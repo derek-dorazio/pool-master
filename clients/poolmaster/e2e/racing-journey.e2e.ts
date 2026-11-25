@@ -6,21 +6,21 @@ import {
   type AdminCredentials,
 } from './helpers/admin-session';
 import { correctFieldParticipant } from './helpers/event-field';
-import { submitAndRead } from './helpers/browser-writes';
-import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
+import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
-import { createTestEvent, findSeededSportLeague, setSportLeagueActive } from './helpers/test-event';
+import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
+import { addTestParticipants } from './helpers/test-participants';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
- * #623 — the horse racing journey (plans/racing-sports.md §9, slice 4): the root admin builds a
- * race on the shared Manage pages (the seeded circuit, eight horses, the race, its seeded field, tiers
- * from those seeds, prices) and releases it (act 1); a new commissioner creates a horse racing
- * contest on it with an edited points table (act 2); a new member joins by link and submits an
- * entry, with no tiebreaker to choose (act 3); and the root admin starts the race, loads its
- * official finishing order through the race results card, and completes it, which settles the
- * contest on that points table (act 4).
+ * #623, #2075 — the racing journey, on Formula 1 (a racing league with a feed: a league with none
+ * stays off): the root admin builds a race on the shared Manage pages (the seeded series, ten test
+ * drivers, the race on its own test slot, its seeded field, tiers from those seeds, prices) and
+ * releases it (act 1); a new commissioner creates a tiered racing contest on it with an edited
+ * points table (act 2); a new member joins by link and submits an entry, with no tiebreaker to
+ * choose (act 3); and the root admin starts the race, loads its official finishing order through
+ * the race results card, and completes it, which settles the contest on that points table (act 4).
  *
  * The golden journey's shape and its safety rules, for the same reasons (its header has them in
  * full): a serial file sharing module state between acts, run-unique names, assertions only about
@@ -28,46 +28,48 @@ import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpe
  * `@smoke`: act 4 writes results and settles a contest, which only the local stack should see.
  */
 
-/** Eight runners, the smallest field horse racing's three default tiers fill (3, 3 and 2). */
-const HORSE_COUNT = 8;
+/** Ten drivers: too few for the series' five tiers of eight, so auto-tiering spreads them two a tier. */
+const DRIVER_COUNT = 10;
 
 /**
- * Each horse's seed is its horse number, so tiers in seed order put horses 1-3 in tier 1, 4-6 in
- * tier 2 and 7-8 in tier 3. Odds are never typed: they come only from the feed.
+ * Each driver's seed is their car number, so tiers in seed order put drivers 1-2 in tier 1, 3-4
+ * in tier 2, and so on to 9-10 in tier 5. Odds are never typed: they come only from the feed.
  */
-const TIER_OF_HORSE: readonly number[] = [1, 1, 1, 2, 2, 2, 3, 3];
+const TIER_OF_DRIVER: readonly number[] = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5];
 
-/** The member's pick in each tier, by horse number: a second favourite, a mid-price, a longshot. */
-const PICKED_HORSES: readonly number[] = [2, 4, 8];
+/** The member's pick in each tier, by car number. */
+const PICKED_DRIVERS: readonly number[] = [2, 4, 5, 8, 10];
 
 /**
- * The commissioner types this table in over whatever the circuit's setup starts from, so the
+ * The commissioner types this table in over whatever the series' setup starts from, so the
  * settled total can only come out right if the typed table reached the contest.
  */
 const POINTS_TABLE: readonly number[] = [10, 6, 4, 2];
 
 /**
- * The official result, by horse number: its place, or how its race ended. Horse 4 wins, horse 2
- * is third and horse 8 fourth, so the member's entry scores 10 + 4 + 2 = 16. On the usual
- * 5, 3, 1 it would have scored 5 + 1 + 0 = 6.
+ * The official result, by car number: its place, or how its race ended. Driver 4 wins, driver 2
+ * is third and driver 8 fourth, so the member's entry scores 10 + 4 + 2 = 16. On Formula 1's own
+ * 25, 18, 15, 12, ... it would have scored 25 + 15 + 12 + 8 + 2 = 62.
  */
-const FINISHING_ORDER: ReadonlyArray<{ horse: number; place: number | null; status: string }> = [
-  { horse: 4, place: 1, status: '' },
-  { horse: 1, place: 2, status: '' },
-  { horse: 2, place: 3, status: '' },
-  { horse: 8, place: 4, status: '' },
-  { horse: 3, place: 5, status: '' },
-  { horse: 5, place: 6, status: '' },
-  { horse: 6, place: 7, status: '' },
-  { horse: 7, place: null, status: 'DNF' },
+const FINISHING_ORDER: ReadonlyArray<{ driver: number; place: number | null; status: string }> = [
+  { driver: 4, place: 1, status: '' },
+  { driver: 1, place: 2, status: '' },
+  { driver: 2, place: 3, status: '' },
+  { driver: 8, place: 4, status: '' },
+  { driver: 3, place: 5, status: '' },
+  { driver: 5, place: 6, status: '' },
+  { driver: 6, place: 7, status: '' },
+  { driver: 9, place: 8, status: '' },
+  { driver: 10, place: 9, status: '' },
+  { driver: 7, place: null, status: 'DNF' },
 ];
 const EXPECTED_ENTRY_POINTS = 16;
 
 type RacingJourneyState = {
   run: JourneyRun;
-  horseIds?: string[];
+  driverIds?: string[];
   raceId?: string;
-  /** Field-entry ids by horse number: index 0 is horse 1. */
+  /** Field-entry ids by car number: index 0 is driver 1. */
   fieldEntryIds?: string[];
   leagueId?: string;
   contestId?: string;
@@ -110,11 +112,11 @@ function requireJourney(): Required<RacingJourneyState> {
   return journey as Required<RacingJourneyState>;
 }
 
-function horseName(run: JourneyRun, horse: number): string {
-  return `${run.playerNamePrefix} ${horse}`;
+function driverName(run: JourneyRun, driver: number): string {
+  return `${run.playerNamePrefix} ${driver}`;
 }
 
-test('act 1: the root admin builds a race — the seeded circuit, eight horses, the race, its seeded field, tiers from seeds and prices — and releases it', async ({ page }) => {
+test('act 1: the root admin builds a race — the seeded series, ten test drivers, the race on its own test slot, its seeded field, tiers from seeds and prices — and releases it', async ({ page }) => {
   test.setTimeout(180_000);
   const credentials = readAdminCredentials();
   admin = credentials;
@@ -122,10 +124,10 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
   const runId = newRunId();
   const run: JourneyRun = {
     runId,
-    sport: 'HORSE_RACING',
-    tourName: 'US Thoroughbred',
-    playerNamePrefix: e2eName('Horse', runId),
-    tournamentName: e2eName('Stakes', runId),
+    sport: 'AUTO_RACING',
+    tourUrlSegment: 'formula-1',
+    playerNamePrefix: e2eName('Driver', runId),
+    tournamentName: e2eName('Grand Prix', runId),
     commissioner: {
       username: e2eUsername('rc', runId),
       email: e2eEmail('rc', runId),
@@ -140,8 +142,8 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
     },
     leagueName: e2eName('Racing League', runId),
     leagueCode: e2eLeagueCode('R', runId),
-    contestName: e2eName('Derby Picks', runId),
-    squadName: e2eName('Stable', runId),
+    contestName: e2eName('Grid Picks', runId),
+    squadName: e2eName('Garage', runId),
   };
   runs.push(run);
   journey = { run };
@@ -154,41 +156,35 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
     await expect(page.getByTestId('root-admin-sports-table')).toBeVisible();
   });
 
-  const circuitId = await test.step('switch the seeded racing circuit on, and find it on the Sports page', async () => {
-    // A league is added by migration, so a journey plays in a seeded one (#2004). No feed covers
-    // horse racing yet, so the circuit is off until the run switches it on; teardown switches it off.
-    const circuit = await findSeededSportLeague(page, 'HORSE_RACING', run.tourName);
-    if (!circuit.isActive) {
-      await setSportLeagueActive(page, circuit.id, true);
-      run.switchedTourOn = true;
-    }
+  const seriesId = await test.step('find the seeded racing series on the Sports page', async () => {
+    // A league is added by migration, so a journey plays in a seeded, active one (#2004).
+    const { id } = await findSeededSportLeague(page, 'AUTO_RACING', run.tourUrlSegment);
     await page.goto('/manage/sports');
-    await expect(page.getByTestId(`root-admin-sports-row-${circuit.id}`)).toBeVisible();
-    return circuit.id;
+    await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
+    return id;
   });
 
-  const horseIds = await test.step(`create ${HORSE_COUNT} horses`, async () => {
-    const names = Array.from({ length: HORSE_COUNT }, (_, index) => horseName(run, index + 1));
-    const ids = await addLeagueParticipants(page, circuitId, 'INDIVIDUAL', names);
-    await expectLeagueParticipants(page, 'horse-racing', circuitId, ids);
-    return ids;
+  const driverIds = await test.step(`create ${DRIVER_COUNT} test drivers`, async () => {
+    const names = Array.from({ length: DRIVER_COUNT }, (_, index) => driverName(run, index + 1));
+    // Test participants (#2096): the series' real drivers come only from its feed.
+    return addTestParticipants(page.request, { 'x-csrf-token': await readCsrfToken(page) }, seriesId, 'INDIVIDUAL', names);
   });
-  journey.horseIds = horseIds;
+  journey.driverIds = driverIds;
 
-  const raceId = await test.step('create the race on the circuit, a week out', async () => {
+  const raceId = await test.step('create the race on the series, a week out', async () => {
     const start = addDays(new Date(), 7);
     start.setHours(17, 0, 0, 0);
     // A race is one race: the event takes the sport's own single round.
     const created = await createTestEvent(page, {
-      sportUrlSegment: 'horse-racing',
-      sportLeagueId: circuitId,
+      sportUrlSegment: 'auto-racing',
+      sportLeagueId: seriesId,
       slotKind: 'TOURNAMENT',
       slotLabel: run.tournamentName,
       startsAt: start,
       name: run.tournamentName,
     });
-    expect(created.sport).toBe('HORSE_RACING');
-    await page.goto(`/manage/sports/horse-racing/events/${created.id}`);
+    expect(created.sport).toBe('AUTO_RACING');
+    await page.goto(`/manage/sports/auto-racing/events/${created.id}`);
     await page.getByTestId('root-admin-event-settings').click();
     await expect(page.getByTestId('root-admin-event-settings-dialog-rounds')).toContainText('1');
     await page.getByTestId('root-admin-event-settings-dialog').getByRole('button', { name: 'Close', exact: true }).click();
@@ -196,11 +192,11 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
   });
   journey.raceId = raceId;
 
-  await test.step(`enter the ${HORSE_COUNT} horses in the field`, async () => {
-    await page.goto(`/manage/sports/horse-racing/events/${raceId}/field`);
+  await test.step(`enter the ${DRIVER_COUNT} drivers in the field`, async () => {
+    await page.goto(`/manage/sports/auto-racing/events/${raceId}/field`);
     await page.getByTestId('root-admin-event-field-add').click();
     await page.getByTestId('root-admin-event-field-add-search').fill(runId);
-    for (const id of horseIds) {
+    for (const id of driverIds) {
       const candidate = page.getByTestId(`root-admin-event-field-add-candidate-${id}`);
       await candidate.click();
       await expect(candidate).toHaveAttribute('aria-pressed', 'true');
@@ -209,16 +205,16 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
     await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
   });
 
-  const fieldEntryIds = await test.step('set each horse\'s seed in its Field dialog', async () => {
-    // The field read straight from the API, for the field-entry id of each horse (the golden
+  const fieldEntryIds = await test.step('set each driver\'s seed in its Field dialog', async () => {
+    // The field read straight from the API, for the field-entry id of each driver (the golden
     // journey's tiers step has the reason it is not sniffed from the page).
     const fieldResponse = await page.request.get(`/api/v1/events/${raceId}/participants`);
     expect(fieldResponse.ok(), `GET the field answered ${fieldResponse.status()}`).toBe(true);
     const field = (await fieldResponse.json()) as { participants: { id: string; participantId: string }[] };
-    const entryIds = horseIds.map((horseId) => {
-      const entry = field.participants.find((candidate) => candidate.participantId === horseId);
+    const entryIds = driverIds.map((driverId) => {
+      const entry = field.participants.find((candidate) => candidate.participantId === driverId);
       if (!entry) {
-        throw new Error(`horse ${horseId} is not in the field`);
+        throw new Error(`driver ${driverId} is not in the field`);
       }
       return entry.id;
     });
@@ -230,11 +226,11 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
   });
   journey.fieldEntryIds = fieldEntryIds;
 
-  await test.step('tier the field in seed order: the top three seeds, the middle three, the bottom two', async () => {
+  await test.step('tier the field in seed order, two seeds a tier over the five tiers', async () => {
     await page.getByTestId('root-admin-tier-auto-tiers').click();
     await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${raceId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
-      await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${String(TIER_OF_HORSE[index])}`);
+      await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${String(TIER_OF_DRIVER[index])}`);
     }
   });
 
@@ -245,7 +241,7 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
   });
 
   await test.step('release the race for contests', async () => {
-    await page.goto(`/manage/sports/horse-racing/events/${raceId}`);
+    await page.goto(`/manage/sports/auto-racing/events/${raceId}`);
     await page.getByTestId('root-admin-event-release-chip').click();
     await page.getByTestId('root-admin-sport-event-release').click();
     const released = await submitAndRead<{ event: { status: string } }>(
@@ -262,7 +258,7 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
   });
 });
 
-test('act 2: a new commissioner creates a horse racing contest on the race with an edited points table, opens it, and hands out a join link', async ({ page }) => {
+test('act 2: a new commissioner creates a tiered racing contest on the race with an edited points table, opens it, and hands out a join link', async ({ page }) => {
   test.setTimeout(120_000);
   const state = requireJourney();
   const { run } = state;
@@ -279,19 +275,21 @@ test('act 2: a new commissioner creates a horse racing contest on the race with 
     await expect(page.getByTestId('league-home')).toBeVisible();
   });
 
-  await test.step('choose horse racing and the race', async () => {
+  await test.step('choose auto racing and the race', async () => {
     await page.goto(`/league/${run.leagueCode}/admin/contests/new`);
     await expect(page.getByTestId('create-contest-page')).toBeVisible();
-    await page.getByTestId('contest-sport-HORSE_RACING').click();
+    await page.getByTestId('contest-sport-AUTO_RACING').click();
     const raceChoice = page.getByTestId(`contest-event-${state.raceId}`);
     await expect(raceChoice).toContainText(run.tournamentName);
     await raceChoice.click();
     await expect(raceChoice).toBeChecked();
   });
 
-  await test.step(`set one horse a tier, all three count, nothing for not finishing, the points table ${POINTS_TABLE.join(', ')}, name the contest, and create it`, async () => {
+  await test.step(`choose tiers, one driver a tier, all five count, nothing for not finishing, the points table ${POINTS_TABLE.join(', ')}, name the contest, and create it`, async () => {
+    // The series' first contest setup is a budget one; this contest is tiered.
+    await page.getByTestId('contest-format-TIERED').click();
     await page.getByTestId('contest-tiered-picks-per-tier').fill('1');
-    await page.getByTestId('contest-tiered-counted-scores').fill('3');
+    await page.getByTestId('contest-tiered-counted-scores').fill('5');
     await page.getByTestId('contest-scoring-did-not-finish-points').fill('0');
     await page.getByTestId('contest-scoring-points-table').fill(POINTS_TABLE.join(', '));
     await page.getByTestId('contest-name').fill(run.contestName);
@@ -301,10 +299,10 @@ test('act 2: a new commissioner creates a horse racing contest on the race with 
       'POST',
       `/api/v1/leagues/${state.leagueId}/contests`,
     );
-    expect(created.contest.sport).toBe('HORSE_RACING');
+    expect(created.contest.sport).toBe('AUTO_RACING');
     state.contestId = created.contest.id;
     await expect(page.getByTestId('manage-contest-page')).toBeVisible();
-    await expect(page.getByTestId('manage-contest-rules')).toContainText('horse');
+    await expect(page.getByTestId('manage-contest-rules')).toContainText('driver');
   });
 
   await test.step('open the contest to the league', async () => {
@@ -336,7 +334,7 @@ test('act 2: a new commissioner creates a horse racing contest on the race with 
   });
 });
 
-test('act 3: a new member joins by the link and submits one horse from each tier, with no tiebreaker to choose', async ({ page }) => {
+test('act 3: a new member joins by the link and submits one driver from each tier, with no tiebreaker to choose', async ({ page }) => {
   test.setTimeout(120_000);
   const state = requireJourney();
   const { run } = state;
@@ -364,9 +362,9 @@ test('act 3: a new member joins by the link and submits one horse from each tier
     await expect(page.getByTestId('contest-entry-builder-heading')).toBeVisible();
   });
 
-  await test.step(`pick horses ${PICKED_HORSES.join(', ')}, one from each tier, and submit`, async () => {
-    for (const horse of PICKED_HORSES) {
-      const fieldEntryId = state.fieldEntryIds[horse - 1];
+  await test.step(`pick drivers ${PICKED_DRIVERS.join(', ')}, one from each tier, and submit`, async () => {
+    for (const driver of PICKED_DRIVERS) {
+      const fieldEntryId = state.fieldEntryIds[driver - 1];
       await expect(page.getByTestId(`contest-entry-participant-${fieldEntryId}`)).toBeVisible();
       await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'PUT', `/api/v1/selections/${state.contestId}/entries/${state.entryId}/picks/${fieldEntryId}`);
       await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
@@ -397,7 +395,7 @@ test('act 4: the root admin starts the race, loads its official finishing order,
   });
 
   await test.step('the race\'s Rounds and matches tab offers the finishing-order card, not golf round scores', async () => {
-    await page.goto(`/manage/sports/horse-racing/events/${state.raceId}/results`);
+    await page.goto(`/manage/sports/auto-racing/events/${state.raceId}/results`);
     await expect(page.getByTestId('root-admin-race-results-panel')).toBeVisible();
     // The old results link opens the Rounds and matches tab, which holds the results.
     await expect(page.getByTestId('root-admin-event-tab-rounds')).toHaveAttribute('aria-current', 'page');
@@ -407,8 +405,8 @@ test('act 4: the root admin starts the race, loads its official finishing order,
 
   await test.step('paste the finishing order, mark it official, preview, and apply', async () => {
     await page.getByTestId('root-admin-race-result-mark-official').check();
-    const rows = FINISHING_ORDER.map(({ horse, place, status }) =>
-      `,${horseName(run, horse)},${place ?? ''},${status},${horse},`);
+    const rows = FINISHING_ORDER.map(({ driver, place, status }) =>
+      `,${driverName(run, driver)},${place ?? ''},${status},${driver},`);
     await page
       .getByTestId('root-admin-race-result-upload-textarea')
       .fill(['externalId,playerName,finishPosition,resultStatus,startPosition,riderName', ...rows].join('\n'));
@@ -418,7 +416,7 @@ test('act 4: the root admin starts the race, loads its official finishing order,
     await submitAndRead(page, 'root-admin-race-result-upload-apply', 'PUT', `/api/v1/events/${state.raceId}/race-results`);
 
     await expect(page.getByTestId('root-admin-race-result-official')).toHaveText('Official');
-    const winner = state.fieldEntryIds[FINISHING_ORDER[0].horse - 1];
+    const winner = state.fieldEntryIds[FINISHING_ORDER[0].driver - 1];
     const nonFinisher = state.fieldEntryIds[7 - 1];
     await expect(page.getByTestId(`root-admin-race-result-finish-${winner}`)).toHaveText('1st');
     await expect(page.getByTestId(`root-admin-race-result-finish-${nonFinisher}`)).toHaveText('Did not finish');
@@ -459,7 +457,7 @@ test('act 4: the root admin starts the race, loads its official finishing order,
 });
 
 async function moveRaceTo(page: Page, raceId: string, status: 'IN_PROGRESS' | 'COMPLETED') {
-  await page.goto(`/manage/sports/horse-racing/events/${raceId}`);
+  await page.goto(`/manage/sports/auto-racing/events/${raceId}`);
   await page.getByTestId('root-admin-event-settings').click();
   await page.getByTestId(`root-admin-sport-event-transition-${status}`).click();
   const moved = await submitAndRead<{ event: { status: string } }>(

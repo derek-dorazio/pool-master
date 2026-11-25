@@ -25,6 +25,7 @@ import { sportLeagueRowDefaults } from '../support/league-profiles';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
+import { syncLeagueTo } from '../support/league-sync';
 
 // Loading a test data file through the real admin API: a test seed a commissioner can build
 // contests on, its players bound to their feed ids, a test slate, and a second run that changes nothing.
@@ -109,7 +110,7 @@ async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ i
 }
 
 async function addSportLeague(name: string, sport: Sport = Sport.GOLF): Promise<void> {
-  await addRunSportLeague(admin.client, sport, name);
+  await addRunSportLeague(sport, name);
 }
 
 async function eventsOf(sportLeagueId: string, championshipYear: number) {
@@ -316,6 +317,20 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     expect(changes(second).filter((row) => row.subject === LoadSubject.PLAYER)).toEqual([]);
   });
 
+  it('in a provider-synced league, makes a player with no feed id a test participant, and binds it no feed id the file gains on a later run', async () => {
+    await addSportLeague(`${tour} synced`);
+    const league = expectDefined(await leagueNamed(`${tour} synced`));
+    await syncLeagueTo(getFunctionalPrisma(), league.id, 'pga');
+
+    await loadSportData(parsed(seed('synced', [undefined, undefined])), { getClient, now: NOW, mode: LoadMode.APPLY, release: false });
+    const again = await loadSportData(parsed(seed('synced', [{ [provider]: feedId('synced-1') }, undefined])), { getClient, now: NOW, mode: LoadMode.APPLY, release: false });
+
+    await expect(getFunctionalPrisma().participant.findMany({ where: { sportLeagueId: league.id }, select: { isTestData: true } }))
+      .resolves.toEqual([{ isTestData: true }, { isTestData: true }]);
+    expect(changes(again).filter((row) => row.subject === LoadSubject.PLAYER)).toEqual([]);
+    await expect(mappingOf('synced-1')).resolves.toBeNull();
+  });
+
   it('takes the league\'s participant a feed id is already mapped to, whatever the file calls the player, and fields it rather than creating a second', async () => {
     const db = getFunctionalPrisma();
     const golfSportId = (await db.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id;
@@ -416,7 +431,7 @@ describe('Filling an event from a test slate through the admin API', () => {
 
   beforeAll(async () => {
     // The loader writes into the league's current Season, so the schedule's 2027 one is made current.
-    await inCurrentSeason(await addRunSportLeague(admin.client, Sport.GOLF, tour), 2027);
+    await inCurrentSeason(await addRunSportLeague(Sport.GOLF, tour), 2027);
     // A test seed held back as a draft puts the event on the site with a field of golfers 1 to 3.
     const schedule: SportDataFile = {
       schemaVersion: 1,

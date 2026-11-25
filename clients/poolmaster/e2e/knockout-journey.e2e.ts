@@ -7,7 +7,7 @@ import {
 } from './helpers/admin-session';
 import { correctFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
-import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
+import { addTestParticipants } from './helpers/test-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
@@ -155,7 +155,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourName: 'NCAA Division I Men',
+    tourUrlSegment: 'ncaa-division-i-men',
     playerNamePrefix: e2eName('Team', runId),
     tournamentName: e2eName('Playoffs', runId),
     commissioner: {
@@ -189,16 +189,15 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   const leagueId = await test.step('find the seeded basketball league on the Sports page', async () => {
     // A league is added by migration, so a journey plays in a seeded one (#2004): one whose
     // knockout games are single games, as the bracket below names one winner a pairing.
-    const { id } = await findSeededSportLeague(page, 'BASKETBALL', run.tourName);
+    const { id } = await findSeededSportLeague(page, 'BASKETBALL', run.tourUrlSegment);
     await page.goto('/manage/sports');
     await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
     return id;
   });
 
-  const teamIds = await test.step(`create the ${TEAMS.length} teams`, async () => {
-    const ids = await addLeagueParticipants(page, leagueId, 'TEAM', TEAMS.map((team) => teamName(run, team.seed)));
-    await expectLeagueParticipants(page, 'basketball', leagueId, ids);
-    return ids;
+  const teamIds = await test.step(`create the ${TEAMS.length} test teams`, async () => {
+    // Test participants (#2096): the league's real teams come only from its feed.
+    return addTestParticipants(page.request, { 'x-csrf-token': await readCsrfToken(page) }, leagueId, 'TEAM', TEAMS.map((team) => teamName(run, team.seed)));
   });
   journey.teamIds = teamIds;
 

@@ -39,7 +39,7 @@ describe('participant service', () => {
       create: mockFn<ParticipantRepository['create']>(async (input) => ({ ...buildParticipant(), ...input })),
     };
 
-    const service = new ParticipantService(participantRepo as never, {} as never, testDomainEvents());
+    const service = new ParticipantService(participantRepo as never, { findSyncProviderId: jest.fn().mockResolvedValue(null) } as never, testDomainEvents());
 
     const participant = await service.create({
       sportLeagueId: 'league-1',

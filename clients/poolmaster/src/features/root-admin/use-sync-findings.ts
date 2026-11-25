@@ -2,10 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import {
   changeProviderSyncFindingStatus,
   getProviderSyncFinding,
+  linkProviderSyncFindingSlot,
   listProviderSyncFindings,
+  listProviderSyncFindingSlotChoices,
   mapProviderSyncFindingParticipant,
   type ChangeProviderSyncFindingStatusRequest,
   type ProviderSyncFindingDto,
+  type ProviderSyncFindingSlotChoiceDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -63,6 +66,33 @@ export function useMapSyncFindingParticipant(findingId: string, options: { onSuc
       return response.data.finding;
     },
     invalidates: [...FINDING_CHANGE_INVALIDATES, QueryKeys.rootAdmin.manageSport.participants],
+    onSuccess: options.onSuccess,
+  });
+}
+
+/** The slots a tournament name finding can be linked to (#2011), read when "link to existing" opens. */
+export function useSyncFindingSlotChoicesQuery(findingId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.syncFindingSlotChoices(findingId),
+    queryFn: async (): Promise<ProviderSyncFindingSlotChoiceDto[]> => {
+      const response = await listProviderSyncFindingSlotChoices({ path: { findingId } });
+      if (!response.data?.slots) throwApiError(response.error, 'Slot choices response is missing data.');
+      return response.data.slots;
+    },
+    enabled: enabled && findingId !== '',
+    retry: false,
+  });
+}
+
+/** Adds a tournament name finding's name as a pattern of a slot, which resolves it (#2011). */
+export function useLinkSyncFindingSlot(findingId: string, options: { onSuccess?: (finding: ProviderSyncFindingDto) => void } = {}) {
+  return useInvalidatingMutation({
+    mutationFn: async (slotDefinitionId: string): Promise<ProviderSyncFindingDto> => {
+      const response = await linkProviderSyncFindingSlot({ path: { findingId }, body: { slotDefinitionId } });
+      if (!response.data?.finding) throwApiError(response.error, 'Slot link response is missing data.');
+      return response.data.finding;
+    },
+    invalidates: [...FINDING_CHANGE_INVALIDATES, QueryKeys.rootAdmin.syncFindingSlotChoices(findingId), QueryKeys.rootAdmin.manageSport.leagues],
     onSuccess: options.onSuccess,
   });
 }

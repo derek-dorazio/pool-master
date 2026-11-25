@@ -7,7 +7,7 @@ import {
 } from './helpers/admin-session';
 import { closeFieldParticipant, correctFieldParticipant, openFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
-import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
+import { addTestParticipants } from './helpers/test-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
@@ -151,7 +151,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const run: JourneyRun = {
       runId,
       sport: 'GOLF',
-      tourName: 'PGA TOUR',
+      tourUrlSegment: 'pga-tour',
       playerNamePrefix: e2eName('Golfer', runId),
       tournamentName: e2eName('Open', runId),
       moreTournamentNames: [e2eName('Classic', runId), e2eName('Invitational', runId)],
@@ -198,19 +198,17 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     const tourId = await test.step('find the seeded golf tour on the Sports page', async () => {
       // A league is added by migration, so a journey plays in a seeded one (#2004).
-      const { id } = await findSeededSportLeague(page, 'GOLF', run.tourName);
+      const { id } = await findSeededSportLeague(page, 'GOLF', run.tourUrlSegment);
       await page.goto('/manage/sports');
       await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
       return id;
     });
     journey.tourId = tourId;
 
-    const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
+    const playerIds = await test.step(`create ${PLAYER_COUNT} test players`, async () => {
       const names = Array.from({ length: PLAYER_COUNT }, (_, index) => `${run.playerNamePrefix} ${index + 1}`);
-      const ids = await addLeagueParticipants(page, tourId, 'INDIVIDUAL', names);
-      // The tour's Participants tab (#1866), read after every save, carries all six new golfers.
-      await expectLeagueParticipants(page, 'golf', tourId, ids);
-      return ids;
+      // Test participants (#2096): the tour's real golfers come only from its feed.
+      return addTestParticipants(page.request, { 'x-csrf-token': await readCsrfToken(page) }, tourId, 'INDIVIDUAL', names);
     });
     journey.playerIds = playerIds;
 

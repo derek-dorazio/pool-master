@@ -27,6 +27,29 @@ export async function syncSlotsFor(
   prisma: Db,
   input: { sportLeagueId: string; sportLeagueProviderMappingId: string; code: string; seasonIds: readonly string[]; covered?: boolean },
 ): Promise<string[]> {
+  return (await slotDefinitionFor(prisma, { ...input, matchType: 'PROVIDER_CODE', value: input.code })).seasonSlotIds;
+}
+
+/**
+ * A tournament's slot definition matched by the NAME_PATTERN `pattern` at the league's provider
+ * mapping (#2011), listed by an active contest template unless `covered` is false, with its phase
+ * in each of `seasonIds` but no Season slot: the events sync creates that when a tournament's name
+ * first matches. Answers the definition's id.
+ */
+export async function nameSlotDefinitionFor(
+  prisma: Db,
+  input: { sportLeagueId: string; sportLeagueProviderMappingId: string; pattern: string; seasonIds: readonly string[]; covered?: boolean },
+): Promise<string> {
+  return (await slotDefinitionFor(prisma, { ...input, matchType: 'NAME_PATTERN', value: input.pattern, seasonSlots: false })).definitionId;
+}
+
+async function slotDefinitionFor(
+  prisma: Db,
+  input: {
+    sportLeagueId: string; sportLeagueProviderMappingId: string; matchType: 'PROVIDER_CODE' | 'NAME_PATTERN'; value: string;
+    seasonIds: readonly string[]; covered?: boolean; seasonSlots?: boolean;
+  },
+): Promise<{ definitionId: string; seasonSlotIds: string[] }> {
   const { sportLeagueId } = input;
   const phase = await prisma.sportLeaguePhase.upsert({
     where: { sportLeagueId_phase: { sportLeagueId, phase: 'REGULAR' } },
@@ -56,8 +79,8 @@ export async function syncSlotsFor(
       sportLeagueId,
       sportLeaguePhaseSlotId: definition.id,
       sportLeagueProviderMappingId: input.sportLeagueProviderMappingId,
-      matchType: 'PROVIDER_CODE',
-      providerValue: input.code,
+      matchType: input.matchType,
+      providerValue: input.value,
     },
   });
   if (input.covered ?? true) {
@@ -87,6 +110,7 @@ export async function syncSlotsFor(
       update: {},
       select: { id: true },
     });
+    if (input.seasonSlots === false) continue;
     ids.push((await prisma.sportLeagueSeasonPhaseSlot.create({
       data: {
         sportLeagueId, sportLeagueSeasonId, sportLeagueSeasonPhaseId: seasonPhase.id, sportLeaguePhaseSlotId: definition.id,
@@ -95,5 +119,5 @@ export async function syncSlotsFor(
       select: { id: true },
     })).id);
   }
-  return ids;
+  return { definitionId: definition.id, seasonSlotIds: ids };
 }

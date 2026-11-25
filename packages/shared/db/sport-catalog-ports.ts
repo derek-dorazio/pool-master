@@ -24,7 +24,6 @@ import type {
   SportConfig,
   SportEvent,
   SportEventContest,
-  SportLeagueSeasonSpan,
   SportEventRoundMatch,
   SportEventParticipant,
   SportEventParticipantGolfRound,
@@ -47,6 +46,8 @@ import type {
   SportLeagueSeasonDetail,
   SportLeagueSeasonSlot,
   SyncSeasonSlot,
+  SlotNamePattern,
+  SlotKind,
   CurrentSeasonCandidate,
 } from '../domain';
 
@@ -92,19 +93,8 @@ export interface SportLeagueRepository {
   findByIds(ids: readonly string[]): Promise<SportLeague[]>;
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
-  findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
-  /** The sport's league at this URL segment (#2042), or null when none has it. */
-  findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  /**
-   * The league and its first Season, made its current one, in one transaction (#2003). The Season
-   * is a stopgap for the browser journeys' own leagues until they move to test slots (#2004).
-   */
-  create(
-    input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
-    firstSeason: SportLeagueSeasonSpan,
-  ): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -272,6 +262,13 @@ export interface SportEventRepository {
   transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null>;
   /** Deletes the event with its rounds, tiers and field. Refuses nothing: the caller guards contests. */
   delete(id: string): Promise<void>;
+  /**
+   * Removes a test slot (#2075) in one transaction: its event (`sportEventId`, null when it has
+   * none) as `delete` does, the slot, and each test participant on that event's field that no other
+   * field holds. No other participant is touched. A synced slot is never removed. Returns how many
+   * test participants went.
+   */
+  deleteTestSlot(seasonSlotId: string, sportEventId: string | null): Promise<number>;
   /** Event participants per event, for each id asked about (0 where none). */
   countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /**
@@ -812,18 +809,73 @@ export interface SportLeagueSeasonRepository {
    */
   createTestSlot(input: TestSeasonSlotCreate): Promise<TestSlotCreateResult>;
   /**
-   * A Season's slots as its events sync reads them (#2005): each with the PROVIDER_CODE value the
-   * league's provider mapping names its definition by, whether one of the league's active contest
+   * A Season's slots as its events sync reads them (#2005): each with its definition, the
+   * PROVIDER_CODE value the league's provider mapping names that definition by, the provider's
+   * tournament code it was linked to by name (#2011), whether one of the league's active contest
    * templates lists that definition, the event on it and its dates. Test slots are left out, since
    * the sync never reads or writes them. A fixed number of reads however many slots.
    */
   findSyncSlots(sportLeagueSeasonId: string, sportLeagueProviderMappingId: string): Promise<SyncSeasonSlot[]>;
+  /**
+   * The NAME_PATTERN mappings of a league's provider mapping (#2011): each normalized tournament
+   * name and the slot definition it places a tournament on. Empty for a league that matches no
+   * tournament by name. One read.
+   */
+  findSlotNamePatterns(sportLeagueProviderMappingId: string): Promise<SlotNamePattern[]>;
+  /**
+   * The tournaments the events sync placed by name (#2011), in one transaction: an existing Season
+   * slot linked to its tournament's code, or a new Season slot of the definition, in the Season's
+   * phase for the definition's phase, with the definition's series format and pairing, and linked.
+   * A definition whose phase the Season lacks gets no slot, and is answered in `phaseMissing` so
+   * the sync can say so. A link already taken is skipped.
+   */
+  linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<{ phaseMissing: string[] }>;
   /**
    * What the events sync learned of a Season's slots (#2005), in one transaction: the slots already
    * synced events now play (a slot that has an event already keeps it), and each slot's dates from
    * its games.
    */
   recordSyncedSlots(input: SyncedSlotsRecord): Promise<void>;
+}
+
+/**
+ * A league's NAME_PATTERN slot definitions, as "link to existing" on a SLOT_NAME_UNMATCHED finding
+ * reads and adds to them (#2011). Definitions are set by migration; only their patterns are added.
+ */
+export interface SlotNamePatternRepository {
+  /**
+   * The slot definitions a tournament of the league can be linked to through its mapping to the
+   * Provider: those the mapping matches by NAME_PATTERN, in key order, each with its patterns. Null
+   * when the league has no mapping to the Provider. A fixed number of reads.
+   */
+  findChoices(sportLeagueId: string, providerId: string): Promise<SlotNamePatternChoices | null>;
+  /** Adds a pattern to a definition; TAKEN when the mapping already has that pattern on any slot. */
+  addPattern(input: { sportLeagueId: string; sportLeagueProviderMappingId: string; slotDefinitionId: string; pattern: string }): Promise<'ADDED' | 'TAKEN'>;
+}
+
+/** The definitions one league's mapping to a Provider matches tournaments to by name. */
+export interface SlotNamePatternChoices {
+  sportLeagueProviderMappingId: string;
+  slots: SlotNamePatternChoice[];
+}
+
+/** One definition a tournament can be linked to, with the names that already place tournaments on it. */
+export interface SlotNamePatternChoice {
+  slotDefinitionId: string;
+  key: string;
+  slotKind: SlotKind;
+  weekNumber: number | null;
+  name: string | null;
+  patterns: string[];
+}
+
+/** The Season slots tournaments were placed on by name, for `linkNameMatchedSlots`. */
+export interface NameMatchedSlotsRecord {
+  sportLeagueId: string;
+  sportLeagueSeasonId: string;
+  sportLeagueProviderMappingId: string;
+  links: ReadonlyArray<{ seasonSlotId: string; code: string }>;
+  creates: ReadonlyArray<{ slotDefinitionId: string; code: string }>;
 }
 
 /** The slots synced events now play, and slot dates from their games, for `recordSyncedSlots`. */

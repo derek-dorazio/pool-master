@@ -2,7 +2,6 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   createParticipant,
-  createSportLeague,
   deleteEvent,
   deleteParticipant,
   deleteSportLeague,
@@ -12,12 +11,12 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { ProviderCode } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { sportRowKeys } from '../support/sport-rows';
 import { Sport } from '@poolmaster/shared/domain';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // #1400 — a root admin deletes a sport league (a tour) or a participant (a player) that nothing
 // uses any more, and is refused while something still does. The e2e teardown could only make
@@ -67,10 +66,8 @@ async function rootAdmin(): Promise<RegisteredUserContext> {
   return admin;
 }
 
-async function newTour(client: Client, name: string): Promise<string> {
-  const tour = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `${name} ${RUN}` } });
-  expect(tour.response?.status).toBe(201);
-  const id = expectDefined(tour.data).sportLeague.id;
+async function newTour(name: string): Promise<string> {
+  const { id } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.GOLF, name: `${name} ${RUN}` });
   created.sportLeagueIds.add(id);
   return id;
 }
@@ -109,7 +106,7 @@ beforeAll(() => ensureGolfSportRow());
 describe('SDK Functional: a root admin deletes a sport league or a participant nothing uses (#1400)', () => {
   it('deletes a sport league with no events and no participants, taking the test slot and Season phase its deleted event left with it', async () => {
     const { client } = await rootAdmin();
-    const sportLeagueId = await newTour(client, 'Delete Tour');
+    const sportLeagueId = await newTour('Delete Tour');
     // A tournament made and deleted again leaves the league with no event.
     const eventId = await newTournament(client, sportLeagueId, 'Delete Tour Open');
     expect((await deleteEvent({ client, path: { eventId } })).response?.status).toBe(204);
@@ -125,7 +122,7 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
 
   it('refuses to delete a sport league that still has a participant with 409 SPORT_LEAGUE_IN_USE, and keeps both (#1853)', async () => {
     const { client } = await rootAdmin();
-    const sportLeagueId = await newTour(client, 'Rostered Tour');
+    const sportLeagueId = await newTour('Rostered Tour');
     const participantId = await newPlayer(client, sportLeagueId, 'Rostered Golfer');
 
     expectFunctionalError(await deleteSportLeague({ client, path: { sportLeagueId } }), { status: 409, code: 'SPORT_LEAGUE_IN_USE' });
@@ -136,8 +133,8 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
 
   it('takes a deleted sport league out of every league\'s muted list, so the league can still save its event email settings', async () => {
     const { client } = await rootAdmin();
-    const sportLeagueId = await newTour(client, 'Muted Tour');
-    const keptId = await newTour(client, 'Kept Muted Tour');
+    const sportLeagueId = await newTour('Muted Tour');
+    const keptId = await newTour('Kept Muted Tour');
     const { league, commissionerClient } = await buildLeagueWithCommissioner({ leagueName: `Muting League ${RUN}` });
     const muted = await updateLeagueEventEmailSettings({
       client: commissionerClient,
@@ -162,7 +159,7 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
 
   it('refuses to delete a sport league that still has an event with 409 SPORT_LEAGUE_IN_USE, and keeps it', async () => {
     const { client } = await rootAdmin();
-    const sportLeagueId = await newTour(client, 'Busy Tour');
+    const sportLeagueId = await newTour('Busy Tour');
     await newTournament(client, sportLeagueId, 'Busy Tour Open');
 
     expectFunctionalError(await deleteSportLeague({ client, path: { sportLeagueId } }), { status: 409, code: 'SPORT_LEAGUE_IN_USE' });
@@ -172,7 +169,7 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
 
   it('deletes a participant on no event field, taking its provider identities with it, and leaves its sport league', async () => {
     const { client } = await rootAdmin();
-    const sportLeagueId = await newTour(client, 'Roster Tour');
+    const sportLeagueId = await newTour('Roster Tour');
     const participantId = await newPlayer(client, sportLeagueId, 'Retired Golfer');
     const db = getFunctionalPrisma();
     await db.participantProviderMapping.create({
@@ -195,7 +192,7 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
 
   it('refuses to delete a participant on an event\'s field with 409 PARTICIPANT_IN_USE, and keeps them', async () => {
     const { client } = await rootAdmin();
-    const sportLeagueId = await newTour(client, 'Field Tour');
+    const sportLeagueId = await newTour('Field Tour');
     const participantId = await newPlayer(client, sportLeagueId, 'Entered Golfer');
     const eventId = await newTournament(client, sportLeagueId, 'Field Tour Open');
     expect((await addEventParticipants({ client, path: { eventId }, body: { participantIds: [participantId] } })).response?.status).toBe(200);
@@ -214,7 +211,7 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
 
   it('refuses both deletes to a signed-in user who is not a root admin with 403, and deletes nothing', async () => {
     const { client: adminClient } = await rootAdmin();
-    const sportLeagueId = await newTour(adminClient, 'Guarded Tour');
+    const sportLeagueId = await newTour('Guarded Tour');
     const participantId = await newPlayer(adminClient, sportLeagueId, 'Guarded Golfer');
     const member = await buildRegisteredUser({ displayName: 'Catalog Delete Member' });
     created.userIds.add(member.userId);

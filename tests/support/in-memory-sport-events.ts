@@ -137,6 +137,14 @@ export class InMemorySportEvents {
   slotProviderCodes = new Map<string, string>();
   /** The synced slots an active contest template lists (#2005). */
   templateCoveredSlotIds = new Set<string>();
+  /** The league's NAME_PATTERN mappings, as `findSlotNamePatterns` reads them (#2011). */
+  slotNamePatterns: Array<{ slotDefinitionId: string; pattern: string }> = [];
+  /** The tournament code each Season slot was linked to by name (#2011). */
+  slotLinks = new Map<string, string>();
+  /** The slot definitions a template lists, so a Season slot created by name is covered (#2011). */
+  templateCoveredDefinitionIds = new Set<string>();
+  /** Slot definitions whose phase the Season lacks: a name match on one makes no Season slot (#2011). */
+  definitionsWithoutSeasonPhase = new Set<string>();
 
   /**
    * A synced Season slot of the league's current Season (#2005), with no dates yet, mapped by
@@ -150,19 +158,43 @@ export class InMemorySportEvents {
   }
 
   /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
-  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'recordSyncedSlots'> {
+  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
     const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
     return {
       findSyncSlots: async (sportLeagueSeasonId) => this.seasonSlots
         .filter((slot) => slot.sportLeagueSeasonId === sportLeagueSeasonId && !slot.isTestData)
         .map((slot) => ({
           seasonSlotId: slot.id,
+          slotDefinitionId: slot.slotDefinitionId,
           providerCode: this.slotProviderCodes.get(slot.id) ?? null,
-          coveredByTemplate: this.templateCoveredSlotIds.has(slot.id),
+          linkedCode: this.slotLinks.get(slot.id) ?? null,
+          coveredByTemplate: this.templateCoveredSlotIds.has(slot.id) || this.templateCoveredDefinitionIds.has(slot.slotDefinitionId),
           sportEventId: ownerOf(slot.id),
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
         })),
+      findSlotNamePatterns: async () => [...this.slotNamePatterns],
+      linkNameMatchedSlots: async ({ sportLeagueId, sportLeagueSeasonId, links, creates }) => {
+        const taken = new Set(this.slotLinks.values());
+        const link = (seasonSlotId: string, code: string) => {
+          if (this.slotLinks.has(seasonSlotId) || taken.has(code)) return;
+          this.slotLinks.set(seasonSlotId, code);
+          taken.add(code);
+        };
+        for (const each of links) link(each.seasonSlotId, each.code);
+        const phaseMissing: string[] = [];
+        for (const create of creates) {
+          if (this.definitionsWithoutSeasonPhase.has(create.slotDefinitionId)) {
+            phaseMissing.push(create.slotDefinitionId);
+            continue;
+          }
+          const id = this.addTestSlot({ id: sportLeagueId, currentSeasonId: sportLeagueSeasonId }, new Date(0), {
+            isTestData: false, label: null, startsAt: null, slotDefinitionId: create.slotDefinitionId, key: create.slotDefinitionId, sportLeagueSeasonId,
+          });
+          link(id, create.code);
+        }
+        return { phaseMissing };
+      },
       recordSyncedSlots: async ({ eventSlots, slotDates }) => {
         for (const change of slotDates) {
           const slot = this.seasonSlots.find((candidate) => candidate.id === change.seasonSlotId);
@@ -236,7 +268,7 @@ export class InMemorySportEvents {
     const sportLeagueId = this.sportLeagues.find((league) => league.sportId === sportId)?.id ?? UNPLACED_SPORT_LEAGUE_ID;
     const participant: Participant = stamp({
       id: this.id('participant'), sportLeagueId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-      injuryStatus: { status: 'HEALTHY' }, ranking: null, ...overrides,
+      injuryStatus: { status: 'HEALTHY' }, ranking: null, isTestData: false, ...overrides,
     });
     this.participants.push(participant);
     if (externalId !== undefined) {
@@ -325,14 +357,7 @@ export class InMemorySportEvents {
         (filters.sportId === undefined || row.sportId === filters.sportId)
         && (filters.isActive === undefined || row.isActive === filters.isActive)
       )),
-      findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
-      findBySportAndUrlSegment: async (sportId, urlSegment) => this.sportLeagues.find((row) => row.sportId === sportId && row.urlSegment === urlSegment) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
-      create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
-        this.sportLeagues.push(created);
-        return created;
-      },
       update: async (id, { syncProviderLeagueId, ...updates }) => {
         const row = this.sportLeagues.find((candidate) => candidate.id === id) as SportLeague;
         Object.assign(row, Object.fromEntries(Object.entries<unknown>(updates).filter(([, value]) => value !== undefined)));
@@ -355,12 +380,13 @@ export class InMemorySportEvents {
         && (query.externalId === undefined || this.mappings.some((mapping) => mapping.participantId === row.id && mapping.externalId === query.externalId))
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
       ))),
-      findBySportLeague: async (sportLeagueId) => this.participants
-        .filter((row) => row.sportLeagueId === sportLeagueId)
+      findBySportLeague: async (sportLeagueId, testData = false) => this.participants
+        .filter((row) => row.sportLeagueId === sportLeagueId && row.isTestData === testData)
         .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity) || left.name.localeCompare(right.name)),
       updateRankings: async () => undefined,
       countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.participants.filter((row) => row.sportLeagueId === id).length])),
       create: async () => { throw new Error('not used'); },
+      createWithProviderMapping: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
       deleteUnlessOnAField: async () => { throw new Error('not used'); },
     };
@@ -384,6 +410,7 @@ export class InMemorySportEvents {
         && externalIds.includes(row.externalId) && this.inScope(row.participantId, scope)),
       findByProviderAndSportLeague: async (providerId, sportLeagueId) => this.mappings.filter((row) => row.providerId === providerId
         && row.sportLeagueId === sportLeagueId),
+      findSyncProviderId: async () => { throw new Error('not used'); },
       bind: async (mapping) => {
         const provider = Object.values(TEST_PROVIDER_ROWS).find((candidate) => candidate.id === mapping.providerId);
         if (!provider) return null;
@@ -458,6 +485,7 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(transition.jobs ?? []));
         return row;
       },
+      deleteTestSlot: async () => { throw new Error('not used'); },
       delete: async (id) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
         this.field = this.field.filter((row) => row.sportEventId !== id);

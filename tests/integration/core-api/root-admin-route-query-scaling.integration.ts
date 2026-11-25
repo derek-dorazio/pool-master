@@ -24,6 +24,7 @@ import {
   ProviderListResponseSchema,
   ProviderSyncFindingListResponseSchema,
   ProviderSyncFindingResponseSchema,
+  ProviderSyncFindingSlotChoiceListResponseSchema,
   ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
   ActivityListResponseSchema,
@@ -63,7 +64,8 @@ import {
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
-import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
+import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { nameSlotDefinitionFor } from '../../support/sync-slots';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId, mapEventToProvider, withCurrentSeason } from '../../support/event-edition';
@@ -319,6 +321,30 @@ async function seedSyncFindings(findings: number) {
     });
   }
   return createTestUser({ isRootAdmin: true });
+}
+
+/**
+ * A root admin and a golf tour synced from the PGA TOUR with `slots` name-matched tournament slots,
+ * two patterns each, and the OPEN SLOT_NAME_UNMATCHED finding whose "link to existing" offers them.
+ */
+async function seedSlotNameChoices(slots: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Name Tour ${randomUUID().slice(0, 8)}` } });
+  const sportLeagueProviderMappingId = await syncLeagueTo(prisma, sportLeague.id, 'pga');
+  const [seasonId] = await syncSeasonsTo(prisma, sportLeague.id, sportLeagueProviderMappingId, [2027]);
+  for (let index = 0; index < slots; index += 1) {
+    const slotDefinitionId = await nameSlotDefinitionFor(prisma, { sportLeagueId: sportLeague.id, sportLeagueProviderMappingId, pattern: `open ${String(index)}`, seasonIds: [seasonId], covered: false });
+    await prisma.sportLeaguePhaseSlotProviderMapping.create({ data: { sportLeagueId: sportLeague.id, sportLeaguePhaseSlotId: slotDefinitionId, sportLeagueProviderMappingId, matchType: 'NAME_PATTERN', providerValue: `the open ${String(index)}` } });
+  }
+  const providerRow = await prisma.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
+  const finding = await prisma.providerSyncFinding.create({
+    data: {
+      kind: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, severity: ProviderSyncFindingSeverity.INFO, sportLeagueId: sportLeague.id, providerId: providerRow.id,
+      providerValue: 'the new open', providerValueName: 'The New Open', firstSeenAt: new Date(), lastSeenAt: new Date(), statusChangedAt: new Date(),
+    },
+  });
+  return { finding, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
 /**
@@ -673,6 +699,15 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       seed: seedSyncFindings,
       call: (rootAdmin) => get('/api/v1/ingestion/sync-findings/', rootAdmin),
       rowsShown: (response) => okBody(response, ProviderSyncFindingListResponseSchema).findings.length,
+    });
+  });
+
+  it('GET a tournament-name finding\'s slot choices: the same statements for 2 slots as for 20, each with its patterns', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/ingestion/sync-findings/{findingId}/slot-choices',
+      seed: seedSlotNameChoices,
+      call: ({ finding, rootAdmin }) => get(`/api/v1/ingestion/sync-findings/${finding.id}/slot-choices`, rootAdmin),
+      rowsShown: (response) => okBody(response, ProviderSyncFindingSlotChoiceListResponseSchema).slots.filter((slot) => slot.patterns.length === 2).length,
     });
   });
 

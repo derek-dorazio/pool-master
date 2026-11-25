@@ -53,6 +53,13 @@ import type { ProviderSeasonImport, SportEventService } from './service';
  */
 const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT_FOUND', 'SPORT_LEAGUE_NOT_SYNCED', 'PROVIDER_LEAGUE_REFUSED', 'PROVIDER_LEAGUE_UNKNOWN']);
 
+/** The finding a tournament its name placed nowhere raises, by why (#2011). */
+const UNPLACED_NAME_KIND: Record<ProviderSeasonImport['unplacedNames'][number]['reason'], ProviderSyncFindingKind> = {
+  UNMATCHED: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED,
+  AMBIGUOUS: ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS,
+  SEASON_PHASE_MISSING: ProviderSyncFindingKind.SLOT_SEASON_PHASE_MISSING,
+};
+
 export interface LeagueEventsSyncOptions {
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findEventSynced'>;
   seasons: Pick<SportLeagueSeasonRepository, 'findForSync'>;
@@ -258,7 +265,8 @@ export class LeagueEventsSync {
   /**
    * One Season: its slate is imported and its linked events kept current, and each code of the
    * slate no slot mapping includes raises one INFO SLOT_VALUE_UNMAPPED finding per league, Provider
-   * and code (#2005). The finding's subject dedupes it across syncs, and a waived one stays waived.
+   * and code (#2005); a tournament its name places nowhere raises SLOT_NAME_UNMATCHED (INFO),
+   * SLOT_NAME_AMBIGUOUS or SLOT_SEASON_PHASE_MISSING (ERROR) per league, Provider and normalized name (#2011). The finding's subject dedupes it across syncs, and a waived one stays waived.
    */
   private async syncSeason(
     sportLeagueId: string,
@@ -275,6 +283,15 @@ export class LeagueEventsSync {
       sportEventId: null,
       providerValue: value.code,
       providerValueName: value.eventName,
+    })));
+    // A tournament its name places nowhere (#2011): one finding per league, Provider and normalized name.
+    if (imported.unplacedNames.length > 0) await this.options.findings.raiseOfSource(providerId, imported.unplacedNames.map((value) => ({
+      kind: UNPLACED_NAME_KIND[value.reason],
+      severity: value.reason === 'UNMATCHED' ? ProviderSyncFindingSeverity.INFO : ProviderSyncFindingSeverity.ERROR,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: value.normalizedName,
+      providerValueName: value.name,
     })));
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };

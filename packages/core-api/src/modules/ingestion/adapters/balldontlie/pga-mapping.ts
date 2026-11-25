@@ -1,7 +1,9 @@
 /**
- * Pure mappings from BALLDONTLIE's PGA TOUR responses to the provider port's shapes. No I/O:
- * the adapter fetches, these reshape. Anything the documented data cannot answer is a
- * `BalldontlieContractError`, never a guess.
+ * Pure mappings from BALLDONTLIE's golf endpoints (`/pga/v2/...`) to the provider port's shapes. No
+ * I/O: the adapter fetches, these reshape. Anything the documented data cannot answer is a
+ * `BalldontlieContractError`, never a guess. Nothing here places a tournament on a slot or names a
+ * tour: a tournament's code is the vendor's id, and its slot comes from the league's NAME_PATTERN
+ * mappings (#2011, `placeSlotsByName`).
  */
 
 import { ParticipantRoundStatus, Sport, JobErrorType } from '@poolmaster/shared/domain';

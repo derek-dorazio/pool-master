@@ -177,7 +177,8 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const [league, participants, mappings] = await Promise.all([
       this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { id: true } }),
       this.prisma.participant.findMany({
-        where: { sportLeagueId },
+        // The league's roster: a test participant is on none (#2096).
+        where: { sportLeagueId, isTestData: false },
         select: { id: true, name: true, participantType: true, shortName: true, nationality: true, teamAffiliation: true, role: true, ranking: true, createdAt: true },
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
       }),

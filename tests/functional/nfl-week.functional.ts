@@ -9,7 +9,6 @@ import {
   cancelEventMatch,
   createContest,
   createParticipant,
-  createSportLeague,
   getEventBracket,
   listEventParticipants,
   listEvents,
@@ -31,7 +30,7 @@ import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -44,7 +43,7 @@ import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // An NFL regular-season week end to end over HTTP (#715). The week is its own event of one round,
 // its field the eight teams playing, and its four games link nowhere: they form no bracket, even
@@ -114,11 +113,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const a = admin.client;
 
     // --- A league that reseeds its playoffs, and a week of three games --------------------------
-    const nfl = await createSportLeague({
-      client: a,
-      body: { ...(await sportLeagueCreateBody(a, Sport.AMERICAN_FOOTBALL)), ...sportPlay(Sport.AMERICAN_FOOTBALL), timeZone: 'UTC', sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
-    });
-    const sportLeagueId = expectDefined(nfl.data, JSON.stringify(nfl.error)).sportLeague.id;
+    const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {

@@ -2182,7 +2182,7 @@ export interface paths {
         put?: never;
         /**
          * Add participants to a sport event's field
-         * @description Any participants; ones already on the field are skipped. Root admin only.
+         * @description Any participants; ones already on the field are skipped. 422 TEST_PARTICIPANT_NOT_ON_TEST_SLOT for a test participant on an event the sync keeps: one joins only a test slot's event. Root admin only.
          */
         post: operations["addEventParticipants"];
         delete?: never;
@@ -2676,11 +2676,7 @@ export interface paths {
          */
         get: operations["listSportLeagues"];
         put?: never;
-        /**
-         * Create a sport league
-         * @description A new sport league, with who competes in its events and how they are scored (#2001), both fixed once set. The platform's own leagues and their Seasons are added by migration (the add-sport skill, #2003); one made here starts with this calendar year's Season as its current one, a stopgap for the browser journeys until they move to test slots (#2004). 400 TIME_ZONE_UNKNOWN for a time zone the runtime does not know. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.
-         */
-        post: operations["createSportLeague"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2747,6 +2743,26 @@ export interface paths {
          */
         post: operations["createTestSlot"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sport-leagues/{sportLeagueId}/test-slots/{seasonSlotId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a test slot
+         * @description Removes a test slot (QA only, #2075), all or nothing: the test event on it, the slot, and each test participant on that event's field that no other field holds; no other participant of the league. How a browser journey cleans up after itself. 404 SEASON_SLOT_NOT_FOUND for a slot that is not the league's; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps; 409 EVENT_HAS_CONTESTS while a contest covers its event. Root admin only.
+         */
+        delete: operations["deleteTestSlot"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2881,7 +2897,7 @@ export interface paths {
         };
         /**
          * List a sport league's participants
-         * @description Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.
+         * @description Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged. A test participant is on no roster; testData=true lists only the test participants, which a test event's field takes (#2096).
          */
         get: operations["listSportLeagueParticipants"];
         put?: never;
@@ -3105,13 +3121,13 @@ export interface paths {
         };
         /**
          * List participants
-         * @description The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).
+         * @description The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league's catalog: 400 SEARCH_TERM_REQUIRED otherwise. It includes test participants (#2096), which no roster lists: the test-data loader finds its earlier ones here by name. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).
          */
         get: operations["listParticipants"];
         put?: never;
         /**
          * Create a participant
-         * @description Creates a participant in the shared participant catalog. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         * @description Creates a participant of a sport league. A provider-synced league takes one with its sync provider's feed id, written with its provider mapping in one transaction, or a test participant (isTestData) for a test event's field; anything else is 409 PARTICIPANT_FEED_ID_REQUIRED, since the sync would make a second participant beside an unmapped one. A league with no feed takes one without a feed id. 404 SPORT_LEAGUE_NOT_FOUND; 409 PARTICIPANT_FEED_ID_TAKEN; 422 TEST_PARTICIPANT_FEED_ID for a test participant given a feed id, SPORT_LEAGUE_NOT_SYNCED for a feed id in a league with no feed. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
          */
         post: operations["createParticipant"];
         delete?: never;
@@ -3183,7 +3199,7 @@ export interface paths {
         put?: never;
         /**
          * Bind a provider identity to a participant
-         * @description How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider's identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. Root admin only.
+         * @description How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider's identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. 422 TEST_PARTICIPANT_FEED_ID for a test participant, which never has one. Root admin only.
          */
         post: operations["bindParticipantProviderMapping"];
         delete?: never;
@@ -3614,6 +3630,46 @@ export interface paths {
          * @description An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
          */
         post: operations["mapProviderSyncFindingParticipant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-findings/{findingId}/slot-choices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the slots a tournament name finding can be linked to
+         * @description What an OPEN SLOT_NAME_UNMATCHED finding's "link to existing" offers (#2011): every slot definition its sport league matches tournaments to by name through its mapping to the finding's Provider, by key, each with the names that already place a tournament on it. Read in a fixed number of queries. 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer LINK_SLOT now. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
+         */
+        get: operations["listProviderSyncFindingSlotChoices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-findings/{findingId}/slot-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link a tournament name finding to an existing slot
+         * @description An OPEN SLOT_NAME_UNMATCHED finding's fix, "link to existing" (#2011): adds the tournament's normalized name (providerValue) as a NAME_PATTERN mapping of the chosen slot definition and resolves the finding; the next events sync links the tournament there. There is no "create new": slot definitions are set by migration. 404 SYNC_FINDING_NOT_FOUND, or SLOT_DEFINITION_NOT_FOUND for a slot listProviderSyncFindingSlotChoices does not offer. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer LINK_SLOT now, or SLOT_NAME_PATTERN_TAKEN when the name already places a tournament. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
+         */
+        post: operations["linkProviderSyncFindingSlot"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9646,7 +9702,7 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description A new participant for the shared catalog. */
+        /** @description A new participant of a sport league. */
         CreateParticipantRequest: {
             /**
              * Format: uuid
@@ -9674,6 +9730,10 @@ export interface components {
             role?: string;
             /** @description Current team affiliation. */
             teamAffiliation?: string;
+            /** @description The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it. */
+            feedId?: string;
+            /** @description A test participant (QA only), for a test event's field: it joins only a test slot's event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted. */
+            isTestData?: boolean;
         };
         /** @description Fields to change on a participant. Omitted fields keep their current values. */
         UpdateParticipantRequest: {
@@ -9950,6 +10010,11 @@ export interface components {
             /** @description Only active, or only inactive, sport leagues. */
             isActive?: boolean;
         };
+        /** @description Which of a sport league's participants to list. */
+        SportLeagueParticipantListQuery: {
+            /** @description True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant. */
+            testData?: boolean;
+        };
         /** @description Sport leagues matching the filters. */
         SportLeagueListResponse: {
             /** @description Matching sport leagues, by name. */
@@ -10203,45 +10268,6 @@ export interface components {
                  */
                 updatedAt: string;
             };
-        };
-        /** @description A new sport league. It has no Season until a migration adds one. */
-        CreateSportLeagueRequest: {
-            /**
-             * @description The sport the new sport league belongs to.
-             * @enum {string}
-             */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description Unique within the sport. */
-            name: string;
-            /** @description The sport league's name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are. */
-            urlSegment: string;
-            /**
-             * @description Who competes in its events: teams or individuals. Fixed once set.
-             * @enum {string}
-             */
-            participantType: "INDIVIDUAL" | "TEAM";
-            /**
-             * @description How its events are scored. Fixed once set.
-             * @enum {string}
-             */
-            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-            /**
-             * @description FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
-             * @enum {string}
-             */
-            bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
-            /**
-             * Format: uuid
-             * @description The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.
-             */
-            platformTierProfileId: string;
-            /**
-             * Format: uuid
-             * @description The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.
-             */
-            platformPricingProfileId: string;
-            /** @description The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know. */
-            timeZone: string;
         };
         /** @description Changes to a sport league; omitted fields are left alone. */
         UpdateSportLeagueRequest: {
@@ -26085,10 +26111,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             /**
-             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
              * @enum {string}
              */
-            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN";
+            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_PHASE_MISSING";
             /**
              * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
              * @enum {string}
@@ -26119,7 +26145,7 @@ export interface components {
                 id: string;
                 name: string;
             } | null;
-            /** @description What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none. */
+            /** @description What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none. */
             providerValue: string | null;
             /** @description The feed's own name for that value, when it sent one. */
             providerValueName: string | null;
@@ -26149,8 +26175,55 @@ export interface components {
                 /** @description Their name, for display. */
                 displayName: string;
             } | null;
-            /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
-            actions: ("MAP_PARTICIPANT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
+            /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
+            actions: ("MAP_PARTICIPANT" | "LINK_SLOT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
+        };
+        /** @description A slot definition a SLOT_NAME_UNMATCHED finding's tournament can be linked to. */
+        ProviderSyncFindingSlotChoiceDto: {
+            /**
+             * Format: uuid
+             * @description The slot definition (SportLeagueSlotDefinitionDto.id).
+             */
+            slotDefinitionId: string;
+            /** @description Its key in the sport league, such as MASTERS. */
+            key: string;
+            /** @enum {string} */
+            slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+            /** @description The week's number in its phase; set only on a WEEK slot. */
+            weekNumber: number | null;
+            /** @description The league's own name for it (Masters Tournament); null when screens show the word for its kind. */
+            name: string | null;
+            /** @description The normalized names that already place a tournament on it, in order. */
+            patterns: string[];
+        };
+        /** @description The slots "link to existing" offers. */
+        ProviderSyncFindingSlotChoiceListResponse: {
+            /** @description Every slot definition the finding's sport league matches tournaments to by name through its mapping to the finding's Provider, by key. Never paged. */
+            slots: {
+                /**
+                 * Format: uuid
+                 * @description The slot definition (SportLeagueSlotDefinitionDto.id).
+                 */
+                slotDefinitionId: string;
+                /** @description Its key in the sport league, such as MASTERS. */
+                key: string;
+                /** @enum {string} */
+                slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                /** @description The week's number in its phase; set only on a WEEK slot. */
+                weekNumber: number | null;
+                /** @description The league's own name for it (Masters Tournament); null when screens show the word for its kind. */
+                name: string | null;
+                /** @description The normalized names that already place a tournament on it, in order. */
+                patterns: string[];
+            }[];
+        };
+        /** @description Adds a SLOT_NAME_UNMATCHED finding's tournament name as a pattern of a slot definition, which resolves it. */
+        LinkProviderSyncFindingSlotRequest: {
+            /**
+             * Format: uuid
+             * @description One of the slot definitions listProviderSyncFindingSlotChoices offers.
+             */
+            slotDefinitionId: string;
         };
         /** @description Every finding kept, most recently seen first. Nothing pages it: a resolved finding is deleted 90 days after it was resolved, and open and waived ones are kept. */
         ProviderSyncFindingListResponse: {
@@ -26158,10 +26231,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_PHASE_MISSING";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -26192,7 +26265,7 @@ export interface components {
                     id: string;
                     name: string;
                 } | null;
-                /** @description What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none. */
+                /** @description What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none. */
                 providerValue: string | null;
                 /** @description The feed's own name for that value, when it sent one. */
                 providerValueName: string | null;
@@ -26222,8 +26295,8 @@ export interface components {
                     /** @description Their name, for display. */
                     displayName: string;
                 } | null;
-                /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
-                actions: ("MAP_PARTICIPANT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
+                /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
+                actions: ("MAP_PARTICIPANT" | "LINK_SLOT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
             }[];
         };
         /** @description One sync finding. */
@@ -26233,10 +26306,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_PHASE_MISSING";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -26267,7 +26340,7 @@ export interface components {
                     id: string;
                     name: string;
                 } | null;
-                /** @description What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none. */
+                /** @description What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none. */
                 providerValue: string | null;
                 /** @description The feed's own name for that value, when it sent one. */
                 providerValueName: string | null;
@@ -26297,8 +26370,8 @@ export interface components {
                     /** @description Their name, for display. */
                     displayName: string;
                 } | null;
-                /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
-                actions: ("MAP_PARTICIPANT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
+                /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
+                actions: ("MAP_PARTICIPANT" | "LINK_SLOT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
             };
         };
         /** @description A root admin resolving, waiving or reopening a finding. */
@@ -33365,6 +33438,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     updateEventParticipants: {
@@ -35177,75 +35259,6 @@ export interface operations {
             };
         };
     };
-    createSportLeague: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSportLeagueRequest"];
-            };
-        };
-        responses: {
-            /** @description One sport league. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportLeagueResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     listSportLeagueOverviews: {
         parameters: {
             query?: never;
@@ -35456,6 +35469,72 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    deleteTestSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Standard API error envelope. */
             401: {
@@ -35791,7 +35870,10 @@ export interface operations {
     };
     listSportLeagueParticipants: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant. */
+                testData?: boolean;
+            };
             header?: never;
             path: {
                 sportLeagueId: string;
@@ -36770,6 +36852,33 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     listSportLeagueProviderMappings: {
@@ -37012,6 +37121,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38313,6 +38431,155 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listProviderSyncFindingSlotChoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The finding (ProviderSyncFindingDto.id). */
+                findingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The slots "link to existing" offers. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncFindingSlotChoiceListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    linkProviderSyncFindingSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The finding (ProviderSyncFindingDto.id). */
+                findingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkProviderSyncFindingSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description One sync finding. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncFindingResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

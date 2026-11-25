@@ -7790,7 +7790,7 @@ export type ParticipantResponse = {
 };
 
 /**
- * A new participant for the shared catalog.
+ * A new participant of a sport league.
  */
 export type CreateParticipantRequest = {
     /**
@@ -7833,6 +7833,14 @@ export type CreateParticipantRequest = {
      * Current team affiliation.
      */
     teamAffiliation?: string;
+    /**
+     * The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.
+     */
+    feedId?: string;
+    /**
+     * A test participant (QA only), for a test event's field: it joins only a test slot's event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted.
+     */
+    isTestData?: boolean;
 };
 
 /**
@@ -8179,6 +8187,16 @@ export type SportLeagueListQuery = {
 };
 
 /**
+ * Which of a sport league's participants to list.
+ */
+export type SportLeagueParticipantListQuery = {
+    /**
+     * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+     */
+    testData?: boolean;
+};
+
+/**
  * Sport leagues matching the filters.
  */
 export type SportLeagueListResponse = {
@@ -8488,48 +8506,6 @@ export type SportLeagueResponse = {
          */
         updatedAt: string;
     };
-};
-
-/**
- * A new sport league. It has no Season until a migration adds one.
- */
-export type CreateSportLeagueRequest = {
-    /**
-     * The sport the new sport league belongs to.
-     */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
-     * Unique within the sport.
-     */
-    name: string;
-    /**
-     * The sport league's name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are.
-     */
-    urlSegment: string;
-    /**
-     * Who competes in its events: teams or individuals. Fixed once set.
-     */
-    participantType: 'INDIVIDUAL' | 'TEAM';
-    /**
-     * How its events are scored. Fixed once set.
-     */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
-    /**
-     * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
-     */
-    bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
-    /**
-     * The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.
-     */
-    platformTierProfileId: string;
-    /**
-     * The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.
-     */
-    platformPricingProfileId: string;
-    /**
-     * The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know.
-     */
-    timeZone: string;
 };
 
 /**
@@ -29823,9 +29799,9 @@ export type ActivityJobResponse = {
 export type ProviderSyncFindingDto = {
     id: string;
     /**
-     * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+     * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -29857,7 +29833,7 @@ export type ProviderSyncFindingDto = {
         name: string;
     } | null;
     /**
-     * What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.
+     * What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.
      */
     providerValue: string | null;
     /**
@@ -29895,9 +29871,78 @@ export type ProviderSyncFindingDto = {
         displayName: string;
     } | null;
     /**
-     * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
+     * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
      */
-    actions: Array<'MAP_PARTICIPANT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+    actions: Array<'MAP_PARTICIPANT' | 'LINK_SLOT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+};
+
+/**
+ * A slot definition a SLOT_NAME_UNMATCHED finding's tournament can be linked to.
+ */
+export type ProviderSyncFindingSlotChoiceDto = {
+    /**
+     * The slot definition (SportLeagueSlotDefinitionDto.id).
+     */
+    slotDefinitionId: string;
+    /**
+     * Its key in the sport league, such as MASTERS.
+     */
+    key: string;
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * The week's number in its phase; set only on a WEEK slot.
+     */
+    weekNumber: number | null;
+    /**
+     * The league's own name for it (Masters Tournament); null when screens show the word for its kind.
+     */
+    name: string | null;
+    /**
+     * The normalized names that already place a tournament on it, in order.
+     */
+    patterns: Array<string>;
+};
+
+/**
+ * The slots "link to existing" offers.
+ */
+export type ProviderSyncFindingSlotChoiceListResponse = {
+    /**
+     * Every slot definition the finding's sport league matches tournaments to by name through its mapping to the finding's Provider, by key. Never paged.
+     */
+    slots: Array<{
+        /**
+         * The slot definition (SportLeagueSlotDefinitionDto.id).
+         */
+        slotDefinitionId: string;
+        /**
+         * Its key in the sport league, such as MASTERS.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * The week's number in its phase; set only on a WEEK slot.
+         */
+        weekNumber: number | null;
+        /**
+         * The league's own name for it (Masters Tournament); null when screens show the word for its kind.
+         */
+        name: string | null;
+        /**
+         * The normalized names that already place a tournament on it, in order.
+         */
+        patterns: Array<string>;
+    }>;
+};
+
+/**
+ * Adds a SLOT_NAME_UNMATCHED finding's tournament name as a pattern of a slot definition, which resolves it.
+ */
+export type LinkProviderSyncFindingSlotRequest = {
+    /**
+     * One of the slot definitions listProviderSyncFindingSlotChoices offers.
+     */
+    slotDefinitionId: string;
 };
 
 /**
@@ -29907,9 +29952,9 @@ export type ProviderSyncFindingListResponse = {
     findings: Array<{
         id: string;
         /**
-         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -29941,7 +29986,7 @@ export type ProviderSyncFindingListResponse = {
             name: string;
         } | null;
         /**
-         * What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.
+         * What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.
          */
         providerValue: string | null;
         /**
@@ -29979,9 +30024,9 @@ export type ProviderSyncFindingListResponse = {
             displayName: string;
         } | null;
         /**
-         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
+         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
          */
-        actions: Array<'MAP_PARTICIPANT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+        actions: Array<'MAP_PARTICIPANT' | 'LINK_SLOT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
     }>;
 };
 
@@ -29995,9 +30040,9 @@ export type ProviderSyncFindingResponse = {
     finding: {
         id: string;
         /**
-         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -30029,7 +30074,7 @@ export type ProviderSyncFindingResponse = {
             name: string;
         } | null;
         /**
-         * What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.
+         * What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.
          */
         providerValue: string | null;
         /**
@@ -30067,9 +30112,9 @@ export type ProviderSyncFindingResponse = {
             displayName: string;
         } | null;
         /**
-         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
+         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
          */
-        actions: Array<'MAP_PARTICIPANT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+        actions: Array<'MAP_PARTICIPANT' | 'LINK_SLOT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
     };
 };
 
@@ -35324,6 +35369,10 @@ export type AddEventParticipantsErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type AddEventParticipantsError = AddEventParticipantsErrors[keyof AddEventParticipantsErrors];
@@ -36432,47 +36481,6 @@ export type ListSportLeaguesResponses = {
 
 export type ListSportLeaguesResponse = ListSportLeaguesResponses[keyof ListSportLeaguesResponses];
 
-export type CreateSportLeagueData = {
-    body: CreateSportLeagueRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sport-leagues/';
-};
-
-export type CreateSportLeagueErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type CreateSportLeagueError = CreateSportLeagueErrors[keyof CreateSportLeagueErrors];
-
-export type CreateSportLeagueResponses = {
-    /**
-     * One sport league.
-     */
-    201: SportLeagueResponse;
-};
-
-export type CreateSportLeagueResponse = CreateSportLeagueResponses[keyof CreateSportLeagueResponses];
-
 export type ListSportLeagueOverviewsData = {
     body?: never;
     path?: never;
@@ -36649,6 +36657,50 @@ export type CreateTestSlotResponses = {
 };
 
 export type CreateTestSlotResponse = CreateTestSlotResponses[keyof CreateTestSlotResponses];
+
+export type DeleteTestSlotData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/test-slots/{seasonSlotId}';
+};
+
+export type DeleteTestSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type DeleteTestSlotError = DeleteTestSlotErrors[keyof DeleteTestSlotErrors];
+
+export type DeleteTestSlotResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type DeleteTestSlotResponse = DeleteTestSlotResponses[keyof DeleteTestSlotResponses];
 
 export type ListSportLeagueSyncsData = {
     body?: never;
@@ -36861,7 +36913,12 @@ export type ListSportLeagueParticipantsData = {
     path: {
         sportLeagueId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+         */
+        testData?: boolean;
+    };
     url: '/api/v1/sport-leagues/{sportLeagueId}/participants';
 };
 
@@ -37515,6 +37572,18 @@ export type CreateParticipantErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type CreateParticipantError = CreateParticipantErrors[keyof CreateParticipantErrors];
@@ -37708,6 +37777,10 @@ export type BindParticipantProviderMappingErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type BindParticipantProviderMappingError = BindParticipantProviderMappingErrors[keyof BindParticipantProviderMappingErrors];
@@ -38620,6 +38693,102 @@ export type MapProviderSyncFindingParticipantResponses = {
 };
 
 export type MapProviderSyncFindingParticipantResponse = MapProviderSyncFindingParticipantResponses[keyof MapProviderSyncFindingParticipantResponses];
+
+export type ListProviderSyncFindingSlotChoicesData = {
+    body?: never;
+    path: {
+        /**
+         * The finding (ProviderSyncFindingDto.id).
+         */
+        findingId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/sync-findings/{findingId}/slot-choices';
+};
+
+export type ListProviderSyncFindingSlotChoicesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ListProviderSyncFindingSlotChoicesError = ListProviderSyncFindingSlotChoicesErrors[keyof ListProviderSyncFindingSlotChoicesErrors];
+
+export type ListProviderSyncFindingSlotChoicesResponses = {
+    /**
+     * The slots "link to existing" offers.
+     */
+    200: ProviderSyncFindingSlotChoiceListResponse;
+};
+
+export type ListProviderSyncFindingSlotChoicesResponse = ListProviderSyncFindingSlotChoicesResponses[keyof ListProviderSyncFindingSlotChoicesResponses];
+
+export type LinkProviderSyncFindingSlotData = {
+    body: LinkProviderSyncFindingSlotRequest;
+    path: {
+        /**
+         * The finding (ProviderSyncFindingDto.id).
+         */
+        findingId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/sync-findings/{findingId}/slot-link';
+};
+
+export type LinkProviderSyncFindingSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type LinkProviderSyncFindingSlotError = LinkProviderSyncFindingSlotErrors[keyof LinkProviderSyncFindingSlotErrors];
+
+export type LinkProviderSyncFindingSlotResponses = {
+    /**
+     * One sync finding.
+     */
+    200: ProviderSyncFindingResponse;
+};
+
+export type LinkProviderSyncFindingSlotResponse = LinkProviderSyncFindingSlotResponses[keyof LinkProviderSyncFindingSlotResponses];
 
 export type ListActivityData = {
     body?: never;

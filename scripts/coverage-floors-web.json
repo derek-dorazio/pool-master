@@ -77,19 +77,7 @@
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 79
         },
-        "src/features/root-admin/root-admin-map-finding-participant-page.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 72
-        },
         "src/features/root-admin/sport-league-page.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 66
-        },
-        "src/features/root-admin/sync-finding-columns.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 50
-        },
-        "src/features/root-admin/sync-finding-labels.ts": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 66
         },

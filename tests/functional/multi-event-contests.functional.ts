@@ -8,7 +8,6 @@ import {
   autoAssignEventTiers,
   createContest,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -32,14 +31,14 @@ import {
   LeagueMembershipResponseSchema,
   SelectionStateResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A golf contest over two tournaments end to end over HTTP (#713). An admin builds two one-round
 // tournaments on a tour of their own, each with the same seven golfers, ranked so the default
@@ -117,9 +116,8 @@ async function buildTwoTournamentContest(
   const a = admin.client;
 
   // --- A tour, its two tournaments, and the same seven golfers in each -----------------------
-  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
-  expect(tour.response?.status).toBe(201);
-  const sportLeagueId = expectDefined(tour.data).sportLeague.id;
+  const tour = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.GOLF, name: `Two Majors Tour ${RUN}${tag}` });
+  const sportLeagueId = tour.id;
   created.sportLeagueIds.add(sportLeagueId);
   await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'PGA TOUR', toSportLeagueId: sportLeagueId });
 

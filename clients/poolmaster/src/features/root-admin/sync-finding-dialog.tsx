@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
 import { assertNever, ProviderSyncFindingAction } from '@poolmaster/shared/domain';
 import {
   Button,
@@ -9,6 +9,8 @@ import {
   FormField,
   LinkButton,
   Notice,
+  QueryState,
+  Select,
   StatusBadge,
   Textarea,
   showToast,
@@ -18,19 +20,33 @@ import type { ProviderSyncFindingDto } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildSyncFindingMapParticipantPath } from './manage-navigation';
 import { SYNC_FINDING_SEVERITY_TONES, SYNC_FINDING_STATUS_TONES, syncFindingTitle } from './sync-finding-labels';
-import { useChangeSyncFindingStatus } from './use-sync-findings';
+import { useChangeSyncFindingStatus, useLinkSyncFindingSlot, useSyncFindingSlotChoicesQuery } from './use-sync-findings';
 
 const NONE = '—';
 
 /**
  * One sync finding's dialog on Findings (#1999), opened by ⤢ on its row: its Details, then the
  * actions the API says it offers (rules/ux-rules.md §12 item 14). View only; each action is its
- * own button, and Waive asks for its note in a confirm dialog.
+ * own button. Waive asks for its note, and Link to existing for its slot (#2011), in a confirm
+ * dialog.
  */
 export function SyncFindingDialog({ finding, onClose }: { finding: ProviderSyncFindingDto; onClose: () => void }) {
   const testId = 'root-admin-sync-finding-dialog';
   const [isWaiving, setIsWaiving] = useState(false);
   const [waiveNote, setWaiveNote] = useState('');
+  const [isLinking, setIsLinking] = useState(false);
+  const [slotDefinitionId, setSlotDefinitionId] = useState('');
+  const slotChoices = useSyncFindingSlotChoicesQuery(finding.id, isLinking);
+  const linkMutation = useLinkSyncFindingSlot(finding.id, {
+    onSuccess: (saved) => {
+      setIsLinking(false);
+      setSlotDefinitionId('');
+      showToast({ title: `${enumLabel('ProviderSyncFindingAction', ProviderSyncFindingAction.LINK_SLOT)}: ${syncFindingTitle(saved)}`, tone: 'success' });
+    },
+  });
+  const linkErrorText = linkMutation.isError
+    ? extractErrorMessage(linkMutation.error, { fallback: 'We could not link this tournament to that slot.' })
+    : null;
   const statusMutation = useChangeSyncFindingStatus(finding.id, {
     onSuccess: (saved) => {
       setIsWaiving(false);
@@ -54,6 +70,15 @@ export function SyncFindingDialog({ finding, onClose }: { finding: ProviderSyncF
             <LinkButton data-testid={buttonTestId} size="sm" to={buildSyncFindingMapParticipantPath(finding.id)} variant="secondary">
               {`${label} ›`}
             </LinkButton>
+          ),
+        };
+      case ProviderSyncFindingAction.LINK_SLOT:
+        return {
+          description: 'Choose the slot this tournament plays. Its name is added to that slot, the next sync links the tournament there, and the finding is resolved.',
+          control: (
+            <Button data-testid={buttonTestId} onClick={() => setIsLinking(true)} size="sm" type="button" variant="secondary">
+              {label}
+            </Button>
           ),
         };
       case ProviderSyncFindingAction.WAIVE:
@@ -144,6 +169,35 @@ export function SyncFindingDialog({ finding, onClose }: { finding: ProviderSyncF
         <FormField label="Why it is waived">
           <Textarea data-testid={`${testId}-waive-note`} onChange={(event) => setWaiveNote(event.target.value)} rows={3} value={waiveNote} />
         </FormField>
+      </ConfirmDialog>
+      <ConfirmDialog
+        confirmLabel={enumLabel('ProviderSyncFindingAction', ProviderSyncFindingAction.LINK_SLOT)}
+        error={isLinking ? linkErrorText : null}
+        isConfirmDisabled={slotDefinitionId === ''}
+        isPending={linkMutation.isPending}
+        onCancel={() => setIsLinking(false)}
+        onConfirm={() => linkMutation.mutate(slotDefinitionId)}
+        onOpenChange={setIsLinking}
+        open={isLinking}
+        pendingLabel="Linking..."
+        testId={`${testId}-link`}
+        title={`Link ${finding.providerValueName ?? finding.providerValue ?? NONE} to a slot`}
+      >
+        <QueryState
+          error={extractErrorMessage(slotChoices.error, { fallback: 'We could not load the slots.' })}
+          loading="Loading slots..."
+          query={slotChoices}
+          testId={`${testId}-link-slots`}
+        >
+          {(slots) => (
+            <FormField label="Slot">
+              <Select data-testid={`${testId}-link-slot`} onChange={(event) => setSlotDefinitionId(event.target.value)} value={slotDefinitionId}>
+                <option value="">Choose a slot</option>
+                {slots.map((slot) => <option key={slot.slotDefinitionId} value={slot.slotDefinitionId}>{slotLabel(slot)}</option>)}
+              </Select>
+            </FormField>
+          )}
+        </QueryState>
       </ConfirmDialog>
     </>
   );

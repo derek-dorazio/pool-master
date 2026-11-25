@@ -48,6 +48,15 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
     return rows.map(mapToMapping);
   }
 
+  async findSyncProviderId(sportLeagueId: string): Promise<string | null | undefined> {
+    const league = await this.prisma.sportLeague.findUnique({
+      where: { id: sportLeagueId },
+      select: { selectedProviderMapping: { select: { providerLeague: { select: { providerId: true } } } } },
+    });
+    if (league === null) return undefined;
+    return league.selectedProviderMapping?.providerLeague.providerId ?? null;
+  }
+
   async bind(
     mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt' | 'providerName'>,
     jobs: readonly BackgroundJobRequest[] = [],
