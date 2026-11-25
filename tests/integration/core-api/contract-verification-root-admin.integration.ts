@@ -1,5 +1,5 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
-import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId } from '../../support/test-slots';
+import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId, testSlotId } from '../../support/test-slots';
 import { syncSlotsFor } from '../../support/sync-slots';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
@@ -37,6 +37,7 @@ import {
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
+  SportLeagueResponseSchema,
   SportLeagueRankingUploadPreviewResponseSchema,
   SportLeagueOverviewListResponseSchema,
   SportLeagueSyncListResponseSchema,
@@ -1236,6 +1237,11 @@ describe('Contract verification (root admin)', () => {
         leagueListRes.json<SportLeagueListResponse>().sportLeagues.some((l) => l.id === leagueId),
       ).toBe(true);
 
+      // --- getSportLeague (200: { sportLeague }) ----------------------------------
+      const leagueRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}`, headers: rootAdmin.headers });
+      expect(leagueRes.statusCode).toBe(200);
+      expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
+
       // --- listSports (200) ------------------------------------------------------
       const sportListRes = await getApp().inject({ method: 'GET', url: '/api/v1/sports', headers: rootAdmin.headers });
       expect(sportListRes.statusCode).toBe(200);
@@ -1845,5 +1851,47 @@ describe('Contract verification (root admin)', () => {
         await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: mlb.typicalGameMinutes, quietAfterMinutes: mlb.quietAfterMinutes });
       }
     });
+  });
+
+  it('createParticipant in a synced league answers 201 with a feed id and 409 PARTICIPANT_FEED_ID_REQUIRED without one, and deleteTestSlot answers 204 for a test slot and 422 SEASON_SLOT_NOT_TEST for a synced one', async () => {
+    const prisma = getPrisma();
+    const rootAdmin = await createTestUser({ displayName: 'Root Admin Synced Participants Contract User', isRootAdmin: true });
+    const { id: leagueId } = await insertTestSportLeague(prisma, { sport: Sport.GOLF, name: `Synced Contract Tour ${randomUUID()}` });
+    try {
+      await syncLeagueTo(prisma, leagueId, 'pga');
+      const create = (payload: Record<string, unknown>) => getApp().inject({
+        method: 'POST', url: '/api/v1/participants', headers: rootAdmin.headers, payload: { sportLeagueId: leagueId, participantType: 'INDIVIDUAL', ...payload },
+      });
+
+      const mappedRes = await create({ name: 'Synced Contract Golfer', feedId: `contract-${randomUUID()}` });
+      const testRes = await create({ name: 'Synced Contract Test Golfer', isTestData: true });
+      const unmappedRes = await create({ name: 'Synced Contract Unmapped Golfer' });
+
+      expect(mappedRes.statusCode).toBe(201);
+      expect(ParticipantResponseSchema.safeParse(mappedRes.json()).success).toBe(true);
+      expect(testRes.statusCode).toBe(201);
+      expect(ParticipantResponseSchema.safeParse(testRes.json()).success).toBe(true);
+      expect(unmappedRes.statusCode).toBe(409);
+      expect(ErrorEnvelopeSchema.parse(unmappedRes.json()).error.code).toBe('PARTICIPANT_FEED_ID_REQUIRED');
+
+      const slotId = await testSlotId(prisma, leagueId, new Date('2086-05-01T12:00:00.000Z'));
+      const syncedSlotId = await testSlotId(prisma, leagueId, new Date('2086-06-01T12:00:00.000Z'));
+      await prisma.sportLeagueSeasonPhaseSlot.update({ where: { id: syncedSlotId }, data: { isTestData: false, label: null } });
+      const deleteSlot = (id: string) => getApp().inject({
+        method: 'DELETE', url: `/api/v1/sport-leagues/${leagueId}/test-slots/${id}`, headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+
+      const deletedRes = await deleteSlot(slotId);
+      const refusedRes = await deleteSlot(syncedSlotId);
+
+      expect(deletedRes.statusCode).toBe(204);
+      expect(deletedRes.body).toBe('');
+      expect(refusedRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.parse(refusedRes.json()).error.code).toBe('SEASON_SLOT_NOT_TEST');
+    } finally {
+      await prisma.participantProviderMapping.deleteMany({ where: { sportLeagueId: leagueId } });
+      await prisma.participant.deleteMany({ where: { sportLeagueId: leagueId } });
+      await deleteTestSportLeagues(prisma, [leagueId]);
+    }
   });
 });

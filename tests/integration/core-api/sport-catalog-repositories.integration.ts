@@ -6,7 +6,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { ProviderCode, Sport, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
+import { ParticipantType, ProviderCode, ScoringFamily, Sport, TournamentFormat, getSportDefinition, isLeaguePlayValidForTournamentFormat } from '@poolmaster/shared/domain';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
@@ -107,6 +107,25 @@ describe('Sport and SportLeague repositories', () => {
       .toEqual(sports.map((row) => [row.sport, getSportDefinition(row.sport).tournamentFormat]));
     expect(sports.filter((row) => row.tournamentFormat === TournamentFormat.MATCHES).map((row) => row.sport).sort())
       .toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASEBALL, Sport.BASKETBALL, Sport.HOCKEY, Sport.SOCCER, Sport.TENNIS]);
+  });
+
+  // #2083: no API adds a sport league, so the migrations that seed them are checked against the
+  // validity table instead of a create request.
+  it('seeds every sport league with a scoring family and participant type its sport\'s tournament format admits', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({
+      select: { name: true, scoringFamily: true, participantType: true, sport: { select: { tournamentFormat: true } } },
+    });
+
+    expect(leagues.length).toBeGreaterThan(0);
+    expect(leagues.filter((league) => !isLeaguePlayValidForTournamentFormat(
+      league.sport.tournamentFormat, league.scoringFamily, league.participantType,
+    )).map((league) => league.name)).toEqual([]);
+  });
+
+  it('refuses a league play its tournament format does not admit: a race scored in strokes, a stroke-play tournament of teams', () => {
+    expect(isLeaguePlayValidForTournamentFormat(TournamentFormat.RACE, ScoringFamily.STROKE_PLAY, ParticipantType.INDIVIDUAL)).toBe(false);
+    expect(isLeaguePlayValidForTournamentFormat(TournamentFormat.STROKE_PLAY_TOURNAMENT, ScoringFamily.STROKE_PLAY, ParticipantType.TEAM)).toBe(false);
+    expect(isLeaguePlayValidForTournamentFormat(TournamentFormat.MATCHES, ScoringFamily.HEAD_TO_HEAD, ParticipantType.INDIVIDUAL)).toBe(true);
   });
 
   // The provider tables migration maps each league BALLDONTLIE lists to its provider league (#1997),
