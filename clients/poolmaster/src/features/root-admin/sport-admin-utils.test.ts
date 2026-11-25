@@ -5,7 +5,6 @@ import {
   sportEventStatusTone,
   parseGolfRoundScoreUpload,
   golfRoundScoreRows,
-  participantStatusTone,
 } from './sport-admin-utils';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 
@@ -141,14 +140,6 @@ describe('sport-admin-utils: golfRoundScoreRows (issue 236)', () => {
       fieldEntryFixture({ rounds: [{ ...result(1, 70), golf: null }] }),
     ];
     expect(golfRoundScoreRows(field, 1)).toEqual([]);
-  });
-});
-
-describe('sport-admin-utils: participantStatusTone', () => {
-  it('tones an active participant active, a suspended one as a warning, and any other inactive', () => {
-    expect(participantStatusTone('ACTIVE')).toBe('active');
-    expect(participantStatusTone('SUSPENDED')).toBe('warning');
-    expect(participantStatusTone('INACTIVE')).toBe('inactive');
   });
 });
 

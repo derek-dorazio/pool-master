@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -6,7 +7,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
   createSportLeague,
   enterContest,
@@ -32,7 +32,7 @@ import {
   LeagueMembershipResponseSchema,
   SelectionStateResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
@@ -95,7 +95,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
 }
 
@@ -136,9 +136,9 @@ async function buildTwoTournamentContest(
   }
 
   const buildTournament = async (name: string, startDate: string) => {
-    const event = await createEvent({
+    const event = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${name} ${RUN}${tag}`, startDate, rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${name} ${RUN}${tag}`, startDate, rounds: 1, autoLifecycleEnabled: false },
     });
     expect(event.response?.status).toBe(201);
     const eventId = expectDefined(event.data).event.id;

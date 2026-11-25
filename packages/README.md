@@ -146,7 +146,7 @@ sync. The job runs the same live-score sync the scheduler runs, reading current 
 and the sync history shows it as a `WEBHOOK` run. A game no match is linked to yet syncs every
 in-progress event of its league. Notifications for anything else are acknowledged and dropped.
 
-The endpoint subscribes to `balldontlieWebhookEventTypes` in `balldontlie-webhooks.ts`: each
+The endpoint reads the events `GAME_EVENTS_BY_SET` and `GOLF_EVENT_PHASES` in `balldontlie-webhooks.ts` name: each
 enabled league row's game start, period end (a soccer match's halftime) and game end, and golf's
 tournament start, round start, player round completed and tournament end (never each hole). To set
 it up, in the vendor dashboard's Webhooks tab (or its webhook API, which needs All-Access), create

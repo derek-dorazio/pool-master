@@ -1,8 +1,9 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { adminApiHeaders, e2eLeagueUrlSegment, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
+import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
 import { adminSignIn, logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
+import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './helpers/test-event';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
@@ -103,7 +104,7 @@ test('act 1: the root admin releases an American football event of one game betw
   const run: JourneyRun = {
     runId,
     sport: 'AMERICAN_FOOTBALL',
-    tourName: e2eName('Squares League', runId),
+    tourName: 'NFL',
     playerNamePrefix: e2eName('Squares Club', runId),
     tournamentName: e2eName('Squares Bowl', runId),
     commissioner: {
@@ -134,19 +135,14 @@ test('act 1: the root admin releases an American football event of one game betw
       throw new Error('the root admin could not sign in to the API');
     }
 
-    const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
-      sport: 'AMERICAN_FOOTBALL',
-      timeZone: 'UTC',
-      name: run.tourName,
-      urlSegment: e2eLeagueUrlSegment(),
-      ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
-      participantType: 'TEAM',
-      scoringFamily: 'HEAD_TO_HEAD',
-    });
-    const { event } = await postJson<{ event: { id: string } }>(api, headers, '/api/v1/events/', {
+    // A league is added by migration, so a journey plays in a seeded one, on its own test slots (#2004).
+    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'AMERICAN_FOOTBALL', run.tourName);
+    const event = await createTestEventThroughApi(api, headers, {
       sportLeagueId: sportLeague.id,
+      slotKind: 'WEEK',
+      slotLabel: run.tournamentName,
       name: run.tournamentName,
-      startDate: KICKOFF,
+      startsAt: KICKOFF,
       rounds: 1,
       autoLifecycleEnabled: false,
     });

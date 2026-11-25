@@ -343,6 +343,8 @@
       "events": [
         {
           "key": "tokyo-marathon",
+          "slotKey": "TOKYO_MARATHON",
+          "slotKey": "TOKYO_MARATHON",
           "name": "Tokyo Marathon",
           "startDate": "2026-03-01",
           "endDate": "2026-03-01",
@@ -445,6 +447,8 @@
         },
         {
           "key": "boston-marathon",
+          "slotKey": "BOSTON_MARATHON",
+          "slotKey": "BOSTON_MARATHON",
           "name": "Boston Marathon",
           "startDate": "2026-04-20",
           "endDate": "2026-04-20",
@@ -547,6 +551,8 @@
         },
         {
           "key": "london-marathon",
+          "slotKey": "LONDON_MARATHON",
+          "slotKey": "LONDON_MARATHON",
           "name": "London Marathon",
           "startDate": "2026-04-26",
           "endDate": "2026-04-26",
@@ -649,6 +655,8 @@
         },
         {
           "key": "sydney-marathon",
+          "slotKey": "SYDNEY_MARATHON",
+          "slotKey": "SYDNEY_MARATHON",
           "name": "Sydney Marathon",
           "startDate": "2026-08-30",
           "endDate": "2026-08-30",
@@ -752,6 +760,8 @@
         },
         {
           "key": "berlin-marathon",
+          "slotKey": "BERLIN_MARATHON",
+          "slotKey": "BERLIN_MARATHON",
           "name": "Berlin Marathon",
           "startDate": "2026-09-27",
           "endDate": "2026-09-27",
@@ -854,6 +864,8 @@
         },
         {
           "key": "chicago-marathon",
+          "slotKey": "CHICAGO_MARATHON",
+          "slotKey": "CHICAGO_MARATHON",
           "name": "Chicago Marathon",
           "startDate": "2026-10-11",
           "endDate": "2026-10-11",

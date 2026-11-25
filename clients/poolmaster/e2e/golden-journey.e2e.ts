@@ -7,9 +7,9 @@ import {
 } from './helpers/admin-session';
 import { closeFieldParticipant, correctFieldParticipant, openFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
-import { createJourneySportLeague } from './helpers/admin-api';
 import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
+import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
@@ -39,7 +39,8 @@ import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpe
  *
  * - every name it creates carries a per-attempt run id, so two runs never touch each other's
  *   rows and anything left behind is identifiable;
- * - it reads nothing by identity except the root admin and the golf sport row;
+ * - it reads nothing by identity except the root admin, the golf sport row and the seeded PGA
+ *   TOUR, whose current Season takes the run's test slots (#2004), and it never changes that tour;
  * - it asserts only the presence of what this run created, never a count or an absence of
  *   anything else, which would pass on an empty local database and fail on QA forever;
  * - teardown removes every attempt's data in `afterAll`, whatever the attempt's outcome.
@@ -150,7 +151,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const run: JourneyRun = {
       runId,
       sport: 'GOLF',
-      tourName: e2eName('Tour', runId),
+      tourName: 'PGA TOUR',
       playerNamePrefix: e2eName('Golfer', runId),
       tournamentName: e2eName('Open', runId),
       moreTournamentNames: [e2eName('Classic', runId), e2eName('Invitational', runId)],
@@ -195,10 +196,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expectListPageLoaded(page, '/manage/plans', 'root-admin-plans-page', 'root-admin-plans-caps');
     });
 
-    const tourId = await test.step('create a golf tour', async () => {
-      // A league is added by migration, so a journey makes its own through the API.
-      const id = await createJourneySportLeague(page, { sport: 'GOLF', name: run.tourName, participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', platformTierProfileCode: 'TIERS_6_OF_10' });
-      // The Sports page's one grid lists every sport league, the new one too.
+    const tourId = await test.step('find the seeded golf tour on the Sports page', async () => {
+      // A league is added by migration, so a journey plays in a seeded one (#2004).
+      const { id } = await findSeededSportLeague(page, 'GOLF', run.tourName);
       await page.goto('/manage/sports');
       await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
       return id;
@@ -219,21 +219,15 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       const now = new Date();
       const start = addDays(now, 7);
       start.setHours(8, 0, 0, 0);
-      await page.goto('/manage/sports/golf/events/new');
-      await page.getByTestId('root-admin-sport-event-create-tour').selectOption(tourId);
-      await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
-      await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
-      await page.getByTestId('root-admin-sport-event-create-rounds').fill('4');
-      const created = await submitAndRead<{ event: { id: string; championshipYear: number } }>(
-        page,
-        'root-admin-sport-event-create-submit',
-        'POST',
-        '/api/v1/events',
-      );
-      const id = created.event.id;
-      await expect(page).toHaveURL(new RegExp(`/manage/sports/golf/events/${id}/field$`));
-      await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
-      return { eventId: id, championshipYear: created.event.championshipYear };
+      const created = await createTestEvent(page, {
+        sportUrlSegment: 'golf',
+        sportLeagueId: tourId,
+        slotKind: 'TOURNAMENT',
+        slotLabel: run.tournamentName,
+        startsAt: start,
+        name: run.tournamentName,
+      });
+      return { eventId: created.id, championshipYear: created.championshipYear };
     });
     journey.eventId = eventId;
     journey.championshipYear = championshipYear;
@@ -1200,7 +1194,7 @@ test('act 7: a contest over two tournaments — the commissioner adds the second
   const contestName = e2eName('Two Events', run.runId);
 
   // The same day a week out, morning and afternoon, so both are in one year whatever the date.
-  const tournaments = await test.step('the root admin builds and releases two more one-round tournaments on the tour, each with the six players a tier apiece', async () => {
+  const tournaments = await test.step('the root admin builds and releases two more tournaments on the tour, each with the six players a tier apiece', async () => {
     await adminSignIn(page, credentials);
     const day = addDays(new Date(), 7);
     const built: BuiltTournament[] = [];
@@ -1364,26 +1358,14 @@ type BuiltTournament = { eventId: string; fieldEntryIds: string[] };
 
 /**
  * #749 — act 1's tournament steps, condensed, for act 7's two further tournaments: create a
- * one-round tournament on the tour, load the six players, put one in each default tier, price
+ * test tournament on the tour, load the six players, put one in each default tier, price
  * the field and release it. Act 1 proves each of these pages; this only uses them.
  */
 async function buildReleasedTournament(
   page: Page,
   { runId, tourId, name, start, playerIds }: { runId: string; tourId: string; name: string; start: Date; playerIds: readonly string[] },
 ): Promise<BuiltTournament> {
-  await page.goto('/manage/sports/golf/events/new');
-  await page.getByTestId('root-admin-sport-event-create-tour').selectOption(tourId);
-  await page.getByTestId('root-admin-sport-event-create-name').fill(name);
-  await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
-  await page.getByTestId('root-admin-sport-event-create-rounds').fill('1');
-  const created = await submitAndRead<{ event: { id: string } }>(
-    page,
-    'root-admin-sport-event-create-submit',
-    'POST',
-    '/api/v1/events',
-  );
-  const eventId = created.event.id;
-  await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
+  const { id: eventId } = await createTestEvent(page, { sportUrlSegment: 'golf', sportLeagueId: tourId, slotKind: 'TOURNAMENT', slotLabel: name, startsAt: start, name });
 
   await page.goto(`/manage/sports/golf/events/${eventId}/field`);
   await page.getByTestId('root-admin-event-field-add').click();
@@ -1505,15 +1487,6 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
-const pad = (value: number) => String(value).padStart(2, '0');
-
-function dateInput(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-function dateTimeInput(date: Date): string {
-  return `${dateInput(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
 
 /** What act 5 reads off `getContestLeaderboard`; everything else in the body is unused here. */
 type ContestLeaderboardBody = {

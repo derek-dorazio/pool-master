@@ -51,14 +51,26 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 
 ## 1. Create the tournament
 
-*Golf → Tournaments → New* (`/manage/sports/golf/events/new`).
+A hand-made tournament is a **test event**: it is made on a **test slot** of the tour's current
+Season, a labelled slot that is QA only and that the sync never reads or writes (#2004). Open the
+tour's League page, its Events tab, and choose *New test event*
+(`/manage/sports/golf/events/new?sportLeagueId=…`).
+
+1. Under **New test slot**, pick the slot definition it plays (*Plays*, for a test tour its
+   TEST_EVENT slot), a label of your own, and its start and end. The start is the cutoff: the
+   tournament can't be released, and contests can't be created or opened, once it has passed.
+   *Add test slot* adds it to the current Season and picks it above.
+2. Under **Test event**:
 
 | Field | Set it to |
 |---|---|
-| Tour, Event year, Name | Any tour, the current year, and a name of your own (for example "Derek's Golf Tournament") |
-| Starts, Ends | A start far enough ahead to finish releasing the tournament and creating contests and entries. The start time is the cutoff: the tournament can't be released, and contests can't be created or opened, once it has passed. |
-| Rounds | 4 |
+| Tour | Prefilled from the League page |
+| Test slot | The slot added in 1 (only free test slots of the current Season are listed) |
+| Name, Venue, Location | A name of your own (for example "Derek's Golf Tournament") |
 | Move this tournament through Live and Completed automatically | **Unchecked** |
+
+The tournament takes its dates from its slot and its round count from its tour; neither is set
+here, nor later in its ⚙ dialog. Its **Slots** tab lists the slot.
 
 The tournament is saved as a **draft**: commissioners can't see it until step 6.
 
@@ -199,9 +211,8 @@ Final standings are built from the scores PoolMaster has already received.
 
 ## Running it again
 
-- **Unlink a finished tournament to reuse its provider event.** A finished tournament keeps
-  its provider event, which blocks another tournament from linking it. *Unlink score source*
-  frees it.
+- **A test slot holds one event.** A finished test event keeps its slot; add another test slot,
+  with a new label, for the next run.
 
 ## Knockout brackets
 

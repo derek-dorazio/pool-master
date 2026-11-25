@@ -45,7 +45,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     ...overrides,
   };
 }
-const summary = { event: sportEvent(), loadedParticipantCount: 88, tierCount: 0, adminCounts: null };
+const summary = { event: sportEvent(), loadedParticipantCount: 88, tierCount: 0, adminCounts: null, slots: [] };
 const fieldRow = {
   entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', isActive: true, isPlayInPlace: false, createdAt: AT, updatedAt: AT },
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },
@@ -195,17 +195,13 @@ describe('event reads: drafts and admin counts are a root admin\'s', () => {
 });
 
 describe('event writes', () => {
-  it('creates an event with its dates read from the body, an omitted end as none', async () => {
+  it('creates a test event on the test slot the body names, answering 201', async () => {
     const { services, handlers } = fakes();
 
-    const created = await callHandler(handlers.createEvent, stubRequest({ body: { name: 'Open', startDate: ISO, endDate: ISO } }));
-    await callHandler(handlers.createEvent, stubRequest({ body: { name: 'Open', startDate: ISO } }));
+    const created = await callHandler(handlers.createEvent, stubRequest({ body: { seasonSlotId: 'slot-1', name: 'Open' } }));
 
     expect(created.statusCode).toBe(201);
-    expect(services.sportEvents.createEvent.mock.calls).toEqual([
-      [{ name: 'Open', startDate: AT, endDate: AT }],
-      [{ name: 'Open', startDate: AT, endDate: undefined }],
-    ]);
+    expect(services.sportEvents.createEvent.mock.calls).toEqual([[{ seasonSlotId: 'slot-1', name: 'Open' }]]);
   });
 
   it('updates an event, telling members unless the body says not to, and clears an end sent as null', async () => {

@@ -1,4 +1,5 @@
-import { getSportDefinition, SportEventStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { AutoReleaseCheckOutcome, SportEventStatus, SportLeagueIssueType } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
 import { Outlet, useLocation, useParams } from 'react-router';
@@ -58,12 +59,12 @@ export function EventPageLayout() {
 
 /** A Release chip shows only while the event is a draft: held when the last automatic try held it. */
 function releaseChipText(event: Pick<SportEventDto, 'lastAutoReleaseCheck'>): string {
-  return event.lastAutoReleaseCheck?.outcome === 'HELD' ? 'Release held ⤢' : 'Release ⤢';
+  return event.lastAutoReleaseCheck?.outcome === AutoReleaseCheckOutcome.HELD ? 'Release held ⤢' : 'Release ⤢';
 }
 
 /** The header's issue chips, less Release, which the Release chip beside them covers. */
 function headerIssues(overview: SportEventOverviewDto): SportEventOverviewDto['issues'] {
-  return overview.issues.filter((issue) => issue.type !== 'RELEASE');
+  return overview.issues.filter((issue) => issue.type !== SportLeagueIssueType.RELEASE);
 }
 
 function LoadedEventPage({ event }: { event: SportEventDto }) {
@@ -86,7 +87,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   // poolmaster-allow-list-lookup: the same few dozen sport leagues, for whether a provider syncs this one
   const leagueOverview = overviewsQuery.data?.find((candidate) => candidate.id === event.sportLeagueId);
   const isSynced = sportLeague === undefined && leagueOverview === undefined
-    ? event.providerSynced
+    ? !event.isTestData
     : isSyncedLeague(sportLeague ?? { selectedProviderMapping: null }, leagueOverview);
   const overview = overviewQuery.data;
 
@@ -120,7 +121,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
         )}
         breadcrumbs={[
           { href: SPORTS_PATH, label: 'Sports' },
-          { label: getSportDefinition(event.sport).name },
+          { label: enumLabel('Sport', event.sport) },
           ...(sportLeague === undefined ? [] : [{ href: buildSportLeaguePath(event.sportUrlSegment, sportLeague.id), label: sportLeague.name }]),
           { label: event.name },
         ]}
@@ -138,7 +139,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
                 data-testid="root-admin-event-release-chip"
                 onClick={() => setReleaseOpen(true)}
                 size="xs"
-                variant={event.lastAutoReleaseCheck?.outcome === 'HELD' ? 'danger' : 'secondary'}
+                variant={event.lastAutoReleaseCheck?.outcome === AutoReleaseCheckOutcome.HELD ? 'danger' : 'secondary'}
               >
                 {releaseChipText(event)}
               </Button>

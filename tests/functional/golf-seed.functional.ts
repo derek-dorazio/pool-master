@@ -1,5 +1,5 @@
+import { deleteTestSportLeagues, TEST_DEFINITION_KEY } from '../support/test-slots';
 import {
-  createEvent,
   getEventBracket,
   listEventParticipants,
   listParticipants,
@@ -18,7 +18,7 @@ import {
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents } from './builders';
+import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents, createTestEvent } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { sportLeagueRowDefaults } from '../support/league-profiles';
@@ -83,7 +83,7 @@ async function cleanup(): Promise<void> {
   await db.participantProviderMapping.deleteMany({ where: { participant: participantWhere } });
   await db.participant.deleteMany({ where: participantWhere });
   await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-  await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+  await deleteTestSportLeagues(db, leagueIds);
 }
 
 let admin: RegisteredUserContext;
@@ -138,7 +138,7 @@ describe('Loading a golf test seed through the admin API', () => {
       players: players(prefix, 12),
       events: [
         {
-          key: 'first',
+          key: 'first', slotKey: TEST_DEFINITION_KEY,
           name: `${prefix} Opener`,
           startDate: '2026-01-15',
           endDate: '2026-01-18',
@@ -155,7 +155,7 @@ describe('Loading a golf test seed through the admin API', () => {
           ],
         },
         {
-          key: 'second',
+          key: 'second', slotKey: TEST_DEFINITION_KEY,
           name: `${prefix} Classic`,
           startDate: '2026-01-22',
           endDate: '2026-01-25',
@@ -231,9 +231,9 @@ describe('Loading a golf test seed through the admin API', () => {
     const withFinale: SportDataFile = { ...seed, sportLeagues: [{ ...seed.sportLeagues[0], events: [...seed.sportLeagues[0].events, finale] }] };
     const finaleStart = shiftedEventDates(finale, seedDateOffsetDays(withFinale, NOW)).startDate;
     // What a run that stopped straight after creating the event leaves behind.
-    expectDefined((await createEvent({
+    expectDefined((await createTestEvent({
       client: admin.client,
-      body: { sportLeagueId: await inCurrentSeason(league.id, 2026), name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: league.id, championshipYear: 2026, name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
     })).data);
 
     const rows = await loadSportData(parsed(withFinale), { getClient, now: NOW, mode: LoadMode.APPLY });
@@ -290,7 +290,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
       name: `${tour} ${key}`,
       players: players(`${prefix}-${key}`, 2).map((player, index) => ({ ...player, ...(feedIds[index] && { feedIds: feedIds[index] }) })),
       events: [{
-        key: 'feed', name: `${prefix} ${key} Open`, startDate: '2026-03-05', endDate: '2026-03-08', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
+        key: 'feed', slotKey: TEST_DEFINITION_KEY, name: `${prefix} ${key} Open`, startDate: '2026-03-05', endDate: '2026-03-08', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
         field: [1, 2].map((index) => ({ player: `${prefix}-${key}-p${index}`, ranking: index, oddsToWin: 5 + index, rounds: [68 + index, 70, 70, 70] })),
       }],
     }],
@@ -357,6 +357,8 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     for (const player of nfl.players) player.key = expectDefined(tagged(player.key));
     for (const event of nfl.events) {
       event.name = playoffs;
+      // A league a test adds plays one test definition (TEST_EVENT), not the file's slot keys.
+      event.slotKey = TEST_DEFINITION_KEY;
       for (const entry of event.field) entry.player = expectDefined(tagged(entry.player));
       for (const match of event.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
     }
@@ -426,7 +428,7 @@ describe('Filling an event from a test slate through the admin API', () => {
         name: tour,
         players: roster.slice(0, 3),
         events: [{
-          key: 'invitational', name: eventName, startDate: '2027-05-06', endDate: '2027-05-09', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
+          key: 'invitational', slotKey: TEST_DEFINITION_KEY, name: eventName, startDate: '2027-05-06', endDate: '2027-05-09', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
           field: [1, 2, 3].map((index) => ({ player: `${prefix}-p${index}`, ranking: index, oddsToWin: 5 + index, rounds: [68 + index, 70, 70, 70] })),
         }],
       }],

@@ -120,7 +120,7 @@ describe('RootAdminRunEventSyncPage', () => {
             readinessStatus: 'CONTEST_ELIGIBLE',
             readinessReasons: [],
             contestEligible: true,
-            providerSynced: true,
+            isTestData: false,
           },
         ],
       },
@@ -199,7 +199,7 @@ describe('RootAdminRunEventSyncPage', () => {
             readinessStatus: 'CONTEST_ELIGIBLE',
             readinessReasons: [],
             contestEligible: true,
-            providerSynced: false,
+            isTestData: true,
           },
         ],
       },
@@ -270,7 +270,7 @@ describe('RootAdminRunEventSyncPage', () => {
       readinessStatus: 'CONTEST_ELIGIBLE',
       readinessReasons: [],
       contestEligible: true,
-      providerSynced: true,
+      isTestData: false,
     };
     listEventsMock.mockResolvedValue({
       data: {

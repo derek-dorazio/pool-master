@@ -94,6 +94,13 @@ describe('missing-index check', () => {
     expect(scans.map((scan) => scan.table)).toEqual(['league_memberships']);
   });
 
+  it('plans a statement whose plan nests deeper than the Prisma engine can deserialise as a JSON column, such as a long join chain', async () => {
+    const indexes = await readIndexLeads(getPrisma());
+    const joins = Array.from({ length: 80 }, (_, i) => `JOIN "sports" s${i + 1} ON s${i + 1}."id" = s${i}."id"`).join(' ');
+    const scans = await planWholeScans(getPrisma(), `SELECT s0."id" FROM "sports" s0 ${joins} WHERE s0."id" = $1`, indexes);
+    expect(scans.every((scan) => scan.table === 'sports')).toBe(true);
+  });
+
   it('does not report a whole read of a reference table, which stays a handful of rows', async () => {
     const indexes = await readIndexLeads(getPrisma());
     expect(await planWholeScans(getPrisma(), SPORTS_BY_FORMAT, indexes)).toEqual([{ table: 'sports', how: 'a sequential scan' }]);

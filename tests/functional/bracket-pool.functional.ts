@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -6,7 +7,6 @@ import {
   autoAssignEventTiers,
   clearGamePick,
   createContest,
-  createEvent,
   createParticipant,
   createSportLeague,
   enterContest,
@@ -48,7 +48,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventRoundMatchupsResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -105,7 +105,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -156,9 +156,9 @@ async function releasedKnockout(options: {
   });
   const sportLeagueId = expectDefined(sportLeague.data, JSON.stringify(sportLeague.error)).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);
-  const event = await createEvent({
+  const event = await createTestEvent({
     client: a,
-    body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, autoLifecycleEnabled: false },
+    body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);

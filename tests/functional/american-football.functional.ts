@@ -21,7 +21,7 @@ import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, inCurrentSeason, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
@@ -87,6 +87,8 @@ describe('SDK Functional: American football', () => {
     for (const player of file.sportLeagues[0].players) player.key = expectDefined(tagged(player.key));
     for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
     for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+    // The loader makes the event in the NFL's current Season; another suite may have moved it.
+    await inCurrentSeason((await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { name: 'NFL', displayOrder: { not: null } }, select: { id: true } })).id, 2026);
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 

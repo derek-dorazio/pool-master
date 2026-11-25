@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues, TEST_DEFINITION_KEY } from '../support/test-slots';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getLeagueByCode, getVersion, listContestEntries, listContests, listLeagueMembers, listSportLeagues, loginUser } from '@poolmaster/shared/generated/hey-api';
@@ -39,7 +40,7 @@ async function cleanup(): Promise<void> {
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).
   if (leagueIds.length) await db.participant.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   if (leagueIds.length) await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-  if (leagueIds.length) await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+  if (leagueIds.length) await deleteTestSportLeagues(db, leagueIds);
 }
 
 afterAll(async () => {
@@ -58,6 +59,8 @@ function taggedSeed(): SportDataFile {
   league.name = leagueName;
   for (const player of league.players) player.key = `${RUN}-${player.key}`;
   for (const event of league.events) for (const entry of event.field) entry.player = `${RUN}-${entry.player}`;
+  // A league a test adds plays one test definition (TEST_EVENT), not the file's slot keys.
+  for (const event of league.events) event.slotKey = TEST_DEFINITION_KEY;
   return file;
 }
 

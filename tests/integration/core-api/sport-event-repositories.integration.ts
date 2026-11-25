@@ -33,6 +33,7 @@ import { createRoundRows, createSportEventRow, createTierRows, seriesNamed } fro
 import { freshEventEdition, mapEventToProvider, seriesSeasonId } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
+import { linkTestSlot } from '../../support/test-slots';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, FIRST_SEASON_2026 } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
@@ -891,7 +892,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     });
   }
 
-  it('finds the drafts of synced leagues with automatic release on that start by the horizon, with each league\'s window and sync provider, in a fixed seven indexed statements', async () => {
+  it('finds the drafts of synced leagues with automatic release on that start by the horizon, leaving out test events, with each league\'s window and sync provider, in a fixed indexed statement count', async () => {
     const synced = await syncedLeague(true, 5);
     const unsynced = await syncedLeague(false);
     const off = await syncedLeague(true, null);
@@ -901,19 +902,20 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     await draftIn(synced.id, -1);
     await draftIn(synced.id, 3, 'SCHEDULED');
     const unlinked = await draftIn(synced.id, 4, 'DRAFT', false);
+    await linkTestSlot(getPrisma(), await draftIn(synced.id, 4, 'DRAFT', false));
     await draftIn(unsynced.id, 3, 'DRAFT', false);
     await draftIn(off.id, 3);
 
     const { result, statements } = await recordStatements(() => repos().events.findAutoReleaseCandidates(NOW, new Date(NOW.getTime() + 30 * DAY_MS)));
 
     expect(result).toEqual([
-      { id: soon.id, startDate: soon.startDate, providerSynced: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
-      { id: unlinked.id, startDate: unlinked.startDate, providerSynced: false, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
-      { id: later.id, startDate: later.startDate, providerSynced: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+      { id: soon.id, startDate: soon.startDate, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+      { id: unlinked.id, startDate: unlinked.startDate, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+      { id: later.id, startDate: later.startDate, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
     ]);
-    // The events, then their provider ids, Seasons, leagues, selected mappings, provider leagues and
-    // providers in one read each, however many events there are.
-    expect(statements).toHaveLength(7);
+    // The events (test events left out in the same read), then their Seasons, leagues, selected
+    // mappings, provider leagues and providers in one read each, however many events there are.
+    expect(statements).toHaveLength(6);
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAutoReleaseCandidates' })))).resolves.toEqual([]);
   });
 

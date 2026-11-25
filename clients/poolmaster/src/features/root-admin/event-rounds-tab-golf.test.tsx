@@ -163,7 +163,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
   });
 
   it('pool-master-r11 shows the sync-tick alert for a provider-synced tournament but keeps the tools usable', async () => {
-    seed({ tournament: { providerSynced: true } });
+    seed({ tournament: { isTestData: false } });
     renderPage();
 
     expect(await screen.findByTestId('root-admin-golf-scores-sync-alert')).toBeInTheDocument();

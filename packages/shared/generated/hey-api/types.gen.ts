@@ -10142,6 +10142,129 @@ export type SportLeagueSeasonSlotDto = {
 };
 
 /**
+ * One slot of one Season, as its Season lists it.
+ */
+export type SportLeagueSeasonPhaseSlotDto = {
+    id: string;
+    /**
+     * The slot definition it plays (SportLeagueSlotDefinitionDto).
+     */
+    slotDefinitionId: string;
+    /**
+     * Its definition's key.
+     */
+    key: string;
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    weekNumber: number | null;
+    /**
+     * Its definition's proper name; null when screens show the word for its kind.
+     */
+    name: string | null;
+    /**
+     * The earliest start of its Games; null until the sync has matched one.
+     */
+    startsAt: string | null;
+    /**
+     * The latest end of its Games; null until the sync has matched one.
+     */
+    endsAt: string | null;
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    /**
+     * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+     */
+    seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+    seriesGames: number;
+    pairing: 'FIXED' | 'RESEEDED';
+    /**
+     * A test slot: QA only, never read or written by the sync.
+     */
+    isTestData: boolean;
+    /**
+     * A test slot's label, unique per Season and definition; null on a synced slot.
+     */
+    label: string | null;
+    /**
+     * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+     */
+    sportEventId: string | null;
+    /**
+     * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+     */
+    takesTestEvent: boolean;
+};
+
+/**
+ * A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season.
+ */
+export type CreateTestSlotRequest = {
+    /**
+     * The slot definition it plays (SportLeagueSlotDefinitionDto), one of the league's: 404 SLOT_DEFINITION_NOT_FOUND otherwise.
+     */
+    slotDefinitionId: string;
+    /**
+     * Tells it apart from the Season's other test slots of that definition: 409 TEST_SLOT_LABEL_TAKEN when one already has it.
+     */
+    label: string;
+    /**
+     * When its test event starts.
+     */
+    startsAt: string;
+    /**
+     * When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt. Omitted, the end is not known.
+     */
+    endsAt?: string;
+};
+
+/**
+ * One Season slot.
+ */
+export type SportLeagueSeasonSlotResponse = {
+    /**
+     * One slot of one Season.
+     */
+    slot: {
+        id: string;
+        /**
+         * The slot definition it plays (SportLeagueSlotDefinitionDto).
+         */
+        slotDefinitionId: string;
+        /**
+         * Its definition's key.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        weekNumber: number | null;
+        /**
+         * Its definition's proper name; null when screens show the word for its kind.
+         */
+        name: string | null;
+        /**
+         * The earliest start of its Games; null until the sync has matched one.
+         */
+        startsAt: string | null;
+        /**
+         * The latest end of its Games; null until the sync has matched one.
+         */
+        endsAt: string | null;
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        /**
+         * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+         */
+        seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+        seriesGames: number;
+        pairing: 'FIXED' | 'RESEEDED';
+        /**
+         * A test slot: QA only, never read or written by the sync.
+         */
+        isTestData: boolean;
+        /**
+         * A test slot's label, unique per Season and definition; null on a synced slot.
+         */
+        label: string | null;
+    };
+};
+
+/**
  * One phase of one Season.
  */
 export type SportLeagueSeasonPhaseDto = {
@@ -10193,6 +10316,14 @@ export type SportLeagueSeasonPhaseDto = {
          * A test slot's label, unique per Season and definition; null on a synced slot.
          */
         label: string | null;
+        /**
+         * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+         */
+        sportEventId: string | null;
+        /**
+         * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+         */
+        takesTestEvent: boolean;
     }>;
 };
 
@@ -10289,6 +10420,14 @@ export type SportLeagueSeasonDto = {
              * A test slot's label, unique per Season and definition; null on a synced slot.
              */
             label: string | null;
+            /**
+             * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+             */
+            sportEventId: string | null;
+            /**
+             * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+             */
+            takesTestEvent: boolean;
         }>;
     }>;
 };
@@ -10390,6 +10529,14 @@ export type SportLeagueSeasonListResponse = {
                  * A test slot's label, unique per Season and definition; null on a synced slot.
                  */
                 label: string | null;
+                /**
+                 * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                 */
+                sportEventId: string | null;
+                /**
+                 * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+                 */
+                takesTestEvent: boolean;
             }>;
         }>;
     }>;
@@ -10816,9 +10963,56 @@ export type SportEventDto = {
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
-     * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+     * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
      */
-    providerSynced: boolean;
+    shootout: boolean;
+    /**
+     * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+     */
+    isTestData: boolean;
+    /**
+     * The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.
+     */
+    slots: Array<{
+        id: string;
+        /**
+         * The slot definition it plays (SportLeagueSlotDefinitionDto).
+         */
+        slotDefinitionId: string;
+        /**
+         * Its definition's key.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        weekNumber: number | null;
+        /**
+         * Its definition's proper name; null when screens show the word for its kind.
+         */
+        name: string | null;
+        /**
+         * The earliest start of its Games; null until the sync has matched one.
+         */
+        startsAt: string | null;
+        /**
+         * The latest end of its Games; null until the sync has matched one.
+         */
+        endsAt: string | null;
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        /**
+         * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+         */
+        seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+        seriesGames: number;
+        pairing: 'FIXED' | 'RESEEDED';
+        /**
+         * A test slot: QA only, never read or written by the sync.
+         */
+        isTestData: boolean;
+        /**
+         * A test slot's label, unique per Season and definition; null on a synced slot.
+         */
+        label: string | null;
+    }>;
     /**
      * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
      */
@@ -11182,9 +11376,56 @@ export type SportEventListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
          */
-        providerSynced: boolean;
+        shootout: boolean;
+        /**
+         * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         */
+        isTestData: boolean;
+        /**
+         * The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.
+         */
+        slots: Array<{
+            id: string;
+            /**
+             * The slot definition it plays (SportLeagueSlotDefinitionDto).
+             */
+            slotDefinitionId: string;
+            /**
+             * Its definition's key.
+             */
+            key: string;
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            weekNumber: number | null;
+            /**
+             * Its definition's proper name; null when screens show the word for its kind.
+             */
+            name: string | null;
+            /**
+             * The earliest start of its Games; null until the sync has matched one.
+             */
+            startsAt: string | null;
+            /**
+             * The latest end of its Games; null until the sync has matched one.
+             */
+            endsAt: string | null;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+             */
+            seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+            seriesGames: number;
+            pairing: 'FIXED' | 'RESEEDED';
+            /**
+             * A test slot: QA only, never read or written by the sync.
+             */
+            isTestData: boolean;
+            /**
+             * A test slot's label, unique per Season and definition; null on a synced slot.
+             */
+            label: string | null;
+        }>;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -11523,9 +11764,56 @@ export type SportEventResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
          */
-        providerSynced: boolean;
+        shootout: boolean;
+        /**
+         * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         */
+        isTestData: boolean;
+        /**
+         * The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.
+         */
+        slots: Array<{
+            id: string;
+            /**
+             * The slot definition it plays (SportLeagueSlotDefinitionDto).
+             */
+            slotDefinitionId: string;
+            /**
+             * Its definition's key.
+             */
+            key: string;
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            weekNumber: number | null;
+            /**
+             * Its definition's proper name; null when screens show the word for its kind.
+             */
+            name: string | null;
+            /**
+             * The earliest start of its Games; null until the sync has matched one.
+             */
+            startsAt: string | null;
+            /**
+             * The latest end of its Games; null until the sync has matched one.
+             */
+            endsAt: string | null;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+             */
+            seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+            seriesGames: number;
+            pairing: 'FIXED' | 'RESEEDED';
+            /**
+             * A test slot: QA only, never read or written by the sync.
+             */
+            isTestData: boolean;
+            /**
+             * A test slot's label, unique per Season and definition; null on a synced slot.
+             */
+            label: string | null;
+        }>;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -11672,28 +11960,19 @@ export type SportEventResponse = {
 };
 
 /**
- * An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.
+ * A test event, made by hand on a test slot (QA only). Created DRAFT with its league's default round count and tiers, and its slot's dates; commissioners see it once it is released.
  */
 export type CreateSportEventRequest = {
     /**
-     * The sport league the event runs on; it decides the sport. The event's series is found or created in it by name, and the event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.
+     * The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event's league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season; 409 SEASON_SLOT_TAKEN when it already has an event.
      */
-    sportLeagueId: string;
+    seasonSlotId: string;
+    /**
+     * The event's name; its series is found or created in the league by it. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in that Season.
+     */
     name: string;
     venue?: string;
     location?: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    startDate: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    endDate?: string;
-    /**
-     * Round count; omitted, the sport's default round count (4 for golf).
-     */
-    rounds?: number;
     autoLifecycleEnabled?: boolean;
 };
 
@@ -11711,11 +11990,11 @@ export type UpdateSportEventRequest = {
      */
     location?: string | null;
     /**
-     * ISO 8601 datetime string.
+     * 422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots'.
      */
     startDate?: string;
     /**
-     * null clears it.
+     * null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.
      */
     endDate?: string | null;
     rounds?: number;
@@ -34350,6 +34629,10 @@ export type UpdateEventErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type UpdateEventError = UpdateEventErrors[keyof UpdateEventErrors];
@@ -35951,6 +36234,53 @@ export type UpdateSportLeagueResponses = {
 };
 
 export type UpdateSportLeagueResponse = UpdateSportLeagueResponses[keyof UpdateSportLeagueResponses];
+
+export type CreateTestSlotData = {
+    body: CreateTestSlotRequest;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/test-slots';
+};
+
+export type CreateTestSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type CreateTestSlotError = CreateTestSlotErrors[keyof CreateTestSlotErrors];
+
+export type CreateTestSlotResponses = {
+    /**
+     * One Season slot.
+     */
+    201: SportLeagueSeasonSlotResponse;
+};
+
+export type CreateTestSlotResponse = CreateTestSlotResponses[keyof CreateTestSlotResponses];
 
 export type ListSportLeagueSyncsData = {
     body?: never;

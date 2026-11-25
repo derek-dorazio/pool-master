@@ -1,8 +1,8 @@
-import { createEvent, getEventPage, listEventPages, listSportLeagues } from '@poolmaster/shared/generated/hey-api';
+import { getEventPage, listEventPages, listSportLeagues } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { EventPageOfferState, Sport } from '@poolmaster/shared/domain';
 import { EventPageListResponseSchema, EventPageResponseSchema } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
@@ -44,9 +44,9 @@ describe('SDK Functional: event pages (#1007)', () => {
     const a = admin.client;
     const nflId = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL')).id;
-    const created = await createEvent({
+    const created = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(nflId, YEAR), name: 'NFL Playoffs', startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: nflId, championshipYear: YEAR, name: 'NFL Playoffs', startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4, autoLifecycleEnabled: false },
     });
     expect(created.response?.status).toBe(201);
     createdEventIds.push(expectDefined(created.data).event.id);

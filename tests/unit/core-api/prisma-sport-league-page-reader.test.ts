@@ -119,7 +119,7 @@ describe('PrismaSportLeaguePageReader.readEventFacts', () => {
   it('gives each event its stored release check, field size and latest run of each kind', async () => {
     const prisma = prismaDouble();
     const event = {
-      id: 'e1', name: 'Opener', startDate: NOW, endDate: null, status: SportEventStatus.DRAFT, providerMappings: [{ id: 'm1' }], releasedAt: null,
+      id: 'e1', name: 'Opener', startDate: NOW, endDate: null, status: SportEventStatus.DRAFT, slots: [], releasedAt: null,
       autoReleaseCheckedAt: NOW, autoReleaseOutcome: AutoReleaseCheckOutcome.HELD, autoReleaseFailedChecks: [ReleaseCheckKey.TIERS_ASSIGNED],
     };
     prisma.sportEvent.findMany.mockImplementation(async (args: { where: { status?: unknown } }) => (args.where.status === undefined

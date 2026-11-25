@@ -126,6 +126,31 @@ export function identifierCounts(path, text) {
 }
 
 /**
+ * The renames in a file's import and export lists, as `{ kind, original, renamed }`:
+ * `import { a as b }` (kind `import`) and `export { a as b } from './x'` (kind `export`).
+ */
+export function renamedSpecifiers(path, text) {
+  const pairs = [];
+  for (const statement of parse(path, text).statements) {
+    let elements = [];
+    let kind = 'export';
+    if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+      elements = statement.exportClause.elements;
+    } else if (ts.isImportDeclaration(statement)) {
+      const bindings = statement.importClause?.namedBindings;
+      if (bindings && ts.isNamedImports(bindings)) elements = bindings.elements;
+      kind = 'import';
+    }
+    for (const element of elements) {
+      if (element.propertyName && element.propertyName.text !== element.name.text) {
+        pairs.push({ kind, original: element.propertyName.text, renamed: element.name.text });
+      }
+    }
+  }
+  return pairs;
+}
+
+/**
  * Classifies each production export from the identifiers of every source file: `unused`,
  * `tests-only`, `own-file` or alive (left out).
  */
@@ -135,6 +160,30 @@ export function classifyExports(files) {
     for (const word of identifiers.keys()) {
       if (!readers.has(word)) readers.set(word, []);
       readers.get(word).push(path);
+    }
+  }
+  const addReader = (name, reader) => {
+    if (!readers.has(name)) readers.set(name, []);
+    if (!readers.get(name).includes(reader)) readers.get(name).push(reader);
+  };
+  // `import { a as b }` makes its own file a reader of `a` only where that file reads `b`, so a
+  // rename to a common word does not borrow every other file's use of that word.
+  const reexports = [];
+  for (const [path, { identifiers, renames = [] }] of files) {
+    for (const { kind, original, renamed } of renames) {
+      if (kind === 'export') reexports.push([original, renamed]);
+      else if ((identifiers.get(renamed) ?? 0) > 0) addReader(original, path);
+    }
+  }
+  // `export { a as b } from` passes `a` on as `b`: whoever reads `b` reads `a` (renames chain).
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [original, renamed] of reexports) {
+      const into = readers.get(original) ?? [];
+      const added = (readers.get(renamed) ?? []).filter((reader) => !into.includes(reader));
+      if (added.length === 0) continue;
+      readers.set(original, [...into, ...added]);
+      changed = true;
     }
   }
   const findings = [];
@@ -196,7 +245,7 @@ export function readRepo(repoRoot) {
     } catch {
       continue;
     }
-    files.set(path, { identifiers: identifierCounts(path, text), exports: isProduction(path) ? exportedNames(path, text) : null });
+    files.set(path, { identifiers: identifierCounts(path, text), exports: isProduction(path) ? exportedNames(path, text) : null, renames: renamedSpecifiers(path, text) });
   }
   return files;
 }

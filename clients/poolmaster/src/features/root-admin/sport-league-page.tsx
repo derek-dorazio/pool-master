@@ -18,7 +18,7 @@ export function SportLeaguePage({
   testId,
 }: {
   children: (sportLeague: SportLeagueDto) => ReactNode;
-  testId?: string;
+  testId: string;
 }) {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
   const { sport } = useManagedSport();
@@ -30,7 +30,7 @@ export function SportLeaguePage({
     [leaguesQuery.data, leagueId],
   );
 
-  useManageBreadcrumbOverride(leagueId || undefined, sportLeague?.name);
+  useManageBreadcrumbOverride(leagueId, sportLeague?.name);
 
   return (
     <section data-testid={testId}>
@@ -43,7 +43,7 @@ export function SportLeaguePage({
         loading={`Loading ${sportLeagueNoun.one}...`}
         query={leaguesQuery}
         size="tile"
-        testId={testId ? `${testId}-state` : undefined}
+        testId={`${testId}-state`}
       >
         {() => (sportLeague ? children(sportLeague) : null)}
       </QueryState>

@@ -1042,7 +1042,13 @@ export async function cleanupTestData(): Promise<void> {
   // Thoroughbred has no template of its own, only horse racing's every-race ones (#1716).
   // Sport rows are migration reference data too and always stay: without them a functional suite
   // run after this lane on the same database finds no sport to load into.
-  await prisma.sportLeague.deleteMany({ where: { contestConfigTemplates: { none: {} }, displayOrder: null } });
+  // Test slots go with their events (#2004); a league's Season phases restrict its phases'
+  // delete, so a test league's Season phases and their slots go before the league.
+  const testLeagueIds = (await prisma.sportLeague.findMany({ where: { contestConfigTemplates: { none: {} }, displayOrder: null }, select: { id: true } }))
+    .map((league) => league.id);
+  await prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }] } });
+  await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
+  await prisma.sportLeague.deleteMany({ where: { id: { in: testLeagueIds } } });
 
   await prisma.platformRuntimeConfig.deleteMany();
   await prisma.platformRuntimeConfigHistory.deleteMany();

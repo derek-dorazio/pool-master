@@ -160,12 +160,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     },
 
     createEvent: async (request: FastifyRequest<{ Body: CreateSportEventRequest }>, reply: FastifyReply) => {
-      const { body } = request;
-      const created = await sportEvents.createEvent({
-        ...body,
-        startDate: new Date(body.startDate),
-        endDate: body.endDate ? new Date(body.endDate) : undefined,
-      });
+      const created = await sportEvents.createEvent(request.body);
       return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
     },
 

@@ -64,9 +64,10 @@ import type {
   SportEventTier,
   SportLeague,
   SportLeagueProviderMapping,
+  SportLeagueSeasonSlot,
   SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
-import { EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -75,6 +76,7 @@ import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 import { SPORT_EVENT_SPORT_SELECT, SPORT_LEAGUE_SPORT_SELECT, sportEventSportWhere, sportOfEvent, sportUrlSegmentOfEvent } from './sport-of';
+import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
 
 type Db = PrismaClient;
 
@@ -264,6 +266,10 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
       await tx.eventSeries.deleteMany({ where: { sportLeagueId: id } });
+      // A Season's phases restrict their phase definition's delete, and its slots their slot
+      // definition's, so the league's cascade cannot take them: they go first, slots before phases.
+      await tx.sportLeagueSeasonPhaseSlot.deleteMany({ where: { sportLeagueId: id } });
+      await tx.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: id } });
       // A muted list is checked when set, not a foreign key, and a league saves its whole list
       // back: an id left in it would make that save fail. Prisma cannot remove an array element.
       // poolmaster-allow-raw-sql: a set-based array update (array_remove across rows): Prisma can't remove one element from an array column in one statement
@@ -386,6 +392,12 @@ export class PrismaSportEventRepository implements SportEventRepository {
         })),
       });
       if (mappings.length > 0) await tx.sportEventProviderMapping.createMany({ data: mappings });
+      const slots = inputs.flatMap((input, index) => (input.seasonSlotIds ?? []).map((sportLeagueSeasonPhaseSlotId) => ({
+        sportEventId: ids[index],
+        sportLeagueSeasonId: input.sportLeagueSeasonId,
+        sportLeagueSeasonPhaseSlotId,
+      })));
+      if (slots.length > 0) await tx.sportEventSlot.createMany({ data: slots });
     });
     const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: ids } }, include: SPORT_EVENT_INCLUDE });
     const rowById = new Map(rows.map((row) => [row.id, row]));
@@ -536,6 +548,26 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
   }
 
+  async findSlots(sportEventIds: readonly string[]): Promise<Map<string, SportLeagueSeasonSlot[]>> {
+    if (sportEventIds.length === 1) {
+      const [onlyId] = sportEventIds;
+      // One event's slots need no link back to it: two reads, the slots and their definitions.
+      const slots = await this.prisma.sportLeagueSeasonPhaseSlot.findMany({
+        where: { eventSlot: { sportEventId: onlyId } },
+        select: SEASON_SLOT_SELECT,
+      });
+      return new Map([[onlyId, slots.map(toSeasonSlot).sort(compareSeasonSlots)]]);
+    }
+    const rows = await this.prisma.sportEventSlot.findMany({
+      where: { sportEventId: { in: [...sportEventIds] } },
+      select: { sportEventId: true, seasonSlot: { select: SEASON_SLOT_SELECT } },
+    });
+    const slotsByEvent = new Map(sportEventIds.map((id): [string, SportLeagueSeasonSlot[]] => [id, []]));
+    for (const row of rows) slotsByEvent.get(row.sportEventId)?.push(toSeasonSlot(row.seasonSlot));
+    for (const slots of slotsByEvent.values()) slots.sort(compareSeasonSlots);
+    return slotsByEvent;
+  }
+
   async findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>> {
     const rows = await this.prisma.sportEventTier.findMany({
       where: {
@@ -567,21 +599,21 @@ export class PrismaSportEventRepository implements SportEventRepository {
         status: SportEventStatus.DRAFT,
         startDate: { gt: now, lte: horizon },
         sportLeagueSeason: { sportLeague: { isActive: true, selectedProviderMappingId: { not: null }, autoReleaseDaysBeforeStart: { not: null } } },
+        // A test event is released by hand only (#2004).
+        slots: { none: COVERS_TEST_SLOT },
       },
       select: {
         id: true,
         startDate: true,
-        providerMappings: { select: { sportLeagueProviderMappingId: true } },
-        sportLeagueSeason: { select: { sportLeague: { select: { ...SYNC_PROVIDER_SELECT, selectedProviderMappingId: true, autoReleaseDaysBeforeStart: true } } } },
+        sportLeagueSeason: { select: { sportLeague: { select: { ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true } } } },
       },
       orderBy: { startDate: 'asc' },
     });
     return rows.flatMap((row) => {
-      const { autoReleaseDaysBeforeStart, selectedProviderMappingId } = row.sportLeagueSeason.sportLeague;
+      const { autoReleaseDaysBeforeStart } = row.sportLeagueSeason.sportLeague;
       const syncProviderId = syncProviderIdOf(row.sportLeagueSeason.sportLeague);
       if (syncProviderId === null || autoReleaseDaysBeforeStart === null) return [];
-      const providerSynced = row.providerMappings.some((mapping) => mapping.sportLeagueProviderMappingId === selectedProviderMappingId);
-      return [{ id: row.id, startDate: row.startDate, providerSynced, syncProviderId, autoReleaseDaysBeforeStart }];
+      return [{ id: row.id, startDate: row.startDate, syncProviderId, autoReleaseDaysBeforeStart }];
     });
   }
 

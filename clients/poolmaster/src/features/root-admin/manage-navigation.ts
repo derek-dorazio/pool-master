@@ -35,6 +35,11 @@ export function buildSportEventPath(sportUrlSegment: string, eventId: string) {
   return `${buildSportEventListPath(sportUrlSegment)}/${eventId}`;
 }
 
+/** The New test event page (#2004), opening on this sport league. */
+export function buildTestEventCreatePath(sportUrlSegment: string, sportLeagueId: string) {
+  return `${buildSportEventListPath(sportUrlSegment)}/new?${new URLSearchParams({ sportLeagueId }).toString()}`;
+}
+
 /** A sport league's page; the sport's leagues are listed together on the Sports page (#1848). */
 export function buildSportLeaguePath(sportUrlSegment: string, sportLeagueId: string) {
   return `${buildSportPath(sportUrlSegment)}/leagues/${sportLeagueId}`;

@@ -15,6 +15,7 @@ import { EventContestsTab } from './event-contests-tab';
 import { EventFieldTab } from './event-field-tab';
 import { EventPageLayout } from './event-page-layout';
 import { EventRoundsTab } from './event-rounds-tab';
+import { EventSlotsTab } from './event-slots-tab';
 import {
   passingReleaseChecks,
   platformPricingProfilesFixture,
@@ -238,6 +239,7 @@ function renderEventPage(path: string, {
           <Route element={<EventPageLayout />} path="/manage/sports/:sport/events/:eventId">
             <Route element={<Navigate replace to="field" />} index />
             <Route element={<EventFieldTab />} path="field" />
+            <Route element={<EventSlotsTab />} path="slots" />
             <Route element={<EventRoundsTab />} path="rounds" />
             <Route element={<EventContestsTab />} path="contests" />
             <Route element={<EventActivityTab />} path="activity" />
@@ -291,7 +293,7 @@ describe('Event page header and tabs', () => {
     listEventContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     await screen.findByTestId('root-admin-event-header', {}, { timeout: 5_000 });
-    await waitFor(() => expect(tabLabels()).toEqual(['Field', 'Rounds and matches', 'Contests', 'Activity']));
+    await waitFor(() => expect(tabLabels()).toEqual(['Field', 'Slots', 'Rounds and matches', 'Contests', 'Activity']));
   });
 
   it('sends the old edit and results links to Field and to Rounds and matches', async () => {
@@ -665,7 +667,7 @@ describe('Event page ⚙ dialog', () => {
   });
 
   it('reads "Not set" for a missing venue, location and round count, and a synced event\'s feed id', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ venue: null, location: null, rounds: null, providerSynced: true }) });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ venue: null, location: null, rounds: null, isTestData: false }) });
 
     const dialog = await openSettings();
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-venue')).toHaveTextContent('Not set');
@@ -785,8 +787,8 @@ describe('Event page ⚙ dialog Edit', () => {
   });
 
   it('leaves a provider-synced event\'s name, venue and dates out of the form, and saves only what an admin still owns', async () => {
-    updateEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, location: 'Hoylake' }) } });
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ providerSynced: true }) });
+    updateEventMock.mockResolvedValue({ data: { event: tournament({ isTestData: false, location: 'Hoylake' }) } });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ isTestData: false }) });
 
     const dialog = await openSettingsEdit();
     for (const field of ['name', 'venue', 'start', 'end']) {
@@ -835,18 +837,19 @@ describe('Event page ⚙ dialog Edit', () => {
     expect(updateEventMock).not.toHaveBeenCalled();
   });
 
-  it('clears the end date and the venue when the admin blanks them, rather than keeping the old ones', async () => {
-    updateEventMock.mockResolvedValue({ data: { event: tournament({ endDate: null, venue: null }) } });
+  it('clears the venue when the admin blanks it, rather than keeping the old one, and offers no dates: they are the event\'s slots\'', async () => {
+    updateEventMock.mockResolvedValue({ data: { event: tournament({ venue: null }) } });
     renderEventPage('/manage/sports/golf/events/tour-1/field');
 
     const dialog = await openSettingsEdit();
-    await userEvent.clear(within(dialog).getByLabelText('Ends'));
+    expect(within(dialog).queryByLabelText('Starts')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Ends')).not.toBeInTheDocument();
     await userEvent.clear(within(dialog).getByLabelText('Venue'));
     await userEvent.type(within(dialog).getByLabelText('Venue'), '   ');
     await userEvent.click(within(dialog).getByTestId('root-admin-event-settings-dialog-save'));
 
     await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
-    expect((updateEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body).toEqual({ endDate: null, venue: null });
+    expect((updateEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body).toEqual({ venue: null });
   });
 
   it('shows the server\'s reason when saving is refused, and stays on the form', async () => {

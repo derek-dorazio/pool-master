@@ -67,6 +67,8 @@ import {
   cancelEventMatch,
   createEvent,
   createParticipant,
+  createTestSlot,
+  getSportLeagueStructure,
   getEventBracket,
   listEventParticipants,
   listEvents,
@@ -75,6 +77,7 @@ import {
   listProviders,
   listSportLeagues,
   listSportLeagueProviderMappings,
+  listSportLeagueSeasons,
   listSports,
   loadEventBracket,
   proposeEventRoundMatchups,
@@ -421,6 +424,34 @@ class Loader {
   }
 
   /**
+   * The free test slot a file event is made on (#2004): the current Season's free test slot of the
+   * named slot definition labelled with the event's key, made with the event's shifted dates when
+   * the Season has none (so a load that stopped part way picks its slot up again). Null when the
+   * league has no definition of that key.
+   */
+  private async testSlotFor(client: Client, sportLeagueId: string, event: SportDataEvent, slotKey: string): Promise<string | null> {
+    const { phases } = await must(getSportLeagueStructure({ client, path: { sportLeagueId } }), 'Read the league\'s slot definitions');
+    const definition = phases.flatMap((phase) => phase.slots).find((slot) => slot.key === slotKey);
+    if (definition === undefined) return null;
+    // A file event's key is unique in its file and short enough for a label. Another event of the
+    // same key (a copy under another name) has its own slot, labelled with the next number.
+    const { seasons } = await must(listSportLeagueSeasons({ client, path: { sportLeagueId } }), 'Read the league\'s Seasons');
+    const labelled = (seasons.find((season) => season.isCurrent)?.phases ?? [])
+      .flatMap((phase) => phase.slots)
+      .filter((slot) => slot.isTestData && slot.slotDefinitionId === definition.id && (slot.label === event.key || slot.label?.startsWith(`${event.key} `) === true));
+    const free = labelled.find((slot) => slot.sportEventId === null);
+    if (free) return free.id;
+    const label = labelled.length === 0 ? event.key : `${event.key} ${String(labelled.length + 1)}`;
+    const dates = shiftedEventDates(event, this.offsetDays);
+    const { slot } = await must(createTestSlot({
+      client,
+      path: { sportLeagueId },
+      body: { slotDefinitionId: definition.id, label, startsAt: dates.startDate, endsAt: dates.endDate },
+    }), `Add a test slot for ${event.name}`);
+    return slot.id;
+  }
+
+  /**
    * Each player's participant id (null in a dry run that would create it): the league's participant
    * a provider maps the player's feed id to (#1850), else the league's participant found by exact
    * name, else created in the league at the file's ranking (#1853). A
@@ -567,7 +598,8 @@ class Loader {
       changes.push(`name ${stored.name} → ${event.name}`);
     }
     // A released test event keeps the dates its own run gave it; only a draft moves to this run's.
-    const compareDates = !this.testSeed || stored.status === SportEventStatus.DRAFT;
+    // An event on a test slot takes its dates from the slot, which an edit cannot move (#2004).
+    const compareDates = stored.slots.length === 0 && (!this.testSeed || stored.status === SportEventStatus.DRAFT);
     // A file that gives the exact start (a post time) moves a start on the same day too.
     const startChanged = event.startsAt === undefined
       ? day(stored.startDate) !== day(dates.startDate)
@@ -706,6 +738,12 @@ class Loader {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not on the site, and this file does not carry the schedule' });
         return;
       }
+      // A test event is made on a test slot of one of the league's slot definitions (#2004): an
+      // event the league has no slot for could never be synced, so it is not loaded either.
+      if (event.slotKey === undefined) {
+        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'names no slot definition, and the league plays only its own slots' });
+        return;
+      }
       this.report({
         ...at,
         subject: LoadSubject.EVENT,
@@ -718,20 +756,28 @@ class Loader {
       }
       if (loadsBracket) this.report({ ...at, subject: LoadSubject.BRACKET, action: LoadAction.ADD, detail: `${matches.length} matches` });
       if (!this.apply) return;
+      const seasonSlotId = await this.testSlotFor(client, input.sportLeagueId, event, event.slotKey);
+      if (seasonSlotId === null) {
+        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `the league has no slot definition ${event.slotKey}` });
+        return;
+      }
       const created = await must(createEvent({
         client,
         body: {
-          sportLeagueId: input.sportLeagueId,
+          seasonSlotId,
           name: event.name,
           ...(event.venue ? { venue: event.venue } : {}),
           ...(event.location ? { location: event.location } : {}),
-          ...shiftedEventDates(event, this.offsetDays),
-          rounds: event.rounds,
           autoLifecycleEnabled: false,
         },
       }), `Create ${event.name}`);
-      if (event.roundsPar !== null) {
-        await must(updateEvent({ client, path: { eventId: created.event.id }, body: { roundsPar: event.roundsPar } }), `Set par for ${event.name}`);
+      // The create gives the league's default round count; the file's own count and par are edits.
+      const edits = {
+        ...(created.event.rounds !== event.rounds && { rounds: event.rounds }),
+        ...(event.roundsPar !== null && { roundsPar: event.roundsPar }),
+      };
+      if (Object.keys(edits).length > 0) {
+        await must(updateEvent({ client, path: { eventId: created.event.id }, body: edits }), `Set rounds and par for ${event.name}`);
       }
       if (loadsField) await this.writeField(client, created.event.id, league, event, participantIds, []);
       if (loadsBracket) await this.writeBracket(client, created.event.id, event, participantIds, []);

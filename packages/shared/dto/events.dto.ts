@@ -22,7 +22,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
-import { UploadRowResolutionDtoSchema } from './sport-catalog.dto';
+import { SportLeagueSeasonSlotDtoSchema, UploadRowResolutionDtoSchema } from './sport-catalog.dto';
 
 /** Derived from the domain SportEventStatus constant (plans/124 §4.1) — `OFFICIAL` dropped. */
 export const EventStatusDtoSchema = z.enum(SportEventStatus);
@@ -136,7 +136,9 @@ export const SportEventDtoSchema = z.object({
   sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
   participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the series\' sport league.'),
   scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the series\' sport league.'),
-  providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
+  shootout: z.boolean().describe('Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer\'s does. Read through its sport.'),
+  isTestData: z.boolean().describe(`Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. ${ADMIN_ONLY}`),
+  slots: z.array(SportLeagueSeasonSlotDtoSchema).describe('The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.'),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
   releaseChecks: z.array(ReleaseCheckDtoSchema).nullable().describe('A DRAFT event\'s ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin\'s release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin\'s read of the one event; null on lists, on an admin action\'s answer, for anyone but a root admin, and once the event is released.'),
@@ -169,15 +171,12 @@ export const SportEventResponseSchema = z.object({
 export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
 
 export const CreateSportEventRequestSchema = z.object({
-  sportLeagueId: z.uuid().describe('The sport league the event runs on; it decides the sport. The event\'s series is found or created in it by name, and the event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.'),
-  name: z.string().min(1),
+  seasonSlotId: z.uuid().describe('The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event\'s league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season; 409 SEASON_SLOT_TAKEN when it already has an event.'),
+  name: z.string().min(1).describe('The event\'s name; its series is found or created in the league by it. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in that Season.'),
   venue: z.string().optional(),
   location: z.string().optional(),
-  startDate: DateTimeSchema,
-  endDate: DateTimeSchema.optional(),
-  rounds: z.number().int().min(1).optional().describe('Round count; omitted, the sport\'s default round count (4 for golf).'),
   autoLifecycleEnabled: z.boolean().optional(),
-}).describe('An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.');
+}).describe('A test event, made by hand on a test slot (QA only). Created DRAFT with its league\'s default round count and tiers, and its slot\'s dates; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
 
 /** The par range an admin may set for an event's rounds. Never above 80, so an unplayed round's 80 strokes is never under par. */
@@ -188,8 +187,8 @@ export const UpdateSportEventRequestSchema = z.object({
   name: z.string().min(1).optional(),
   venue: z.string().nullable().optional().describe('null clears it.'),
   location: z.string().nullable().optional().describe('null clears it.'),
-  startDate: DateTimeSchema.optional(),
-  endDate: z.iso.datetime().nullable().optional().describe('null clears it.'),
+  startDate: DateTimeSchema.optional().describe('422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots\'.'),
+  endDate: z.iso.datetime().nullable().optional().describe('null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.'),
   rounds: z.number().int().min(1).optional(),
   roundsPar: z.number().int().min(ROUNDS_PAR_MIN).max(ROUNDS_PAR_MAX).nullable().optional()
     .describe(`Par for every round, ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}. null clears it, so contest scoring derives each round's par from the field.`),

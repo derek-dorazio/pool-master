@@ -50,6 +50,7 @@ import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-
 import { EventPageLayout } from '@/features/root-admin/event-page-layout';
 import { EventFieldTab } from '@/features/root-admin/event-field-tab';
 import { EventRoundsTab } from '@/features/root-admin/event-rounds-tab';
+import { EventSlotsTab } from '@/features/root-admin/event-slots-tab';
 import { EventContestsTab } from '@/features/root-admin/event-contests-tab';
 import { EventActivityTab } from '@/features/root-admin/event-activity-tab';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
@@ -434,6 +435,7 @@ export const router = createBrowserRouter([
                             children: [
                               { index: true, element: <Navigate replace to="field" /> },
                               { path: 'field', element: <EventFieldTab /> },
+                              { path: 'slots', element: <EventSlotsTab /> },
                               { path: 'rounds', element: <EventRoundsTab /> },
                               { path: 'contests', element: <EventContestsTab /> },
                               { path: 'activity', element: <EventActivityTab /> },
