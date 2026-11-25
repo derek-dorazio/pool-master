@@ -49,6 +49,8 @@ describe('IngestionService manual sync submission', () => {
         sport: Sport.GOLF,
         eventExternalId: 'golf-open-championship-2026',
         status: 'COMPLETED',
+        startedAt: new Date(),
+        completedAt: new Date(),
         recordsProcessed: 1,
         errors: 0,
         errorLog: [],
@@ -100,7 +102,7 @@ describe('IngestionService manual sync submission', () => {
     const syncRuns = inMemorySyncRuns();
     const completed = {
       jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: Sport.GOLF, eventExternalId: 'open-2026',
-      status: 'COMPLETED', recordsProcessed: 1, errors: 0, errorLog: [], warnings: [], stats: {},
+      status: 'COMPLETED', startedAt: new Date(), completedAt: new Date(), recordsProcessed: 1, errors: 0, errorLog: [], warnings: [], stats: {},
     };
     // Already due again, so the one drain runs the deferred try too.
     const refusal = new ProviderRateLimitedError('balldontlie', new Date(Date.now() - 1_000), 'its circuit is open');

@@ -660,7 +660,7 @@ describe('IngestionScheduler', () => {
         },
       );
 
-      await scheduler['runConfiguredLiveScoreSweep']('GOLF');
+      await scheduler['runConfiguredLiveScoreSweep']('GOLF', eventReader);
 
       expect(syncRunLedger.createSubmissions).toHaveBeenCalledWith(expect.objectContaining({
         providerId: 'mock-provider',
@@ -718,9 +718,9 @@ describe('IngestionScheduler', () => {
         },
       );
 
-      const firstRun = scheduler['runConfiguredLiveScoreSweep']('GOLF');
+      const firstRun = scheduler['runConfiguredLiveScoreSweep']('GOLF', eventReader);
       await liveScoreCallStarted;
-      await scheduler['runConfiguredLiveScoreSweep']('GOLF');
+      await scheduler['runConfiguredLiveScoreSweep']('GOLF', eventReader);
       expect(provider.getLiveScores).toHaveBeenCalledTimes(1);
       expect(mockCallbacks.onLiveScores).not.toHaveBeenCalled();
 
@@ -769,8 +769,8 @@ describe('IngestionScheduler', () => {
         },
       );
 
-      await scheduler['runConfiguredSportFieldSync']('GOLF');
-      await scheduler['runConfiguredLiveScoreSweep']('GOLF');
+      await scheduler['runConfiguredSportFieldSync']('GOLF', eventReader);
+      await scheduler['runConfiguredLiveScoreSweep']('GOLF', eventReader);
 
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
         source: 'SCHEDULED',
@@ -836,7 +836,7 @@ describe('IngestionScheduler', () => {
         now: () => now,
       });
 
-      await scheduler['runConfiguredSportFieldSync']('GOLF');
+      await scheduler['runConfiguredSportFieldSync']('GOLF', eventReader);
 
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
       expect(eventReader.listEventsForFeed).toHaveBeenCalledWith({
@@ -1211,17 +1211,18 @@ describe('IngestionScheduler with two providers running', () => {
   it('sweeps live events from both providers, each from its own provider, even when both use the same event id', async () => {
     const { primary, secondary, registry } = twoGolfProviders();
     const config = createEnabledScheduleConfig();
+    const eventReader = readerOf({
+      live: [
+        { providerId: 'mock-contest-feed', externalId: '41' },
+        { providerId: 'balldontlie', externalId: '41' },
+      ],
+    });
     const scheduler = new IngestionScheduler(registry, createMockCallbacks(), undefined, {
       configReader: { getConfig: jest.fn().mockResolvedValue(config) },
-      eventReader: readerOf({
-        live: [
-          { providerId: 'mock-contest-feed', externalId: '41' },
-          { providerId: 'balldontlie', externalId: '41' },
-        ],
-      }),
+      eventReader,
     });
 
-    await scheduler['runConfiguredLiveScoreSweep']('GOLF');
+    await scheduler['runConfiguredLiveScoreSweep']('GOLF', eventReader);
 
     expect(primary.getLiveScores).toHaveBeenCalledWith('41');
     expect(secondary.getLiveScores).toHaveBeenCalledWith('41');
@@ -1294,6 +1295,23 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
     expect(job?.status).toBe('FAILED');
   });
 
+  it('syncs nothing, and calls no provider, for a notification from a provider not running here', async () => {
+    const { scheduler, provider, syncRunLedger } = schedulerFor(createEnabledScheduleConfig());
+
+    expect(await scheduler.runNotifiedEventSync({ ...notified, providerId: 'not-running-here' }, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK })).toBeNull();
+    expect(provider.getLiveScores).not.toHaveBeenCalled();
+    expect(syncRunLedger.createSubmissions).not.toHaveBeenCalled();
+  });
+
+  it('fails the sync, calling no provider, when the ledger records no run for it', async () => {
+    const { scheduler, provider, syncRunLedger } = schedulerFor(createEnabledScheduleConfig());
+    syncRunLedger.createSubmissions.mockResolvedValueOnce([]);
+
+    await expect(scheduler.runNotifiedEventSync(notified, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK }))
+      .rejects.toThrow('Scheduled sync ledger did not create a provider sync run.');
+    expect(provider.getLiveScores).not.toHaveBeenCalled();
+  });
+
   it('syncs nothing while live score syncs are switched off for the sport', async () => {
     const { scheduler, provider } = schedulerFor({
       ...createEnabledScheduleConfig(),
@@ -1335,16 +1353,17 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const registry = registryWith(polled, notified);
     const config = options.config ?? adminConfig;
     const logger = fakeLogger();
+    const eventReader = { ...readerOf({ sports: [Sport.GOLF, Sport.AMERICAN_FOOTBALL] }), listLiveScoreEvents: jest.fn(async () => live) };
     const scheduler = new IngestionScheduler(registry, createMockCallbacks(), logger, {
       configReader: { getConfig: jest.fn().mockResolvedValue(config) },
-      eventReader: { ...readerOf({ sports: [Sport.GOLF, Sport.AMERICAN_FOOTBALL] }), listLiveScoreEvents: jest.fn(async () => live) },
+      eventReader,
       now: () => clock.now,
       notifiedProviderCadence: () => ('cadence' in options ? options.cadence : cadence),
     });
     const sweepAt = async (sport: Sport, minutes: number, events: LiveScoreEventRef[]) => {
       clock.now = new Date(T0.getTime() + minutes * MINUTE);
       live = events;
-      await scheduler['runConfiguredLiveScoreSweep'](sport);
+      await scheduler['runConfiguredLiveScoreSweep'](sport, eventReader);
     };
     const pollsOf = (provider: SportDataProvider, eventId: string) =>
       (provider.getLiveScores as jest.Mock<unknown, [string]>).mock.calls.filter(([id]) => id === eventId).length;
@@ -1500,5 +1519,92 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     await sweepAt(Sport.AMERICAN_FOOTBALL, 1, events);
 
     expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
+  });
+});
+
+describe('IngestionScheduler loops, defaults and a provider that keeps its own payloads', () => {
+  const now = new Date('2026-11-12T18:00:00.000Z');
+  const flush = () => new Promise((resolve) => { setImmediate(resolve); });
+
+  it('starts no sport loop when stopped while it reads which sports to run', async () => {
+    let answer!: (sports: Sport[]) => void;
+    const eventReader = { ...readerOf({}), listSyncedSports: jest.fn(() => new Promise<Sport[]>((resolve) => { answer = resolve; })) };
+    const logger = fakeLogger();
+    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider()), createMockCallbacks(), logger, {
+      configReader: { getConfig: jest.fn().mockResolvedValue(createEnabledScheduleConfig()) },
+      eventReader,
+    });
+
+    scheduler.start();
+    await flush();
+    scheduler.stop();
+    answer([Sport.GOLF]);
+    await flush();
+
+    expect(eventReader.listSyncedSports).toHaveBeenCalled();
+    expect(eventReader.listEventsForFeed).not.toHaveBeenCalled();
+    expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalled();
+  });
+
+  it('logs a failed read of which sports to run, rather than leaving the loop an unhandled rejection', async () => {
+    const eventReader = { ...readerOf({}), listSyncedSports: jest.fn().mockRejectedValue(new Error('db down')) };
+    const logger = fakeLogger();
+    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider()), createMockCallbacks(), logger, {
+      configReader: { getConfig: jest.fn().mockResolvedValue(createEnabledScheduleConfig()) },
+      eventReader,
+    });
+
+    scheduler.start();
+    await flush();
+    scheduler.stop();
+
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ error: expect.any(Error) }), 'Failed to reconcile configured sport ingestion loops');
+  });
+
+  it('polls no live event while live score syncs are switched off', async () => {
+    const eventReader = readerOf({ live: [{ providerId: 'mock-provider', externalId: 'evt-1' }] });
+    const provider = fakeSportDataProvider();
+    const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks(), undefined, {
+      configReader: { getConfig: jest.fn().mockResolvedValue({ ...createEnabledScheduleConfig(), SCORES: { enabled: false, intervalSeconds: 30 } }) },
+      eventReader,
+    });
+
+    await scheduler['runConfiguredLiveScoreSweep']('GOLF', eventReader);
+
+    expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalled();
+    expect(provider.getLiveScores).not.toHaveBeenCalled();
+  });
+
+  it('loads fields for the next 14 days when the field sync names no lookahead', async () => {
+    const eventReader = readerOf({});
+    const config = { ...createEnabledScheduleConfig(), FIELD: { intervalMinutes: 360 } };
+    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider()), createMockCallbacks(), undefined, {
+      configReader: { getConfig: jest.fn().mockResolvedValue(config) },
+      eventReader,
+      now: () => now,
+    });
+
+    await scheduler['runConfiguredSportFieldSync']('GOLF', eventReader);
+
+    expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({
+      from: now,
+      to: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+    }));
+  });
+
+  it('clears a provider\'s kept payloads before a run, and reports the ones the run kept, when the provider opens no capture session', async () => {
+    const capturedAt = '2026-05-30T12:00:00.000Z';
+    const kept: ProviderPayloadCapture[] = [{ operation: 'provider.request', path: '/v1/scores', capturedAt, raw: { scores: [] }, bytes: 12 }];
+    const clearProviderPayloads = jest.fn();
+    const provider: SportDataProvider & ProviderPayloadDiagnostics = Object.assign(fakeSportDataProvider(), {
+      clearProviderPayloads,
+      consumeProviderPayloads: () => kept,
+    });
+    const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks());
+
+    const [job] = await scheduler.runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'e1', feeds: ['EVENTLIVESCORES'] });
+
+    expect(clearProviderPayloads).toHaveBeenCalledTimes(1);
+    expect(job.providerPayload).toEqual({ operation: 'EVENTLIVESCORES', rawCaptured: true, rawTruncated: false, raw: kept });
   });
 });

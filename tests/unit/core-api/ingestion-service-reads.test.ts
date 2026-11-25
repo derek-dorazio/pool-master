@@ -334,7 +334,7 @@ describe('IngestionService manual sync job (#1441)', () => {
 
   const COMPLETED_JOB: IngestionJobRecord = {
     jobType: 'EVENT_LIVE_SCORES_SYNC', providerId: 'balldontlie', sport: Sport.GOLF, eventExternalId: 'evt-1',
-    status: 'COMPLETED', recordsProcessed: 0, errors: 0, errorLog: [], warnings: [],
+    status: 'COMPLETED', startedAt: new Date('2026-05-30T12:00:00.000Z'), completedAt: new Date('2026-05-30T12:00:01.000Z'), recordsProcessed: 0, errors: 0, errorLog: [], warnings: [],
   };
 
   it('returns the SUBMITTED runs before any feed runs, with one queued MANUAL_EVENT_SYNC job naming them and scoped to the linked event', async () => {
