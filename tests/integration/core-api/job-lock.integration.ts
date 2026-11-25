@@ -144,3 +144,13 @@ describe('the background job lock shared by two server tasks', () => {
     expect(await tick(first, key)).toBe(true);
   });
 });
+
+describe('PostgresJobLock with no database URL', () => {
+  it('refuses to run a job, naming the missing DATABASE_URL, and never runs the work', async () => {
+    const task = new PostgresJobLock(undefined, fakeLogger());
+    const work = jest.fn(async () => undefined);
+
+    await expect(task.runExclusive(`job-${randomUUID()}`, work)).rejects.toThrow('DATABASE_URL');
+    expect(work).not.toHaveBeenCalled();
+  });
+});
