@@ -562,6 +562,72 @@ describe('background job runner (#1440)', () => {
     );
   });
 
+  it('stops at once, waiting on nothing, when it was never started and no drain is running', async () => {
+    const { runner, handler } = setup();
+
+    await runner.stop();
+    await runner.drain();
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('records nothing, and warns, when another task claimed a lapsed job again before this one could give up on it', async () => {
+    const { jobs, runner, time, logger } = setup();
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload(), start: TEST_JOB_START });
+    for (let lapsed = 0; lapsed < 4; lapsed++) {
+      await jobs.claimDue({ now: time.now(), limit: 1, leaseUntil: new Date(time.now().getTime() + BACKGROUND_JOB_LEASE_MS) });
+      time.advance(BACKGROUND_JOB_LEASE_MS);
+    }
+    jest.spyOn(jobs, 'markFailed').mockResolvedValueOnce(false);
+
+    await runner.drain();
+
+    expect(only(jobs).status).toBe(BackgroundJobStatus.RUNNING);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
+  });
+
+  it('records nothing, and warns, when another task claimed a job with a bad payload again before this one could fail it', async () => {
+    const { jobs, handler, runner, logger } = setup();
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [], sport: 'CROQUET' }, start: TEST_JOB_START });
+    jest.spyOn(jobs, 'markFailed').mockResolvedValueOnce(false);
+
+    await runner.drain();
+
+    expect(handler).not.toHaveBeenCalled();
+    expect(only(jobs).status).toBe(BackgroundJobStatus.RUNNING);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
+  });
+
+  it('records no retry, and warns, when another task claimed a failed job again before this one could queue its retry', async () => {
+    const { jobs, runner, queue, logger } = setup({ handler: () => Promise.reject(new Error('provider timed out')) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+    jest.spyOn(jobs, 'markRetry').mockResolvedValueOnce(false);
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.RUNNING, attempts: 1 });
+    expect(logger.warn).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.retry' }), expect.any(String));
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
+  });
+
+  it('records no final failure, and warns, when another task claimed a job on its last try again before this one could fail it', async () => {
+    const { jobs, runner, queue, time, logger } = setup({ handler: () => Promise.reject(new Error('provider timed out')) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+    for (const delay of [MINUTE, 5 * MINUTE, 30 * MINUTE]) {
+      await runner.drain();
+      time.advance(delay);
+    }
+    jest.spyOn(jobs, 'markFailed').mockResolvedValueOnce(false);
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.RUNNING, attempts: 4 });
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
+  });
+
   it('starts polling once however often started, runs what is due at once, and stops polling when stopped', async () => {
     const { jobs, runner, queue, logger } = setup();
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());

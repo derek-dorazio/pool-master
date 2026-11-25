@@ -127,18 +127,17 @@ export class EventLifecycleScheduler {
       return;
     }
 
-    if (candidate.status === SportEventStatus.IN_PROGRESS) {
-      // A second-chance bracket goes live at its starting round's first game, mid-event (#721).
-      await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
-      const dueAt = completionDueAt(candidate, roundSchedule);
-      if (dueAt === undefined || now < dueAt) return;
-      await this.eventLifecycleService.applySportEventStatusTransition({
-        sportEventId: candidate.id,
-        toStatus: SportEventStatus.COMPLETED,
-        actor: { type: 'SYSTEM' },
-        fromStatus: SportEventStatus.IN_PROGRESS,
-      });
-    }
+    // IN_PROGRESS: the candidate read answers only SCHEDULED, IN_PROGRESS and POSTPONED events.
+    // A second-chance bracket goes live at its starting round's first game, mid-event (#721).
+    await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
+    const dueAt = completionDueAt(candidate, roundSchedule);
+    if (dueAt === undefined || now < dueAt) return;
+    await this.eventLifecycleService.applySportEventStatusTransition({
+      sportEventId: candidate.id,
+      toStatus: SportEventStatus.COMPLETED,
+      actor: { type: 'SYSTEM' },
+      fromStatus: SportEventStatus.IN_PROGRESS,
+    });
   }
 }
 

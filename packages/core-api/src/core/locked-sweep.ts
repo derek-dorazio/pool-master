@@ -53,7 +53,7 @@ export class LockedSweep {
     const { intervalMs, firstRunAfterMs } = this.options;
     if (typeof intervalMs === 'function') {
       this.generation += 1;
-      this.scheduleRead(this.generation, firstRunAfterMs ?? SCHEDULE_RECHECK_MS);
+      this.scheduleRead(intervalMs, this.generation, firstRunAfterMs ?? SCHEDULE_RECHECK_MS);
       return;
     }
     this.timer = setTimeout(() => {
@@ -99,26 +99,25 @@ export class LockedSweep {
   }
 
   /** A read-interval sweep: run after `delayMs`, then read the next interval and schedule again. */
-  private scheduleRead(generation: number, delayMs: number): void {
+  private scheduleRead(readInterval: () => Promise<number>, generation: number, delayMs: number): void {
     this.timer = setTimeout(() => {
-      void this.runThenScheduleRead(generation);
+      void this.runThenScheduleRead(readInterval, generation);
     }, delayMs);
     this.timer.unref();
   }
 
-  private async runThenScheduleRead(generation: number): Promise<void> {
+  private async runThenScheduleRead(readInterval: () => Promise<number>, generation: number): Promise<void> {
     await this.run();
-    const nextDelayMs = await this.readIntervalMs();
+    const nextDelayMs = await this.readIntervalMs(readInterval);
     if (generation === this.generation) {
-      this.scheduleRead(generation, nextDelayMs);
+      this.scheduleRead(readInterval, generation, nextDelayMs);
     }
   }
 
-  private async readIntervalMs(): Promise<number> {
-    const { intervalMs, lockKey, label, logger } = this.options;
-    if (typeof intervalMs === 'number') return intervalMs;
+  private async readIntervalMs(readInterval: () => Promise<number>): Promise<number> {
+    const { lockKey, label, logger } = this.options;
     try {
-      return await intervalMs();
+      return await readInterval();
     } catch (error) {
       logger?.error({
         action: 'lockedSweep.intervalReadFailed',

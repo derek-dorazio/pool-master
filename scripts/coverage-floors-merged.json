@@ -43,19 +43,6 @@
           "reason": "Under the job floor when it came in; raised by #2106.",
           "lines": 98
         },
-        "packages/core-api/src/core/locked-sweep.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "branches": 94
-        },
-        "packages/core-api/src/modules/background-jobs/background-job-queue.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "branches": 85
-        },
-        "packages/core-api/src/modules/background-jobs/background-job-runner.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "lines": 95,
-          "branches": 95
-        },
         "packages/core-api/src/modules/contest-management/service.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
           "lines": 97,
@@ -65,14 +52,6 @@
           "reason": "Under the job floor when it came in; raised by #2106.",
           "lines": 97,
           "branches": 90
-        },
-        "packages/core-api/src/modules/domain-events/domain-events.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "branches": 91
-        },
-        "packages/core-api/src/modules/events/event-lifecycle-scheduler.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "branches": 86
         },
         "packages/core-api/src/modules/events/league-events-sync.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
@@ -87,10 +66,6 @@
           "reason": "Under the job floor when it came in; raised by #2106.",
           "lines": 98,
           "branches": 95
-        },
-        "packages/core-api/src/plugins/request-job-start.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "branches": 87
         }
       }
     }

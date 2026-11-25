@@ -1,4 +1,4 @@
-import { BackgroundJobStatus, BackgroundJobType, Sport, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, ProviderCode, Sport, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import {
   BackgroundJobQueue,
   InvalidBackgroundJobPayloadError,
@@ -125,5 +125,28 @@ describe('jobs a write carries (#1466)', () => {
     expect(first).toMatchObject({ type: BackgroundJobType.MANUAL_EVENT_SYNC, status: BackgroundJobStatus.QUEUED, payload: PAYLOAD });
     expect(jobs.rows).toHaveLength(1);
     expect(runner.wake).toHaveBeenCalledTimes(2);
+  });
+  it('keys a job to the Provider row of the code the caller names, and to none when that code has no row (#2040)', () => {
+    const jobs = inMemoryBackgroundJobs();
+    const sportLeagueId = '00000000-0000-4000-8000-0000000000a1';
+    const keyed = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart, providerIdOf: () => 'provider-row-1' });
+    const unknown = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart, providerIdOf: () => undefined });
+
+    const keyedRequest = keyed.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId }, { providerCode: ProviderCode.BALLDONTLIE });
+    const unknownRequest = unknown.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId }, { providerCode: ProviderCode.BALLDONTLIE });
+
+    expect(keyedRequest.providerId).toBe('provider-row-1');
+    expect(unknownRequest).not.toHaveProperty('providerId');
+  });
+
+  it('answers a new job for each enqueue with no options, since without a dedupe key nothing coalesces', async () => {
+    const { jobs, queue } = setup();
+
+    const first = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD);
+    const second = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD);
+
+    expect(first).toMatchObject({ status: BackgroundJobStatus.QUEUED, payload: PAYLOAD });
+    expect(second.id).not.toBe(first.id);
+    expect(jobs.rows).toHaveLength(2);
   });
 });

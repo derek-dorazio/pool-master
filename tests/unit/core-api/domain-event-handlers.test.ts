@@ -535,6 +535,14 @@ describe('DomainEvents.collectEach, for a guarded batch write', () => {
     expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 
+  it('hands no jobs for a moved subject it was given no event about', async () => {
+    const { events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
+
+    const batch = await domain.collectEach(events, (event) => event.sportEvent.id);
+
+    expect(batch.jobsFor(['event-c', 'event-a'])).toEqual([eventChangedJob('event-a', 'RESCHEDULED')]);
+  });
+
   it('wakes nothing when the write moved none of its subjects', async () => {
     const { queue, events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
 
