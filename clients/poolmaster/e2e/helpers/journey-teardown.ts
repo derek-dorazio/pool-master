@@ -134,9 +134,11 @@ async function removeRunTestSlots(api: APIRequestContext, headers: AuthHeaders, 
 export async function listTestSlots(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string): Promise<Array<{ id: string; label: string | null }>> {
   const response = await expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/seasons`, { headers }), 'list Seasons');
   const { seasons } = (await response.json()) as {
-    seasons: Array<{ phases: Array<{ slots: Array<{ id: string; isTestData: boolean; label: string | null }> }> }>;
+    seasons: Array<{ phases: Array<{ competitions: Array<{ slots: Array<{ id: string; isTestData: boolean; label: string | null }> }> }> }>;
   };
-  return seasons.flatMap((season) => season.phases.flatMap((phase) => phase.slots)).filter((slot) => slot.isTestData);
+  return seasons
+    .flatMap((season) => season.phases.flatMap((phase) => phase.competitions.flatMap((competition) => competition.slots)))
+    .filter((slot) => slot.isTestData);
 }
 
 /** Removes a test slot with its event and the test participants of its field that no other field holds (#2075). */
