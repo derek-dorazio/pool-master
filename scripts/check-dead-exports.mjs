@@ -126,21 +126,25 @@ export function identifierCounts(path, text) {
 }
 
 /**
- * The `[original, newName]` pairs a file's import and export lists rename: `import { a as b }`
- * and `export { a as b } from './x'`. Code that reads `b` is then a reader of `a`.
+ * The renames in a file's import and export lists, as `{ kind, original, renamed }`:
+ * `import { a as b }` (kind `import`) and `export { a as b } from './x'` (kind `export`).
  */
 export function renamedSpecifiers(path, text) {
   const pairs = [];
   for (const statement of parse(path, text).statements) {
     let elements = [];
+    let kind = 'export';
     if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
       elements = statement.exportClause.elements;
     } else if (ts.isImportDeclaration(statement)) {
       const bindings = statement.importClause?.namedBindings;
       if (bindings && ts.isNamedImports(bindings)) elements = bindings.elements;
+      kind = 'import';
     }
     for (const element of elements) {
-      if (element.propertyName && element.propertyName.text !== element.name.text) pairs.push([element.propertyName.text, element.name.text]);
+      if (element.propertyName && element.propertyName.text !== element.name.text) {
+        pairs.push({ kind, original: element.propertyName.text, renamed: element.name.text });
+      }
     }
   }
   return pairs;
@@ -158,11 +162,23 @@ export function classifyExports(files) {
       readers.get(word).push(path);
     }
   }
-  // A name passed on under a new one is read wherever the new name is (renames chain).
-  const renames = [...files.values()].flatMap(({ renames: pairs }) => pairs ?? []);
+  const addReader = (name, reader) => {
+    if (!readers.has(name)) readers.set(name, []);
+    if (!readers.get(name).includes(reader)) readers.get(name).push(reader);
+  };
+  // `import { a as b }` makes its own file a reader of `a` only where that file reads `b`, so a
+  // rename to a common word does not borrow every other file's use of that word.
+  const reexports = [];
+  for (const [path, { identifiers, renames = [] }] of files) {
+    for (const { kind, original, renamed } of renames) {
+      if (kind === 'export') reexports.push([original, renamed]);
+      else if ((identifiers.get(renamed) ?? 0) > 0) addReader(original, path);
+    }
+  }
+  // `export { a as b } from` passes `a` on as `b`: whoever reads `b` reads `a` (renames chain).
   for (let changed = true; changed;) {
     changed = false;
-    for (const [original, renamed] of renames) {
+    for (const [original, renamed] of reexports) {
       const into = readers.get(original) ?? [];
       const added = (readers.get(renamed) ?? []).filter((reader) => !into.includes(reader));
       if (added.length === 0) continue;

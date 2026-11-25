@@ -71,6 +71,15 @@ describe('check-dead-exports (#2111)', () => {
     assert.deepEqual(classifyExports(files), []);
   });
 
+  it('does not count other files reading a common word as reads of an export imported under that word by a file that never reads it', () => {
+    const files = new Map([
+      ['packages/core-api/src/jobs/queue.ts', file('export const enqueue = () => {};', ['enqueue'])],
+      ['packages/core-api/src/app.ts', file("import { enqueue as id } from './jobs/queue';")],
+      ['packages/core-api/src/other.ts', file('const id = 1;\nid;')],
+    ]);
+    assert.deepEqual(classifyExports(files).map(({ name, kind }) => `${name}:${kind}`), ['enqueue:unused']);
+  });
+
   it('counts an export its own file uses, and no other production file does, as own-file only, even when a test reads it too', () => {
     const files = new Map([
       ['clients/poolmaster/src/a.ts', file('export function helper() {} export function main() { return helper(); }', ['helper', 'main'])],
