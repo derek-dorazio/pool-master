@@ -1593,8 +1593,8 @@ describe('Contract verification (root admin)', () => {
       expect(seasonsRes.statusCode).toBe(200);
       const seasons = SportLeagueSeasonListResponseSchema.safeParse(seasonsRes.json());
       expect(seasons.success).toBe(true);
-      // Latest first: the 2081 Season the test made current, then the calendar year's the create began with.
-      expect(seasons.data?.seasons.map((season) => [season.championshipYear, season.isCurrent])).toEqual([[2081, true], [new Date().getUTCFullYear(), false]]);
+      // The league's one Season, the 2081 Season the test made current.
+      expect(seasons.data?.seasons.map((season) => [season.championshipYear, season.isCurrent])).toEqual([[2081, true]]);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
