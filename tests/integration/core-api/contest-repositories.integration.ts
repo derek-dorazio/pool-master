@@ -1060,6 +1060,47 @@ describe('ContestConfigTemplateRepository', () => {
     const active = await repo.list({ active: true });
     expect(ours(active).map((template) => template.id)).toEqual([kept.id]);
   });
+
+  it('makes a template its league\'s default for its selection type, taking the default from the one that had it, and replaces the slot definitions it covers', async () => {
+    const { pga } = await createGolfLeagues();
+    const masters = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MASTERS');
+    const open = await keyedSlotDefinitionId(getPrisma(), pga.id, 'OPEN');
+    const previous = await createTemplate('previous', [masters], 0, pga.id);
+    await getPrisma().contestConfigTemplate.update({ where: { id: previous.id }, data: { isDefault: true } });
+    const next = await createTemplate('next', [masters], 1, pga.id);
+    const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
+
+    const updated = await repo.update(next.id, {
+      isDefault: true,
+      slotDefinitionIds: [open, open],
+      coverageMode: TemplateCoverageMode.ALL_LISTED,
+      description: 'Every listed slot',
+      sortOrder: 5,
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 2 },
+    });
+
+    expect(updated).toEqual(expect.objectContaining({
+      isDefault: true,
+      coverageMode: TemplateCoverageMode.ALL_LISTED,
+      description: 'Every listed slot',
+      sortOrder: 5,
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 2 },
+    }));
+    expect(updated.slots.map((slot) => slot.id)).toEqual([open]);
+    expect((await getPrisma().contestConfigTemplate.findUniqueOrThrow({ where: { id: previous.id } })).isDefault).toBe(false);
+  });
+
+  it('finds only the league\'s own slot definitions asked for, and none for an empty ask without reading', async () => {
+    const { pga, lpga } = await createGolfLeagues();
+    const masters = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MASTERS');
+    const lpgaMajor = await keyedSlotDefinitionId(getPrisma(), lpga.id, 'MAJOR');
+    const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
+
+    const found = await repo.findSlotDefinitions(pga.id, [masters, lpgaMajor]);
+
+    expect(found.map((slot) => [slot.id, slot.key])).toEqual([[masters, 'MASTERS']]);
+    await expect(repo.findSlotDefinitions(pga.id, [])).resolves.toEqual([]);
+  });
 });
 
 describe('ContestEntryRepository', () => {

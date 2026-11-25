@@ -1481,6 +1481,45 @@ describe('ContestManagementService', () => {
         .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
     });
 
+    it('refuses a new entry limit on an open squares contest before its draw with 409 CONTEST_CONFIGURATION_LOCKED: only the box limit still changes', async () => {
+      const contestRepo = createContestRepo();
+      const contest = await contestRepo.findById('contest-1');
+      (contestRepo.findById as jest.Mock).mockResolvedValue({ ...contest, selectionType: SelectionType.SQUARES, status: ContestStatus.OPEN });
+      const { service, configurationRepo } = build({ contestRepo });
+
+      await expect(service.updateContestConfiguration('contest-1', { ...expectDefined(CREATE.configuration), maxEntriesPerSquad: 2 }))
+        .rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 CONTEST_NOT_FOUND when a settings change finds the configuration gone on its read back', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      const stored = await configurationRepo.findByContest('contest-1');
+      (configurationRepo.findByContest as jest.Mock).mockReset().mockResolvedValueOnce(stored).mockResolvedValueOnce(null);
+
+      await expect(build({ configurationRepo }).service.updateContestConfiguration('contest-1', expectDefined(CREATE.configuration)))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+    });
+
+    it('answers 404 CONTEST_NOT_FOUND changing the events of a contest with no configuration, changing nothing', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValue(null);
+      const contestRepo = createContestRepo();
+      const { service } = build({ configurationRepo, contestRepo });
+
+      await expect(service.setContestSportEvents('league-1', 'contest-1', [EVENT_ID]))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    });
+
+    it('lists the sports leagues the league\'s contests use in a season as the repository counts them', async () => {
+      const contestRepo = createContestRepo();
+      (contestRepo.findSportLeagueIdsBySeason as jest.Mock).mockResolvedValue([PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]);
+
+      await expect(build({ contestRepo }).service.listSportLeaguesUsed('league-1', 2026)).resolves.toEqual([PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]);
+      expect(contestRepo.findSportLeagueIdsBySeason).toHaveBeenCalledWith('league-1', 2026);
+    });
+
     it('refuses a settings change on a contest with no sport event, with 404 SPORT_EVENT_NOT_FOUND and nothing stored', async () => {
       const contestRepo = createContestRepo();
       const contest = await contestRepo.findById('contest-1');
