@@ -60,6 +60,7 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 ### 1. Persistence and Domain
 
 - [ ] Update Prisma schema if the database model changed.
+- [ ] A new column is typed: no `Json` column outside an integration boundary (`rules/domain-model-conventions-rules.md` *Guiding Principle: Strongly Typed End-to-End*), and no feed key (`externalId`, `provider…Id`, `providerCode`) outside a `…ProviderMapping` table (`rules/domain-model-conventions-rules.md` §17 *Provider keys live only in ProviderMapping tables*). `rules:check:schema-shapes` fails on either one not listed in `scripts/schema-shapes.json`; a genuine boundary is listed there with its reason, through `scripts/baseline-raises.json`.
 - [ ] Generate a new Prisma migration if required.
 - [ ] Update shared domain types/enums/constants.
 - [ ] Update repository/service logic and persistence mapping.

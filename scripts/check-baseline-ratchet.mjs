@@ -74,7 +74,12 @@ function webSharedImports(text) {
   return entries;
 }
 
-export { coverageFloors };
+/** A list of entries each standing for itself, valued by its owner or reason (#2112): each key counts one, so a new one is a raise. */
+function listedEntries(text) {
+  return new Map(Object.keys(JSON.parse(text)).filter((key) => !key.startsWith('$')).map((key) => [key, 1]));
+}
+
+export { coverageFloors, listedEntries };
 
 /** Every ratcheted baseline and how its entries are read. A new baseline is added here. */
 export const BASELINES = [
@@ -88,6 +93,7 @@ export const BASELINES = [
   { file: 'eslint-rules/enum-string-literal-baseline.json', read: countsPerFile },
   { file: 'eslint-rules/dto-shape-baseline.json', read: countsPerFile },
   { file: 'eslint-rules/local-enum-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/positional-pick-baseline.json', read: countsPerFile },
   { file: 'scripts/page-sections-baseline.json', read: countsPerFile },
   { file: 'scripts/retired-names.json', read: countsPerFile },
   { file: 'scripts/sport-registry-frozen.json', read: listedFiles },
@@ -96,6 +102,7 @@ export const BASELINES = [
   { file: 'scripts/coverage-floors-web.json', read: coverageFloors },
   { file: 'scripts/web-shared-imports-baseline.json', read: webSharedImports },
   { file: 'scripts/dead-exports.json', read: countsPerFile },
+  { file: 'scripts/schema-shapes.json', read: listedEntries },
 ];
 
 /**

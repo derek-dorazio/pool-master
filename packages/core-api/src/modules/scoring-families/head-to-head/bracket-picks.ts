@@ -88,6 +88,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
   withdrawn: ReadonlySet<string> = new Set(),
 ): ResolvedBracket<Pick> {
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
+  // poolmaster-allow-position: round numbers sorted ascending: the lowest is the first round
   const firstRound = rounds.at(0);
   const reseeded = reseededRounds(bracket);
   const pickByMatchId = new Map(picks.map((pick) => [pick.sportEventRoundMatchId, pick]));
@@ -182,6 +183,7 @@ export function findBracketProblem(
     return startsAtRound > 1 ? `it has no games from round ${startsAtRound} on` : 'it has no games';
   }
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
+  // poolmaster-allow-position: round numbers sorted ascending: the highest is the final round
   const finals = bracket.filter((match) => match.roundNumber === rounds.at(-1));
   if (finals.length !== 1) {
     return `its last round has ${finals.length} games, not one final`;
