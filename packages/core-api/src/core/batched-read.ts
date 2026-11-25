@@ -11,8 +11,10 @@
  * Build one per fan-out and let it go with it. It remembers nothing between batches, so a read
  * made after a write sees the write.
  */
+type PendingAsk<Ask, Answer> = { ask: Ask; resolve: (answer: Answer) => void; reject: (error: unknown) => void };
+
 export class BatchedRead<Ask, Answer> {
-  private pending: Array<{ ask: Ask; resolve: (answer: Answer) => void; reject: (error: unknown) => void }> | null = null;
+  private pending: Array<PendingAsk<Ask, Answer>> | null = null;
 
   /** `readAll` answers every ask it is given, in the order given. */
   constructor(private readonly readAll: (asks: readonly Ask[]) => Promise<readonly Answer[]>) {}
@@ -20,16 +22,16 @@ export class BatchedRead<Ask, Answer> {
   load(ask: Ask): Promise<Answer> {
     return new Promise<Answer>((resolve, reject) => {
       if (this.pending === null) {
-        this.pending = [];
+        const batch: Array<PendingAsk<Ask, Answer>> = [];
+        this.pending = batch;
         // After every asker running now, however many promise steps each takes to get here.
-        setImmediate(() => void this.dispatch());
+        setImmediate(() => void this.dispatch(batch));
       }
       this.pending.push({ ask, resolve, reject });
     });
   }
 
-  private async dispatch(): Promise<void> {
-    const batch = this.pending ?? [];
+  private async dispatch(batch: ReadonlyArray<PendingAsk<Ask, Answer>>): Promise<void> {
     this.pending = null;
     try {
       const answers = await this.readAll(batch.map(({ ask }) => ask));

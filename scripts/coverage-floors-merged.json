@@ -7,66 +7,17 @@
       "lines": 80,
       "branches": 80,
       "exceptions": {
-        "packages/core-api/src/core/batched-read.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 75
-        },
-        "packages/core-api/src/core/prisma-context.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "lines": 44,
-          "branches": 50
-        },
-        "packages/core-api/src/core/sliding-window-rate-limiter.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 50
-        },
-        "packages/core-api/src/core/user-name.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 50
-        },
         "packages/core-api/src/index.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
           "branches": 73
-        },
-        "packages/core-api/src/modules/activity/routes.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 50
         },
         "packages/core-api/src/modules/contest-management/wiring.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
           "branches": 76
         },
-        "packages/core-api/src/modules/email/email-unsubscribe-routes.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 75
-        },
         "packages/core-api/src/modules/events/wiring.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
           "branches": 50
-        },
-        "packages/core-api/src/modules/ingestion/adapters/provider-payload-recorder.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 75
-        },
-        "packages/core-api/src/modules/ingestion/findings/routes.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 50
-        },
-        "packages/core-api/src/plugins/request-query-usage.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 75
-        },
-        "packages/core-api/src/plugins/schema-components.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 50
-        },
-        "packages/core-api/src/plugins/string-transforms.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 66
-        },
-        "packages/core-api/src/plugins/swagger.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 0
         }
       }
     },
@@ -80,16 +31,7 @@
       ],
       "lines": 80,
       "branches": 80,
-      "exceptions": {
-        "packages/shared/api-routes.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "lines": 64
-        },
-        "packages/shared/openapi/nullable-to-3-1.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 78
-        }
-      }
+      "exceptions": {}
     },
     {
       "name": "jobs",

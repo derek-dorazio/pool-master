@@ -38,7 +38,7 @@ export class SlidingWindowRateLimiter {
   private forgetIdleKeys(windowStart: number): void {
     if (this.windows.size < IDLE_SWEEP_THRESHOLD) return;
     for (const [key, timestamps] of this.windows) {
-      if ((timestamps.at(-1) ?? 0) <= windowStart) this.windows.delete(key);
+      if (timestamps.every((timestamp) => timestamp <= windowStart)) this.windows.delete(key);
     }
   }
 }
