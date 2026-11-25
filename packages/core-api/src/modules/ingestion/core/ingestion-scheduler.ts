@@ -61,10 +61,10 @@ export interface IngestionJobRecord {
   jobType: JobType;
   providerId: string;
   sport: Sport;
-  eventExternalId?: string;
+  eventExternalId: string;
   status: IngestionJobStatus;
-  startedAt?: Date;
-  completedAt?: Date;
+  startedAt: Date;
+  completedAt: Date;
   recordsProcessed: number;
   errors: number;
   errorLog: IngestionJobErrorLogEntry[];
@@ -90,9 +90,9 @@ export interface IngestionJobProviderPayload {
 
 interface IngestionJobWorkResult {
   recordsProcessed: number;
-  stats?: Record<string, number>;
-  warnings?: IngestionJobWarning[];
-  writeDiagnostics?: SyncWriteDiagnostics;
+  stats: Record<string, number>;
+  warnings: IngestionJobWarning[];
+  writeDiagnostics: SyncWriteDiagnostics;
 }
 
 export interface EventSyncRequest {
@@ -261,8 +261,12 @@ export class IngestionScheduler {
   }
 
   private async reconcileConfiguredSportLoops(): Promise<void> {
+    // The sports come from the event reader, and each loop reads its events there: without one, no
+    // sport has a loop.
+    const eventReader = this.options.eventReader;
+    if (!eventReader) return;
     try {
-      const sports = await this.getConfiguredScheduledSports();
+      const sports = await this.getConfiguredScheduledSports(eventReader);
       if (!this.running) {
         return;
       }
@@ -273,13 +277,13 @@ export class IngestionScheduler {
 
         this.startRecurringLoop(
           `${sport} participant sync`,
-          async () => this.runConfiguredSportFieldSync(sport),
+          async () => this.runConfiguredSportFieldSync(sport, eventReader),
           async () => this.getFieldSyncDelayMs(),
           `ingestion:${sport}:participants`,
         );
         this.startRecurringLoop(
           `${sport} live score sync`,
-          async () => this.runConfiguredLiveScoreSweep(sport),
+          async () => this.runConfiguredLiveScoreSweep(sport, eventReader),
           async () => this.getLiveScoreSweepDelayMs(),
           `ingestion:${sport}:live-scores`,
         );
@@ -396,7 +400,7 @@ export class IngestionScheduler {
     }, eventId);
   }
 
-  private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
+  private async runConfiguredSportFieldSync(sport: Sport, eventReader: IngestionScheduledEventReader): Promise<void> {
     // The field sync always runs, for synced sport leagues only (ADR 0011, #2086): it has no switch.
     const config = await this.getGlobalConfig();
 
@@ -406,19 +410,14 @@ export class IngestionScheduler {
       from: window.from.toISOString(),
       to: window.to.toISOString(),
     }, 'Running configured sport participant sync');
-    await this.runConfiguredActiveFieldSync(sport, window);
+    await this.runConfiguredActiveFieldSync(sport, window, eventReader);
   }
 
   private async runConfiguredActiveFieldSync(
     sport: Sport,
     window: { from: Date; to: Date },
+    eventReader: IngestionScheduledEventReader,
   ): Promise<void> {
-    const eventReader = this.options.eventReader;
-    if (!eventReader) {
-      this.logger?.debug({ sport }, 'Skipping active event participant sync because no event reader is configured');
-      return;
-    }
-
     const events = await eventReader.listEventsForFeed({
       sport,
       feed: 'EVENTPARTICIPANTS',
@@ -447,17 +446,11 @@ export class IngestionScheduler {
     }
   }
 
-  private async runConfiguredLiveScoreSweep(sport: Sport): Promise<void> {
+  private async runConfiguredLiveScoreSweep(sport: Sport, eventReader: IngestionScheduledEventReader): Promise<void> {
     const feed = 'EVENTLIVESCORES' as const;
     const config = await this.getGlobalConfig();
     if (!config.SCORES.enabled) {
       this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because it is disabled');
-      return;
-    }
-
-    const eventReader = this.options.eventReader;
-    if (!eventReader) {
-      this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync because no event reader is configured');
       return;
     }
 
@@ -700,16 +693,18 @@ export class IngestionScheduler {
     sport: Sport,
     feed: IngestionFeedType,
     provider: SportDataProvider,
-    work: () => Promise<number | IngestionJobWorkResult>,
-    eventExternalId?: string,
+    work: () => Promise<IngestionJobWorkResult>,
+    eventExternalId: string,
   ): Promise<IngestionJobRecord> {
-    const job: IngestionJobRecord = {
+    const startedAt = new Date();
+    // The record as it runs: it gets its completedAt when the work ends, either way.
+    const job: Omit<IngestionJobRecord, 'completedAt'> = {
       jobType,
       providerId,
       sport,
       eventExternalId,
       status: 'RUNNING',
-      startedAt: new Date(),
+      startedAt,
       recordsProcessed: 0,
       errors: 0,
       errorLog: [],
@@ -722,8 +717,8 @@ export class IngestionScheduler {
         jobType,
         providerId,
         sport,
-        eventExternalId: eventExternalId ?? null,
-        startedAt: job.startedAt?.toISOString() ?? null,
+        eventExternalId,
+        startedAt: startedAt.toISOString(),
       }, 'Ingestion job started');
       if (supportsProviderPayloadDiagnostics(provider) && !payloadCaptureSession) {
         provider.clearProviderPayloads();
@@ -731,17 +726,12 @@ export class IngestionScheduler {
       const result = payloadCaptureSession
         ? await payloadCaptureSession.run(work)
         : await work();
-      if (typeof result === 'number') {
-        job.recordsProcessed = result;
-      } else {
-        job.recordsProcessed = result.recordsProcessed;
-        job.stats = result.stats;
-        job.warnings = result.warnings;
-        job.writeDiagnostics = result.writeDiagnostics;
-      }
+      job.recordsProcessed = result.recordsProcessed;
+      job.stats = result.stats;
+      job.warnings = result.warnings;
+      job.writeDiagnostics = result.writeDiagnostics;
       job.providerPayload = buildProviderPayload(feed, provider, payloadCaptureSession);
       job.status = 'COMPLETED';
-      job.completedAt = new Date();
     } catch (err) {
       // The provider turned the call away for now (league model 1c): the caller's job is queued
       // again for when it will answer, so the failure is thrown, not kept as this run's outcome.
@@ -758,16 +748,14 @@ export class IngestionScheduler {
       job.status = 'FAILED';
       job.errors = 1;
       job.errorLog = [{ error: failure.errorMessage, at: new Date() }];
-      job.completedAt = new Date();
     }
+    const finished: IngestionJobRecord = { ...job, completedAt: new Date() };
 
     this.logger?.info({
-      ...toJobLogPayload(job),
-      durationMs: job.startedAt
-        ? job.completedAt.getTime() - job.startedAt.getTime()
-        : null,
+      ...toJobLogPayload(finished),
+      durationMs: finished.completedAt.getTime() - startedAt.getTime(),
     }, 'Ingestion job completed');
-    return job;
+    return finished;
   }
 
   /** `lockKey` names the job lock a loop that calls a provider holds; a local loop has none. */
@@ -777,11 +765,8 @@ export class IngestionScheduler {
     resolveDelayMs: () => Promise<number>,
     lockKey?: string,
   ): void {
+    // Started only while running, and `stop()` clears every timer, so each tick runs while running.
     const tick = async () => {
-      if (!this.running) {
-        return;
-      }
-
       try {
         this.logger?.debug({ label }, 'Recurring ingestion loop tick started');
         // Jobs a scheduled sync queues, such as settling an event it found final, record SCHEDULE (#1861).
@@ -847,10 +832,10 @@ export class IngestionScheduler {
    * The sports a sport league syncs from a running provider (#2073): read from the leagues' selected
    * provider mappings, so a sport no active league syncs runs no loop.
    */
-  private async getConfiguredScheduledSports(): Promise<Sport[]> {
+  private async getConfiguredScheduledSports(eventReader: IngestionScheduledEventReader): Promise<Sport[]> {
     const providerCodes = this.registry.all().map((provider) => provider.providerCode);
-    if (providerCodes.length === 0 || !this.options.eventReader) return [];
-    return this.options.eventReader.listSyncedSports({ providerCodes });
+    if (providerCodes.length === 0) return [];
+    return eventReader.listSyncedSports({ providerCodes });
   }
 
   /**
@@ -891,7 +876,7 @@ function createFailedJob(
   providerId: string,
   sport: Sport,
   error: string,
-  eventExternalId?: string,
+  eventExternalId: string,
 ): IngestionJobRecord {
   return {
     jobType,
@@ -965,14 +950,14 @@ function toJobLogPayload(job: IngestionJobRecord): Record<string, unknown> {
     jobType: job.jobType,
     providerId: job.providerId,
     sport: job.sport,
-    eventExternalId: job.eventExternalId ?? null,
+    eventExternalId: job.eventExternalId,
     status: job.status,
     recordsProcessed: job.recordsProcessed,
     errors: job.errors,
     stats: job.stats ?? null,
     warnings: job.warnings ?? [],
-    startedAt: job.startedAt?.toISOString() ?? null,
-    completedAt: job.completedAt?.toISOString() ?? null,
+    startedAt: job.startedAt.toISOString(),
+    completedAt: job.completedAt.toISOString(),
   };
 }
 

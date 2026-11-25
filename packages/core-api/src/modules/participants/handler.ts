@@ -183,6 +183,8 @@ export function createParticipantHandlers(participantService: ParticipantService
         nationality: body.nationality,
         role: body.role,
         teamAffiliation: body.teamAffiliation,
+        feedId: body.feedId,
+        isTestData: body.isTestData,
       });
 
       logger.info(

@@ -210,7 +210,12 @@ export class IngestionService {
   async listProviders(): Promise<ProviderSummary[]> {
     const providers = this.registry.all();
     const rows = this.providerSettings.all();
-    const providerIds = [...new Set([...providers.map((provider) => provider.providerId), ...rows.map((row) => providerSourceIdOf(row.code))])];
+    // Each provider's name, by id: its Provider row's where it has one, else its adapter's.
+    const providerNames = new Map([
+      ...providers.map((provider) => [provider.providerId, provider.providerName] as const),
+      ...rows.map((row) => [providerSourceIdOf(row.code), row.name] as const),
+    ]);
+    const providerIds = [...providerNames.keys()];
     const [eventSummaries, syncedLeagues, rateLimited, runCounts] = await Promise.all([
       this.sportEvents.summarizeByProviders(providerIds),
       this.sportLeagues.findEventSynced(),
@@ -229,14 +234,14 @@ export class IngestionService {
     }
     const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
     const rowsById = new Map(rows.map((row) => [providerSourceIdOf(row.code), row]));
-    const summaries = providerIds.map((providerId): ProviderSummary => {
+    const summaries = [...providerNames].map(([providerId, providerName]): ProviderSummary => {
       const provider = this.registry.bySourceId(providerId);
       const row = rowsById.get(providerId);
       const health = providerHealthOfRuns(row === undefined ? undefined : runCountsByProvider.get(row.id));
       const events = eventSummaries.get(providerId);
       return {
         providerId,
-        providerName: row?.name ?? provider?.providerName ?? providerId,
+        providerName,
         status: health.status,
         errorRate: health.errorRate,
         lastEventAt: events?.lastChangedAt ?? null,

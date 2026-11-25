@@ -7,7 +7,6 @@ import {
   autoAssignEventTiers,
   createContest,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -23,7 +22,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -34,7 +33,7 @@ import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // Horse racing end to end over HTTP (#622, #623): an admin builds a race and its field, a
 // commissioner runs a Win/Place/Show contest from the sport's template, the draw deals each entry
@@ -97,9 +96,8 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const a = admin.client;
 
     // --- The race and its field ------------------------------------------------------------
-    const circuit = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.HORSE_RACING)), ...sportPlay(Sport.HORSE_RACING), timeZone: 'UTC', sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
-    expect(circuit.response?.status).toBe(201);
-    const sportLeagueId = expectDefined(circuit.data).sportLeague.id;
+    const circuit = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` });
+    const sportLeagueId = circuit.id;
     created.sportLeagueIds.add(sportLeagueId);
     await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'US Thoroughbred', toSportLeagueId: sportLeagueId });
 

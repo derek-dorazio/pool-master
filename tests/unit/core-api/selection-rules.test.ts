@@ -101,6 +101,7 @@ function fieldRow(overrides: Partial<SportEventParticipant> & { id: string }): S
 function participant(id: string, overrides: Partial<Participant> = {}): Participant {
   return {
     id,
+    isTestData: false,
     sportLeagueId: 'league-1',
     ranking: null,
     name: `Golfer ${id}`,

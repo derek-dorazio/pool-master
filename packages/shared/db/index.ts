@@ -58,6 +58,7 @@ export type {
   MembershipTransaction,
   ParticipantProviderMappingRepository,
   ProviderMappingScope,
+  ParticipantFeedId,
   ParticipantRepository,
   ParticipantSearchFilters,
   SquadDetails,
@@ -174,6 +175,8 @@ export type {
   TierAssignment,
   PlatformTierProfileRepository,
   PlatformTierProfileWrite,
+  AutoLifecycleCandidate,
+  AutoLifecycleStatus,
 } from './sport-catalog-ports';
 export type {
   CustomerLeagueCommissioner,

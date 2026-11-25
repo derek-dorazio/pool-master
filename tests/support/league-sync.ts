@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { ProviderCode, providerSourceIdOf, type SportLeagueSeasonSpan } from '@poolmaster/shared/domain';
+import { ProviderCode, providerSourceIdOf } from '@poolmaster/shared/domain';
 
 /**
  * The provider id a league synced by `syncLeagueTo` reads as its sync provider, and its events
@@ -60,11 +60,3 @@ export async function syncSeasonsTo(
   if (ids.length > 0) await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { currentSeasonId: ids[0] } });
   return ids;
 }
-
-/** A sport league's first Season, for a test that makes one through the repository: 2026, named for its year. */
-export const FIRST_SEASON_2026: SportLeagueSeasonSpan = {
-  name: '2026',
-  championshipYear: 2026,
-  startsAt: new Date('2026-01-01T00:00:00.000Z'),
-  endsAt: new Date('2026-12-31T23:59:59.999Z'),
-};

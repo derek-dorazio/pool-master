@@ -4,7 +4,7 @@ import { BackgroundJobType, JobTrigger, LeagueRole, Sport } from '@poolmaster/sh
 import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import { requireRootAdmin } from '../../../packages/core-api/src/core/root-admin-guard';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
-import { currentJobStart } from '../../../packages/core-api/src/core/job-start';
+import { currentJobStart, JobStartMissingError } from '../../../packages/core-api/src/core/job-start';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import { actsAs, requestJobStart } from '../../../packages/core-api/src/plugins/request-job-start';
 import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from '../../../packages/core-api/src/modules/leagues/permissions';
@@ -40,14 +40,19 @@ async function buildApp(role: LeagueRole = LeagueRole.COMMISSIONER) {
   };
   const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   app.setErrorHandler(globalErrorHandler);
+  // What a request's handler threw, so a test can tell which failure answered it.
+  const errors: Error[] = [];
+  app.addHook('onError', async (_request, _reply, error) => { errors.push(error); });
   await app.register(requestJobStart);
   await app.register(authGuard);
   app.post('/admin/things', { onRequest: requireRootAdmin }, queueOne);
   app.post('/leagues/:id/tools', { preHandler: requireCommissioner(memberships) }, queueOne);
   app.post('/leagues/:id/admin-tools', { onRequest: requireRootAdmin, preHandler: requireCommissioner(memberships) }, queueOne);
   app.post('/leagues/:id/picks', { preHandler: requireMemberOfLeague(memberships, leagueFromPath) }, queueOne);
+  // A public route (no one signed in), here only to show what queueing a job from one does.
+  app.get('/api/v1/contest-config-templates', queueOne);
   await app.ready();
-  return { app, jobs };
+  return { app, jobs, errors };
 }
 
 async function startOf(url: string, headers: Record<string, string>, role?: LeagueRole) {
@@ -85,6 +90,19 @@ describe('request job start', () => {
   it('records SYSTEM with no person for upkeep a member\'s own request queues', async () => {
     await expect(startOf(`/leagues/${LEAGUE_ID}/picks`, bearer('member-1', false), LeagueRole.MEMBER))
       .resolves.toEqual({ trigger: JobTrigger.SYSTEM, startedByUserId: undefined });
+  });
+
+  it('refuses to queue a job from a request with no one signed in, since nothing says what started it, and writes no job', async () => {
+    const { app, jobs, errors } = await buildApp();
+    try {
+      const response = await app.inject({ method: 'GET', url: '/api/v1/contest-config-templates' });
+
+      expect(response.statusCode).toBe(500);
+      expect(errors).toEqual([expect.any(JobStartMissingError)]);
+      expect(jobs.rows).toHaveLength(0);
+    } finally {
+      await app.close();
+    }
   });
 
   it('keeps the stronger role whichever gate says so first', () => {

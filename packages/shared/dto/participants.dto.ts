@@ -94,7 +94,9 @@ export const CreateParticipantRequestSchema = z.object({
   nationality: z.string().max(10).optional().describe('Participant nationality or country code.'),
   role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
   teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
-}).describe('A new participant for the shared catalog.');
+  feedId: z.string().min(1).max(255).optional().describe('The sport league\'s sync provider\'s own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.'),
+  isTestData: z.boolean().optional().describe('A test participant (QA only), for a test event\'s field: it joins only a test slot\'s event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted.'),
+}).describe('A new participant of a sport league.');
 export type CreateParticipantRequest = z.infer<typeof CreateParticipantRequestSchema>;
 
 export const UpdateParticipantRequestSchema = z.object({

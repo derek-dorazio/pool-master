@@ -545,6 +545,21 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       expect(await screen.findByText('Sport league not found.')).toBeInTheDocument();
     });
 
+    it.each([
+      [true, 'the league\'s test participants'],
+      [false, 'the league\'s roster'],
+    ])('offers a test event (%s) %s, which the API lists apart', async (isTestData) => {
+      seed({ tournament: { isTestData } });
+      listSportLeagueParticipantsMock.mockResolvedValue(rosterOf({ id: 'p-test', name: 'Test Golfer' }));
+      renderPage();
+
+      await openAddModal();
+
+      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-test')).toBeInTheDocument();
+      // The mock reads the request's query string, so the flag arrives as its text.
+      expect(listSportLeagueParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { testData: String(isTestData) } }));
+    });
+
     it('narrows the roster to the typed name, and says no new golfers matched when none does', async () => {
       seed();
       listSportLeagueParticipantsMock.mockResolvedValue(

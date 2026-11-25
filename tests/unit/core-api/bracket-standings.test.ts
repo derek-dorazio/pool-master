@@ -47,6 +47,7 @@ import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeParticipantContestScoringRuleRepo, fakeSquaresRepo } from '../../support/repo-fakes';
 import { testDomainEvents } from '../../support/domain-events';
+import { fakeLogger } from '../../support/fake-logger';
 
 const T0 = new Date('2027-03-01T00:00:00.000Z');
 /** The bracket tips off at noon on 18 March; the test's clock is set either side of it. */
@@ -472,6 +473,124 @@ describe('ContestService.getBracketLeaderboard', () => {
 });
 
 describe('Stored bracket leaderboards (#1435)', () => {
+  it('rebuilds nothing, and reads no contest, when no board of the changed contests or events is stored', async () => {
+    const context = setup();
+    const findByIds = jest.spyOn(context.deps.contests, 'findByIds');
+
+    await expect(context.contestService.rebuildLeaderboardSnapshots({ sportEventIds: [context.sportEvent.id], contestIds: [] })).resolves.toBe(0);
+    expect(findByIds).not.toHaveBeenCalled();
+  });
+
+  it('skips a stored board whose contest is gone, counting it as unchanged', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    context.world.contests.delete(context.contest.id);
+
+    await expect(context.contestService.rebuildLeaderboardSnapshots({ sportEventIds: [], contestIds: [context.contest.id] })).resolves.toBe(0);
+    expect(context.world.leaderboardSnapshots.rows.size).toBe(1);
+  });
+
+  it('skips a stored board of a contest that keeps no leaderboard (a squares grid), counting it as unchanged', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    context.world.contests.set(context.contest.id, { ...context.contest, selectionType: SelectionType.SQUARES });
+
+    await expect(context.contestService.rebuildLeaderboardSnapshots({ sportEventIds: [], contestIds: [context.contest.id] })).resolves.toBe(0);
+    expect(context.world.leaderboardSnapshots.rows.size).toBe(1);
+  });
+
+  it('drops a stored board that can no longer be shown, so the next read answers why, and counts it', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    // The event moved back before its start: its picks are hidden again.
+    context.setNow(BEFORE_START);
+
+    await expect(context.contestService.rebuildLeaderboardSnapshots({ sportEventIds: [context.sportEvent.id], contestIds: [] })).resolves.toBe(1);
+    expect(context.world.leaderboardSnapshots.rows.size).toBe(0);
+  });
+
+  it('logs a rebuild that fails for another reason, keeps the stored board and counts it as unchanged', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    const logger = fakeLogger();
+    const service = new ContestService({ ...context.deps, logger });
+    jest.spyOn(context.deps.leaderboardSnapshots, 'save').mockRejectedValue(new Error('connection reset'));
+    context.setNow(new Date(DURING.getTime() + 60_000));
+
+    await expect(service.rebuildLeaderboardSnapshots({ sportEventIds: [context.sportEvent.id], contestIds: [] })).resolves.toBe(0);
+    expect(context.world.leaderboardSnapshots.rows.size).toBe(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ contestId: context.contest.id, error: 'connection reset' }),
+      'leaderboard snapshot rebuild failed; the stored board stands until its next rebuild',
+    );
+  });
+
+  it('computes the board once for two viewers asking together, and both read the one stored version', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    const save = jest.spyOn(context.deps.leaderboardSnapshots, 'save');
+
+    const [first, second] = await Promise.all([
+      context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id),
+      context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id),
+    ]);
+
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(second).toEqual(first);
+  });
+
+  it('answers the newer board stored meanwhile when its own write loses to it', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    const newer = { ...expectDefined([...context.world.leaderboardSnapshots.rows.values()].at(0)), version: 7 };
+    jest.spyOn(context.deps.leaderboardSnapshots, 'save').mockResolvedValue(null);
+    // No current board is read first, so the read computes; then the newer one is read back.
+    jest.spyOn(context.deps.leaderboardSnapshots, 'find').mockResolvedValueOnce(null).mockResolvedValueOnce(newer);
+
+    const read = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+
+    expect(read.version).toBe(7);
+  });
+
+  it('answers its own board as version 1 when its write is refused and no stored board can be read back', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    const stored = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    jest.spyOn(context.deps.leaderboardSnapshots, 'save').mockResolvedValue(null);
+    jest.spyOn(context.deps.leaderboardSnapshots, 'find').mockResolvedValue(null);
+
+    const read = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+
+    expect(read.version).toBe(1);
+    expect(read.board).toEqual(stored.board);
+  });
+
+  it('refuses a board of another kind read back in place of the one it wrote', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK);
+    jest.spyOn(context.deps.leaderboardSnapshots, 'save').mockResolvedValue(null);
+    jest.spyOn(context.deps.leaderboardSnapshots, 'find')
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        contestId: context.contest.id,
+        shownEvent: '',
+        boardFormat: LEADERBOARD_BOARD_FORMAT,
+        version: 2,
+        computedFrom: DURING,
+        contestUpdatedAt: T0,
+        validUntil: null,
+        board: { kind: LeaderboardKind.PICK_EM, board: {} } as unknown as StoredLeaderboard,
+      });
+
+    await expect(context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id))
+      .rejects.toThrow(`Contest ${context.contest.id} stored a PICK_EM board for a BRACKET read`);
+  });
+
   it('answers the next poll from the stored board until a result is saved, then from the board rebuilt with that result', async () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);

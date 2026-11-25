@@ -1,5 +1,5 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
-import { readCsrfToken, submitAndRead } from './browser-writes';
+import { submitAndRead } from './browser-writes';
 import { expectOk, type AuthHeaders } from './admin-api';
 
 /**
@@ -10,26 +10,20 @@ import { expectOk, type AuthHeaders } from './admin-api';
  * hold a test slot.
  */
 
-export type SeededSportLeague = { id: string; isActive: boolean };
+export type SeededSportLeague = { id: string };
 
-/** A seeded sport league of the sport, by its name, as the root admin's list reads it. */
-export async function findSeededSportLeague(page: Page, sport: string, name: string): Promise<SeededSportLeague> {
-  return findSeededSportLeagueThroughApi(page.request, {}, sport, name);
+/** A seeded sport league of the sport, by its URL segment (a stable key, never its name), as the root admin's list reads it. */
+export async function findSeededSportLeague(page: Page, sport: string, urlSegment: string): Promise<SeededSportLeague> {
+  return findSeededSportLeagueThroughApi(page.request, {}, sport, urlSegment);
 }
 
 /** `findSeededSportLeague`, for a journey that signs its API calls with the admin's token. */
-export async function findSeededSportLeagueThroughApi(api: APIRequestContext, headers: AuthHeaders, sport: string, name: string): Promise<SeededSportLeague> {
+export async function findSeededSportLeagueThroughApi(api: APIRequestContext, headers: AuthHeaders, sport: string, urlSegment: string): Promise<SeededSportLeague> {
   const response = await expectOk(api.get('/api/v1/sport-leagues', { headers, params: { sport } }), `list ${sport} sport leagues`);
-  const { sportLeagues } = (await response.json()) as { sportLeagues: Array<{ id: string; name: string; isActive: boolean }> };
-  const found = sportLeagues.find((sportLeague) => sportLeague.name === name);
-  if (!found) throw new Error(`no seeded ${sport} sport league is named "${name}"`);
-  return { id: found.id, isActive: found.isActive };
-}
-
-/** Switches a sport league on or off through the API, signed as the browser's root admin. */
-export async function setSportLeagueActive(page: Page, sportLeagueId: string, isActive: boolean): Promise<void> {
-  const headers = { 'x-csrf-token': await readCsrfToken(page) };
-  await expectOk(page.request.patch(`/api/v1/sport-leagues/${sportLeagueId}`, { headers, data: { isActive } }), `switch sport league ${sportLeagueId} ${isActive ? 'on' : 'off'}`);
+  const { sportLeagues } = (await response.json()) as { sportLeagues: Array<{ id: string; urlSegment: string }> };
+  const found = sportLeagues.find((sportLeague) => sportLeague.urlSegment === urlSegment);
+  if (!found) throw new Error(`no seeded ${sport} sport league has the URL segment "${urlSegment}"`);
+  return { id: found.id };
 }
 
 /**
