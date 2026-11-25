@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  type PlanCap,
+  PlanCap,
   type LeaguePlan,
   type PlanFeature,
 } from '@poolmaster/shared/domain';
