@@ -16,7 +16,7 @@ export interface ContestTypeTile {
 /** A sport league's contest types on Contest types: its own templates (#1825: every template has one league). */
 export interface ContestCatalogLeague {
   sportLeagueId: string;
-  /** What the page calls it, as How to Play does: the league's display name, else its name. */
+  /** What the page calls it, as How to Play does: its name. */
   name: string;
   /** Its stored URL segment, its name in the page's link: `?sport=golf&league=pga`. */
   urlSegment: string;
@@ -101,7 +101,7 @@ export function buildLeagueContestCatalog(
     const groups = activeSportLeaguesOf(sport, sportLeagues)
       .map((sportLeague) => ({
         sportLeagueId: sportLeague.id,
-        name: sportLeague.displayName ?? sportLeague.name,
+        name: sportLeague.name,
         urlSegment: sportLeague.urlSegment,
         tiles: toTiles(sportLeague.id, offeredIn(sportLeague, templates), sportLeague.selectionTypes),
       }))
@@ -113,7 +113,7 @@ export function buildLeagueContestCatalog(
 /** A sport league on the public How to Play page: the formats its own templates offer. */
 export interface PublicCatalogLeague {
   sportLeagueId: string;
-  /** What the page calls it beside other sports' leagues: its display name, else its name. */
+  /** What the page calls it beside other sports' leagues: its name. */
   name: string;
   /** Its stored URL segment, its name in the page's link: `?sport=basketball&league=wnba`. */
   urlSegment: string;
@@ -141,7 +141,7 @@ function toFormatTiles(
 /** Sport leagues in their display order, the NFL before NCAA Men's Football; unordered ones after, by name. */
 function bySportLeagueDisplayOrder(left: SportLeagueDto, right: SportLeagueDto) {
   return (left.displayOrder ?? Number.MAX_SAFE_INTEGER) - (right.displayOrder ?? Number.MAX_SAFE_INTEGER)
-    || (left.displayName ?? left.name).localeCompare(right.displayName ?? right.name);
+    || left.name.localeCompare(right.name);
 }
 
 /** A sport's active sport leagues, in display order. */
@@ -178,7 +178,7 @@ export function buildPublicContestCatalog(
     const leagues = activeLeagues
       .map((sportLeague) => ({
         sportLeagueId: sportLeague.id,
-        name: sportLeague.displayName ?? sportLeague.name,
+        name: sportLeague.name,
         urlSegment: sportLeague.urlSegment,
         groups: toFormatTiles(`${sport}/${sportLeague.id}`, offeredIn(sportLeague, sportTemplates), sportLeague.selectionTypes),
       }))

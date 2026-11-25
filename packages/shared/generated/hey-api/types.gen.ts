@@ -8139,10 +8139,6 @@ export type SportLeagueDto = {
      */
     noun: 'LEAGUE' | null;
     /**
-     * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
-     */
-    displayName: string | null;
-    /**
      * Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
      */
     participantType: 'INDIVIDUAL' | 'TEAM';
@@ -8318,10 +8314,6 @@ export type SportLeagueListResponse = {
          */
         noun: 'LEAGUE' | null;
         /**
-         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
-         */
-        displayName: string | null;
-        /**
          * Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
@@ -8473,10 +8465,6 @@ export type SportLeagueResponse = {
          * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
          */
         noun: 'LEAGUE' | null;
-        /**
-         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
-         */
-        displayName: string | null;
         /**
          * Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
          */
