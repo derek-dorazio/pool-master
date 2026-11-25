@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
-  CreateSportLeagueRequest,
   CreateTestSlotRequest,
   SportLeagueListQuery,
+  SportLeagueParticipantListQuery,
   SportLeagueListResponse,
   SportLeagueParticipantRankingsRequest,
   SportLeagueRankingUploadPreviewResponse,
@@ -44,7 +44,7 @@ type SportLeagueParams = { Params: { sportLeagueId: string } };
  * Service errors carry their own code and status; the global error handler sends them. `lists`
  * keeps the public list by its filters (#1181); the routes clear it on every write.
  */
-export function createSportLeagueHandlers(
+export function buildSportLeagueHandlers(
   sportLeagues: SportLeagueService,
   lists: ReadCache<SportLeagueListResponse>,
   overviews: SportLeagueOverviewService,
@@ -109,16 +109,15 @@ export function createSportLeagueHandlers(
       return { sportLeague: mapSportLeagueToDto(sportLeague) } satisfies SportLeagueResponse;
     },
 
-    createSportLeague: async (request: FastifyRequest<{ Body: CreateSportLeagueRequest }>, reply: FastifyReply) => {
-      const { sport, ...input } = request.body;
-      const sportLeague = await sportLeagues.createSportLeague(sport, input);
-      return reply.status(201).send({ sportLeague: mapSportLeagueToDto(sportLeague) } satisfies SportLeagueResponse);
-    },
-
     createTestSlot: async (request: FastifyRequest<SportLeagueParams & { Body: CreateTestSlotRequest }>, reply: FastifyReply) => {
       const { startsAt, endsAt, ...input } = request.body;
       const slot = await sportLeagues.createTestSlot(request.params.sportLeagueId, { ...input, startsAt: new Date(startsAt), endsAt: endsAt === undefined ? null : new Date(endsAt) });
       return reply.status(201).send({ slot: mapSportLeagueSeasonSlotToDto(slot) } satisfies SportLeagueSeasonSlotResponse);
+    },
+
+    deleteTestSlot: async (request: FastifyRequest<{ Params: { sportLeagueId: string; seasonSlotId: string } }>, reply: FastifyReply) => {
+      await sportLeagues.deleteTestSlot(request.params.sportLeagueId, request.params.seasonSlotId);
+      return reply.status(204).send();
     },
 
     updateSportLeague: async (request: FastifyRequest<SportLeagueParams & { Body: UpdateSportLeagueRequest }>): Promise<SportLeagueResponse> => {
@@ -131,8 +130,10 @@ export function createSportLeagueHandlers(
       return reply.status(204).send();
     },
 
-    listParticipants: async (request: FastifyRequest<SportLeagueParams>): Promise<ParticipantListResponse> => {
-      const participants = await sportLeagues.listParticipants(request.params.sportLeagueId);
+    listParticipants: async (
+      request: FastifyRequest<SportLeagueParams & { Querystring: SportLeagueParticipantListQuery }>,
+    ): Promise<ParticipantListResponse> => {
+      const participants = await sportLeagues.listParticipants(request.params.sportLeagueId, request.query.testData ?? false);
       return { participants: participants.map(mapParticipantToDto) };
     },
 

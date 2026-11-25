@@ -323,11 +323,11 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Add participants to a sport event\'s field',
-      description: 'Any participants; ones already on the field are skipped. Root admin only.',
+      description: 'Any participants; ones already on the field are skipped. 422 TEST_PARTICIPANT_NOT_ON_TEST_SLOT for a test participant on an event the sync keeps: one joins only a test slot\'s event. Root admin only.',
       operationId: 'addEventParticipants',
       params: EVENT_PARAMS,
       body: schemaRef('AddSportEventParticipantsRequest'),
-      response: { 200: schemaRef('AddSportEventParticipantsResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('AddSportEventParticipantsResponse'), ...errors(401, 403, 404, 422) },
     },
     handler: handler.addEventParticipants,
   });

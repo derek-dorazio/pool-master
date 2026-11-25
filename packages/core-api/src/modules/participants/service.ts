@@ -4,6 +4,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ParticipantFeedId,
   ParticipantRepository,
   ParticipantProviderMappingRepository,
   ParticipantSearchFilters,
@@ -30,6 +31,10 @@ export interface CreateParticipantInput {
   nationality?: string;
   role?: string;
   teamAffiliation?: string;
+  /** The sport league's sync provider's id for the participant, mapped in the same write (#2096). */
+  feedId?: string;
+  /** A test participant for a test slot's field (#2096); it never takes a feed id. */
+  isTestData?: boolean;
 }
 
 export interface UpdateParticipantInput {
@@ -80,60 +85,79 @@ export class ParticipantService {
     return participants;
   }
 
+  /**
+   * A participant of the sport league (#2096). A provider-synced league takes exactly two shapes:
+   * one with its sync provider's feed id, written with its provider mapping in one transaction, or a
+   * test participant (`isTestData`), which never has a mapping. Anything else is 409
+   * PARTICIPANT_FEED_ID_REQUIRED, since the sync would make a second participant beside an unmapped
+   * one. A league with no feed takes a participant without a feed id, as before. 404
+   * SPORT_LEAGUE_NOT_FOUND; 422 TEST_PARTICIPANT_FEED_ID for a test participant given a feed id,
+   * SPORT_LEAGUE_NOT_SYNCED for a feed id in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN for
+   * a feed id the league already maps.
+   */
   async create(input: CreateParticipantInput): Promise<Participant> {
     this.logger?.debug(
-      {
-        action: 'participants.create.start',
-        data: {
-          sportLeagueId: input.sportLeagueId,
-          participantType: input.participantType,
-        },
-      },
+      { action: 'participants.create.start', data: { sportLeagueId: input.sportLeagueId, participantType: input.participantType, isTestData: input.isTestData === true } },
       'Creating participant',
     );
-
-    try {
-      const participant = await this.participantRepo.create({
-        sportLeagueId: input.sportLeagueId,
-        ranking: input.ranking ?? null,
-        name: input.name,
-        participantType: input.participantType,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        shortName: input.shortName,
-        nationality: input.nationality,
-        role: input.role,
-        teamAffiliation: input.teamAffiliation,
-        status: ParticipantStatus.ACTIVE,
-        injuryStatus: DEFAULT_INJURY_STATUS,
-      });
-
-      this.logger?.info(
-        {
-          action: 'participants.create.success',
-          data: {
-            participantId: participant.id,
-            sportLeagueId: participant.sportLeagueId,
-          },
-        },
-        'Created participant',
+    const isTestData = input.isTestData === true;
+    if (isTestData && input.feedId !== undefined) throw new TestParticipantFeedIdError();
+    const syncProviderId = await this.providerMappingRepo.findSyncProviderId(input.sportLeagueId);
+    if (syncProviderId === undefined) throw new SportLeagueNotFoundError(input.sportLeagueId);
+    if (syncProviderId === null && input.feedId !== undefined) throw new SportLeagueNotSyncedError(input.sportLeagueId);
+    if (syncProviderId !== null && !isTestData && input.feedId === undefined) {
+      this.logger?.warn(
+        { action: 'participants.create.feedIdRequired', data: { sportLeagueId: input.sportLeagueId } },
+        'Refused an unmapped participant in a provider-synced sport league',
       );
-
-      return participant;
+      throw new ParticipantFeedIdRequiredError(input.sportLeagueId);
+    }
+    const row = {
+      sportLeagueId: input.sportLeagueId,
+      ranking: input.ranking ?? null,
+      name: input.name,
+      participantType: input.participantType,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      shortName: input.shortName,
+      nationality: input.nationality,
+      role: input.role,
+      teamAffiliation: input.teamAffiliation,
+      status: ParticipantStatus.ACTIVE,
+      injuryStatus: DEFAULT_INJURY_STATUS,
+      isTestData,
+    };
+    let participant: Participant;
+    try {
+      participant = syncProviderId === null || input.feedId === undefined
+        ? await this.participantRepo.create(row)
+        : await this.createMapped(row, { providerId: syncProviderId, externalId: input.feedId });
     } catch (error) {
       this.logger?.error(
-        {
-          action: 'participants.create.failed',
-          err: error,
-          data: {
-            sportLeagueId: input.sportLeagueId,
-            participantType: input.participantType,
-          },
-        },
+        { action: 'participants.create.failed', err: error, data: { sportLeagueId: input.sportLeagueId, participantType: input.participantType } },
         'Participant creation failed',
       );
       throw error;
     }
+    this.logger?.info(
+      { action: 'participants.create.success', data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, isTestData } },
+      'Created participant',
+    );
+    return participant;
+  }
+
+  /** The participant and its feed id's mapping together, with the mapping's follow-ups (#2069). */
+  private async createMapped(row: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>, feedId: ParticipantFeedId): Promise<Participant> {
+    const followUps = await this.domainEvents.collect({
+      type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED,
+      sportLeagueId: row.sportLeagueId,
+      providerId: feedId.providerId,
+      externalIds: [feedId.externalId],
+    });
+    const created = await this.participantRepo.createWithProviderMapping(row, feedId, followUps.jobs);
+    if (created === null) throw new ParticipantFeedIdTakenError(feedId.externalId);
+    followUps.queued();
+    return created;
   }
 
   async update(id: string, input: UpdateParticipantInput): Promise<Participant> {
@@ -245,6 +269,7 @@ export class ParticipantService {
     if (!participant) {
       throw new ParticipantNotFoundError(participantId);
     }
+    if (participant.isTestData) throw new TestParticipantFeedIdError();
     const followUps = await this.domainEvents.collect({
       type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED,
       sportLeagueId: participant.sportLeagueId,
@@ -302,5 +327,59 @@ export class ParticipantInUseError extends Error {
   constructor(participantId: string, fieldEntries: number) {
     super(`Participant ${participantId} is on ${fieldEntries} event ${fieldEntries === 1 ? 'field' : 'fields'}, so they cannot be deleted.`);
     this.name = 'ParticipantInUseError';
+  }
+}
+
+/** 409: a provider-synced league takes a participant only with its feed id, or as a test participant (#2096). */
+class ParticipantFeedIdRequiredError extends Error {
+  readonly code: ApiErrorCode = 'PARTICIPANT_FEED_ID_REQUIRED';
+  readonly statusCode = 409;
+
+  constructor(sportLeagueId: string) {
+    super(`Sport league ${sportLeagueId} is provider-synced: a participant needs its provider's feed id, or must be a test participant.`);
+    this.name = 'ParticipantFeedIdRequiredError';
+  }
+}
+
+/** 409: another participant of the league already holds the feed id (#2096). */
+class ParticipantFeedIdTakenError extends Error {
+  readonly code: ApiErrorCode = 'PARTICIPANT_FEED_ID_TAKEN';
+  readonly statusCode = 409;
+
+  constructor(externalId: string) {
+    super(`Another participant of the sport league already has feed id ${externalId}.`);
+    this.name = 'ParticipantFeedIdTakenError';
+  }
+}
+
+/** 422: a test participant never has a provider mapping (#2096). */
+class TestParticipantFeedIdError extends Error {
+  readonly code: ApiErrorCode = 'TEST_PARTICIPANT_FEED_ID';
+  readonly statusCode = 422;
+
+  constructor() {
+    super('A test participant never has a provider feed id.');
+    this.name = 'TestParticipantFeedIdError';
+  }
+}
+
+class SportLeagueNotFoundError extends Error {
+  readonly code: ApiErrorCode = 'SPORT_LEAGUE_NOT_FOUND';
+  readonly statusCode = 404;
+
+  constructor(sportLeagueId: string) {
+    super(`Sport league ${sportLeagueId} was not found.`);
+    this.name = 'SportLeagueNotFoundError';
+  }
+}
+
+/** 422: a feed id names a participant at the league's sync provider, and this league has none (#2096). */
+class SportLeagueNotSyncedError extends Error {
+  readonly code: ApiErrorCode = 'SPORT_LEAGUE_NOT_SYNCED';
+  readonly statusCode = 422;
+
+  constructor(sportLeagueId: string) {
+    super(`Sport league ${sportLeagueId} has no feed, so a participant of it has no feed id.`);
+    this.name = 'SportLeagueNotSyncedError';
   }
 }

@@ -74,6 +74,7 @@ export function EventFieldTab() {
           onClose={() => setAddOpen(false)}
           sport={event.sport}
           sportLeagueId={event.sportLeagueId}
+          testEvent={event.isTestData}
         />
       ) : null}
     </div>

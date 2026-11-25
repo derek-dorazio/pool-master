@@ -76,11 +76,12 @@ export function useSportLeagueNoun(sport: Sport, sportLeagueId: string | undefin
  * belongs to one league, so this is the league's whole roster, read once and never paged; screens
  * filter it by status and name in the browser.
  */
-export function useLeagueRosterQuery(sportLeagueId: string, options: { enabled?: boolean } = {}) {
+export function useLeagueRosterQuery(sportLeagueId: string, options: { enabled?: boolean; testData?: boolean } = {}) {
+  const testData = options.testData ?? false;
   return useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.leagueRoster(sportLeagueId),
+    queryKey: QueryKeys.rootAdmin.manageSport.leagueRoster(sportLeagueId, testData),
     queryFn: async (): Promise<ParticipantDto[]> => {
-      const response = await listSportLeagueParticipants({ path: { sportLeagueId } });
+      const response = await listSportLeagueParticipants({ path: { sportLeagueId }, query: { testData } });
       if (!response.data?.participants) {
         throwApiError(response.error, 'The roster response is missing data.');
       }

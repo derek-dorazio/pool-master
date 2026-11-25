@@ -24,7 +24,6 @@ import type {
   SportConfig,
   SportEvent,
   SportEventContest,
-  SportLeagueSeasonSpan,
   SportEventRoundMatch,
   SportEventParticipant,
   SportEventParticipantGolfRound,
@@ -92,19 +91,8 @@ export interface SportLeagueRepository {
   findByIds(ids: readonly string[]): Promise<SportLeague[]>;
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
-  findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
-  /** The sport's league at this URL segment (#2042), or null when none has it. */
-  findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  /**
-   * The league and its first Season, made its current one, in one transaction (#2003). The Season
-   * is a stopgap for the browser journeys' own leagues until they move to test slots (#2004).
-   */
-  create(
-    input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
-    firstSeason: SportLeagueSeasonSpan,
-  ): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -272,6 +260,13 @@ export interface SportEventRepository {
   transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null>;
   /** Deletes the event with its rounds, tiers and field. Refuses nothing: the caller guards contests. */
   delete(id: string): Promise<void>;
+  /**
+   * Removes a test slot (#2075) in one transaction: its event (`sportEventId`, null when it has
+   * none) as `delete` does, the slot, and each test participant on that event's field that no other
+   * field holds. No other participant is touched. A synced slot is never removed. Returns how many
+   * test participants went.
+   */
+  deleteTestSlot(seasonSlotId: string, sportEventId: string | null): Promise<number>;
   /** Event participants per event, for each id asked about (0 where none). */
   countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /**

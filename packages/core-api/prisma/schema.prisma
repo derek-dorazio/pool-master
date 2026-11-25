@@ -1312,6 +1312,10 @@ model Participant {
   injuryStatus     Json                    @default("{\"status\": \"HEALTHY\"}") @map("injury_status")
   photoUrl         String?                 @map("photo_url")
   photoLastUpdated DateTime?               @map("photo_last_updated") @db.Timestamptz
+  /// A test participant (QA only, #2096), marked as test slots are: made for a test slot's field,
+  /// the one participant a provider-synced league takes without a feed id. It joins only a test
+  /// slot's field, never gets a provider mapping, and no roster or sync reads it.
+  isTestData       Boolean                 @default(false) @map("is_test_data")
 
   sportLeague            SportLeague                  @relation(fields: [sportLeagueId], references: [id])
   providerMappings       ParticipantProviderMapping[]

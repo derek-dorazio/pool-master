@@ -7,7 +7,6 @@ import {
   autoAssignEventTiers,
   createContest,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getEventBracket,
@@ -40,7 +39,7 @@ import {
   PickEmLeaderboardResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -52,7 +51,7 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A pick'em week scored against the spread end to end over HTTP (#720). An admin releases a week of
 // four unlinked basketball games and sets three spreads; a straight-up pool against the spread is
@@ -126,8 +125,8 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const a = admin.client;
 
     // --- A released week of four games ------------------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
-    const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {

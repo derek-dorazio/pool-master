@@ -7,7 +7,6 @@ import {
   autoAssignEventTiers,
   createContest,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -42,7 +41,7 @@ import {
   SportEventBracketResponseSchema,
   type PickEmLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -54,7 +53,7 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A two-week confidence pick'em season end to end over HTTP (#717). An admin releases two weeks,
 // each an eight-team basketball event whose four first-round games are the week (its later
@@ -199,8 +198,8 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     const a = admin.client;
 
     // --- Two released weeks of four games -----------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Season Conference ${RUN}` } });
-    const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Season Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {

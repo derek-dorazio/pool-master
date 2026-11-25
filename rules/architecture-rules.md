@@ -737,7 +737,10 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
 - A data file carries its scope in an envelope (schema version, sport, season, sport
   leagues, contents, `testData: true`), checked before any write; the filename is never parsed.
 - **A test participant carries the provider's feed id wherever the provider serves it**, so the
-  sync and the test data share one participant row and never make a duplicate. A "Test-" event
+  sync and the test data share one participant row and never make a duplicate. In a
+  provider-synced league a file player without the sync provider's id is written as a test
+  participant (`isTestData`, #2096): on no roster, never mapped, fielded only on test slots'
+  events. A made-up feed id is never written. A "Test-" event
   never carries a provider id: a real one would let the live score poll write real results
   onto it.
 - It is re-entrant by comparing and filling in: what is missing is added, what differs is

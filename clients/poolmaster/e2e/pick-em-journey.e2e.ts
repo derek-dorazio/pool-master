@@ -113,7 +113,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
   const run: JourneyRun = {
     runId,
     sport: 'AMERICAN_FOOTBALL',
-    tourName: 'NFL',
+    tourUrlSegment: 'nfl',
     playerNamePrefix: e2eName('Club', runId),
     tournamentName: e2eName('Pickem Week 1', runId),
     moreTournamentNames: [e2eName('Pickem Week 2', runId)],
@@ -146,7 +146,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
     }
 
     // A league is added by migration, so a journey plays in a seeded one, on its own test slots (#2004).
-    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'AMERICAN_FOOTBALL', run.tourName);
+    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'AMERICAN_FOOTBALL', run.tourUrlSegment);
     const eventIds: string[] = [];
     for (const [index, week] of WEEKS.entries()) {
       const event = await createTestEventThroughApi(api, headers, {
@@ -163,6 +163,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
       const participantIds: string[] = [];
       for (const name of teams) {
         const { participant } = await postJson<{ participant: { id: string } }>(api, headers, '/api/v1/participants/', {
+          isTestData: true,
           sportLeagueId: sportLeague.id,
           participantType: 'TEAM',
           name: teamName(run, name),

@@ -19,10 +19,10 @@ import { requireRootAdmin } from '../../core/root-admin-guard';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
 import { PublicReadPath, readPublicReadCacheTtlMs } from '../../core/public-cache';
 import { ReadCache } from '../../core/read-cache';
-import { createSportLeagueService, eventFieldCache } from '../events/wiring';
+import { buildSportLeagueService, eventFieldCache } from '../events/wiring';
 import { PrismaSportLeagueOverviewReader } from '../../adapters/prisma-sport-league-overview-reader';
 import { SportLeagueOverviewService } from '../sport-catalog/sport-league-overview';
-import { createSportLeagueHandlers } from './handler';
+import { buildSportLeagueHandlers } from './handler';
 import type { SportDataProviderLookup } from '../sport-catalog/sport-league-service';
 import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
 import { SportLeaguePageService } from '../sport-catalog/sport-league-page';
@@ -51,14 +51,14 @@ export interface SportLeaguesModuleOptions {
 
 export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
-  const sportLeagues = createSportLeagueService(getAppPrisma(fastify), fastify.log, opts.providers);
+  const sportLeagues = buildSportLeagueService(getAppPrisma(fastify), fastify.log, opts.providers);
   const lists = new ReadCache<SportLeagueListResponse>(readPublicReadCacheTtlMs(process.env));
   const overviews = new SportLeagueOverviewService({ reader: new PrismaSportLeagueOverviewReader(getAppPrisma(fastify)) });
   const page = new SportLeaguePageService({
     reader: new PrismaSportLeaguePageReader(getAppPrisma(fastify)),
     webhookProviderIds: opts.webhookProviderIds,
   });
-  const handler = createSportLeagueHandlers(sportLeagues, lists, overviews, page);
+  const handler = buildSportLeagueHandlers(sportLeagues, lists, overviews, page);
   const write = { onRequest: requireRootAdmin };
 
   // A ranking write changes the participants every event of the sport league shows on its field
@@ -113,19 +113,6 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     handler: handler.getSportLeague,
   });
 
-  fastify.post('/', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Create a sport league',
-      description: 'A new sport league, with who competes in its events and how they are scored (#2001), both fixed once set. The platform\'s own leagues and their Seasons are added by migration (the add-sport skill, #2003); one made here starts with this calendar year\'s Season as its current one, a stopgap for the browser journeys until they move to test slots (#2004). 400 TIME_ZONE_UNKNOWN for a time zone the runtime does not know. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
-      operationId: 'createSportLeague',
-      body: schemaRef('CreateSportLeagueRequest'),
-      response: { 201: schemaRef('SportLeagueResponse'), ...errors(400, 403, 404, 409, 422) },
-    },
-    handler: handler.createSportLeague,
-  });
-
   fastify.post('/:sportLeagueId/test-slots', {
     ...write,
     schema: {
@@ -140,6 +127,24 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       response: { 201: schemaRef('SportLeagueSeasonSlotResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     handler: handler.createTestSlot,
+  });
+
+  fastify.delete('/:sportLeagueId/test-slots/:seasonSlotId', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Remove a test slot',
+      description: 'Removes a test slot (QA only, #2075), all or nothing: the test event on it, the slot, and each test participant on that event\'s field that no other field holds; no other participant of the league. How a browser journey cleans up after itself. '
+        + '404 SEASON_SLOT_NOT_FOUND for a slot that is not the league\'s; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps; 409 EVENT_HAS_CONTESTS while a contest covers its event. Root admin only.',
+      operationId: 'deleteTestSlot',
+      params: {
+        type: 'object',
+        required: ['sportLeagueId', 'seasonSlotId'],
+        properties: { sportLeagueId: { type: 'string', format: 'uuid' }, seasonSlotId: { type: 'string', format: 'uuid' } },
+      },
+      response: { 204: { type: 'null' }, ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.deleteTestSlot,
   });
 
   fastify.patch('/:sportLeagueId', {
@@ -270,9 +275,10 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'List a sport league\'s participants',
-      description: 'Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.',
+      description: 'Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged. A test participant is on no roster; testData=true lists only the test participants, which a test event\'s field takes (#2096).',
       operationId: 'listSportLeagueParticipants',
       params: SPORT_LEAGUE_PARAMS,
+      querystring: schemaRef('SportLeagueParticipantListQuery'),
       response: { 200: schemaRef('ParticipantListResponse'), ...errors(404) },
     },
     handler: handler.listParticipants,
