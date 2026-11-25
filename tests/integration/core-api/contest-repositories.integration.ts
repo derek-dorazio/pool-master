@@ -85,7 +85,7 @@ const PINNED_RELEASE_COUNTS: Array<[string, number]> = [
   ['SELECT event_series', 1],
   ['SELECT sport_event_provider_mappings', 2],
   ['SELECT sport_events', 3],
-  ['SELECT sport_league_seasons', 3],
+  ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
   ['UPDATE sport_events', 1],
 ];
