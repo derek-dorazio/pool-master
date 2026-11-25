@@ -1,0 +1,165 @@
+{
+  "$comment": "#2103 -- per-file coverage floors over the merged service report: the unit run plus the four integration shards (scripts/merge-service-coverage.mjs), so a file counts as covered by whichever suite proves it. Checked by scripts/check-coverage-floors.mjs in CI's service-integration-tests job. Every backend and shared file must reach 80% lines and 80% branches; job code (bodies, runner, queue, domain events, schedulers, the job lock) is held to scoring's 100% / 96%. The Jest unit floors in tests/jest.config.js (scoring 100/96, logic 90/80) and the integration repository floor in scripts/coverage-floors.json stay as they are. An exception is a file's number when the floor came in, rounded down: it can only be raised or deleted, and rules:check:baseline-ratchet refuses a new or lowered one unless scripts/baseline-raises.json declares it. Job-file catch-up: #2106. The jobs floor takes in contests/service.ts, contest-management/service.ts and event-lifecycle-service.ts whole on purpose: they hold the job handlers that calculate standings and move contest and event status, so the whole file is held to the job bar. packages/shared/index.ts is excluded because it only re-exports.",
+  "floors": [
+    {
+      "name": "backend-files",
+      "include": "packages/core-api/src/**/*.ts",
+      "lines": 80,
+      "branches": 80,
+      "exceptions": {
+        "packages/core-api/src/core/batched-read.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 75
+        },
+        "packages/core-api/src/core/prisma-context.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "lines": 44,
+          "branches": 50
+        },
+        "packages/core-api/src/core/sliding-window-rate-limiter.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 50
+        },
+        "packages/core-api/src/core/user-name.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 50
+        },
+        "packages/core-api/src/index.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 73
+        },
+        "packages/core-api/src/modules/activity/routes.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 50
+        },
+        "packages/core-api/src/modules/contest-management/wiring.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 50
+        },
+        "packages/core-api/src/modules/email/email-unsubscribe-routes.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 75
+        },
+        "packages/core-api/src/modules/events/wiring.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 50
+        },
+        "packages/core-api/src/modules/ingestion/adapters/provider-payload-recorder.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 75
+        },
+        "packages/core-api/src/modules/ingestion/findings/routes.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 50
+        },
+        "packages/core-api/src/plugins/request-query-usage.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 75
+        },
+        "packages/core-api/src/plugins/schema-components.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 50
+        },
+        "packages/core-api/src/plugins/string-transforms.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 66
+        },
+        "packages/core-api/src/plugins/swagger.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 0
+        }
+      }
+    },
+    {
+      "name": "shared-files",
+      "include": "packages/shared/**/*.ts",
+      "exclude": [
+        "packages/shared/generated/**",
+        "packages/shared/dist/**",
+        "packages/shared/index.ts"
+      ],
+      "lines": 80,
+      "branches": 80,
+      "exceptions": {
+        "packages/shared/api-routes.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "lines": 64
+        },
+        "packages/shared/openapi/nullable-to-3-1.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "branches": 78
+        },
+        "packages/shared/utils/id.ts": {
+          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
+          "lines": 0
+        }
+      }
+    },
+    {
+      "name": "jobs",
+      "include": "packages/core-api/src/{modules/background-jobs/**/*.ts,modules/domain-events/**/*.ts,modules/**/*-job.ts,modules/**/*-job-requests.ts,**/*-scheduler.ts,core/job-lock.ts,core/job-start.ts,core/locked-sweep.ts,plugins/request-job-start.ts,adapters/prisma-background-job-repository.ts,modules/events/event-lifecycle-service.ts,modules/events/league-events-sync.ts,modules/events/synced-field-follow-ups.ts,modules/events/synced-field-valuation.ts,modules/ingestion/ingestion-service.ts,modules/notifications/contest-email-jobs.ts,modules/contests/service.ts,modules/contest-management/service.ts}",
+      "lines": 100,
+      "branches": 96,
+      "exceptions": {
+        "packages/core-api/src/adapters/prisma-background-job-repository.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "lines": 98
+        },
+        "packages/core-api/src/core/job-lock.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "lines": 96,
+          "branches": 92
+        },
+        "packages/core-api/src/core/locked-sweep.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "branches": 94
+        },
+        "packages/core-api/src/modules/background-jobs/background-job-queue.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "branches": 85
+        },
+        "packages/core-api/src/modules/background-jobs/background-job-runner.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "lines": 95,
+          "branches": 95
+        },
+        "packages/core-api/src/modules/contest-management/service.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "lines": 96,
+          "branches": 91
+        },
+        "packages/core-api/src/modules/contests/service.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "lines": 97,
+          "branches": 90
+        },
+        "packages/core-api/src/modules/domain-events/domain-events.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "branches": 91
+        },
+        "packages/core-api/src/modules/events/event-lifecycle-scheduler.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "branches": 86
+        },
+        "packages/core-api/src/modules/events/league-events-sync.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "branches": 95
+        },
+        "packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "lines": 96,
+          "branches": 88
+        },
+        "packages/core-api/src/modules/ingestion/ingestion-service.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "lines": 98,
+          "branches": 95
+        },
+        "packages/core-api/src/plugins/request-job-start.ts": {
+          "reason": "Under the job floor when it came in; raised by #2106.",
+          "branches": 87
+        }
+      }
+    }
+  ]
+}

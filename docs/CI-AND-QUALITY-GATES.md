@@ -1102,14 +1102,22 @@ release, and the mock contest feed provider has its own suite.
   Use the Babel provider (the default). A V8 run counts per line, so its numbers are not comparable.
 - **Fixing a shortfall:** add an integration test for the query or branch the repository misses (`rules/testing-rules.md` *Repository Coverage Floor*).
 
+### Per-file floors on every file (#2103)
+
+- **Backend and shared, merged report:** `service-unit-tests` uploads its Babel report as `coverage-service-unit`. `service-integration-tests` merges it with the four integration shards into `coverage/service-all-merged/` and runs `scripts/check-coverage-floors.mjs --config scripts/coverage-floors-merged.json`: every file under `packages/core-api/src` and `packages/shared` at 80% lines / 80% branches, and job code (bodies, runner, queue, domain events, schedulers, job lock) at 100% / 96%. Both runs are Babel, so the merge is sound.
+- **Web:** `poolmaster-unit-tests` writes Vitest's `coverage-final.json` (the `json` reporter) and runs the same script with `--config scripts/coverage-floors-web.json --root clients/poolmaster`: every web file at 80% / 80%.
+- **Exceptions:** each file under its floor when the floor came in sits at its number then, rounded down. The check fails when a file improves past its exception (raise it) or reaches the floor (delete it). `rules:check:baseline-ratchet` reads all three floor files and refuses a new exception or a lowered floor unless `scripts/baseline-raises.json` declares it. `--suggest` prints the exceptions a report implies, for introducing a floor.
+
 ### Coverage thresholds — current state and roadmap
 
 | Suite | Threshold today | Source of truth |
 |---|---|---|
 | Backend unit | scoring files 100% / 96% / 100% / 100% each; services, module logic, route handlers, mappers, shared domain and DTOs 90% lines / 80% branches each; the rest 35% / 27% / 24.25% / 36% (stmts / branches / fns / lines) | `tests/jest.config.js` |
 | Backend integration | per file, repositories: 90% lines / 80% branches (merged shards) | `scripts/coverage-floors.json` |
+| Backend, unit and integration merged | per file, every file 80% lines / 80% branches; job code 100% / 96% (named exceptions only tighten) | `scripts/coverage-floors-merged.json` |
 | Backend FAPI | none | — |
 | Webapp unit | 94% / 87.5% / 94.5% / 94% (stmts / branches / fns / lines) for the suite, plus 90% lines / 85% branches for each feature folder and `src/lib` folder | `clients/poolmaster/vitest.config.ts` |
+| Webapp unit, per file | every file 80% lines / 80% branches (named exceptions only tighten) | `scripts/coverage-floors-web.json` |
 | Webapp E2E | N/A | — |
 
 The two suite-level thresholds are intentionally **regression floors**, not targets, and they only ratchet up: when a slice raises measured coverage, the floor may follow to about 3 points under the new measurement, and it is never lowered to let a slice through. The backend one is measured with Babel statement counts, the method it was set against (#302); the web one is V8, the only provider that suite uses. The webapp also has per-folder floors (90% lines, 85% branches for every feature folder and `src/lib` folder, #1478), so one weak feature cannot hide behind strong ones; a change that drops its folder under the floor adds tests, and the floor is never lowered. Vitest's `autoUpdate` stays off: it rewrites the config on every run, which would conflict between parallel PRs. Slice authors should still aim for ≥ 80% statements on touched files.

@@ -90,6 +90,25 @@ The floors are measured with Babel, the provider CI's `service-unit-tests` job u
 floor as coverage grows; never lower one to pass. Meet a floor with tests that prove behavior
 (§1A), never with application code shaped for a test (§1B).
 
+**Every file has its own floor (#2103).** On top of the floors above, which stay as they are,
+every file is held per file to at least **80% of lines and 80% of branches**:
+
+- **Backend and shared:** every file under `packages/core-api/src` and `packages/shared`
+  (generated clients aside), judged on the unit and integration runs merged, so a file counts
+  as covered by whichever suite proves it (`scripts/coverage-floors-merged.json`).
+- **Job code at 100% of lines and 96% of branches**, scoring's floor, in the same merged report:
+  the job bodies, the runner and queue, domain events, the schedulers and the job lock. Jobs
+  settle contests and move workflow status, so they decide outcomes the way scoring does. The
+  job lock is a Postgres lock, so only the integration suite can prove it; a mock proves nothing.
+- **Web:** every file in `clients/poolmaster/src` (`scripts/coverage-floors-web.json`), beside
+  the folder floors below.
+
+A file under its floor when the floor came in is a named exception at its number then, rounded
+down. An exception only tightens: the check fails when the file improves until the exception is
+raised, and when it reaches the floor until the exception is deleted. A new or lowered exception
+fails `rules:check:baseline-ratchet` unless `scripts/baseline-raises.json` declares it, so a new
+file always lands at the floor.
+
 The webapp enforces per-folder coverage floors on top of its whole-suite floor:
 every `clients/poolmaster/src/features/*` folder and every `src/lib` folder must
 keep 90% of its lines and 85% of its branches covered (`vitest.config.ts`,
