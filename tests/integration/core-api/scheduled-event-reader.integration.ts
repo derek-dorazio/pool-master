@@ -42,18 +42,36 @@ function reader(provider = fakeSportDataProvider({ providerId: PROVIDER })) {
 const PROVIDER_LEAGUE_OF: Partial<Record<Sport, string>> = { [Sport.GOLF]: 'pga', [Sport.AMERICAN_FOOTBALL]: 'nfl' };
 
 /**
+ * A Season of its own in a new golf league, synced from BALLDONTLIE's PGA league when `synced`:
+ * an event made in it is that league's (#2004).
+ */
+async function seriesInLeague(name: string, synced: boolean, isActive = true) {
+  const prisma = getPrisma();
+  const sport = await prisma.sport.upsert({
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
+  if (synced) await syncLeagueTo(prisma, league.id, 'pga');
+  return freshEventEdition(prisma, { name, sportLeagueId: league.id, championshipYear: 2026 });
+}
+
+/**
  * An event the provider has `externalId` for (#2004), under its sport's provider league, unless
- * `linked` is false, when it has no provider id at all.
+ * `linked` is false, when it has no provider id at all. With `synced`, it is in a league of its own
+ * synced from the provider, as a field sync reads (#2086).
  */
 async function createEvent(
   externalId: string,
-  overrides: Partial<Prisma.SportEventUncheckedCreateInput> & { withField?: boolean; linked?: boolean; sport?: Sport } = {},
+  overrides: Partial<Prisma.SportEventUncheckedCreateInput> & { withField?: boolean; linked?: boolean; sport?: Sport; synced?: boolean } = {},
 ) {
   const prisma = getPrisma();
-  const { withField = false, sport: eventSport = Sport.GOLF, linked = true, ...data } = overrides;
+  const { withField = false, sport: eventSport = Sport.GOLF, linked = true, synced = false, ...data } = overrides;
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: eventSport })),
+      ...(synced && await seriesInLeague(`Synced ${externalId}`, true)),
       name: `Reader ${externalId}`,
       startDate: new Date('2026-04-30T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -146,14 +164,15 @@ describe('ScheduledEventReader — play under way and notifications (#1499)', ()
 });
 
 describe('ScheduledEventReader — field hydration', () => {
+  // Every event here is a synced league's: the field sync reads no other (#2086).
   it('offers draft and released events that start inside the window, never started, finished or unlinked ones', async () => {
-    await createEvent('draft-event', { status: 'DRAFT', startDate: new Date('2026-04-30T12:00:00.000Z') });
-    await createEvent('released-event', { status: 'SCHEDULED', startDate: new Date('2026-05-02T12:00:00.000Z') });
-    await createEvent('in-progress-event', { status: 'IN_PROGRESS', startDate: new Date('2026-04-27T12:00:00.000Z') });
-    await createEvent('completed-event', { status: 'COMPLETED', startDate: new Date('2026-04-27T12:00:00.000Z') });
-    await createEvent('already-started-event', { status: 'SCHEDULED', startDate: new Date('2026-04-26T12:00:00.000Z') });
-    await createEvent('past-window-event', { status: 'SCHEDULED', startDate: new Date('2026-05-04T12:00:00.000Z') });
-    await createEvent('unlinked-event', { status: 'SCHEDULED', linked: false, startDate: new Date('2026-04-29T12:00:00.000Z') });
+    await createEvent('draft-event', { synced: true, status: 'DRAFT', startDate: new Date('2026-04-30T12:00:00.000Z') });
+    await createEvent('released-event', { synced: true, status: 'SCHEDULED', startDate: new Date('2026-05-02T12:00:00.000Z') });
+    await createEvent('in-progress-event', { synced: true, status: 'IN_PROGRESS', startDate: new Date('2026-04-27T12:00:00.000Z') });
+    await createEvent('completed-event', { synced: true, status: 'COMPLETED', startDate: new Date('2026-04-27T12:00:00.000Z') });
+    await createEvent('already-started-event', { synced: true, status: 'SCHEDULED', startDate: new Date('2026-04-26T12:00:00.000Z') });
+    await createEvent('past-window-event', { synced: true, status: 'SCHEDULED', startDate: new Date('2026-05-04T12:00:00.000Z') });
+    await createEvent('unlinked-event', { synced: true, status: 'SCHEDULED', linked: false, startDate: new Date('2026-04-29T12:00:00.000Z') });
 
     const events = await reader().listEventsForFeed({
       sport: Sport.GOLF,
@@ -167,8 +186,8 @@ describe('ScheduledEventReader — field hydration', () => {
   });
 
   it('never offers an event that starts after the window closes', async () => {
-    await createEvent('in-window', { startDate: new Date('2026-05-01T12:00:00.000Z') });
-    await createEvent('after-window', { startDate: new Date('2026-05-04T12:00:00.000Z') });
+    await createEvent('in-window', { synced: true, startDate: new Date('2026-05-01T12:00:00.000Z') });
+    await createEvent('after-window', { synced: true, startDate: new Date('2026-05-04T12:00:00.000Z') });
 
     const events = await reader().listEventsForFeed({
       sport: Sport.GOLF,
@@ -182,9 +201,9 @@ describe('ScheduledEventReader — field hydration', () => {
   });
 
   it('offers at most the two soonest events per pass, soonest first', async () => {
-    await createEvent('third', { startDate: new Date('2026-05-03T12:00:00.000Z') });
-    await createEvent('first', { startDate: new Date('2026-04-28T12:00:00.000Z') });
-    await createEvent('second', { startDate: new Date('2026-04-29T12:00:00.000Z') });
+    await createEvent('third', { synced: true, startDate: new Date('2026-05-03T12:00:00.000Z') });
+    await createEvent('first', { synced: true, startDate: new Date('2026-04-28T12:00:00.000Z') });
+    await createEvent('second', { synced: true, startDate: new Date('2026-04-29T12:00:00.000Z') });
 
     const events = await reader().listEventsForFeed({
       sport: Sport.GOLF,
@@ -198,8 +217,8 @@ describe('ScheduledEventReader — field hydration', () => {
   });
 
   it('leaves the window open-ended after now when no bounds are given', async () => {
-    await createEvent('started', { startDate: new Date('2026-04-20T12:00:00.000Z') });
-    await createEvent('next-year', { startDate: new Date('2027-04-20T12:00:00.000Z') });
+    await createEvent('started', { synced: true, startDate: new Date('2026-04-20T12:00:00.000Z') });
+    await createEvent('next-year', { synced: true, startDate: new Date('2027-04-20T12:00:00.000Z') });
 
     const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now });
 
@@ -208,29 +227,16 @@ describe('ScheduledEventReader — field hydration', () => {
 });
 
 describe('ScheduledEventReader — field hydration for synced sport leagues only (#1726)', () => {
-  async function seriesInLeague(name: string, synced: boolean, isActive = true) {
-    const prisma = getPrisma();
-    const sport = await prisma.sport.upsert({
-      where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
-      update: {},
-    });
-    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
-    if (synced) await syncLeagueTo(prisma, league.id, 'pga');
-    // The event is in its Season's league (#2004).
-    return freshEventEdition(prisma, { name, sportLeagueId: league.id, championshipYear: 2026 });
-  }
 
-  it('offers only the events of active sport leagues whose sync names the event\'s provider, and offers every linked event without the switch', async () => {
+
+  it('offers only the events of active sport leagues whose sync names the event\'s provider: never an unsynced or inactive league\'s', async () => {
     await createEvent('synced', { ...(await seriesInLeague('Synced', true)), startDate: new Date('2026-04-29T12:00:00.000Z') });
     await createEvent('sync-off', { ...(await seriesInLeague('Off', false)), startDate: new Date('2026-04-28T06:00:00.000Z') });
     await createEvent('inactive-league', { ...(await seriesInLeague('Inactive', true, false)), startDate: new Date('2026-04-28T03:00:00.000Z') });
 
-    const syncedOnly = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater, syncedLeaguesOnly: true });
-    const all = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
+    const offered = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
 
-    expect(externalIds(syncedOnly)).toEqual(['synced']);
-    expect(externalIds(all)).toEqual(['inactive-league', 'sync-off']);
+    expect(externalIds(offered)).toEqual(['synced']);
   });
 
   it('offers none of the events of a provider with no Provider row, which syncs no league, even in a synced league', async () => {
@@ -239,7 +245,7 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     await createEvent('rowless', { ...(await seriesInLeague('Synced', true)), startDate: new Date('2026-04-29T12:00:00.000Z') });
 
     const events = await createScheduledEventReader({ prisma: getAppPrisma(), registry })
-      .listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater, syncedLeaguesOnly: true });
+      .listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
 
     expect(events).toEqual([]);
   });
@@ -253,7 +259,7 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     await createEvent('synced-second', { ...later, startDate: new Date('2026-04-29T12:00:00.000Z') });
     await createEvent('synced-third', { ...latest, startDate: new Date('2026-04-30T12:00:00.000Z') });
 
-    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater, syncedLeaguesOnly: true });
+    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
 
     expect(externalIds(events)).toEqual(['synced-first', 'synced-second']);
   });
@@ -269,10 +275,10 @@ describe('ScheduledEventReader — a second provider serving the sport', () => {
     return createScheduledEventReader({ prisma: getAppPrisma(), registry });
   };
 
-  it('loads the provider\'s own two soonest fields, the second provider with no row adding none', async () => {
-    await createEvent('ours-first', { startDate: new Date('2026-04-27T12:00:00.000Z') });
-    await createEvent('ours-second', { startDate: new Date('2026-04-28T12:00:00.000Z') });
-    await createEvent('ours-third', { startDate: new Date('2026-04-29T12:00:00.000Z') });
+  it('loads the two soonest fields of the provider its leagues sync from, the second provider with no row adding none', async () => {
+    await createEvent('ours-first', { synced: true, startDate: new Date('2026-04-27T12:00:00.000Z') });
+    await createEvent('ours-second', { synced: true, startDate: new Date('2026-04-28T12:00:00.000Z') });
+    await createEvent('ours-third', { synced: true, startDate: new Date('2026-04-29T12:00:00.000Z') });
 
     const events = await twoProviders().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, from: now, to: weekLater });
 

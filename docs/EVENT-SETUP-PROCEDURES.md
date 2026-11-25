@@ -43,9 +43,9 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
    (#1871). A new interval starts only after the current wait runs out, so the first poll
    after the change can take up to the old 300 seconds.
 2. **Fields load on the Field row's schedule.** The **Field** row on the same section sets
-   how often fields refresh and how many days ahead. A synced sport league's events load
-   their fields regardless of the saved switch (#1726), and leagues that are not synced are
-   off, so the page offers no off switch for it.
+   how often fields refresh and how many days ahead. The Field sync has no switch (#2086): it
+   always runs, for synced sport leagues only, and leagues that are not synced are off. The
+   API says which syncs have a switch, and the page draws only those.
 3. **The tour is synced.** Its League page names the provider league it is synced from. A tour
    with none is off, and a hand-made tournament on it is a test event.
 

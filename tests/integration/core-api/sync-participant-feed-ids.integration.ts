@@ -150,7 +150,7 @@ describe('the sync matches feed participants by feed id only, within the event\'
     const { golfer, detail, event, sportLeagueId } = await fieldOf();
     // As the loader writes a test player: created in its league under the file's spelling, then its feed id bound.
     const seeded = await prisma.participant.create({ data: { sportLeagueId, name: `${golfer.name} (test spelling)`, participantType: 'INDIVIDUAL' } });
-    const participants = new ParticipantService(new PrismaParticipantRepository(getAppPrisma()), new PrismaParticipantProviderMappingRepository(getAppPrisma()));
+    const participants = new ParticipantService(new PrismaParticipantRepository(getAppPrisma()), new PrismaParticipantProviderMappingRepository(getAppPrisma()), testDomainEvents());
     await participants.bindProviderMapping(seeded.id, BALLDONTLIE_TEST_PROVIDER_ID, golfer.externalId);
 
     await sync(detail);

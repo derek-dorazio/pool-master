@@ -976,10 +976,6 @@ export type IngestionScheduleConfigPatch = {
      */
     EVENTS?: {
         /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
         intervalMinutes?: number;
@@ -991,15 +987,15 @@ export type IngestionScheduleConfigPatch = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
-    };
-    /**
-     * Partial feed-scheduling update payload.
-     */
-    FIELD?: {
         /**
          * Whether the feed should be scheduled automatically.
          */
         enabled?: boolean;
+    };
+    /**
+     * Partial scheduling update for a sync kind with no switch.
+     */
+    FIELD?: {
         /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
@@ -1018,10 +1014,6 @@ export type IngestionScheduleConfigPatch = {
      */
     SCORES?: {
         /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
         intervalMinutes?: number;
@@ -1033,6 +1025,10 @@ export type IngestionScheduleConfigPatch = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
     };
 };
 
@@ -1045,10 +1041,6 @@ export type IngestionScheduleConfig = {
      */
     EVENTS: {
         /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled: boolean;
-        /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
         intervalMinutes?: number;
@@ -1060,15 +1052,15 @@ export type IngestionScheduleConfig = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
-    };
-    /**
-     * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-     */
-    FIELD: {
         /**
          * Whether the feed should be scheduled automatically.
          */
         enabled: boolean;
+    };
+    /**
+     * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+     */
+    FIELD: {
         /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
@@ -1087,9 +1079,62 @@ export type IngestionScheduleConfig = {
      */
     SCORES: {
         /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+        /**
          * Whether the feed should be scheduled automatically.
          */
         enabled: boolean;
+    };
+};
+
+/**
+ * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+ */
+export type IngestionSyncSchedule = {
+    /**
+     * How often the feed should run, in minutes, for interval-driven orchestration.
+     */
+    intervalMinutes?: number;
+    /**
+     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+     */
+    intervalSeconds?: number;
+    /**
+     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+     */
+    lookaheadDays?: number;
+    /**
+     * The sync's switch; absent for a sync with none.
+     */
+    enabled?: boolean;
+    /**
+     * Whether the sync runs on its interval now.
+     */
+    runs: boolean;
+    /**
+     * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+     */
+    switchable: boolean;
+};
+
+/**
+ * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
+ */
+export type IngestionSchedule = {
+    /**
+     * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+     */
+    EVENTS: {
         /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
@@ -1102,6 +1147,76 @@ export type IngestionScheduleConfig = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
+        /**
+         * The sync's switch; absent for a sync with none.
+         */
+        enabled?: boolean;
+        /**
+         * Whether the sync runs on its interval now.
+         */
+        runs: boolean;
+        /**
+         * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+         */
+        switchable: boolean;
+    };
+    /**
+     * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+     */
+    FIELD: {
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+        /**
+         * The sync's switch; absent for a sync with none.
+         */
+        enabled?: boolean;
+        /**
+         * Whether the sync runs on its interval now.
+         */
+        runs: boolean;
+        /**
+         * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+         */
+        switchable: boolean;
+    };
+    /**
+     * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+     */
+    SCORES: {
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+        /**
+         * The sync's switch; absent for a sync with none.
+         */
+        enabled?: boolean;
+        /**
+         * Whether the sync runs on its interval now.
+         */
+        runs: boolean;
+        /**
+         * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+         */
+        switchable: boolean;
     };
 };
 
@@ -16541,10 +16656,6 @@ export type SettingsGroup = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16556,15 +16667,15 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -16583,10 +16694,6 @@ export type SettingsGroup = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16598,6 +16705,10 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
     /**
@@ -16609,10 +16720,6 @@ export type SettingsGroup = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16624,15 +16731,15 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -16651,10 +16758,6 @@ export type SettingsGroup = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16666,6 +16769,10 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
 } | {
@@ -17566,10 +17673,6 @@ export type SettingsGroupList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17581,15 +17684,15 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -17608,10 +17711,6 @@ export type SettingsGroupList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17623,6 +17722,10 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         };
         /**
@@ -17634,10 +17737,6 @@ export type SettingsGroupList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17649,15 +17748,15 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -17676,10 +17775,6 @@ export type SettingsGroupList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17691,6 +17786,10 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         };
     } | {
@@ -18559,10 +18658,6 @@ export type SettingsGroupUpdateRequest = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -18574,15 +18669,15 @@ export type SettingsGroupUpdateRequest = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -18601,10 +18696,6 @@ export type SettingsGroupUpdateRequest = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -18616,6 +18707,10 @@ export type SettingsGroupUpdateRequest = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
     /**
@@ -19052,10 +19147,6 @@ export type SettingsChange = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -19067,15 +19158,15 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -19094,10 +19185,6 @@ export type SettingsChange = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -19109,6 +19196,10 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     } | null;
     /**
@@ -19120,10 +19211,6 @@ export type SettingsChange = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -19135,15 +19222,15 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -19162,10 +19249,6 @@ export type SettingsChange = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -19177,6 +19260,10 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
 } | {
@@ -20033,10 +20120,6 @@ export type SettingsChangeList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -20048,15 +20131,15 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -20075,10 +20158,6 @@ export type SettingsChangeList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -20090,6 +20169,10 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         } | null;
         /**
@@ -20101,10 +20184,6 @@ export type SettingsChangeList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -20116,15 +20195,15 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -20143,10 +20222,6 @@ export type SettingsChangeList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -20158,6 +20233,10 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         };
     } | {
@@ -28765,7 +28844,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS';
+    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -28894,7 +28973,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -29000,7 +29079,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -37327,9 +37406,9 @@ export type GetIngestionScheduleError = GetIngestionScheduleErrors[keyof GetInge
 
 export type GetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
+     * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
      */
-    200: IngestionScheduleConfig;
+    200: IngestionSchedule;
 };
 
 export type GetIngestionScheduleResponse = GetIngestionScheduleResponses[keyof GetIngestionScheduleResponses];
@@ -37356,9 +37435,9 @@ export type UpdateIngestionScheduleError = UpdateIngestionScheduleErrors[keyof U
 
 export type UpdateIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
+     * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
      */
-    200: IngestionScheduleConfig;
+    200: IngestionSchedule;
 };
 
 export type UpdateIngestionScheduleResponse = UpdateIngestionScheduleResponses[keyof UpdateIngestionScheduleResponses];
@@ -37385,9 +37464,9 @@ export type ResetIngestionScheduleError = ResetIngestionScheduleErrors[keyof Res
 
 export type ResetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
+     * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
      */
-    200: IngestionScheduleConfig;
+    200: IngestionSchedule;
 };
 
 export type ResetIngestionScheduleResponse = ResetIngestionScheduleResponses[keyof ResetIngestionScheduleResponses];

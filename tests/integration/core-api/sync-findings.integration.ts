@@ -3,6 +3,7 @@
  * raises it, what a raise does to a resolved or waived finding, the retention cleanup, the startup
  * webhook check, and the root admin's routes over them. No mocks.
  */
+import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
@@ -30,7 +31,7 @@ import { ProviderSettingsStore } from '../../../packages/core-api/src/modules/in
 import { SYNC_FINDINGS_REQUESTS_PER_MINUTE } from '../../../packages/core-api/src/modules/ingestion/findings/routes';
 import { SyncFindingRetention } from '../../../packages/core-api/src/modules/ingestion/findings/sync-finding-retention';
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
-import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, createTestUser, drainBackgroundJobs, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
@@ -260,7 +261,7 @@ describe('the startup webhook check', () => {
     const service = new ProviderSyncFindingService({
       repository: new PrismaProviderSyncFindingRepository(getPrisma()),
       providers: { all: () => [{ ...provider, leagues: [] }] },
-      participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma())),
+      participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma()), testDomainEvents()),
       now: () => NOW,
     });
     const syncedLeagues = synced.map(({ id }) => ({ id, selectedProviderMapping: { providerCode: ProviderCode.BALLDONTLIE } as never }));
@@ -272,6 +273,32 @@ describe('the startup webhook check', () => {
 
     expect(raised).toEqual([expect.objectContaining({ kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, severity: ProviderSyncFindingSeverity.ERROR, providerId: provider.id, status: ProviderSyncFindingStatus.OPEN })]);
     expect(after.map((row) => row.status)).toEqual([ProviderSyncFindingStatus.RESOLVED]);
+  });
+});
+
+describe('the startup webhook check, a league dropped from the synced set', () => {
+  it('resolves the missing webhook secret finding of a league the Provider no longer syncs on the next check, while the leagues it still syncs keep theirs', async () => {
+    const kept = await golfLeague();
+    const dropped = await golfLeague();
+    await syncLeagueTo(getPrisma(), kept.id, 'pga');
+    await syncLeagueTo(getPrisma(), dropped.id, 'pga');
+    const provider = await balldontlie();
+    const service = new ProviderSyncFindingService({
+      repository: new PrismaProviderSyncFindingRepository(getPrisma()),
+      providers: { all: () => [{ ...provider, leagues: [] }] },
+      participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma()), testDomainEvents()),
+      now: () => NOW,
+    });
+    const synced = (ids: string[]) => ids.map((id) => ({ id, selectedProviderMapping: { providerCode: ProviderCode.BALLDONTLIE } as never }));
+
+    await service.checkWebhookSecrets({ syncedLeagues: synced([kept.id, dropped.id]), isMissingSecret: () => true });
+    await service.checkWebhookSecrets({ syncedLeagues: synced([kept.id]), isMissingSecret: () => true });
+    const rows = await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: { in: [kept.id, dropped.id] } }, select: { sportLeagueId: true, status: true } });
+
+    expect(Object.fromEntries(rows.map((row) => [row.sportLeagueId, row.status]))).toEqual({
+      [kept.id]: ProviderSyncFindingStatus.OPEN,
+      [dropped.id]: ProviderSyncFindingStatus.RESOLVED,
+    });
   });
 });
 
@@ -288,7 +315,7 @@ describe('the rate-limit finding', () => {
       findings: new ProviderSyncFindingService({
         repository: new PrismaProviderSyncFindingRepository(getPrisma()),
         providers,
-        participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma())),
+        participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma()), testDomainEvents()),
         now: () => new Date(clock),
       }),
       providers,
@@ -400,6 +427,27 @@ describe('the sync findings routes (contract)', () => {
     expect(await prisma.participantProviderMapping.findMany({ where: { participantId: participant.id }, select: { providerId: true, externalId: true } }))
       .toEqual([{ providerId: provider.id, externalId: finding.providerValue }]);
     expect(againRes.statusCode).toBe(409);
+  });
+
+  it('resolves an unmapped participant finding when its feed id is mapped through the participant\'s own mapping route, leaving another feed id\'s finding open', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    const { league, provider, findingId } = await seedUnmappedFinding();
+    const [other] = await new PrismaProviderSyncFindingRepository(getPrisma()).raise([unmapped(league.id, provider.id, `golfer-${randomUUID().slice(0, 6)}`)], NOW);
+    const prisma = getPrisma();
+    const { providerValue } = await prisma.providerSyncFinding.findUniqueOrThrow({ where: { id: findingId } });
+    const participant = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Avery Hart', participantType: 'INDIVIDUAL' } });
+
+    const bindRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/participants/${participant.id}/provider-mappings`,
+      headers: rootAdmin.headers,
+      payload: { providerId: provider.id, externalId: providerValue },
+    });
+    await drainBackgroundJobs();
+
+    expect(bindRes.statusCode).toBe(200);
+    const statuses = await prisma.providerSyncFinding.findMany({ where: { id: { in: [findingId, other.id] } }, select: { id: true, status: true } });
+    expect(Object.fromEntries(statuses.map((row) => [row.id, row.status]))).toEqual({ [findingId]: ProviderSyncFindingStatus.RESOLVED, [other.id]: ProviderSyncFindingStatus.OPEN });
   });
 
   it('counts a league\'s open findings by severity in its Sports page Issues, most serious first', async () => {

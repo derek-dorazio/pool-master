@@ -23,6 +23,7 @@ import {
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { ParticipantService } from '../../participants/service';
 import { providerByCode } from '../provider-settings-store';
+import type { ResolveMappedParticipantFindingsJobPayload } from './mapped-participant-findings-job';
 
 export class ProviderSyncFindingError extends Error {
   constructor(message: string, readonly code: ApiErrorCode, readonly statusCode: number) {
@@ -148,8 +149,10 @@ export class ProviderSyncFindingService {
 
   /**
    * A Provider whose webhooks are switched on while its signing secret is not set: an ERROR on
-   * each league it syncs. Once its secret is set, or its webhooks are off, its findings resolve.
-   * Checked when a worker task starts, since the secret is read from its environment.
+   * each league it syncs. Once its secret is set, or its webhooks are off, its findings resolve;
+   * while it is still missing, a league the Provider no longer syncs has its finding resolved
+   * (#2070). Checked when a worker task starts, since the secret is read from its environment.
+   * One statement per Provider, whatever the number of leagues.
    */
   async checkWebhookSecrets(input: {
     syncedLeagues: readonly Pick<SportLeague, 'id' | 'selectedProviderMapping'>[];
@@ -163,6 +166,9 @@ export class ProviderSyncFindingService {
         await this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, providerId: provider.id }, now);
         continue;
       }
+      const syncedIds = input.syncedLeagues.filter((league) => league.selectedProviderMapping?.providerCode === provider.code).map((league) => league.id);
+      // poolmaster-allow-query-in-loop: once per Provider row, a handful
+      await this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, providerId: provider.id, exceptSportLeagueIds: syncedIds }, now);
       for (const league of input.syncedLeagues) {
         if (league.selectedProviderMapping?.providerCode !== provider.code) continue;
         raises.push({
@@ -221,6 +227,24 @@ export class ProviderSyncFindingService {
   /** The Provider answered again: its rate-limit findings resolve. Returns how many did. */
   async resolveProviderRateLimited(providerId: string): Promise<number> {
     return this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, providerId }, this.now());
+  }
+
+  /**
+   * Feed ids were mapped to participants (#2069), by any path: their OPEN unmapped participant
+   * findings in the league resolve, in one statement. Returns how many did.
+   */
+  async resolveMappedParticipants(payload: ResolveMappedParticipantFindingsJobPayload): Promise<number> {
+    const resolved = await this.deps.repository.resolveOpen({
+      kind: ProviderSyncFindingKind.UNMAPPED_PARTICIPANT,
+      sportLeagueId: payload.sportLeagueId,
+      providerId: payload.providerId,
+      providerValues: payload.externalIds,
+    }, this.now());
+    this.deps.logger?.info(
+      { action: 'ingestion.syncFinding.mappedParticipantsResolved', sportLeagueId: payload.sportLeagueId, providerId: payload.providerId, mapped: payload.externalIds.length, resolved },
+      'Resolved the unmapped participant findings of newly mapped feed ids',
+    );
+    return resolved;
   }
 
   /** Every finding kept, most recently seen first. Nothing pages it: resolved ones are cleared after 90 days. */

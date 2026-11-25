@@ -705,6 +705,7 @@ export const enUS = {
       SYNC_EVENT_GAMES_AND_TIERS: 'Games, tiers and prices',
       ACTIVATE_EVENT_CONTESTS: 'Contests go live',
       FOLLOW_POSTPONED_EVENT_CONTESTS: 'Postponed event contests',
+      RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'Mapped participant findings',
     },
     BackgroundJobKind: {
       SYNC: 'Sync',

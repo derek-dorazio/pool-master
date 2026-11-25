@@ -14,12 +14,13 @@ import {
   PrismaParticipantProviderMappingRepository,
 } from '../../adapters';
 import { ParticipantService } from './service';
+import type { DomainEventsModuleOptions } from '../domain-events';
 import { createParticipantHandlers } from './handler';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
 import { eventFieldCache } from '../events/wiring';
 
-export function participantsModule(fastify: FastifyInstance): void {
+export function participantsModule(fastify: FastifyInstance, opts: DomainEventsModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -29,6 +30,7 @@ export function participantsModule(fastify: FastifyInstance): void {
   const participantService = new ParticipantService(
     participantRepo,
     providerMappingRepo,
+    opts.domainEvents,
     fastify.log.child({ module: 'participants.service' }),
   );
 

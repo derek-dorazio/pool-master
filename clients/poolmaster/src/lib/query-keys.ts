@@ -290,6 +290,9 @@ export const QueryKeys = {
       ['poolmaster', 'root-admin', 'activity', scope, from, to] as const,
     // Every system email (#1872), under `settings`, so an EMAIL_CONFIG save refreshes its On/Off status.
     systemEmails: ['poolmaster', 'root-admin', 'settings', 'system-emails'] as const,
+    // The ingestion schedule read (#2086), with whether each sync runs and has a switch; under
+    // `settings`, so a schedule save refreshes it.
+    ingestionSchedule: ['poolmaster', 'root-admin', 'settings', 'ingestion-schedule'] as const,
     systemEmailLatestSend: (templateKey: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'settings', 'system-emails', templateKey, 'latest-send'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,

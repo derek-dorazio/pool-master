@@ -4,7 +4,8 @@
 
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type { ParticipantProviderMappingRepository, ProviderMappingScope } from '@poolmaster/shared/db';
-import type { ParticipantProviderMapping, ParticipantType, ProviderCode } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, ParticipantProviderMapping, ParticipantType, ProviderCode } from '@poolmaster/shared/domain';
+import { backgroundJobsInsert } from './prisma-background-job-repository';
 
 /** The Provider's name, read with each mapping, which the API returns beside its id. */
 const WITH_PROVIDER_NAME = { provider: { select: { name: true } } } as const;
@@ -49,6 +50,7 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
 
   async bind(
     mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt' | 'providerName'>,
+    jobs: readonly BackgroundJobRequest[] = [],
   ): Promise<ParticipantProviderMapping | null> {
     const binding = {
       participantId: mapping.participantId,
@@ -61,12 +63,13 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
       participantType: mapping.participantType,
     };
     try {
-      const row = await this.prisma.participantProviderMapping.upsert({
+      const upsert = this.prisma.participantProviderMapping.upsert({
         where: { providerId_externalId_sportLeagueId_participantType: identity },
         create: { ...binding, ...identity },
         update: binding,
         include: WITH_PROVIDER_NAME,
       });
+      const row = jobs.length === 0 ? await upsert : (await this.prisma.$transaction([upsert, backgroundJobsInsert(this.prisma, jobs)]))[0];
       return mapToMapping(row);
     } catch (error) {
       // P2003: the provider id names no Provider row (the participant was read by the caller).

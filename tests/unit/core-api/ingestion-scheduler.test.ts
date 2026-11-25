@@ -95,7 +95,7 @@ function createMockRegistry(
 
 function createEnabledScheduleConfig() {
   return {
-    FIELD: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+    FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
     SCORES: { enabled: true, intervalSeconds: 30 },
     EVENTS: { enabled: true, intervalMinutes: 360 },
   };
@@ -823,7 +823,7 @@ describe('IngestionScheduler', () => {
       const registry = createMockRegistry(provider, ['GOLF']);
       const configReader = {
         getConfig: jest.fn().mockResolvedValue({
-                FIELD: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+                FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
           SCORES: { enabled: true, intervalSeconds: 30 },
           EVENTS: { enabled: true, intervalMinutes: 360 },
         }),
@@ -844,7 +844,6 @@ describe('IngestionScheduler', () => {
         from: now,
         now,
         to: new Date('2026-05-12T12:00:00.000Z'),
-        syncedLeaguesOnly: false,
       });
       expect(provider.getEventDetails).toHaveBeenCalledWith('field-available-event');
       expect(mockCallbacks.onEventDetail).toHaveBeenCalledWith(fieldAvailableDetail);
@@ -928,19 +927,16 @@ describe('IngestionScheduler', () => {
 
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
       expect(eventReader.listLiveScoreEvents).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF' }));
-      expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF', syncedLeaguesOnly: true }));
-      expect(eventReader.listEventsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({ syncedLeaguesOnly: false }));
+      expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF', feed: 'EVENTPARTICIPANTS' }));
     });
 
-    it('paces the field loop at the admin\'s participant interval with the participant switch off as well as on, never the short config recheck', async () => {
-      const off = { ...createEnabledScheduleConfig(), FIELD: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 } };
-      const scheduler = (config: typeof off) => new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), ['GOLF']), mockCallbacks, undefined, {
-        configReader: { getConfig: jest.fn().mockResolvedValue(config) },
+    it('paces the field loop at the admin\'s participant interval, since the field sync has no switch, never the short config recheck', async () => {
+      const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), ['GOLF']), mockCallbacks, undefined, {
+        configReader: { getConfig: jest.fn().mockResolvedValue(createEnabledScheduleConfig()) },
         eventReader: readerOf({}),
       });
 
-      expect(await scheduler(off)['getFieldSyncDelayMs']()).toBe(360 * 60_000);
-      expect(await scheduler(createEnabledScheduleConfig())['getFieldSyncDelayMs']()).toBe(360 * 60_000);
+      expect(await scheduler['getFieldSyncDelayMs']()).toBe(360 * 60_000);
     });
 
     it('start() is idempotent — calling twice does not double timers', () => {

@@ -1,4 +1,3 @@
-import { ProviderSyncKind } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,8 +16,8 @@ import {
 
 /**
  * One sync's schedule (#1873): how often it runs, which events it covers and who last changed the
- * schedule, with Close and Edit; Edit switches it on or off and changes its interval, and Field's
- * days ahead too (Field always runs, so it has no switch), then comes
+ * schedule, with Close and Edit; Edit switches it on or off when it has a switch (the API says,
+ * #2086), changes its interval, and its days ahead when it looks ahead, then comes
  * back to the view (rules/ux-rules.md §12 item 14).
  */
 export function SyncScheduleDialog({
@@ -33,7 +32,6 @@ export function SyncScheduleDialog({
 }) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const testId = 'root-admin-sync-schedule-dialog';
-  const isField = row.key === ProviderSyncKind.FIELD;
   const form = useForm<SyncScheduleFormValues>({
     resolver: zodResolver(syncScheduleFormSchema),
     defaultValues: syncScheduleFormValues(row),
@@ -95,16 +93,16 @@ export function SyncScheduleDialog({
       title={mode === 'view' ? `${row.sync} sync` : `${row.sync} sync · Edit`}
     >
       <div className="grid gap-4">
-        {isField ? null : (
+        {row.switchable ? (
           <label className="flex items-center gap-2">
             <Checkbox data-testid={`${testId}-enabled`} {...form.register('enabled')} />
             <Text as="span">Runs on its schedule</Text>
           </label>
-        )}
+        ) : null}
         <FormField error={form.formState.errors.interval?.message} label={row.unit === 'seconds' ? 'Every, seconds' : 'Every, minutes'}>
           <Input data-testid={`${testId}-interval`} inputMode="numeric" {...form.register('interval')} />
         </FormField>
-        {isField ? (
+        {row.lookaheadDays !== null ? (
           <FormField error={form.formState.errors.lookaheadDays?.message} label="Days ahead">
             <Input data-testid={`${testId}-lookahead-days`} inputMode="numeric" {...form.register('lookaheadDays')} />
           </FormField>

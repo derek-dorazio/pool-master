@@ -141,8 +141,8 @@ export interface LiveScoreEventRef extends ScheduledEventRef {
 
 export interface IngestionScheduledEventReader {
   /**
-   * The next events per provider whose fields a participant sync loads. `syncedLeaguesOnly` keeps
-   * the events of synced sport leagues (their sync names the event's provider, ADR 0011).
+   * The next events per provider whose fields a participant sync loads: the events of synced sport
+   * leagues only, whose sync names the event's provider (ADR 0011, #2086).
    */
   listEventsForFeed(input: {
     sport: Sport;
@@ -150,7 +150,6 @@ export interface IngestionScheduledEventReader {
     from?: Date;
     now: Date;
     to?: Date;
-    syncedLeaguesOnly?: boolean;
   }): Promise<ScheduledEventRef[]>;
   /** Every in-progress event the live-score sweep syncs. */
   listLiveScoreEvents(input: { sport: Sport; now: Date }): Promise<LiveScoreEventRef[]>;
@@ -397,25 +396,21 @@ export class IngestionScheduler {
       return;
     }
 
-    // A synced sport league's fields load whether or not the admin has turned the feed on for
-    // every linked event (ADR 0011, #1726); the switch widens it to all of them.
+    // The field sync always runs, for synced sport leagues only (ADR 0011, #2086): it has no switch.
     const config = await this.getGlobalConfig();
-    const syncedLeaguesOnly = !config.FIELD.enabled;
 
     const window = resolveEventParticipantSyncWindow(config, this.getNow());
     this.logger?.debug({
       sport,
       from: window.from.toISOString(),
       to: window.to.toISOString(),
-      syncedLeaguesOnly,
     }, 'Running configured sport participant sync');
-    await this.runConfiguredActiveFieldSync(sport, window, syncedLeaguesOnly);
+    await this.runConfiguredActiveFieldSync(sport, window);
   }
 
   private async runConfiguredActiveFieldSync(
     sport: Sport,
     window: { from: Date; to: Date },
-    syncedLeaguesOnly: boolean,
   ): Promise<void> {
     const eventReader = this.options.eventReader;
     if (!eventReader) {
@@ -429,7 +424,6 @@ export class IngestionScheduler {
       from: window.from,
       now: this.getNow(),
       to: window.to,
-      syncedLeaguesOnly,
     });
 
     this.logger?.debug({
@@ -833,13 +827,10 @@ export class IngestionScheduler {
     return schedulePolicyDelayMs(config[kind]);
   }
 
-  /**
-   * The field loop's interval. It runs for synced sport leagues even while the admin's switch is
-   * off (#1726), so the switch never shortens it to the config recheck.
-   */
+  /** The field loop's interval: the field sync has no switch (#2086), so it always runs on it. */
   private async getFieldSyncDelayMs(): Promise<number> {
     const config = await this.getGlobalConfig();
-    return schedulePolicyDelayMs({ ...config.FIELD, enabled: true });
+    return schedulePolicyDelayMs(config.FIELD);
   }
 
   /** The admin's live-score interval, shortened to a tick while a notified provider's cadence is set. */

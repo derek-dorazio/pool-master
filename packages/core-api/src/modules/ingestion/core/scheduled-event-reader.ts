@@ -33,7 +33,7 @@ export function createScheduledEventReader({
   logger,
 }: ScheduledEventReaderDependencies): IngestionScheduledEventReader {
   return {
-    async listEventsForFeed({ sport, feed, from, now, to, syncedLeaguesOnly = false }) {
+    async listEventsForFeed({ sport, feed, from, now, to }) {
       logger?.debug({
         sport,
         feed,
@@ -53,7 +53,6 @@ export function createScheduledEventReader({
         // poolmaster-allow-query-in-loop: once per provider serving the sport, one or two
         const events = await prisma.sportEvent.findMany({
           where: {
-            ...sportEventSportWhere(sport),
             providerMappings: { some: { provider: { code } } },
             // A field loads while the event is a draft or released and not yet started (#431).
             status: { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] },
@@ -61,10 +60,16 @@ export function createScheduledEventReader({
               gte: from ?? now,
               ...(to ? { lte: to } : {}),
             },
-            // A synced league's sync names this provider (ADR 0011, #1726).
-            ...(syncedLeaguesOnly && {
-              sportLeagueSeason: { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code } } } } } },
-            }),
+            // The sport's events (#2042), of a synced league only: its sync names this provider
+            // (ADR 0011, #1726, #2086). Both through the event's Season (#2004), in one clause, so
+            // neither filter replaces the other.
+            sportLeagueSeason: {
+              sportLeague: {
+                sport: { sport },
+                isActive: true,
+                selectedProviderMapping: { is: { providerLeague: { provider: { code } } } },
+              },
+            },
           },
           orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
           take: FIELD_EVENTS_PER_PROVIDER,

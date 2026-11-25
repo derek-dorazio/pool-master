@@ -52,28 +52,28 @@ describe('createScheduledEventReader', () => {
     await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', from, now: NOW, to });
 
     expect(findMany.mock.calls.map(([query]) => query.where)).toEqual([{
-      sportLeagueSeason: { sportLeague: { sport: { sport: Sport.GOLF } } },
       providerMappings: { some: { provider: { code: 'BALLDONTLIE' } } },
       status: { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] },
       startDate: { gte: from, lte: to },
+      sportLeagueSeason: { sportLeague: { sport: { sport: Sport.GOLF }, isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
     }]);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ startDate: 'asc' }, { id: 'asc' }] }));
   });
 
-  it('narrows a provider\'s field query to active sport leagues whose selected mapping names that provider when asked for synced leagues only, and asks nothing of a provider with no Provider row', async () => {
+  it('narrows a provider\'s field query to active sport leagues whose selected mapping names that provider, and asks nothing of a provider with no Provider row', async () => {
     const { read, findMany } = reader(['mock', 'balldontlie']);
 
-    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW, syncedLeaguesOnly: true })).resolves.toEqual([
+    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW })).resolves.toEqual([
       { providerId: 'balldontlie', externalId: 'BALLDONTLIE-ext' },
     ]);
 
     expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany.mock.calls.map(([query]) => (query.where as { sportLeagueSeason?: unknown }).sportLeagueSeason)).toEqual([
-      { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
+      { sportLeague: { sport: { sport: Sport.GOLF }, isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
     ]);
   });
 
-  it('issues exactly one query per provider with a row for the field feed and exactly one in all for the scores feed, however many events they hold', async () => {
+  it('issues one query per provider a league can sync from for the field feed and exactly one in all for the scores feed, however many events they hold', async () => {
     const { read, findMany } = reader(['mock', 'balldontlie']);
 
     await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW });

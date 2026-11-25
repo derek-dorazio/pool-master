@@ -2478,7 +2478,7 @@ export const listSettingsGroupHistory = <ThrowOnError extends boolean = false>(o
 /**
  * Get ingestion schedule configuration
  *
- * Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.
+ * Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools, with whether each sync kind runs and whether it has a switch.
  */
 export const getIngestionSchedule = <ThrowOnError extends boolean = false>(options?: Options<GetIngestionScheduleData, ThrowOnError>): RequestResult<GetIngestionScheduleResponses, GetIngestionScheduleErrors, ThrowOnError> => (options?.client ?? client).get<GetIngestionScheduleResponses, GetIngestionScheduleErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

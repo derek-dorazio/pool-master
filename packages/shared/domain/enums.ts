@@ -1963,6 +1963,8 @@ export const BackgroundJobType = {
   ACTIVATE_EVENT_CONTESTS: 'ACTIVATE_EVENT_CONTESTS',
   /** A postponed event's contests follow its start: reopened while it is ahead, live once it has passed (#1792, #1952). */
   FOLLOW_POSTPONED_EVENT_CONTESTS: 'FOLLOW_POSTPONED_EVENT_CONTESTS',
+  /** Resolves the OPEN unmapped participant findings of feed ids a mapping now names, however it was made (#2069). */
+  RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */
