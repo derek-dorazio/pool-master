@@ -73,4 +73,16 @@ describe('ErrorBoundary', () => {
     loggerSpy.mockRestore();
     consoleErrorSpy.mockRestore();
   });
+
+  it('logs a null component stack when React reports none', () => {
+    const loggerSpy = vi.spyOn(logger, 'fatal').mockImplementation(() => undefined);
+    const boundary = new ErrorBoundary({ children: null });
+
+    boundary.componentDidCatch(new Error('render exploded'), { componentStack: '' });
+
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { componentStack: null } }),
+      'Unhandled render error',
+    );
+  });
 });
