@@ -2182,7 +2182,7 @@ export interface paths {
         put?: never;
         /**
          * Add participants to a sport event's field
-         * @description Any participants; ones already on the field are skipped. Root admin only.
+         * @description Any participants; ones already on the field are skipped. 422 TEST_PARTICIPANT_NOT_ON_TEST_SLOT for a test participant on an event the sync keeps: one joins only a test slot's event. Root admin only.
          */
         post: operations["addEventParticipants"];
         delete?: never;
@@ -2748,6 +2748,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sport-leagues/{sportLeagueId}/test-slots/{seasonSlotId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a test slot
+         * @description Removes a test slot (QA only, #2075): the test event on it, then the slot, then every test participant of the league no event field holds any more. How a browser journey cleans up after itself. 404 SEASON_SLOT_NOT_FOUND for a slot that is not the league's; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps; 409 EVENT_HAS_CONTESTS while a contest covers its event. Root admin only.
+         */
+        delete: operations["deleteTestSlot"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sport-leagues/{sportLeagueId}/syncs": {
         parameters: {
             query?: never;
@@ -3107,7 +3127,7 @@ export interface paths {
         put?: never;
         /**
          * Create a participant
-         * @description Creates a participant in the shared participant catalog. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         * @description Creates a participant of a sport league. A provider-synced league takes one with its sync provider's feed id, written with its provider mapping in one transaction, or a test participant (isTestData) for a test event's field; anything else is 409 PARTICIPANT_FEED_ID_REQUIRED, since the sync would make a second participant beside an unmapped one. A league with no feed takes one without a feed id. 404 SPORT_LEAGUE_NOT_FOUND; 409 PARTICIPANT_FEED_ID_TAKEN; 422 TEST_PARTICIPANT_FEED_ID for a test participant given a feed id, SPORT_LEAGUE_NOT_SYNCED for a feed id in a league with no feed. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
          */
         post: operations["createParticipant"];
         delete?: never;
@@ -3179,7 +3199,7 @@ export interface paths {
         put?: never;
         /**
          * Bind a provider identity to a participant
-         * @description How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider's identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. Root admin only.
+         * @description How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider's identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. 422 TEST_PARTICIPANT_FEED_ID for a test participant, which never has one. Root admin only.
          */
         post: operations["bindParticipantProviderMapping"];
         delete?: never;
@@ -9616,7 +9636,7 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description A new participant for the shared catalog. */
+        /** @description A new participant of a sport league. */
         CreateParticipantRequest: {
             /**
              * Format: uuid
@@ -9644,6 +9664,10 @@ export interface components {
             role?: string;
             /** @description Current team affiliation. */
             teamAffiliation?: string;
+            /** @description The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it. */
+            feedId?: string;
+            /** @description A test participant (QA only), for a test event's field: it joins only a test slot's event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted. */
+            isTestData?: boolean;
         };
         /** @description Fields to change on a participant. Omitted fields keep their current values. */
         UpdateParticipantRequest: {
@@ -33280,6 +33304,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     updateEventParticipants: {
@@ -35350,6 +35383,72 @@ export interface operations {
             };
         };
     };
+    deleteTestSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     listSportLeagueSyncs: {
         parameters: {
             query?: never;
@@ -36616,6 +36715,33 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     listSportLeagueProviderMappings: {
@@ -36858,6 +36984,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

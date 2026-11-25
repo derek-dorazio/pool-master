@@ -7744,7 +7744,7 @@ export type ParticipantResponse = {
 };
 
 /**
- * A new participant for the shared catalog.
+ * A new participant of a sport league.
  */
 export type CreateParticipantRequest = {
     /**
@@ -7787,6 +7787,14 @@ export type CreateParticipantRequest = {
      * Current team affiliation.
      */
     teamAffiliation?: string;
+    /**
+     * The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.
+     */
+    feedId?: string;
+    /**
+     * A test participant (QA only), for a test event's field: it joins only a test slot's event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted.
+     */
+    isTestData?: boolean;
 };
 
 /**
@@ -35204,6 +35212,10 @@ export type AddEventParticipantsErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type AddEventParticipantsError = AddEventParticipantsErrors[keyof AddEventParticipantsErrors];
@@ -36489,6 +36501,50 @@ export type CreateTestSlotResponses = {
 
 export type CreateTestSlotResponse = CreateTestSlotResponses[keyof CreateTestSlotResponses];
 
+export type DeleteTestSlotData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/test-slots/{seasonSlotId}';
+};
+
+export type DeleteTestSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type DeleteTestSlotError = DeleteTestSlotErrors[keyof DeleteTestSlotErrors];
+
+export type DeleteTestSlotResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type DeleteTestSlotResponse = DeleteTestSlotResponses[keyof DeleteTestSlotResponses];
+
 export type ListSportLeagueSyncsData = {
     body?: never;
     path: {
@@ -37354,6 +37410,18 @@ export type CreateParticipantErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type CreateParticipantError = CreateParticipantErrors[keyof CreateParticipantErrors];
@@ -37547,6 +37615,10 @@ export type BindParticipantProviderMappingErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type BindParticipantProviderMappingError = BindParticipantProviderMappingErrors[keyof BindParticipantProviderMappingErrors];
