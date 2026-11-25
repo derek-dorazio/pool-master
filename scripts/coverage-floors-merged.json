@@ -34,7 +34,7 @@
         },
         "packages/core-api/src/modules/contest-management/wiring.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 50
+          "branches": 76
         },
         "packages/core-api/src/modules/email/email-unsubscribe-routes.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
@@ -103,7 +103,7 @@
         },
         "packages/core-api/src/core/job-lock.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
-          "lines": 96,
+          "lines": 97,
           "branches": 92
         },
         "packages/core-api/src/core/locked-sweep.ts": {
@@ -121,7 +121,7 @@
         },
         "packages/core-api/src/modules/contest-management/service.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
-          "lines": 96,
+          "lines": 97,
           "branches": 92
         },
         "packages/core-api/src/modules/contests/service.ts": {
