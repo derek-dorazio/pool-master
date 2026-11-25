@@ -33,6 +33,7 @@ function createLedgerStore() {
         ...rest,
         providerId: TEST_PROVIDER_ROWS[providerCode].id,
         providerName: TEST_PROVIDER_ROWS[providerCode].name,
+        sport: null,
         eventId: null,
         id: `sync-run-${nextId}`,
         createdAt: input.createdAt ?? new Date(),

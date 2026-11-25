@@ -114,7 +114,6 @@ import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
   PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../packages/core-api/src/modules/events/league-events-sync';
@@ -387,7 +386,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
     sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providers).sportEvents,
     findings: integrationSyncFindings(prisma, providerSettings),
@@ -822,15 +820,6 @@ async function cleanupContestArtifacts(
     },
   });
   await database.participantContestScoringRule.deleteMany({
-    where: {
-      contestConfiguration: {
-        contestId: {
-          in: contestIds,
-        },
-      },
-    },
-  });
-  await database.contestPrizeDefinition.deleteMany({
     where: {
       contestConfiguration: {
         contestId: {

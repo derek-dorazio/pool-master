@@ -73,6 +73,10 @@ export interface SeasonSpan {
 export interface SportLeagueOverview {
   id: string;
   sport: Sport;
+  /** Its sport's URL segment (#2042): a link to the league's Manage page names the sport by it. */
+  sportUrlSegment: string;
+  /** Its sport's display order (#2042): the Sports grid sorts its sport column by it. */
+  sportDisplayOrder: number;
   name: string;
   /** The provider that syncs its events. Null when none does. */
   providerId: string | null;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Navigate, useParams } from 'react-router';
-import { buildEventPagePath, EventPageOfferState, getSportDefinition } from '@poolmaster/shared/domain';
+import { EventPageOfferState, getSportDefinition, isUrlSegment } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -14,7 +14,7 @@ import { PhotoHero } from './components/photo-hero';
 import { StartButton } from './components/start-button';
 import { withPrimaryOffer } from './event-page-offers';
 import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
-import { buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
+import { buildHowToPlaySportPath } from './event-page-paths';
 import type { StartRequest } from './start-path';
 import { useEventPageQuery, useEventPagesQuery } from './use-event-pages-query';
 
@@ -26,7 +26,7 @@ const READY_STEPS: readonly { title: string; body: string }[] = [
 ];
 
 function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: EventPageOfferDto; page: EventPageDto; testId: string }) {
-  const request: StartRequest = { sport: page.sport, slug: page.slug, templateId: offer.template.id };
+  const request: StartRequest = { sportUrlSegment: page.sportUrlSegment, urlSegment: page.urlSegment, templateId: offer.template.id };
   const offerCopy = eventPageOfferCopy(copy, offer);
   const isOpen = offer.state === EventPageOfferState.OPEN;
   return (
@@ -66,13 +66,13 @@ function EventPageContent({ page }: { page: EventPageDto }) {
   // poolmaster-allow-list-lookup: the sport's few upcoming event pages, shown as what comes next
   const nextUp = withPrimaryOffer((sportPagesQuery.data ?? []).filter((other) => other.id !== page.id))
     .find(({ primary: other }) => primary === undefined || other.edition.startDate > primary.edition.startDate);
-  const startRequest: StartRequest = { sport: page.sport, slug: page.slug, templateId: primary?.template.id ?? null };
+  const startRequest: StartRequest = { sportUrlSegment: page.sportUrlSegment, urlSegment: page.urlSegment, templateId: primary?.template.id ?? null };
   const hero = useRef<HTMLDivElement>(null);
 
   return (
     <section className="space-y-10 pb-20 md:pb-0" data-testid="event-page">
-      <PhotoHero sport={page.sport}>
-        <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sport) }, { label: copy.name }]} />
+      <PhotoHero sportUrlSegment={page.sportUrlSegment}>
+        <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sportUrlSegment) }, { label: copy.name }]} />
         {copy.eyebrow ? <Eyebrow>{copy.eyebrow}</Eyebrow> : null}
         <Heading data-testid="event-page-name" level={1} variant="hero">{copy.name}</Heading>
         <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
@@ -115,7 +115,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
           actionLabel="See ways to play"
           name={eventPageCopy(nextUp.page).name}
           testId="event-page-next-up"
-          to={buildEventPagePath(nextUp.page.sport, nextUp.page.slug)}
+          to={nextUp.page.path}
         />
       ) : null}
 
@@ -147,10 +147,11 @@ export function MovedPage() {
  */
 export function EventPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'event-page' }), []);
-  const params = useParams<'sport' | 'pageSlug'>();
-  const sport = sportFromPathSegment(params.sport);
-  const pageQuery = useEventPageQuery(sport, params.pageSlug);
-  const isNotFound = sport === null || hasErrorCode(pageQuery.error, 'EVENT_PAGE_NOT_FOUND');
+  const { sportUrlSegment = '', urlSegment = '' } = useParams<'sportUrlSegment' | 'urlSegment'>();
+  // An address no page could have is not asked for: it has moved, as a missing page has.
+  const isAddress = isUrlSegment(sportUrlSegment) && isUrlSegment(urlSegment);
+  const pageQuery = useEventPageQuery(isAddress ? sportUrlSegment : undefined, urlSegment);
+  const isNotFound = !isAddress || hasErrorCode(pageQuery.error, 'EVENT_PAGE_NOT_FOUND');
 
   useEffect(() => {
     if (pageQuery.isError && !isNotFound) {
@@ -169,7 +170,7 @@ export function EventPage() {
   }
   const page = pageQuery.data;
   if (!page.isActive) {
-    return page.redirectTo ? <Navigate replace to={buildEventPagePath(page.redirectTo.sport, page.redirectTo.slug)} /> : <MovedPage />;
+    return page.redirectTo ? <Navigate replace to={page.redirectTo.path} /> : <MovedPage />;
   }
   return <EventPageContent page={page} />;
 }

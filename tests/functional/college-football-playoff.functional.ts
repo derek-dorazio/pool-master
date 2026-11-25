@@ -25,6 +25,7 @@ import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, t
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // The College Football Playoff end to end over HTTP (#707): the 2025-26 test seed loads into the
 // seeded sport league, its event starting with the league's six tiers, and is played out game by
@@ -98,7 +99,7 @@ describe('SDK Functional: College Football Playoff', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
   });

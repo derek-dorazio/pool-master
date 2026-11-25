@@ -1,6 +1,6 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
-import { SportOrder, type Sport } from '@poolmaster/shared/domain';
+import type { ExplicitEnumOrder, Sport } from '@poolmaster/shared/domain';
 
 /** One provider league with its provider's name, as the Provider leagues grid shows it. */
 export interface ProviderLeagueRow {
@@ -17,8 +17,11 @@ export interface ProviderLeagueRow {
 
 const columnHelper = createColumnHelper<ProviderLeagueRow>();
 
-/** The Provider leagues grid's columns (#1997), each explained behind its (i). */
-export const providerLeagueColumns = [
+/**
+ * The Provider leagues grid's columns (#1997), each explained behind its (i). The sport column
+ * sorts in the sports' display order, which the API gives (`sportDisplayOrder`).
+ */
+export const providerLeagueColumns = (sportOrder: ExplicitEnumOrder<string>) => [
   columnHelper.accessor('providerName', {
     header: 'Provider',
     meta: { info: 'The provider whose league it is.', type: { kind: 'text' } },
@@ -35,7 +38,7 @@ export const providerLeagueColumns = [
     header: 'Sport',
     meta: {
       info: 'The sport the league plays: only a sport league of the same sport can map to it.',
-      type: { kind: 'enum', order: SportOrder, label: (sport) => enumLabel('Sport', sport as Sport) },
+      type: { kind: 'enum', order: sportOrder, label: (sport) => enumLabel('Sport', sport as Sport) },
     },
     cell: ({ getValue }) => enumLabel('Sport', getValue()),
   }),

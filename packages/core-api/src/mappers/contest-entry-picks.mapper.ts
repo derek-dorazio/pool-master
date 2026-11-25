@@ -3,14 +3,10 @@
  *
  * The Prisma row is the pick's raw persistence shape (with Decimal cost,
  * nullable optional columns, Date timestamps). The DTO surface uses ISO
- * datetime strings, primitive `number | null` for nullable optionals, and
- * the typed `ContestFormat` enum.
- *
- * See plans/117 §4.3 (unified pick model), §7.1 (denormalization invariant),
- * §12.1 (canonical DTO surface).
+ * datetime strings and primitive `number | null` for nullable optionals.
  */
 
-import type { ContestEntryPick, ContestFormat } from '@poolmaster/shared/domain';
+import type { ContestEntryPick } from '@poolmaster/shared/domain';
 
 /**
  * Shape of the Prisma row read by `prisma.contestEntryPick.findUnique` /
@@ -23,9 +19,6 @@ export interface ContestEntryPickRow {
   id: string;
   entryId: string;
   sportEventParticipantId: string;
-  contestFormat: ContestFormat;
-  period: number | null;
-  slot: number | null;
   tier: string | null;
   cost: { toNumber(): number } | number | null;
   isAutoPicked: boolean;
@@ -48,9 +41,6 @@ export function mapContestEntryPickRowToDomain(row: ContestEntryPickRow): Contes
     id: row.id,
     entryId: row.entryId,
     sportEventParticipantId: row.sportEventParticipantId,
-    contestFormat: row.contestFormat,
-    period: row.period ?? undefined,
-    slot: row.slot ?? undefined,
     tier: row.tier ?? undefined,
     cost: decimalToNumber(row.cost) ?? undefined,
     isAutoPicked: row.isAutoPicked,

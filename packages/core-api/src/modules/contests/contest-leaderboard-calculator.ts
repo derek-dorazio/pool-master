@@ -59,7 +59,6 @@ export interface ContestLeaderboardEntryInput {
     id: string;
     sportEventParticipantId: string;
     pickedAt: Date;
-    slot: number | null;
   }>;
 }
 
@@ -241,7 +240,6 @@ export function buildContestEntryStanding(
         pickId: pick.id,
         sportEventParticipantId: pick.sportEventParticipantId,
         pickedAt: pick.pickedAt,
-        slot: pick.slot,
         isCounting,
         isDropped: participant.score !== null && !isCounting,
         participant,
@@ -457,16 +455,7 @@ function compareScoredContestEntryPicks(
   if (leftScore !== null) return -1;
   if (rightScore !== null) return 1;
 
-  return compareSlots(left.slot, right.slot)
-    || left.pickedAt.getTime() - right.pickedAt.getTime()
+  return left.pickedAt.getTime() - right.pickedAt.getTime()
     || left.pickId.localeCompare(right.pickId);
-}
-
-/** Roster slots order ascending, with an unslotted pick last. Not a score: no direction. */
-function compareSlots(left: number | null, right: number | null): number {
-  if (left === null && right === null) return 0;
-  if (left === null) return 1;
-  if (right === null) return -1;
-  return left - right;
 }
 

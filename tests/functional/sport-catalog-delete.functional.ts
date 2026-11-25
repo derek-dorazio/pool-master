@@ -12,9 +12,10 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { ProviderCode } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { sportRowKeys } from '../support/sport-rows';
 import { Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../support/sport-play';
 
@@ -55,7 +56,7 @@ afterAll(async () => {
 async function ensureGolfSportRow(): Promise<void> {
   await getFunctionalPrisma().sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -68,7 +69,7 @@ async function rootAdmin(): Promise<RegisteredUserContext> {
 }
 
 async function newTour(client: Client, name: string): Promise<string> {
-  const tour = await createSportLeague({ client, body: { ...(await sportLeagueProfiles(client, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `${name} ${RUN}` } });
+  const tour = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `${name} ${RUN}` } });
   expect(tour.response?.status).toBe(201);
   const id = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(id);

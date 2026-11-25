@@ -19,7 +19,6 @@ import {
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
-  SportOrder,
   type OverdueEventFacts,
   type SportLeagueFindingsIssueItem,
   type SportLeagueIssue,
@@ -51,6 +50,8 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
     return {
       id: league.id,
       sport: league.sport,
+      sportUrlSegment: league.sportUrlSegment,
+      sportDisplayOrder: league.sportDisplayOrder,
       name: league.name,
       providerId,
       providerName: league.syncProviderName,
@@ -143,10 +144,8 @@ function overdueItemsOf(candidates: readonly OverdueEventFacts[], now: Date): Sp
     .sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime() || left.label.localeCompare(right.label));
 }
 
-const compareSport = compareByEnumOrder(SportOrder);
-
 function compareOverviews(left: SportLeagueOverview, right: SportLeagueOverview): number {
-  return compareSport(left.sport, right.sport) || left.name.localeCompare(right.name);
+  return left.sportDisplayOrder - right.sportDisplayOrder || left.name.localeCompare(right.name);
 }
 
 function groupBy<T>(items: readonly T[], key: (item: T) => string): Map<string, T[]> {

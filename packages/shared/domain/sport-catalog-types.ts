@@ -32,6 +32,8 @@ export interface SportLeagueProviderMapping {
 export interface SportLeague extends DomainEntity {
   sportId: string;
   name: string;
+  /** Its name in addresses within its sport (#2042): `?league=wnba`. Stored, never built from the name. */
+  urlSegment: string;
   /**
    * Its current Season (#2003): recomputed once a day by `currentSeasonOf`, never set by hand.
    * Null only for a league no migration has given a Season.

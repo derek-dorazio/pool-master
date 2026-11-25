@@ -22,6 +22,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // An event's field against real Postgres (#1163): read in one repository call on one connection,
 // shared by every contest and pick screen on the event for 30 seconds, and read afresh once an
@@ -45,7 +46,7 @@ async function golfEvent() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const edition = await freshEventEdition(prisma);
@@ -55,7 +56,6 @@ async function golfEvent() {
       ...edition,
       externalId: `field-reads-${randomUUID()}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
       name: `Field Reads Open ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,
@@ -105,7 +105,6 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
       ...(await freshEventEdition(prisma, { sport })),
       externalId: `field-reads-${randomUUID()}`,
       providerId: 'integration-test',
-      sport,
       name: `Field Reads ${sport} ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,
@@ -144,6 +143,8 @@ describe('An event\'s field', () => {
       ['SELECT sport_events', 1],
       ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
+      // The event's sport, read through its league (#2042).
+      ['SELECT sports', 1],
     ]);
     expect(field.map((row) => [row.entry.id, row.affiliatedWithSportLeague])).toEqual([[ana.id, true], [bea.id, true], [cal.id, false]]);
     const [anaRow, beaRow] = field;

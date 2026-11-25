@@ -7,11 +7,9 @@ import {
   buildEventPagePath,
   emailFormatImagePath,
   sportHeaderImagePath,
-  sportPathSegment,
-  type EventPage,
+  type EventPageAddress,
   formatSelectionTypeName,
   type SelectionType,
-  type Sport,
   type SportEvent,
   type User,
 } from '@poolmaster/shared/domain';
@@ -93,8 +91,8 @@ export function buildCreateContestUrl(
 }
 
 /** An event page, where a fan sees every way to play the event. */
-export function buildEventPageUrl(appBaseUrl: string, page: Pick<EventPage, 'sport' | 'slug'>): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}${buildEventPagePath(page.sport, page.slug)}`;
+export function buildEventPageUrl(appBaseUrl: string, page: Pick<EventPageAddress, 'sportUrlSegment' | 'urlSegment'>): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}${buildEventPagePath(page)}`;
 }
 
 /** The league's contest types page, in Commissioner tools (#1392): every way to play its sport leagues offer. */
@@ -102,22 +100,22 @@ export function buildLeagueContestTypesUrl(appBaseUrl: string, leagueCode: strin
   return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/admin/contest-types`;
 }
 
-/** A sport's picture at the top of an email about one of its events. */
-export function buildEmailSportImageUrl(appBaseUrl: string, sport: Sport): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}${sportHeaderImagePath(sport)}`;
+/** A sport's picture at the top of an email about one of its events, by the sport's stored URL segment. */
+export function buildEmailSportImageUrl(appBaseUrl: string, sportUrlSegment: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}${sportHeaderImagePath(sportUrlSegment)}`;
 }
 
 /** The top of an email about `sportEvent`: its sport's picture, its sport league's name ('' for none), its name and start. */
 export function buildEmailEventHeader(
   appBaseUrl: string,
-  sportEvent: Pick<SportEvent, 'name' | 'startDate' | 'sport'>,
+  sportEvent: Pick<SportEvent, 'name' | 'startDate' | 'sportUrlSegment'>,
   sportLeagueName: string,
 ): EmailEventHeader {
   return {
     sportLeagueName,
     eventName: sportEvent.name,
     startsAt: sportEvent.startDate,
-    imageUrl: buildEmailSportImageUrl(appBaseUrl, sportEvent.sport),
+    imageUrl: buildEmailSportImageUrl(appBaseUrl, sportEvent.sportUrlSegment),
   };
 }
 
@@ -136,9 +134,9 @@ export function buildContestAdminUrl(appBaseUrl: string, leagueCode: string, con
   return `${buildLeagueAdminContestsUrl(appBaseUrl, leagueCode)}/${encodeURIComponent(contestId)}`;
 }
 
-/** A sport event's root admin page, under the sport's Manage pages. */
-export function buildSportEventAdminUrl(appBaseUrl: string, sport: Sport, sportEventId: string): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/manage/sports/${sportPathSegment(sport)}/events/${encodeURIComponent(sportEventId)}`;
+/** A sport event's root admin page, under its sport's Manage pages (the sport by its stored URL segment). */
+export function buildSportEventAdminUrl(appBaseUrl: string, sportEvent: Pick<SportEvent, 'sportUrlSegment' | 'id'>): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/manage/sports/${sportEvent.sportUrlSegment}/events/${encodeURIComponent(sportEvent.id)}`;
 }
 
 /** The reader's squad page for one year (#872). */

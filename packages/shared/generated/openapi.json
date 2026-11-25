@@ -17875,6 +17875,17 @@
             ],
             "description": "The sport."
           },
+          "urlSegment": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given."
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity."
+          },
           "tournamentFormat": {
             "type": "string",
             "enum": [
@@ -17898,6 +17909,8 @@
         "required": [
           "id",
           "sport",
+          "urlSegment",
+          "displayOrder",
           "tournamentFormat",
           "createdAt",
           "updatedAt"
@@ -17935,6 +17948,17 @@
                   ],
                   "description": "The sport."
                 },
+                "urlSegment": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                  "description": "The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given."
+                },
+                "displayOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity."
+                },
                 "tournamentFormat": {
                   "type": "string",
                   "enum": [
@@ -17958,6 +17982,8 @@
               "required": [
                 "id",
                 "sport",
+                "urlSegment",
+                "displayOrder",
                 "tournamentFormat",
                 "createdAt",
                 "updatedAt"
@@ -17965,7 +17991,7 @@
               "additionalProperties": false,
               "description": "A sport the platform runs contests on."
             },
-            "description": "Every sport, ordered by sport."
+            "description": "Every sport, in display order."
           }
         },
         "required": [
@@ -18053,9 +18079,25 @@
             ],
             "description": "The sport this sport league belongs to, as the sport enum."
           },
+          "sportUrlSegment": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league."
+          },
+          "sportDisplayOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
+          },
           "name": {
             "type": "string",
             "description": "Sport league name, e.g. \"PGA Tour\"."
+          },
+          "urlSegment": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever."
           },
           "currentSeasonId": {
             "description": "The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.",
@@ -18252,7 +18294,10 @@
           "id",
           "sportId",
           "sport",
+          "sportUrlSegment",
+          "sportDisplayOrder",
           "name",
+          "urlSegment",
           "currentSeasonId",
           "timeZone",
           "isActive",
@@ -18340,9 +18385,25 @@
                   ],
                   "description": "The sport this sport league belongs to, as the sport enum."
                 },
+                "sportUrlSegment": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                  "description": "Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league."
+                },
+                "sportDisplayOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
+                },
                 "name": {
                   "type": "string",
                   "description": "Sport league name, e.g. \"PGA Tour\"."
+                },
+                "urlSegment": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                  "description": "The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever."
                 },
                 "currentSeasonId": {
                   "description": "The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.",
@@ -18539,7 +18600,10 @@
                 "id",
                 "sportId",
                 "sport",
+                "sportUrlSegment",
+                "sportDisplayOrder",
                 "name",
+                "urlSegment",
                 "currentSeasonId",
                 "timeZone",
                 "isActive",
@@ -18606,9 +18670,25 @@
                 ],
                 "description": "The sport this sport league belongs to, as the sport enum."
               },
+              "sportUrlSegment": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "description": "Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league."
+              },
+              "sportDisplayOrder": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
+              },
               "name": {
                 "type": "string",
                 "description": "Sport league name, e.g. \"PGA Tour\"."
+              },
+              "urlSegment": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "description": "The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever."
               },
               "currentSeasonId": {
                 "description": "The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.",
@@ -18805,7 +18885,10 @@
               "id",
               "sportId",
               "sport",
+              "sportUrlSegment",
+              "sportDisplayOrder",
               "name",
+              "urlSegment",
               "currentSeasonId",
               "timeZone",
               "isActive",
@@ -18862,6 +18945,12 @@
             "minLength": 1,
             "description": "Unique within the sport."
           },
+          "urlSegment": {
+            "type": "string",
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The sport league's name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are."
+          },
           "participantType": {
             "type": "string",
             "enum": [
@@ -18907,6 +18996,7 @@
         "required": [
           "sport",
           "name",
+          "urlSegment",
           "participantType",
           "scoringFamily",
           "platformTierProfileId",
@@ -18987,6 +19077,16 @@
               "SOCCER",
               "TENNIS"
             ]
+          },
+          "sportUrlSegment": {
+            "type": "string",
+            "description": "Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by."
+          },
+          "sportDisplayOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it."
           },
           "name": {
             "type": "string"
@@ -19372,6 +19472,8 @@
         "required": [
           "id",
           "sport",
+          "sportUrlSegment",
+          "sportDisplayOrder",
           "name",
           "providerId",
           "providerName",
@@ -19412,6 +19514,16 @@
                     "SOCCER",
                     "TENNIS"
                   ]
+                },
+                "sportUrlSegment": {
+                  "type": "string",
+                  "description": "Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by."
+                },
+                "sportDisplayOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it."
                 },
                 "name": {
                   "type": "string"
@@ -19797,6 +19909,8 @@
               "required": [
                 "id",
                 "sport",
+                "sportUrlSegment",
+                "sportDisplayOrder",
                 "name",
                 "providerId",
                 "providerName",
@@ -21510,8 +21624,8 @@
             },
             "description": "One per field row, active or withdrawn, never paged."
           },
-          "eventPageSlug": {
-            "description": "The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.",
+          "eventPagePath": {
+            "description": "The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.",
             "type": [
               "string",
               "null"
@@ -21528,7 +21642,7 @@
           "tierOrderBasis",
           "tierOrderCoversField",
           "fieldFeed",
-          "eventPageSlug"
+          "eventPagePath"
         ],
         "additionalProperties": false,
         "description": "The root admin's Event page header and sync rows."
@@ -22047,8 +22161,8 @@
                 },
                 "description": "One per field row, active or withdrawn, never paged."
               },
-              "eventPageSlug": {
-                "description": "The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.",
+              "eventPagePath": {
+                "description": "The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.",
                 "type": [
                   "string",
                   "null"
@@ -22065,7 +22179,7 @@
               "tierOrderBasis",
               "tierOrderCoversField",
               "fieldFeed",
-              "eventPageSlug"
+              "eventPagePath"
             ],
             "additionalProperties": false,
             "description": "The root admin's Event page header and sync rows."
@@ -24528,6 +24642,10 @@
             ],
             "description": "Sport the event belongs to."
           },
+          "sportUrlSegment": {
+            "type": "string",
+            "description": "The URL segment of the event's sport, read through its sport league: what a web address names the sport by."
+          },
           "name": {
             "type": "string",
             "description": "Event name shown in contest and event selectors."
@@ -25203,6 +25321,7 @@
           "providerId",
           "providerName",
           "sport",
+          "sportUrlSegment",
           "name",
           "venue",
           "location",
@@ -25337,6 +25456,10 @@
                     "TENNIS"
                   ],
                   "description": "Sport the event belongs to."
+                },
+                "sportUrlSegment": {
+                  "type": "string",
+                  "description": "The URL segment of the event's sport, read through its sport league: what a web address names the sport by."
                 },
                 "name": {
                   "type": "string",
@@ -26013,6 +26136,7 @@
                 "providerId",
                 "providerName",
                 "sport",
+                "sportUrlSegment",
                 "name",
                 "venue",
                 "location",
@@ -26101,6 +26225,10 @@
                   "TENNIS"
                 ],
                 "description": "Sport the event belongs to."
+              },
+              "sportUrlSegment": {
+                "type": "string",
+                "description": "The URL segment of the event's sport, read through its sport league: what a web address names the sport by."
               },
               "name": {
                 "type": "string",
@@ -26777,6 +26905,7 @@
               "providerId",
               "providerName",
               "sport",
+              "sportUrlSegment",
               "name",
               "venue",
               "location",
@@ -31938,6 +32067,13 @@
               null
             ]
           },
+          "sportUrlSegment": {
+            "description": "The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "entryCount": {
             "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
             "type": "number"
@@ -32350,7 +32486,7 @@
             "description": "When this participant was picked."
           },
           "slot": {
-            "description": "Optional roster slot from the pick row.",
+            "description": "Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).",
             "type": [
               "integer",
               "null"
@@ -32603,7 +32739,7 @@
                   "description": "When this participant was picked."
                 },
                 "slot": {
-                  "description": "Optional roster slot from the pick row.",
+                  "description": "Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).",
                   "type": [
                     "integer",
                     "null"
@@ -33579,7 +33715,7 @@
                         "description": "When this participant was picked."
                       },
                       "slot": {
-                        "description": "Optional roster slot from the pick row.",
+                        "description": "Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).",
                         "type": [
                           "integer",
                           "null"
@@ -33893,6 +34029,13 @@
                   null
                 ]
               },
+              "sportUrlSegment": {
+                "description": "The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "entryCount": {
                 "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
                 "type": "number"
@@ -34153,6 +34296,13 @@
                     "SOCCER",
                     "TENNIS",
                     null
+                  ]
+                },
+                "sportUrlSegment": {
+                  "description": "The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.",
+                  "type": [
+                    "string",
+                    "null"
                   ]
                 },
                 "entryCount": {
@@ -55658,12 +55808,21 @@
               "SOCCER",
               "TENNIS"
             ],
-            "description": "The sport the page belongs to; its URL's first segment is this sport's path segment."
+            "description": "The sport the page belongs to."
           },
-          "slug": {
+          "sportUrlSegment": {
             "type": "string",
             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-            "description": "The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>."
+            "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+          },
+          "urlSegment": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year)."
+          },
+          "path": {
+            "type": "string",
+            "description": "The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given."
           },
           "displayOrder": {
             "type": "integer",
@@ -55696,17 +55855,29 @@
                   "BASEBALL",
                   "SOCCER",
                   "TENNIS"
-                ]
+                ],
+                "description": "The sport the page belongs to."
               },
-              "slug": {
+              "sportUrlSegment": {
                 "type": "string",
                 "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                "description": "The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>."
+                "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+              },
+              "urlSegment": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "description": "The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year)."
+              },
+              "path": {
+                "type": "string",
+                "description": "The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given."
               }
             },
             "required": [
               "sport",
-              "slug"
+              "sportUrlSegment",
+              "urlSegment",
+              "path"
             ],
             "additionalProperties": false
           },
@@ -57254,7 +57425,9 @@
         "required": [
           "id",
           "sport",
-          "slug",
+          "sportUrlSegment",
+          "urlSegment",
+          "path",
           "displayOrder",
           "isActive",
           "redirectTo",
@@ -57288,12 +57461,21 @@
                   "SOCCER",
                   "TENNIS"
                 ],
-                "description": "The sport the page belongs to; its URL's first segment is this sport's path segment."
+                "description": "The sport the page belongs to."
               },
-              "slug": {
+              "sportUrlSegment": {
                 "type": "string",
                 "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                "description": "The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>."
+                "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+              },
+              "urlSegment": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "description": "The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year)."
+              },
+              "path": {
+                "type": "string",
+                "description": "The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given."
               },
               "displayOrder": {
                 "type": "integer",
@@ -57326,17 +57508,29 @@
                       "BASEBALL",
                       "SOCCER",
                       "TENNIS"
-                    ]
+                    ],
+                    "description": "The sport the page belongs to."
                   },
-                  "slug": {
+                  "sportUrlSegment": {
                     "type": "string",
                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                    "description": "The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>."
+                    "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                  },
+                  "urlSegment": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                    "description": "The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year)."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given."
                   }
                 },
                 "required": [
                   "sport",
-                  "slug"
+                  "sportUrlSegment",
+                  "urlSegment",
+                  "path"
                 ],
                 "additionalProperties": false
               },
@@ -58884,7 +59078,9 @@
             "required": [
               "id",
               "sport",
-              "slug",
+              "sportUrlSegment",
+              "urlSegment",
+              "path",
               "displayOrder",
               "isActive",
               "redirectTo",
@@ -58955,12 +59151,21 @@
                     "SOCCER",
                     "TENNIS"
                   ],
-                  "description": "The sport the page belongs to; its URL's first segment is this sport's path segment."
+                  "description": "The sport the page belongs to."
                 },
-                "slug": {
+                "sportUrlSegment": {
                   "type": "string",
                   "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                  "description": "The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>."
+                  "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                },
+                "urlSegment": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                  "description": "The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year)."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given."
                 },
                 "displayOrder": {
                   "type": "integer",
@@ -58993,17 +59198,29 @@
                         "BASEBALL",
                         "SOCCER",
                         "TENNIS"
-                      ]
+                      ],
+                      "description": "The sport the page belongs to."
                     },
-                    "slug": {
+                    "sportUrlSegment": {
                       "type": "string",
                       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                      "description": "The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>."
+                      "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                    },
+                    "urlSegment": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                      "description": "The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year)."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given."
                     }
                   },
                   "required": [
                     "sport",
-                    "slug"
+                    "sportUrlSegment",
+                    "urlSegment",
+                    "path"
                   ],
                   "additionalProperties": false
                 },
@@ -60551,7 +60768,9 @@
               "required": [
                 "id",
                 "sport",
-                "slug",
+                "sportUrlSegment",
+                "urlSegment",
+                "path",
                 "displayOrder",
                 "isActive",
                 "redirectTo",
@@ -68916,7 +69135,11 @@
             "description": "That Provider's name."
           },
           "sport": {
-            "type": "string",
+            "description": "The run's sport, its sport league's; null for a run with no sport league.",
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "GOLF",
               "HORSE_RACING",
@@ -68928,7 +69151,8 @@
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
-              "TENNIS"
+              "TENNIS",
+              null
             ]
           },
           "eventId": {
@@ -69079,7 +69303,11 @@
             "description": "That Provider's name."
           },
           "sport": {
-            "type": "string",
+            "description": "The run's sport, its sport league's; null for a run with no sport league.",
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "GOLF",
               "HORSE_RACING",
@@ -69091,7 +69319,8 @@
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
-              "TENNIS"
+              "TENNIS",
+              null
             ]
           },
           "eventId": {
@@ -69517,6 +69746,7 @@
             "format": "uuid"
           },
           "sport": {
+            "description": "Only the runs of this sport's sport leagues. A run with no sport league is in no sport.",
             "type": "string",
             "enum": [
               "GOLF",
@@ -69577,7 +69807,11 @@
                   "description": "That Provider's name."
                 },
                 "sport": {
-                  "type": "string",
+                  "description": "The run's sport, its sport league's; null for a run with no sport league.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
                   "enum": [
                     "GOLF",
                     "HORSE_RACING",
@@ -69589,7 +69823,8 @@
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
-                    "TENNIS"
+                    "TENNIS",
+                    null
                   ]
                 },
                 "eventId": {
@@ -69789,7 +70024,11 @@
                   "description": "That Provider's name."
                 },
                 "sport": {
-                  "type": "string",
+                  "description": "The run's sport, its sport league's; null for a run with no sport league.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
                   "enum": [
                     "GOLF",
                     "HORSE_RACING",
@@ -69801,7 +70040,8 @@
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
-                    "TENNIS"
+                    "TENNIS",
+                    null
                   ]
                 },
                 "eventId": {
@@ -86701,36 +86941,24 @@
         }
       }
     },
-    "/api/v1/event-pages/{sport}/{pageSlug}": {
+    "/api/v1/event-pages/{sportUrlSegment}/{urlSegment}": {
       "get": {
         "operationId": "getEventPage",
         "summary": "Get an event page",
         "tags": [
           "Event pages"
         ],
-        "description": "One event page by its sport and slug, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.",
+        "description": "One event page by its address, the sport's URL segment then the page's, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
             },
             "in": "path",
-            "name": "sport",
+            "name": "sportUrlSegment",
             "required": true,
-            "description": "The page's sport."
+            "description": "The page's sport, by the sport's stored URL segment, such as american-football: the first segment of the page's web address."
           },
           {
             "schema": {
@@ -86738,9 +86966,9 @@
               "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
             },
             "in": "path",
-            "name": "pageSlug",
+            "name": "urlSegment",
             "required": true,
-            "description": "The page's stored URL name, such as championship-weekend."
+            "description": "The page's stored URL segment within its sport, such as championship-weekend."
           }
         ],
         "responses": {
@@ -88283,7 +88511,8 @@
             },
             "in": "query",
             "name": "sport",
-            "required": false
+            "required": false,
+            "description": "Only the runs of this sport's sport leagues. A run with no sport league is in no sport."
           },
           {
             "schema": {

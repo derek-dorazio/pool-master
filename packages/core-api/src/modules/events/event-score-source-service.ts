@@ -22,6 +22,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { MANUAL_ADMIN_PROVIDER_ID, providerSourceIdOf, SportEventSyncScope, type Sport } from '@poolmaster/shared/domain';
 import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '../../adapters/prisma-sport-catalog-repositories';
+import { SPORT_EVENT_SPORT_SELECT, sportOfEvent } from '../../adapters/sport-of';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
   ProviderLeagueRefusedError,
@@ -252,9 +253,10 @@ export class EventScoreSourceService {
     if (!provider) {
       throw new EventScoreSourceError(`Provider ${input.providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
     }
-    if (!provider.sportsCovered.includes(existing.sport)) {
+    const sport = sportOfEvent(existing);
+    if (!provider.sportsCovered.includes(sport)) {
       throw new EventScoreSourceError(
-        `Provider ${input.providerId} does not cover ${existing.sport}, the sport of sport event ${sportEventId}.`,
+        `Provider ${input.providerId} does not cover ${sport}, the sport of sport event ${sportEventId}.`,
         'PROVIDER_SPORT_MISMATCH',
         422,
       );
@@ -311,7 +313,7 @@ export class EventScoreSourceService {
   }
 
   private async requireSportEvent(sportEventId: string) {
-    const existing = await this.prisma.sportEvent.findUnique({ where: { id: sportEventId } });
+    const existing = await this.prisma.sportEvent.findUnique({ where: { id: sportEventId }, include: SPORT_EVENT_SPORT_SELECT });
     if (!existing) {
       throw new EventScoreSourceError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }

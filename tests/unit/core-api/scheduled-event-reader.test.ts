@@ -51,8 +51,8 @@ describe('createScheduledEventReader', () => {
 
     const statuses = { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] };
     expect(findMany.mock.calls.map(([query]) => query.where)).toEqual([
-      { sport: Sport.GOLF, providerId: { in: ['mock'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY },
-      { sport: Sport.GOLF, providerId: { in: ['bdl'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY },
+      { eventSeries: { sportLeague: { sport: { sport: Sport.GOLF } } }, providerId: { in: ['mock'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY },
+      { eventSeries: { sportLeague: { sport: { sport: Sport.GOLF } } }, providerId: { in: ['bdl'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY },
     ]);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }] }));
   });
@@ -91,7 +91,7 @@ describe('createScheduledEventReader', () => {
 
     expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { sport: Sport.AMERICAN_FOOTBALL, providerId: { in: ['mock', 'bdl'] }, externalId: { not: '' }, status: SportEventStatus.IN_PROGRESS, sportEventParticipants: { some: {} }, syncScope: SportEventSyncScope.SCORES_ONLY },
+      where: { eventSeries: { sportLeague: { sport: { sport: Sport.AMERICAN_FOOTBALL } } }, providerId: { in: ['mock', 'bdl'] }, externalId: { not: '' }, status: SportEventStatus.IN_PROGRESS, sportEventParticipants: { some: {} }, syncScope: SportEventSyncScope.SCORES_ONLY },
     }));
   });
 

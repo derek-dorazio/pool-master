@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation, useParams } from 'react-router';
-import { sportPathSegment } from '@poolmaster/shared/domain';
-import { SPORTS_PATH } from './manage-navigation';
+import { buildSportPath } from './manage-navigation';
 import { useSportEventQuery } from './use-sport-event';
 import { useManagedSport } from './use-managed-sport';
 
@@ -11,13 +10,13 @@ import { useManagedSport } from './use-managed-sport';
  */
 export function ManageSportEventRoute() {
   const { eventId = '' } = useParams<{ eventId: string }>();
-  const { sport } = useManagedSport();
+  const { sport, sportUrlSegment } = useManagedSport();
   const { pathname, search } = useLocation();
   const event = useSportEventQuery(eventId).data;
 
   if (event && event.sport !== sport) {
-    const ownSportPath = `${SPORTS_PATH}/${sportPathSegment(event.sport)}`;
-    const rest = pathname.slice(`${SPORTS_PATH}/${sportPathSegment(sport)}`.length);
+    const ownSportPath = buildSportPath(event.sportUrlSegment);
+    const rest = pathname.slice(buildSportPath(sportUrlSegment).length);
     return <Navigate replace to={`${ownSportPath}${rest}${search}`} />;
   }
   return <Outlet />;

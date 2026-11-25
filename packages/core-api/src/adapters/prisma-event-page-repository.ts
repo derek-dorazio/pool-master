@@ -4,58 +4,64 @@
 import type { PrismaClient } from '@prisma/client';
 import type { EventPageRepository, EventPageSeries } from '@poolmaster/shared/db';
 import {
-  compareByEnumOrder,
   SportEventStatus,
-  SportOrder,
   type EventPage,
+  type EventPageAddress,
   type EventPageEdition,
   type EventPageOffer,
   type Sport,
   NOT_OVER_SPORT_EVENT_STATUSES,
 } from '@poolmaster/shared/domain';
-import { mapContestConfigTemplate } from './prisma-contest-management-repositories';
+import { mapContestConfigTemplate, TEMPLATE_INCLUDE } from './prisma-contest-management-repositories';
 
-const PAGE_INCLUDE = { redirectTo: { select: { sport: true, slug: true } } } as const;
+/** A page's address reads its sport's stored URL segment (#2042). */
+const ADDRESS_SELECT = { sport: true, urlSegment: true, sportConfig: { select: { urlSegment: true } } } as const;
+const PAGE_INCLUDE = { sportConfig: { select: { urlSegment: true } }, redirectTo: { select: ADDRESS_SELECT } } as const;
 
-function mapEventPage(row: {
-  id: string;
+interface AddressRow {
   sport: Sport;
-  slug: string;
+  urlSegment: string;
+  sportConfig: { urlSegment: string };
+}
+
+function mapAddress(row: AddressRow): EventPageAddress {
+  return { sport: row.sport, sportUrlSegment: row.sportConfig.urlSegment, urlSegment: row.urlSegment };
+}
+
+function mapEventPage(row: AddressRow & {
+  id: string;
   displayOrder: number;
   isActive: boolean;
-  redirectTo: { sport: Sport; slug: string } | null;
+  redirectTo: AddressRow | null;
 }): EventPage {
   return {
     id: row.id,
-    sport: row.sport,
-    slug: row.slug,
+    ...mapAddress(row),
     displayOrder: row.displayOrder,
     isActive: row.isActive,
-    redirectTo: row.redirectTo === null ? null : { sport: row.redirectTo.sport, slug: row.redirectTo.slug },
+    redirectTo: row.redirectTo === null ? null : mapAddress(row.redirectTo),
   };
 }
 
 export class PrismaEventPageRepository implements EventPageRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findBySportSlug(sport: Sport, slug: string): Promise<EventPage | null> {
-    const row = await this.prisma.eventPage.findUnique({
-      where: { sport_slug: { sport, slug } },
+  async findByUrlSegments(sportUrlSegment: string, urlSegment: string): Promise<EventPage | null> {
+    const row = await this.prisma.eventPage.findFirst({
+      where: { urlSegment, sportConfig: { urlSegment: sportUrlSegment } },
       include: PAGE_INCLUDE,
     });
     return row === null ? null : mapEventPage(row);
   }
 
   async findActive(sport?: Sport): Promise<EventPage[]> {
+    // Grouped by sport in the sports' own display order, then each sport's pages in theirs.
     const rows = await this.prisma.eventPage.findMany({
       where: { isActive: true, ...(sport !== undefined && { sport }) },
       include: PAGE_INCLUDE,
-      orderBy: [{ displayOrder: 'asc' }, { slug: 'asc' }],
+      orderBy: [{ sportConfig: { displayOrder: 'asc' } }, { displayOrder: 'asc' }, { urlSegment: 'asc' }],
     });
-    // Grouped by sport in Sport's own order (`SportOrder`), not Postgres's enum declaration
-    // order; the sort is stable, so each sport keeps its pages' display order.
-    const bySportOrder = compareByEnumOrder(SportOrder);
-    return rows.map(mapEventPage).sort((left, right) => bySportOrder(left.sport, right.sport));
+    return rows.map(mapEventPage);
   }
 
   async findOffers(eventPageIds: readonly string[]): Promise<EventPageOffer[]> {
@@ -66,7 +72,7 @@ export class PrismaEventPageRepository implements EventPageRepository {
       // A disabled setup is left out, as Create contest refuses it, and so is a switched-off
       // sport league's offer (#1812), as Create contest offers none of its events.
       where: { eventPageId: { in: [...eventPageIds] }, template: { active: true }, sportLeague: { isActive: true } },
-      include: { template: true, sportLeague: { select: { name: true, displayName: true } } },
+      include: { template: { include: TEMPLATE_INCLUDE }, sportLeague: { select: { name: true, displayName: true } } },
       orderBy: [{ eventPageId: 'asc' }, { sortOrder: 'asc' }],
     });
     return rows.map((row) => ({

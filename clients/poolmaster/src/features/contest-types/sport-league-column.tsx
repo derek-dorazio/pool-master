@@ -1,5 +1,5 @@
 import { ChoiceList, type ChoiceListItem } from '@/features/shared/ui';
-import { sportLeagueChoiceSearch, sportSlug, type FilterableSport, type SportLeagueChoice } from './sport-league-choice';
+import { sportLeagueChoiceSearch, type FilterableSport, type SportLeagueChoice } from './sport-league-choice';
 
 /** With every sport shown, how many of a sport's leagues the column lists before "+ N more". */
 const LINES_PER_SPORT = 4;
@@ -15,16 +15,15 @@ function sportLeagueColumnItems(
   onPick?: () => void,
 ): ChoiceListItem[] {
   const all: ChoiceListItem = { isChosen: choice.sport === null, label: 'All sports', onClick: onPick, testId: `${testId}-all`, to: '?', tone: 'heading' };
-  return [all, ...sports.flatMap(({ sport, name, leagues, count }) => {
-    const slug = sportSlug(sport);
+  return [all, ...sports.flatMap(({ sport, urlSegment, name, leagues, count }) => {
     const isOpen = choice.sport?.sport === sport;
     const heading: ChoiceListItem = {
       count,
       isChosen: isOpen && choice.league === null,
       label: name,
       onClick: onPick,
-      testId: `${testId}-${slug}`,
-      to: sportLeagueChoiceSearch(sport),
+      testId: `${testId}-${urlSegment}`,
+      to: sportLeagueChoiceSearch(urlSegment),
       tone: 'heading',
     };
     if (choice.sport !== null && !isOpen) {
@@ -32,18 +31,18 @@ function sportLeagueColumnItems(
     }
     const lines = leagues.map((league): ChoiceListItem => ({
       depth: 1,
-      isChosen: isOpen && choice.league?.slug === league.slug,
+      isChosen: isOpen && choice.league?.urlSegment === league.urlSegment,
       label: league.name,
       onClick: onPick,
-      testId: `${testId}-${slug}-${league.slug}`,
-      to: sportLeagueChoiceSearch(sport, league.slug),
+      testId: `${testId}-${urlSegment}-${league.urlSegment}`,
+      to: sportLeagueChoiceSearch(urlSegment, league.urlSegment),
     }));
     if (isOpen || lines.length <= LINES_PER_SPORT) {
       return [heading, ...lines];
     }
     const shown = lines.slice(0, LINES_PER_SPORT);
     const more = lines.length - shown.length;
-    const moreLine: ChoiceListItem = { depth: 1, isChosen: false, label: `+ ${more} more`, onClick: onPick, testId: `${testId}-${slug}-more`, to: sportLeagueChoiceSearch(sport), tone: 'muted' };
+    const moreLine: ChoiceListItem = { depth: 1, isChosen: false, label: `+ ${more} more`, onClick: onPick, testId: `${testId}-${urlSegment}-more`, to: sportLeagueChoiceSearch(urlSegment), tone: 'muted' };
     return [heading, ...shown, moreLine];
   })];
 }

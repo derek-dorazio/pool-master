@@ -31,7 +31,8 @@ import {
 } from '../helpers';
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedTiers } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
@@ -55,7 +56,7 @@ beforeEach(() => cleanupTestData());
 async function golf() {
   return getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -65,12 +66,12 @@ async function seedSportLeague(participants: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Catalog Tour ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Catalog Tour ${suffix}` } });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Catalog Open ${suffix}` } });
   await prisma.sportEvent.create({
     data: {
       eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, new Date().getUTCFullYear()), externalId: `scaling-${suffix}`, providerId: 'integration-test',
-      sport: Sport.GOLF, name: `Scaling Catalog Open ${suffix}`, startDate: new Date(Date.now() + 30 * DAY),
+      name: `Scaling Catalog Open ${suffix}`, startDate: new Date(Date.now() + 30 * DAY),
     },
   });
   for (let index = 0; index < participants; index += 1) {
@@ -102,7 +103,7 @@ async function seedSportLeagueEvents(events: number) {
     const event = await prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), externalId: `scaling-${randomUUID()}`, providerId: 'integration-test',
-        sport: Sport.GOLF, name: `${sportLeague.name} Event ${String(index)}`, startDate,
+        name: `${sportLeague.name} Event ${String(index)}`, startDate,
       },
     });
     const field = [];
@@ -139,18 +140,18 @@ async function seedReseededRound(matchups: number) {
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.create({
-    data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Reseed League ${suffix}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Reseed League ${suffix}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
   });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Reseed Playoffs ${suffix}` } });
   const startDate = new Date(Date.now() + 7 * DAY);
   const event = await prisma.sportEvent.create({
     data: {
       eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), externalId: `scaling-${suffix}`, providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL, name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
+      name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
     },
   });
   const rounds = [];

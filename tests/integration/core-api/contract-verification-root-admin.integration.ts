@@ -80,7 +80,6 @@ import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
 } from '../../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
@@ -108,14 +107,15 @@ import type {
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-import { freshEventEdition, withCurrentSeason } from '../../support/event-edition';
+import { fixtureTourId, freshEventEdition, withCurrentSeason } from '../../support/event-edition';
 import type { z } from 'zod';
 import { expectDefined } from '../../support/expect-defined';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
 import { participantLeagueId } from '../../support/participant-league';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
@@ -324,7 +324,6 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   });
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
-    sports: new PrismaSportRepository(getAppPrisma()),
     scoreSource: new EventScoreSourceService(getAppPrisma(), registry),
     sportEvents: integrationSportEventServices(getAppPrisma(), providerRows.providers).sportEvents,
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
@@ -406,7 +405,6 @@ describe('Contract verification (root admin)', () => {
         kind: 'SCORES',
         trigger: 'SCHEDULE',
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-        sport: 'GOLF',
         status: 'COMPLETED',
         summary: 'Completed event participants sync.',
         detailsJson: { providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: true, rawTruncated: false, raw: [] } },
@@ -496,6 +494,8 @@ describe('Contract verification (root admin)', () => {
     // The completed run was submitted after the failed one but started before it: the list
     // orders by submission, newest first (#1174).
     const submittedAt = Date.now();
+    // A run's sport is its sport league's (#2042).
+    const golfLeagueId = await fixtureTourId(getPrisma());
     await getPrisma().providerSyncRun.createMany({
       data: [
         {
@@ -503,7 +503,7 @@ describe('Contract verification (root admin)', () => {
           trigger: 'SCHEDULE',
           id: '11111111-1111-1111-1111-111111111111',
           providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-          sport: 'GOLF',
+          sportLeagueId: golfLeagueId,
           status: 'COMPLETED',
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
           completedAt: new Date('2026-04-09T10:01:00.000Z'),
@@ -527,7 +527,7 @@ describe('Contract verification (root admin)', () => {
           trigger: 'SCHEDULE',
           id: '22222222-2222-2222-2222-222222222222',
           providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-          sport: 'GOLF',
+          sportLeagueId: golfLeagueId,
           status: 'FAILED',
           startedAt: new Date('2026-04-10T10:00:00.000Z'),
           completedAt: new Date('2026-04-10T10:00:30.000Z'),
@@ -809,7 +809,6 @@ describe('Contract verification (root admin)', () => {
         ...(await freshEventEdition(getPrisma())),
         externalId: 'event-1',
         providerId: 'balldontlie',
-        sport: 'GOLF',
         name: 'Contract Masters',
         venue: 'Contract National',
         location: 'Augusta, GA',
@@ -821,7 +820,6 @@ describe('Contract verification (root admin)', () => {
         metadata: {},
       },
       update: {
-        sport: 'GOLF',
         name: 'Contract Masters',
         venue: 'Contract National',
         location: 'Augusta, GA',
@@ -843,8 +841,9 @@ describe('Contract verification (root admin)', () => {
         trigger: 'SCHEDULE',
         id: '33333333-3333-3333-3333-333333333333',
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-        sport: 'GOLF',
         sportEventId: contractEvent.id,
+        // The event's own league: a run on an event records it (#2042 reads the run's sport there).
+        sportLeagueId: await fixtureTourId(getPrisma()),
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
@@ -853,8 +852,9 @@ describe('Contract verification (root admin)', () => {
       },
       update: {
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-        sport: 'GOLF',
         sportEventId: contractEvent.id,
+        // The event's own league: a run on an event records it (#2042 reads the run's sport there).
+        sportLeagueId: await fixtureTourId(getPrisma()),
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
@@ -1135,6 +1135,7 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
+        ...sportRowKeys('GOLF'),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1202,6 +1203,7 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
+        ...sportRowKeys('GOLF'),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1219,7 +1221,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
+        payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
@@ -1643,6 +1645,7 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
+        ...sportRowKeys('GOLF'),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1675,7 +1678,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
+        payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
@@ -1749,13 +1752,13 @@ describe('Contract verification (root admin)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
+    const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
     // A migration's league has its Seasons mapped to the provider's, one of them current (#2003).
     const [seasonId] = await syncSeasonsTo(prisma, synced.id, await syncLeagueTo(prisma, synced.id, 'pga'), [2085]);
-    const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
+    const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
 
     try {
       const syncRes = await app.inject({
@@ -1829,12 +1832,12 @@ describe('Contract verification (root admin)', () => {
     const stamp = Date.now().toString().slice(-8);
     const horseRacing = await prisma.sport.upsert({
       where: { sport: 'HORSE_RACING' },
-      create: { sport: 'HORSE_RACING', tournamentFormat: 'RACE' },
+      create: { sport: 'HORSE_RACING', ...sportRowKeys('HORSE_RACING'), tournamentFormat: 'RACE' },
       update: {},
     });
     const golf = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[]) => {
@@ -1843,7 +1846,6 @@ describe('Contract verification (root admin)', () => {
           ...(await freshEventEdition(prisma, { sport })),
           externalId: `race-contract-${sport}-${stamp}`,
           providerId: 'manual-admin',
-          sport,
           name: `Race Contract ${sport} ${stamp}`,
           startDate: new Date('2026-05-02T22:00:00.000Z'),
           status: 'SCHEDULED',

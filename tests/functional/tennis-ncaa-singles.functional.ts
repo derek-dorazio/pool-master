@@ -15,6 +15,7 @@ import { buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } f
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // The 2025 NCAA Division I men's and women's singles championships over HTTP (#704 slice 4): the
 // test seed loads each 64-player draw into its NCAA sport league, six rounds named as the NCAA
@@ -93,7 +94,7 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.TENNIS },
-      create: { sport: Sport.TENNIS, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.TENNIS, ...sportRowKeys(Sport.TENNIS), tournamentFormat: 'MATCHES' },
       update: {},
     });
   });

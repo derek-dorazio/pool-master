@@ -41,7 +41,7 @@ import { setAuthSessionUser, type AuthSessionUser } from "./auth-session-cache";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { SignUpForm } from "./sign-up-form";
-import { eventPageCopy } from "@/features/event-pages/event-page-copy";
+import { eventPageName } from "@/features/event-pages/event-page-copy";
 import { HOW_TO_PLAY_PATH } from "@/features/event-pages/event-page-paths";
 import { parseStartReturnPath } from "@/features/event-pages/start-path";
 
@@ -338,7 +338,7 @@ export function AuthHomePage() {
       <div className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         {startRequest && !isInvite ? (
           <Notice data-testid="auth-start-banner" tone="info">
-            {`You're starting a ${eventPageCopy(startRequest).name} pool`}
+            {`You're starting a ${eventPageName(startRequest)} pool`}
           </Notice>
         ) : null}
         {(inviteCode && invitePreviewQuery.isError) ||

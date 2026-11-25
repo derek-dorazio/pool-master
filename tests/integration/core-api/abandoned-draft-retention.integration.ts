@@ -43,7 +43,6 @@ async function seedContest(leagueId: string, status: ContestStatus, sportEventId
         create: {
           selectionType: 'TIERED',
           participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
-          prizeDefinitions: { create: { prizeDefinitionId: 'WINNER', displayName: 'Winner', sortOrder: 1 } },
         },
       },
     },
@@ -82,7 +81,6 @@ describe('abandoned draft contest retention (#1195)', () => {
     await expect(prisma.contestConfiguration.count({ where: { contestId: draft.id } })).resolves.toBe(0);
     const contestConfigurationId = expectDefined(draft.configuration, 'the draft configuration').id;
     await expect(prisma.participantContestScoringRule.count({ where: { contestConfigurationId } })).resolves.toBe(0);
-    await expect(prisma.contestPrizeDefinition.count({ where: { contestConfigurationId } })).resolves.toBe(0);
     await expect(prisma.sportEvent.count({ where: { id: event.id } })).resolves.toBe(1);
   });
 

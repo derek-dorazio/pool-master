@@ -33,13 +33,13 @@ export function RootAdminParticipantCreatePage() {
     feature: 'root-admin-participant-create-page',
   });
   const navigate = useNavigate();
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { participant, sportLeague } = sportVocabulary(definition);
   const leaguesQuery = useSportLeaguesQuery(sport);
   const [searchParams] = useSearchParams();
   const startLeagueId = searchParams.get('sportLeague');
   // Back to the League page's Participants tab it came from (#1866), else the Sports page.
-  const participantsPath = (sportLeagueId: string) => `${buildSportLeaguePath(sport, sportLeagueId)}/participants`;
+  const participantsPath = (sportLeagueId: string) => `${buildSportLeaguePath(sportUrlSegment, sportLeagueId)}/participants`;
   const cancelPath = startLeagueId ? participantsPath(startLeagueId) : SPORTS_PATH;
 
   const form = useForm<NewPlayerValues>({

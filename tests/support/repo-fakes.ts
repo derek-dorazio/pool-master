@@ -277,6 +277,7 @@ export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = 
     findByIds: many(),
     findAll: many(),
     findBySportAndName: one(),
+    findBySportAndUrlSegment: one(),
     findEventSynced: many(),
     create: echoCreate('sport-league'),
     update: echoUpdate(),

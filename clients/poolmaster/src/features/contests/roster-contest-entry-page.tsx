@@ -576,7 +576,7 @@ export function RosterContestEntryPage() {
           help: isBudget
             ? `Tap ${participantNoun.many} to add them to your lineup, keeping the total under the salary cap. Picks save as you tap and lock when the event starts.`
             : `Open each tier and tap the ${participantNoun.many} you want, up to the tier's picks. Picks save as you tap and lock when the event starts.`,
-          link: { label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) },
+          link: { label: 'How to play', to: buildHowToPlayFormatPath(contest.sportUrlSegment ?? null, contest.selectionType) },
         } : null}
         isBudget={isBudget}
         isBusy={pickChangeMutation.isPending}

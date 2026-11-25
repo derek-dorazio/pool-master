@@ -80,6 +80,7 @@ import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/mo
 import { planEntitlementsOver } from './plan-entitlements';
 import { fieldReads } from './field-reads';
 import { InMemoryLeaderboardSnapshots } from './in-memory-leaderboard-snapshots';
+import { sportRowKeys } from './sport-rows';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
 export class UniqueConstraintViolation extends Error {
@@ -263,6 +264,7 @@ export class InMemoryContestWorld {
       id: this.nextId('event'),
       name: 'The Masters',
       sport: Sport.GOLF,
+      sportUrlSegment: sportRowKeys(overrides.sport ?? Sport.GOLF).urlSegment,
       status: SportEventStatus.SCHEDULED,
       createdAt: T0,
       updatedAt: T0,
@@ -302,7 +304,6 @@ export class InMemoryContestWorld {
         ?? (contestId !== undefined ? this.contests.get(contestId)?.sportEventIds.at(0) : undefined)
         ?? 'event-unset',
       sportEventParticipantId,
-      contestFormat: ContestFormat.ROSTER,
       isAutoPicked: false,
       pickedAt: this.tick(),
       createdAt: T0,

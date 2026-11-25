@@ -13,6 +13,7 @@ import { SportEventError } from '../../../packages/core-api/src/modules/events/e
 import { createSportEventParticipantService } from '../../../packages/core-api/src/modules/events/wiring';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The field upload against real Postgres: it adjusts rankings, odds, seeds and withdrawals
 // of golfers already on an event's field, all or none, through the grid save's write path.
@@ -39,7 +40,7 @@ async function createField(suffix: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -47,7 +48,6 @@ async function createField(suffix: string) {
       ...(await freshEventEdition(prisma)),
       externalId: `field-upload-${suffix}`,
       providerId: 'integration-test',
-      sport: 'GOLF',
       name: `Field Upload Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: 'SCHEDULED',

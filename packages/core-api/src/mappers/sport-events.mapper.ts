@@ -58,6 +58,7 @@ export function mapSportEventToDto({
     providerId: event.providerId,
     providerName: eventProviderNameOf(event),
     sport: event.sport,
+    sportUrlSegment: event.sportUrlSegment,
     name: event.name,
     venue: event.venue ?? null,
     location: event.location ?? null,

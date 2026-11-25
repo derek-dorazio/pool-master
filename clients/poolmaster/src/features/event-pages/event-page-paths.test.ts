@@ -1,10 +1,10 @@
-import { SelectionType, Sport } from '@poolmaster/shared/domain';
+import { SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import { buildHowToPlayFormatPath, howToPlayFormatAnchor } from './event-page-paths';
 
 describe('buildHowToPlayFormatPath', () => {
-  it('opens How to Play at the contest\'s sport on its way to play', () => {
-    expect(buildHowToPlayFormatPath(Sport.HORSE_RACING, SelectionType.TIERED)).toBe('/how-to-play?sport=horse-racing&format=TIERED');
+  it('opens How to Play at the contest\'s sport, by its URL segment, on its way to play', () => {
+    expect(buildHowToPlayFormatPath('horse-racing', SelectionType.TIERED)).toBe('/how-to-play?sport=horse-racing&format=TIERED');
   });
 
   it('opens How to Play on its way to play across every sport for a contest with no sport', () => {

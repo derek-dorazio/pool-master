@@ -91,10 +91,11 @@ type HowToPlaySport = FilterableSport & { catalog: PublicCatalogSport };
 function toHowToPlaySport(catalog: PublicCatalogSport): HowToPlaySport {
   return {
     sport: catalog.sport,
+    urlSegment: catalog.urlSegment,
     name: catalog.name,
     catalog,
     count: wayCountOf(catalog.groups),
-    leagues: catalog.leagues.map((league) => ({ slug: league.slug, name: league.name })),
+    leagues: catalog.leagues.map((league) => ({ urlSegment: league.urlSegment, name: league.name })),
   };
 }
 
@@ -161,7 +162,7 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, createLea
                 key={sport.sport}
                 name={sport.name}
                 testId={`${testId}-sport-${sport.sport}`}
-                to={sportLeagueChoiceSearch(sport.sport)}
+                to={sportLeagueChoiceSearch(sport.urlSegment)}
               />
             ))}
           </SectionRows>
@@ -194,7 +195,7 @@ export function HowToPlayPage() {
   const choice = useSportLeagueChoice(sports);
   const chosenSport = choice.sport?.catalog ?? null;
   const chosenLeague = chosenSport && choice.league
-    ? chosenSport.leagues.find((league) => league.slug === choice.league?.slug) ?? null
+    ? chosenSport.leagues.find((league) => league.urlSegment === choice.league?.urlSegment) ?? null
     : null;
   const chosen = chosenLeague ? chosenLeague.groups : chosenSport?.groups ?? null;
   // A contest page's "How to play this contest" names its format (#1392): that tile opens, in view.

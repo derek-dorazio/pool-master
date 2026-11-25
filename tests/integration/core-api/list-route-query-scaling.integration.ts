@@ -41,7 +41,8 @@ import { PrismaContestRepository } from '../../../packages/core-api/src/adapters
 import { createContestRow } from '../../support/contest-rows';
 import { fixtureSeasonId, freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 // No mocks.
@@ -128,7 +129,7 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
       seriesByIndex.set(index, edition.eventSeriesId);
       if (cupPerContest && recurringSeriesId === undefined) {
         const { sportId } = await prisma.sportLeague.findFirstOrThrow({ where: { eventSeries: { some: { id: edition.eventSeriesId } } } });
-        const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } });
+        const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } });
         await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
       }
       const event = await prisma.sportEvent.create({
@@ -136,7 +137,6 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
           ...edition,
           externalId: `scaling-${randomUUID()}`,
           providerId: 'integration-test',
-          sport: Sport.GOLF,
           name: `Scaling Final ${seeded.suffix} ${String(year)} ${String(index)}`,
           startDate: new Date(`${String(year)}-06-11T12:00:00.000Z`),
         },
@@ -179,10 +179,10 @@ async function seedSportLeagueWithSeasons(years: number) {
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Seasons Tour ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Seasons Tour ${suffix}` } });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Seasons Open ${suffix}` } });
   for (let offset = 0; offset < years; offset += 1) {
     const year = LAST_SEEDED_YEAR - offset;
@@ -192,7 +192,6 @@ async function seedSportLeagueWithSeasons(years: number) {
         sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, year),
         externalId: `scaling-${randomUUID()}`,
         providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: `Scaling Seasons Open ${suffix} ${String(year)}`,
         startDate: new Date(`${String(year)}-06-11T12:00:00.000Z`),
         status: 'COMPLETED',

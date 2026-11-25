@@ -4,7 +4,8 @@ import { Sport } from '@poolmaster/shared/domain';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { recordStatements, statementCounts } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
@@ -27,10 +28,10 @@ async function golfTour() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
+  const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
   await withCurrentSeason(prisma, tour.id, 2087);
   return tour;
 }
@@ -119,7 +120,7 @@ describe('Creating one event (#1253)', () => {
     // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
     expect(statementCounts(statements)).toEqual([
       ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
-      ['SELECT event_series', 2], ['SELECT platform_tier_profiles', 1], ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
+      ['SELECT event_series', 2], ['SELECT platform_tier_profiles', 1], ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);
