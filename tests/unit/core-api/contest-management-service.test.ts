@@ -2978,3 +2978,48 @@ describe('createContestSportEventReader.findByIds (#1355)', () => {
     ]);
   });
 });
+
+describe('createContestSportEventReader field, game and price reads', () => {
+  const EVENT = 'event-1';
+  function readerOver(ports: { entries?: unknown[]; valuations?: unknown[]; games?: unknown[] }) {
+    const store = new InMemorySportEvents();
+    return createContestSportEventReader({
+      sportEvents: store.sportEventRepo(),
+      sports: store.sportRepo(),
+      field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
+      valuations: { findBySportEvent: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
+      matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
+    });
+  }
+
+  it('answers null for an event it cannot find', async () => {
+    await expect(readerOver({}).findById('missing')).resolves.toBeNull();
+  });
+
+  it('lists the prices of the active field only, leaving out a withdrawn golfer and an unpriced one', async () => {
+    const reader = readerOver({
+      entries: [{ id: 'in', isActive: true }, { id: 'out', isActive: false }, { id: 'unpriced', isActive: true }],
+      valuations: [
+        { sportEventParticipantId: 'in', price: 9000 },
+        { sportEventParticipantId: 'out', price: 8000 },
+        { sportEventParticipantId: 'unpriced', price: null },
+      ],
+    });
+
+    await expect(reader.findActiveFieldPrices(EVENT)).resolves.toEqual([9000]);
+  });
+
+  it('counts the games without a spread, leaving out a cancelled one, and finds a game by id or null', async () => {
+    const reader = readerOver({
+      games: [
+        { id: 'g1', status: MatchStatus.SCHEDULED, roundNumber: 1, homeSpread: null },
+        { id: 'g2', status: MatchStatus.SCHEDULED, roundNumber: 2, homeSpread: -3.5 },
+        { id: 'g3', status: MatchStatus.CANCELLED, roundNumber: 1, homeSpread: null },
+      ],
+    });
+
+    await expect(reader.countGamesWithoutSpread(EVENT)).resolves.toBe(1);
+    await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2 });
+    await expect(reader.findGame(EVENT, 'missing')).resolves.toBeNull();
+  });
+});

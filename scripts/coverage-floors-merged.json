@@ -122,7 +122,7 @@
         "packages/core-api/src/modules/contest-management/service.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
           "lines": 96,
-          "branches": 91
+          "branches": 92
         },
         "packages/core-api/src/modules/contests/service.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
