@@ -15,11 +15,8 @@ export function Toaster() {
           data-testid="app-toast"
           description={toast.description}
           key={toast.id}
-          onOpenChange={(open) => {
-            if (!open) {
-              dismissToast(toast.id);
-            }
-          }}
+          // A shown toast is always open, so the one change it reports is closing.
+          onOpenChange={() => dismissToast(toast.id)}
           open
           title={toast.title}
           tone={toast.tone}
