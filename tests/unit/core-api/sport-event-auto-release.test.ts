@@ -9,7 +9,6 @@ import {
   ReleaseCheckKey,
   Sport,
   SportEventStatus,
-  SportEventSyncScope,
   type ReleaseAttemptResult,
   type SportEvent,
 } from '@poolmaster/shared/domain';
@@ -86,8 +85,7 @@ async function readySyncedDraft(store: InMemorySportEvents, sportLeagueId: strin
   const event = store.addEvent({
     status: SportEventStatus.DRAFT,
     sportLeagueId,
-    providerId: PROVIDER,
-    syncScope: SportEventSyncScope.SCORES_ONLY,
+    providerRef: { providerId: PROVIDER, externalId: `draft-${daysAhead}` },
     syncProviderId: PROVIDER,
     startDate: new Date(NOW.getTime() + daysAhead * DAY_MS),
     ...overrides,
@@ -158,7 +156,7 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
   it('skips an event outside its league\'s window, one whose league turned automatic release off, an unsynced one and one already released, changing none', async () => {
     const { store, service, sportLeague } = setup();
     const outside = await readySyncedDraft(store, sportLeague.id, 8);
-    const unsynced = await readySyncedDraft(store, sportLeague.id, 3, { providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE });
+    const unsynced = await readySyncedDraft(store, sportLeague.id, 3, { providerMappings: [] });
     const released = await readySyncedDraft(store, sportLeague.id, 3, { status: SportEventStatus.SCHEDULED });
 
     await expect(service.autoReleaseEvent(outside.id)).resolves.toEqual({ outcome: ReleaseAttemptOutcome.SKIPPED, reason: ReleaseAttemptSkipReason.OUTSIDE_WINDOW });
@@ -352,7 +350,7 @@ describe('SportEventAutoReleaseScheduler: the hourly sweep (#1823)', () => {
 
   it('leaves alone a draft not linked to its league\'s sync provider', async () => {
     const { store, sportLeague, scheduler, jobRows } = setup();
-    await readySyncedDraft(store, sportLeague.id, 3, { providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE });
+    await readySyncedDraft(store, sportLeague.id, 3, { providerMappings: [] });
 
     await scheduler.runSweep();
 

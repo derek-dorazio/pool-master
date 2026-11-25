@@ -309,7 +309,7 @@ describe('Activity reads and job results (#1819)', () => {
     const event = await prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Activity Jobs Open ${suffix}`,
-        providerId: 'integration-background-jobs', externalId: `activity-${suffix}`, startDate: new Date(),
+        startDate: new Date(),
       },
     });
     return { sportLeague, event };

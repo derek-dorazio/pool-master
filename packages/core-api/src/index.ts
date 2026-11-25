@@ -101,7 +101,7 @@ import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
 import { releaseSportEventJobHandler } from './modules/events/release-sport-event-job';
 import { syncChangedRows } from './modules/ingestion/core/sync-write-diagnostics';
-import { EventScoreSourceService } from './modules/events/event-score-source-service';
+import { ProviderSeasonScheduleReader } from './modules/events/provider-season-schedule-reader';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
 import { LeagueEventsSync } from './modules/events/league-events-sync';
 import { activityModule } from './modules/activity/routes';
@@ -388,7 +388,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
-    scoreSource: new EventScoreSourceService(prisma, registry, app.log),
+    seasonSchedule: new ProviderSeasonScheduleReader(prisma, registry),
     sportEvents: sportEventServices.sportEvents,
     findings: syncFindings,
     syncRuns: providerSyncRuns,

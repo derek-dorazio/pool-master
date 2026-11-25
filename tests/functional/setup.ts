@@ -3,9 +3,8 @@ import fs from 'node:fs';
 import { PrismaClient } from '@prisma/client';
 import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
-import { cleanupFreshEventEditions } from '../support/event-edition';
+import { cleanupFreshEventEditions, FIXTURE_EDITION_EVENTS } from '../support/event-edition';
 const FUNCTIONAL_TEST_EMAIL_DOMAIN = '@functional.test';
-const FUNCTIONAL_TEST_PROVIDER_IDS = ['functional-test', 'integration-test'] as const;
 
 export interface FunctionalServerState {
   pid: number;
@@ -403,12 +402,9 @@ export async function cleanupFunctionalData(): Promise<void> {
     },
   });
   const userIds = users.map((user) => user.id);
+  // The suite's events are each on a fixture edition (#2004: an event names no provider of its own).
   const providerSportEvents = await database.sportEvent.findMany({
-    where: {
-      providerId: {
-        in: [...FUNCTIONAL_TEST_PROVIDER_IDS],
-      },
-    },
+    where: FIXTURE_EDITION_EVENTS,
     select: {
       id: true,
     },

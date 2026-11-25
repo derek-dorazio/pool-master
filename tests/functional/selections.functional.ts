@@ -307,8 +307,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `budget-functional-event-${randomUUID().slice(0, 8)}`,
-      providerId: 'integration-test',
       name: 'Budget Functional Event',
       startDate: new Date('2099-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -403,8 +401,6 @@ async function seedTieredDraftFixture(options: {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `tiered-functional-event-${randomUUID().slice(0, 8)}`,
-      providerId: 'integration-test',
       name: 'Tiered Functional Event',
       startDate: new Date('2099-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -483,8 +479,6 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `multi-tier-functional-event-${randomUUID().slice(0, 8)}`,
-      providerId: 'functional-test',
       name: 'Multi Tier Functional Event',
       startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       status: 'SCHEDULED',

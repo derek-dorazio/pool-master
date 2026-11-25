@@ -138,8 +138,6 @@ describe('Contest management integration', () => {
       data: {
         eventSeriesId: series.id,
         sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventTiming.startDate.getUTCFullYear()),
-        externalId: `masters-2026-${randomUUID().slice(0, 8)}`,
-        providerId: 'PGA',
         name: 'Masters Tournament 2026',
         startDate: eventTiming.startDate,
         status: 'SCHEDULED',

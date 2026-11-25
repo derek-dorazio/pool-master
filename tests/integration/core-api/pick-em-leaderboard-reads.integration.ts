@@ -76,13 +76,10 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
     sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
-    externalId: `pickem-board-${randomUUID()}`,
-    providerId: 'integration-test',
     name: label,
     startDate,
     status,
     rounds: 1,
-    syncScope: 'NONE',
     autoLifecycleEnabled: false,
   });
   await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
@@ -330,7 +327,7 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
-    // The contest (9: its sport is read through its events' series and league since #2042), the reader's squad membership (1; the task keeps the league membership,
+    // The contest (9: its sport is read through its events' Season and league since #2042), the reader's squad membership (1; the task keeps the league membership,
     // #1438), and the snapshot (1): pinned however many weeks, games, entries and picks the season has.
     expect(statements).toHaveLength(11);
   });

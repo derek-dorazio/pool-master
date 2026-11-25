@@ -88,8 +88,6 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `golf-settlement-event-${suffix}`,
-        providerId: 'integration-test',
         name: `Golf Settlement Invitational ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
@@ -285,8 +283,6 @@ describe('golf contest settlement — which contests settle', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `golf-settlement-draft-${suffix}`,
-        providerId: 'integration-test',
         name: `Golf Settlement Draft Open ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
@@ -421,8 +417,6 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `golf-settlement-unplayed-${suffix}`,
-        providerId: 'integration-test',
         name: `Golf Unplayed Classic ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),

@@ -39,9 +39,15 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
   },
   {
     table: 'sport_events',
-    sqlIncludes: 'FROM "public"."sport_events" WHERE 1=1 GROUP BY "public"."sport_events"."event_series_id"',
-    reason: "The root admin's Sports page (#1847) counts every sport league's events, so it groups every event: one row per series, a few thousand "
+    sqlIncludes: 'FROM "public"."sport_events" WHERE 1=1 GROUP BY "public"."sport_events"."sport_league_season_id"',
+    reason: "The root admin's Sports page (#1847) counts every sport league's events, so it groups every event: one row per Season (#2004), a few thousand "
       + 'events in all. Only that page reads it, and an index cannot narrow a read of every row. (Its seasons are the current Season\'s own span since #2003.)',
+  },
+  {
+    table: 'sport_league_seasons',
+    sqlIncludes: 'SELECT "public"."sport_league_seasons"."id", "public"."sport_league_seasons"."sport_league_id" FROM "public"."sport_league_seasons" WHERE 1=1',
+    reason: "The root admin's Sports page (#1847) names the league of every Season its event counts are grouped by (#2004): a few Seasons per league, "
+      + 'a few hundred rows in all, read whole once for the page. An index cannot narrow a read of every row.',
   },
   {
     table: 'leagues',

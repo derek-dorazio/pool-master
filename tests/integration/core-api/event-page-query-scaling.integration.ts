@@ -80,8 +80,6 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
       data: {
         eventSeriesId: series.id,
         sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()),
-        externalId: `scaling-weekend-${suffix}-${String(sortOrder)}`,
-        providerId: 'integration-test',
         name: eventSeriesName,
         startDate,
         status: SportEventStatus.SCHEDULED,

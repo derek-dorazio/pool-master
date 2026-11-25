@@ -9,7 +9,6 @@ import {
 } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import { matchEndingMark } from './bracket-copy';
-import { syncScopeLabel } from './sport-admin-utils';
 import { syncFailedText } from './sport-league-overview-text';
 
 /**
@@ -36,11 +35,6 @@ describe('root admin words come from the display strings', () => {
     expect(matchEndingMark(MatchEnding.RETIREMENT)).toBe('ret.');
     expect(matchEndingMark(MatchEnding.WALKOVER)).toBe('w/o');
     expect(matchEndingMark(MatchEnding.DEFAULT)).toBe('def.');
-  });
-
-  it('an event with no feed reads Manual, and one whose scores sync reads Scores synced', () => {
-    expect(syncScopeLabel('NONE')).toBe('Manual');
-    expect(syncScopeLabel('SCORES_ONLY')).toBe('Scores synced');
   });
 
   it('a race result preview row says what is wrong with it in the admin’s words', () => {

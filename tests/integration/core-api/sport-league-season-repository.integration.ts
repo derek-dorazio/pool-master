@@ -5,12 +5,13 @@
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 import { PrismaSportLeaguePageReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-page-reader';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { mapEventToProvider } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -32,16 +33,17 @@ async function seasonedLeague() {
   return { league, mappingId, s2025, s2026, s2027 };
 }
 
-/** One event in `seasonId`, synced unless `syncScope` says otherwise. */
-async function eventIn(sportLeagueId: string, seasonId: string, syncScope: SportEventSyncScope) {
+/** One event in `seasonId`, kept under the provider's id for it as the sync makes one when `synced`, else a test event with none. */
+async function eventIn(sportLeagueId: string, seasonId: string, synced: boolean) {
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID().slice(0, 8)}` } });
-  await prisma.sportEvent.create({
+  const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: seasonId, syncScope, name: series.name,
-      startDate: new Date('2026-03-01T00:00:00.000Z'), providerId: 'integration-test', externalId: `season-repo-${randomUUID()}`,
+      eventSeriesId: series.id, sportLeagueSeasonId: seasonId, name: series.name,
+      startDate: new Date('2026-03-01T00:00:00.000Z'),
     },
   });
+  if (synced) await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: `season-${event.id}` }, 'nba');
 }
 
 describe('PrismaSportLeagueSeasonRepository', () => {
@@ -69,8 +71,8 @@ describe('PrismaSportLeagueSeasonRepository', () => {
 
   it('reads each league\'s current Season and its Seasons\' spans, marking only a Season the sync has made an event in', async () => {
     const { league, s2025, s2026, s2027 } = await seasonedLeague();
-    await eventIn(league.id, s2026, SportEventSyncScope.SCORES_ONLY);
-    await eventIn(league.id, s2027, SportEventSyncScope.NONE);
+    await eventIn(league.id, s2026, true);
+    await eventIn(league.id, s2027, false);
     const repository = new PrismaSportLeagueSeasonRepository(getPrisma());
 
     const facts = (await repository.findCurrentSeasonFacts()).find((row) => row.sportLeagueId === league.id);

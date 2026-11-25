@@ -61,8 +61,6 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      externalId: `squares-${suffix}`,
-      providerId: 'integration-test',
       name: `Squares Event ${suffix}`,
       startDate: new Date('2030-02-03T23:30:00.000Z'),
       status: 'SCHEDULED',

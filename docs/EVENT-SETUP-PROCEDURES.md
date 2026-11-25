@@ -1,9 +1,10 @@
 # Event Setup Procedures
 
-How a root admin sets up an event by hand on the Manage screens and runs it through its
-lifecycle, from draft to settled contests. The numbered steps follow a golf tournament linked
-to the tour's provider (BALLDONTLIE), so its field and live scores come from that provider's
-feed. No provider simulates a live round (`rules/architecture-rules.md` §3 *Provider and
+How a root admin takes an event on the Manage screens through its lifecycle, from draft to
+settled contests. The numbered steps follow a golf tournament of a tour synced from its provider
+(BALLDONTLIE), so the tournament, its field and its live scores come from that provider's feed.
+An event made by hand is a test event: no provider has an id for it, so no feed loads its field
+or scores it (#2004). No provider simulates a live round (`rules/architecture-rules.md` §3 *Provider and
 Adapter Registry Discipline*): live scores arrive only while the real tournament is being
 played, and contests on past events are tried from the test seeds instead (*Loading instead of
 typing*, below). Release, contests, the lifecycle moves and cancelling work the same way for
@@ -22,12 +23,13 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 
 ## What drives a golf tournament
 
-- **PoolMaster owns the event.** You create it, build its field, and move it between
-  statuses yourself.
+- **The tour's sync creates the event.** Each tournament it creates is kept under the
+  provider's id for it, which is what every later sync of it goes by. No screen links an event
+  to a provider event by hand, or unlinks one (#2004).
 - **The provider owns the scores.** Its feed scores golfers hole by hole while the real
-  tournament your event is linked to is being played.
-- **The live-score sync carries scores across.** It polls every linked tournament that is
-  *In progress* and has a field. It does not look at dates.
+  tournament is being played.
+- **The live-score sync carries scores across.** It polls every tournament its provider has an
+  id for that is *In progress* and has a field. It does not look at dates.
 - **Golfers are matched by provider id, never by name.** A score only lands on a golfer
   whose player record came from the provider, so the field must be loaded from it (step 4).
   Golfers added by hand from the roster get no scores.
@@ -37,15 +39,15 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 1. **Live-score sync is on, every 60 seconds.** Open *Manage → Providers*
    (`/manage/providers`). Under *Sync schedules*, open the **Live scores** row, choose *Edit*,
    tick *Runs on its schedule* and set *Every, seconds* to `60`. The default is 300. This one setting applies to every
-   sport and every linked tournament in the environment: there are no per-sport overrides
+   sport and every synced tournament in the environment: there are no per-sport overrides
    (#1871). A new interval starts only after the current wait runs out, so the first poll
    after the change can take up to the old 300 seconds.
 2. **Fields load on the Field row's schedule.** The **Field** row on the same section sets
    how often fields refresh and how many days ahead. The Field sync has no switch (#2086): it
    always runs, for synced sport leagues only, and leagues that are not synced are off. The
    API says which syncs have a switch, and the page draws only those.
-3. **Pick a provider event that has not started.** The link picker lists only the provider's
-   events that start inside your tournament's dates, so give it the real tournament's dates.
+3. **The tour is synced.** Its League page names the provider league it is synced from. A tour
+   with none is off, and a hand-made tournament on it is a test event.
 
 ## 1. Create the tournament
 
@@ -54,7 +56,7 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 | Field | Set it to |
 |---|---|
 | Tour, Event year, Name | Any tour, the current year, and a name of your own (for example "Derek's Golf Tournament") |
-| Starts, Ends | A start far enough ahead to finish releasing the tournament and creating contests and entries. The start time is the cutoff: the tournament can't be released, and contests can't be created or opened, once it has passed. Use the real tournament's dates, so the link picker lists it |
+| Starts, Ends | A start far enough ahead to finish releasing the tournament and creating contests and entries. The start time is the cutoff: the tournament can't be released, and contests can't be created or opened, once it has passed. |
 | Rounds | 4 |
 | Move this tournament through Live and Completed automatically | **Unchecked** |
 
@@ -64,21 +66,21 @@ Leave automatic lifecycle off. With it on, a background job moves the tournament
 In progress and Completed from its round dates, which takes the timing out of your hands.
 You can turn it off later from the tournament's ⚙: *Automatic lifecycle on*, *Turn off*.
 
-## 2. Link it to the provider
+## 2. The provider's id for it
 
-On the tournament's Tools tab, choose *Link to provider event* on the score-source card and pick
-the provider's event. The list shows only events that start inside the tournament's own dates.
-The card then says "Linked to balldontlie event …" and the badge reads *Scores synced*.
+The tour's sync creates its tournaments, so step 1 is for a test event only; a synced
+tournament is already there, a draft, with the provider's id for it. Its ⚙ dialog lists that id
+under *Feed ids*, and its badge reads *Scores synced*. A test event lists none, and its sync
+button is refused (`EVENT_NOT_LINKED`).
 
-To create a whole year of those listed events at once, open the tour's page (`/manage/sports/golf/leagues/:leagueId`),
+To create a whole year of the provider's events at once, rather than wait for the sync, open the tour's page (`/manage/sports/golf/leagues/:leagueId`),
 pick the year on its tournament calendar, and choose *Import {year} from provider*. Every
-event the provider lists for that tour and year is created and linked for scores; ones the tour
+event the provider lists for that tour and year is created under the provider's id for it; ones the tour
 already has are skipped, so it is safe to run again. The import needs the tour synced: its
 selected provider league mapping names the provider and the provider league, and the import asks
 that provider for that league alone, keeping only events stamped with its code (#1997). A tour
 with no selected mapping is refused (`SPORT_LEAGUE_NOT_SYNCED`); when the provider's plan does
-not include that league, the dialog says so (#1797). The single-event browse lists every event
-the provider gives for the sport, narrowed to the synced league's provider league when it has one.
+not include that league, the dialog says so (#1797).
 
 ## 3. Check the rounds
 

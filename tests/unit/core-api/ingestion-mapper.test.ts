@@ -5,7 +5,6 @@
  */
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import {
-  toProviderEventDto,
   toProviderManualSyncSubmissionResponse,
   toProviderSummaryDto,
   toProviderSyncRunDetailDto,
@@ -129,26 +128,5 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     const details = { warnings: ['late'] } as never;
 
     expect(toProviderSyncRunDetailDto({ ...buildRun(), details })).toEqual(expect.objectContaining({ id: 'run-1', details }));
-  });
-
-  const providerEvent = {
-    externalId: 'x1',
-    providerId: 'p1',
-    sport: Sport.GOLF,
-    name: 'Open',
-    startDate: AT,
-    status: 'SCHEDULED',
-    fieldLocked: false,
-  } as unknown as Parameters<typeof toProviderEventDto>[0];
-
-  it('sends a provider event\'s omitted venue, location, end, rounds and field size as null', () => {
-    expect(toProviderEventDto(providerEvent)).toEqual(expect.objectContaining({
-      venue: null, location: null, endDate: null, rounds: null, participantCount: null, startDate: AT.toISOString(),
-    }));
-  });
-
-  it('sends a provider event\'s venue, location, end, rounds and field size when given', () => {
-    expect(toProviderEventDto({ ...providerEvent, venue: 'Augusta', location: 'GA', endDate: AT, rounds: 4, participantCount: 88 }))
-      .toEqual(expect.objectContaining({ venue: 'Augusta', location: 'GA', endDate: AT.toISOString(), rounds: 4, participantCount: 88 }));
   });
 });

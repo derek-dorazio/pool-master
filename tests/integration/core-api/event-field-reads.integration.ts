@@ -54,8 +54,6 @@ async function golfEvent() {
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
-      externalId: `field-reads-${randomUUID()}`,
-      providerId: 'integration-test',
       name: `Field Reads Open ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,
@@ -103,8 +101,6 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport })),
-      externalId: `field-reads-${randomUUID()}`,
-      providerId: 'integration-test',
       name: `Field Reads ${sport} ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,
@@ -129,7 +125,6 @@ describe('An event\'s field', () => {
     // The event's own row, then the field and each of its relations in one statement: no read per
     // row, and nothing else. A field row's games are read twice, as the home side and as the away side.
     expect(statementCounts(statements)).toEqual([
-      ['SELECT event_series', 1],
       ['SELECT participants', 1],
       ['SELECT sport_event_participant_golf_rounds', 1],
       ['SELECT sport_event_participant_golf_standings', 1],
@@ -138,6 +133,7 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_participant_standings', 1],
       ['SELECT sport_event_participant_valuations', 1],
       ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_matches', 2],
       ['SELECT sport_event_rounds', 1],
       ['SELECT sport_events', 1],

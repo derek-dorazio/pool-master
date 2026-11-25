@@ -92,17 +92,18 @@ export class PrismaEventPageRepository implements EventPageRepository {
     if (series.length === 0) return [];
     const rows = await this.prisma.sportEvent.findMany({
       where: {
-        eventSeries: { OR: series.map(({ sportLeagueId, eventSeriesName }) => ({ sportLeagueId, name: eventSeriesName })) },
+        // An event's league is its Season's (#2004); the series names the edition.
+        OR: series.map(({ sportLeagueId, eventSeriesName }) => ({ sportLeagueSeason: { sportLeagueId }, eventSeries: { name: eventSeriesName } })),
         status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] },
       },
       select: {
-        id: true, name: true, sportLeagueSeason: { select: { championshipYear: true } }, startDate: true, endDate: true, status: true,
-        eventSeries: { select: { sportLeagueId: true, name: true } },
+        id: true, name: true, sportLeagueSeason: { select: { championshipYear: true, sportLeagueId: true } }, startDate: true, endDate: true, status: true,
+        eventSeries: { select: { name: true } },
       },
       orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
     });
     return series.map(({ sportLeagueId, eventSeriesName }) => {
-      const editions = rows.filter((row) => row.eventSeries.sportLeagueId === sportLeagueId && row.eventSeries.name === eventSeriesName);
+      const editions = rows.filter((row) => row.sportLeagueSeason.sportLeagueId === sportLeagueId && row.eventSeries.name === eventSeriesName);
       // The edition under way comes first, then the rest soonest first.
       const underWay = editions.filter((row) => row.status === SportEventStatus.IN_PROGRESS);
       const rest = editions.filter((row) => row.status !== SportEventStatus.IN_PROGRESS);

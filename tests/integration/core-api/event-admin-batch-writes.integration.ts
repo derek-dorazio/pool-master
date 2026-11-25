@@ -56,8 +56,6 @@ async function golfEvent() {
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
-      externalId: `batch-writes-${randomUUID()}`,
-      providerId: 'integration-test',
       name: `Batch Writes Open ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,

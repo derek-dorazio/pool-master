@@ -108,8 +108,7 @@ describe('RootAdminRunEventSyncPage', () => {
         events: [
           {
             id: 'event-internal-1',
-            providerId: 'mock-contest-feed',
-            externalId: 'golf-masters-2026',
+            providerMappings: [{ providerCode: 'MOCK_CONTEST_FEED', providerName: 'Mock contest feed', externalId: 'golf-masters-2026' }],
             sport: 'GOLF',
             name: 'Manual Test Golf Tournament',
             venue: 'QA Course',
@@ -121,14 +120,14 @@ describe('RootAdminRunEventSyncPage', () => {
             readinessStatus: 'CONTEST_ELIGIBLE',
             readinessReasons: [],
             contestEligible: true,
-            syncScope: 'SCORES_ONLY',
+            providerSynced: true,
           },
         ],
       },
     });
   });
 
-  it('pool-master-dxd.34 selects a loaded event and submits its provider event id', async () => {
+  it('pool-master-dxd.34 selects a loaded event and submits the sync by the event\'s own id', async () => {
     renderPage();
 
     expect(
@@ -151,14 +150,8 @@ describe('RootAdminRunEventSyncPage', () => {
 
     await waitFor(() => {
       expect(submitEventSyncMock).toHaveBeenCalledWith({
-        path: {
-          sport: 'GOLF',
-          eventId: 'golf-masters-2026',
-        },
-        body: {
-          providerId: 'mock-contest-feed',
-          feeds: ['EVENTPARTICIPANTS'],
-        },
+        path: { eventId: 'event-internal-1' },
+        body: { feeds: ['EVENTPARTICIPANTS'] },
       });
     });
 
@@ -188,13 +181,13 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(calls.every(([options]) => typeof options.query.sportLeagueSeasonId === 'string')).toBe(true);
   });
 
-  it('offers only events linked to a provider event, names the sport by its display name, and explains the empty list when none is linked', async () => {
+  it('offers only provider-synced events, names the sport by its display name, and explains the empty list when none is synced', async () => {
     listEventsMock.mockResolvedValue({
       data: {
         events: [
           {
             id: 'event-internal-2',
-            externalId: 'manual-admin-unlinked',
+            providerMappings: [],
             sport: 'GOLF',
             name: 'Unlinked Golf Tournament',
             venue: 'QA Course',
@@ -206,7 +199,7 @@ describe('RootAdminRunEventSyncPage', () => {
             readinessStatus: 'CONTEST_ELIGIBLE',
             readinessReasons: [],
             contestEligible: true,
-            syncScope: 'NONE',
+            providerSynced: false,
           },
         ],
       },
@@ -214,7 +207,7 @@ describe('RootAdminRunEventSyncPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText(/No linked golf events match this preset/)).toBeInTheDocument();
+    expect(await screen.findByText(/No synced golf events match this preset/)).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Golf' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /Unlinked Golf Tournament/ })).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
@@ -257,7 +250,7 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
   });
 
-  it('sends the chosen event\'s own provider when two providers\' events share an external id', async () => {
+  it('sends the chosen event by its own id when two providers\' events share an external id', async () => {
     listProvidersMock.mockResolvedValue({
       data: {
         providers: [
@@ -277,13 +270,13 @@ describe('RootAdminRunEventSyncPage', () => {
       readinessStatus: 'CONTEST_ELIGIBLE',
       readinessReasons: [],
       contestEligible: true,
-      syncScope: 'SCORES_ONLY',
+      providerSynced: true,
     };
     listEventsMock.mockResolvedValue({
       data: {
         events: [
-          { ...linkedEvent, id: 'event-bdl', providerId: 'balldontlie', externalId: '41', name: 'BALLDONTLIE Open' },
-          { ...linkedEvent, id: 'event-b', providerId: 'feed-b', externalId: '41', name: 'Feed B Open' },
+          { ...linkedEvent, id: 'event-bdl', providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: '41' }], name: 'BALLDONTLIE Open' },
+          { ...linkedEvent, id: 'event-b', providerMappings: [{ providerCode: 'FEED_B', providerName: 'Feed B', externalId: '41' }], name: 'Feed B Open' },
         ],
       },
     });
@@ -294,8 +287,8 @@ describe('RootAdminRunEventSyncPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
     await waitFor(() => {
       expect(submitEventSyncMock).toHaveBeenCalledWith({
-        path: { sport: 'GOLF', eventId: '41' },
-        body: { providerId: 'balldontlie', feeds: ['EVENTPARTICIPANTS'] },
+        path: { eventId: 'event-bdl' },
+        body: { feeds: ['EVENTPARTICIPANTS'] },
       });
     });
 
@@ -322,7 +315,7 @@ describe('RootAdminRunEventSyncPage', () => {
 
     expect(await screen.findByText('We could not submit the event sync right now.')).toBeInTheDocument();
     const [fields, message] = mockLogger.warn.mock.calls.at(-1) as [{ action: string; data: { eventId: string | null } }, string];
-    expect(fields).toMatchObject({ action: 'rootAdmin.eventSync.failed', data: { eventId: 'golf-masters-2026' } });
+    expect(fields).toMatchObject({ action: 'rootAdmin.eventSync.failed', data: { eventId: 'event-internal-1' } });
     expect(message).toBe('Manual provider event sync failed');
   });
 

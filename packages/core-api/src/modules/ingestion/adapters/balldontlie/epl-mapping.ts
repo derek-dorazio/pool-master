@@ -29,7 +29,7 @@ export const EPL_MATCHES_PATH = '/epl/v2/matches';
 export const EPL_TEAMS_PATH = '/epl/v2/teams';
 
 /**
- * The tour name events and teams carry in `metadata.tour`, for display; a sport
+ * The tour name teams carry in `metadata.tour`, for display; a sport
  * league finds them by their provider league code (#1997).
  */
 export const EPL_TOUR = 'EPL';
@@ -78,7 +78,6 @@ export function toEplMatchweekEvent(scope: EplScope, matches: readonly SoccerMat
     rounds: 1,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: EPL_TOUR, season: scope.season },
   };
 }
 

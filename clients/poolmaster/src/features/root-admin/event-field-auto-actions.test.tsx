@@ -82,7 +82,6 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'league-1',
-    syncScope: 'NONE',
     autoLifecycleEnabled: true,
     loadedParticipantCount: 3,
     tierCount: 2,

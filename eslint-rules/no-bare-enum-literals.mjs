@@ -1,6 +1,6 @@
 /**
  * A comparison against an enum-backed column must name the enum member, not a bare
- * string literal: `x.syncScope === SportEventSyncScope.FULL`, not `=== 'FULL'`.
+ * string literal: `x.scoringFamily === ScoringFamily.HEAD_TO_HEAD`, not `=== 'HEAD_TO_HEAD'`.
  *
  * SCOPE, AND WHY IT IS NARROW. `tsc` already rejects an INVALID literal here (TS2367,
  * verified) — so this rule is not about preventing bad values. It is about the rename:

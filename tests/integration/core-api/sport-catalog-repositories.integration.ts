@@ -18,7 +18,7 @@ import {
   PrismaSportLeagueRepository,
   PrismaSportRepository,
 } from '../../../packages/core-api/src/adapters';
-import { freshEventEdition, fixtureSeasonId, seriesSeasonId } from '../../support/event-edition';
+import { freshEventEdition, fixtureSeasonId, mapEventToProvider, seriesSeasonId } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { participantLeagueId } from '../../support/participant-league';
@@ -49,8 +49,6 @@ async function createEvent(tag: string, overrides: Record<string, unknown> = {})
   return getPrisma().sportEvent.create({
     data: {
       ...(await freshEventEdition(getPrisma())),
-      externalId: `catalog-${tag}-${randomUUID()}`,
-      providerId: 'integration-test',
       name: `Catalog ${tag}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       ...overrides,
@@ -582,7 +580,7 @@ describe('SportEvent core repositories', () => {
     expect((await events.findAll({ statuses: ['SCHEDULED', 'IN_PROGRESS'] })).map((row) => row.id)).toEqual([earlier.id, later.id]);
     expect(await events.findAll({ statuses: ['COMPLETED'] })).toEqual([]);
     expect((await events.findAll({ sportLeagueId: pga.id })).map((row) => row.id)).toEqual([later.id]);
-    await expect(events.findById(later.id)).resolves.toMatchObject({ sportLeagueId: pga.id, syncScope: 'NONE', autoLifecycleEnabled: true });
+    await expect(events.findById(later.id)).resolves.toMatchObject({ sportLeagueId: pga.id, providerMappings: [], autoLifecycleEnabled: true });
     expect(await events.countParticipants([later.id, earlier.id])).toEqual(new Map([[later.id, 1], [earlier.id, 0]]));
   });
 
@@ -597,16 +595,22 @@ describe('SportEvent core repositories', () => {
   });
 
   it('summarizes each provider\'s scheduled and in-progress events and its latest change, with zeros for a provider with none', async () => {
-    const live = await createEvent('live', { status: 'IN_PROGRESS' });
-    await createEvent('scheduled', { status: 'SCHEDULED' });
-    await createEvent('done', { status: 'COMPLETED' });
-    await createEvent('elsewhere', { providerId: 'TEST_PROVIDER', status: 'SCHEDULED' });
+    // Each event the provider has an id for is its event (#2004); one with none is no provider's.
+    const mapped = async (tag: string, status: string) => {
+      const event = await createEvent(tag, { status });
+      await mapEventToProvider(getPrisma(), event.id, { providerId: 'balldontlie', externalId: `catalog-${tag}-${event.id}` });
+      return event;
+    };
+    const live = await mapped('live', 'IN_PROGRESS');
+    await mapped('scheduled', 'SCHEDULED');
+    await mapped('done', 'COMPLETED');
+    await createEvent('elsewhere', { status: 'SCHEDULED' });
     const touched = await getPrisma().sportEvent.update({ where: { id: live.id }, data: { name: 'Catalog live, renamed' } });
 
-    const summary = await new PrismaSportEventRepository(getAppPrisma()).summarizeByProviders(['integration-test', 'contract-provider']);
+    const summary = await new PrismaSportEventRepository(getAppPrisma()).summarizeByProviders(['balldontlie', 'contract-provider']);
 
     expect(summary).toEqual(new Map([
-      ['integration-test', { activeEventCount: 2, lastChangedAt: touched.updatedAt }],
+      ['balldontlie', { activeEventCount: 2, lastChangedAt: touched.updatedAt }],
       ['contract-provider', { activeEventCount: 0, lastChangedAt: null }],
     ]));
   });

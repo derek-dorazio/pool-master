@@ -1,18 +1,9 @@
-import { ProviderCode, ProviderHealthStatus, SportEventSyncScope } from './enums';
+import { ProviderCode, ProviderHealthStatus } from './enums';
 
 /**
- * Reserved provider identity for admin-authored SportEvent rows (plans/124
- * §3.5). No adapter is ever registered for this id (ProviderRegistry.register
- * throws if asked to), so a manual/admin-managed tournament cannot be
- * scheduled or manually targeted by any sync route.
- */
-export const MANUAL_ADMIN_PROVIDER_ID = 'manual-admin';
-
-
-/**
- * The id each provider's events still carry as `providerId` (#1997), by its Provider code: the
- * adapter's own id. Participant mappings, sync runs and sync jobs hold a Provider foreign key
- * (#2040); the events' copy goes in league model slice 7.
+ * Each provider adapter's own id, by its Provider code (#1997): the key the provider registry and
+ * the sync's provider refs use until the registry is keyed by Provider (#2073). Every stored row
+ * holds a Provider foreign key instead (#2040, #2004).
  */
 /** A provider id as its events carry it (`balldontlie`): an id, not a display word. */
 type ProviderSourceId = string;
@@ -27,8 +18,8 @@ export function providerSourceIdOf(code: ProviderCode): string {
 }
 
 /**
- * The Provider code whose events carry this `providerId`, or undefined for an id no Provider
- * code carries (`manual-admin`), which syncs no league.
+ * The Provider code of the adapter with this id, or undefined for an id no Provider carries,
+ * which syncs nothing.
  */
 export function providerCodeOfSourceId(providerId: string): ProviderCode | undefined {
   return (Object.keys(PROVIDER_SOURCE_IDS) as ProviderCode[]).find((code) => PROVIDER_SOURCE_IDS[code] === providerId);
@@ -46,28 +37,61 @@ export function requireProviderCodeOfSourceId(providerId: string): ProviderCode 
 }
 
 /**
- * Whether an event's details come from its provider's sync (ADR 0011): its sport league is synced
- * by a provider (`syncProviderId`, its selected mapping's provider), and the event is linked to that
- * provider for scores. The provider wins over an
- * admin's edit to such an event's name, venue and dates (`rules/architecture-rules.md` §4 *A live
- * provider sync is the source of its league's events*), so the admin pages show them read-only.
+ * The provider's id for an event (#2004): the sync writes one when it creates the event from its
+ * provider's schedule. A test event, made by hand on a test slot, has none.
  */
-export function isProviderSyncedEvent(event: {
+export interface SportEventProviderMapping {
+  providerCode: ProviderCode;
+  /** The provider's name, read with its code so no reader looks it up. */
+  providerName: string;
+  /** The provider's own id for the event, as it sends it. */
+  externalId: string;
+}
+
+/** An event's id at a provider, as the provider adapters key it: the adapter's id and the event's. */
+export interface ProviderEventRef {
   providerId: string;
-  syncScope: SportEventSyncScope;
-  syncProviderId?: string;
-}): boolean {
-  return event.syncProviderId !== undefined
-    && event.syncProviderId === event.providerId
-    && event.syncScope === SportEventSyncScope.SCORES_ONLY;
+  externalId: string;
 }
 
 /**
- * The name of the provider an event is linked to (#1999): its sport league's sync provider, when
- * the event is linked to that one; null for an admin-authored event, or one linked elsewhere.
+ * The event's id at its sport league's sync provider (#2004, ADR 0011), as the adapters key it:
+ * undefined for a test event, for an event of a league no provider syncs, and for one whose
+ * league's provider has no id for it.
  */
-export function eventProviderNameOf(event: { providerId: string; syncProviderId?: string; syncProviderName?: string }): string | null {
-  return event.syncProviderId !== undefined && event.syncProviderId === event.providerId ? event.syncProviderName ?? null : null;
+export function eventFeedRef(event: {
+  providerMappings: readonly SportEventProviderMapping[];
+  syncProviderId?: string;
+}): ProviderEventRef | undefined {
+  if (event.syncProviderId === undefined) return undefined;
+  const mapping = event.providerMappings.find((each) => providerSourceIdOf(each.providerCode) === event.syncProviderId);
+  return mapping === undefined ? undefined : { providerId: event.syncProviderId, externalId: mapping.externalId };
+}
+
+/**
+ * Whether an event's details come from its provider's sync (ADR 0011): its sport league is synced
+ * by a provider (`syncProviderId`, its selected mapping's provider), and that provider has an id
+ * for the event. The provider wins over an admin's edit to such an event's name, venue and dates
+ * (`rules/architecture-rules.md` §4 *A live provider sync is the source of its league's events*),
+ * so the admin pages show them read-only.
+ */
+export function isProviderSyncedEvent(event: {
+  providerMappings: readonly SportEventProviderMapping[];
+  syncProviderId?: string;
+}): boolean {
+  return eventFeedRef(event) !== undefined;
+}
+
+/**
+ * The name of the provider an event is synced from (#1999): its sport league's sync provider, when
+ * that provider has an id for the event; null for a test event.
+ */
+export function eventProviderNameOf(event: {
+  providerMappings: readonly SportEventProviderMapping[];
+  syncProviderId?: string;
+}): string | null {
+  if (event.syncProviderId === undefined) return null;
+  return event.providerMappings.find((each) => providerSourceIdOf(each.providerCode) === event.syncProviderId)?.providerName ?? null;
 }
 
 /** How many of a Provider's sync runs finished in a window, and how many of those failed. */

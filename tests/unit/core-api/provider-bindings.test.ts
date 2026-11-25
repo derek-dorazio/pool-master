@@ -66,19 +66,6 @@ describe('provider bindings', () => {
     expect(registry.getAllProviders()).toEqual([]);
   });
 
-  it('pool-master-cgb: refuses to register a provider claiming the reserved manual-admin providerId', () => {
-    const registry = new ProviderRegistry();
-
-    expect(() =>
-      registry.register(Sport.GOLF, {
-        providerId: 'manual-admin',
-        providerName: 'Should never register',
-        sportsCovered: [Sport.GOLF],
-      } as never, 'PRIMARY'),
-    ).toThrow(/reserved manual-admin providerId/);
-    expect(registry.getProvider(Sport.GOLF)).toBeNull();
-  });
-
   describe('the Provider rows', () => {
     it('registers an enabled BALLDONTLIE row as the primary provider of every sport its leagues cover, with the key from the environment', () => {
       const registry = new ProviderRegistry();

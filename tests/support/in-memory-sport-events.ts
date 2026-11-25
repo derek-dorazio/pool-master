@@ -39,7 +39,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, ValuationSource } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -91,6 +91,12 @@ const UNPLACED_SPORT_LEAGUE_ID = 'sport-league-unplaced';
 /** The Season every league in the store is in unless a test adds another (#2003). */
 export const IN_MEMORY_SEASON_ID = 'season-2026';
 const IN_MEMORY_SEASON_YEAR = 2026;
+
+/** The mapping the sync writes for a provider's event, read with the provider's name. */
+export function providerMappingOf(ref: ProviderEventRef): SportEventProviderMapping {
+  const providerCode = requireProviderCodeOfSourceId(ref.providerId);
+  return { providerCode, providerName: TEST_PROVIDER_ROWS[providerCode].name, externalId: ref.externalId };
+}
 
 export class InMemorySportEvents {
   private sequence = 0;
@@ -186,17 +192,28 @@ export class InMemorySportEvents {
    * Pass `sportLeagueId` (and `eventSeriesId`, `sportLeagueSeasonId`) to place it on a real one;
    * its championship year is its Season's.
    */
-  addEvent(overrides: Partial<SportEvent> = {}): SportEvent {
+  addEvent({ providerRef, ...overrides }: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
     const event: SportEvent = stamp({
-      id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
+      id: this.id('event'), providerMappings: providerRef === undefined ? [] : [providerMappingOf(providerRef)], sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
       eventSeriesId: this.id('event-series'), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
-      metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
+      autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
       championshipYear: 0,
     });
     event.championshipYear = overrides.championshipYear ?? this.seasonYears.get(event.sportLeagueSeasonId) ?? IN_MEMORY_SEASON_YEAR;
     this.events.push(event);
     return event;
+  }
+
+  /** The event's id at the provider with this adapter id, if the provider has one for it. */
+  externalIdAt(sportEventId: string, providerId: string): string | undefined {
+    return this.events.find((row) => row.id === sportEventId)?.providerMappings
+      .find((mapping) => providerSourceIdOf(mapping.providerCode) === providerId)?.externalId;
+  }
+
+  /** The adapter id of the provider the league's selected mapping names, if it has one. */
+  private syncProviderIdOf(sportLeagueId: string): string | undefined {
+    return this.sportLeagues.find((league) => league.id === sportLeagueId)?.selectedProviderMapping?.providerId;
   }
 
   /** Gives an event these rounds, through the round repository's one insert. */
@@ -328,9 +345,13 @@ export class InMemorySportEvents {
       findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
       findLinks: async (ids) => this.events
         .filter((row) => ids.includes(row.id))
-        .map(({ id, name, sportLeagueId, providerId }) => ({ id, name, sportLeagueId, providerId })),
-      findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
-      findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
+        .map(({ id, name, sportLeagueId }) => {
+          const syncProviderId = this.syncProviderIdOf(sportLeagueId);
+          const held = syncProviderId !== undefined && this.externalIdAt(id, syncProviderId) !== undefined;
+          return { id, name, sportLeagueId, providerId: held ? syncProviderId : null };
+        }),
+      findByProviderRef: async (providerId, externalId) => this.events.find((row) => this.externalIdAt(row.id, providerId) === externalId) ?? null,
+      findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => externalIds.includes(this.externalIdAt(row.id, providerId) ?? '')),
       // No sport filter: every event is golf while Sport has one member.
       findAll: async (filters) => this.events.filter((row) => (
         (filters.statuses === undefined || filters.statuses.includes(row.status))
@@ -360,7 +381,7 @@ export class InMemorySportEvents {
         }
         return inputs.map((input) => {
           const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
-          return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
+          return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced' });
         });
       },
       update: async (id, updates: SportEventUpdate, options) => {
@@ -412,7 +433,7 @@ export class InMemorySportEvents {
         this.events.some((event) => event.id === match.sportEventId && event.sportLeagueId === sportLeagueId)
       )),
       summarizeByProviders: async (providerIds) => new Map(providerIds.map((providerId) => {
-        const events = this.events.filter((row) => row.providerId === providerId);
+        const events = this.events.filter((row) => this.externalIdAt(row.id, providerId) !== undefined);
         const changed = events.map((row) => row.updatedAt.getTime());
         return [providerId, {
           activeEventCount: events.filter((row) => row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS').length,
@@ -420,16 +441,18 @@ export class InMemorySportEvents {
         }];
       })),
       findLiveNotifiedEvents: async (query) => this.events
-        .filter((row) => row.providerId === query.providerId && row.sport === query.sport
-          && row.syncScope === 'SCORES_ONLY'
+        .filter((row) => this.externalIdAt(row.id, query.providerId) !== undefined && row.sport === query.sport
           && (row.status === 'IN_PROGRESS' || (query.startedBy !== undefined && row.status === 'SCHEDULED'
             && row.autoLifecycleEnabled && row.startDate <= query.startedBy))
-          && ('externalId' in query ? row.externalId === query.externalId : row.externalId.startsWith(query.externalIdPrefix)))
+          && ('externalId' in query
+            ? this.externalIdAt(row.id, query.providerId) === query.externalId
+            // An event's mapping sits under its league's selected provider mapping, whose provider league names it.
+            : this.sportLeagues.find((league) => league.id === row.sportLeagueId)?.selectedProviderMapping?.providerLeagueCode === query.providerLeagueCode))
         .map((row) => ({
           sportEventId: row.id,
           sport: row.sport,
-          providerId: row.providerId,
-          externalId: row.externalId,
+          providerId: query.providerId,
+          externalId: this.externalIdAt(row.id, query.providerId) as string,
           holdsGame: query.gameId !== undefined
             && this.matchRows.some((match) => match.sportEventId === row.id && match.externalGameId === query.gameId),
           inProgress: row.status === 'IN_PROGRESS',
@@ -446,7 +469,8 @@ export class InMemorySportEvents {
         if (row.status !== 'DRAFT' || row.startDate <= now || row.startDate > horizon) return [];
         if (!league?.isActive || league.selectedProviderMapping === null || league.autoReleaseDaysBeforeStart === null) return [];
         return [{
-          id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope,
+          id: row.id, startDate: row.startDate,
+          providerSynced: this.externalIdAt(row.id, league.selectedProviderMapping.providerId) !== undefined,
           syncProviderId: league.selectedProviderMapping.providerId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
         }];
       }),

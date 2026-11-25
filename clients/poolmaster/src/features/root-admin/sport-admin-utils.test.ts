@@ -3,28 +3,15 @@ import type { ParticipantRoundStatus } from '@poolmaster/shared/domain';
 import {
   deriveSportEventReadiness,
   formatSportEventStatus,
-  syncScopeLabel,
-  syncScopeTone,
   sportEventStatusTone,
-  participantFieldActionLabel,
   parseRosterUpload,
   parseGolfRoundScoreUpload,
   golfRoundScoreRows,
-  sportProviderOptions,
+  participantStatusTone,
 } from './sport-admin-utils';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 
 // plans/124 §6.3/§6.4 — pure helpers backing the golf admin keystone screens (pool-master-3dg).
-
-describe('pool-master-3dg sport-admin-utils: sync scope', () => {
-  it('pool-master-3dg maps every sync scope to a label and tone', () => {
-    expect(syncScopeLabel('NONE')).toBe('Manual');
-    expect(syncScopeLabel('SCORES_ONLY')).toBe('Scores synced');
-
-    expect(syncScopeTone('NONE')).toBe('active');
-    expect(syncScopeTone('SCORES_ONLY')).toBe('info');
-  });
-});
 
 describe('pool-master-3dg sport-admin-utils: status formatting', () => {
   it('an event status reads its display string, sentence case like every other status', () => {
@@ -106,36 +93,10 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
     expect(deriveSportEventReadiness({ ...base, status: 'IN_PROGRESS' }).label).toBe('Live');
     expect(deriveSportEventReadiness({ ...base, status: 'COMPLETED' }).label).toBe('Completed');
   });
-});
 
-describe('sport-admin-utils: provider resolution', () => {
-  const providers = [
-    { providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['GOLF'], primaryForSports: [] },
-    { providerId: 'espn', providerName: 'ESPN', sportsCovered: ['NFL'], primaryForSports: ['NFL'] },
-    { providerId: 'mock-contest-feed', providerName: 'Mock feed', sportsCovered: ['GOLF', 'NBA'], primaryForSports: ['GOLF', 'NBA'] },
-  ];
-
-  it('lists the providers covering a sport with its primary first, whatever order the list holds them in', () => {
-    expect(sportProviderOptions(providers, 'GOLF')).toEqual([
-      { providerId: 'mock-contest-feed', providerName: 'Mock feed' },
-      { providerId: 'balldontlie', providerName: 'BALLDONTLIE' },
-    ]);
-    expect(sportProviderOptions(providers, 'HORSE_RACING')).toEqual([]);
-    expect(sportProviderOptions(undefined, 'GOLF')).toEqual([]);
-  });
-
-  it('puts the first provider covering a sport first when none is its primary', () => {
-    expect(sportProviderOptions([providers[0]], 'GOLF').at(0)?.providerId).toBe('balldontlie');
-    expect(sportProviderOptions([], 'GOLF')).toEqual([]);
-  });
-});
-
-// plans/124 §6.3 / §4.4a — Field editor Load/Refresh label derivation.
-describe('pool-master-za4 sport-admin-utils: participantFieldActionLabel', () => {
-  it('pool-master-za4 says "Load" for an empty field and "Refresh" once it has entries', () => {
-    expect(participantFieldActionLabel(0)).toBe('Load Participant Field');
-    expect(participantFieldActionLabel(1)).toBe('Refresh Participant Field');
-    expect(participantFieldActionLabel(156)).toBe('Refresh Participant Field');
+  it('shows a cancelled or postponed event under its status, as a warning with no setup reasons', () => {
+    expect(deriveSportEventReadiness({ ...base, status: 'CANCELLED', loadedParticipantCount: 0 })).toEqual({ label: 'Cancelled', tone: 'warning', reasons: [] });
+    expect(deriveSportEventReadiness({ ...base, status: 'POSTPONED' })).toEqual({ label: 'Postponed', tone: 'warning', reasons: [] });
   });
 });
 
@@ -177,6 +138,10 @@ describe('pool-master-qqs sport-admin-utils: parseRosterUpload', () => {
 
   it('pool-master-qqs surfaces the format-level empty-input error', () => {
     expect(() => parseRosterUpload('', 'CSV')).toThrow('Paste or upload some rows first.');
+  });
+
+  it('refuses an empty JSON array as having no rows', () => {
+    expect(() => parseRosterUpload('[]', 'JSON')).toThrow('No rows found.');
   });
 });
 
@@ -295,5 +260,19 @@ describe('sport-admin-utils: golfRoundScoreRows (issue 236)', () => {
       fieldEntryFixture({ rounds: [{ ...result(1, 70), golf: null }] }),
     ];
     expect(golfRoundScoreRows(field, 1)).toEqual([]);
+  });
+});
+
+describe('sport-admin-utils: participantStatusTone', () => {
+  it('tones an active participant active, a suspended one as a warning, and any other inactive', () => {
+    expect(participantStatusTone('ACTIVE')).toBe('active');
+    expect(participantStatusTone('SUSPENDED')).toBe('warning');
+    expect(participantStatusTone('INACTIVE')).toBe('inactive');
+  });
+});
+
+describe('sport-admin-utils: parseGolfRoundScoreUpload with no rows', () => {
+  it('refuses an empty JSON array as having no rows', () => {
+    expect(() => parseGolfRoundScoreUpload('[]', 'JSON')).toThrow('No rows found.');
   });
 });

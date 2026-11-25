@@ -32,8 +32,11 @@ export type ProviderNotification = {
   notificationType: string;
   phase: ProviderNotificationPhase;
 } & (
-  /** A game's notification: the provider's events whose ids start with `eventIdPrefix` may hold it. */
-  | { subject: 'GAME'; gameId: string; eventIdPrefix: string }
+  /**
+   * A game's notification: the events the provider has an id for in its league `providerLeagueCode`
+   * (#2004) may hold it.
+   */
+  | { subject: 'GAME'; gameId: string; providerLeagueCode: string }
   /** An event's own notification, such as a golf round starting. */
   | { subject: 'EVENT'; eventId: string }
 );
@@ -136,7 +139,7 @@ export class ProviderNotificationService {
     const candidates = await this.deps.sportEvents.findLiveNotifiedEvents({
       providerId,
       sport,
-      externalIdPrefix: notification.eventIdPrefix,
+      providerLeagueCode: notification.providerLeagueCode,
       gameId: notification.gameId,
       ...startedBy,
     });

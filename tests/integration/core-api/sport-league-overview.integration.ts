@@ -17,7 +17,7 @@ import { recordStatements } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
-import { fixtureSeasonId } from '../../support/event-edition';
+import { fixtureSeasonId, mapEventToProvider } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -54,7 +54,7 @@ async function event(sportLeagueId: string, { championshipYear, ...input }: { ch
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
   return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, sportLeagueSeasonId, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), ...input },
+    data: { eventSeriesId: series.id, sportLeagueSeasonId, name: `Event ${randomUUID().slice(0, 8)}`, ...input },
   });
 }
 
@@ -159,11 +159,13 @@ describe('ProviderSyncRunLedger with the event repository', () => {
   it('records on a scheduled run the event and sport league its provider event is linked to', async () => {
     const tour = await sportLeague('Ledger Tour');
     const linked = await event(tour.id, { championshipYear: 2027, startDate: days(3) });
+    const externalId = `ledger-${linked.id}`;
+    await mapEventToProvider(getPrisma(), linked.id, { providerId: 'balldontlie', externalId });
     const ledger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
     const normalizedRequest = new SyncOrchestrator({ now: () => NOW }).normalizeRequest({
       source: 'SCHEDULED',
       actor: { type: 'SYSTEM', name: 'scheduler' },
-      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: linked.externalId, feeds: ['EVENTLIVESCORES'] },
+      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: externalId, feeds: ['EVENTLIVESCORES'] },
     });
 
     const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, trigger: JobTrigger.SCHEDULE });

@@ -24,6 +24,7 @@ import type {
 import type { BackgroundJobOutcome, Contest, SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
+  eventFeedRef,
   SelectionType,
   SportEventStatus,
   isDeclaredSportEventTransition,
@@ -479,8 +480,7 @@ export class EventLifecycleService {
         const logged = {
           contestId: contest.id,
           sportEventId: sportEvent.id,
-          providerId: sportEvent.providerId,
-          eventExternalId: sportEvent.externalId,
+          eventFeedRef: eventFeedRef(sportEvent) ?? null,
         };
         if (!activated.has(contest.id)) {
           this.logger?.debug(logged, 'Skipped contest started email because contest was already active');

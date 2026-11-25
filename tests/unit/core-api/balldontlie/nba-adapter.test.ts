@@ -1,6 +1,6 @@
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
-import { EventScoreSourceService } from '../../../../packages/core-api/src/modules/events/event-score-source-service';
+import { ProviderSeasonScheduleReader } from '../../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import { registryWith } from '../../../support/fake-sport-data-provider';
 import { asPrismaClient } from '../../../support/prisma-double';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
@@ -59,9 +59,9 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2025-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
 
-      expect(events.map((event) => [event.externalId, event.name, event.status, event.metadata])).toEqual([
-        ['nba-2024-postseason', 'NBA Playoffs', 'COMPLETED', { tour: 'NBA', season: 2024 }],
-        ['nba-2025-postseason', 'NBA Playoffs', 'IN_PROGRESS', { tour: 'NBA', season: 2025 }],
+      expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
+        ['nba-2024-postseason', 'NBA Playoffs', 'COMPLETED'],
+        ['nba-2025-postseason', 'NBA Playoffs', 'IN_PROGRESS'],
       ]);
       expect(events.map((event) => event.providerLeagueCode)).toEqual(['nba', 'nba']);
       expect(requestLine(harness.api)).toEqual([
@@ -260,7 +260,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       selectedProviderMapping: { id: 'mapping', providerLeague: { id: 'provider-league', code: 'nba', name: 'NBA', provider: { code: 'BALLDONTLIE', name: 'BALLDONTLIE' } } },
     };
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(league) } };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(harness.adapter));
+    const service = new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(harness.adapter));
 
     const events = await service.listSeasonEvents('balldontlie', 'league', '2023');
 

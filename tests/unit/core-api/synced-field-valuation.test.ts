@@ -21,7 +21,7 @@ function tierDefinitions(count: number) {
 async function setup(options: { status?: SportEventStatus; fieldSize?: number; tierCount?: number; pricing?: BudgetPricingProfile } = {}) {
   const store = new InMemorySportEvents();
   const league = options.pricing && store.addLeagueWithPlatformPricingProfile(options.pricing);
-  const event = store.addEvent({ status: options.status ?? SportEventStatus.DRAFT, ...SYNCED, ...(league && { sportLeagueId: league.id }) });
+  const event = store.addEvent({ status: options.status ?? SportEventStatus.DRAFT, providerRef: SYNCED, ...(league && { sportLeagueId: league.id }) });
   await store.addTiers(event.id, tierDefinitions(options.tierCount ?? 2));
   for (let index = 1; index <= (options.fieldSize ?? 4); index++) {
     // p-01 has the shortest odds.

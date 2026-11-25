@@ -77,8 +77,6 @@ describe('RosterPick CRUD integration', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `roster-pick-crud-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
         name: 'Roster Pick CRUD Event',
         startDate: eventTiming.startDate,
         status: 'SCHEDULED',

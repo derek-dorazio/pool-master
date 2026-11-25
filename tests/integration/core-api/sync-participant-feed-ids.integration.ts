@@ -29,9 +29,10 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   const prisma = getPrisma();
-  await prisma.sportEventParticipant.deleteMany({ where: { sportEvent: { providerId: PROVIDER } } });
-  await prisma.sportEventRound.deleteMany({ where: { sportEvent: { providerId: PROVIDER } } });
-  await prisma.sportEvent.deleteMany({ where: { providerId: PROVIDER } });
+  const ownEvents = { sportLeagueSeason: { sportLeague: { name: { startsWith: NAME_PREFIX } } } };
+  await prisma.sportEventParticipant.deleteMany({ where: { sportEvent: ownEvents } });
+  await prisma.sportEventRound.deleteMany({ where: { sportEvent: ownEvents } });
+  await prisma.sportEvent.deleteMany({ where: ownEvents });
   await prisma.participantProviderMapping.deleteMany({ where: { participant: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
   await prisma.eventSeries.deleteMany({ where: { sportLeague: { name: { startsWith: NAME_PREFIX } } } });
@@ -53,13 +54,11 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
     startDate: new Date('2027-07-15T12:00:00.000Z'),
     status: 'SCHEDULED',
     fieldLocked: false,
-    metadata: {},
     participants: [golfer],
   };
-  const event = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
   // Each event on a sport league of its own, so a test sees only the participants it makes.
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
-  await prisma.eventSeries.update({ where: { id: event.eventSeriesId }, data: { sportLeagueId: league.id } });
+  const event = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: detail.externalId, name: detail.name, startDate: detail.startDate, sportLeagueId: league.id });
   return { golfer, detail, event, sportLeagueId: league.id, suffix };
 }
 

@@ -80,7 +80,6 @@ describe('NFL events', () => {
       rounds: 1,
       participantCount: 8,
       fieldLocked: true,
-      metadata: { tour: 'NFL', season: 2026, seasonType: 2 },
     });
   });
 

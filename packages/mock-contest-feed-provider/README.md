@@ -78,14 +78,11 @@ The `golf-sandbox` scenario lists no events, but answers any event id that start
 replay all work. Its schedule is a fixed placeholder and nothing about it is compared with
 today, so a made-up PoolMaster tournament on any dates can have its own mock event.
 
-In PoolMaster, press **Link to a new simulated event** on an unlinked tournament's
-score-source card. That links it to `sandbox-<PoolMaster event id>`, which is unique per
-tournament. Then load the participant field, set ranks and tiers, and start the live
-simulation. Until a replay runs, a sandbox event's scores show nobody on the course.
-
-A replay is remembered by event id until the mock restarts. A tournament unlinked and
-linked again gets the same `sandbox-<id>`, so it picks up the earlier replay's scores at
-once. Use a fresh tournament for a fresh run.
+PoolMaster no longer links a tournament to a sandbox event: an event's provider id is written
+by its league's sync alone (#2004), and the mock has no Provider row, so no PoolMaster event
+is linked to it. A sandbox event is reached through the mock's own API. Until a replay runs, its
+scores show nobody on the course, and a replay is remembered by event id until the mock
+restarts.
 
 ## Run Locally
 

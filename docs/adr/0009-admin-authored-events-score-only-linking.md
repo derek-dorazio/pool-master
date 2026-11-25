@@ -1,6 +1,9 @@
 # ADR 0009: Admin-Authored Events and Score-Only Linking Are the Only Provider Pattern
 
 - **Status:** Superseded by ADR-0011
+- **Note (#2004):** score-only linking is gone too. An event's provider id is a
+  `SportEventProviderMapping` row only the sync writes; `SportEvent.syncScope` and the admin's link
+  and unlink routes were removed.
 - **Date:** 2026-10-07
 
 ## Context

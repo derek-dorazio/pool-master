@@ -11,7 +11,7 @@ import type {
   SportEventDto,
   SportEventParticipantDto,
 } from '@/lib/api';
-import { type AssertTrue, type ParticipantRoundStatus, type Sport, SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
+import { type AssertTrue, type ParticipantRoundStatus, SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -34,28 +34,7 @@ type BadgeTone =
   | 'warning';
 
 // #236: the golf screens read the shared SportEvent and its rounds, not golf projections.
-export type SportEventDtoSyncScope = SportEventDto['syncScope'];
 export type SportEventDtoStatus = SportEventDto['status'];
-
-// --- Sync scope (plans/124 §4.4) ---
-
-export function syncScopeLabel(scope: SportEventDtoSyncScope): string {
-  return enumLabel('SportEventSyncScope', scope);
-}
-
-export function syncScopeTone(scope: SportEventDtoSyncScope): BadgeTone {
-  if (scope === 'SCORES_ONLY') return 'info';
-  return 'active';
-}
-
-/**
- * Whether this tournament pulls anything from a provider — gates the Field
- * editor's "Load / Refresh Participant Field" action and the Score-source block
- * (§4.4a). `NONE` is a purely manual tournament.
- */
-export function sportEventHasScoreSync(scope: SportEventDtoSyncScope): boolean {
-  return scope !== 'NONE';
-}
 
 // --- Status (SportEventStatus) ---
 
@@ -147,33 +126,6 @@ export function deriveSportEventReadiness(
   return { label: 'Ready to release', tone: 'info', reasons: [] };
 }
 
-// --- Provider resolution (plans/124 §4.4, #1495) ---
-//
-// listProviderCatalogEvents needs a providerId, resolved from the provider-health list the
-// sync lane already exposes. More than one provider can cover a sport; the one marked primary for it comes first and is the default.
-
-export type SportProviderOption = {
-  providerId: string;
-  providerName: string;
-};
-
-type ProviderCoverage = SportProviderOption & {
-  sportsCovered: readonly string[];
-  primaryForSports: readonly string[];
-};
-
-/** The providers covering the sport, its primary first; empty when none does. */
-export function sportProviderOptions(
-  providers: ReadonlyArray<ProviderCoverage> | undefined,
-  sport: Sport,
-): SportProviderOption[] {
-  const covering = (providers ?? []).filter((provider) => provider.sportsCovered.includes(sport));
-  return [
-    ...covering.filter((provider) => provider.primaryForSports.includes(sport)),
-    ...covering.filter((provider) => !provider.primaryForSports.includes(sport)),
-  ].map(({ providerId, providerName }) => ({ providerId, providerName }));
-}
-
 // --- Player status (Participant.status) ---
 
 type BadgeToneLite = 'active' | 'inactive' | 'warning';
@@ -205,21 +157,6 @@ export function participantStatusTone(status: ManagedParticipantStatus): BadgeTo
   if (status === 'ACTIVE') return 'active';
   if (status === 'SUSPENDED') return 'warning';
   return 'inactive';
-}
-
-// --- Field editor (plans/124 §6.3 / §4.4a) ---
-
-/**
- * The "Load Participant Field" / "Refresh Participant Field" header action is one
- * endpoint (`refreshEventParticipants`) with a client-computed label:
- * "Load" while the field is still empty, "Refresh" once it has entries (§4.4a).
- */
-export function participantFieldActionLabel(
-  fieldCount: number,
-): 'Load Participant Field' | 'Refresh Participant Field' {
-  return fieldCount === 0
-    ? 'Load Participant Field'
-    : 'Refresh Participant Field';
 }
 
 // --- League roster bulk upload (plans/124 §6.3 Tour Home / §6.4) ---

@@ -83,10 +83,11 @@ const PINNED_RELEASE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 1],
-  ['SELECT event_series', 4],
+  ['SELECT event_series', 1],
+  ['SELECT sport_event_provider_mappings', 2],
   ['SELECT sport_events', 3],
-  ['SELECT sport_league_seasons', 2],
-  ['SELECT sport_leagues', 3], // each event's sport is read through its series' league since #2042 (#2089)
+  ['SELECT sport_league_seasons', 3],
+  ['SELECT sport_leagues', 3], // each event's sport is read through its Season's league since #2042 (#2089)
   ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
 ];
@@ -114,8 +115,6 @@ async function createLeagueAndEvent() {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `contest-repo-${suffix}`,
-      providerId: 'integration-test',
       name: `Contest Repo Open ${suffix}`,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
@@ -141,8 +140,6 @@ async function createLaterEvent(suffix: string, startDate = new Date('2026-07-16
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `contest-repo-later-${suffix}-${randomUUID().slice(0, 4)}`,
-      providerId: 'integration-test',
       name: `Contest Repo Later Open ${suffix}`,
       startDate,
       status: 'SCHEDULED',
@@ -732,8 +729,6 @@ async function createSecondTourEvent(fixtureEventSeriesId: string, suffix: strin
     data: {
       eventSeriesId: series.id,
       sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026),
-      externalId: `plan-cap-${suffix}`,
-      providerId: 'integration-test',
       name: `Plan Cap Classic ${suffix}`,
       startDate: new Date('2026-08-04T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -1598,8 +1593,6 @@ describe('SportEventRepository.findAll start bounds (#893)', () => {
     const create = async (day: string) => prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `start-bounds-${day}-${suffix}`,
-        providerId: 'integration-test',
         name: `Start Bounds ${day} ${suffix}`,
         startDate: new Date(`2026-06-${day}T12:00:00.000Z`),
         status: 'SCHEDULED',

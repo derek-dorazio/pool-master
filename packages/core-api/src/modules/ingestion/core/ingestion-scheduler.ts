@@ -129,6 +129,8 @@ export interface ScheduledEventRef {
 
 /** A linked event the live-score sweep syncs, with what its pace and quiet check read (#1499). */
 export interface LiveScoreEventRef extends ScheduledEventRef {
+  /** The code of the provider league its sport league's mapping names (`nfl`, #2004). */
+  providerLeagueCode: string;
   /** Whether its sport is played in rounds, such as golf, rather than in matches. */
   playedInRounds: boolean;
   /** When the play now under way began (a round, or a match); null when none is. */
@@ -168,7 +170,7 @@ export interface NotifiedProviderCadence {
    * How long an event may stay in play with no notification before the sweep warns: the longest
    * gap its league's notifications have in normal play, such as a quarter and halftime.
    */
-  quietAfterMs: (sport: Sport, event: ScheduledEventRef) => number;
+  quietAfterMs: (sport: Sport, event: LiveScoreEventRef) => number;
 }
 
 /** How often the live-score sweep looks for due events while a provider's cadence is set. */

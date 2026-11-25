@@ -42,6 +42,7 @@ function readerOf({ fields = [], live = [] }: { fields?: ScheduledEventRef[]; li
   return {
     listEventsForFeed: jest.fn().mockResolvedValue(fields),
     listLiveScoreEvents: jest.fn().mockResolvedValue(live.map((event): LiveScoreEventRef => ({
+      providerLeagueCode: 'pga',
       playedInRounds: true,
       playUnderwaySince: null,
       lastProviderNotificationAt: null,
@@ -217,7 +218,6 @@ describe('IngestionScheduler', () => {
         startDate: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
         fieldLocked: false,
-        metadata: {},
         participants: [
           { externalId: 'player-1', providerId: 'mock-provider', sport: 'GOLF', name: 'Player One', active: true, metadata: {} },
           { externalId: 'player-2', providerId: 'mock-provider', sport: 'GOLF', name: 'Player Two', active: true, metadata: {} },
@@ -524,7 +524,6 @@ describe('IngestionScheduler', () => {
         startDate: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
         fieldLocked: false,
-        metadata: {},
         participants: [
           {
             externalId: 'player-1',
@@ -740,7 +739,6 @@ describe('IngestionScheduler', () => {
           startDate: now,
           status: 'IN_PROGRESS',
           fieldLocked: true,
-          metadata: {},
           participants: [],
         } satisfies SportEventDetail),
         getLiveScores: jest.fn().mockResolvedValue({
@@ -813,7 +811,6 @@ describe('IngestionScheduler', () => {
         startDate: new Date('2026-05-02T12:00:00.000Z'),
         status: 'SCHEDULED',
         fieldLocked: false,
-        metadata: {},
         participants: [],
       };
       const provider = fakeSportDataProvider({
@@ -989,7 +986,6 @@ describe('IngestionScheduler job outcomes', () => {
     startDate: new Date('2026-04-10T12:00:00.000Z'),
     status: 'SCHEDULED',
     fieldLocked: false,
-    metadata: {},
     participants,
   });
 
@@ -1336,6 +1332,7 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
   const event = (providerId: string, externalId: string, live: Partial<LiveScoreEventRef> = {}): LiveScoreEventRef => ({
     providerId,
     externalId,
+    providerLeagueCode: 'pga',
     playedInRounds: false,
     playUnderwaySince: null,
     lastProviderNotificationAt: null,

@@ -14,7 +14,7 @@ import {
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
-import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import { ProviderSeasonScheduleError } from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import type { ProviderEventDetailsChange, ProviderSeasonImport } from '../../../packages/core-api/src/modules/events/service';
 import { buildProviderMapping, buildSportLeague } from '../../factories';
@@ -72,7 +72,7 @@ function build(options: {
   const jobs = inMemoryBackgroundJobs(() => now);
   const syncRuns = inMemorySyncRuns(jobs);
   const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
-  const scoreSource = {
+  const seasonSchedule = {
     listSeasonEvents: options.listSeasonEvents
       ?? jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>(async (_providerId, sportLeagueId, providerSeasonId) => [providerEvent(`${sportLeagueId}-${providerSeasonId}`)]),
   };
@@ -96,7 +96,7 @@ function build(options: {
   const sync = new LeagueEventsSync({
     sportLeagues,
     seasons,
-    scoreSource,
+    seasonSchedule,
     sportEvents,
     findings,
     syncRuns,
@@ -111,7 +111,7 @@ function build(options: {
     sleep: () => Promise.resolve(),
   });
   if (options.wakes !== false) queue.wakes(runner);
-  return { sync, runner, jobs, syncRuns, scoreSource, sportEvents, findings, logger };
+  return { sync, runner, jobs, syncRuns, seasonSchedule, sportEvents, findings, logger };
 }
 
 /** A lease renewal for a try that still holds its claim. */
@@ -156,12 +156,12 @@ describe('LeagueEventsSync', () => {
         next: { name: '2027', championshipYear: 2027, startsAt: new Date('2027-09-01T00:00:00Z'), endsAt: new Date('2028-02-28T23:59:59Z'), providerSeasonId: '2027' },
       });
       const nfl = syncedLeague(seasons, { name: 'NFL' }, nflSeasons);
-      const { sync, scoreSource } = build({ leagues: [nfl], seasons, now: new Date('2027-01-15T12:00:00Z') });
+      const { sync, seasonSchedule } = build({ leagues: [nfl], seasons, now: new Date('2027-01-15T12:00:00Z') });
 
       await sync.run({ sportLeagueId: nfl.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
       // The playoffs under way in January 2027 are the 2026 Season's: it is read first, by its own id.
-      expect(scoreSource.listSeasonEvents.mock.calls.map(([, , providerSeasonId]) => providerSeasonId)).toEqual(['2026', '2027']);
+      expect(seasonSchedule.listSeasonEvents.mock.calls.map(([, , providerSeasonId]) => providerSeasonId)).toEqual(['2026', '2027']);
     });
 
     it('makes every league\'s scheduled job due now, with no league held back behind another', async () => {
@@ -271,12 +271,12 @@ describe('LeagueEventsSync', () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const own = seasonsOf();
       const pga = syncedLeague(seasons, {}, own);
-      const { sync, runner, scoreSource, sportEvents } = build({ leagues: [pga], seasons });
+      const { sync, runner, seasonSchedule, sportEvents } = build({ leagues: [pga], seasons });
 
       await sync.queueScheduled();
       await runner.drain();
 
-      expect(scoreSource.listSeasonEvents.mock.calls).toEqual([['balldontlie', pga.id, '2026'], ['balldontlie', pga.id, '2027']]);
+      expect(seasonSchedule.listSeasonEvents.mock.calls).toEqual([['balldontlie', pga.id, '2026'], ['balldontlie', pga.id, '2027']]);
       expect(sportEvents.importProviderSeason.mock.calls).toEqual([
         [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2026`)] }],
         [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.next.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2027`)] }],
@@ -292,21 +292,21 @@ describe('LeagueEventsSync', () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const own = seasonsOf();
       const pga = syncedLeague(seasons, {}, own);
-      const { sync, scoreSource } = build({ leagues: [pga], seasons });
+      const { sync, seasonSchedule } = build({ leagues: [pga], seasons });
 
       await sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.last.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.ADMIN });
 
-      expect(scoreSource.listSeasonEvents.mock.calls).toEqual([['balldontlie', pga.id, '2025']]);
+      expect(seasonSchedule.listSeasonEvents.mock.calls).toEqual([['balldontlie', pga.id, '2025']]);
     });
 
     it('skips a later Season the provider has no id for, reading the rest', async () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const pga = syncedLeague(seasons, {}, seasonsOf({ next: { providerSeasonId: null } }));
-      const { sync, scoreSource } = build({ leagues: [pga], seasons });
+      const { sync, seasonSchedule } = build({ leagues: [pga], seasons });
 
       await sync.run({ sportLeagueId: pga.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
-      expect(scoreSource.listSeasonEvents.mock.calls.map(([, , providerSeasonId]) => providerSeasonId)).toEqual(['2026']);
+      expect(seasonSchedule.listSeasonEvents.mock.calls.map(([, , providerSeasonId]) => providerSeasonId)).toEqual(['2026']);
     });
 
     it('raises one SEASON_MISSING ERROR finding when the last Season the provider has an id for has ended, and still completes its run', async () => {
@@ -417,7 +417,7 @@ describe('LeagueEventsSync', () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const pga = syncedLeague(seasons);
       const listSeasonEvents = jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>()
-        .mockRejectedValue(new EventScoreSourceError('Your plan does not include the PGA TOUR.', 'PROVIDER_LEAGUE_REFUSED', 422));
+        .mockRejectedValue(new ProviderSeasonScheduleError('Your plan does not include the PGA TOUR.', 'PROVIDER_LEAGUE_REFUSED', 422));
       const { sync, runner, jobs, syncRuns, logger } = build({ leagues: [pga], seasons, listSeasonEvents });
 
       await sync.queueScheduled();

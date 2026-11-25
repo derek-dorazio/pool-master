@@ -5,9 +5,7 @@ import type {
   AddSportEventParticipantsResponse,
   AutoAssignSportEventPricesRequest,
   AutoAssignSportEventTiersRequest,
-  CreateSportEventFromProviderEventRequest,
   CreateSportEventRequest,
-  LinkSportEventScoreSourceRequest,
   ReplaceSportEventTierAssignmentsRequest,
   ReplaceSportEventTiersRequest,
   SportEventListQuery,
@@ -46,7 +44,7 @@ import type {
   SportEventRoundMatchupsResponse,
   UpdateSportEventRoundMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
-import { MatchResultSource, OFFERABLE_SPORT_EVENT_STATUSES, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { eventFeedRef, MatchResultSource, OFFERABLE_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
@@ -61,12 +59,8 @@ import {
   toProviderManualSyncSubmissionResponse,
 } from '../../mappers';
 import type { IngestionService } from '../ingestion/ingestion-service';
-import {
-  SportEventSyncScopeError,
-  SportProviderNotFoundError,
-} from '../ingestion/ingestion-service';
+import { SportProviderNotFoundError } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
-import type { EventScoreSourceService } from './event-score-source-service';
 import { SportEventError } from './errors';
 import type { SportEventServices } from './wiring';
 import type { SportLeaguePageService } from '../sport-catalog/sport-league-page';
@@ -100,7 +94,6 @@ function isOfferableEventList(query: SportEventListQuery): boolean {
 export interface EventHandlerDeps {
   services: SportEventServices;
   eventLifecycle: EventLifecycleService;
-  scoreSource: EventScoreSourceService;
   ingestion: IngestionService;
   /** Settle again (#1890): the event's contests' boards rebuilt from the results stored now. */
   leaderboards: Pick<LeaderboardRebuilds, 'eventsChanged'>;
@@ -113,7 +106,7 @@ export interface EventHandlerDeps {
  * contract code and status and reaches the caller through the global error handler; only
  * the provider-sync errors, which carry neither, are mapped here.
  */
-export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion, leaderboards, eventOverviews }: EventHandlerDeps) {
+export function createEventHandlers({ services, eventLifecycle, ingestion, leaderboards, eventOverviews }: EventHandlerDeps) {
   const { sportEvents, rounds, field, tiers, golfScores, raceResults, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
@@ -177,22 +170,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
     },
 
-    createEventFromProviderEvent: async (
-      request: FastifyRequest<{ Body: CreateSportEventFromProviderEventRequest }>,
-      reply: FastifyReply,
-    ) => {
-      const { sportLeagueId, providerId, externalId, rounds: roundCount } = request.body;
-      const providerEvent = await scoreSource.getProviderEventDetail(providerId, externalId);
-      const created = await sportEvents.createEventFromProviderEvent({
-        sportLeagueId,
-        providerId,
-        externalId,
-        rounds: roundCount,
-        providerEvent,
-      });
-      return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
-    },
-
     updateEvent: async (request: FastifyRequest<EventParams & { Body: UpdateSportEventRequest }>): Promise<SportEventResponse> => {
       const { startDate, endDate, tellMembers, ...rest } = request.body;
       const updated = await sportEvents.updateEvent(request.params.eventId, {
@@ -224,16 +201,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return eventResponse(request.params.eventId);
     },
 
-    linkScoreSource: async (request: FastifyRequest<EventParams & { Body: LinkSportEventScoreSourceRequest }>): Promise<SportEventResponse> => {
-      await scoreSource.linkScoreSource(request.params.eventId, request.body);
-      return eventResponse(request.params.eventId);
-    },
-
-    unlinkScoreSource: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
-      await scoreSource.unlinkScoreSource(request.params.eventId);
-      return eventResponse(request.params.eventId);
-    },
-
     /** Settle again (#1890): queues one rebuild of the event's contests' boards from the results stored now; 204. */
     rebuildEventLeaderboards: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const { eventId } = request.params;
@@ -247,19 +214,19 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const event = await sportEvents.requireEvent(request.params.eventId);
-      if (event.syncScope === SportEventSyncScope.NONE) {
-        return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} is not linked to a provider.`);
+      const feedRef = eventFeedRef(event);
+      if (feedRef === undefined) {
+        return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} has no id at its league's provider.`);
       }
       try {
         const result = await ingestion.syncEventData(
-          { sport: event.sport, providerId: event.providerId, eventId: event.externalId, feeds: ['EVENTPARTICIPANTS'] },
+          { sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, feeds: ['EVENTPARTICIPANTS'] },
           request.authUser?.userId ?? '',
           request.authUser?.email ?? '',
         );
         return reply.status(202).send(toProviderManualSyncSubmissionResponse(result));
       } catch (err) {
         if (err instanceof SportProviderNotFoundError) return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
-        if (err instanceof SportEventSyncScopeError) return sendError(reply, 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED', err.message);
         throw err;
       }
     },

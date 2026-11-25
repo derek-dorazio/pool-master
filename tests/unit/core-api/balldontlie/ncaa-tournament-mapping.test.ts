@@ -62,7 +62,6 @@ describe('an NCAA men\'s tournament as an event', () => {
       rounds: 6,
       participantCount: 68,
       fieldLocked: true,
-      metadata: { tour: NCAA_MEN.tour, season: 2025 },
     });
   });
 
@@ -201,7 +200,7 @@ describe('NCAA men\'s tournament game scores', () => {
 });
 
 describe('the NCAA women\'s tournament, whose bracket numbers the First Four round 0 and the championship round 6', () => {
-  it('is an event of its own, six rounds long, carrying the women\'s tour and complete once its round 6 championship is final', () => {
+  it('is an event of its own, six rounds long, and complete once its round 6 championship is final', () => {
     expect(toNcaaTournamentEvent(WOMENS_2025, womens2025, 64)).toEqual({
       externalId: 'ncaaw-2025-tournament',
       providerId: 'balldontlie',
@@ -213,7 +212,6 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
       rounds: 6,
       participantCount: 64,
       fieldLocked: true,
-      metadata: { tour: 'NCAAW', season: 2025 },
     });
   });
 

@@ -12,7 +12,7 @@ import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
-import { linkedProviderEvent } from '../../support/event-edition';
+import { linkedProviderEvent, providerEventWhere } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 
 const rankedEventIds = [
@@ -23,8 +23,7 @@ const rankedEventIds = [
   'integration-linked-sync',
   'integration-unlinked-sync',
   'integration-odds-field',
-  'integration-admin-header-SCORES_ONLY',
-  'integration-admin-header-NONE',
+  'integration-admin-header',
   'integration-batched-sync',
   'integration-rebuild-sync',
   'integration-rebuild-fail',
@@ -48,7 +47,7 @@ afterAll(async () => {
     where: {
       standing: {
         sportEventParticipant: {
-          sportEvent: { externalId: 'integration-ingestion-event' },
+          sportEvent: providerEventWhere('balldontlie', 'integration-ingestion-event'),
         },
       },
     },
@@ -56,20 +55,20 @@ afterAll(async () => {
   await prisma.sportEventParticipantStanding.deleteMany({
     where: {
       sportEventParticipant: {
-        sportEvent: { externalId: 'integration-ingestion-event' },
+        sportEvent: providerEventWhere('balldontlie', 'integration-ingestion-event'),
       },
     },
   });
   await prisma.sportEventParticipant.deleteMany({
     where: {
-      sportEvent: { externalId: { in: rankedEventIds } },
+      sportEvent: providerEventWhere('balldontlie', { in: rankedEventIds }),
     },
   });
   await prisma.sportEventRound.deleteMany({
-    where: { sportEvent: { externalId: { in: rankedEventIds } } },
+    where: { sportEvent: providerEventWhere('balldontlie', { in: rankedEventIds }) },
   });
   await prisma.sportEvent.deleteMany({
-    where: { externalId: { in: rankedEventIds } },
+    where: providerEventWhere('balldontlie', { in: rankedEventIds }),
   });
   // The suite's participants are the ones mapped to its feed ids (#2040: a feed id lives only on the mapping).
   const feedMapped = await prisma.participantProviderMapping.findMany({ where: { externalId: { startsWith: 'ingestion-' } }, select: { participantId: true } });
@@ -94,14 +93,13 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-15T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
-      metadata: {},
       participants: [{ externalId: golferId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${golferId}`, active: true, ranking: 3, metadata: {} }],
     };
     await linkedProviderEvent(getPrisma(), { providerId: detail.providerId, externalId, name: detail.name, startDate: detail.startDate });
     return detail;
   }
   const withRebuilds = () => new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
-  const eventIdOf = async (externalId: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'balldontlie', externalId } } })).id;
+  const eventIdOf = async (externalId: string) => (await getPrisma().sportEvent.findFirstOrThrow({ where: providerEventWhere('balldontlie', externalId) })).id;
 
   it('writes the event\'s leaderboard rebuild job with the field a sync changes, and none for a sync that changes nothing (#1466)', async () => {
     const detail = await linkedField('integration-rebuild-sync', 'ingestion-rebuild-1');
@@ -186,7 +184,6 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-15T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
-      metadata: { season: '2026' },
       participants: [
         {
           externalId: 'ingestion-player-1',
@@ -217,13 +214,8 @@ describe('IngestionPersistence', () => {
       sportEventParticipantsPersisted: 1,
     });
 
-    const event = await prisma.sportEvent.findUniqueOrThrow({
-      where: {
-        providerId_externalId: {
-          providerId: 'balldontlie',
-          externalId: 'integration-ingestion-event',
-        },
-      },
+    const event = await prisma.sportEvent.findFirstOrThrow({
+      where: providerEventWhere('balldontlie', 'integration-ingestion-event'),
     });
     const participant = await prisma.participant.findFirstOrThrow({
       where: { providerMappings: { some: { externalId: 'ingestion-player-1' } } },
@@ -267,7 +259,6 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-22T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
-      metadata: {},
       participants: [golfer('ingestion-ranked-1', 'Ranked Golfer', 7), golfer('ingestion-ranked-2', 'Unranked Golfer')],
     };
     const event = await linkedProviderEvent(prisma, {
@@ -310,7 +301,6 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-29T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
-      metadata: {},
       participants,
     };
   }
@@ -380,7 +370,6 @@ describe('IngestionPersistence', () => {
       status: 'SCHEDULED' as const,
       participantCount: 80,
       fieldLocked: false,
-      metadata: {},
     });
 
     const result = await persistence.persistEventsWithDiagnostics([
@@ -391,7 +380,7 @@ describe('IngestionPersistence', () => {
     expect(result.count).toBe(1);
     expect((await prisma.sportEvent.findUniqueOrThrow({ where: { id: linked.id } })).participantCount).toBe(80);
     await expect(prisma.sportEvent.count({
-      where: { providerId: 'balldontlie', externalId: 'integration-unlinked-sync' },
+      where: providerEventWhere('balldontlie', 'integration-unlinked-sync'),
     })).resolves.toBe(0);
   });
 
@@ -417,7 +406,6 @@ describe('IngestionPersistence', () => {
       status: 'SCHEDULED' as const,
       participantCount,
       fieldLocked: false,
-      metadata: {},
     });
 
     const result = await persistence.persistEventsWithDiagnostics([
@@ -442,7 +430,7 @@ describe('IngestionPersistence', () => {
     expect([grown.id, same.id, shrunk.id].map((id) => byId.get(id)?.participantCount)).toEqual([80, 80, 70]);
     expect(byId.get(same.id)?.updatedAt).toEqual(same.updatedAt);
     await expect(prisma.sportEvent.count({
-      where: { providerId: 'balldontlie', externalId: 'integration-batch-unlinked' },
+      where: providerEventWhere('balldontlie', 'integration-batch-unlinked'),
     })).resolves.toBe(0);
   });
 
@@ -509,14 +497,13 @@ describe('IngestionPersistence', () => {
     });
   });
 
-  // #118, #435 — an admin owns the header, rounds and status of every event, linked for
-  // scores (SCORES_ONLY) or not (NONE). Sync may refresh the field size, and nothing else.
-  it.each(['SCORES_ONLY', 'NONE'] as const)(
-    'leaves a %s event\'s admin-owned name, start, rounds and status as they were, and refreshes only its field size',
-    async (syncScope) => {
+  // #118, #435 — the field sync never writes a linked event's header, rounds or status (the
+  // events sync keeps those, #1727). It may refresh the field size, and nothing else.
+  it('leaves a linked event\'s stored name, start, rounds and status as they were, and refreshes only its field size',
+    async () => {
       const prisma = getPrisma();
       const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-      const externalId = `integration-admin-header-${syncScope}`;
+      const externalId = 'integration-admin-header';
       const startDate = new Date('2026-06-11T12:00:00.000Z');
       const created = await linkedProviderEvent(prisma, {
         providerId: 'balldontlie',
@@ -524,7 +511,7 @@ describe('IngestionPersistence', () => {
         name: 'Admin Open',
         startDate,
       });
-      await prisma.sportEvent.update({ where: { id: created.id }, data: { syncScope, participantCount: 60 } });
+      await prisma.sportEvent.update({ where: { id: created.id }, data: { participantCount: 60 } });
 
       await persistence.persistEventsWithDiagnostics([{
         externalId,
@@ -536,7 +523,6 @@ describe('IngestionPersistence', () => {
         rounds: 5,
         participantCount: 80,
         fieldLocked: true,
-        metadata: {},
       }]);
 
       const row = await prisma.sportEvent.findUniqueOrThrow({ where: { id: created.id } });
@@ -545,7 +531,6 @@ describe('IngestionPersistence', () => {
         startDate,
         rounds: created.rounds,
         status: created.status,
-        syncScope,
         participantCount: 80,
       });
     },

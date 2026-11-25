@@ -38,7 +38,7 @@ export interface NcaaTournamentLeague {
   key: 'ncaab' | 'ncaaw';
   eventName: string;
   /**
-   * The tour name its events and teams carry in `metadata.tour`, for display; a sport league
+   * The tour name its teams carry in `metadata.tour`, for display; a sport league
    * finds them by their provider league code (#1997).
    */
   tour: string;
@@ -132,7 +132,6 @@ export function toNcaaTournamentEvent(scope: NcaaTournamentScope, games: readonl
     rounds: tournamentRoundsOf(league),
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: league.tour, season: scope.season },
   };
 }
 

@@ -22,7 +22,7 @@ const nflPeriodEnded: ProviderNotification = {
   phase: 'PROGRESS',
   subject: 'GAME',
   gameId: '424095',
-  eventIdPrefix: 'nfl-',
+  providerLeagueCode: 'nfl',
 };
 
 const golfRoundStarted: ProviderNotification = {
@@ -73,7 +73,7 @@ describe('provider notifications (#1498)', () => {
     expect(findLiveNotifiedEvents).toHaveBeenCalledWith({
       providerId: 'balldontlie',
       sport: Sport.AMERICAN_FOOTBALL,
-      externalIdPrefix: 'nfl-',
+      providerLeagueCode: 'nfl',
       gameId: '424095',
     });
     expect(jobs.rows).toEqual([expect.objectContaining({

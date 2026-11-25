@@ -36,7 +36,7 @@ export const FIFA_WC_MATCHES_PATH = '/fifa/worldcup/v1/matches';
 export const FIFA_WC_TEAMS_PATH = '/fifa/worldcup/v1/teams';
 
 /**
- * The tour name events and teams carry in `metadata.tour`, for display; a sport
+ * The tour name teams carry in `metadata.tour`, for display; a sport
  * league finds them by their provider league code (#1997).
  */
 export const FIFA_WC_TOUR = 'FIFAWC';
@@ -122,7 +122,6 @@ export function toWorldCupEvent(scope: WorldCupScope, matches: readonly FifaMatc
     ...(rounds !== undefined && { rounds }),
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: FIFA_WC_TOUR, season: scope.season },
   };
 }
 

@@ -22,8 +22,8 @@ export interface SportLeagueProviderMapping {
   providerCode: ProviderCode;
   providerName: string;
   /**
-   * The id the provider's events and participants carry (`SportEvent.providerId`): the
-   * provider's adapter id, read through `providerSourceIdOf`.
+   * The provider's adapter id, as its feed's events and participants name it, read through
+   * `providerSourceIdOf`.
    */
   providerId: string;
 }
@@ -262,8 +262,8 @@ export interface SportEventRoundMatch extends DomainEntity {
    */
   homeSpread: number | null;
   /**
-   * The provider game the match takes its score from (#1496), on its event's own provider (the
-   * event's `providerId`); null until an admin links it.
+   * The provider game the match takes its score from (#1496), at the provider its event is
+   * mapped to (`SportEvent.providerMappings`); null until the sync or an admin links it.
    */
   externalGameId: string | null;
   /**

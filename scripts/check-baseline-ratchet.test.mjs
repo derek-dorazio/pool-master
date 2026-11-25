@@ -77,7 +77,13 @@ describe('check-baseline-ratchet (#1619)', () => {
 
   it('reads every real baseline file without losing an entry', () => {
     for (const { file, read: readBaseline } of BASELINES) {
-      const entries = readBaseline(readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
+      const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+      const entries = readBaseline(text);
+      // The duplicate baseline can shrink to no pair at all; it must still read every pair it lists.
+      if (file === 'scripts/duplicate-baseline.json') {
+        assert.equal(entries.size, (JSON.parse(text).pairs ?? []).length, `${file} lost a pair`);
+        continue;
+      }
       assert.ok(entries.size > 0, `${file} read as empty`);
     }
     const listed = readFileSync(new URL('../eslint-rules/query-states-baseline.mjs', import.meta.url), 'utf8');

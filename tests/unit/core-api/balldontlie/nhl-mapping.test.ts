@@ -109,7 +109,6 @@ describe('toNhlPlayoffGame', () => {
       status: 'COMPLETED',
       startDate: new Date('2025-04-19T00:00:00Z'),
       endDate: new Date('2025-06-14T00:00:00Z'),
-      metadata: { tour: 'NHL', season: 2024 },
     });
   });
 });

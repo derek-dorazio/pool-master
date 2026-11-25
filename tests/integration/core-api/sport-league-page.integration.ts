@@ -28,7 +28,7 @@ import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setup
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
-import { seriesSeasonId } from '../../support/event-edition';
+import { mapEventToProvider, seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -63,9 +63,12 @@ async function sportLeague(name: string, { synced = false, ...extra }: { synced?
 async function event(sportLeagueId: string, input: { startDate: Date; status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' }) {
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
-  return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), syncScope: 'SCORES_ONLY', ...input },
+  const created = await prisma.sportEvent.create({
+    data: { eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Event ${randomUUID().slice(0, 8)}`, ...input },
   });
+  // Kept under BALLDONTLIE's id for it, as a sync leaves it (#2004).
+  await mapEventToProvider(prisma, created.id, { providerId: 'balldontlie', externalId: `page-${created.id}` });
+  return created;
 }
 
 async function get(url: string) {
