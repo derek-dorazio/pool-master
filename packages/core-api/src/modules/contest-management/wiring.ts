@@ -157,10 +157,23 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
  * once for all of them. Build one for each page read and let it go with it.
  */
 export function createContestOpeningReader(prisma: PrismaClient): ContestOpeningReader {
-  const sportEvents = new PrismaSportEventRepository(prisma);
-  const sports = new PrismaSportRepository(prisma);
-  const field = new PrismaSportEventParticipantRepository(prisma);
-  const eventMatches = new PrismaSportEventRoundMatchRepository(prisma);
+  return createBatchedContestOpeningReader({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    sports: new PrismaSportRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    valuations: new PrismaSportEventParticipantValuationRepository(prisma),
+    matches: new PrismaSportEventRoundMatchRepository(prisma),
+  });
+}
+
+/** The opening reader over its repositories, with the batching described on `createContestOpeningReader`. */
+export function createBatchedContestOpeningReader({ sportEvents, sports, field, valuations, matches: eventMatches }: {
+  sportEvents: SportEventRepository;
+  sports: SportRepository;
+  field: SportEventParticipantRepository;
+  valuations: SportEventParticipantValuationRepository;
+  matches: SportEventRoundMatchRepository;
+}): ContestOpeningReader {
   const eventsById = batchedByIds((ids) => sportEvents.findByIds(ids), (event) => event.id);
   const participantCounts = new BatchedRead<string, number>(async (sportEventIds) => {
     const counts = await sportEvents.countParticipants([...new Set(sportEventIds)]);
@@ -173,13 +186,12 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
   const matches = withReads(eventMatches, { findBySportEvent: (sportEventId) => gamesOf.load(sportEventId) });
   const reader = createContestSportEventReader({
     sportEvents: withReads(sportEvents, {
-      findById: async (id) => (await eventsById.load([id])).at(0) ?? null,
       findByIds: (ids) => eventsById.load(ids),
       countParticipants: async (sportEventIds) => new Map(await Promise.all(sportEventIds.map(async (sportEventId) => [sportEventId, await participantCounts.load(sportEventId)] as const))),
     }),
     sports: withReads(sports, { findAll: () => (sportRows ??= sports.findAll()) }),
     field: withReads(field, { findBySportEvent: (sportEventId) => fieldOf.load(sportEventId) }),
-    valuations: new PrismaSportEventParticipantValuationRepository(prisma),
+    valuations,
     matches,
   });
   return {

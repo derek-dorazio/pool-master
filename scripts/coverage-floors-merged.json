@@ -6,20 +6,7 @@
       "include": "packages/core-api/src/**/*.ts",
       "lines": 80,
       "branches": 80,
-      "exceptions": {
-        "packages/core-api/src/index.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 73
-        },
-        "packages/core-api/src/modules/contest-management/wiring.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 76
-        },
-        "packages/core-api/src/modules/events/wiring.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "branches": 50
-        }
-      }
+      "exceptions": {}
     },
     {
       "name": "shared-files",

@@ -7,7 +7,7 @@
  * deployment actually sets, so a comparison that is silently false shows up here.
  */
 
-import { AppEnvironment, readAppEnv } from '../../../packages/core-api/src/core/config';
+import { AppEnvironment, readAppEnv, readListenPort } from '../../../packages/core-api/src/core/config';
 
 describe('readAppEnv', () => {
   it.each(Object.values(AppEnvironment))('returns %s when POOLMASTER_ENVIRONMENT names it', (value) => {
@@ -42,5 +42,12 @@ describe('readAppEnv', () => {
     } finally {
       process.env.POOLMASTER_ENVIRONMENT = original;
     }
+  });
+});
+
+describe('readListenPort', () => {
+  it('listens on PORT when it is set, and on 3000 when it is not', () => {
+    expect(readListenPort({ PORT: '8080' })).toBe(8080);
+    expect(readListenPort({})).toBe(3000);
   });
 });

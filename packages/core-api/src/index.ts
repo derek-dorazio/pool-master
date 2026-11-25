@@ -16,7 +16,7 @@ import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
-import { readTrustProxy } from './core/config';
+import { readListenPort, readTrustProxy } from './core/config';
 import { currentJobStart } from './core/job-start';
 import { readTaskRole, taskRolePlan } from './core/task-role';
 import { PostgresJobLock } from './core/job-lock';
@@ -141,6 +141,7 @@ import {
   createEmailOutbox,
   SnsMessageVerifier,
   readApplicationBaseUrl,
+  readSesEventsTopicArn,
 } from './modules/email';
 import { emailEventsModule } from './modules/email/email-events-routes';
 import { emailUnsubscribeModule } from './modules/email/email-unsubscribe-routes';
@@ -535,7 +536,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     prefix: '/api/v1/email',
     deliveryEvents,
     verifier: new SnsMessageVerifier(),
-    topicArn: process.env.SES_EVENTS_TOPIC_ARN?.trim() || undefined,
+    topicArn: readSesEventsTopicArn(),
   });
   app.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: emailPreferences });
 
@@ -637,7 +638,7 @@ export function buildApp(options: BuildAppOptions = {}) {
 
 async function start(): Promise<void> {
   const app = buildApp();
-  const port = Number(process.env.PORT ?? 3000);
+  const port = readListenPort();
 
   try {
     await app.listen({ port, host: '0.0.0.0' });
