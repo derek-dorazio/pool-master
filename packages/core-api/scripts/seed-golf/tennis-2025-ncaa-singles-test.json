@@ -432,6 +432,7 @@
       "events": [
         {
           "key": "ncaam-tennis-singles-2025",
+          "slotKey": "FINAL",
           "name": "NCAA Men's Singles Championship",
           "startDate": "2025-11-18",
           "endDate": "2025-11-23",
@@ -2286,6 +2287,7 @@
       "events": [
         {
           "key": "ncaaw-tennis-singles-2025",
+          "slotKey": "FINAL",
           "name": "NCAA Women's Singles Championship",
           "startDate": "2025-11-18",
           "endDate": "2025-11-23",

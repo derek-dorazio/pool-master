@@ -169,7 +169,13 @@ const MatchSchema = z.object({
 }).strict();
 
 const EventSchema = z.object({
-  key: z.string().min(1),
+  /** Unique in the file; a test event's test slot is labelled with it, so 64 characters at most. */
+  key: z.string().min(1).max(64),
+  /**
+   * The key of the league's slot definition the event plays (#2004): the loader makes a test
+   * event on a test slot of it. An event the league has no definition for is not loaded.
+   */
+  slotKey: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   name: z.string().min(1),
   /** The event's real dates. A test seed moves them forward (shiftedEventDates). */
   startDate: IsoDaySchema,

@@ -179,6 +179,7 @@
       "events": [
         {
           "key": "premier-league-2025-26-matchweek-1",
+          "slotKey": "WEEK_1",
           "name": "Premier League Matchweek 1",
           "startDate": "2025-08-15",
           "endDate": "2025-08-18",
@@ -503,6 +504,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-2",
+          "slotKey": "WEEK_2",
           "name": "Premier League Matchweek 2",
           "startDate": "2025-08-22",
           "endDate": "2025-08-25",
@@ -827,6 +829,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-3",
+          "slotKey": "WEEK_3",
           "name": "Premier League Matchweek 3",
           "startDate": "2025-08-30",
           "endDate": "2025-08-31",
@@ -1151,6 +1154,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-4",
+          "slotKey": "WEEK_4",
           "name": "Premier League Matchweek 4",
           "startDate": "2025-09-13",
           "endDate": "2025-09-14",
@@ -1475,6 +1479,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-5",
+          "slotKey": "WEEK_5",
           "name": "Premier League Matchweek 5",
           "startDate": "2025-09-20",
           "endDate": "2025-09-21",
@@ -1799,6 +1804,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-6",
+          "slotKey": "WEEK_6",
           "name": "Premier League Matchweek 6",
           "startDate": "2025-09-27",
           "endDate": "2025-09-29",
@@ -2123,6 +2129,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-7",
+          "slotKey": "WEEK_7",
           "name": "Premier League Matchweek 7",
           "startDate": "2025-10-03",
           "endDate": "2025-10-05",
@@ -2447,6 +2454,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-8",
+          "slotKey": "WEEK_8",
           "name": "Premier League Matchweek 8",
           "startDate": "2025-10-18",
           "endDate": "2025-10-20",
@@ -2771,6 +2779,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-9",
+          "slotKey": "WEEK_9",
           "name": "Premier League Matchweek 9",
           "startDate": "2025-10-24",
           "endDate": "2025-10-26",
@@ -3095,6 +3104,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-10",
+          "slotKey": "WEEK_10",
           "name": "Premier League Matchweek 10",
           "startDate": "2025-11-01",
           "endDate": "2025-11-03",
@@ -3419,6 +3429,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-11",
+          "slotKey": "WEEK_11",
           "name": "Premier League Matchweek 11",
           "startDate": "2025-11-08",
           "endDate": "2025-11-09",
@@ -3743,6 +3754,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-12",
+          "slotKey": "WEEK_12",
           "name": "Premier League Matchweek 12",
           "startDate": "2025-11-22",
           "endDate": "2025-11-24",
@@ -4067,6 +4079,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-13",
+          "slotKey": "WEEK_13",
           "name": "Premier League Matchweek 13",
           "startDate": "2025-11-29",
           "endDate": "2025-11-30",
@@ -4391,6 +4404,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-14",
+          "slotKey": "WEEK_14",
           "name": "Premier League Matchweek 14",
           "startDate": "2025-12-02",
           "endDate": "2025-12-04",
@@ -4715,6 +4729,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-15",
+          "slotKey": "WEEK_15",
           "name": "Premier League Matchweek 15",
           "startDate": "2025-12-06",
           "endDate": "2025-12-08",
@@ -5039,6 +5054,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-16",
+          "slotKey": "WEEK_16",
           "name": "Premier League Matchweek 16",
           "startDate": "2025-12-13",
           "endDate": "2025-12-15",
@@ -5363,6 +5379,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-17",
+          "slotKey": "WEEK_17",
           "name": "Premier League Matchweek 17",
           "startDate": "2025-12-20",
           "endDate": "2025-12-22",
@@ -5687,6 +5704,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-18",
+          "slotKey": "WEEK_18",
           "name": "Premier League Matchweek 18",
           "startDate": "2025-12-26",
           "endDate": "2025-12-28",
@@ -6011,6 +6029,7 @@
         },
         {
           "key": "premier-league-2025-26-matchweek-19",
+          "slotKey": "WEEK_19",
           "name": "Premier League Matchweek 19",
           "startDate": "2025-12-30",
           "endDate": "2026-01-01",

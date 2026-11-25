@@ -226,6 +226,7 @@
       "events": [
         {
           "key": "australian-grand-prix",
+          "slotKey": "AUSTRALIAN_GRAND_PRIX",
           "name": "Australian Grand Prix",
           "startDate": "2026-03-08",
           "endDate": "2026-03-08",
@@ -457,6 +458,7 @@
         },
         {
           "key": "chinese-grand-prix",
+          "slotKey": "CHINESE_GRAND_PRIX",
           "name": "Chinese Grand Prix",
           "startDate": "2026-03-15",
           "endDate": "2026-03-15",
@@ -686,6 +688,7 @@
         },
         {
           "key": "japanese-grand-prix",
+          "slotKey": "JAPANESE_GRAND_PRIX",
           "name": "Japanese Grand Prix",
           "startDate": "2026-03-29",
           "endDate": "2026-03-29",
@@ -919,6 +922,7 @@
         },
         {
           "key": "miami-grand-prix",
+          "slotKey": "MIAMI_GRAND_PRIX",
           "name": "Miami Grand Prix",
           "startDate": "2026-05-03",
           "endDate": "2026-05-03",
@@ -1152,6 +1156,7 @@
         },
         {
           "key": "canadian-grand-prix",
+          "slotKey": "CANADIAN_GRAND_PRIX",
           "name": "Canadian Grand Prix",
           "startDate": "2026-05-24",
           "endDate": "2026-05-24",
@@ -1384,6 +1389,7 @@
         },
         {
           "key": "monaco-grand-prix",
+          "slotKey": "MONACO_GRAND_PRIX",
           "name": "Monaco Grand Prix",
           "startDate": "2026-06-07",
           "endDate": "2026-06-07",
@@ -1617,6 +1623,7 @@
         },
         {
           "key": "barcelona-catalunya-grand-prix",
+          "slotKey": "BARCELONA_CATALUNYA_GRAND_PRIX",
           "name": "Barcelona-Catalunya Grand Prix",
           "startDate": "2026-06-14",
           "endDate": "2026-06-14",
@@ -1850,6 +1857,7 @@
         },
         {
           "key": "austrian-grand-prix",
+          "slotKey": "AUSTRIAN_GRAND_PRIX",
           "name": "Austrian Grand Prix",
           "startDate": "2026-06-28",
           "endDate": "2026-06-28",
@@ -2083,6 +2091,7 @@
         },
         {
           "key": "british-grand-prix",
+          "slotKey": "BRITISH_GRAND_PRIX",
           "name": "British Grand Prix",
           "startDate": "2026-07-05",
           "endDate": "2026-07-05",
@@ -2316,6 +2325,7 @@
         },
         {
           "key": "belgian-grand-prix",
+          "slotKey": "BELGIAN_GRAND_PRIX",
           "name": "Belgian Grand Prix",
           "startDate": "2026-07-19",
           "endDate": "2026-07-19",
@@ -2549,6 +2559,7 @@
         },
         {
           "key": "hungarian-grand-prix",
+          "slotKey": "HUNGARIAN_GRAND_PRIX",
           "name": "Hungarian Grand Prix",
           "startDate": "2026-07-26",
           "endDate": "2026-07-26",
@@ -2782,6 +2793,7 @@
         },
         {
           "key": "dutch-grand-prix",
+          "slotKey": "DUTCH_GRAND_PRIX",
           "name": "Dutch Grand Prix",
           "startDate": "2026-08-23",
           "endDate": "2026-08-23",
@@ -3015,6 +3027,7 @@
         },
         {
           "key": "italian-grand-prix",
+          "slotKey": "ITALIAN_GRAND_PRIX",
           "name": "Italian Grand Prix",
           "startDate": "2026-09-06",
           "endDate": "2026-09-06",
@@ -3248,6 +3261,7 @@
         },
         {
           "key": "spanish-grand-prix",
+          "slotKey": "SPANISH_GRAND_PRIX",
           "name": "Spanish Grand Prix",
           "startDate": "2026-09-13",
           "endDate": "2026-09-13",
@@ -3481,6 +3495,7 @@
         },
         {
           "key": "azerbaijan-grand-prix",
+          "slotKey": "AZERBAIJAN_GRAND_PRIX",
           "name": "Azerbaijan Grand Prix",
           "startDate": "2026-09-26",
           "endDate": "2026-09-26",
@@ -3714,6 +3729,7 @@
         },
         {
           "key": "bahrain-grand-prix-in-malaysia",
+          "slotKey": "BAHRAIN_GRAND_PRIX",
           "name": "Bahrain Grand Prix in Malaysia",
           "startDate": "2026-10-04",
           "endDate": "2026-10-04",
@@ -3947,6 +3963,7 @@
         },
         {
           "key": "singapore-grand-prix",
+          "slotKey": "SINGAPORE_GRAND_PRIX",
           "name": "Singapore Grand Prix",
           "startDate": "2026-10-11",
           "endDate": "2026-10-11",
@@ -4523,6 +4540,7 @@
       "events": [
         {
           "key": "daytona-500",
+          "slotKey": "DAYTONA_500",
           "name": "Daytona 500",
           "startDate": "2026-02-15",
           "endDate": "2026-02-15",
@@ -8833,6 +8851,7 @@
         },
         {
           "key": "coca-cola-600",
+          "slotKey": "COCA_COLA_600",
           "name": "Coca-Cola 600",
           "startDate": "2026-05-24",
           "endDate": "2026-05-24",
@@ -12049,6 +12068,7 @@
         },
         {
           "key": "brickyard-400",
+          "slotKey": "BRICKYARD_400",
           "name": "Brickyard 400",
           "startDate": "2026-07-26",
           "endDate": "2026-07-26",
@@ -13845,6 +13865,7 @@
         },
         {
           "key": "cook-out-southern-500",
+          "slotKey": "SOUTHERN_500",
           "name": "Cook Out Southern 500",
           "startDate": "2026-09-06",
           "endDate": "2026-09-06",
@@ -16126,6 +16147,7 @@
       "events": [
         {
           "key": "grand-prix-of-st-petersburg",
+          "slotKey": "GRAND_PRIX_OF_ST_PETERSBURG",
           "name": "Grand Prix of St. Petersburg",
           "startDate": "2026-03-01",
           "endDate": "2026-03-01",
@@ -17078,6 +17100,7 @@
         },
         {
           "key": "grand-prix-of-long-beach",
+          "slotKey": "GRAND_PRIX_OF_LONG_BEACH",
           "name": "Grand Prix of Long Beach",
           "startDate": "2026-04-19",
           "endDate": "2026-04-19",
@@ -17554,6 +17577,7 @@
         },
         {
           "key": "indianapolis-500",
+          "slotKey": "INDIANAPOLIS_500",
           "name": "Indianapolis 500",
           "startDate": "2026-05-24",
           "endDate": "2026-05-24",
@@ -17897,6 +17921,7 @@
         },
         {
           "key": "detroit-grand-prix",
+          "slotKey": "DETROIT_GRAND_PRIX",
           "name": "Detroit Grand Prix",
           "startDate": "2026-05-31",
           "endDate": "2026-05-31",
@@ -18849,6 +18874,7 @@
         },
         {
           "key": "music-city-grand-prix",
+          "slotKey": "MUSIC_CITY_GRAND_PRIX",
           "name": "Music City Grand Prix",
           "startDate": "2026-07-20",
           "endDate": "2026-07-20",
@@ -19087,6 +19113,7 @@
         },
         {
           "key": "grand-prix-of-portland",
+          "slotKey": "GRAND_PRIX_OF_PORTLAND",
           "name": "Grand Prix of Portland",
           "startDate": "2026-08-09",
           "endDate": "2026-08-09",

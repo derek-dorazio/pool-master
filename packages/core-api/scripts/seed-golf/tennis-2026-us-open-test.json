@@ -924,6 +924,7 @@
       "events": [
         {
           "key": "atp-us-open-2026",
+          "slotKey": "US_OPEN",
           "name": "US Open",
           "startDate": "2026-08-30",
           "endDate": "2026-09-13",
@@ -4891,6 +4892,7 @@
       "events": [
         {
           "key": "wta-us-open-2026",
+          "slotKey": "US_OPEN",
           "name": "US Open",
           "startDate": "2026-08-30",
           "endDate": "2026-09-13",
