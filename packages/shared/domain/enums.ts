@@ -678,11 +678,6 @@ export function isSportEventStatusFinished(status: SportEventStatus): boolean {
   return FINISHED_SPORT_EVENT_STATUSES.includes(status);
 }
 
-/** Whether the event is not over yet: any status but completed or cancelled. */
-export function isSportEventStatusNotOver(status: SportEventStatus): boolean {
-  return !isSportEventStatusFinished(status);
-}
-
 /**
  * Whether the event is past its contest cutoff: its start time has passed, or its status says it
  * has started or been called off. The server and the web both ask this one question (#117, #431).
@@ -1035,11 +1030,6 @@ export const JobTriggerOrder = explicitOrder<JobTrigger>({
  */
 export const PERSON_JOB_TRIGGERS = [JobTrigger.ADMIN, JobTrigger.COMMISSIONER] as const;
 export type PersonJobTrigger = (typeof PERSON_JOB_TRIGGERS)[number];
-
-/** Whether a trigger names the person who started the job. */
-export function isPersonJobTrigger(trigger: JobTrigger): trigger is PersonJobTrigger {
-  return (PERSON_JOB_TRIGGERS as readonly JobTrigger[]).includes(trigger);
-}
 
 /**
  * Why a background job did not do its work (#1861), beside its error message. Set with the error

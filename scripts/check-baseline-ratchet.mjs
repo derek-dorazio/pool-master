@@ -95,6 +95,7 @@ export const BASELINES = [
   { file: 'scripts/coverage-floors-merged.json', read: coverageFloors },
   { file: 'scripts/coverage-floors-web.json', read: coverageFloors },
   { file: 'scripts/web-shared-imports-baseline.json', read: webSharedImports },
+  { file: 'scripts/dead-exports.json', read: countsPerFile },
 ];
 
 /**

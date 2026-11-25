@@ -7,7 +7,6 @@ import {
   FINISHED_SPORT_EVENT_STATUSES,
   hasSportEventStarted,
   isSportEventStatusFinished,
-  isSportEventStatusNotOver,
   isSportEventStatusStarted,
   NOT_OVER_SPORT_EVENT_STATUSES,
   SportEventStatus,
@@ -28,7 +27,6 @@ describe('sport event status sets', () => {
   });
 
   it('counts every status but completed and cancelled as not over, so the two sets split every status between them', () => {
-    expect(ALL.filter(isSportEventStatusNotOver).sort()).toEqual(['DRAFT', 'IN_PROGRESS', 'POSTPONED', 'SCHEDULED']);
     expect([...NOT_OVER_SPORT_EVENT_STATUSES].sort()).toEqual(['DRAFT', 'IN_PROGRESS', 'POSTPONED', 'SCHEDULED']);
     expect([...NOT_OVER_SPORT_EVENT_STATUSES, ...FINISHED_SPORT_EVENT_STATUSES].sort()).toEqual([...ALL].sort());
   });

@@ -1,13 +1,11 @@
 import {
   createDisplayStrings,
   displayString,
-  displayStringLocaleFor,
   DISPLAY_STRING_MODULES,
   enumLabel,
   enUS,
   flattenDisplayStrings,
   hasDisplayString,
-  pluralBaseKey,
   GENERIC_SPORT_WORD_ROLES,
   SOURCE_LOCALE,
   SPORT_WORD_ROLES,
@@ -100,7 +98,6 @@ describe('display string lookups', () => {
     expect(strings.moduleLocaleFor(null)).toBe(SOURCE_LOCALE);
     expect(strings.enumLabel('ContestStatus', ContestStatus.ACTIVE, { locale: 'de-DE' })).toBe(enUS.enum.ContestStatus.ACTIVE);
     expect(lookup('word.weekNumber', { n: 3 }, 'fr-FR')).toBe('Week 3');
-    expect(displayStringLocaleFor('es-MX')).toBe(SOURCE_LOCALE);
   });
 
   it('fill placeholders and choose plurals by each language\'s rules: French counts 0 as one, English as other', () => {
@@ -155,12 +152,6 @@ describe('display string lookups', () => {
     expect(flat['sport.GOLF.participant_one']).toBe('golfer');
     expect(flat['sport.GOLF.eventStart.short']).toBe('tee time');
     expect(flat['error.CONTEST_FULL']).toBe(enUS.error.CONTEST_FULL);
-  });
-
-  it('take the plural suffix off a key, and leave a key without one as it is', () => {
-    expect(pluralBaseKey('word.roundCount_one')).toBe('word.roundCount');
-    expect(pluralBaseKey('word.roundCount_other')).toBe('word.roundCount');
-    expect(pluralBaseKey('word.weekNumber')).toBe('word.weekNumber');
   });
 
   it('ship en-US as the source language', () => {
