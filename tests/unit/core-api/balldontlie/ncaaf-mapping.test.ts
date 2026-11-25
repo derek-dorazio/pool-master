@@ -33,7 +33,7 @@ describe('College Football Playoff scopes', () => {
 });
 
 describe('a College Football Playoff as an event', () => {
-  it('carries every game of its season as a play with no code, for the sync to place by date window, spanning its first game to its last', () => {
+  it('carries every game of its season as a play with no code and its two teams\' feed ids, for the sync to place by date window, spanning its first game to its last', () => {
     const event = toCfpEvent(CFP_2025, season2025);
     expect(event).toEqual({
       externalId: 'ncaaf-2025-cfp',
@@ -45,7 +45,9 @@ describe('a College Football Playoff as an event', () => {
       status: 'COMPLETED',
       participantCount: undefined,
       fieldLocked: true,
-      providerSlots: season2025.map((game) => ({ code: null, startsAt: new Date(game.date as string), endsAt: new Date(game.date as string) })),
+      providerSlots: season2025.map((game) => ({
+        code: null, startsAt: new Date(game.date as string), endsAt: new Date(game.date as string), teams: [String(game.home_team?.id), String(game.visitor_team?.id)],
+      })),
     });
   });
 

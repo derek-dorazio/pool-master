@@ -222,10 +222,16 @@ code. Such a game goes to the Season slot whose definition has a `DATE_WINDOW` m
 whose window (`window_starts_at` inclusive to `window_ends_at` exclusive on the Season slot, kept
 apart from the dates its games give) holds its start; a Season's windows do not overlap. The
 windows are data, loaded by migration each Season. A window is `TENTATIVE` (a best guess while the
-shape is known and the games are not) or `CONFIRMED`; a tentative window still places games, and
-the sync confirms it as soon as it places one. Games no window holds are not synced and raise one
-`GAMES_UNPLACED` INFO finding per league (inclusion only: the other bowls share the playoff's
-days). A Season the sync reads with a date-window slot that has no window, or a tentative one,
+shape is known and the games are not) or `CONFIRMED`. The adapter sends each game's two teams'
+feed ids with it, and only a game between two teams on the event's field (the seeds the admin
+places) is the slot's own: those games give the slot its dates, and the first one in a tentative
+window confirms it. Any game in a window still places the event on its slot, so the event exists
+for its seeds to be placed, but a window holding only other games (a bowl between two unseeded
+schools on the first round's days, or anything before the seeds are placed) takes no dates and
+confirms nothing. Games no window holds are not synced and raise one `GAMES_UNPLACED` INFO finding
+per league and Season, counting only games inside the Season's span, so a waiver covers one
+Season's known bowls and never a later Season's gap (inclusion only: the other bowls share the
+playoff's days). A Season the sync reads with a date-window slot that has no window, or a tentative one,
 raises one `SLOT_DATES_NEEDED` WARNING naming the slots, which resolves once every window is
 confirmed; the Structure tab flags those slots (`needsDates`). An event's field is the seeds placed
 on it: an event playing a date-window slot takes no new team from its feed, and the feed only
@@ -574,6 +580,10 @@ every league, and the PR must say so.
 - **CFP windows each Season**: a migration adds the next Season's round windows once the schedule
   is published (2026 and 2027 are loaded; 2027's first round and final are not set yet). The admin
   dialog to set them is a follow-up to #1924. Golf tournaments match by name (#2011).
+- **CFP read cost**: the events and field syncs each page the whole college season by
+  `seasons[]`, thousands of games, since the vendor marks no playoff game; the field sync reads it
+  only to refresh rows already on the field. Fine on the paid key; on the free key (5 requests a
+  minute) one sync spends several minutes of the shared budget. Revisit with the paid trial (#1500).
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
 - **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
 - **Per-event tier override** from the event ⚙ dialog is in progress.

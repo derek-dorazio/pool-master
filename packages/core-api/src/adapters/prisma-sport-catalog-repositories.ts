@@ -301,6 +301,29 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return rows.map(toSportEvent);
   }
 
+  async findFieldFeedIds(providerId: string, sportLeagueId: string, sportEventIds: readonly string[]): Promise<Map<string, ReadonlySet<string>>> {
+    const code = providerCodeOfSourceId(providerId);
+    const fields = new Map<string, Set<string>>();
+    if (sportEventIds.length === 0 || code === undefined) return fields;
+    const rows = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId: { in: [...sportEventIds] }, isActive: true },
+      select: { sportEventId: true, participantId: true },
+    });
+    if (rows.length === 0) return fields;
+    const mappings = await this.prisma.participantProviderMapping.findMany({
+      where: { provider: { code }, sportLeagueId, participantId: { in: [...new Set(rows.map((row) => row.participantId))] } },
+      select: { participantId: true, externalId: true },
+    });
+    const feedIdsOf = new Map<string, string[]>();
+    for (const mapping of mappings) feedIdsOf.set(mapping.participantId, [...(feedIdsOf.get(mapping.participantId) ?? []), mapping.externalId]);
+    for (const row of rows) {
+      const field = fields.get(row.sportEventId) ?? new Set<string>();
+      for (const feedId of feedIdsOf.get(row.participantId) ?? []) field.add(feedId);
+      fields.set(row.sportEventId, field);
+    }
+    return fields;
+  }
+
   async findAll(filters: SportEventFilters): Promise<SportEvent[]> {
     const rows = await this.prisma.sportEvent.findMany({
       where: {

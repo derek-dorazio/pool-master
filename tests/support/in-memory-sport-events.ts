@@ -456,6 +456,18 @@ export class InMemorySportEvents {
         }),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => this.externalIdAt(row.id, providerId) === externalId) ?? null,
       findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => externalIds.includes(this.externalIdAt(row.id, providerId) ?? '')),
+      findFieldFeedIds: async (providerId, sportLeagueId, ids) => {
+        const provider = TEST_PROVIDER_ROWS[requireProviderCodeOfSourceId(providerId)].id;
+        const fields = new Map<string, Set<string>>();
+        for (const row of this.field.filter((entry) => ids.includes(entry.sportEventId) && entry.isActive)) {
+          const field = fields.get(row.sportEventId) ?? new Set<string>();
+          for (const mapping of this.mappings) {
+            if (mapping.participantId === row.participantId && mapping.providerId === provider && mapping.sportLeagueId === sportLeagueId) field.add(mapping.externalId);
+          }
+          fields.set(row.sportEventId, field);
+        }
+        return fields;
+      },
       // No sport filter: every event is golf while Sport has one member.
       findAll: async (filters) => this.events.filter((row) => (
         (filters.statuses === undefined || filters.statuses.includes(row.status))

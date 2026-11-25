@@ -391,7 +391,7 @@ describe('LeagueEventsSync', () => {
       }]);
     });
 
-    it('raises one WARNING SLOT_OUTSIDE_SEASON per placed place dated before or after the Season, none for a place inside it, and one INFO GAMES_UNPLACED for the games no window held', async () => {
+    it('raises one WARNING SLOT_OUTSIDE_SEASON per placed place dated before or after the Season, none for a place inside it, and one INFO GAMES_UNPLACED keyed by the Season for the games inside it that no window held', async () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const own = seasonsOf();
       const pga = syncedLeague(seasons, {}, own);
@@ -406,7 +406,12 @@ describe('LeagueEventsSync', () => {
           { code: null, startsAt: at('2027-01-25T00:00:00Z'), endsAt: at('2027-02-03T00:00:00Z'), eventName: 'Late' },
           { code: null, startsAt: at('2027-02-05T00:00:00Z'), endsAt: at('2027-02-06T00:00:00Z'), eventName: 'Late' },
         ],
-        unplaced: [{ eventName: 'Bowls', count: 3 }, { eventName: 'More bowls', count: 1 }],
+        unplaced: [
+          ...['2026-12-20T17:00:00Z', '2026-12-20T21:00:00Z', '2026-12-21T01:00:00Z'].map((kickoff) => ({ code: null, startsAt: at(kickoff), endsAt: at(kickoff), eventName: 'Bowls' })),
+          { code: null, startsAt: at('2026-12-22T01:00:00Z'), endsAt: at('2026-12-22T01:00:00Z'), eventName: 'More bowls' },
+          // Last Season's bowl is not this Season's to report.
+          { code: null, startsAt: at('2025-12-20T17:00:00Z'), endsAt: at('2025-12-20T17:00:00Z'), eventName: 'Old bowls' },
+        ],
         slotsNeedingDates: null,
         unplacedNames: [],
       }));
@@ -428,7 +433,7 @@ describe('LeagueEventsSync', () => {
         severity: ProviderSyncFindingSeverity.INFO,
         sportLeagueId: pga.id,
         sportEventId: null,
-        providerValue: null,
+        providerValue: '2026',
         providerValueName: 'Bowls, More bowls',
       }]);
     });

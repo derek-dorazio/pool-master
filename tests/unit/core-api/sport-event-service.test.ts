@@ -460,19 +460,38 @@ describe('SportEventService.importProviderSeason', () => {
     expect(result.created[0].event).toEqual(expect.objectContaining({ startDate: slate[0].startDate }));
   });
 
-  it('places a game with no code in the window that holds it, confirms a tentative window it places one in, and names the date-window slots still needing dates (#2012)', async () => {
+  it('places a game with no code in the window that holds it, confirms a tentative window and dates its slot only by a game between two seeds on the event\'s field, and names the date-window slots still needing dates (#2012)', async () => {
     const { store, service, sportLeague } = setup();
     const kickoff = slate[0].startDate;
     const window = (status: SlotWindowStatus) => ({ startsAt: new Date(kickoff.getTime() - 60_000), endsAt: new Date(kickoff.getTime() + 60_000), status });
     const firstRound = store.addWindowSlot(sportLeague, 'ROUND_OF_16', window(SlotWindowStatus.TENTATIVE));
     store.addWindowSlot(sportLeague, 'FINAL', null);
-    const playoff = { ...providerEvent('ncaaf-2026-cfp', 'College Football Playoff', null, kickoff, kickoff), providerSlots: [{ code: null, startsAt: kickoff, endsAt: kickoff }] };
+    const playoffOf = (...teams: string[][]) => ({
+      ...providerEvent('ncaaf-2026-cfp', 'College Football Playoff', null, kickoff, kickoff),
+      providerSlots: teams.map((pair) => ({ code: null, startsAt: kickoff, endsAt: kickoff, teams: pair })),
+    });
+    const slotOf = () => store.seasonSlots.find((slot) => slot.id === firstRound);
 
-    const result = await service.importProviderSeason(importOf(sportLeague, [playoff]));
+    // Made before its seeds are placed: on the slot, but no game is the event's own yet.
+    const made = await service.importProviderSeason(importOf(sportLeague, [playoffOf(['1', '2'])]));
+    expect(made.created).toHaveLength(1);
+    expect(store.slotWindows.get(firstRound)?.status).toBe(SlotWindowStatus.TENTATIVE);
+    expect(slotOf()?.startsAt).toBeNull();
+    expect(made.slotsNeedingDates).toEqual(['ROUND_OF_16', 'FINAL']);
 
-    expect(result.created).toHaveLength(1);
+    // Seeds placed: another bowl in the window, between unseeded schools, still confirms nothing.
+    const eventId = made.created[0].event.id;
+    for (const feedId of ['1', '2']) store.addToField(eventId, store.addParticipant(sportLeague.sportId, `Seed ${feedId}`, { externalId: feedId }).id);
+    store.addParticipant(sportLeague.sportId, 'Unseeded', { externalId: '9' });
+    const bowl = await service.importProviderSeason(importOf(sportLeague, [playoffOf(['9', '8'])]));
+    expect(store.slotWindows.get(firstRound)?.status).toBe(SlotWindowStatus.TENTATIVE);
+    expect(bowl.slotsNeedingDates).toEqual(['ROUND_OF_16', 'FINAL']);
+
+    // The game between the two seeds confirms the window and dates the slot.
+    const seeded = await service.importProviderSeason(importOf(sportLeague, [playoffOf(['9', '8'], ['1', '2'])]));
     expect(store.slotWindows.get(firstRound)?.status).toBe(SlotWindowStatus.CONFIRMED);
-    expect(result.slotsNeedingDates).toEqual(['FINAL']);
+    expect(slotOf()?.startsAt).toEqual(kickoff);
+    expect(seeded.slotsNeedingDates).toEqual(['FINAL']);
   });
 
   it('names no slot needing dates for a Season with no slot placed by date window', async () => {

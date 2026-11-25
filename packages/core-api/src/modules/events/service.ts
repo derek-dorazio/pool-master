@@ -141,8 +141,8 @@ export interface ProviderSeasonImport {
   unmatched: Array<{ code: string; eventName: string }>;
   /** Each place the slot mappings placed games in, with the name of the event they are in (#2012). */
   placed: Array<ProviderSlotPlay & { eventName: string }>;
-  /** Games with no code that no slot's window holds, by event: not synced (#2012). */
-  unplaced: Array<{ eventName: string; count: number }>;
+  /** Each game with no code that no slot's window holds, with its event's name: not synced (#2012). */
+  unplaced: Array<ProviderSlotPlay & { eventName: string }>;
   /**
    * The keys of the slots placed by date window that still need their dates after this import
    * (#2012, #1924); null when the Season has no slot placed by date window.
@@ -327,6 +327,11 @@ export class SportEventService {
     const named = await this.placeByName(input, seasonSlots, namePatterns);
     const slots = named.slots;
     const linkedIdByExternalId = new Map(linkedEvents.flatMap((event) => externalIdsAt(event, input.providerId).map((externalId) => [externalId, event.id] as const)));
+    // A window takes dates only from games between teams on its event's field (#2012): one read of
+    // the linked events' fields, and none for a Season with no window.
+    const fields = linkedEvents.length === 0 || !slots.some((slot) => slot.window !== null)
+      ? new Map<string, ReadonlySet<string>>()
+      : await this.deps.sportEvents.findFieldFeedIds(input.providerId, input.sportLeagueId, linkedEvents.map((event) => event.id));
 
     const editions: NewEdition[] = [];
     const skipped: ProviderSeasonImport['skipped'] = [];
@@ -340,21 +345,23 @@ export class SportEventService {
     const taken = new Set(slots.flatMap((slot) => (slot.sportEventId === null ? [] : [slot.seasonSlotId])));
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
-      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots);
+      const linkedId = linkedIdByExternalId.get(externalId);
+      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots, linkedId === undefined ? undefined : fields.get(linkedId));
       for (const play of missed) {
         // A tournament name matching handled is reported by its name, not again by its code.
         if (!unmatched.has(play.code) && !named.handledCodes.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
       }
-      if (unplacedGames.length > 0) unplaced.push({ eventName: name, count: unplacedGames.length });
-      for (const { slot, play } of matched) {
+      unplaced.push(...unplacedGames.map((game) => ({ ...game, eventName: name })));
+      for (const { slot, play, fromGames } of matched) {
         placed.push({ ...play, eventName: name });
+        // A window holding no game of the event's own teams is no evidence of its dates (#2012).
+        if (!fromGames) continue;
         const change = slotDatesChange(slot, play);
         if (change !== null) slotDates.push({ seasonSlotId: slot.seasonSlotId, ...change });
-        // The feed placed a game in a best-guess window: the window is now the feed's (#2012).
+        // The feed placed the event's own game in a best-guess window: the window is now the feed's.
         if (slot.window?.status === SlotWindowStatus.TENTATIVE) confirmedWindows.add(slot.seasonSlotId);
       }
       const free = matched.filter(({ slot }) => !taken.has(slot.seasonSlotId));
-      const linkedId = linkedIdByExternalId.get(externalId);
       if (linkedId !== undefined) {
         for (const { slot } of free) {
           taken.add(slot.seasonSlotId);
@@ -400,7 +407,7 @@ export class SportEventService {
         unmatchedCodes: [...unmatched.keys()],
         // Provider events whose games carry no place at all, which no slot mapping can place.
         noCodeCount: input.providerEvents.filter((providerEvent) => providerEvent.providerSlots.length === 0).length,
-        unplacedGameCount: unplaced.reduce((total, row) => total + row.count, 0),
+        unplacedGameCount: unplaced.length,
         windowsConfirmedCount: confirmedWindows.size,
         slotsNeedingDates,
       },

@@ -7,7 +7,7 @@ import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/
 import { ProviderSeasonScheduleReader, type ProviderEventDetailSummary } from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import { BalldontlieAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
-import { BALLDONTLIE_TEST_LEAGUES } from '../../support/balldontlie-provider-rows';
+import { BALLDONTLIE_TEST_LEAGUES, BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSportEventServices, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
@@ -193,7 +193,19 @@ async function windowedLeague(slots: ReadonlyArray<{ key: string; window: TestSl
   return { league, seasonId, sportLeagueProviderMappingId, slotIds };
 }
 
-const kickoff = (iso: string) => ({ code: null, startsAt: new Date(iso), endsAt: new Date(iso) });
+/** A game with no code, as the college football adapter sends it: its kickoff and its two teams' feed ids. */
+const kickoff = (iso: string, teams: readonly string[] = ['bowl-a', 'bowl-b']) => ({ code: null, startsAt: new Date(iso), endsAt: new Date(iso), teams });
+
+/** Places the seeds on the event's field, as the admin does: teams of the league with these BALLDONTLIE feed ids. */
+async function placeSeeds(sportLeagueId: string, feedIds: readonly string[]) {
+  const prisma = getPrisma();
+  const event = await prisma.sportEvent.findFirstOrThrow({ where: { sportLeagueId }, select: { id: true } });
+  for (const [index, externalId] of feedIds.entries()) {
+    const team = await prisma.participant.create({ data: { sportLeagueId, name: `Seed ${externalId}`, participantType: 'TEAM' } });
+    await prisma.participantProviderMapping.create({ data: { participantId: team.id, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId } });
+    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, seedNumber: index + 1 } });
+  }
+}
 const windowOf = (from: string, to: string, status: TestSlotWindow['status']): TestSlotWindow => ({ startsAt: new Date(from), endsAt: new Date(to), status });
 
 /** A season's slate as the college football adapter sends it: every game a play with no code. */
@@ -205,31 +217,49 @@ function seasonSlate(plays: ReturnType<typeof kickoff>[]): SlateEvent {
 describe('The events sync places games with no code by their Season slot\'s date window (#2012)', () => {
   const findingsOf = (sportLeagueId: string) => getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId }, orderBy: { kind: 'asc' } });
 
-  it('places a season\'s windowed games on their slots, a later round on the next sync, confirms the tentative window it places a game in, and raises one INFO for the games no window holds', async () => {
+  it('places the season\'s slate on its windowed slots, and dates a slot and confirms its tentative window only by games between seeds on the event\'s field, never by another bowl in its dates', async () => {
     const prisma = getPrisma();
     const { league, slotIds } = await windowedLeague([
       { key: 'first', window: windowOf('2027-12-18T10:00:00Z', '2027-12-20T12:00:00Z', 'TENTATIVE') },
       { key: 'semi', window: windowOf('2027-12-27T10:00:00Z', '2027-12-29T12:00:00Z', 'CONFIRMED') },
     ]);
+    const firstSlot = () => prisma.sportLeagueSeasonPhaseSlot.findUniqueOrThrow({ where: { id: slotIds.get('first') } });
     const regularSeason = kickoff('2027-09-04T16:00:00Z');
-    const firstRound = [kickoff('2027-12-18T17:00:00Z'), kickoff('2027-12-19T01:00:00Z')];
-    const slate = { events: [seasonSlate([regularSeason, ...firstRound])] };
+    const firstRound = [kickoff('2027-12-18T17:00:00Z', ['seed-1', 'seed-4']), kickoff('2027-12-19T01:00:00Z', ['seed-2', 'seed-3'])];
+    // Another bowl on the first round's days, between two schools the playoff did not seed.
+    const bowl = kickoff('2027-12-19T05:00:00Z');
+    const slate = { events: [seasonSlate([regularSeason, ...firstRound, bowl])] };
     const sync = buildSync(slate);
 
+    // Before the seeds are placed the event is made on the slot, but no game is its own.
     await runSync(sync, league.id);
-    slate.events = [seasonSlate([regularSeason, ...firstRound, kickoff('2027-12-28T20:00:00Z')])];
+    expect((await eventsWithSlots(league.id)).map((event) => event.slotIds)).toEqual([[slotIds.get('first')]]);
+    expect(await firstSlot()).toMatchObject({ windowStatus: 'TENTATIVE', startsAt: null, endsAt: null });
+
+    await placeSeeds(league.id, ['seed-1', 'seed-2', 'seed-3', 'seed-4']);
+    slate.events = [seasonSlate([regularSeason, ...firstRound, bowl, kickoff('2027-12-28T20:00:00Z', ['seed-1', 'seed-2'])])];
     await runSync(sync, league.id);
 
-    expect(await eventsWithSlots(league.id)).toEqual([{
-      name: 'College Football Playoff',
-      startDate: new Date('2027-12-18T17:00:00Z'),
-      endDate: new Date('2027-12-28T20:00:00Z'),
-      slotIds: [slotIds.get('first') ?? '', slotIds.get('semi') ?? ''].sort(),
-    }]);
-    const first = await prisma.sportLeagueSeasonPhaseSlot.findUniqueOrThrow({ where: { id: slotIds.get('first') } });
-    expect([first.windowStatus, first.startsAt, first.endsAt]).toEqual(['CONFIRMED', new Date('2027-12-18T17:00:00Z'), new Date('2027-12-19T01:00:00Z')]);
-    expect((await findingsOf(league.id)).map((finding) => [finding.kind, finding.severity, finding.providerValueName, finding.status]))
-      .toEqual([[ProviderSyncFindingKind.GAMES_UNPLACED, ProviderSyncFindingSeverity.INFO, 'College Football Playoff', ProviderSyncFindingStatus.OPEN]]);
+    expect((await eventsWithSlots(league.id)).map((event) => event.slotIds)).toEqual([[slotIds.get('first') ?? '', slotIds.get('semi') ?? ''].sort()]);
+    expect(await firstSlot()).toMatchObject({ windowStatus: 'CONFIRMED', startsAt: new Date('2027-12-18T17:00:00Z'), endsAt: new Date('2027-12-19T01:00:00Z') });
+    // The regular season's game is in no window; the first round's warning resolves once it is confirmed.
+    expect((await findingsOf(league.id)).map((finding) => [finding.kind, finding.severity, finding.providerValue, finding.status])).toEqual([
+      [ProviderSyncFindingKind.GAMES_UNPLACED, ProviderSyncFindingSeverity.INFO, '2027', ProviderSyncFindingStatus.OPEN],
+      [ProviderSyncFindingKind.SLOT_DATES_NEEDED, ProviderSyncFindingSeverity.WARNING, '2027', ProviderSyncFindingStatus.RESOLVED],
+    ]);
+  });
+
+  it('confirms no tentative window and dates no slot by a bowl between two unseeded schools in its dates', async () => {
+    const prisma = getPrisma();
+    const { league, slotIds } = await windowedLeague([{ key: 'first', window: windowOf('2027-12-18T10:00:00Z', '2027-12-20T12:00:00Z', 'TENTATIVE') }]);
+    const sync = buildSync({ events: [seasonSlate([kickoff('2027-12-19T17:00:00Z')])] });
+    await runSync(sync, league.id);
+    await placeSeeds(league.id, ['seed-1', 'seed-2']);
+
+    await runSync(sync, league.id);
+
+    expect(await prisma.sportLeagueSeasonPhaseSlot.findUniqueOrThrow({ where: { id: slotIds.get('first') } })).toMatchObject({ windowStatus: 'TENTATIVE', startsAt: null });
+    expect((await findingsOf(league.id)).map((finding) => [finding.kind, finding.status])).toEqual([[ProviderSyncFindingKind.SLOT_DATES_NEEDED, ProviderSyncFindingStatus.OPEN]]);
   });
 
   it('raises one WARNING for a windowed game dated after its Season ends, and still writes it', async () => {

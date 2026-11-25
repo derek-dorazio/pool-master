@@ -4,8 +4,9 @@
  *
  * PoolMaster's CFP event is one season's playoff bracket (`ncaaf-2025-cfp`, played December 2025
  * to January 2026). The vendor's games carry no postseason flag, bowl name, round or venue, so
- * the adapter names no place for any game: each game is a play with no code, and the events sync
- * places it in the Season slot whose date window holds its kickoff (#2012). The windows are the
+ * the adapter names no place for any game: each game is a play with no code and its two teams, and
+ * the events sync places it in the Season slot whose date window holds its kickoff (#2012), taking
+ * the slot's dates only from games between two of the seeds on the event's field. The windows are the
  * schedule's own dates, held as data on each Season's slots; a game no window holds (a regular
  * season game, another bowl) is not synced. The GAME writer links a game only to the bracket
  * match whose two teams it has, and the field is the seeds the admin places, so a bowl between two
@@ -76,8 +77,17 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], partici
     status,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    providerSlots: times.map((time) => ({ code: null, startsAt: new Date(time), endsAt: new Date(time) })),
+    providerSlots: games.map((game, index) => ({ code: null, startsAt: new Date(times[index]), endsAt: new Date(times[index]), teams: teamFeedIdsOf(game) })),
   };
+}
+
+/** A game's two teams by their feed ids: a window takes its dates only from games between seeds (#2012). */
+function teamFeedIdsOf(game: NcaafGame): string[] {
+  const name = gameName(game);
+  return [
+    required(required(game.home_team, NCAAF_GAMES_PATH, name, 'home_team').id, NCAAF_GAMES_PATH, name, 'home_team.id'),
+    required(required(game.visitor_team, NCAAF_GAMES_PATH, name, 'visitor_team').id, NCAAF_GAMES_PATH, name, 'visitor_team.id'),
+  ].map(participantFeedId);
 }
 
 export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderParticipant {

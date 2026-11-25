@@ -268,8 +268,8 @@ export class LeagueEventsSync {
    * slate no slot mapping includes raises one INFO SLOT_VALUE_UNMAPPED finding per league, Provider
    * and code (#2005); a tournament its name places nowhere raises SLOT_NAME_UNMATCHED (INFO),
    * SLOT_NAME_AMBIGUOUS or SLOT_SEASON_PHASE_MISSING (ERROR) per league, Provider and normalized name (#2011).
-   * Games with no code that no slot's window holds raise one INFO GAMES_UNPLACED per league and
-   * Provider, placed games dated outside the Season a WARNING, and date-window slots still needing
+   * Games with no code that no slot's window holds, inside the Season's span, raise one INFO
+   * GAMES_UNPLACED per league, Provider and Season, placed games dated outside the Season a WARNING, and date-window slots still needing
    * dates a WARNING per Season (#2012). The findings' subjects dedupe them across syncs, and a
    * waived one stays waived.
    */
@@ -299,14 +299,7 @@ export class LeagueEventsSync {
       providerValueName: value.name,
     })));
     await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, imported.placed);
-    if (imported.unplaced.length > 0) await this.options.findings.raiseOfSource(providerId, [{
-      kind: ProviderSyncFindingKind.GAMES_UNPLACED,
-      severity: ProviderSyncFindingSeverity.INFO,
-      sportLeagueId,
-      sportEventId: null,
-      providerValue: null,
-      providerValueName: imported.unplaced.map((row) => row.eventName).join(', '),
-    }]);
+    await this.raiseGamesUnplaced(sportLeagueId, providerId, season, imported.unplaced);
     await this.checkSlotDates(sportLeagueId, providerId, season, imported.slotsNeedingDates);
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
@@ -337,6 +330,31 @@ export class LeagueEventsSync {
       providerValue: code,
       providerValueName: eventName,
     })));
+  }
+
+  /**
+   * One INFO GAMES_UNPLACED per league, Provider and Season for the games with no code that no
+   * slot's window holds and that are dated inside the Season's span (#2012). A game outside the
+   * span is not this Season's, so waiving the finding covers one Season's known games, never a
+   * later Season's gap. The finding names the events the games are in.
+   */
+  private async raiseGamesUnplaced(
+    sportLeagueId: string,
+    providerId: string,
+    season: { startsAt: Date; endsAt: Date; providerSeasonId: string },
+    unplaced: ProviderSeasonImport['unplaced'],
+  ): Promise<void> {
+    const outside = new Set(playsOutsideSeason(unplaced, season));
+    const inSeason = unplaced.filter((game) => !outside.has(game));
+    if (inSeason.length === 0) return;
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.GAMES_UNPLACED,
+      severity: ProviderSyncFindingSeverity.INFO,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: season.providerSeasonId,
+      providerValueName: [...new Set(inSeason.map((game) => game.eventName))].join(', '),
+    }]);
   }
 
   /**

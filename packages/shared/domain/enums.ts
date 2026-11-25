@@ -969,8 +969,9 @@ export const ProviderSyncFindingKind = {
   /**
    * The events sync read games whose feed names no place for them (no round or week) that no
    * Season slot's date window holds (#2012): they are not synced. INFO, since a feed with no round
-   * marker lists every game of its days (college football's other bowls); inclusion only. Subject:
-   * league and Provider.
+   * marker lists every game of its days (college football's other bowls); inclusion only. Only
+   * games inside the Season's span count. Subject: league, Provider and the provider's id for the
+   * Season.
    */
   GAMES_UNPLACED: 'GAMES_UNPLACED',
   /**
