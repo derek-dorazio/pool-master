@@ -2368,6 +2368,39 @@ export const ChampionshipTileOrder = explicitOrder<ChampionshipTile>({
   [ChampionshipTile.MOST_PLAYED]: 5,
 });
 
+/**
+ * A value a field can be put in order by (#1807, #2160): odds to win (shortest first), seed or rank
+ * (both lowest first). Each tier and pricing profile lists the ones it orders by, first deciding.
+ */
+export const FieldOrderBasis = {
+  ODDS: 'ODDS',
+  SEED: 'SEED',
+  RANKING: 'RANKING',
+} as const;
+export type FieldOrderBasis = (typeof FieldOrderBasis)[keyof typeof FieldOrderBasis];
+/** As the profile forms offer them: today's order, odds first. */
+export const FieldOrderBasisOrder = explicitOrder<FieldOrderBasis>({
+  [FieldOrderBasis.ODDS]: 0,
+  [FieldOrderBasis.SEED]: 1,
+  [FieldOrderBasis.RANKING]: 2,
+});
+
+/**
+ * How a tier profile lays a field out in tiers (#2160). EQUAL_GROUPS fills each tier but the last
+ * with the same number, in the field's order; RANGES puts each participant in the tier whose range
+ * holds their value of the profile's first source (seed 1, seeds 2-4, seed 5 and up).
+ */
+export const TierProfileType = {
+  EQUAL_GROUPS: 'EQUAL_GROUPS',
+  RANGES: 'RANGES',
+} as const;
+export type TierProfileType = (typeof TierProfileType)[keyof typeof TierProfileType];
+/** Equal groups first, as the profile form offers them. */
+export const TierProfileTypeOrder = explicitOrder<TierProfileType>({
+  [TierProfileType.EQUAL_GROUPS]: 0,
+  [TierProfileType.RANGES]: 1,
+});
+
 /** What a tier profile's last tier takes (#1844). */
 export const PlatformTierProfileLastTier = {
   /** Everyone left once the tiers before it are filled. */

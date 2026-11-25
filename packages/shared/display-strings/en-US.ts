@@ -824,6 +824,15 @@ export const enUS = {
       ALL_REMAINING: 'All remaining',
       CAPPED: 'Capped',
     },
+    FieldOrderBasis: {
+      ODDS: 'Odds',
+      SEED: 'Seed',
+      RANKING: 'Rank',
+    },
+    TierProfileType: {
+      EQUAL_GROUPS: 'Equal groups',
+      RANGES: 'Ranges',
+    },
   },
   error: {
     ACCOUNT_DELETE_CONFIRMATION_MISMATCH: 'Delete confirmation email must match the account email.',

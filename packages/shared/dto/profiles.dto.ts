@@ -3,7 +3,7 @@
  * (`SportLeagueDto.platformTierProfileId`, `platformPricingProfileId`). Nothing is set per sport. Root admin only.
  */
 import { z } from 'zod';
-import { BudgetPricingProfileSchema, TierLayoutValuesSchema } from '@poolmaster/shared/domain';
+import { BudgetPricingProfileSchema, EqualGroupsLayoutSchema, ProfileSourcesSchema, RangesLayoutSchema } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
@@ -14,18 +14,19 @@ const SportLeagueCountSchema = z.number().int().describe('How many sport leagues
 
 // --- Tier profiles ----------------------------------------------------------
 
-export const PlatformTierProfileWriteRequestSchema = TierLayoutValuesSchema.extend({
-  code: ProfileCodeSchema,
-  name: ProfileNameSchema,
-}).describe('A tier profile\'s code, name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 PLATFORM_TIER_PROFILE_INVALID otherwise.');
+const TierProfileIdentity = { code: ProfileCodeSchema, name: ProfileNameSchema, sources: ProfileSourcesSchema };
+const SavedProfile = { id: z.uuid(), sportLeagueCount: SportLeagueCountSchema, createdAt: DateTimeSchema, updatedAt: DateTimeSchema };
+
+export const PlatformTierProfileWriteRequestSchema = z.discriminatedUnion('type', [
+  EqualGroupsLayoutSchema.extend(TierProfileIdentity),
+  RangesLayoutSchema.extend(TierProfileIdentity),
+]).describe('A tier profile\'s code, name, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can\'t be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.');
 export type PlatformTierProfileWriteRequest = z.infer<typeof PlatformTierProfileWriteRequestSchema>;
 
-export const PlatformTierProfileDtoSchema = PlatformTierProfileWriteRequestSchema.extend({
-  id: z.uuid(),
-  sportLeagueCount: SportLeagueCountSchema,
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-}).describe('A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field\'s order. A field too small to reach the last tier is split evenly over the tiers.');
+export const PlatformTierProfileDtoSchema = z.discriminatedUnion('type', [
+  EqualGroupsLayoutSchema.extend(TierProfileIdentity).extend(SavedProfile),
+  RangesLayoutSchema.extend(TierProfileIdentity).extend(SavedProfile),
+]).describe('A tier layout each sport league can name: a new event of the league starts with its tiers, and auto-tiering puts the field in order by the profile\'s sources, then fills the tiers: EQUAL_GROUPS, tierSize in each tier but the last (a field too small to reach the last tier is split evenly); RANGES, each participant in the tier whose range holds their seed or rank.');
 export type PlatformTierProfileDto = z.infer<typeof PlatformTierProfileDtoSchema>;
 
 export const PlatformTierProfileListResponseSchema = z.object({
@@ -43,7 +44,8 @@ export type PlatformTierProfileResponse = z.infer<typeof PlatformTierProfileResp
 export const PlatformPricingProfileWriteRequestSchema = BudgetPricingProfileSchema.extend({
   code: ProfileCodeSchema,
   name: ProfileNameSchema,
-}).describe('A pricing profile\'s code, name and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other.');
+  sources: ProfileSourcesSchema,
+}).describe('A pricing profile\'s code, name, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one.');
 export type PlatformPricingProfileWriteRequest = z.infer<typeof PlatformPricingProfileWriteRequestSchema>;
 
 export const PlatformPricingProfileDtoSchema = PlatformPricingProfileWriteRequestSchema.extend({
@@ -51,7 +53,7 @@ export const PlatformPricingProfileDtoSchema = PlatformPricingProfileWriteReques
   sportLeagueCount: SportLeagueCountSchema,
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
-}).describe('A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them.');
+}).describe('A set of budget pricing values each sport league can name: a synced field of the league never priced before is put in order by its sources and priced with its values, and the price dialog offers them.');
 export type PlatformPricingProfileDto = z.infer<typeof PlatformPricingProfileDtoSchema>;
 
 export const PlatformPricingProfileListResponseSchema = z.object({
