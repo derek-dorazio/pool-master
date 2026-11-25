@@ -473,7 +473,8 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
     const notice = recordingSportEventChangedNotice();
     const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED, Sport.GOLF, notice);
     await service.updateEvent(eventId, { name: 'Admin Renamed Open' }, TELL);
-    const moved = { ...listed, name: 'Alpha Invitational', venue: 'B Links', startDate: new Date(listed.startDate.getTime() + 7 * DAY), endDate: new Date(listedEnd.getTime() + 7 * DAY) };
+    const moved = providerEvent('pga-2026-a', 'Alpha Invitational', 'B Links', new Date(listed.startDate.getTime() + 7 * DAY), new Date(listedEnd.getTime() + 7 * DAY));
+    await service.importProviderSeason(importOf(sportLeague, [moved]));
 
     const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [moved] });
 
@@ -484,12 +485,39 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
 
   it('changes only the name, venue and end of an event under way, never the start that already happened', async () => {
     const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.IN_PROGRESS);
-    const delayed = { ...listed, venue: 'Rain Links', startDate: new Date(listed.startDate.getTime() + DAY), endDate: new Date(listedEnd.getTime() + DAY) };
+    const delayed = providerEvent('pga-2026-a', 'Alpha Open', 'Rain Links', new Date(listed.startDate.getTime() + DAY), new Date(listedEnd.getTime() + DAY));
+    await service.importProviderSeason(importOf(sportLeague, [delayed]));
 
     const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [delayed] });
 
     expect(changes.map((change) => change.changed)).toEqual([['venue', 'endDate']]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'Rain Links', startDate: listed.startDate, endDate: delayed.endDate }));
+  });
+
+  it('keeps a slotted event\'s dates on its slots\' when the provider event\'s own dates differ, so they are worked out one way', async () => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED);
+    const before = await sportEvents.findById(eventId);
+
+    const changes = await service.keepProviderEventsCurrent({
+      sportLeagueId: sportLeague.id,
+      providerId: FEED,
+      providerEvents: [{ ...listed, startDate: new Date(listed.startDate.getTime() - DAY), endDate: new Date(listedEnd.getTime() + DAY) }],
+    });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(before);
+  });
+
+  it('moves a slotted event\'s dates with its slots on a later sync, after the import gave the slots the games\' new dates', async () => {
+    const { store, service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED);
+    const rescheduled = providerEvent('pga-2026-a', 'Alpha Open', 'A Links', new Date(listed.startDate.getTime() + 2 * DAY), new Date(listedEnd.getTime() + 3 * DAY));
+    await service.importProviderSeason(importOf(sportLeague, [rescheduled]));
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [{ ...rescheduled, endDate: null }] });
+
+    expect(changes.map((change) => change.changed)).toEqual([['startDate', 'endDate']]);
+    const slot = expectDefined(store.seasonSlots.find((each) => each.startsAt?.getTime() === rescheduled.startDate.getTime()));
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ startDate: slot.startsAt, endDate: slot.endsAt }));
   });
 
   it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])('leaves a %s event exactly as it is, whatever the provider now says', async (status) => {

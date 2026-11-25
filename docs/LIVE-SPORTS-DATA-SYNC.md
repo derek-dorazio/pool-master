@@ -186,7 +186,10 @@ the vendor's week or round (`REG:5`, `POST:2`, built once in `provider-slot-code
 tournament id. The sync matches each code to a Season slot through the slot definition's
 `PROVIDER_CODE` row in `sport_league_phase_slot_provider_mappings` at the league's selected
 provider mapping, so a league's own offsets live in those rows, not in code. Test slots are never
-read. Each matched slot takes its games' dates (an update only when they moved). A code no slot
+read. Each matched slot takes its games' dates (an update only when they moved): it starts at its
+first game's start and ends at its last game's start, since the feed sends start times only, never
+an end; no slice yet records a game's end, so this stays until one does. An event that plays slots
+takes its dates from them (`eventDatesFromSlots`), on creation and on every later sync. A code no slot
 maps raises one `SLOT_VALUE_UNMAPPED` INFO finding per league and code; waive it for a code the
 league does not play (the preseason). A page that lists fewer events or games deletes nothing.
 

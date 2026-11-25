@@ -359,6 +359,8 @@ export class SportEventService {
         slotsLinkedCount: eventSlots.length,
         slotDatesChangedCount: slotDates.length,
         unmatchedCodes: [...unmatched.keys()],
+        // Provider events whose games carry no code, which no PROVIDER_CODE mapping can place.
+        noCodeCount: input.providerEvents.filter((providerEvent) => providerEvent.providerSlots.length === 0).length,
       },
       'Imported provider Season',
     );
@@ -371,8 +373,10 @@ export class SportEventService {
    * still lets change (`PROVIDER_DETAILS_BY_STATUS`) are written where they differ, through
    * `updateEvent`: the admin's own path, so a moved start shifts the rounds and tells the
    * leagues as an admin's move would, and the lifecycle scheduler then moves the status on the new
-   * dates. The provider wins over an admin's edit (`rules/architecture-rules.md` §4). A venue or end
-   * the provider does not send is left as it is, not cleared. One read for the events, then one
+   * dates. The provider wins over an admin's edit (`rules/architecture-rules.md` §4). An event that
+   * plays Season slots takes its dates from those slots (`eventDatesFromSlots`), read after the
+   * import wrote them, never from the provider event (#2005). A venue or end the provider does not
+   * send is left as it is, not cleared. One read for the events, then one
    * update per event that changed; an update that fails is logged and the rest still go.
    */
   async keepProviderEventsCurrent(input: {
@@ -385,12 +389,15 @@ export class SportEventService {
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
     );
     const providerEventById = new Map(input.providerEvents.map((providerEvent) => [providerEvent.externalId, providerEvent]));
+    // An event that plays Season slots takes its dates from them, the one computation (#2005).
+    const slotsByEvent = linked.length === 0 ? new Map<string, SportLeagueSeasonSlot[]>() : await this.deps.sportEvents.findSlots(linked.map((event) => event.id));
     const changes: ProviderEventDetailsChange[] = [];
     for (const event of linked) {
       const externalId = externalIdsAt(event, input.providerId).at(0);
       const providerEvent = externalId === undefined ? undefined : providerEventById.get(externalId);
       if (externalId === undefined || !providerEvent || event.sportLeagueId !== input.sportLeagueId) continue;
-      const updates = providerDetailUpdates(event, providerEvent);
+      const slotDates = eventDatesFromSlots(slotsByEvent.get(event.id) ?? []);
+      const updates = providerDetailUpdates(event, slotDates === null ? providerEvent : { ...providerEvent, ...slotDates });
       const changed = PROVIDER_DETAILS_BY_STATUS[event.status].filter((field) => updates[field] !== undefined);
       if (changed.length === 0) continue;
       try {
@@ -436,8 +443,8 @@ export class SportEventService {
   }
 
   /**
-   * An event edit, the admin's and the sync's one path. The sync's dates are its provider's: its
-   * games' span, which is also its slots' (#2005), so the sync may move them where an admin may not.
+   * An event edit, the admin's and the sync's one path. On an event that plays Season slots the
+   * sync writes only the dates its slots give (#2005), so it may move them where an admin may not.
    */
   private async applyEventUpdate(
     sportEventId: string,
