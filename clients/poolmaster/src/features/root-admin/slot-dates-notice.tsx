@@ -22,7 +22,7 @@ export function SlotDatesNotice({ sportLeagueId, structurePath }: { sportLeagueI
       title="Slots need dates"
       tone="warning"
     >
-      {`The sync places a game only inside its slot's dates, and these Seasons have slots with no dates or only tentative ones: ${text}.`}
+      {`These Seasons have slots with no dates or only tentative ones: ${text}.`}
     </Notice>
   );
 }

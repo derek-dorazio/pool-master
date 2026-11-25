@@ -150,10 +150,15 @@ function seasonSlotColumns(seasons: readonly SportLeagueSeasonDto[]) {
       header: 'Ends',
       meta: { info: 'The latest end of its games. Blank until the sync has matched one.', type: { kind: 'datetime', direction: 'both' } },
     }),
-    slotColumnHelper.accessor((slot) => ({ start: slot.window?.startsAt ?? null, end: slot.window?.endsAt ?? null }), {
-      id: 'window',
-      header: 'Date window',
-      meta: { info: 'For a slot its provider places by date window: the dates a game must start in to be placed in it, set as data each Season. Blank when it has none.', type: { kind: 'dateRange', direction: 'both' } },
+    slotColumnHelper.accessor((slot) => slot.window?.startsAt ?? null, {
+      id: 'windowStartsAt',
+      header: 'Window from',
+      meta: { info: 'For a slot its provider places by date window: a game starting at or after this is placed in it, up to Window to. Set as data each Season; blank when it has none.', type: { kind: 'datetime', direction: 'both' } },
+    }),
+    slotColumnHelper.accessor((slot) => slot.window?.endsAt ?? null, {
+      id: 'windowEndsAt',
+      header: 'Window to',
+      meta: { info: 'A game starting before this, and at or after Window from, is placed in the slot; one starting at this moment is not. Blank when it has no window.', type: { kind: 'datetime', direction: 'both' } },
     }),
     slotColumnHelper.accessor((slot) => slot.window?.status ?? null, {
       id: 'windowStatus',
