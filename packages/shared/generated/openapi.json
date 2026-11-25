@@ -23579,6 +23579,176 @@
         "additionalProperties": false,
         "description": "One slot of one Season."
       },
+      "CreateTestSlotRequest": {
+        "type": "object",
+        "properties": {
+          "slotDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The slot definition it plays (SportLeagueSlotDefinitionDto), one of the league's: 404 SLOT_DEFINITION_NOT_FOUND otherwise."
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Tells it apart from the Season's other test slots of that definition: 409 TEST_SLOT_LABEL_TAKEN when one already has it.",
+            "x-transform": [
+              "trim"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When its test event starts."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt."
+          }
+        },
+        "required": [
+          "slotDefinitionId",
+          "label",
+          "startsAt",
+          "endsAt"
+        ],
+        "additionalProperties": false,
+        "description": "A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season."
+      },
+      "SportLeagueSeasonSlotResponse": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "slotDefinitionId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+              },
+              "key": {
+                "type": "string",
+                "description": "Its definition's key."
+              },
+              "slotKind": {
+                "type": "string",
+                "enum": [
+                  "WEEK",
+                  "PLAY_IN",
+                  "ROUND_OF_64",
+                  "ROUND_OF_32",
+                  "ROUND_OF_16",
+                  "QUARTERFINAL",
+                  "SEMIFINAL",
+                  "THIRD_PLACE",
+                  "FINAL",
+                  "TOURNAMENT"
+                ]
+              },
+              "weekNumber": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "description": "Its definition's proper name; null when screens show the word for its kind.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "startsAt": {
+                "description": "The earliest start of its Games; null until the sync has matched one.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "endsAt": {
+                "description": "The latest end of its Games; null until the sync has matched one.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SCHEDULED",
+                  "IN_PROGRESS",
+                  "COMPLETED",
+                  "CANCELLED"
+                ]
+              },
+              "seriesFormat": {
+                "type": "string",
+                "enum": [
+                  "SINGLE_GAME",
+                  "BEST_OF",
+                  "AGGREGATE"
+                ],
+                "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+              },
+              "seriesGames": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "pairing": {
+                "type": "string",
+                "enum": [
+                  "FIXED",
+                  "RESEEDED"
+                ]
+              },
+              "isTestData": {
+                "type": "boolean",
+                "description": "A test slot: QA only, never read or written by the sync."
+              },
+              "label": {
+                "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "slotDefinitionId",
+              "key",
+              "slotKind",
+              "weekNumber",
+              "name",
+              "startsAt",
+              "endsAt",
+              "status",
+              "seriesFormat",
+              "seriesGames",
+              "pairing",
+              "isTestData",
+              "label"
+            ],
+            "additionalProperties": false,
+            "description": "One slot of one Season."
+          }
+        },
+        "required": [
+          "slot"
+        ],
+        "additionalProperties": false,
+        "description": "One Season slot."
+      },
       "SportLeagueSeasonPhaseDto": {
         "type": "object",
         "properties": {
@@ -25164,9 +25334,136 @@
             ],
             "description": "How the event is scored. Read through the series' sport league."
           },
-          "providerSynced": {
+          "isTestData": {
             "type": "boolean",
-            "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+            "description": "Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "slotDefinitionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "Its definition's key."
+                },
+                "slotKind": {
+                  "type": "string",
+                  "enum": [
+                    "WEEK",
+                    "PLAY_IN",
+                    "ROUND_OF_64",
+                    "ROUND_OF_32",
+                    "ROUND_OF_16",
+                    "QUARTERFINAL",
+                    "SEMIFINAL",
+                    "THIRD_PLACE",
+                    "FINAL",
+                    "TOURNAMENT"
+                  ]
+                },
+                "weekNumber": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "description": "Its definition's proper name; null when screens show the word for its kind.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startsAt": {
+                  "description": "The earliest start of its Games; null until the sync has matched one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "description": "The latest end of its Games; null until the sync has matched one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED"
+                  ]
+                },
+                "seriesFormat": {
+                  "type": "string",
+                  "enum": [
+                    "SINGLE_GAME",
+                    "BEST_OF",
+                    "AGGREGATE"
+                  ],
+                  "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+                },
+                "seriesGames": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "pairing": {
+                  "type": "string",
+                  "enum": [
+                    "FIXED",
+                    "RESEEDED"
+                  ]
+                },
+                "isTestData": {
+                  "type": "boolean",
+                  "description": "A test slot: QA only, never read or written by the sync."
+                },
+                "label": {
+                  "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "slotDefinitionId",
+                "key",
+                "slotKind",
+                "weekNumber",
+                "name",
+                "startsAt",
+                "endsAt",
+                "status",
+                "seriesFormat",
+                "seriesGames",
+                "pairing",
+                "isTestData",
+                "label"
+              ],
+              "additionalProperties": false,
+              "description": "One slot of one Season."
+            },
+            "description": "The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet."
           },
           "autoLifecycleEnabled": {
             "type": "boolean",
@@ -25551,7 +25848,8 @@
           "sportLeagueId",
           "participantType",
           "scoringFamily",
-          "providerSynced",
+          "isTestData",
+          "slots",
           "autoLifecycleEnabled",
           "tierCount",
           "releaseChecks",
@@ -25992,9 +26290,136 @@
                   ],
                   "description": "How the event is scored. Read through the series' sport league."
                 },
-                "providerSynced": {
+                "isTestData": {
                   "type": "boolean",
-                  "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+                  "description": "Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+                },
+                "slots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "slotDefinitionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "Its definition's key."
+                      },
+                      "slotKind": {
+                        "type": "string",
+                        "enum": [
+                          "WEEK",
+                          "PLAY_IN",
+                          "ROUND_OF_64",
+                          "ROUND_OF_32",
+                          "ROUND_OF_16",
+                          "QUARTERFINAL",
+                          "SEMIFINAL",
+                          "THIRD_PLACE",
+                          "FINAL",
+                          "TOURNAMENT"
+                        ]
+                      },
+                      "weekNumber": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "name": {
+                        "description": "Its definition's proper name; null when screens show the word for its kind.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "startsAt": {
+                        "description": "The earliest start of its Games; null until the sync has matched one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "description": "The latest end of its Games; null until the sync has matched one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "SCHEDULED",
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "CANCELLED"
+                        ]
+                      },
+                      "seriesFormat": {
+                        "type": "string",
+                        "enum": [
+                          "SINGLE_GAME",
+                          "BEST_OF",
+                          "AGGREGATE"
+                        ],
+                        "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+                      },
+                      "seriesGames": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "pairing": {
+                        "type": "string",
+                        "enum": [
+                          "FIXED",
+                          "RESEEDED"
+                        ]
+                      },
+                      "isTestData": {
+                        "type": "boolean",
+                        "description": "A test slot: QA only, never read or written by the sync."
+                      },
+                      "label": {
+                        "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "slotDefinitionId",
+                      "key",
+                      "slotKind",
+                      "weekNumber",
+                      "name",
+                      "startsAt",
+                      "endsAt",
+                      "status",
+                      "seriesFormat",
+                      "seriesGames",
+                      "pairing",
+                      "isTestData",
+                      "label"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One slot of one Season."
+                  },
+                  "description": "The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet."
                 },
                 "autoLifecycleEnabled": {
                   "type": "boolean",
@@ -26379,7 +26804,8 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
-                "providerSynced",
+                "isTestData",
+                "slots",
                 "autoLifecycleEnabled",
                 "tierCount",
                 "releaseChecks",
@@ -26774,9 +27200,136 @@
                 ],
                 "description": "How the event is scored. Read through the series' sport league."
               },
-              "providerSynced": {
+              "isTestData": {
                 "type": "boolean",
-                "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+                "description": "Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+              },
+              "slots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "slotDefinitionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "Its definition's key."
+                    },
+                    "slotKind": {
+                      "type": "string",
+                      "enum": [
+                        "WEEK",
+                        "PLAY_IN",
+                        "ROUND_OF_64",
+                        "ROUND_OF_32",
+                        "ROUND_OF_16",
+                        "QUARTERFINAL",
+                        "SEMIFINAL",
+                        "THIRD_PLACE",
+                        "FINAL",
+                        "TOURNAMENT"
+                      ]
+                    },
+                    "weekNumber": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "name": {
+                      "description": "Its definition's proper name; null when screens show the word for its kind.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startsAt": {
+                      "description": "The earliest start of its Games; null until the sync has matched one.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "endsAt": {
+                      "description": "The latest end of its Games; null until the sync has matched one.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "CANCELLED"
+                      ]
+                    },
+                    "seriesFormat": {
+                      "type": "string",
+                      "enum": [
+                        "SINGLE_GAME",
+                        "BEST_OF",
+                        "AGGREGATE"
+                      ],
+                      "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+                    },
+                    "seriesGames": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "pairing": {
+                      "type": "string",
+                      "enum": [
+                        "FIXED",
+                        "RESEEDED"
+                      ]
+                    },
+                    "isTestData": {
+                      "type": "boolean",
+                      "description": "A test slot: QA only, never read or written by the sync."
+                    },
+                    "label": {
+                      "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "slotDefinitionId",
+                    "key",
+                    "slotKind",
+                    "weekNumber",
+                    "name",
+                    "startsAt",
+                    "endsAt",
+                    "status",
+                    "seriesFormat",
+                    "seriesGames",
+                    "pairing",
+                    "isTestData",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One slot of one Season."
+                },
+                "description": "The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet."
               },
               "autoLifecycleEnabled": {
                 "type": "boolean",
@@ -27161,7 +27714,8 @@
               "sportLeagueId",
               "participantType",
               "scoringFamily",
-              "providerSynced",
+              "isTestData",
+              "slots",
               "autoLifecycleEnabled",
               "tierCount",
               "releaseChecks",
@@ -27184,14 +27738,15 @@
       "CreateSportEventRequest": {
         "type": "object",
         "properties": {
-          "sportLeagueId": {
+          "seasonSlotId": {
             "type": "string",
             "format": "uuid",
-            "description": "The sport league the event runs on; it decides the sport. The event's series is found or created in it by name, and the event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
+            "description": "The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event's league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season; 409 SEASON_SLOT_TAKEN when it already has an event."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "The event's name; its series is found or created in the league by it. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in that Season."
           },
           "venue": {
             "type": "string"
@@ -27199,33 +27754,16 @@
           "location": {
             "type": "string"
           },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "rounds": {
-            "description": "Round count; omitted, the sport's default round count (4 for golf).",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9007199254740991
-          },
           "autoLifecycleEnabled": {
             "type": "boolean"
           }
         },
         "required": [
-          "sportLeagueId",
-          "name",
-          "startDate"
+          "seasonSlotId",
+          "name"
         ],
         "additionalProperties": false,
-        "description": "An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released."
+        "description": "A test event, made by hand on a test slot (QA only). Created DRAFT with its league's default round count and tiers, and its slot's dates; commissioners see it once it is released."
       },
       "UpdateSportEventRequest": {
         "type": "object",
@@ -27249,12 +27787,12 @@
             ]
           },
           "startDate": {
+            "description": "422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots'.",
             "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
+            "format": "date-time"
           },
           "endDate": {
-            "description": "null clears it.",
+            "description": "null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.",
             "type": [
               "string",
               "null"
@@ -81161,11 +81699,11 @@
       },
       "post": {
         "operationId": "createEvent",
-        "summary": "Create a sport event",
+        "summary": "Create a test event on a test slot",
         "tags": [
           "Events"
         ],
-        "description": "An admin-authored edition of a series in its sport league's current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season; 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. The sport comes from the sport league. Root admin only.",
+        "description": "A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's default rounds and tiers. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. The series is found or created in the league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -81298,7 +81836,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. 400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. Root admin only.",
+        "description": "Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. 400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. 422 EVENT_DATES_FROM_SLOTS when startDate or endDate is sent for an event with Season slots, whose dates are its slots'. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -81362,6 +81900,16 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -85077,6 +85625,109 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sport-leagues/{sportLeagueId}/test-slots": {
+      "post": {
+        "operationId": "createTestSlot",
+        "summary": "Add a test slot to the current Season",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTestSlotRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "One Season slot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeagueSeasonSlotResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

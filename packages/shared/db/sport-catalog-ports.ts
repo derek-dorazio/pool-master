@@ -47,6 +47,7 @@ import type {
   SeasonSpan,
   SportLeagueSeason,
   SportLeagueSeasonDetail,
+  SportLeagueSeasonSlot,
   CurrentSeasonCandidate,
 } from '../domain';
 
@@ -153,6 +154,8 @@ export interface SportEventFilters {
  */
 export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
   providerRef?: ProviderEventRef;
+  /** The Season slots it covers (#2004), in its own Season: a test event's test slot. */
+  seasonSlotIds?: readonly string[];
 };
 
 /** undefined leaves a field alone; null clears a nullable one. */
@@ -231,8 +234,6 @@ export interface SportEventReleaseFacts {
 export interface SportEventAutoReleaseCandidate {
   id: string;
   startDate: Date;
-  /** Whether its league's sync provider has an id for it (#2004): a test event has none. */
-  providerSynced: boolean;
   syncProviderId: string;
   autoReleaseDaysBeforeStart: number;
 }
@@ -289,6 +290,11 @@ export interface SportEventRepository {
   countUnpricedActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Tiers per event, for each id asked about (0 where none). */
   countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * The Season slots each event covers (#2004), in play order, for each id asked about (empty
+   * where none), in a fixed number of reads however many events.
+   */
+  findSlots(sportEventIds: readonly string[]): Promise<Map<string, SportLeagueSeasonSlot[]>>;
   /**
    * The labels of the tiers no active participant is in, per event, in tier order, for each id
    * asked about (empty where none). An event can't be released while any remain: no entry could
@@ -657,8 +663,8 @@ export interface SportLeaguePageEvent {
   startDate: Date;
   endDate: Date | null;
   status: SportEventStatus;
-  /** Whether the league's sync provider has an id for it (#2004); false for a test event. */
-  providerSynced: boolean;
+  /** A test event, on a test slot (#2004); every other event is one the league's sync keeps. */
+  isTestData: boolean;
   releasedAt: Date | null;
   lastReleaseCheck: AutoReleaseCheck | null;
 }
@@ -812,4 +818,31 @@ export interface SportLeagueSeasonRepository {
   findCurrentSeasonFacts(): Promise<SportLeagueCurrentSeasonFacts[]>;
   /** Points each league named at its new current Season, in one transaction. */
   setCurrentSeasons(changes: ReadonlyArray<{ sportLeagueId: string; currentSeasonId: string | null }>): Promise<void>;
+  /** One Season slot with its Season and the event on it, or null for an unknown id (#2004). */
+  findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null>;
+  /**
+   * Adds a labelled test slot of a definition to a Season (#2004), copying the definition's series
+   * format and pairing, in the Season's phase for the definition's phase. Null when the definition
+   * is not one of the league's. Raises the database's unique violation for a label the Season
+   * already has on that definition.
+   */
+  createTestSlot(input: TestSeasonSlotCreate): Promise<SportLeagueSeasonSlot | null>;
+}
+
+/** A Season slot as an event create reads it: where it is, and the event already on it. */
+export interface SeasonSlotWithEvent extends SportLeagueSeasonSlot {
+  sportLeagueId: string;
+  sportLeagueSeasonId: string;
+  /** The event covering it; null while it is free. */
+  sportEventId: string | null;
+}
+
+/** A labelled test slot to add to a Season (#2004). */
+export interface TestSeasonSlotCreate {
+  sportLeagueId: string;
+  sportLeagueSeasonId: string;
+  slotDefinitionId: string;
+  label: string;
+  startsAt: Date;
+  endsAt: Date;
 }

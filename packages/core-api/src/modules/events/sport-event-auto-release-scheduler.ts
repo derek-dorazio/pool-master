@@ -68,8 +68,7 @@ export class SportEventAutoReleaseScheduler {
   private async sweep(): Promise<void> {
     const now = this.now();
     const candidates = await this.options.sportEvents.findAutoReleaseCandidates(now, autoReleaseHorizon(now));
-    const due = candidates.filter((candidate) => candidate.providerSynced
-      && isWithinAutoReleaseWindow(candidate.startDate, candidate.autoReleaseDaysBeforeStart, now));
+    const due = candidates.filter((candidate) => isWithinAutoReleaseWindow(candidate.startDate, candidate.autoReleaseDaysBeforeStart, now));
     if (due.length > 0) {
       // poolmaster-allow-direct-job: the automatic release sweep's timer starts each release
       await this.options.jobs.enqueueAll(due.map((candidate) => releaseSportEventJob(this.options.jobs, candidate.id)));

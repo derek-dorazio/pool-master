@@ -162,11 +162,12 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     ...write,
     schema: {
       tags: TAGS,
-      summary: 'Create a sport event',
+      summary: 'Create a test event on a test slot',
       description:
-        'An admin-authored edition of a series in its sport league\'s current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. '
-        + 'The series is found or created in the sport league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season; 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. '
-        + 'The sport comes from the sport league. Root admin only.',
+        'A test event (QA only, #2004), DRAFT, on a free test slot of its league\'s current Season: the sync makes every other event. '
+        + 'Its league, Season and dates are the slot\'s, with its league\'s default rounds and tiers. '
+        + '404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. '
+        + 'The series is found or created in the league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season. Root admin only.',
       operationId: 'createEvent',
       body: schemaRef('CreateSportEventRequest'),
       response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },
@@ -180,11 +181,12 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       tags: TAGS,
       summary: 'Update a sport event',
       description: 'Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. '
-        + '400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. Root admin only.',
+        + '400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. '
+        + '422 EVENT_DATES_FROM_SLOTS when startDate or endDate is sent for an event with Season slots, whose dates are its slots\'. Root admin only.',
       operationId: 'updateEvent',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventRequest'),
-      response: { 200: schemaRef('SportEventResponse'), ...errors(400, 401, 403, 404) },
+      response: { 200: schemaRef('SportEventResponse'), ...errors(400, 401, 403, 404, 422) },
     },
     handler: handler.updateEvent,
   });

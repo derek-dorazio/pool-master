@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
   CreateSportLeagueRequest,
+  CreateTestSlotRequest,
   SportLeagueListQuery,
   SportLeagueListResponse,
   SportLeagueParticipantRankingsRequest,
@@ -12,6 +13,7 @@ import type {
   SportLeaguePositionListResponse,
   SportLeagueResponse,
   SportLeagueSeasonListResponse,
+  SportLeagueSeasonSlotResponse,
   SportLeagueStructureResponse,
   SportLeagueSyncListResponse,
   UpdateSportLeagueRequest,
@@ -25,6 +27,7 @@ import {
   mapSportLeagueEventOverviewToDto,
   mapSportLeagueOverviewToDto,
   mapSportLeagueParticipantOverviewToDto,
+  mapSportLeagueSeasonSlotToDto,
   mapSportLeagueSeasonToDto,
   mapSportLeaguePositionToDto,
   mapSportLeagueStructureToDto,
@@ -110,6 +113,12 @@ export function createSportLeagueHandlers(
       const { sport, ...input } = request.body;
       const sportLeague = await sportLeagues.createSportLeague(sport, input);
       return reply.status(201).send({ sportLeague: mapSportLeagueToDto(sportLeague) } satisfies SportLeagueResponse);
+    },
+
+    createTestSlot: async (request: FastifyRequest<SportLeagueParams & { Body: CreateTestSlotRequest }>, reply: FastifyReply) => {
+      const { startsAt, endsAt, ...input } = request.body;
+      const slot = await sportLeagues.createTestSlot(request.params.sportLeagueId, { ...input, startsAt: new Date(startsAt), endsAt: new Date(endsAt) });
+      return reply.status(201).send({ slot: mapSportLeagueSeasonSlotToDto(slot) } satisfies SportLeagueSeasonSlotResponse);
     },
 
     updateSportLeague: async (request: FastifyRequest<SportLeagueParams & { Body: UpdateSportLeagueRequest }>): Promise<SportLeagueResponse> => {

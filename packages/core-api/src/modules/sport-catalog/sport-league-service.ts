@@ -13,6 +13,7 @@ import type {
   PlatformPricingProfileRepository,
   SportEventRepository,
   SportLeagueRepository,
+  SportLeagueSeasonRepository,
   SportLeagueUpdate,
   SportLeagueUses,
   SportRepository,
@@ -32,6 +33,7 @@ import {
   type SportConfig,
   type SportLeaguePlay,
   type SportLeague,
+  type SportLeagueSeasonSlot,
   type SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
@@ -80,6 +82,8 @@ export interface SportLeagueServiceDeps {
   sportLeagues: SportLeagueRepository;
   sportEvents: SportEventRepository;
   participants: ParticipantRepository;
+  /** Where a labelled test slot is added (#2004). */
+  seasons: Pick<SportLeagueSeasonRepository, 'createTestSlot'>;
   /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
   mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
   /** Which providers can sync a sport league's events (ADR 0011). */
@@ -157,6 +161,38 @@ export class SportLeagueService {
     }, calendarYearSeason((this.deps.now ?? (() => new Date()))()));
     this.deps.logger?.info({ sportLeagueId: sportLeague.id, sport, name: input.name }, 'Created sport league');
     return (await this.summarize([sportLeague]))[0];
+  }
+
+  /**
+   * A labelled test slot of one of the league's slot definitions, in its current Season (#2004,
+   * plan §2): QA's test events are made on these, and the sync never reads or writes them. 404
+   * SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON,
+   * TEST_SLOT_ENDS_BEFORE_START; 409 TEST_SLOT_LABEL_TAKEN.
+   */
+  async createTestSlot(
+    sportLeagueId: string,
+    input: { slotDefinitionId: string; label: string; startsAt: Date; endsAt: Date },
+  ): Promise<SportLeagueSeasonSlot> {
+    const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
+    if (!sportLeague) throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    if (sportLeague.currentSeasonId === null) {
+      throw new SportCatalogError(`${sportLeague.name} has no current Season.`, 'SPORT_LEAGUE_HAS_NO_SEASON', 422);
+    }
+    if (input.endsAt.getTime() <= input.startsAt.getTime()) {
+      throw new SportCatalogError('A test slot must end after it starts.', 'TEST_SLOT_ENDS_BEFORE_START', 422);
+    }
+    let slot: SportLeagueSeasonSlot | null;
+    try {
+      slot = await this.deps.seasons.createTestSlot({ ...input, sportLeagueId, sportLeagueSeasonId: sportLeague.currentSeasonId });
+    } catch (error) {
+      if ((error as { code?: unknown } | null)?.code === 'P2002') {
+        throw new SportCatalogError(`The current Season already has a test slot labelled "${input.label}" on that definition.`, 'TEST_SLOT_LABEL_TAKEN', 409);
+      }
+      throw error;
+    }
+    if (slot === null) throw new SportCatalogError(`Slot definition ${input.slotDefinitionId} is not one of ${sportLeague.name}'s.`, 'SLOT_DEFINITION_NOT_FOUND', 404);
+    this.deps.logger?.info({ sportLeagueId, sportLeagueSeasonId: sportLeague.currentSeasonId, seasonSlotId: slot.id, label: input.label }, 'Created test slot');
+    return slot;
   }
 
   /**

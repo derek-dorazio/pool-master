@@ -1,15 +1,19 @@
 /**
  * Prisma adapter for a sport league's Seasons (#2003): what the events sync reads of them, and the
- * daily current-Season recompute's reads and writes. Seasons are added by migration, so nothing
- * here creates one.
+ * daily current-Season recompute's reads and writes, and its slots as an event create reads them.
+ * Seasons are added by migration, so nothing here creates one; a labelled test slot is added here
+ * (#2004).
  */
 import type { PrismaClient } from '@prisma/client';
 import type {
+  SeasonSlotWithEvent,
   SportLeagueCurrentSeasonFacts,
   SportLeagueSeasonRepository,
   SyncableSportLeagueSeason,
+  TestSeasonSlotCreate,
 } from '@poolmaster/shared/db';
-import type { SportLeagueSeason } from '@poolmaster/shared/domain';
+import type { SportLeagueSeason, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
+import { SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
 
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
 
@@ -60,5 +64,43 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       data: { currentSeasonId: change.currentSeasonId },
       select: { id: true },
     })));
+  }
+
+  async findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null> {
+    const row = await this.prisma.sportLeagueSeasonPhaseSlot.findUnique({
+      where: { id: seasonSlotId },
+      select: { ...SEASON_SLOT_SELECT, sportLeagueId: true, sportLeagueSeasonId: true, eventSlot: { select: { sportEventId: true } } },
+    });
+    if (row === null) return null;
+    const { sportLeagueId, sportLeagueSeasonId, eventSlot, ...slot } = row;
+    return { ...toSeasonSlot(slot), sportLeagueId, sportLeagueSeasonId, sportEventId: eventSlot?.sportEventId ?? null };
+  }
+
+  async createTestSlot(input: TestSeasonSlotCreate): Promise<SportLeagueSeasonSlot | null> {
+    const definition = await this.prisma.sportLeaguePhaseSlot.findFirst({
+      where: { id: input.slotDefinitionId, sportLeagueId: input.sportLeagueId },
+      select: { sportLeaguePhaseId: true, seriesFormat: true, seriesGames: true, pairing: true },
+    });
+    if (definition === null) return null;
+    const phase = await this.prisma.sportLeagueSeasonPhase.findUniqueOrThrow({
+      where: { sportLeagueSeasonId_sportLeaguePhaseId: { sportLeagueSeasonId: input.sportLeagueSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId } },
+      select: { id: true },
+    });
+    return toSeasonSlot(await this.prisma.sportLeagueSeasonPhaseSlot.create({
+      data: {
+        sportLeagueId: input.sportLeagueId,
+        sportLeagueSeasonId: input.sportLeagueSeasonId,
+        sportLeagueSeasonPhaseId: phase.id,
+        sportLeaguePhaseSlotId: input.slotDefinitionId,
+        startsAt: input.startsAt,
+        endsAt: input.endsAt,
+        seriesFormat: definition.seriesFormat,
+        seriesGames: definition.seriesGames,
+        pairing: definition.pairing,
+        isTestData: true,
+        label: input.label,
+      },
+      select: SEASON_SLOT_SELECT,
+    }));
   }
 }

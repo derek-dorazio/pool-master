@@ -156,6 +156,8 @@ export type {
   SyncableSportLeagueSeason,
   SportLeagueCurrentSeasonFacts,
   SportLeagueSeasonRepository,
+  SeasonSlotWithEvent,
+  TestSeasonSlotCreate,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
   SportLeagueOverviewLeague,

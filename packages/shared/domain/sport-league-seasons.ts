@@ -150,3 +150,26 @@ export function orderSportLeagueSeasons(seasons: readonly SportLeagueSeasonDetai
 
 /** A Season's own facts, as a write gives them. */
 export type SportLeagueSeasonSpan = Pick<SportLeagueSeason, 'name' | 'championshipYear' | 'startsAt' | 'endsAt'>;
+
+/**
+ * Whether an event is a test event (#2004, plan §2): it covers a test slot. A league is synced or
+ * off, so every other event is one its sync keeps, and the provider wins over an edit to it.
+ */
+export function isTestEvent(slots: ReadonlyArray<Pick<SportLeagueSeasonSlot, 'isTestData'>>): boolean {
+  return slots.some((slot) => slot.isTestData);
+}
+
+/**
+ * An event's dates from the Season slots it covers (#2004): the earliest slot start and the latest
+ * slot end, the end null while any slot has none. Null when no slot has a start yet, and for an
+ * event with no slots (golf, racing and tennis until slice 12), which keeps the feed's dates.
+ */
+export function eventDatesFromSlots(
+  slots: ReadonlyArray<Pick<SportLeagueSeasonSlot, 'startsAt' | 'endsAt'>>,
+): { startDate: Date; endDate: Date | null } | null {
+  const starts = slots.flatMap((slot) => (slot.startsAt === null ? [] : [slot.startsAt.getTime()]));
+  if (starts.length === 0) return null;
+  const ends = slots.map((slot) => slot.endsAt?.getTime() ?? null);
+  const endDate = ends.includes(null) ? null : new Date(Math.max(...ends.filter((end): end is number => end !== null)));
+  return { startDate: new Date(Math.min(...starts)), endDate };
+}

@@ -47,6 +47,7 @@ import { EventFieldReader } from './event-field-reader';
 import { SportEventRoundService } from './sport-event-round-service';
 import { SportEventContestService } from './sport-event-contest-service';
 import { PrismaSportEventContestReader } from '../../adapters/prisma-sport-event-contest-reader';
+import { PrismaSportLeagueSeasonRepository } from '../../adapters/prisma-sport-league-season-repository';
 import { SportEventTierService } from './sport-event-tier-service';
 
 export function createSportEventTierService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventTierService {
@@ -241,6 +242,7 @@ export function createSportEventServices(
     eventSeries: new PrismaEventSeriesRepository(prisma),
     sportLeagues,
     sports,
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     rounds,
     tiers,
     bracket,
@@ -284,6 +286,7 @@ export function createSportLeagueService(
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     providers,
     platformTierProfiles: new PrismaPlatformTierProfileRepository(prisma),

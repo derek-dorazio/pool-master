@@ -14,6 +14,7 @@ import {
   type SportLeagueOverview,
   type SportLeagueParticipantOverview,
   type SportLeagueSeasonDetail,
+  type SportLeagueSeasonSlot,
   type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
@@ -28,6 +29,7 @@ import type {
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
   SportLeagueSeasonDto,
+  SportLeagueSeasonSlotDto,
   SportLeaguePositionDto,
   SportLeagueStructureResponse,
   SportLeagueSyncDto,
@@ -266,22 +268,27 @@ export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): Spor
       id: phase.id,
       phase: phase.phase,
       isSynced: phase.isSynced,
-      slots: phase.slots.map((slot) => ({
-        id: slot.id,
-        slotDefinitionId: slot.slotDefinitionId,
-        key: slot.key,
-        slotKind: slot.slotKind,
-        weekNumber: slot.weekNumber,
-        name: slot.name,
-        startsAt: slot.startsAt?.toISOString() ?? null,
-        endsAt: slot.endsAt?.toISOString() ?? null,
-        status: slot.status,
-        seriesFormat: slot.seriesFormat,
-        seriesGames: slot.seriesGames,
-        pairing: slot.pairing,
-        isTestData: slot.isTestData,
-        label: slot.label,
-      })),
+      slots: phase.slots.map(mapSportLeagueSeasonSlotToDto),
     })),
+  };
+}
+
+/** One Season slot for the wire: the Structure tab's, an event's Slots tab's and a test slot create's. */
+export function mapSportLeagueSeasonSlotToDto(slot: SportLeagueSeasonSlot): SportLeagueSeasonSlotDto {
+  return {
+    id: slot.id,
+    slotDefinitionId: slot.slotDefinitionId,
+    key: slot.key,
+    slotKind: slot.slotKind,
+    weekNumber: slot.weekNumber,
+    name: slot.name,
+    startsAt: slot.startsAt?.toISOString() ?? null,
+    endsAt: slot.endsAt?.toISOString() ?? null,
+    status: slot.status,
+    seriesFormat: slot.seriesFormat,
+    seriesGames: slot.seriesGames,
+    pairing: slot.pairing,
+    isTestData: slot.isTestData,
+    label: slot.label,
   };
 }
