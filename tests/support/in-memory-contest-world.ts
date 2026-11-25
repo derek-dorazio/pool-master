@@ -397,7 +397,6 @@ export class InMemoryContestWorld {
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
       findBySportEvents: async (sportEventIds) =>
         [...this.contests.values()].filter((contest) => contest.sportEventIds.some((sportEventId) => sportEventIds.includes(sportEventId))),
-      findJoinableByReleasedEdition: async () => [],
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
       findDraftsStartingBy: async ({ firstStartsBy, createdBy, firstStatuses }) => [...this.contests.values()].filter((contest) => {
@@ -445,13 +444,9 @@ export class InMemoryContestWorld {
       },
       // Mirrors the adapter: removed events take their picks and entry statuses with them, and
       // every entry gets a DRAFT status for each added event.
-      replaceSportEvents: async (id, sportEventIds, options = {}) => {
+      replaceSportEvents: async (id, sportEventIds) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);
-        const { replacing } = options;
-        if (replacing && (replacing.length !== existing.sportEventIds.length || !replacing.every((eventId) => existing.sportEventIds.includes(eventId)))) {
-          return false;
-        }
         const removed = existing.sportEventIds.filter((eventId) => !sportEventIds.includes(eventId));
         this.contests.set(id, { ...existing, sportEventIds: [...sportEventIds] });
         for (const [pickId, pick] of this.picks) {
@@ -467,7 +462,6 @@ export class InMemoryContestWorld {
             .map((sportEventId) => ({ sportEventId, status: 'DRAFT' as const }));
           this.entries.set(entry.id, { ...entry, events: [...kept, ...added] });
         }
-        return true;
       },
       setCupWeight: async (id, cupWeight, whileIn) => {
         const existing = this.contests.get(id);
@@ -810,7 +804,7 @@ export class InMemoryContestWorld {
         .filter((event) => (filters.statuses === undefined || filters.statuses.includes(event.status))
           && (filters.sportLeagueId === undefined || event.sportLeagueId === filters.sportLeagueId)
           && (filters.sportLeagueSeasonId === undefined || event.sportLeagueSeasonId === filters.sportLeagueSeasonId)
-          && (filters.eventSeriesId === undefined || event.eventSeriesId === filters.eventSeriesId)
+          && (filters.slotDefinitionIds === undefined || event.slotDefinitions.some((definition) => filters.slotDefinitionIds?.includes(definition.id) === true))
           && (filters.startsFrom === undefined || event.startDate >= filters.startsFrom)
           && (filters.startsBefore === undefined || event.startDate < filters.startsBefore))
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),

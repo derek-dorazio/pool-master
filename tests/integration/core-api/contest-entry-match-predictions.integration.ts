@@ -28,7 +28,7 @@ import { createRoundRows, createSportEventRow } from '../../support/sport-event-
 import { createContestRow } from '../../support/contest-rows';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
-import { seriesSeasonId } from '../../support/event-edition';
+import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // A pick'em entry's game picks against real Postgres (#716): the prediction port's read and its
@@ -68,10 +68,9 @@ async function createWeek(label: string, startDate: Date) {
     create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
     update: {},
   });
-  const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
-    eventSeriesId: eventSeries.id,
-    sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
+    sportLeagueId: sportLeague.id,
+    sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026),
     name: label,
     startDate,
     status: 'SCHEDULED',

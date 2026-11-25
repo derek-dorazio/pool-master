@@ -102,7 +102,7 @@ export function eventPageOfferCopy(copy: EventPageCopy, offer: EventPageOfferDto
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-/** When an edition starts, from now, as a Coming up card says it: "In 3 weeks", "Tomorrow". */
+/** When an offer's next slot starts, from now, as a Coming up card says it: "In 3 weeks", "Tomorrow". */
 export function formatStartsIn(startDate: string, now: Date): string {
   const days = Math.ceil((new Date(startDate).getTime() - now.getTime()) / MS_PER_DAY);
   if (days <= 0) return 'Under way';

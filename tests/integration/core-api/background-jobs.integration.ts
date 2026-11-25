@@ -30,7 +30,7 @@ import {
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
-import { seriesSeasonId } from '../../support/event-edition';
+import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -305,10 +305,9 @@ describe('Activity reads and job results (#1819)', () => {
       update: {},
     });
     const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Jobs Open ${suffix}` } });
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Activity Jobs Open ${suffix}`,
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `Activity Jobs Open ${suffix}`,
         startDate: new Date(),
       },
     });
@@ -321,8 +320,7 @@ describe('Activity reads and job results (#1819)', () => {
     await prisma.providerSyncRun.deleteMany();
     const leagues = await prisma.sportLeague.findMany({ where: { name: { startsWith: 'Activity Jobs ' } }, select: { id: true } });
     const leagueIds = leagues.map((league) => league.id);
-    await prisma.sportEvent.deleteMany({ where: { eventSeries: { sportLeagueId: { in: leagueIds } } } });
-    await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
+    await prisma.sportEvent.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await prisma.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   });
 

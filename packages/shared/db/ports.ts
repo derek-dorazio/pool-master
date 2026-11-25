@@ -530,13 +530,6 @@ export interface ContestRepository {
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
   /** The contests on any of the events, each once, oldest first (#1255). */
   findBySportEvents(sportEventIds: readonly string[]): Promise<Contest[]>;
-  /**
-   * The contests a released edition can join (#714, #1179): made from a template covering the
-   * edition's series (matched by the series' name within its sport league), not COMPLETED, not
-   * drawn, without the edition yet, and every event of the edition's year. All in one query,
-   * oldest configuration first; none when the series is gone.
-   */
-  findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the live standings sweep reads it (#877). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
@@ -582,11 +575,8 @@ export interface ContestRepository {
    * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
    * transaction under the contest row lock: each entry gets a DRAFT status row for every added
    * event, and loses its status row and its picks (roster and game picks) on every removed one.
-   * With `replacing`, only if the contest's events under its row lock are still exactly those:
-   * otherwise nothing is written and it answers false, so a change built from a stale read never
-   * drops an event added meanwhile (#1318).
    */
-  replaceSportEvents(id: string, sportEventIds: readonly string[], options?: { replacing?: readonly string[] }): Promise<boolean>;
+  replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void>;
   /**
    * Moves a contest to `to` (with its start or end time), but only while it is in one of the
    * `from` statuses. Returns whether this call made the change: a guarded single write, so two
@@ -614,14 +604,6 @@ export interface ContestRepository {
    * draft opened or given a later event meanwhile is kept. Resolves to the drafts deleted.
    */
   deleteAbandonedDraftsBatch(lastEventStartedBefore: Date, limit: number): Promise<DeletedDraftContest[]>;
-}
-
-/** A sport event just released, as `ContestRepository.findJoinableByReleasedEdition` matches it. */
-export interface ReleasedEdition {
-  id: string;
-  eventSeriesId: string;
-  /** The Season it is played in: a contest made from a template joins only its own Season's editions. */
-  sportLeagueSeasonId: string;
 }
 
 export interface ContestStatusFilter {

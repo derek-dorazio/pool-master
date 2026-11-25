@@ -78,7 +78,7 @@ export function mapSportEventToDto({
     contestEligible: operationalState.contestEligible,
     contestOpenings: eventContestOpenings({ ...event, loadedParticipantCount }, now),
     tiersLocked: !areTiersAndPricesEditable(event),
-    eventSeriesId: event.eventSeriesId,
+    slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
     sportLeagueSeasonId: event.sportLeagueSeasonId,
     championshipYear: event.championshipYear,
     sportLeagueId: event.sportLeagueId,

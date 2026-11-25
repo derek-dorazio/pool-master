@@ -5,13 +5,12 @@
  */
 
 import { createHash } from 'node:crypto';
-import { ContestFormat, getSportDefinition, isTemplateOfferedOn, SelectionType, type Sport } from '@poolmaster/shared/domain';
-import type { ContestConfigTemplateListResponse, SelectionStateResponse, SportEventListResponse } from '@poolmaster/shared/generated/hey-api';
+import { ContestFormat, getSportDefinition, SelectionType, type Sport } from '@poolmaster/shared/domain';
+import type { ContestConfigTemplateListResponse, SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
 import { AppEnvironment } from '../../src/core/config';
 
 type SelectionGroup = NonNullable<SelectionStateResponse['selectionGroups']>[number];
 type GroupParticipant = SelectionGroup['participants'][number];
-type StoredEvent = SportEventListResponse['events'][number];
 type Template = ContestConfigTemplateListResponse['templates'][number];
 
 /** The environments a test-data run may write to: QA and the local ones, never staging or prod. */
@@ -43,15 +42,14 @@ export function testLeagueName(sport: Sport, sportLeagueName: string): string {
 }
 
 /**
- * The template a test contest on this event is created from: a tiered or budget one offered on the
- * event's kind of event (#816) in its sport league, as Create contest offers it, the default
- * first. A draw deals its picks to every entry at once and closes
- * them, so the run picks for itself instead. Null when none is offered: a week of a season's games
- * is picked game by game, so it has no roster template.
+ * The template a test contest on this event is created from: a tiered or budget one of those
+ * offered on it (the API's list of its sport league's templates covering one of its slot
+ * definitions, #2010), as Create contest offers it, the default first. A draw deals its picks to
+ * every entry at once and closes them, so the run picks for itself instead. Null when none is
+ * offered: a week of a season's games is picked game by game, so it has no roster template.
  */
-export function chooseContestTemplate(templates: readonly Template[], event: Pick<StoredEvent, 'sport' | 'sportLeagueId' | 'rounds' | 'participantType' | 'scoringFamily'>): Template | null {
-  const pickable = templates.filter((template) => isTemplateOfferedOn(template, event)
-    && template.contestFormat === ContestFormat.ROSTER
+export function chooseContestTemplate(templates: readonly Template[]): Template | null {
+  const pickable = templates.filter((template) => template.contestFormat === ContestFormat.ROSTER
     && template.selectionType !== SelectionType.RANDOM_DRAW);
   const ranked = [...pickable].sort((left, right) => Number(right.isDefault) - Number(left.isDefault) || left.sortOrder - right.sortOrder);
   return ranked.at(0) ?? null;

@@ -1,7 +1,6 @@
-import { jest } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus, type BackgroundJobOutcome } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestFormat, ContestStatus, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus, TemplateCoverageMode } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
@@ -16,24 +15,19 @@ import {
   PrismaSportEventRepository,
   PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
-import { recordStatements, statementCounts, statementShape } from '../statement-log';
-import { createContestManagementService, createReleasedEditionContests } from '../../../packages/core-api/src/modules/contest-management/wiring';
-import { ContestEventsChangedError } from '../../../packages/core-api/src/modules/contest-management/service';
-import { integrationPlanEntitlements } from '../plan-entitlements';
+import { recordStatements, statementShape } from '../statement-log';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
-  drainBackgroundJobs,
   getAppPrisma,
   getPrisma,
-  holdingBackgroundJobs,
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { fixtureSeasonId, freshEventEdition, seriesSeasonId } from '../../support/event-edition';
+import { fixtureSeasonId, freshEventEdition, keyedSlotDefinitionId } from '../../support/event-edition';
 import { mockFn } from '../../support/mock-fn';
 import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
@@ -71,26 +65,6 @@ function repos() {
     eventStandings: new PrismaContestEntryEventStandingRepository(getAppPrisma()),
   };
 }
-
-/**
- * What a release sends (#1318): the event read and moved, with one read of the template pools it
- * joins and one insert of their jobs, however many pools in however many leagues.
- */
-const PINNED_RELEASE_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 1],
-  ['SELECT contest_draws', 1],
-  ['SELECT contest_sport_events', 1],
-  ['SELECT contest_squares_draws', 1],
-  ['SELECT contest_squares_games', 1],
-  ['SELECT contests', 1],
-  ['SELECT event_series', 1],
-  ['SELECT sport_event_provider_mappings', 2],
-  ['SELECT sport_events', 3],
-  ['SELECT sport_league_seasons', 3],
-  ['SELECT sport_leagues', 3], // each event's sport is read through its Season's league since #2042 (#2089)
-  ['SELECT sports', 3],
-  ['UPDATE sport_events', 1],
-];
 
 /** A league with two squads, and a golf event with three golfers on its field. */
 async function createLeagueAndEvent() {
@@ -717,18 +691,16 @@ describe('ContestRepository', () => {
 });
 
 /**
- * A 2026 event in a second sports league: a real one from the reference data, with a series of
- * this test's own. `remove` deletes it with every contest on it.
+ * A 2026 event in a second sports league: a real one from the reference data. `remove` deletes it
+ * with every contest on it.
  */
-async function createSecondTourEvent(fixtureEventSeriesId: string, suffix: string) {
+async function createSecondTourEvent(fixtureTourId: string, suffix: string) {
   const prisma = getPrisma();
-  const fixtureTourId = (await prisma.eventSeries.findUniqueOrThrow({ where: { id: fixtureEventSeriesId } })).sportLeagueId;
   const secondTour = await prisma.sportLeague.findFirstOrThrow({ where: { id: { not: fixtureTourId } } });
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId: secondTour.id, name: `Plan Cap Series ${suffix}` } });
   const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id,
-      sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026),
+      sportLeagueId: secondTour.id,
+      sportLeagueSeasonId: await fixtureSeasonId(prisma, secondTour.id, 2026),
       name: `Plan Cap Classic ${suffix}`,
       startDate: new Date('2026-08-04T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -737,7 +709,6 @@ async function createSecondTourEvent(fixtureEventSeriesId: string, suffix: strin
   const remove = async () => {
     await prisma.contest.deleteMany({ where: { sportEvents: { some: { sportEventId: event.id } } } });
     await prisma.sportEvent.delete({ where: { id: event.id } });
-    await prisma.eventSeries.delete({ where: { id: series.id } });
   };
   return { fixtureTourId, secondTourId: secondTour.id, event, remove };
 }
@@ -754,7 +725,7 @@ describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
   it('lists the different sports leagues of the league\'s contests of one season, drafts included, and nothing from other seasons or leagues', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const other = await createLeagueAndEvent();
-    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
+    const second = await createSecondTourEvent(event.sportLeagueId, suffix);
     try {
       await createContest(league.id, event.id, 'Fixture One');
       await createContest(league.id, event.id, 'Fixture Draft', ContestStatus.DRAFT);
@@ -778,7 +749,7 @@ describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
 describe('ContestRepository sports leagues a year (#947)', () => {
   it('creates a season\'s contests in its one allowed sports league, and refuses one in another with sportsLeagueLimitReached, storing nothing', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
-    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
+    const second = await createSecondTourEvent(event.sportLeagueId, suffix);
     const fixtureLimit = { sportLeaguesPerYear: 1, sportLeagueId: second.fixtureTourId };
     try {
       const first = await repos().contests.create(draftOn(league.id, event.id, 'First'), fixtureLimit);
@@ -800,7 +771,7 @@ describe('ContestRepository sports leagues a year (#947)', () => {
 
   it('lets only one of two contests racing for a season\'s last sports league in, the other refused sportsLeagueLimitReached', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
-    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
+    const second = await createSecondTourEvent(event.sportLeagueId, suffix);
     try {
       const results = await Promise.all([
         repos().contests.create(draftOn(league.id, event.id, 'Racer One'), { sportLeaguesPerYear: 1, sportLeagueId: second.fixtureTourId }),
@@ -816,7 +787,7 @@ describe('ContestRepository sports leagues a year (#947)', () => {
 
   it('refuses moving a contest into a season whose contests use the plan\'s sports leagues, keeping its season, and moves it with no limit', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
-    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
+    const second = await createSecondTourEvent(event.sportLeagueId, suffix);
     try {
       await createContestRow(repos().contests, draftOn(league.id, second.event.id, 'Second Tour 2026'));
       const nextYear = await createContestRow(repos().contests, draftOn(league.id, event.id, 'Fixture 2027', 2027));
@@ -980,12 +951,15 @@ describe('ContestConfigTemplateRepository', () => {
     return { pga, lpga };
   }
 
-  /** Every template belongs to one sport league (#1825); one with no league named goes in a scratch league. */
-  async function createTemplate(key: string, eventType: ContestTemplateEventType | null, sortOrder: number, sportLeagueId?: string) {
-    return getPrisma().contestConfigTemplate.create({
+  /**
+   * Every template belongs to one sport league (#1825); one with no league named goes in a scratch
+   * league. It covers the slot definitions given (#2010), which must be its league's.
+   */
+  async function createTemplate(key: string, slotDefinitionIds: readonly string[], sortOrder: number, sportLeagueId?: string) {
+    const template = await getPrisma().contestConfigTemplate.create({
       data: {
         sportLeagueId: sportLeagueId ?? (await createGolfLeagues()).pga.id,
-        eventType,
+        coverageMode: TemplateCoverageMode.ONE_SLOT,
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateKey: `${prefix}${key}`,
@@ -995,27 +969,37 @@ describe('ContestConfigTemplateRepository', () => {
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
       },
     });
+    await getPrisma().contestConfigTemplateSlot.createMany({
+      data: slotDefinitionIds.map((sportLeaguePhaseSlotId) => ({ sportLeagueId: template.sportLeagueId, templateId: template.id, sportLeaguePhaseSlotId })),
+    });
+    return template;
   }
 
-  it("lists an event type's templates with the ones for any event type, in sort order", async () => {
-    await createTemplate('any', null, 2);
-    await createTemplate('knockout', ContestTemplateEventType.KNOCKOUT, 1);
-    await createTemplate('week', ContestTemplateEventType.WEEK, 0);
+  it('lists the templates covering any slot definition asked for, in sort order, leaving out one covering only others and one covering none', async () => {
+    const { pga } = await createGolfLeagues();
+    const masters = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MASTERS');
+    const open = await keyedSlotDefinitionId(getPrisma(), pga.id, 'OPEN');
+    await createTemplate('both', [masters, open], 2, pga.id);
+    await createTemplate('masters', [masters], 1, pga.id);
+    await createTemplate('open', [open], 0, pga.id);
+    await createTemplate('none', [], 3, pga.id);
 
-    const templates = await new PrismaContestConfigTemplateRepository(getAppPrisma())
-      .list({ sport: Sport.GOLF, eventType: ContestTemplateEventType.KNOCKOUT });
+    const templates = await new PrismaContestConfigTemplateRepository(getAppPrisma()).list({ slotDefinitionIds: [masters] });
 
-    expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}knockout`, `${prefix}any`]);
+    expect(ours(templates).map((template) => [template.templateKey, template.slots.map((slot) => slot.id)])).toEqual([
+      [`${prefix}masters`, [masters]],
+      [`${prefix}both`, expect.arrayContaining([masters, open])],
+    ]);
   });
 
   it("lists only a sport league's own templates, never another league's copy of the same setup", async () => {
     const { pga, lpga } = await createGolfLeagues();
-    await createTemplate('lpga', null, 1, lpga.id);
-    await createTemplate('pga', null, 2, pga.id);
+    await createTemplate('lpga', [], 1, lpga.id);
+    await createTemplate('pga', [], 2, pga.id);
     const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
 
-    const forLpga = await repo.list({ sport: Sport.GOLF, sportLeagueId: lpga.id });
-    const unfiltered = await repo.list({ sport: Sport.GOLF });
+    const forLpga = await repo.list({ sportLeagueId: lpga.id });
+    const unfiltered = await repo.list({ });
 
     expect(ours(forLpga).map((template) => [template.templateKey, template.sportLeagueId])).toEqual([
       [`${prefix}lpga`, lpga.id],
@@ -1023,38 +1007,45 @@ describe('ContestConfigTemplateRepository', () => {
     expect(ours(unfiltered).map((template) => template.templateKey)).toEqual([`${prefix}lpga`, `${prefix}pga`]);
   });
 
-  it('narrows by sport league and event type together: the league must match, the event type match or be unscoped', async () => {
+  it('narrows by sport league and slot definition together: the league must match and the template cover one of the definitions', async () => {
     const { pga, lpga } = await createGolfLeagues();
-    await createTemplate('lpga-knockout', ContestTemplateEventType.KNOCKOUT, 0, lpga.id);
-    await createTemplate('lpga-week', ContestTemplateEventType.WEEK, 1, lpga.id);
-    await createTemplate('lpga-any', null, 2, lpga.id);
-    await createTemplate('pga-any', null, 3, pga.id);
+    const lpgaMajor = await keyedSlotDefinitionId(getPrisma(), lpga.id, 'MAJOR');
+    const lpgaOther = await keyedSlotDefinitionId(getPrisma(), lpga.id, 'OTHER');
+    await createTemplate('lpga-major', [lpgaMajor], 0, lpga.id);
+    await createTemplate('lpga-other', [lpgaOther], 1, lpga.id);
+    await createTemplate('pga-any', [], 3, pga.id);
 
     const templates = await new PrismaContestConfigTemplateRepository(getAppPrisma())
-      .list({ sport: Sport.GOLF, sportLeagueId: lpga.id, eventType: ContestTemplateEventType.KNOCKOUT });
+      .list({ sportLeagueId: lpga.id, slotDefinitionIds: [lpgaMajor] });
 
-    expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}lpga-knockout`, `${prefix}lpga-any`]);
+    expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}lpga-major`]);
+  });
+
+  it("refuses a template covering another sport league's slot definition", async () => {
+    const { pga, lpga } = await createGolfLeagues();
+    const pgaMajor = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MAJOR');
+
+    await expect(createTemplate('crossed', [pgaMajor], 0, lpga.id)).rejects.toThrow();
   });
 
   it('lets two sport leagues each hold a setup with the same key, but refuses a second one in the same league', async () => {
     const { pga, lpga } = await createGolfLeagues();
-    await createTemplate('shared', null, 0, pga.id);
-    await createTemplate('shared', null, 0, lpga.id);
+    await createTemplate('shared', [], 0, pga.id);
+    await createTemplate('shared', [], 0, lpga.id);
 
-    await expect(createTemplate('shared', ContestTemplateEventType.WEEK, 0, lpga.id)).resolves.toBeDefined();
-    await expect(createTemplate('shared', ContestTemplateEventType.WEEK, 0, lpga.id)).rejects.toThrow();
+    await expect(createTemplate('shared', [], 0, lpga.id)).rejects.toThrow();
   });
 
   it('refuses to delete a sport league that still has a template of its own', async () => {
     const { lpga } = await createGolfLeagues();
-    await createTemplate('lpga', null, 0, lpga.id);
+    await createTemplate('lpga', [], 0, lpga.id);
 
     await expect(getPrisma().sportLeague.delete({ where: { id: lpga.id } })).rejects.toThrow();
   });
 
   it('updates only the fields given, and a retired template leaves the active list', async () => {
-    const kept = await createTemplate('kept', null, 0);
-    const retired = await createTemplate('retired', null, 1);
+    const kept = await createTemplate('kept', [], 0);
+    const retired = await createTemplate('retired', [], 1);
     const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
 
     const updated = await repo.update(retired.id, { name: 'Retired Template', active: false });
@@ -1066,210 +1057,49 @@ describe('ContestConfigTemplateRepository', () => {
       sortOrder: 1,
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
     }));
-    const active = await repo.list({ sport: Sport.GOLF, active: true });
+    const active = await repo.list({ active: true });
     expect(ours(active).map((template) => template.id)).toEqual([kept.id]);
   });
-});
 
-describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => {
-  const prefix = `itest-series-${randomUUID().slice(0, 8)}-`;
-  afterEach(async () => {
-    await cleanupTestData();
-    await getPrisma().contestConfigTemplate.deleteMany({ where: { templateKey: { startsWith: prefix } } });
-    await getPrisma().sportLeague.deleteMany({ where: { name: { startsWith: prefix } } });
+  it('makes a template its league\'s default for its selection type, taking the default from the one that had it, and replaces the slot definitions it covers', async () => {
+    const { pga } = await createGolfLeagues();
+    const masters = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MASTERS');
+    const open = await keyedSlotDefinitionId(getPrisma(), pga.id, 'OPEN');
+    const previous = await createTemplate('previous', [masters], 0, pga.id);
+    await getPrisma().contestConfigTemplate.update({ where: { id: previous.id }, data: { isDefault: true } });
+    const next = await createTemplate('next', [masters], 1, pga.id);
+    const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
+
+    const updated = await repo.update(next.id, {
+      isDefault: true,
+      slotDefinitionIds: [open, open],
+      coverageMode: TemplateCoverageMode.ALL_LISTED,
+      description: 'Every listed slot',
+      sortOrder: 5,
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 2 },
+    });
+
+    expect(updated).toEqual(expect.objectContaining({
+      isDefault: true,
+      coverageMode: TemplateCoverageMode.ALL_LISTED,
+      description: 'Every listed slot',
+      sortOrder: 5,
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 2 },
+    }));
+    expect(updated.slots.map((slot) => slot.id)).toEqual([open]);
+    expect((await getPrisma().contestConfigTemplate.findUniqueOrThrow({ where: { id: previous.id } })).isDefault).toBe(false);
   });
 
-  async function createSeriesTemplate(key: string, sportLeagueId: string, eventSeriesNames: string[]) {
-    return getPrisma().contestConfigTemplate.create({
-      data: {
-        sportLeagueId,
-        contestFormat: 'ROSTER',
-        selectionType: 'TIERED',
-        templateKey: `${prefix}${key}`,
-        name: `Series template ${key}`,
-        description: 'Integration template',
-        sortOrder: 0,
-        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
-        eventSeriesNames,
-      },
-    });
-  }
+  it('finds only the league\'s own slot definitions asked for, and none for an empty ask without reading', async () => {
+    const { pga, lpga } = await createGolfLeagues();
+    const masters = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MASTERS');
+    const lpgaMajor = await keyedSlotDefinitionId(getPrisma(), lpga.id, 'MAJOR');
+    const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
 
-  async function contestFromTemplate(
-    leagueId: string,
-    sportEventIds: string | readonly string[],
-    name: string,
-    templateId: string,
-    status: ContestStatus = ContestStatus.OPEN,
-  ) {
-    const contest = await createContest(leagueId, sportEventIds, name, status);
-    await getPrisma().contestConfiguration.create({
-      data: {
-        contestId: contest.id,
-        templateId,
-        selectionType: 'TIERED',
-        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
-      },
-    });
-    return contest;
-  }
+    const found = await repo.findSlotDefinitions(pga.id, [masters, lpgaMajor]);
 
-  /** A league and event, a template covering the event's series, and the next edition of that series not yet in any contest. */
-  async function seriesWithTemplate() {
-    const prisma = getPrisma();
-    const fixture = await createLeagueAndEvent();
-    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: fixture.event.eventSeriesId } });
-    const covering = await createSeriesTemplate('covering', series.sportLeagueId, ['Some Other Major', series.name]);
-    const edition = { id: randomUUID(), eventSeriesId: series.id, sportLeagueSeasonId: fixture.event.sportLeagueSeasonId };
-    return { ...fixture, series, covering, edition };
-  }
-
-  it('finds the contests made from a template naming the series in the series\' own sport league, and no others', async () => {
-    const prisma = getPrisma();
-    const { league, event, series, covering, edition } = await seriesWithTemplate();
-    const otherTour = await prisma.sportLeague.create({
-      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
-    });
-    const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
-    const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
-    const expected = await contestFromTemplate(league.id, event.id, 'Covered Pool', covering.id);
-    await contestFromTemplate(league.id, event.id, 'Other League Pool', otherLeague.id);
-    await contestFromTemplate(league.id, event.id, 'Other Series Pool', otherSeries.id);
-
-    const found = await repos().contests.findJoinableByReleasedEdition(edition);
-
-    expect(found.map((contest) => contest.id)).toEqual([expected.id]);
-    expect(found[0]?.sportEventIds).toEqual([event.id]);
-    await expect(repos().contests.findJoinableByReleasedEdition({ ...edition, eventSeriesId: randomUUID() })).resolves.toEqual([]);
-  });
-
-  it('leaves out a COMPLETED pool, a drawn pool, a squares-drawn pool, a pool that already has the edition and a pool of another Season\'s events, keeping the rest (one with no events yet among them) oldest first', async () => {
-    const prisma = getPrisma();
-    const { league, event, suffix, covering, edition, series } = await seriesWithTemplate();
-    const first = await contestFromTemplate(league.id, event.id, 'Live Pool', covering.id, ContestStatus.ACTIVE);
-    const second = await contestFromTemplate(league.id, event.id, 'Draft Pool', covering.id, ContestStatus.DRAFT);
-    await contestFromTemplate(league.id, event.id, 'Finished Pool', covering.id, ContestStatus.COMPLETED);
-    const drawn = await contestFromTemplate(league.id, event.id, 'Drawn Pool', covering.id);
-    await prisma.contestDraw.create({ data: { contestId: drawn.id, seed: 'seed', fieldOrder: [], entryOrder: [] } });
-    const squaresDrawn = await contestFromTemplate(league.id, event.id, 'Squares Drawn Pool', covering.id);
-    await prisma.contestSquaresDraw.create({
-      data: { contestId: squaresDrawn.id, seed: 'seed', rowDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [9, 8, 7, 6, 5, 4, 3, 2, 1, 0] },
-    });
-    const noEvents = await contestFromTemplate(league.id, [], 'No Events Yet Pool', covering.id);
-    const { event: released } = await createLaterEvent(suffix);
-    await contestFromTemplate(league.id, [event.id, released.id], 'Already Has It', covering.id);
-    const { event: lastYear } = await createLaterEvent(suffix, new Date('2025-07-16T12:00:00.000Z'));
-    await prisma.sportEvent.update({ where: { id: lastYear.id }, data: { sportLeagueSeasonId: await fixtureSeasonId(prisma, series.sportLeagueId, 2025) } });
-    await contestFromTemplate(league.id, [event.id, lastYear.id], 'Mixed Years Pool', covering.id);
-
-    const found = await repos().contests.findJoinableByReleasedEdition({ ...edition, id: released.id });
-
-    expect(found.map((contest) => contest.name)).toEqual([first.name, second.name, noEvents.name]);
-  });
-
-  /**
-   * A league and `majors` more majors still drafts, each with its field loaded and in the same
-   * tour and year as the league's event, with `pools` majors pools on that event covering every
-   * major: one in the first league, or with three, two there and one in a second league.
-   */
-  async function majorsPools(pools: 1 | 3, majors: 1 | 2 = 1) {
-    const prisma = getPrisma();
-    const first = await createLeagueAndEvent();
-    const second = pools === 3 ? await createLeagueAndEvent() : first;
-    const firstMajor = await prisma.eventSeries.findUniqueOrThrow({ where: { id: first.event.eventSeriesId } });
-    const drafts = [];
-    for (let number = 1; number <= majors; number++) {
-      const { event } = await createLaterEvent(first.suffix, new Date(Date.now() + (20 + 10 * number) * 24 * 60 * 60 * 1000));
-      drafts.push(await prisma.sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.DRAFT } }));
-    }
-    const draftMajors = await prisma.eventSeries.findMany({ where: { id: { in: drafts.map((draft) => draft.eventSeriesId) } } });
-    const template = await createSeriesTemplate(`majors-${randomUUID().slice(0, 8)}`, firstMajor.sportLeagueId, [firstMajor.name, ...draftMajors.map((series) => series.name)]);
-    const contests = [];
-    for (let number = 1; number <= pools; number++) {
-      const { league } = number === 3 ? second : first;
-      // Every pool is on the first league's event, the major already played in the year.
-      contests.push(await contestFromTemplate(league.id, first.event.id, `Majors Pool ${number}`, template.id));
-    }
-    return { draftIds: drafts.map((draft) => draft.id), contestIds: contests.map((contest) => contest.id), firstEventId: first.event.id };
-  }
-
-  /** The release as the events routes make it, with the app's job queue: its jobs wait for a drain. */
-  function releasing() {
-    const { queue } = integrationBackgroundJobs();
-    const domainEvents = testDomainEvents({ queue, releasedEditionContests: createReleasedEditionContests(getAppPrisma(), fakeLogger()) });
-    const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()), { domainEvents });
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents, ...NO_SETTLE_JOBS });
-    const release = (sportEventId: string) => lifecycle.applySportEventStatusTransition({
-      sportEventId, toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true,
-    });
-    return { contestManagement, release };
-  }
-
-  /** Each pool's events, in its order. */
-  async function poolEvents(contestIds: readonly string[]): Promise<string[][]> {
-    const rows = await getPrisma().contestSportEvent.findMany({
-      where: { contestId: { in: [...contestIds] } },
-      orderBy: { sequence: 'asc' },
-      select: { contestId: true, sportEventId: true },
-    });
-    return contestIds.map((contestId) => rows.filter((row) => row.contestId === contestId).map((row) => row.sportEventId));
-  }
-
-  it('releases a major into its majors pools by one job per pool written with the release (#1318): the same statements for three pools across two leagues as for one, and each job adds the major to its pool', async () => {
-    const { release } = releasing();
-    const one = await majorsPools(1);
-    const three = await majorsPools(3);
-
-    const withOne = await holdingBackgroundJobs(() => recordStatements(() => release(expectDefined(one.draftIds[0]))));
-    const withThree = await holdingBackgroundJobs(() => recordStatements(() => release(expectDefined(three.draftIds[0]))));
-
-    expect(statementCounts(withThree.statements)).toEqual(statementCounts(withOne.statements));
-    expect(statementCounts(withThree.statements)).toEqual(PINNED_RELEASE_COUNTS);
-    const jobs = await getPrisma().backgroundJob.findMany({ where: { type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST }, select: { payload: true } });
-    expect(jobs.map(({ payload }) => (payload as { contestId: string }).contestId).sort()).toEqual([...one.contestIds, ...three.contestIds].sort());
-    await expect(poolEvents(three.contestIds)).resolves.toEqual(Array(3).fill([three.firstEventId]));
-
-    await drainBackgroundJobs();
-
-    await expect(poolEvents(one.contestIds)).resolves.toEqual([[one.firstEventId, one.draftIds[0]]]);
-    await expect(poolEvents(three.contestIds)).resolves.toEqual(Array(3).fill([three.firstEventId, three.draftIds[0]]));
-    await expect(getPrisma().backgroundJob.count({ where: { type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, status: { not: 'SUCCEEDED' } } })).resolves.toBe(0);
-  });
-
-  it('keeps both majors when two majors\' jobs add them to one pool at once (#1318): the later write is refused, and its retry adds its major beside the other', async () => {
-    const { contestManagement, release } = releasing();
-    const { draftIds: [pga, open], contestIds: [poolId], firstEventId } = await majorsPools(1, 2);
-    await holdingBackgroundJobs(async () => {
-      await release(expectDefined(pga));
-      await release(expectDefined(open));
-    });
-    // Both jobs read the pool before either writes, as two job slots running them together can.
-    const replaceSportEvents = PrismaContestRepository.prototype.replaceSportEvents;
-    let arrived = 0;
-    let bothRead: () => void = () => undefined;
-    const reads = new Promise<void>((resolve) => { bothRead = resolve; });
-    const racing = jest.spyOn(PrismaContestRepository.prototype, 'replaceSportEvents').mockImplementation(async function (this: PrismaContestRepository, ...args) {
-      arrived += 1;
-      if (arrived === 2) bothRead();
-      await reads;
-      return replaceSportEvents.apply(this, args);
-    });
-    let outcomes: PromiseSettledResult<BackgroundJobOutcome>[];
-    try {
-      outcomes = await Promise.allSettled([pga, open].map((sportEventId) => contestManagement.addReleasedEditionToContest({ contestId: expectDefined(poolId), sportEventId: expectDefined(sportEventId) })));
-    } finally {
-      racing.mockRestore();
-    }
-
-    expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
-    const refused = outcomes.findIndex((outcome) => outcome.status === 'rejected');
-    expect((outcomes[refused] as PromiseRejectedResult).reason).toBeInstanceOf(ContestEventsChangedError);
-    await expect(poolEvents([expectDefined(poolId)])).resolves.toEqual([[firstEventId, [pga, open][1 - refused]]]);
-
-    // The runner's retry reads the pool again.
-    await contestManagement.addReleasedEditionToContest({ contestId: expectDefined(poolId), sportEventId: expectDefined([pga, open][refused]) });
-
-    await expect(poolEvents([expectDefined(poolId)])).resolves.toEqual([[firstEventId, pga, open]]);
+    expect(found.map((slot) => [slot.id, slot.key])).toEqual([[masters, 'MASTERS']]);
+    await expect(repo.findSlotDefinitions(pga.id, [])).resolves.toEqual([]);
   });
 });
 

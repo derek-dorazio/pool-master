@@ -68,7 +68,6 @@ async function cleanup(): Promise<void> {
   }
   const leagueIds = [...created.sportLeagueIds];
   if (leagueIds.length) {
-    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
   if (created.participantIds.size) {
@@ -160,7 +159,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.HORSE_RACING, sportLeagueId, active: true },
+      query: { sportLeagueId, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const drawTemplate = expectDefined(templates.find((template) => template.selectionType === SelectionType.RANDOM_DRAW), 'the random-draw template');

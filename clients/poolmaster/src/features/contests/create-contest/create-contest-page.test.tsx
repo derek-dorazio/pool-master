@@ -9,7 +9,18 @@ import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { FormatIllustration } from '@/features/contest-types/illustrations';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CreateContestPage } from './create-contest-page';
-import { openingsUnderWay, withEventOpenings } from '../test/contest-admin-fixtures';
+import { WEEK_SLOT_ID, openingsUnderWay, sportSlotId, templateSlotFixture, withEventOpenings } from '../test/contest-admin-fixtures';
+
+/**
+ * A template list read, as Create contest asks it (#2010): the event's league and slot
+ * definitions, read back from the request's URL, so one slot definition comes as a string.
+ */
+type TemplateQuery = { query?: { sportLeagueId?: string; slotDefinitionIds?: string | readonly string[]; active?: string } };
+
+/** Whether a template list read asks for templates covering this slot definition. */
+function queriesSlot(options: TemplateQuery, slotDefinitionId: string): boolean {
+  return [options.query?.slotDefinitionIds ?? []].flat().includes(slotDefinitionId);
+}
 
 /** The drawing How to Play shows for a format, to compare the preview's picture against. */
 function formatPictureMarkup(selectionType: SelectionType) {
@@ -68,7 +79,15 @@ bindApiMocks({
 });
 
 /** One active sport league in every sport, so the sport picker offers them all. */
-const ACTIVE_LEAGUE_IN_EVERY_SPORT = SUPPORTED_SPORTS.map((sport) => sportLeagueFixture({ id: `${sport}-league`, sport, name: `${sport} league` }));
+const ACTIVE_LEAGUE_IN_EVERY_SPORT = [
+  ...SUPPORTED_SPORTS.map((sport) => sportLeagueFixture({ id: `${sport}-league`, sport, name: `${sport} league` })),
+  // The leagues the tests' own templates are in: a template's sport is its league's (#2010).
+  sportLeagueFixture({ id: 'ncaa-men', sport: 'BASKETBALL', name: 'NCAA Men' }),
+  sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA' }),
+  sportLeagueFixture({ id: 'nfl', sport: 'AMERICAN_FOOTBALL', name: 'NFL' }),
+  sportLeagueFixture({ id: 'pga-tour', sport: 'GOLF', name: 'PGA TOUR' }),
+  sportLeagueFixture({ id: 'lpga-tour', sport: 'GOLF', name: 'LPGA Tour' }),
+];
 
 beforeEach(() => {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: ACTIVE_LEAGUE_IN_EVERY_SPORT } });
@@ -217,7 +236,9 @@ function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?
       templates: [
         {
           id: '11111111-1111-4111-8111-111111111111',
-          sport: 'GOLF',
+          coverageMode: 'ONE_SLOT',
+          slots: [templateSlotFixture(sportSlotId('GOLF'))],
+          sportLeagueId: 'GOLF-league',
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           templateKey: 'golf-tiered-pick-6',
@@ -236,7 +257,9 @@ function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?
         },
         {
           id: '33333333-3333-4333-8333-333333333333',
-          sport: 'GOLF',
+          coverageMode: 'ONE_SLOT',
+          slots: [templateSlotFixture(sportSlotId('GOLF'))],
+          sportLeagueId: 'GOLF-league',
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           templateKey: 'golf-tiered-pick-12',
@@ -330,7 +353,7 @@ function primeBasketballMocks(
     ? Promise.resolve({ data: { events } })
     : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
   const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
-  listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'BASKETBALL'
+  listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => (queriesSlot(options, sportSlotId('BASKETBALL'))
     ? Promise.resolve({ data: { templates } })
     : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
 }
@@ -533,7 +556,9 @@ describe('Commissioner tools › Contests › Create contest', () => {
         templates: [
           {
             id: '44444444-4444-4444-8444-444444444444',
-            sport: 'GOLF',
+            coverageMode: 'ONE_SLOT',
+            slots: [templateSlotFixture(sportSlotId('GOLF'))],
+            sportLeagueId: 'GOLF-league',
             contestFormat: 'ROSTER',
             selectionType: 'TIERED',
             templateKey: 'golf-tiered-custom',
@@ -846,9 +871,9 @@ describe('Commissioner tools › Contests › Create contest', () => {
   describe('bracket setups the chosen event can start at', () => {
     const bracketTemplate = (templateKey: string, name: string, startsAtRound: number, overrides: Record<string, unknown> = {}) => ({
       id: `80200000-0000-4000-8000-0000000001${String(startsAtRound)}${String(templateKey.length)}`,
-      sport: 'BASKETBALL',
+      coverageMode: 'ONE_SLOT',
+      slots: [templateSlotFixture(sportSlotId('BASKETBALL'))],
       sportLeagueId: 'ncaa-men',
-      eventType: 'KNOCKOUT',
       contestFormat: 'PREDICTION',
       selectionType: 'BRACKET',
       templateKey,
@@ -926,10 +951,10 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
       function primeRequestedBracket(events: Array<Record<string, unknown>>, query = '') {
         primeBasketballMocks(events, [], BRACKET_TEMPLATES);
-        const byQuery = listContestConfigTemplatesMock.getMockImplementation() as (options: { query?: { sport?: string } }) => Promise<{ data: { templates: unknown[] } }>;
-        listContestConfigTemplatesMock.mockImplementation(async (options: { query?: { sport?: string } }) => (options.query?.sport
+        const byQuery = listContestConfigTemplatesMock.getMockImplementation() as (options: TemplateQuery) => Promise<{ data: { templates: unknown[] } }>;
+        listContestConfigTemplatesMock.mockImplementation(async (options: TemplateQuery) => (options.query?.slotDefinitionIds
           ? byQuery(options)
-          : { data: { templates: [...(await byQuery({ query: { sport: 'GOLF' } })).data.templates, ...BRACKET_TEMPLATES] } }));
+          : { data: { templates: [...(await byQuery({ query: { slotDefinitionIds: [sportSlotId('GOLF')] } })).data.templates, ...BRACKET_TEMPLATES] } }));
         renderCreateContestPage(`/league/BIGDAWGS/admin/contests/new?template=${SECOND_CHANCE.id}${query}`);
       }
 
@@ -1064,7 +1089,8 @@ describe('Commissioner tools › Contests › Create contest › a sport league\
   // The PGA TOUR's copy of golf's tiered pick 6 (#1825): the list answers it only unnarrowed.
   const PGA_DEFAULT = {
     id: '11111111-1111-4111-8111-111111111111',
-    sport: 'GOLF',
+    coverageMode: 'ONE_SLOT',
+    slots: [templateSlotFixture(sportSlotId('GOLF'))],
     sportLeagueId: PGA_LEAGUE_ID,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
@@ -1119,8 +1145,8 @@ describe('Commissioner tools › Contests › Create contest › a sport league\
 
     await waitFor(() => expect(screen.getByTestId('contest-template-lpga-tiered-pick-12')).toBeChecked());
     const queries = listContestConfigTemplatesMock.mock.calls.map(([options]) =>
-      (options as { query?: { sport?: string; sportLeagueId?: string } }).query);
-    expect(queries).toContainEqual(expect.objectContaining({ sport: 'GOLF', sportLeagueId: LPGA_LEAGUE_ID }));
+      (options as TemplateQuery).query);
+    expect(queries).toContainEqual(expect.objectContaining({ sportLeagueId: LPGA_LEAGUE_ID, slotDefinitionIds: sportSlotId('GOLF') }));
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).not.toBeChecked();
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
   });
@@ -1141,7 +1167,9 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
   const PRICING = { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
   const BUDGET_TEMPLATE = {
     id: '55555555-5555-4555-8555-555555555555',
-    sport: 'GOLF',
+    coverageMode: 'ONE_SLOT',
+    slots: [templateSlotFixture(sportSlotId('GOLF'))],
+    sportLeagueId: 'GOLF-league',
     contestFormat: 'ROSTER',
     selectionType: 'BUDGET_PICK',
     templateKey: 'golf-budget-pick-6',
@@ -1238,7 +1266,9 @@ describe('Commissioner tools › Contests › Create contest › Quick pick form
   const DRAW_TEMPLATES = [
     {
       id: '66666666-6666-4666-8666-666666666666',
-      sport: 'GOLF',
+      coverageMode: 'ONE_SLOT',
+      slots: [templateSlotFixture(sportSlotId('GOLF'))],
+      sportLeagueId: 'GOLF-league',
       contestFormat: 'ROSTER',
       selectionType: 'RANDOM_DRAW',
       templateKey: 'golf-random-draw-1',
@@ -1252,7 +1282,9 @@ describe('Commissioner tools › Contests › Create contest › Quick pick form
     },
     {
       id: '77777777-7777-4777-8777-777777777777',
-      sport: 'GOLF',
+      coverageMode: 'ONE_SLOT',
+      slots: [templateSlotFixture(sportSlotId('GOLF'))],
+      sportLeagueId: 'GOLF-league',
       contestFormat: 'ROSTER',
       selectionType: 'RANDOM_DRAW',
       templateKey: 'golf-random-draw-3-best-2',
@@ -1342,13 +1374,15 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
         ? singleEvent({ id: 'race-1', sport: 'HORSE_RACING', name: 'Kentucky Derby', participantCount: 9, tierCount: 3 })
         : golfEvents?.(options)
     ));
-    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }) => (
-      options.query?.sport === 'HORSE_RACING'
+    listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery) => (
+      queriesSlot(options, sportSlotId('HORSE_RACING'))
         ? {
           data: {
             templates: [{
               id: RACE_PRESET_ID,
-              sport: 'HORSE_RACING',
+              coverageMode: 'ONE_SLOT',
+              slots: [templateSlotFixture(sportSlotId('HORSE_RACING'))],
+              sportLeagueId: 'HORSE_RACING-league',
               contestFormat: 'ROSTER',
               selectionType: 'TIERED',
               templateKey: 'horse-racing-tiered-pick-3',
@@ -1472,7 +1506,8 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
     configuration: { selectionType: string; [setting: string]: unknown },
   ) => ({
     id,
-    sport: 'AUTO_RACING',
+    coverageMode: 'ONE_SLOT',
+    slots: [templateSlotFixture(sportSlotId('AUTO_RACING'))],
     sportLeagueId: FORMULA_1_LEAGUE_ID,
     contestFormat: 'ROSTER',
     selectionType: configuration.selectionType,
@@ -1513,9 +1548,9 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
         })
         : golfEvents?.(options)
     ));
-    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string; sportLeagueId?: string } }) => (
-      options.query?.sport === 'AUTO_RACING'
-        ? { data: { templates: options.query.sportLeagueId === FORMULA_1_LEAGUE_ID ? FORMULA_1_PRESETS : [] } }
+    listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery) => (
+      queriesSlot(options, sportSlotId('AUTO_RACING'))
+        ? { data: { templates: options.query?.sportLeagueId === FORMULA_1_LEAGUE_ID ? FORMULA_1_PRESETS : [] } }
         : golfTemplates?.(options)
     ));
   }
@@ -1601,7 +1636,7 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
     listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => (
       options.query?.sport === 'AUTO_RACING' ? { data: { events: [nascarRace, f1Race] } } : golfEvents?.(options)
     ));
-    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string; sportLeagueId?: string } }) => (
+    listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery) => (
       options.query?.sportLeagueId === NASCAR_LEAGUE_ID ? { data: { templates: [nascarTiered] } } : f1Templates?.(options)
     ));
 
@@ -1665,7 +1700,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       ? Promise.resolve({ data: { events: [PLAYOFFS_UNDER_WAY] } })
       : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
     const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
-    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'AMERICAN_FOOTBALL'
+    listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => (queriesSlot(options, sportSlotId('AMERICAN_FOOTBALL'))
       ? Promise.resolve({ data: { templates: [] } })
       : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
     getEventBracketMock.mockResolvedValue({
@@ -1753,6 +1788,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
   const NFL_WEEK = {
     id: 'nfl-week-1',
     sport: 'AMERICAN_FOOTBALL',
+    slotDefinitionIds: [WEEK_SLOT_ID],
     name: 'NFL Week 1',
     venue: null,
     status: 'SCHEDULED',
@@ -1766,7 +1802,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     sportLeagueId: 'nfl',
   };
   const nflTemplate = (overrides: Record<string, unknown>) => ({
-    sport: 'AMERICAN_FOOTBALL',
+    coverageMode: 'ONE_SLOT',
     sportLeagueId: 'nfl',
     active: true,
     schemaVersion: 1,
@@ -1775,7 +1811,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
   const WEEK_TEMPLATES = [
     nflTemplate({
       id: '80200000-0000-4000-8000-000000000001',
-      eventType: 'WEEK',
+      slots: [templateSlotFixture(WEEK_SLOT_ID)],
       contestFormat: 'PREDICTION',
       selectionType: 'PICK_EM',
       templateKey: 'nfl-pick-em-straight-up',
@@ -1787,7 +1823,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     }),
     nflTemplate({
       id: '80200000-0000-4000-8000-000000000002',
-      eventType: 'WEEK',
+      slots: [templateSlotFixture(WEEK_SLOT_ID)],
       contestFormat: 'PREDICTION',
       selectionType: 'SURVIVOR',
       templateKey: 'nfl-survivor',
@@ -1801,7 +1837,8 @@ describe('Commissioner tools › Contests › Create contest › templates by na
   const KNOCKOUT_TEMPLATES = [
     nflTemplate({
       id: '80200000-0000-4000-8000-000000000003',
-      eventType: 'KNOCKOUT',
+      slots: [templateSlotFixture(sportSlotId('AMERICAN_FOOTBALL'))],
+      sportLeagueId: 'AMERICAN_FOOTBALL-league',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateKey: 'nfl-tiered-doubling',
@@ -1828,11 +1865,11 @@ describe('Commissioner tools › Contests › Create contest › templates by na
       ? Promise.resolve({ data: { events: [NFL_WEEK] } })
       : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
     const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
-    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string; eventType?: string } }): Promise<unknown> => {
-      if (options.query?.sport !== 'AMERICAN_FOOTBALL') {
+    listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => {
+      if (!queriesSlot(options, WEEK_SLOT_ID) && !queriesSlot(options, sportSlotId('AMERICAN_FOOTBALL'))) {
         return golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } });
       }
-      return Promise.resolve({ data: { templates: options.query.eventType === 'WEEK' ? WEEK_TEMPLATES : KNOCKOUT_TEMPLATES } });
+      return Promise.resolve({ data: { templates: queriesSlot(options, WEEK_SLOT_ID) ? WEEK_TEMPLATES : KNOCKOUT_TEMPLATES } });
     });
   }
 
@@ -1857,10 +1894,10 @@ describe('Commissioner tools › Contests › Create contest › templates by na
 
   it('opens on another sport\'s template chosen on the contest types page: its sport, an event it is offered on, its format and its own card', async () => {
     primeNflWeekMocks();
-    const nflAndGolf = listContestConfigTemplatesMock.getMockImplementation() as (options: { query?: { sport?: string } }) => Promise<{ data: { templates: unknown[] } }>;
-    listContestConfigTemplatesMock.mockImplementation(async (options: { query?: { sport?: string } }) => (options.query?.sport
+    const nflAndGolf = listContestConfigTemplatesMock.getMockImplementation() as (options: TemplateQuery) => Promise<{ data: { templates: unknown[] } }>;
+    listContestConfigTemplatesMock.mockImplementation(async (options: TemplateQuery) => (options.query?.slotDefinitionIds
       ? nflAndGolf(options)
-      : { data: { templates: [...(await nflAndGolf({ query: { sport: 'GOLF' } })).data.templates, ...WEEK_TEMPLATES, ...KNOCKOUT_TEMPLATES] } }));
+      : { data: { templates: [...(await nflAndGolf({ query: { slotDefinitionIds: [sportSlotId('GOLF')] } })).data.templates, ...WEEK_TEMPLATES, ...KNOCKOUT_TEMPLATES] } }));
     renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=80200000-0000-4000-8000-000000000002');
 
     await waitFor(() => expect(screen.getByTestId('contest-template-nfl-survivor')).toBeChecked());
@@ -1880,7 +1917,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     expect(screen.getByTestId('contest-format-PICK_EM')).toBeChecked();
     const queries = listContestConfigTemplatesMock.mock.calls.map(([options]) =>
       (options as { query?: Record<string, unknown> }).query);
-    expect(queries).toContainEqual(expect.objectContaining({ sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl', eventType: 'WEEK' }));
+    expect(queries).toContainEqual(expect.objectContaining({ sportLeagueId: 'nfl', slotDefinitionIds: WEEK_SLOT_ID }));
     expect(screen.queryByTestId('contest-template-nfl-tiered-doubling')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('contest-format-SURVIVOR'));

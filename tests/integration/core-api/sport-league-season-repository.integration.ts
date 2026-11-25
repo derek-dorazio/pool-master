@@ -37,10 +37,9 @@ async function seasonedLeague() {
 /** One event in `seasonId`, kept under the provider's id for it as the sync makes one when `synced`, else a test event with none. */
 async function eventIn(sportLeagueId: string, seasonId: string, synced: boolean) {
   const prisma = getPrisma();
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID().slice(0, 8)}` } });
   const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: seasonId, name: series.name,
+      sportLeagueId: sportLeagueId, sportLeagueSeasonId: seasonId, name: `Season event ${randomUUID()}`,
       startDate: new Date('2026-03-01T00:00:00.000Z'),
     },
   });
@@ -136,8 +135,7 @@ describe('PrismaSportLeagueSeasonRepository test slots (#2004)', () => {
     const { league, s2026 } = await seasonedLeague();
     const prisma = getPrisma();
     const freeSlotId = await testSlotIdIn(prisma, league.id, s2026, STARTS);
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `Series ${randomUUID().slice(0, 8)}` } });
-    const event = await prisma.sportEvent.create({ data: { eventSeriesId: series.id, sportLeagueSeasonId: s2026, name: series.name, startDate: STARTS } });
+    const event = await prisma.sportEvent.create({ data: { sportLeagueId: league.id, sportLeagueSeasonId: s2026, name: `Event ${randomUUID().slice(0, 8)}`, startDate: STARTS } });
     const takenSlotId = await linkTestSlot(prisma, event);
     const repository = new PrismaSportLeagueSeasonRepository(prisma);
 

@@ -35,12 +35,11 @@ const createdSportLeagueIds: string[] = [];
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
-  const series = { eventSeries: { sportLeagueId: { in: createdSportLeagueIds } } };
+  const series = { sportLeagueId: { in: createdSportLeagueIds } };
   await getPrisma().sportEventTier.deleteMany({ where: { sportEvent: series } });
   await getPrisma().sportEventRound.deleteMany({ where: { sportEvent: series } });
   await getPrisma().sportEventSlot.deleteMany({ where: { sportEvent: series } });
   await getPrisma().sportEvent.deleteMany({ where: series });
-  await getPrisma().eventSeries.deleteMany({ where: { sportLeagueId: { in: createdSportLeagueIds } } });
   await deleteTestSportLeagues(getPrisma(), createdSportLeagueIds);
   await getPrisma().platformRuntimeConfigHistory.deleteMany({ where: { configKey: { in: ['PLAN_CONFIG', 'EMAIL_CONFIG'] } } });
   await getPrisma().platformRuntimeConfig.deleteMany({ where: { configKey: { in: ['PLAN_CONFIG', 'EMAIL_CONFIG'] } } });

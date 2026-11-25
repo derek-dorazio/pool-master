@@ -1,4 +1,4 @@
-import { ContestTemplateEventType, type Sport, TournamentFormat } from './enums';
+import { type Sport, TournamentFormat } from './enums';
 import { getSportDefinition } from './sports/registry';
 import { eventSportDefinition, type SportLeagueEvent } from './sports/sport-league-definition';
 import type { SportDefinition } from './sports/sport-definition';
@@ -31,32 +31,4 @@ export function definitionPlaysMatches(definition: SportDefinition): boolean {
  */
 export function eventPlaysMatches(event: SportLeagueEvent): boolean {
   return definitionPlaysMatches(eventSportDefinition(event));
-}
-
-/**
- * The kind of event a contest template must be offered for (#802): a week of games for a match
- * sport's event of one round, whose games form no bracket (#715), else a knockout; null for a
- * sport whose events are all one kind. An event with no round count has its sport's default.
- */
-export function contestTemplateEventTypeOf(event: SportLeagueEvent & { rounds?: number | null }): ContestTemplateEventType | null {
-  const definition = eventSportDefinition(event);
-  if (!definitionPlaysMatches(definition)) {
-    return null;
-  }
-  const rounds = event.rounds ?? definition.defaultRounds;
-  return rounds === 1 ? ContestTemplateEventType.WEEK : ContestTemplateEventType.KNOCKOUT;
-}
-
-/**
- * Whether a contest template is offered on an event (#802): its own sport league's, for the
- * event's kind of event (a knockout or a week of games) or for any.
- * Create contest and the test-participants loader both choose templates by it (#816).
- */
-export function isTemplateOfferedOn(
-  template: { sport: Sport; sportLeagueId: string; eventType?: ContestTemplateEventType | null },
-  event: SportLeagueEvent & { sportLeagueId: string; rounds?: number | null },
-): boolean {
-  return template.sport === event.sport
-    && template.sportLeagueId === event.sportLeagueId
-    && ((template.eventType ?? null) === null || template.eventType === contestTemplateEventTypeOf(event));
 }

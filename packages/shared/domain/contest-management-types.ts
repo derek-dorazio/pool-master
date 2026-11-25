@@ -1,6 +1,9 @@
 import type {
   ContestFormat,
-  ContestTemplateEventType,
+  TemplateCoverageMode,
+  LeaguePhase,
+  MatchFormat,
+  SlotKind,
   MatchPeriodLayout,
   ParticipantInactiveReason,
   ParticipantType,
@@ -49,8 +52,8 @@ export interface SportEvent extends DomainEntity {
   /** Par for every round, when an admin set it; unset, contest scoring derives each round's par from the field (#478). */
   roundsPar?: number;
   participantCount?: number;
-  /** The event series — the recurring tournament — this is one edition of. */
-  eventSeriesId: string;
+  /** The slot definitions of the Season slots the event covers, in play order (#2004, #2010): where templates are offered. */
+  slotDefinitions: SportEventSlotDefinition[];
   /** The Season the event is played in (#2003). */
   sportLeagueSeasonId: string;
   /**
@@ -58,29 +61,29 @@ export interface SportEvent extends DomainEntity {
    * Read through the Season, never stored on the event.
    */
   championshipYear: number;
-  /** The event's sport league, read through its Season (#2004) — never stored on the event (plans/147 decision 7). */
+  /** The event's sport league (#2010): stored, and its Season is the same league's (a composite key). */
   sportLeagueId: string;
   /**
-   * The series' sport league's period layout when it is not its sport's (#786: men's college
-   * basketball's halves), read through the series like `sportLeagueId`; absent plays the sport's.
+   * Its sport league's period layout when it is not its sport's (#786: men's college
+   * basketball's halves), read through the league; absent plays the sport's.
    * Read through `matchPeriodsOf`.
    */
   matchPeriodLayout?: MatchPeriodLayout;
   /**
-   * The series' sport league's first squares round when not every round's matches are single
-   * games (#787), read through the series like `sportLeagueId`; absent takes every round. Read
+   * Its sport league's first squares round when not every round's matches are single
+   * games (#787), read through the league; absent takes every round. Read
    * through `isSquaresRound`.
    */
   squaresFromRound?: number;
   /**
-   * The series' sport league's participant type and scoring family (#2001), read through the
-   * series like `sportLeagueId`. Read through `eventSportDefinition`.
+   * Its sport league's participant type and scoring family (#2001), read through the
+   * league. Read through `eventSportDefinition`.
    */
   participantType: ParticipantType;
   scoringFamily: ScoringFamily;
   /**
-   * The provider whose sync creates and keeps the series' sport league's events (ADR 0011), read
-   * through the series like `sportLeagueId`; absent when no provider syncs the league. Whether this
+   * The provider whose sync creates and keeps its sport league's events (ADR 0011), read
+   * through the league; absent when no provider syncs the league. Whether this
    * event is one the sync keeps is `isProviderSyncedEvent`.
    */
   syncProviderId?: string;
@@ -156,14 +159,15 @@ export interface ContestConfiguration extends DomainEntity {
 
 /** Seeded reusable contest template selected during commissioner create flow. */
 export interface ContestConfigTemplate extends DomainEntity {
-  sport: Sport;
   /**
    * The sport league whose events this template is offered for. Every template belongs to one
    * (#1825); two leagues offering the same setup each have their own copy.
    */
   sportLeagueId: string;
-  /** The kind of event the template is offered for (#802); null offers it for every event of its sport. */
-  eventType?: ContestTemplateEventType | null;
+  /** How a contest made from the template covers its slot definitions (#2010). */
+  coverageMode: TemplateCoverageMode;
+  /** The slot definitions the template covers, in play order: where it is offered (#2010). */
+  slots: ContestTemplateSlot[];
   contestFormat: ContestFormat;
   /** How an entry in a contest created from this template picks. */
   selectionType: SelectionType;
@@ -175,12 +179,28 @@ export interface ContestConfigTemplate extends DomainEntity {
   active: boolean;
   configJson: ContestRulesWithEntryLimit;
   schemaVersion: number;
-  /**
-   * The event series a contest made from this template covers, by name in its sport league (#714:
-   * a majors pool's four majors). The contest takes each series' edition of its year as that
-   * edition is released for contests. Empty: the commissioner adds the contest's events.
-   */
-  eventSeriesNames: string[];
+}
+
+/** A slot definition one of an event's Season slots plays (#2010): its id and kind. */
+export interface SportEventSlotDefinition {
+  id: string;
+  slotKind: SlotKind;
+}
+
+/** One slot definition a contest template covers (#2010), with the facts screens and checks read. */
+export interface ContestTemplateSlot {
+  /** The slot definition's id. */
+  id: string;
+  /** Its code in the league (WEEK_14, FINAL, MASTERS); nothing parses it. */
+  key: string;
+  /** The league's proper name for it, or null for the word for its kind. */
+  name: string | null;
+  slotKind: SlotKind;
+  weekNumber: number | null;
+  /** The phase it is in, and that phase's kind. */
+  sportLeaguePhaseId: string;
+  phase: LeaguePhase;
+  matchFormat: MatchFormat;
 }
 
 /**

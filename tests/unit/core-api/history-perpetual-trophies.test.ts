@@ -1,6 +1,6 @@
 /**
  * Perpetual trophies (#874): one per contest of one event the league runs again every year, the
- * same series and selection type, with a plate per year's winners.
+ * same slot definitions and selection type (#2010), with a plate per year's winners.
  */
 import type { SeriesContest } from '@poolmaster/shared/db';
 import { CupWeight, SelectionType, type LeagueYearFinish } from '@poolmaster/shared/domain';
@@ -11,8 +11,9 @@ function contest(id: string, championshipYear: number, overrides: Partial<Series
     id,
     selectionType: SelectionType.TIERED,
     cupWeight: CupWeight.NORMAL,
-    eventSeriesId: 'masters',
-    seriesName: 'Masters Tournament',
+    slotDefinitionIds: ['masters'],
+    eventName: 'Masters Tournament',
+    slotName: null,
     sportLeagueName: 'PGA Tour',
     championshipYear,
     completedAt: new Date(`${championshipYear}-04-14T00:00:00.000Z`),
@@ -36,9 +37,9 @@ function win(contestId: string, squadId: string, place = 1): LeagueYearFinish {
   };
 }
 
-/** A trophy as `[seriesName, selectionType, [year, contestId, winners][]]`. */
+/** A trophy as `[name, selectionType, [year, contestId, winners][]]`. */
 function shape(trophies: ReturnType<typeof buildPerpetualTrophies>) {
-  return trophies.map((trophy) => [trophy.seriesName, trophy.selectionType, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winnerSquadIds])]);
+  return trophies.map((trophy) => [trophy.name, trophy.selectionType, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winnerSquadIds])]);
 }
 
 describe('perpetual trophies', () => {
@@ -57,7 +58,7 @@ describe('perpetual trophies', () => {
     expect(buildPerpetualTrophies([contest('masters-a', 2025), contest('masters-b', 2025)], [])).toEqual([]);
   });
 
-  it('keeps the same series picked two ways as two trophies, and skips a year the league did not run one', () => {
+  it('keeps the same slot picked two ways as two trophies, and skips a year the league did not run one', () => {
     const trophies = buildPerpetualTrophies([
       contest('tiered-2022', 2022),
       contest('tiered-2025', 2025),
@@ -77,7 +78,7 @@ describe('perpetual trophies', () => {
     expect(trophies[0]?.plates.map((plate) => plate.winnerSquadIds)).toEqual([[], ['eagles']]);
   });
 
-  it('leaves out contests not counted, so a series run counted only once earns no trophy', () => {
+  it('leaves out contests not counted, so a slot run counted only once earns no trophy', () => {
     expect(buildPerpetualTrophies([
       contest('masters-2024', 2024, { cupWeight: CupWeight.NOT_COUNTED }),
       contest('masters-2025', 2025),
@@ -91,15 +92,15 @@ describe('perpetual trophies', () => {
     const noGames = { count: 0, roundCount: 0, sendingWinnerOn: 0 };
     const nfl = { sportLeagueName: 'NFL', selectionType: SelectionType.PICK_EM };
     const trophies = buildPerpetualTrophies([
-      contest('week-1-2024', 2024, { ...nfl, eventSeriesId: 'week-1', seriesName: 'NFL Week 1', games: week }),
-      contest('week-1-2025', 2025, { ...nfl, eventSeriesId: 'week-1', seriesName: 'NFL Week 1', games: week }),
-      contest('bowl-2024', 2024, { ...nfl, selectionType: SelectionType.SQUARES, eventSeriesId: 'bowl', seriesName: 'Super Bowl', games: bowl }),
-      contest('bowl-2025', 2025, { ...nfl, selectionType: SelectionType.SQUARES, eventSeriesId: 'bowl', seriesName: 'Super Bowl', games: bowl }),
-      contest('playoffs-2024', 2024, { ...nfl, selectionType: SelectionType.BRACKET, eventSeriesId: 'playoffs', seriesName: 'NFL Playoffs', games: bracket }),
-      contest('playoffs-2025', 2025, { ...nfl, selectionType: SelectionType.BRACKET, eventSeriesId: 'playoffs', seriesName: 'NFL Playoffs', games: bracket }),
+      contest('week-1-2024', 2024, { ...nfl, slotDefinitionIds: ['week-1'], eventName: 'NFL Week 1', slotName: null, games: week }),
+      contest('week-1-2025', 2025, { ...nfl, slotDefinitionIds: ['week-1'], eventName: 'NFL Week 1', slotName: null, games: week }),
+      contest('bowl-2024', 2024, { ...nfl, selectionType: SelectionType.SQUARES, slotDefinitionIds: ['bowl'], eventName: 'Super Bowl', slotName: null, games: bowl }),
+      contest('bowl-2025', 2025, { ...nfl, selectionType: SelectionType.SQUARES, slotDefinitionIds: ['bowl'], eventName: 'Super Bowl', slotName: null, games: bowl }),
+      contest('playoffs-2024', 2024, { ...nfl, selectionType: SelectionType.BRACKET, slotDefinitionIds: ['playoffs'], eventName: 'NFL Playoffs', slotName: null, games: bracket }),
+      contest('playoffs-2025', 2025, { ...nfl, selectionType: SelectionType.BRACKET, slotDefinitionIds: ['playoffs'], eventName: 'NFL Playoffs', slotName: null, games: bracket }),
     ], []);
 
-    expect(trophies.map((trophy) => trophy.seriesName)).toEqual(['NFL Playoffs', 'Super Bowl']);
+    expect(trophies.map((trophy) => trophy.name)).toEqual(['NFL Playoffs', 'Super Bowl']);
     expect(isWeekOfGames(week)).toBe(true);
     expect(isWeekOfGames(noGames)).toBe(false);
     expect(isWeekOfGames(bracket)).toBe(false);
@@ -121,5 +122,28 @@ describe('perpetual trophy plates in one year', () => {
     );
 
     expect(trophies[0].plates.map((plate) => plate.contestId)).toEqual(['masters-2025-late', 'masters-2025-early', 'masters-2025-open', 'masters-2024']);
+  });
+
+  it('names a trophy by its slot\'s proper name when it has one, else by its newest run\'s event name, and gives it its first slot definition as its id', () => {
+    const trophies = buildPerpetualTrophies([
+      contest('masters-2024', 2024, { eventName: 'Masters Tournament 2024', slotName: 'Masters' }),
+      contest('masters-2025', 2025, { eventName: 'Masters Tournament 2025', slotName: 'Masters' }),
+      contest('open-2024', 2024, { slotDefinitionIds: ['open'], eventName: 'Open 2024', sportLeagueName: 'R&A' }),
+      contest('open-2025', 2025, { slotDefinitionIds: ['open'], eventName: 'Open 2025', sportLeagueName: 'R&A' }),
+    ], []);
+
+    expect(trophies.map((trophy) => [trophy.trophyId, trophy.name])).toEqual([['masters', 'Masters'], ['open', 'Open 2025']]);
+  });
+
+  it('keeps one trophy for an event covering several slots whichever order they are read in, and none for an event in no slot', () => {
+    const championship = { sportLeagueName: 'NFL', selectionType: SelectionType.TIERED, eventName: 'Championship Weekend' };
+    const trophies = buildPerpetualTrophies([
+      contest('cw-2024', 2024, { ...championship, slotDefinitionIds: ['afc', 'nfc'] }),
+      contest('cw-2025', 2025, { ...championship, slotDefinitionIds: ['nfc', 'afc'] }),
+      contest('unslotted-2024', 2024, { slotDefinitionIds: [], eventName: 'Unslotted' }),
+      contest('unslotted-2025', 2025, { slotDefinitionIds: [], eventName: 'Unslotted' }),
+    ], []);
+
+    expect(shape(trophies)).toEqual([['Championship Weekend', SelectionType.TIERED, [[2025, 'cw-2025', []], [2024, 'cw-2024', []]]]]);
   });
 });

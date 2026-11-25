@@ -4,7 +4,10 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
-import { ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
+
+/** A slot definition with what puts it in play order. */
+const TROPHY_DEFINITION_SELECT = { id: true, key: true, name: true, slotKind: true, weekNumber: true, phase: { select: { phase: true } } } as const;
 
 const FINISH_SELECT = {
   leagueId: true,
@@ -107,8 +110,10 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
             sportEvent: {
               select: {
                 id: true,
+                name: true,
                 sportLeagueSeason: { select: { championshipYear: true, sportLeague: { select: { name: true } } } },
-                eventSeries: { select: { id: true, name: true } },
+                // The slot definitions the event covers key its trophy until #2024 (#2010).
+                slots: { select: { seasonSlot: { select: { definition: { select: TROPHY_DEFINITION_SELECT } } } } },
               },
             },
           },
@@ -138,12 +143,18 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       id: row.id,
       selectionType: row.selectionType,
       cupWeight: row.cupWeight,
-      eventSeriesId: event.eventSeries.id,
-      seriesName: event.eventSeries.name,
+      ...coveredDefinitions(event.slots.map(({ seasonSlot }) => ({ ...seasonSlot.definition, phase: seasonSlot.definition.phase.phase }))),
+      eventName: event.name,
       sportLeagueName: event.sportLeagueSeason.sportLeague.name,
       championshipYear: event.sportLeagueSeason.championshipYear,
       completedAt: row.endsAt,
       games: gamesByEvent.get(event.id) ?? { count: 0, roundCount: 0, sendingWinnerOn: 0 },
     }));
   }
+}
+
+/** An event's slot definitions in play order, and the first one's proper name. */
+function coveredDefinitions(definitions: (Parameters<typeof compareCoveredSlots>[0] & { id: string; name: string | null })[]): Pick<SeriesContest, 'slotDefinitionIds' | 'slotName'> {
+  const inPlayOrder = [...definitions].sort(compareCoveredSlots);
+  return { slotDefinitionIds: inPlayOrder.map((definition) => definition.id), slotName: inPlayOrder[0]?.name ?? null };
 }

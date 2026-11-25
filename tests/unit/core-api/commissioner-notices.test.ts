@@ -9,10 +9,12 @@ import {
   EventEmailDelivery,
   LeagueRole,
   SelectionType,
+  SlotKind,
   Sport,
   SportEventStatus,
+  TemplateCoverageMode,
   type ContestConfigTemplate,
-  type ContestTemplateEventType,
+  type ContestTemplateSlot,
   type EventPage,
   type League,
   type SportEvent,
@@ -35,6 +37,15 @@ const inDays = (days: number) => new Date(NOW.getTime() + days * DAY);
 const MONDAY = new Date('2026-04-06T07:00:00.000Z');
 const mondayPlus = (days: number) => new Date(MONDAY.getTime() + days * DAY);
 const SPORT_LEAGUE_NAMES: Record<string, string> = { 'pga-tour': 'PGA Tour', lpga: 'LPGA Tour', nfl: 'NFL' };
+
+
+/** The slot definition an event of this name plays: one per name, so each year's edition shares it. */
+const slotOf = (name: string) => `definition-${name}`;
+/** The PGA TOUR tournaments the tests' setups are offered on. */
+const TOURNAMENTS = [
+  'Already Started', 'Another Open', 'Called Off', 'Far Off', 'Next Week', 'On Hold', 'RBC Heritage', 'The Masters',
+  'The Open', 'The Players', 'Too Far Open', 'Valero Texas Open', 'Valspar Championship', 'Winter Open',
+];
 
 describe('CommissionerNotices', () => {
   let world: InMemoryContestWorld;
@@ -72,7 +83,13 @@ describe('CommissionerNotices', () => {
       contests: world.contestRepo(),
       configurations: world.configurationRepo(),
       matches: { findBySportEvents: async () => [] },
-      templates: { list: async () => templates },
+      // As the adapter lists them: the sport league's active templates covering one of the slots asked.
+      templates: {
+        list: async ({ sportLeagueId, slotDefinitionIds, active } = {}) => templates.filter((template) =>
+          (sportLeagueId === undefined || template.sportLeagueId === sportLeagueId)
+          && (active === undefined || template.active === active)
+          && (slotDefinitionIds === undefined || template.slots.some((covered) => slotDefinitionIds.includes(covered.id)))),
+      },
       leagues: world.leagueRepo(),
       readConfig: () => config,
       sportLeagues: {
@@ -115,10 +132,11 @@ describe('CommissionerNotices', () => {
     return user;
   }
 
+  /** An event in its own tournament slot, a definition per name: last year's edition of a name shares it (#2010). */
   function event(overrides: Partial<SportEvent> & { startDate: Date }): SportEvent {
     return world.addSportEvent({
+      slotDefinitions: [{ id: slotOf(overrides.name ?? 'Open'), slotKind: SlotKind.TOURNAMENT }],
       sportLeagueId: 'pga-tour',
-      eventSeriesId: `series-${overrides.name ?? 'The Masters'}`,
       sportLeagueSeasonId: 'season-2026',
       championshipYear: 2026,
       ...overrides,
@@ -231,6 +249,7 @@ describe('CommissionerNotices', () => {
         name,
         sport: Sport.AMERICAN_FOOTBALL,
         rounds: 1,
+        slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK }],
         sportLeagueId: 'nfl',
         sportLeagueSeasonId: 'season-2026',
         championshipYear: 2026,
@@ -292,7 +311,7 @@ describe('CommissionerNotices', () => {
         template({ id: 'tour-salary', name: 'Budget Pick: Tour Salary Cap', sportLeagueId: 'pga-tour', selectionType: SelectionType.BUDGET_PICK, sortOrder: 1 }),
         template({ id: 'variation', name: 'Pick 4 Tiers', isDefault: false }),
         template({ id: 'other-tour', name: 'LPGA Pick 6', sportLeagueId: 'lpga' }),
-        template({ id: 'football', name: 'Weekly Pick\'em', sport: Sport.AMERICAN_FOOTBALL }),
+        template({ id: 'football', name: 'Weekly Pick\'em', sportLeagueId: 'nfl', slots: [{ id: slotOf('Week 1'), slotKind: SlotKind.WEEK } as ContestTemplateSlot] }),
       ];
 
       await notices().queueDue(NOW);
@@ -508,6 +527,7 @@ describe('CommissionerNotices', () => {
         name,
         sport: Sport.AMERICAN_FOOTBALL,
         rounds: 1,
+        slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK }],
         sportLeagueId: 'nfl',
         sportLeagueSeasonId: 'season-2026',
         championshipYear: 2026,
@@ -635,9 +655,9 @@ describe('CommissionerNotices', () => {
 
   function template(overrides: Partial<ContestConfigTemplate> & { id: string; name: string }): ContestConfigTemplate {
     return {
-      sport: Sport.GOLF,
       sportLeagueId: 'pga-tour',
-      eventType: null as ContestTemplateEventType | null,
+      coverageMode: TemplateCoverageMode.ONE_SLOT,
+      slots: TOURNAMENTS.map((name) => ({ id: slotOf(name), slotKind: SlotKind.TOURNAMENT }) as ContestTemplateSlot),
       selectionType: SelectionType.TIERED,
       description: 'Pick a golfer from each tier.',
       sortOrder: 0,

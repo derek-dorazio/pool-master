@@ -110,7 +110,7 @@ export function describePickEmMode(mode: PickEmMode) {
 }
 
 /** A pick'em contest's rules: the winner of every game, or the team that covers when against the spread (#720). */
-export function describePickEmRules({ mode, againstTheSpread }: { mode: PickEmMode; againstTheSpread: boolean }) {
+function describePickEmRules({ mode, againstTheSpread }: { mode: PickEmMode; againstTheSpread: boolean }) {
   if (!againstTheSpread) {
     return describePickEmMode(mode);
   }

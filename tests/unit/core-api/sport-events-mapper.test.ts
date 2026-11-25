@@ -20,7 +20,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     // Far ahead, so the mapper's own clock always reads it as not yet started.
     startDate: new Date('2999-04-12T16:00:00.000Z'),
     participantCount: 144,
-    eventSeriesId: '22222222-2222-4222-8222-222222222222',
+    slotDefinitions: [],
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: '33333333-3333-4333-8333-333333333333',
@@ -118,11 +118,11 @@ describe('SportEvent readiness on the wire', () => {
     });
   });
 
-  // The series, the Season and the sport league reached through the series are always present:
-  // an event has exactly one parent.
-  it('carries the event\'s series, its Season with that Season\'s championship year, and its sport league', () => {
-    expect(mapSportEventToDto(summary(event(), 1))).toMatchObject({
-      eventSeriesId: '22222222-2222-4222-8222-222222222222',
+  // The Season and the sport league are always present: an event has exactly one of each (#2010).
+  it('carries the event\'s slot definitions in play order, its Season with that Season\'s championship year, and its sport league', () => {
+    const slotted = event({ slotDefinitions: [{ id: 'afc-championship', slotKind: SlotKind.SEMIFINAL }, { id: 'nfc-championship', slotKind: SlotKind.SEMIFINAL }] });
+    expect(mapSportEventToDto(summary(slotted, 1))).toMatchObject({
+      slotDefinitionIds: ['afc-championship', 'nfc-championship'],
       sportLeagueSeasonId: 'season-2026',
       championshipYear: 2026,
       sportLeagueId: '33333333-3333-4333-8333-333333333333',

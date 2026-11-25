@@ -27,12 +27,12 @@ afterEach(() => {
 });
 
 describe('Coming up row', () => {
-  it('asks only for the pages with an edition coming and shows a card for each in the order the server sends, soonest first, naming its contest types and linking to the page', async () => {
+  it('asks only for the pages with a slot coming and shows a card for each in the order the server sends, soonest first, naming its contest types and linking to the page', async () => {
     const superBowl = championshipWeekendFixture({
       id: 'page-sb',
       urlSegment: 'super-bowl',
       path: '/play/american-football/super-bowl',
-      offers: [{ ...championshipWeekendFixture().offers[0], edition: { sportEventId: 'sb', name: 'Super Bowl', championshipYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
+      offers: [{ ...championshipWeekendFixture().offers[0], nextSlot: { seasonSlotId: 'season-slot-sb', sportEventId: 'sb', name: 'Super Bowl', championshipYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
     });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture(), superBowl] } });
     renderRow('AMERICAN_FOOTBALL');
@@ -59,7 +59,7 @@ describe('Coming up row', () => {
     expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { upcoming: 'true' } }));
   });
 
-  it('leaves out a page between seasons, and shows nothing when no page has an edition coming', async () => {
+  it('leaves out a page between seasons, and shows nothing when no page has a slot coming', async () => {
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture({ offers: [] })] } });
     renderRow();
 
@@ -71,7 +71,7 @@ describe('Coming up row', () => {
 describe('formatStartsIn', () => {
   const NOW = new Date('2027-01-01T12:00:00.000Z');
 
-  it('says how far off an edition starts: tomorrow, in days under two weeks, else in weeks, and under way once started', () => {
+  it('says how far off the next slot starts: tomorrow, in days under two weeks, else in weeks, and under way once started', () => {
     expect(formatStartsIn('2027-01-02T12:00:00.000Z', NOW)).toBe('Tomorrow');
     expect(formatStartsIn('2027-01-06T12:00:00.000Z', NOW)).toBe('In 5 days');
     expect(formatStartsIn('2027-01-22T12:00:00.000Z', NOW)).toBe('In 3 weeks');

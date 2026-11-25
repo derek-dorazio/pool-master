@@ -55,13 +55,13 @@ describe('display string lookups', () => {
   });
 
   it('give a screen\'s own wording of an error code under error.<CODE>.<context>, with its placeholders filled', () => {
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'tour', event: 'tournament' }))
-      .toBe('This tour already has this tournament in its current Season.');
-    expect(flattenDisplayStrings(enUS)['error.EVENT_EDITION_ALREADY_EXISTS.createEvent']).toBe(enUS.errorContext.EVENT_EDITION_ALREADY_EXISTS.createEvent);
+    expect(displayString('error.BRACKET_INVALID.bracketAdmin', { participant: 'team', participants: 'teams', match: 'game' }))
+      .toBe('That pairing could not be saved. Each team plays one opening game, and two different teams meet in a game.');
+    expect(flattenDisplayStrings(enUS)['error.BRACKET_INVALID.bracketAdmin']).toBe(enUS.errorContext.BRACKET_INVALID.bracketAdmin);
   });
 
   it('say whether a key built at run time has words, so a screen\'s context is tried before the code\'s own message', () => {
-    expect(hasDisplayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toBe(true);
+    expect(hasDisplayString('error.BRACKET_INVALID.bracketAdmin')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL.createEvent')).toBe(false);
     expect(hasDisplayString('error.CONTEST_FULL')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL', 'fr-CA')).toBe(true);
@@ -126,13 +126,13 @@ describe('display string lookups', () => {
   });
 
   it('refuse at compile time a screen\'s error wording without its placeholder values, and fill them when given', () => {
-    // @ts-expect-error The create-event wording needs its sportLeague and event.
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toContain('{{sportLeague}}');
-    // @ts-expect-error The placeholder is event, not game.
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', game: 'game' }))
-      .toContain('{{event}}');
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', event: 'game' }))
-      .toBe('This league already has this game in its current Season.');
+    // @ts-expect-error The bracket wording needs its participant, participants and match.
+    expect(displayString('error.BRACKET_INVALID.bracketAdmin')).toContain('{{participant}}');
+    // @ts-expect-error The placeholder is match, not game.
+    expect(displayString('error.BRACKET_INVALID.bracketAdmin', { participant: 'team', participants: 'teams', game: 'game' }))
+      .toContain('{{match}}');
+    expect(displayString('error.BRACKET_INVALID.bracketAdmin', { participant: 'player', participants: 'players', match: 'match' }))
+      .toBe('That pairing could not be saved. Each player plays one opening match, and two different players meet in a match.');
   });
 
   it('refuse at compile time a key the modules do not hold', () => {

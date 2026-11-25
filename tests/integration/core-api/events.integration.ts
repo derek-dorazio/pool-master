@@ -449,12 +449,10 @@ describe('events routes', () => {
       const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
       const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Season List Tour ${randomUUID()}` } });
       const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeague.id, 2098);
-      const released = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Season List Classic' } });
-      const draft = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Season List Open' } });
       await prisma.sportEvent.createMany({
         data: [
-          { eventSeriesId: released.id, status: 'SCHEDULED' as const, startDate: new Date('2098-04-20T15:00:00.000Z'), name: 'Season List Classic' },
-          { eventSeriesId: draft.id, status: 'DRAFT' as const, startDate: new Date('2098-05-20T15:00:00.000Z'), name: 'Season List Open' },
+          { sportLeagueId: sportLeague.id, status: 'SCHEDULED' as const, startDate: new Date('2098-04-20T15:00:00.000Z'), name: 'Season List Classic' },
+          { sportLeagueId: sportLeague.id, status: 'DRAFT' as const, startDate: new Date('2098-05-20T15:00:00.000Z'), name: 'Season List Open' },
         ].map((edition) => ({
           ...edition,
           sportLeagueSeasonId,

@@ -112,8 +112,8 @@ describe('rankRecords', () => {
   describe('repeat winner', () => {
     /** A perpetual trophy with a plate per `[year, contestId, winners]`, newest first as the trophy keeps them. */
     const trophy = (plates: Array<[number, string, string[]]>): PerpetualTrophy => ({
-      eventSeriesId: 'masters',
-      seriesName: 'Masters Tournament',
+      trophyId: 'masters',
+      name: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: SelectionType.TIERED,
       plates: plates.map(([year, contestId, winnerSquadIds]) => ({ year, contestId, winnerSquadIds })),
@@ -136,8 +136,8 @@ describe('rankRecords', () => {
     it('breaks a run on a year the league did not run the contest, and keeps wins of different trophies apart', () => {
       const best = repeat([
         trophy([[2026, 'masters-2026', ['eagles']], [2024, 'masters-2024', ['eagles']]]),
-        { ...trophy([[2026, 'bowl-2026', ['birdies']], [2025, 'bowl-2025', ['birdies']]]), eventSeriesId: 'super-bowl', selectionType: SelectionType.SQUARES },
-        { ...trophy([[2025, 'open-2025', ['eagles']]]), eventSeriesId: 'us-open' },
+        { ...trophy([[2026, 'bowl-2026', ['birdies']], [2025, 'bowl-2025', ['birdies']]]), trophyId: 'super-bowl', selectionType: SelectionType.SQUARES },
+        { ...trophy([[2025, 'open-2025', ['eagles']]]), trophyId: 'us-open' },
       ]);
 
       expect(stand(best?.best)).toEqual([2, [['birdies', 2026, 'bowl-2026']]]);

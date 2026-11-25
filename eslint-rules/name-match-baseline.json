@@ -1,7 +1,6 @@
 {
   "$comment": "#2114 -- domain lookups by name per production file, read by poolmaster/no-name-match (eslint.config.js). Owners: participant-row-resolver #2008 (slice 10b); prisma-participant-repository #2025 (slice 21); price-assign-action #2044 (slice 7b); prisma-event-page-repository #2010 (slice 11 drops EventSeries); series-playoff-bracket #2052 (slice 21b). Counts only fall; rules:check:baseline-ratchet refuses a raise unless scripts/baseline-raises.json declares it.",
   "clients/poolmaster/src/features/root-admin/price-assign-action.tsx": 2,
-  "packages/core-api/src/adapters/prisma-event-page-repository.ts": 2,
   "packages/core-api/src/adapters/prisma-participant-repository.ts": 1,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket.ts": 1,
   "packages/core-api/src/modules/sport-catalog/participant-row-resolver.ts": 1

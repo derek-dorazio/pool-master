@@ -3,9 +3,8 @@
  * delete one event. Before #236 this was split between `listEvents` here and eleven
  * golf-named operations over the same rows in `GolfTournamentService`.
  *
- * An event is one edition of an EventSeries, in one event year (plans/147). Its sport
- * comes from the series' sport league (series → sport league → sport), never from the
- * caller. Creation is where the sport matters: golf seeds four rounds (or the rounds its
+ * An event is one sport league's, in one of its Seasons (#2003, #2010). Its sport comes from
+ * the sport league, never from the caller. Creation is where the sport matters: golf seeds four rounds (or the rounds its
  * provider schedule implies) and six default tiers. Any other sport is refused with 422
  * rather than created as if it were golf.
  *
@@ -18,7 +17,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestRepository,
-  EventSeriesRepository,
   SportEventCreate,
   SportEventRoundSchedule,
   SportEventFilters,
@@ -121,7 +119,7 @@ export interface ProviderEventDetail {
 /** What a provider Season import (#385, #2003) created, and what it left alone and why. */
 export interface ProviderSeasonImport {
   created: SportEventAdminSummary[];
-  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' }>;
+  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -145,20 +143,11 @@ const PROVIDER_DETAILS_BY_STATUS: Readonly<Record<SportEventStatus, ReadonlyArra
   [SportEventStatus.CANCELLED]: [],
 };
 
-/**
- * The database refusing a second edition of a series in one Season — the
- * (eventSeriesId, sportLeagueSeasonId) unique constraint, recognised by Prisma's P2002 and the
- * column it names. Duck-typed so the service does not depend on the Prisma client.
- */
+/** A Prisma unique violation's target, or null. Duck-typed so the service does not depend on the Prisma client. */
 function uniqueViolationTarget(error: unknown): string | null {
   if (typeof error !== 'object' || error === null) return null;
   const { code, meta } = error as { code?: unknown; meta?: { target?: unknown } };
   return code === 'P2002' ? JSON.stringify(meta?.target ?? '') : null;
-}
-
-function isEditionConflict(error: unknown): boolean {
-  const target = uniqueViolationTarget(error);
-  return target !== null && (target.includes('sport_league_season_id') || target.includes('sportLeagueSeasonId'));
 }
 
 /** The database refusing a second event on one Season slot (#2004): the slot's unique key. */
@@ -169,7 +158,6 @@ function isSlotConflict(error: unknown): boolean {
 
 export interface SportEventServiceDeps {
   sportEvents: SportEventRepository;
-  eventSeries: EventSeriesRepository;
   sportLeagues: SportLeagueRepository;
   sports: SportRepository;
   /** The Season slot a test event is made on (#2004). */
@@ -223,7 +211,7 @@ export class SportEventService {
    * since the sync makes every other. The slot must be free and in its league's current Season;
    * the event's dates are the slot's, and it gets its league's default round count. 404
    * SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST, SEASON_SLOT_NOT_CURRENT; 409
-   * SEASON_SLOT_TAKEN, EVENT_EDITION_ALREADY_EXISTS.
+   * SEASON_SLOT_TAKEN.
    */
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const found = await this.deps.seasons.findSlot(input.seasonSlotId);
@@ -239,7 +227,6 @@ export class SportEventService {
     const dates = eventDatesFromSlots([slot]);
     if (dates === null) throw new Error(`Season slot ${slot.id} has no start.`);
     const rounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
-    const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
       event: {
@@ -250,7 +237,7 @@ export class SportEventService {
         endDate: dates.endDate ?? undefined,
         status: SportEventStatus.DRAFT,
         rounds,
-        eventSeriesId: seriesIdOf(seriesIdByName, input.name),
+        sportLeagueId: sportLeague.id,
         sportLeagueSeasonId: found.sportLeagueSeasonId,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
         seasonSlotIds: [slot.id],
@@ -268,12 +255,11 @@ export class SportEventService {
   /**
    * #385, #2003 — one Season's provider slate, created in that Season in one action, in a fixed number of
    * queries however long the slate (#1253), each with the provider's id for it (#2004). Events PoolMaster already has are skipped rather than refused,
-   * so the import can be run again: one already linked to the provider event, or a series that
-   * already has an edition that Season (an admin-authored one, say, or an earlier event of the
-   * same name in this slate). A provider event whose start has passed is skipped too (#1821):
+   * so the import can be run again: one already linked to the provider event. Events are told apart
+   * by the provider's id, never by name (#2010): a Season slot is played by at most one event, a
+   * unique key on its event slot. A provider event whose start has passed is skipped too (#1821):
    * created now it would be a draft nobody can release or play. One already linked is still
-   * reported as linked, and keeps updating through `keepProviderEventsCurrent`. An edition another admin creates while the import runs is not
-   * skipped: it refuses the whole import with 409, and running it again skips that event.
+   * reported as linked, and keeps updating through `keepProviderEventsCurrent`.
    */
   async importProviderSeason(input: {
     sportLeagueId: string;
@@ -287,11 +273,6 @@ export class SportEventService {
       input.providerId,
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
     )).flatMap((event) => externalIdsAt(event, input.providerId)));
-    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !providerEventStarted(providerEvent, now));
-    const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
-    const seriesWithEdition = new Set(unlinked.length === 0
-      ? []
-      : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: input.sportLeagueSeasonId })).map((event) => event.eventSeriesId));
 
     const editions: NewEdition[] = [];
     const skipped: ProviderSeasonImport['skipped'] = [];
@@ -305,13 +286,7 @@ export class SportEventService {
         skipped.push({ externalId, name, reason: 'ALREADY_STARTED' });
         continue;
       }
-      const eventSeriesId = seriesIdOf(seriesIdByName, name);
-      if (seriesWithEdition.has(eventSeriesId)) {
-        skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
-        continue;
-      }
-      seriesWithEdition.add(eventSeriesId);
-      editions.push(providerEdition(seriesIdByName, { ...providerEvent, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
+      editions.push(providerEdition({ ...providerEvent, sportLeagueId: sportLeague.id, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
     }
     const created = await this.createEditions(sportLeague, editions);
 
@@ -647,18 +622,11 @@ export class SportEventService {
     return event;
   }
 
-  /** The sport league's series of these names, each created on first use, by name. */
-  private async resolveSeries(sportLeague: SportLeague, names: readonly string[]): Promise<Map<string, string>> {
-    const series = await this.deps.eventSeries.findOrCreateMany(sportLeague.id, [...new Set(names)]);
-    return new Map(series.map((row) => [row.name, row.id]));
-  }
-
   /**
    * Creates new editions in a fixed number of queries, however many (#1253): the events in one
    * insert, then every event's rounds and default tiers in one insert each. A new event has no
    * field, no contests and every tier empty, so its summary is built from what was written
-   * rather than read back. 409 EVENT_EDITION_ALREADY_EXISTS when a series already has an
-   * edition in the Season; then none of the events is created.
+   * rather than read back.
    */
   private async createEditions(
     sportLeague: SportLeague,
@@ -672,17 +640,6 @@ export class SportEventService {
       events = await this.deps.sportEvents.createMany(editions.map((edition) => edition.event));
     } catch (error) {
       if (isSlotConflict(error)) throw new SportEventError('That slot already has an event.', 'SEASON_SLOT_TAKEN', 409);
-      if (isEditionConflict(error)) {
-        // Every caller creates editions of one Season.
-        const [first] = editions;
-        throw new SportEventError(
-          editions.length === 1
-            ? `"${first.event.name}" already has an edition in this Season.`
-            : 'One of these events already has an edition in this Season; none were created.',
-          'EVENT_EDITION_ALREADY_EXISTS',
-          409,
-        );
-      }
       throw error;
     }
     await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
@@ -766,13 +723,6 @@ interface NewEdition {
   rounds: readonly SportEventRoundSchedule[];
 }
 
-/** The id of the series of this name, which `resolveSeries` found or created. */
-function seriesIdOf(seriesIdByName: ReadonlyMap<string, string>, name: string): string {
-  const id = seriesIdByName.get(name);
-  if (id === undefined) throw new Error(`No event series "${name}" was found or created.`);
-  return id;
-}
-
 /** The event's ids at one provider, as the adapter keys it: one at most, since an event has one id per provider. */
 function externalIdsAt(event: SportEvent, providerId: string): string[] {
   return event.providerMappings.filter((mapping) => providerSourceIdOf(mapping.providerCode) === providerId).map((mapping) => mapping.externalId);
@@ -791,8 +741,7 @@ function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminS
  * `rounds` always matches the rounds created.
  */
 function providerEdition(
-  seriesIdByName: ReadonlyMap<string, string>,
-  input: ProviderEventDetail & { externalId: string; sportLeagueSeasonId: string; providerId: string; rounds?: number },
+  input: ProviderEventDetail & { externalId: string; sportLeagueId: string; sportLeagueSeasonId: string; providerId: string; rounds?: number },
 ): NewEdition {
   const schedule = input.rounds === undefined
     ? providerEventRoundSchedule(input.startDate, input.endDate)
@@ -806,7 +755,7 @@ function providerEdition(
       endDate: input.endDate ?? undefined,
       status: SportEventStatus.DRAFT,
       rounds: schedule.length,
-      eventSeriesId: seriesIdOf(seriesIdByName, input.name),
+      sportLeagueId: input.sportLeagueId,
       sportLeagueSeasonId: input.sportLeagueSeasonId,
       autoLifecycleEnabled: true,
     },

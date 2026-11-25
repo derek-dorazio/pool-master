@@ -13,8 +13,8 @@ describe('Start paths', () => {
     expect(parseStartReturnPath('/invite/ABC?sport=american-football&page=x')).toBeNull();
   });
 
-  it('sends an open offer to Create contest on its edition and starting round, and one not yet open to the league home', () => {
-    const bracket = offerFixture('nfl-bracket', { startsAtRound: 3, edition: { sportEventId: 'event-9', name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-09T18:00:00.000Z', endDate: null } });
+  it('sends an open offer to Create contest on the event of its next slot and its starting round, and one not yet open to the league home', () => {
+    const bracket = offerFixture('nfl-bracket', { startsAtRound: 3, nextSlot: { seasonSlotId: 'season-slot-9', sportEventId: 'event-9', name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-09T18:00:00.000Z', endDate: null } });
 
     expect(buildStartDestination('BIGDAWGS', REQUEST, bracket))
       .toBe(`/league/BIGDAWGS/admin/contests/new?template=${bracket.template.id}&event=event-9&startRound=3`);

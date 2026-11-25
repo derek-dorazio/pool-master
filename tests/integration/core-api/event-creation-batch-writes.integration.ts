@@ -93,24 +93,18 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     expect(first).toMatchObject({ tierCount: 6, loadedParticipantCount: 0, adminCounts: { emptyTierLabels: ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6'], contestCount: 0 } });
   });
 
-  it('skips an event already linked, a series that has an edition that Season, and a second event of one name, creating the rest', async () => {
+  it('skips an event already linked, and creates a provider event whose name a hand-made event of the Season shares: events are told apart by feed id, never by name', async () => {
     const tour = await golfTour();
-    const [linked, edition, fresh] = providerSlate(3, 2087);
+    const [linked, fresh] = providerSlate(2, 2087);
     const { sportEvents } = integrationSportEventServices();
-    await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: [expectDefined(linked)] });
-    await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, expectDefined(edition).startDate), name: expectDefined(edition).name });
-    const sameName = { ...expectDefined(fresh), externalId: `slate-${randomUUID()}` };
+    const sportLeagueSeasonId = await fixtureSeasonId(getPrisma(), tour.id, 2087);
+    await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, providerEvents: [expectDefined(linked)] });
+    await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, expectDefined(fresh).startDate), name: expectDefined(fresh).name });
 
-    const result = await sportEvents.importProviderSeason({
-      sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: [expectDefined(linked), expectDefined(edition), expectDefined(fresh), sameName],
-    });
+    const result = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, providerEvents: [expectDefined(linked), expectDefined(fresh)] });
 
     expect(result.created.map(({ event }) => event.providerMappings.map((mapping) => mapping.externalId))).toEqual([[expectDefined(fresh).externalId]]);
-    expect(result.skipped).toEqual([
-      { externalId: expectDefined(linked).externalId, name: expectDefined(linked).name, reason: 'ALREADY_LINKED' },
-      { externalId: expectDefined(edition).externalId, name: expectDefined(edition).name, reason: 'EDITION_EXISTS' },
-      { externalId: sameName.externalId, name: sameName.name, reason: 'EDITION_EXISTS' },
-    ]);
+    expect(result.skipped).toEqual([{ externalId: expectDefined(linked).externalId, name: expectDefined(linked).name, reason: 'ALREADY_LINKED' }]);
   });
 });
 
@@ -129,25 +123,29 @@ describe('Creating one event (#1253)', () => {
     // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
     // The tour is synced: its selected mapping, provider league and provider are read with the
     // league and again with the event read back, beside the event's own provider ids (#2004). The
-    // test slot is read once with its definition and any event on it, and linked in one insert.
+    // test slot is read once with its definition and any event on it, and linked in one insert. The
+    // event read back carries the slot definitions it covers (#2010), a second slot read #2089
+    // folds into the summary's. No series is found or created (#2010).
     expect(statementCounts(statements)).toEqual([
-      ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
-      ['SELECT event_series', 1], ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
-      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 1], ['SELECT sport_events', 1], ['SELECT sport_league_phase_slots', 1],
-      ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_phase_slots', 1],
+      ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
+      ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
+      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 2], ['SELECT sport_events', 1], ['SELECT sport_league_phase_slots', 2],
+      ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_phase_slots', 2],
       ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);
   });
 
-  it('refuses a second edition of a series in a Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
+  it('creates a second event of the same name in a Season: nothing refuses a name twice, as no event is identified by its name', async () => {
     const tour = await golfTour();
     const { sportEvents } = integrationSportEventServices();
-    await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'The Batch Classic' });
+    const first = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'The Batch Classic' });
 
-    await expect(sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'The Batch Classic' }))
-      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409 });
+    const second = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'The Batch Classic' });
+
+    expect(second.event.id).not.toBe(first.event.id);
+    expect(second.event.sportLeagueSeasonId).toBe(first.event.sportLeagueSeasonId);
   });
 });
 

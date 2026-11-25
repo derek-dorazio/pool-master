@@ -810,8 +810,11 @@ Contest:
   17, and its migration deletes stored tie picks. Games can still end tied, and today's rules
   for that are kept: in pick'em a pick on a tied game earns nothing (a tie has no winner; a
   spread push is still a push), and in survivor a tied game puts the entry out, as a loss does.
-  Brackets cover POSTSEASON slots only, where one side always advances: a bracket template
-  that lists a slot outside a POSTSEASON phase is refused (slice 11).
+  Brackets are for elimination tournaments, whatever the phase (Derek 2026-11-25: "postseason is
+  not a requirement"): a bracket template lists only knockout slots, played head to head and not
+  a WEEK of a season's games, so a playoff round and a tennis Slam both fit. Any other slot is
+  refused, read from the slot's kind and match format (slice 11); the ATP and WTA bracket
+  templates stay.
 - No multi-tournament field pools (Derek 2026-11-24, slices 11 and 15: "not practical; the
   Majors cup serves that purpose"): tiered, budget and quick pick contests never span events.
   The PGA and LPGA majors pools and the ATP and WTA Grand Slam tiered pools are deleted by

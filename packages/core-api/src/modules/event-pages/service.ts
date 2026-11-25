@@ -1,7 +1,8 @@
 /**
  * Event pages (#1007, `plans/event-landing-pages.md`): public pages for one event a fan would
- * name, each a curated list of offers. An offer is shown with its series' next edition that can
- * still take the contest, and whether it takes it now; an offer with no such edition is left out.
+ * name, each a curated list of offers. An offer is shown with its slot definition's next Season
+ * slot that can still take the contest (#2010), and whether it takes it now; an offer with no such
+ * slot is left out.
  */
 import type { FastifyBaseLogger } from 'fastify';
 import type { EventPageRepository } from '@poolmaster/shared/db';
@@ -10,7 +11,7 @@ import {
   EventPageOfferState,
   SelectionType,
   type EventPage,
-  type EventPageEdition,
+  type EventPageNextSlot,
   type EventPageOffer,
   type Sport,
 } from '@poolmaster/shared/domain';
@@ -27,19 +28,19 @@ export class EventPageNotFoundError extends Error {
   }
 }
 
-/** An offer as the page shows it: with its edition, whether it opens now, and a bracket's starting round. */
+/** An offer as the page shows it: with its next Season slot, whether it opens now, and a bracket's starting round. */
 export interface EventPageOfferView {
   offer: EventPageOffer;
   startsAtRound: number | null;
   state: EventPageOfferState;
-  edition: EventPageEdition;
-  /** When the setup's cutoff on the edition falls, after which this offer no longer shows as it does now. */
+  nextSlot: EventPageNextSlot;
+  /** When the setup's cutoff on the slot's event falls, after which this offer no longer shows as it does now. */
   closesAt: Date;
 }
 
 export interface EventPageView {
   page: EventPage;
-  /** The offers that have an edition left, in order; none for a retired page. */
+  /** The offers that have a Season slot left, in order; none for a retired page. */
   offers: EventPageOfferView[];
 }
 
@@ -92,7 +93,7 @@ export class EventPageService {
 
   /**
    * The active pages, by sport then display order; with `upcoming`, only those whose primary offer
-   * shows an edition coming, soonest first: what a Coming up row shows (#1202).
+   * shows a slot coming, soonest first: what a Coming up row shows (#1202).
    */
   async listPages(sport?: Sport, upcoming = false): Promise<EventPageView[]> {
     this.logger?.debug({ action: 'eventPages.list.enter', sport, upcoming }, 'Listing event pages');
@@ -105,7 +106,7 @@ export class EventPageService {
     return views
       .flatMap((view) => {
         const primary = view.offers.find(({ offer }) => offer.isPrimary);
-        return primary === undefined ? [] : [{ view, startDate: primary.edition.startDate.getTime() }];
+        return primary === undefined ? [] : [{ view, startDate: primary.nextSlot.startDate.getTime() }];
       })
       .sort((left, right) => left.startDate - right.startDate)
       .map(({ view }) => view);
@@ -113,41 +114,41 @@ export class EventPageService {
 
   /**
    * The active page each event is offered on, by sport event id: the event an offer shows now
-   * (its series' next edition still taking the contest). Where two pages offer one event, the
+   * (its next Season slot's, still taking the contest). Where two pages offer one event, the
    * first in display order wins. Emails about an event link to its page.
    */
   async pagesByEvent(): Promise<Map<string, EventPage>> {
     const byEvent = new Map<string, EventPage>();
     for (const view of await this.listPages()) {
       for (const offer of view.offers) {
-        if (!byEvent.has(offer.edition.sportEventId)) byEvent.set(offer.edition.sportEventId, view.page);
+        if (!byEvent.has(offer.nextSlot.sportEventId)) byEvent.set(offer.nextSlot.sportEventId, view.page);
       }
     }
     return byEvent;
   }
 
   /**
-   * The offers that have an edition left, in order, each with it. Every offer's series is read
-   * at once and every edition's opening asked side by side, so the reads are the same for any
+   * The offers that have a Season slot left, in order, each with it. Every offer's slots are read
+   * at once and every slot's opening asked side by side, so the reads are the same for any
    * number of offers (#1316).
    */
   private async showOffers(offers: readonly EventPageOffer[]): Promise<EventPageOfferView[]> {
-    const editions = await this.pages.findEditionsNotOver(offers);
+    const slots = await this.pages.findSlotsNotOver(offers.map((offer) => offer.sportLeaguePhaseSlotId));
     const askOpening = this.openings();
-    const shown = await Promise.all(offers.map((offer, index) => showOffer(offer, editions[index] ?? [], askOpening)));
+    const shown = await Promise.all(offers.map((offer, index) => showOffer(offer, slots[index] ?? [], askOpening)));
     return shown.filter((view): view is EventPageOfferView => view !== null);
   }
 }
 
-/** The offer with its series' first edition not past the contest's cutoff, or null when none is left. */
-async function showOffer(offer: EventPageOffer, editions: readonly EventPageEdition[], askOpening: ContestOpeningAsk): Promise<EventPageOfferView | null> {
+/** The offer with its slot definition's first Season slot not past the contest's cutoff, or null when none is left. */
+async function showOffer(offer: EventPageOffer, slots: readonly EventPageNextSlot[], askOpening: ContestOpeningAsk): Promise<EventPageOfferView | null> {
   const startsAtRound = offerStartsAtRound(offer);
   const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType, startsAtRound };
-  for (const edition of editions) {
-    const { opening, closesAt } = await askOpening(edition.sportEventId, setup);
+  for (const nextSlot of slots) {
+    const { opening, closesAt } = await askOpening(nextSlot.sportEventId, setup);
     if (opening !== ContestOpening.CLOSED && closesAt !== null) {
       const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
-      return { offer, startsAtRound, state, edition, closesAt };
+      return { offer, startsAtRound, state, nextSlot, closesAt };
     }
   }
   return null;
