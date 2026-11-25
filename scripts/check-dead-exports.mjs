@@ -19,9 +19,12 @@
  * Types and interfaces are left out: they are erased and carry no path. Fixture files
  * (`…test-fixtures.ts`, `…test-context.tsx`, `…fixtures.ts`) count as tests.
  *
- * The lookup is by name, so an export shadowed by a same-named identifier elsewhere is missed,
- * never wrongly reported. An enum's `…Order` list is exempt (the enum-order rule requires one),
- * and so is a default export, which a framework or tool loads. A test hook that must stay takes
+ * Uses are identifier tokens in code, read with the same parser: a name in a comment or a string
+ * is not a use, and neither is an import or export list, so an `export { x } from` barrel line
+ * keeps nothing alive. The lookup is by name, so an export shadowed by a same-named identifier
+ * elsewhere is missed, never wrongly reported. An enum's order list (`…Order = explicitOrder(…)`
+ * or `alphabeticalOrder(…)`) is exempt, since the enum-order rule requires one, and so is a
+ * default export, which a framework or tool loads. A test hook that must stay takes
  * `// poolmaster-allow-test-export: <reason>` on the line before; the default is to delete it and
  * test through the public surface.
  *
@@ -43,8 +46,8 @@ const PRODUCTION_ROOTS = ['packages/core-api/src/', 'clients/poolmaster/src/', '
 const SOURCE = /\.(ts|tsx|mts|mjs|js|cjs)$/;
 const NEVER_READ = /(^|\/)(node_modules|dist|generated)\//;
 const TEST_LIKE = /(\.(test|spec|stories)\.[cm]?[jt]sx?$)|((^|\/)(__tests__|test|tests|e2e|fixtures)\/)|([/-]test-(fixtures?|context|helpers?)\.tsx?$)|([/-]fixtures?\.tsx?$)/;
-const IDENTIFIER = /[A-Za-z_$][\w$]*/g;
 const MARKER = /poolmaster-allow-test-export(?![\w-])\s*:\s*\S/;
+const ORDER_BUILDERS = new Set(['explicitOrder', 'alphabeticalOrder']);
 
 /** Production source: under a production root, not a test, story, test folder or generated client. */
 export function isProduction(path) {
@@ -60,6 +63,18 @@ function hasModifier(node, kind) {
   return ts.canHaveModifiers(node) && (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === kind);
 }
 
+function parse(path, text) {
+  const kind = /\.tsx$/.test(path) ? ts.ScriptKind.TSX : /\.[cm]?jsx?$/.test(path) ? ts.ScriptKind.JS : ts.ScriptKind.TS;
+  return ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, kind);
+}
+
+/** An enum's order list, which the enum-order rule requires: `…Order = explicitOrder<…>(…)` or `alphabeticalOrder(…)`. */
+function isEnumOrderList(declaration) {
+  let init = declaration.initializer;
+  while (init && (ts.isAsExpression(init) || ts.isSatisfiesExpression(init))) init = init.expression;
+  return Boolean(init && ts.isCallExpression(init) && ts.isIdentifier(init.expression) && ORDER_BUILDERS.has(init.expression.text));
+}
+
 function markedAsTestHook(sourceFile, node) {
   const leading = ts.getLeadingCommentRanges(sourceFile.text, node.getFullStart()) ?? [];
   return leading.some((range) => MARKER.test(sourceFile.text.slice(range.pos, range.end)));
@@ -67,10 +82,10 @@ function markedAsTestHook(sourceFile, node) {
 
 /** The names a production file exports, by declaration or by a local `export { … }`, minus the exempt ones. */
 export function exportedNames(path, text) {
-  const sourceFile = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const sourceFile = parse(path, text);
   const names = [];
   const add = (name, node) => {
-    if (!name || /Order$/.test(name) || markedAsTestHook(sourceFile, node)) return;
+    if (!name || markedAsTestHook(sourceFile, node)) return;
     names.push(name);
   };
   for (const statement of sourceFile.statements) {
@@ -82,7 +97,7 @@ export function exportedNames(path, text) {
     if (!hasModifier(statement, ts.SyntaxKind.ExportKeyword) || hasModifier(statement, ts.SyntaxKind.DefaultKeyword)) continue;
     if (ts.isVariableStatement(statement)) {
       for (const declaration of statement.declarationList.declarations) {
-        if (ts.isIdentifier(declaration.name)) add(declaration.name.text, statement);
+        if (ts.isIdentifier(declaration.name) && !isEnumOrderList(declaration)) add(declaration.name.text, statement);
       }
     } else if (ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) {
       continue;
@@ -93,10 +108,20 @@ export function exportedNames(path, text) {
   return names;
 }
 
-/** How many times each identifier appears in a text. */
-export function identifierCounts(text) {
+/**
+ * How many times each identifier token appears in a file's code. Comments and strings are not
+ * code, so a name mentioned in either is not a use. Import and export lists are not uses either:
+ * an `export { x } from './x'` barrel line, or an `import { x }` never read, keeps nothing alive;
+ * the code that reads `x` does.
+ */
+export function identifierCounts(path, text) {
   const counts = new Map();
-  for (const [word] of text.matchAll(IDENTIFIER)) counts.set(word, (counts.get(word) ?? 0) + 1);
+  const visit = (node) => {
+    if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) return;
+    if (ts.isIdentifier(node)) counts.set(node.text, (counts.get(node.text) ?? 0) + 1);
+    ts.forEachChild(node, visit);
+  };
+  visit(parse(path, text));
   return counts;
 }
 
@@ -171,7 +196,7 @@ export function readRepo(repoRoot) {
     } catch {
       continue;
     }
-    files.set(path, { identifiers: identifierCounts(text), exports: isProduction(path) ? exportedNames(path, text) : null });
+    files.set(path, { identifiers: identifierCounts(path, text), exports: isProduction(path) ? exportedNames(path, text) : null });
   }
   return files;
 }

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataGrid } from "./data-grid";
-import { optionsFromLabels } from "./data-grid-filters";
+import { optionsFromLabels } from "../../../test/data-grid-options";
 
 type Team = { id: string; name: string; conference: string };
 

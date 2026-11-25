@@ -228,7 +228,7 @@ A new enum in `packages/shared/domain/enums.ts` states its order beside it, as
 `<Name>Order`: `explicitOrder({...})` giving every value its place, or
 `alphabeticalOrder('<Name>')` when the set has no natural order and its values sort A
 to Z by their display strings, in the reader's language. Every list, grid, picker and sort uses that
-order through `compareByEnumOrder` or `sortByEnumOrder`; no consumer keeps a
+order through `compareByEnumOrder`; no consumer keeps a
 `Record<Enum, number>` rank map of its own. A screen that genuinely needs another
 order (the Home page's current contests, Open before Live) gets a named order beside
 the enum, such as `ContestStatusOrderForHomeCurrent`, with a comment saying where it

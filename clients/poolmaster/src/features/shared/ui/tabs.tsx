@@ -1,39 +1,8 @@
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "./class-names";
 import { radioGroupKeyboard } from "./radio-group-keys";
 
 export const Tabs = TabsPrimitive.Root;
-
-export function TabsList({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
-  return (
-    <TabsPrimitive.List
-      className={cn(
-        "inline-flex max-w-full flex-wrap rounded-2xl border border-border bg-background p-1",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-export function TabsTrigger({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>) {
-  return (
-    <TabsPrimitive.Trigger
-      className={cn(
-        "rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition data-[state=active]:bg-selected data-[state=active]:text-on-inverse disabled:cursor-not-allowed disabled:opacity-60",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
 
 export const TabsContent = TabsPrimitive.Content;
 
