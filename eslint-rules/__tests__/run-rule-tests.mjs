@@ -31,6 +31,7 @@ import noNodeEnvReads from '../no-node-env-reads.mjs';
 import noSportBranching from '../no-sport-branching.mjs';
 import noClockYearOrLeagueTables from '../no-clock-year-or-league-tables.mjs';
 import noEnumStringLiterals from '../no-enum-string-literals.mjs';
+import noDtoShapedLocalTypes from '../no-dto-shaped-local-types.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
@@ -1507,6 +1508,35 @@ ruleTester.run('no-enum-string-literals', noEnumStringLiterals, {
     // A file over its baseline reports every hit, so it cannot add one.
     {
       code: "if (a === 'OPEN') {}\nif (b === 'DRAFT') {}",
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2107: no local copy of a generated hey-api type under another name. Shapes come from the real
+// generated file (LeagueDto: id, leagueCode, name, description, isActive, memberCount, ...).
+ruleTester.run('no-dto-shaped-local-types', noDtoShapedLocalTypes, {
+  valid: [
+    // The DTO itself, and Pick<>.
+    'type Row = LeagueDto;',
+    "type Row = Pick<LeagueDto, 'id' | 'name'>;",
+    // Component props are left alone.
+    'interface LeagueCardProps { id: string; name: string; leagueCode: string; memberCount: number }',
+    // Fewer than 3 fields, or under 75% shared.
+    'interface Row { id: string; name: string }',
+    'interface Row { id: string; name: string; leagueCode: string; tone: string; width: number }',
+    // A shape that only shares names takes a marker with its reason.
+    '// poolmaster-allow-dto-shape: form values, not the league\ninterface FormValues { id: string; name: string; leagueCode: string }',
+  ],
+  invalid: [
+    { code: 'interface LeagueRow { id: string; name: string; leagueCode: string; memberCount: number }', errors: [{ messageId: 'dtoCopy' }] },
+    { code: 'export type LeagueRow = { id: string; name: string; isActive: boolean };', errors: [{ messageId: 'dtoCopy' }] },
+    { code: '// poolmaster-allow-dto-shape\ninterface Row { id: string; name: string; leagueCode: string }', errors: [{ messageId: 'missingReason' }] },
+    { code: '// poolmaster-allow-dto-shape: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
+    {
+      code: 'interface A { id: string; name: string; leagueCode: string }\ninterface B { id: string; name: string; isActive: boolean }',
       filename: 'legacy.ts',
       options: [{ baseline: { 'legacy.ts': 1 } }],
       errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],

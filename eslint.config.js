@@ -36,6 +36,12 @@ const ENUM_STRING_LITERAL_BASELINE = Object.fromEntries(
     .filter(([key]) => !key.startsWith('$')),
 );
 
+// #2107: the DTO-shaped local types each grandfathered web file may still have, by repo path.
+const DTO_SHAPE_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/dto-shape-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
 /**
  * Selector sets are hoisted to module scope on purpose.
  *
@@ -613,7 +619,11 @@ export default tseslint.config(
     files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
     ignores: ['clients/poolmaster/src/**/test/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/*.stories.tsx'],
     plugins: { poolmaster },
-    rules: { 'poolmaster/no-enum-string-literals': ['error', { baseline: ENUM_STRING_LITERAL_BASELINE }] },
+    rules: {
+      'poolmaster/no-enum-string-literals': ['error', { baseline: ENUM_STRING_LITERAL_BASELINE }],
+      // #2107: no local copy of a generated hey-api type under another name.
+      'poolmaster/no-dto-shaped-local-types': ['error', { baseline: DTO_SHAPE_BASELINE }],
+    },
   },
   {
     // What a league plan allows comes from the plan entitlements service (#944), the one place
