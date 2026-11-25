@@ -11,7 +11,7 @@ import { SportLeagueStructureResponseSchema } from '@poolmaster/shared/dto';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
-import { fixtureTourId } from '../../support/event-edition';
+import { fixtureSeasonId, fixtureTourId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -272,6 +272,25 @@ describe('the database checks on competitions', () => {
 
     await expect(getPrisma().sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: otherPhase.id, code: 'REGULAR', orderIndex: 1 } }))
       .rejects.toThrow(Prisma.PrismaClientKnownRequestError);
+  });
+
+  it('refuse a Season competition whose Season does not hold its phase, or whose competition is in another phase', async () => {
+    const prisma = getPrisma();
+    const league = await testLeague();
+    const regular = await regularPhase(league.id);
+    const postseason = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: league.id, phase: LeaguePhase.POSTSEASON, isSynced: true } });
+    const regularCompetition = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: regular.id, code: 'REGULAR', orderIndex: 1 } });
+    const playoff = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: postseason.id, code: 'PLAYOFF', orderIndex: 1 } });
+    const sportLeagueSeasonId = await fixtureSeasonId(prisma, league.id, 2026);
+    await prisma.sportLeagueSeasonPhase.create({ data: { sportLeagueId: league.id, sportLeagueSeasonId, sportLeaguePhaseId: regular.id } });
+    const base = { sportLeagueId: league.id, sportLeagueSeasonId };
+
+    await expect(prisma.sportLeagueSeasonCompetition.create({ data: { ...base, sportLeaguePhaseId: postseason.id, sportLeagueCompetitionId: playoff.id } }))
+      .rejects.toThrow(/sport_league_season_competitions_season_phase_fkey/);
+    await expect(prisma.sportLeagueSeasonCompetition.create({ data: { ...base, sportLeaguePhaseId: regular.id, sportLeagueCompetitionId: playoff.id } }))
+      .rejects.toThrow(/sport_league_season_competitions_competition_fkey/);
+    await expect(prisma.sportLeagueSeasonCompetition.create({ data: { ...base, sportLeaguePhaseId: regular.id, sportLeagueCompetitionId: regularCompetition.id } }))
+      .resolves.toMatchObject({ sportLeagueCompetitionId: regularCompetition.id });
   });
 });
 

@@ -53,7 +53,7 @@ export async function seasonCompetitionFor(
     skipDuplicates: true,
   });
   await prisma.sportLeagueSeasonCompetition.createMany({
-    data: [{ sportLeagueId, sportLeagueSeasonId, sportLeagueCompetitionId: competition.competitionId }],
+    data: [{ sportLeagueId, sportLeagueSeasonId, sportLeaguePhaseId: competition.phaseId, sportLeagueCompetitionId: competition.competitionId }],
     skipDuplicates: true,
   });
   const seasonCompetition = await prisma.sportLeagueSeasonCompetition.findUniqueOrThrow({

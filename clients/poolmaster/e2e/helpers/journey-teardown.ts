@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
+import type { SportLeagueSeasonListResponse } from '@poolmaster/shared/generated/hey-api';
 import { adminApiHeaders, attempt, expectOk, type AuthHeaders, type Log } from './admin-api';
 import type { AdminCredentials } from './admin-session';
 import { findSeededSportLeagueThroughApi } from './test-event';
@@ -133,9 +134,7 @@ async function removeRunTestSlots(api: APIRequestContext, headers: AuthHeaders, 
 /** Every test slot of every Season of a sport league, as its Season list reads them. */
 export async function listTestSlots(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string): Promise<Array<{ id: string; label: string | null }>> {
   const response = await expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/seasons`, { headers }), 'list Seasons');
-  const { seasons } = (await response.json()) as {
-    seasons: Array<{ phases: Array<{ competitions: Array<{ slots: Array<{ id: string; isTestData: boolean; label: string | null }> }> }> }>;
-  };
+  const { seasons } = (await response.json()) as SportLeagueSeasonListResponse;
   return seasons
     .flatMap((season) => season.phases.flatMap((phase) => phase.competitions.flatMap((competition) => competition.slots)))
     .filter((slot) => slot.isTestData);

@@ -80,9 +80,11 @@ export async function withCurrentSeason(
     data: phases.map((phase) => ({ sportLeagueId, sportLeagueSeasonId: seasonId, sportLeaguePhaseId: phase.id })),
     skipDuplicates: true,
   });
-  const competitions = await prisma.sportLeagueCompetition.findMany({ where: { sportLeagueId }, select: { id: true } });
+  const competitions = await prisma.sportLeagueCompetition.findMany({ where: { sportLeagueId }, select: { id: true, sportLeaguePhaseId: true } });
   await prisma.sportLeagueSeasonCompetition.createMany({
-    data: competitions.map((competition) => ({ sportLeagueId, sportLeagueSeasonId: seasonId, sportLeagueCompetitionId: competition.id })),
+    data: competitions.map((competition) => ({
+      sportLeagueId, sportLeagueSeasonId: seasonId, sportLeaguePhaseId: competition.sportLeaguePhaseId, sportLeagueCompetitionId: competition.id,
+    })),
     skipDuplicates: true,
   });
   await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { currentSeasonId: seasonId } });

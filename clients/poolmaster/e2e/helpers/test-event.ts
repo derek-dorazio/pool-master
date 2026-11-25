@@ -1,4 +1,5 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import type { SportLeagueSeasonListResponse, SportLeagueStructureResponse } from '@poolmaster/shared/generated/hey-api';
 import { submitAndRead } from './browser-writes';
 import { expectOk, type AuthHeaders } from './admin-api';
 
@@ -36,8 +37,8 @@ async function currentSeasonDefinitionId(api: APIRequestContext, headers: AuthHe
     expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/structure`, { headers }), 'read the league structure'),
     expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/seasons`, { headers }), 'list Seasons'),
   ]);
-  const { phases } = (await structureResponse.json()) as { phases: Array<{ competitions: Array<{ id: string; slots: Array<{ id: string; slotKind: string }> }> }> };
-  const { seasons } = (await seasonsResponse.json()) as { seasons: Array<{ isCurrent: boolean; phases: Array<{ competitions: Array<{ sportLeagueCompetitionId: string }> }> }> };
+  const { phases } = (await structureResponse.json()) as SportLeagueStructureResponse;
+  const { seasons } = (await seasonsResponse.json()) as SportLeagueSeasonListResponse;
   const seasonCompetitions = new Set(
     seasons.find((season) => season.isCurrent)?.phases.flatMap((phase) => phase.competitions.map((competition) => competition.sportLeagueCompetitionId)) ?? [],
   );

@@ -24,6 +24,7 @@ CREATE TABLE "sport_league_competitions" (
 CREATE UNIQUE INDEX "sport_league_competitions_sport_league_id_code_key" ON "sport_league_competitions"("sport_league_id", "code");
 CREATE UNIQUE INDEX "sport_league_competitions_sport_league_phase_id_order_index_key" ON "sport_league_competitions"("sport_league_phase_id", "order_index");
 CREATE UNIQUE INDEX "sport_league_competitions_sport_league_id_id_key" ON "sport_league_competitions"("sport_league_id", "id");
+CREATE UNIQUE INDEX "sport_league_competitions_sport_league_phase_id_id_key" ON "sport_league_competitions"("sport_league_phase_id", "id");
 CREATE INDEX "sport_league_competitions_sport_league_id_sport_league_phas_idx" ON "sport_league_competitions"("sport_league_id", "sport_league_phase_id");
 ALTER TABLE "sport_league_competitions"
   ADD CONSTRAINT "sport_league_competitions_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE CASCADE ON UPDATE CASCADE,
@@ -41,6 +42,7 @@ CREATE TABLE "sport_league_season_competitions" (
   "id" UUID NOT NULL DEFAULT gen_random_uuid(),
   "sport_league_id" UUID NOT NULL,
   "sport_league_season_id" UUID NOT NULL,
+  "sport_league_phase_id" UUID NOT NULL,
   "sport_league_competition_id" UUID NOT NULL,
   "status" "PrismaSeasonCompetitionStatus" NOT NULL DEFAULT 'SCHEDULED',
   "champion_participant_id" UUID,
@@ -55,11 +57,12 @@ CREATE INDEX "sport_league_season_competitions_sport_league_id_sport_leag_idx" O
 CREATE INDEX "sport_league_season_competitions_champion_participant_id_idx" ON "sport_league_season_competitions"("champion_participant_id");
 ALTER TABLE "sport_league_season_competitions"
   ADD CONSTRAINT "sport_league_season_competitions_season_fkey" FOREIGN KEY ("sport_league_id", "sport_league_season_id") REFERENCES "sport_league_seasons"("sport_league_id", "id") ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT "sport_league_season_competitions_competition_fkey" FOREIGN KEY ("sport_league_id", "sport_league_competition_id") REFERENCES "sport_league_competitions"("sport_league_id", "id") ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT "sport_league_season_competitions_season_phase_fkey" FOREIGN KEY ("sport_league_season_id", "sport_league_phase_id") REFERENCES "sport_league_season_phases"("sport_league_season_id", "sport_league_phase_id") ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT "sport_league_season_competitions_competition_fkey" FOREIGN KEY ("sport_league_phase_id", "sport_league_competition_id") REFERENCES "sport_league_competitions"("sport_league_phase_id", "id") ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT "sport_league_season_competitions_champion_fkey" FOREIGN KEY ("champion_participant_id") REFERENCES "participants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
-INSERT INTO "sport_league_season_competitions" ("sport_league_id", "sport_league_season_id", "sport_league_competition_id", "updated_at")
-SELECT sp."sport_league_id", sp."sport_league_season_id", c."id", now()
+INSERT INTO "sport_league_season_competitions" ("sport_league_id", "sport_league_season_id", "sport_league_phase_id", "sport_league_competition_id", "updated_at")
+SELECT sp."sport_league_id", sp."sport_league_season_id", sp."sport_league_phase_id", c."id", now()
 FROM "sport_league_season_phases" sp
 JOIN "sport_league_competitions" c ON c."sport_league_phase_id" = sp."sport_league_phase_id";
 

@@ -2738,6 +2738,8 @@ model SportLeagueCompetition {
   @@unique([sportLeaguePhaseId, orderIndex])
   /// The target of a slot's composite key, which keeps the slot in its own league's competition.
   @@unique([sportLeagueId, id])
+  /// The target of a Season competition's composite key, which keeps it in its competition's phase.
+  @@unique([sportLeaguePhaseId, id])
   @@index([sportLeagueId, sportLeaguePhaseId])
   @@map("sport_league_competitions")
 }
@@ -2900,6 +2902,7 @@ model SportLeagueSeasonPhase {
 
   season SportLeagueSeason @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_phases_season_fkey")
   phase  SportLeaguePhase  @relation(fields: [sportLeagueId, sportLeaguePhaseId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_phases_phase_fkey")
+  competitions SportLeagueSeasonCompetition[]
 
   @@unique([sportLeagueSeasonId, sportLeaguePhaseId])
   @@unique([sportLeagueSeasonId, id])
@@ -2915,6 +2918,9 @@ model SportLeagueSeasonCompetition {
   id                       String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportLeagueId            String                        @map("sport_league_id") @db.Uuid
   sportLeagueSeasonId      String                        @map("sport_league_season_id") @db.Uuid
+  /// The competition's phase, carried so the composite keys hold the Season competition under its
+  /// own Season phase and the competition in that phase.
+  sportLeaguePhaseId       String                        @map("sport_league_phase_id") @db.Uuid
   sportLeagueCompetitionId String                        @map("sport_league_competition_id") @db.Uuid
   status                   PrismaSeasonCompetitionStatus @default(SCHEDULED)
   /// The participant who won it; null until COMPLETED, and always null for a competition with no
@@ -2924,7 +2930,8 @@ model SportLeagueSeasonCompetition {
   updatedAt                DateTime                      @updatedAt @map("updated_at") @db.Timestamptz
 
   season      SportLeagueSeason                  @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_competitions_season_fkey")
-  competition SportLeagueCompetition             @relation(fields: [sportLeagueId, sportLeagueCompetitionId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_competitions_competition_fkey")
+  seasonPhase SportLeagueSeasonPhase             @relation(fields: [sportLeagueSeasonId, sportLeaguePhaseId], references: [sportLeagueSeasonId, sportLeaguePhaseId], onDelete: Cascade, map: "sport_league_season_competitions_season_phase_fkey")
+  competition SportLeagueCompetition             @relation(fields: [sportLeaguePhaseId, sportLeagueCompetitionId], references: [sportLeaguePhaseId, id], onDelete: Restrict, map: "sport_league_season_competitions_competition_fkey")
   champion    Participant?                       @relation(fields: [championParticipantId], references: [id], onDelete: Restrict, map: "sport_league_season_competitions_champion_fkey")
   slots       SportLeagueSeasonCompetitionSlot[]
 
