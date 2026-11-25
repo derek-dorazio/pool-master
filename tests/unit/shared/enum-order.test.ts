@@ -41,7 +41,7 @@ describe('enum orders', () => {
   it('sorts an alphabetical order by a given label instead, ignoring case, where a screen still keeps its own words', () => {
     const labels: Record<string, string> = { TEAM: 'apple', INDIVIDUAL: 'Banana' };
 
-    expect(['INDIVIDUAL', 'TEAM'].sort(compareByEnumOrder(alphabeticalOrder('ParticipantType'), (value) => labels[value]))).toEqual(['TEAM', 'INDIVIDUAL']);
+    expect([enums.ParticipantType.INDIVIDUAL, enums.ParticipantType.TEAM].sort(compareByEnumOrder(alphabeticalOrder('ParticipantType'), (value) => labels[value]))).toEqual(['TEAM', 'INDIVIDUAL']);
   });
 
   it('compares two values as a sort callback would: negative, zero or positive', () => {
