@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
+import { ProviderLeagueUnknownError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
@@ -85,7 +86,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'nfl' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['nfl-2025-postseason', 'NFL Playoffs', 'COMPLETED'],
@@ -101,7 +102,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'nfl' });
 
       expect(events).toEqual([]);
       expect(requestLine(harness.api)).toEqual([]);
@@ -113,16 +114,16 @@ describe('BalldontlieAdapter (NFL)', () => {
       jest.spyOn(Date, 'now').mockReturnValue(Date.UTC(2027, 1, 1));
       const adapter = new BalldontlieAdapter({ connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }), apiKey: API_KEY, leagues: BALLDONTLIE_TEST_LEAGUES });
 
-      await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerSeasonId: '2026' });
+      await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerLeagueCode: 'nfl', providerSeasonId: '2026' });
 
       expect(requestLine(harness.api).map((line) => /seasons\[\]=(\d+)/.exec(line)?.[1])).toEqual(['2026']);
     });
 
-    it('lists nothing for a sport it does not cover', async () => {
+    it('throws an unknown-league error, reading nothing, when the NFL\'s code is asked for under another sport', async () => {
       const harness = setup();
       restore = harness.restore;
 
-      await expect(harness.adapter.getUpcomingEvents(Sport.TENNIS)).resolves.toEqual([]);
+      await expect(harness.adapter.getUpcomingEvents(Sport.TENNIS, undefined, { providerLeagueCode: 'nfl' })).rejects.toBeInstanceOf(ProviderLeagueUnknownError);
       expect(harness.api.requests).toEqual([]);
     });
   });

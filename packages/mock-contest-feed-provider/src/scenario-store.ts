@@ -216,7 +216,6 @@ function parseMetadata(record: unknown, field: string): EventMetadataRecord | un
   return {
     officialName: toOptionalString(record.officialName, `${field}.officialName`),
     eventType: toOptionalString(record.eventType, `${field}.eventType`),
-    tour: toOptionalString(record.tour, `${field}.tour`),
     externalEventId: toOptionalString(record.externalEventId, `${field}.externalEventId`),
     notes,
   };
@@ -1207,7 +1206,6 @@ function buildSandboxGolfEvent(eventId: string): ContestFeedEventRecord {
     metadata: {
       officialName: eventId,
       eventType: 'sandbox',
-      tour: 'PoolMaster Sandbox',
       externalEventId: eventId,
       notes: ['Built on request for a PoolMaster-created tournament; start a live replay to make its scores move.'],
     },

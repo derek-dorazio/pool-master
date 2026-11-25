@@ -29,7 +29,7 @@ const aces = rowAt(wnbaTeamListSchema.parse(readBalldontlieFixture('wnba', 'team
 
 describe('WNBA playoffs league', () => {
   it('is basketball\'s WNBA playoffs, played in the season\'s own year, ending in best-of-seven Finals', () => {
-    expect(WNBA_PLAYOFFS).toMatchObject({ key: 'wnba', tour: 'WNBA', sport: Sport.BASKETBALL, playoffYearOffset: 0 });
+    expect(WNBA_PLAYOFFS).toMatchObject({ key: 'wnba', sport: Sport.BASKETBALL, playoffYearOffset: 0 });
     expect(WNBA_PLAYOFFS.rounds.at(-1)).toMatchObject({ name: 'WNBA Finals', seriesLength: 7 });
   });
 

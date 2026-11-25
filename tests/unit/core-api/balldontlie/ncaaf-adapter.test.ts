@@ -74,17 +74,17 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
   afterEach(() => restore?.());
 
   describe('getUpcomingEvents', () => {
-    it('lists each season\'s playoff starting in the range beside the NFL\'s events, reading each season\'s window by date', async () => {
+    it('lists each season\'s playoff starting in the range, reading only college football and each season\'s window by date', async () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('2025-06-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('2025-06-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'ncaaf' });
 
-      expect(events.filter((event) => event.providerLeagueCode === 'ncaaf').map((event) => [event.externalId, event.name, event.status])).toEqual([
-        ['ncaaf-2025-cfp', 'College Football Playoff', 'COMPLETED'],
-        ['ncaaf-2026-cfp', 'College Football Playoff', 'IN_PROGRESS'],
+      expect(events.map((event) => [event.externalId, event.name, event.status, event.providerLeagueCode])).toEqual([
+        ['ncaaf-2025-cfp', 'College Football Playoff', 'COMPLETED', 'ncaaf'],
+        ['ncaaf-2026-cfp', 'College Football Playoff', 'IN_PROGRESS', 'ncaaf'],
       ]);
-      expect(events.some((event) => event.externalId === 'nfl-2025-postseason')).toBe(true);
+      expect(harness.api.requests.some((request) => request.path.startsWith('/nfl/'))).toBe(false);
       expect(collegeRequests(harness.api)).toEqual([
         '/ncaaf/v1/games?start_date=2024-12-08&end_date=2025-02-01&per_page=100',
         '/ncaaf/v1/games?start_date=2025-12-07&end_date=2026-02-01&per_page=100',
@@ -96,7 +96,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
+      await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'ncaaf' });
 
       expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual([]);
     });
@@ -105,7 +105,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 0, 15));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerSeasonId: '2025' });
+      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerLeagueCode: 'ncaaf', providerSeasonId: '2025' });
 
       expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual(['2025']);
       // Its window is still open in mid-January, so it is not over yet.
@@ -172,15 +172,14 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
     });
   });
 
-  it('lists every college football team beside the NFL\'s, each toured CFP', async () => {
+  it('lists every college football team after the NFL\'s', async () => {
     const harness = setup();
     restore = harness.restore;
 
     const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
 
-    const college = teams.filter((team) => team.metadata.tour === 'CFP');
-    expect(college.map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
-    expect(teams.some((team) => team.metadata.tour === undefined)).toBe(true);
+    expect(teams.slice(-5).map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
+    expect(teams.length).toBeGreaterThan(5);
     expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/teams?']);
   });
 });

@@ -24,8 +24,6 @@ import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-sl
 export interface PlayoffsLeague {
   /** The vendor's path segment and the scope and team id prefix: `nba`. */
   key: string;
-  /** The league's tour word, carried in each team's `metadata.tour`. */
-  tour: string;
   sport: Sport;
   /** The event's name: "NBA Playoffs". */
   eventName: string;
@@ -208,7 +206,7 @@ export function toPlayoffsTeamParticipant(league: PlayoffsLeague, team: PlayoffT
     sport: league.sport,
     name: team.name,
     active: true,
-    metadata: { ...team.metadata, tour: league.tour },
+    metadata: team.metadata,
   };
 }
 

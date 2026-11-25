@@ -7,7 +7,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '../../adapters/prisma-sport-catalog-repositories';
 import { LeagueProviderNotResolvedError, ProviderRegistry, type LeagueProviderSource } from '../ingestion/core/provider-registry';
-import { ProviderLeagueRefusedError, type SportDataProvider } from '../ingestion/core/provider-interface';
+import { ProviderLeagueRefusedError, ProviderLeagueUnknownError, type SportDataProvider } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { ProviderSlotPlay, SportLeagueProviderMapping } from '@poolmaster/shared/domain';
 
@@ -41,7 +41,8 @@ export class ProviderSeasonScheduleReader {
    * One Season's slate, for the league's events sync (#2003): the events of the provider league its
    * selected provider mapping names (#1997), by the code the provider stamps on each, never by a
    * name, asked for by the provider's own id for the Season. The provider is asked for that league
-   * alone, and a refusal of it by the provider's plan is a `PROVIDER_LEAGUE_REFUSED` error (#1797).
+   * alone, and a refusal of it by the provider's plan is a `PROVIDER_LEAGUE_REFUSED` error (#1797);
+   * a code the provider does not read is a `PROVIDER_LEAGUE_UNKNOWN` error, with nothing read (#2005).
    * The provider is the one that mapping names (#2073): 422 SPORT_LEAGUE_NOT_SYNCED when the league
    * has no selected mapping, 404 PROVIDER_NOT_FOUND when its provider is not running here.
    */
@@ -63,6 +64,10 @@ export class ProviderSeasonScheduleReader {
       // #1797 — the provider's plan leaves this league out: say so, not "something went wrong".
       if (error instanceof ProviderLeagueRefusedError) {
         throw new ProviderSeasonScheduleError(error.message, 'PROVIDER_LEAGUE_REFUSED', 422);
+      }
+      // #2005 — the mapping names a league the provider does not read: nothing was read.
+      if (error instanceof ProviderLeagueUnknownError) {
+        throw new ProviderSeasonScheduleError(error.message, 'PROVIDER_LEAGUE_UNKNOWN', 422);
       }
       throw error;
     });
