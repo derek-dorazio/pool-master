@@ -80,6 +80,7 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.SLOT_VALUE_UNMAPPED]: [],
   [ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN]: [],
   [ProviderSyncFindingKind.SLOT_OUTSIDE_SEASON]: [],
+  [ProviderSyncFindingKind.GAMES_UNPLACED]: [],
 };
 
 /**

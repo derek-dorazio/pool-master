@@ -36,7 +36,6 @@ import {
   type ProviderSyncRunOutcome,
   type SportLeague,
   type SportLeagueProviderMapping,
-  type ProviderSlotPlay,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 import { SCHEDULE_START } from '../../core/job-start';
@@ -260,7 +259,9 @@ export class LeagueEventsSync {
   /**
    * One Season: its slate is imported and its linked events kept current, and each code of the
    * slate no slot mapping includes raises one INFO SLOT_VALUE_UNMAPPED finding per league, Provider
-   * and code (#2005). The finding's subject dedupes it across syncs, and a waived one stays waived.
+   * and code (#2005). Games with no code that no slot's window holds raise one INFO GAMES_UNPLACED
+   * per league and Provider, and placed games dated outside the Season a WARNING (#2012). The
+   * findings' subjects dedupe them across syncs, and a waived one stays waived.
    */
   private async syncSeason(
     sportLeagueId: string,
@@ -278,30 +279,34 @@ export class LeagueEventsSync {
       providerValue: value.code,
       providerValueName: value.eventName,
     })));
-    await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, providerEvents, imported.unmatched);
+    await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, imported.placed);
+    if (imported.unplaced.length > 0) await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.GAMES_UNPLACED,
+      severity: ProviderSyncFindingSeverity.INFO,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: null,
+      providerValueName: imported.unplaced.map((row) => row.eventName).join(', '),
+    }]);
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
   }
 
   /**
-   * One WARNING SLOT_OUTSIDE_SEASON per league, Provider and code whose games the slot mappings
-   * place but which are dated outside the Season's span (#2012), before it or after it. The games
-   * are still written; the finding's subject dedupes it across syncs.
+   * One WARNING SLOT_OUTSIDE_SEASON per league, Provider and place whose placed games are dated
+   * outside the Season's span (#2012), before it or after it. The games are still written; the
+   * finding's subject dedupes it across syncs. A place found by date window has no code, so its
+   * finding names none.
    */
   private async raiseSlotsOutsideSeason(
     sportLeagueId: string,
     providerId: string,
     season: { startsAt: Date; endsAt: Date },
-    providerEvents: ReadonlyArray<{ name: string; providerSlots: readonly ProviderSlotPlay[] }>,
-    unmatched: ReadonlyArray<{ code: string }>,
+    placed: ProviderSeasonImport['placed'],
   ): Promise<void> {
-    const unmapped = new Set(unmatched.map((value) => value.code));
-    const outside = new Map<string, string>();
-    for (const providerEvent of providerEvents) {
-      const placed = providerEvent.providerSlots.filter((play) => !unmapped.has(play.code));
-      for (const play of playsOutsideSeason(placed, season)) {
-        if (!outside.has(play.code)) outside.set(play.code, providerEvent.name);
-      }
+    const outside = new Map<string | null, string>();
+    for (const play of playsOutsideSeason(placed, season)) {
+      if (!outside.has(play.code)) outside.set(play.code, play.eventName);
     }
     if (outside.size === 0) return;
     await this.options.findings.raiseOfSource(providerId, [...outside].map(([code, eventName]) => ({

@@ -79,6 +79,10 @@ export const enUS = {
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
     },
+    SlotWindowStatus: {
+      TENTATIVE: 'Tentative',
+      CONFIRMED: 'Confirmed',
+    },
     SlotProviderMatchType: {
       PROVIDER_CODE: 'Provider code',
       NAME_PATTERN: 'Name pattern',
@@ -277,6 +281,7 @@ export const enUS = {
       SLOT_VALUE_UNMAPPED: 'Provider code not mapped to a slot',
       PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
       SLOT_OUTSIDE_SEASON: 'Games outside the Season',
+      GAMES_UNPLACED: 'Games in no slot',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

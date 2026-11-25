@@ -592,6 +592,7 @@ enum PrismaProviderSyncFindingKind {
   SLOT_VALUE_UNMAPPED
   PROVIDER_LEAGUE_UNKNOWN
   SLOT_OUTSIDE_SEASON
+  GAMES_UNPLACED
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -2652,6 +2653,13 @@ enum PrismaSlotProviderMatchType {
   CALENDAR_WEEK
 }
 
+/// Whether a Season slot's date window is the schedule's published dates or a best guess while
+/// the shape is known but the games are not (#2012). Mirrors the domain `SlotWindowStatus`.
+enum PrismaSlotWindowStatus {
+  TENTATIVE
+  CONFIRMED
+}
+
 /// How a slot's games are contested (#2043): two sides meeting, or a whole field ranked. Mirrors
 /// the domain `MatchFormat`.
 enum PrismaMatchFormat {
@@ -2750,7 +2758,7 @@ model SportLeaguePhaseSlot {
 /// a provider value no row names is never synced. Keyed by the league's own provider mapping, so
 /// the slot and the provider league are always the same sport league's. Set by migration; slice 12
 /// adds NAME_PATTERN rows from findings. Database check: `providerValue` is null exactly for
-/// CALENDAR_WEEK.
+/// CALENDAR_WEEK and DATE_WINDOW.
 model SportLeaguePhaseSlotProviderMapping {
   id                           String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportLeagueId                String                      @map("sport_league_id") @db.Uuid
@@ -2758,7 +2766,8 @@ model SportLeaguePhaseSlotProviderMapping {
   sportLeagueProviderMappingId String                      @map("sport_league_provider_mapping_id") @db.Uuid
   matchType                    PrismaSlotProviderMatchType @map("match_type")
   /// What the provider's game is matched on: the adapter's code (`REG:5`, `POST:3`) or a
-  /// normalized tournament name. Null for CALENDAR_WEEK, which matches by the global date rule.
+  /// normalized tournament name. Null for CALENDAR_WEEK, which matches by the global date rule,
+  /// and for DATE_WINDOW, which matches by the Season slot's window.
   providerValue                String?                     @map("provider_value") @db.VarChar(200)
   createdAt                    DateTime                    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                    DateTime                    @updatedAt @map("updated_at") @db.Timestamptz
@@ -2859,25 +2868,33 @@ model SportLeagueSeasonPhase {
 /// checks: a test slot has a label and a synced one none; a definition has one synced slot per
 /// Season and any number of test slots, each label once.
 model SportLeagueSeasonPhaseSlot {
-  id                       String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportLeagueId            String                 @map("sport_league_id") @db.Uuid
-  sportLeagueSeasonId      String                 @map("sport_league_season_id") @db.Uuid
-  sportLeagueSeasonPhaseId String                 @map("sport_league_season_phase_id") @db.Uuid
-  sportLeaguePhaseSlotId   String                 @map("sport_league_phase_slot_id") @db.Uuid
+  id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId            String                  @map("sport_league_id") @db.Uuid
+  sportLeagueSeasonId      String                  @map("sport_league_season_id") @db.Uuid
+  sportLeagueSeasonPhaseId String                  @map("sport_league_season_phase_id") @db.Uuid
+  sportLeaguePhaseSlotId   String                  @map("sport_league_phase_slot_id") @db.Uuid
   /// The earliest start and latest end of the slot's Games; null until the sync has matched one.
-  startsAt                 DateTime?              @map("starts_at") @db.Timestamptz
-  endsAt                   DateTime?              @map("ends_at") @db.Timestamptz
-  status                   PrismaSeasonSlotStatus @default(SCHEDULED)
-  seriesFormat             PrismaSeriesFormat     @map("series_format")
-  seriesGames              Int                    @map("series_games")
+  startsAt                 DateTime?               @map("starts_at") @db.Timestamptz
+  endsAt                   DateTime?               @map("ends_at") @db.Timestamptz
+  /// The dates a DATE_WINDOW slot's games are placed by (#2012): the schedule's own published dates
+  /// for this Season, set by migration, kept apart from the dates derived from the placed games.
+  /// Null on every other slot, and on a DATE_WINDOW slot whose dates are not announced yet.
+  /// Database check: both or neither, and the end after the start.
+  windowStartsAt           DateTime?               @map("window_starts_at") @db.Timestamptz
+  windowEndsAt             DateTime?               @map("window_ends_at") @db.Timestamptz
+  /// Whether the window is the published dates or a best guess; set exactly when the window is.
+  windowStatus             PrismaSlotWindowStatus? @map("window_status")
+  status                   PrismaSeasonSlotStatus  @default(SCHEDULED)
+  seriesFormat             PrismaSeriesFormat      @map("series_format")
+  seriesGames              Int                     @map("series_games")
   pairing                  PrismaSlotPairing
   /// A test slot (QA only, never in production): the sync never reads or writes it, so test and
   /// synced events never share a slot. Several per definition, told apart by `label`.
-  isTestData               Boolean                @default(false) @map("is_test_data")
+  isTestData               Boolean                 @default(false) @map("is_test_data")
   /// A test slot's label, unique per Season and definition; null on a synced slot.
-  label                    String?                @db.VarChar(64)
-  createdAt                DateTime               @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                DateTime               @updatedAt @map("updated_at") @db.Timestamptz
+  label                    String?                 @db.VarChar(64)
+  createdAt                DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime                @updatedAt @map("updated_at") @db.Timestamptz
 
   season      SportLeagueSeason      @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_phase_slots_season_fkey")
   /// The composite key keeps the slot in a phase of its own Season.

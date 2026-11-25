@@ -40,6 +40,7 @@ import {
   matchProviderSlots,
   providerSourceIdOf,
   type ProviderSlotPlay,
+  SlotWindowStatus,
   ReleaseAttemptOutcome,
   type ReleaseAttemptResult,
   ReleaseAttemptSkipReason,
@@ -135,6 +136,10 @@ export interface ProviderSeasonImport {
   skipped: Array<{ externalId: string; name: string; reason: ProviderEventSkipReason }>;
   /** Each code no slot mapping includes, once, with the name of an event whose games carry it. */
   unmatched: Array<{ code: string; eventName: string }>;
+  /** Each place the slot mappings placed games in, with the name of the event they are in (#2012). */
+  placed: Array<ProviderSlotPlay & { eventName: string }>;
+  /** Games with no code that no slot's window holds, by event: not synced (#2012). */
+  unplaced: Array<{ eventName: string; count: number }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -306,17 +311,24 @@ export class SportEventService {
     const unmatched = new Map<string, ProviderSeasonImport['unmatched'][number]>();
     const eventSlots: SyncedSlotsRecord['eventSlots'][number][] = [];
     const slotDates: SyncedSlotsRecord['slotDates'][number][] = [];
+    const confirmedWindows = new Set<string>();
+    const placed: ProviderSeasonImport['placed'] = [];
+    const unplaced: ProviderSeasonImport['unplaced'] = [];
     /** Slots an event of this slate takes, so a second provider event cannot take one too. */
     const taken = new Set(slots.flatMap((slot) => (slot.sportEventId === null ? [] : [slot.seasonSlotId])));
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
-      const { matched, unmatched: missed } = matchProviderSlots(providerEvent.providerSlots, slots);
+      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots);
       for (const play of missed) {
         if (!unmatched.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
       }
+      if (unplacedGames.length > 0) unplaced.push({ eventName: name, count: unplacedGames.length });
       for (const { slot, play } of matched) {
+        placed.push({ ...play, eventName: name });
         const change = slotDatesChange(slot, play);
         if (change !== null) slotDates.push({ seasonSlotId: slot.seasonSlotId, ...change });
+        // The feed placed a game in a best-guess window: the window is now the feed's (#2012).
+        if (slot.window?.status === SlotWindowStatus.TENTATIVE) confirmedWindows.add(slot.seasonSlotId);
       }
       const free = matched.filter(({ slot }) => !taken.has(slot.seasonSlotId));
       const linkedId = linkedIdByExternalId.get(externalId);
@@ -343,7 +355,7 @@ export class SportEventService {
       }));
     }
     const written = await this.createEditions(sportLeague, editions);
-    await this.deps.seasons.recordSyncedSlots({ eventSlots, slotDates });
+    await this.deps.seasons.recordSyncedSlots({ eventSlots, slotDates, confirmedWindows: [...confirmedWindows] });
     // The new events' slots as they now stand, with the dates just written: one read for them all.
     const slotsByEvent = written.length === 0 ? new Map<string, SportLeagueSeasonSlot[]>() : await this.deps.sportEvents.findSlots(written.map(({ event }) => event.id));
     const created = written.map((summary) => ({ ...summary, slots: slotsByEvent.get(summary.event.id) ?? [] }));
@@ -359,12 +371,14 @@ export class SportEventService {
         slotsLinkedCount: eventSlots.length,
         slotDatesChangedCount: slotDates.length,
         unmatchedCodes: [...unmatched.keys()],
-        // Provider events whose games carry no code, which no PROVIDER_CODE mapping can place.
+        // Provider events whose games carry no place at all, which no slot mapping can place.
         noCodeCount: input.providerEvents.filter((providerEvent) => providerEvent.providerSlots.length === 0).length,
+        unplacedGameCount: unplaced.reduce((total, row) => total + row.count, 0),
+        windowsConfirmedCount: confirmedWindows.size,
       },
       'Imported provider Season',
     );
-    return { created, skipped, unmatched: [...unmatched.values()] };
+    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced };
   }
 
   /**

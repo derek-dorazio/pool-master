@@ -825,6 +825,8 @@ export interface SportLeagueSeasonRepository {
 export interface SyncedSlotsRecord {
   eventSlots: ReadonlyArray<{ sportEventId: string; sportLeagueSeasonId: string; seasonSlotId: string }>;
   slotDates: ReadonlyArray<{ seasonSlotId: string; startsAt: Date; endsAt: Date }>;
+  /** Season slots whose TENTATIVE window the feed has now placed a game in: they become CONFIRMED (#2012). */
+  confirmedWindows: readonly string[];
 }
 
 /** What adding a test slot did: the slot, or why there is none. */

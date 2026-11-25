@@ -208,6 +208,22 @@ export const SeasonSlotStatusOrder = explicitOrder<SeasonSlotStatus>({
   [SeasonSlotStatus.CANCELLED]: 3,
 });
 
+/**
+ * Whether a Season slot's date window (#2012) is the schedule's published dates or a best guess,
+ * loaded while the shape is known and the games are not. In the order a window moves through them.
+ */
+export const SlotWindowStatus = {
+  /** A best guess: the sync places games by it, and a finding asks for the published dates. */
+  TENTATIVE: 'TENTATIVE',
+  /** The schedule's published dates. */
+  CONFIRMED: 'CONFIRMED',
+} as const;
+export type SlotWindowStatus = (typeof SlotWindowStatus)[keyof typeof SlotWindowStatus];
+export const SlotWindowStatusOrder = explicitOrder<SlotWindowStatus>({
+  [SlotWindowStatus.TENTATIVE]: 0,
+  [SlotWindowStatus.CONFIRMED]: 1,
+});
+
 /** How a provider's games are matched to a slot definition (#2002, plan §1 and §6), in matching order. */
 export const SlotProviderMatchType = {
   /** The code the provider's adapter reduces a game to (`REG:5`, `POST:3`). */
@@ -928,6 +944,13 @@ export const ProviderSyncFindingKind = {
    * is what to check. Subject: league, Provider and the code.
    */
   SLOT_OUTSIDE_SEASON: 'SLOT_OUTSIDE_SEASON',
+  /**
+   * The events sync read games whose feed names no place for them (no round or week) that no
+   * Season slot's date window holds (#2012): they are not synced. INFO, since a feed with no round
+   * marker lists every game of its days (college football's other bowls); inclusion only. Subject:
+   * league and Provider.
+   */
+  GAMES_UNPLACED: 'GAMES_UNPLACED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

@@ -162,6 +162,7 @@ export class InMemorySportEvents {
           sportEventId: ownerOf(slot.id),
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
+          window: null,
         })),
       recordSyncedSlots: async ({ eventSlots, slotDates }) => {
         for (const change of slotDates) {
