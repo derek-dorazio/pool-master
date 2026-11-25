@@ -23602,16 +23602,15 @@
             "description": "When its test event starts."
           },
           "endsAt": {
+            "description": "When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt. Omitted, the end is not known.",
             "type": "string",
-            "format": "date-time",
-            "description": "When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt."
+            "format": "date-time"
           }
         },
         "required": [
           "slotDefinitionId",
           "label",
-          "startsAt",
-          "endsAt"
+          "startsAt"
         ],
         "additionalProperties": false,
         "description": "A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season."

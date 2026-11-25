@@ -1,5 +1,6 @@
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
+import type { SportLeagueSeasonRepository } from '@poolmaster/shared/db';
 import { BracketAdvancement, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import type { Participant, SportLeague } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
@@ -88,6 +89,7 @@ function buildService(overrides: {
   participants?: Parameters<typeof fakeParticipantRepo>[0];
   mappings?: Parameters<typeof fakeParticipantProviderMappingRepo>[0];
   providers?: SportDataProviderLookup;
+  seasons?: Pick<SportLeagueSeasonRepository, 'createTestSlot'>;
   platformTierProfiles?: { findById: jest.Mock };
   platformPricingProfiles?: { findById: jest.Mock };
   now?: () => Date;
@@ -102,6 +104,7 @@ function buildService(overrides: {
     }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     participants: fakeParticipantRepo(overrides.participants),
+    seasons: overrides.seasons ?? { createTestSlot: jest.fn() },
     mappings: fakeParticipantProviderMappingRepo(overrides.mappings),
     providers: overrides.providers ?? registeredProviders({}),
     platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },

@@ -117,7 +117,7 @@ export function createSportLeagueHandlers(
 
     createTestSlot: async (request: FastifyRequest<SportLeagueParams & { Body: CreateTestSlotRequest }>, reply: FastifyReply) => {
       const { startsAt, endsAt, ...input } = request.body;
-      const slot = await sportLeagues.createTestSlot(request.params.sportLeagueId, { ...input, startsAt: new Date(startsAt), endsAt: new Date(endsAt) });
+      const slot = await sportLeagues.createTestSlot(request.params.sportLeagueId, { ...input, startsAt: new Date(startsAt), endsAt: endsAt === undefined ? null : new Date(endsAt) });
       return reply.status(201).send({ slot: mapSportLeagueSeasonSlotToDto(slot) } satisfies SportLeagueSeasonSlotResponse);
     },
 

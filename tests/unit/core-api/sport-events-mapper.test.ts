@@ -1,5 +1,5 @@
 import { sportPlay } from '../../support/sport-play';
-import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, Sport, type SportEvent } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, Sport, type SportEvent } from '@poolmaster/shared/domain';
 import {
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
@@ -39,6 +39,7 @@ function summary(sportEvent: SportEvent, loadedParticipantCount: number, untiere
     loadedParticipantCount,
     tierCount: 0,
     adminCounts: { untieredParticipantCount, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
+    slots: [],
   };
 }
 
@@ -165,7 +166,7 @@ describe('the contests on an event on the wire (#1889)', () => {
 
 describe('SportEvent admin counts on the wire (#1198)', () => {
   it('carries null admin counts for a read that did not count them, keeping the field size and tier count', () => {
-    expect(mapSportEventToDto({ event: event(), loadedParticipantCount: 72, tierCount: 6, adminCounts: null })).toMatchObject({
+    expect(mapSportEventToDto({ event: event(), loadedParticipantCount: 72, tierCount: 6, adminCounts: null, slots: [] })).toMatchObject({
       loadedParticipantCount: 72,
       tierCount: 6,
       adminCounts: null,
@@ -177,7 +178,7 @@ describe('SportEvent admin counts on the wire (#1198)', () => {
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
     const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: ['Tier 6'], contestCount: 2 };
-    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, tierCount: 6, adminCounts })).toMatchObject({
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, tierCount: 6, adminCounts, slots: [] })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
       adminCounts,
@@ -222,20 +223,27 @@ describe('the event\'s rounds and tiers on the wire', () => {
 });
 
 describe('SportEvent provider sync on the wire (ADR 0011)', () => {
-  it('marks an event provider-synced, naming its provider, when its sport league\'s sync provider has an id for it, and sends every provider\'s id', () => {
+  it('names an event\'s provider when its sport league\'s sync provider has an id for it, and sends every provider\'s id', () => {
     const dto = mapSportEventToDto(summary(event({ syncProviderId: 'balldontlie' }), 72));
 
-    expect(dto).toMatchObject({ providerSynced: true, providerName: 'BALLDONTLIE' });
+    expect(dto).toMatchObject({ isTestData: false, providerName: 'BALLDONTLIE', slots: [] });
     expect(dto.providerMappings).toEqual([{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'mock-major-2026' }]);
   });
 
-  it('leaves an event admin-owned when its sport league is not synced', () => {
-    expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({ providerSynced: false, providerName: null });
+  it('names no provider for an event of a league no provider syncs', () => {
+    expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({ providerName: null });
   });
 
-  it('leaves a test event admin-owned, with no provider ids, even in a synced league', () => {
-    const dto = mapSportEventToDto(summary(event({ syncProviderId: 'balldontlie', providerMappings: [] }), 72));
+  it('marks an event on a test slot a test event, with its slot on the wire and no provider ids, even in a synced league', () => {
+    const AT = new Date('2026-06-04T12:00:00.000Z');
+    const slot = {
+      id: 'slot-1', slotDefinitionId: 'def-1', key: 'MASTERS', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: 'Masters Tournament',
+      startsAt: AT, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1,
+      pairing: SlotPairing.FIXED, isTestData: true, label: 'QA A',
+    };
+    const dto = mapSportEventToDto({ ...summary(event({ syncProviderId: 'balldontlie', providerMappings: [] }), 72), slots: [slot] });
 
-    expect(dto).toMatchObject({ providerSynced: false, providerName: null, providerMappings: [] });
+    expect(dto).toMatchObject({ isTestData: true, providerName: null, providerMappings: [] });
+    expect(dto.slots).toEqual([{ ...slot, startsAt: AT.toISOString(), endsAt: null }]);
   });
 });

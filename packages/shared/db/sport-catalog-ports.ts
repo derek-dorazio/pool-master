@@ -844,5 +844,5 @@ export interface TestSeasonSlotCreate {
   slotDefinitionId: string;
   label: string;
   startsAt: Date;
-  endsAt: Date;
+  endsAt: Date | null;
 }

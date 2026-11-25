@@ -1,8 +1,9 @@
-import { createLeague, createSportLeague, listEvents, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createEvent, createLeague, createSportLeague, createTestSlot, listEvents, updateEvent, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { SPORT_PLATFORM_TIER_PROFILE_CODE, STANDARD_PLATFORM_PRICING_PROFILE_CODE } from '../support/league-profiles';
 import { fixtureSeasonId, withCurrentSeason } from '../support/event-edition';
+import { testSlotDefinitionId, uniqueTestSlotLabel } from '../support/test-slots';
 import { sportPlay } from '../support/sport-play';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
@@ -313,6 +314,43 @@ export async function addRunSportLeague(client: Client, sport: Sport, name: stri
 export async function inCurrentSeason(sportLeagueId: string, championshipYear: number): Promise<string> {
   await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
   return sportLeagueId;
+}
+
+/** What a test makes a test event with: its league and Season year, and the slot's dates. */
+export interface TestEventBody {
+  sportLeagueId: string;
+  /** The Season it is made in, made the league's current one (`inCurrentSeason`). */
+  championshipYear: number;
+  name: string;
+  venue?: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  /** A round count other than its league's default, set by an edit after the create. */
+  rounds?: number;
+  autoLifecycleEnabled?: boolean;
+}
+
+/**
+ * A test event through the API as QA makes one (#2004): a labelled test slot in the league's
+ * current Season (`createTestSlot`), then the event on it (`createEvent`). Answers the create's
+ * result; a round count is set by an edit, and the result then carries the edited event.
+ */
+export async function createTestEvent({ client, body }: { client: Client; body: TestEventBody }) {
+  const { sportLeagueId, championshipYear, startDate, endDate, rounds, ...event } = body;
+  const sportLeagueSeasonId = await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  const slotDefinitionId = await testSlotDefinitionId(getFunctionalPrisma(), sportLeagueId, sportLeagueSeasonId);
+  const slot = await createTestSlot({
+    client,
+    path: { sportLeagueId },
+    body: { slotDefinitionId, label: uniqueTestSlotLabel(), startsAt: startDate, ...(endDate !== undefined && { endsAt: endDate }) },
+  });
+  if (!slot.data) throw new Error(`Could not add a test slot: ${JSON.stringify(slot.error)}`);
+  const created = await createEvent({ client, body: { ...event, seasonSlotId: slot.data.slot.id } });
+  if (rounds === undefined || !created.data || created.data.event.rounds === rounds) return created;
+  const edited = await updateEvent({ client, path: { eventId: created.data.event.id }, body: { rounds } });
+  if (!edited.data) throw new Error(`Could not set the test event's rounds: ${JSON.stringify(edited.error)}`);
+  return { ...created, data: edited.data };
 }
 
 /** The events of the league's Season named for `championshipYear`, as an admin lists one Season (#2003). */

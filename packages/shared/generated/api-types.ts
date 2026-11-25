@@ -11701,9 +11701,9 @@ export interface components {
             startsAt: string;
             /**
              * Format: date-time
-             * @description When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt.
+             * @description When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt. Omitted, the end is not known.
              */
-            endsAt: string;
+            endsAt?: string;
         };
         /** @description One Season slot. */
         SportLeagueSeasonSlotResponse: {

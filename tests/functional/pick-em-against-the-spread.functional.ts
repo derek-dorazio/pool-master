@@ -5,7 +5,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
   createSportLeague,
   enterContest,
@@ -40,7 +39,7 @@ import {
   PickEmLeaderboardResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -139,9 +138,9 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
       created.participantIds.add(id);
       teamIds.push(id);
     }
-    const event = await createEvent({
+    const event = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Spread Week ${RUN}`, startDate: START, rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Spread Week ${RUN}`, startDate: START, rounds: 1, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
     created.sportEventIds.add(eventId);

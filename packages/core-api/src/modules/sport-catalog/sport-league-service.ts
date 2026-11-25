@@ -171,14 +171,14 @@ export class SportLeagueService {
    */
   async createTestSlot(
     sportLeagueId: string,
-    input: { slotDefinitionId: string; label: string; startsAt: Date; endsAt: Date },
+    input: { slotDefinitionId: string; label: string; startsAt: Date; endsAt: Date | null },
   ): Promise<SportLeagueSeasonSlot> {
     const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
     if (!sportLeague) throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     if (sportLeague.currentSeasonId === null) {
       throw new SportCatalogError(`${sportLeague.name} has no current Season.`, 'SPORT_LEAGUE_HAS_NO_SEASON', 422);
     }
-    if (input.endsAt.getTime() <= input.startsAt.getTime()) {
+    if (input.endsAt !== null && input.endsAt.getTime() <= input.startsAt.getTime()) {
       throw new SportCatalogError('A test slot must end after it starts.', 'TEST_SLOT_ENDS_BEFORE_START', 422);
     }
     let slot: SportLeagueSeasonSlot | null;

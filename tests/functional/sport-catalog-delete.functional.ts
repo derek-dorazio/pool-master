@@ -1,6 +1,5 @@
 import {
   addEventParticipants,
-  createEvent,
   createParticipant,
   createSportLeague,
   deleteEvent,
@@ -12,7 +11,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { ProviderCode } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueCreateBody, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { sportRowKeys } from '../support/sport-rows';
@@ -88,14 +87,14 @@ async function newPlayer(client: Client, sportLeagueId: string, name: string): P
 }
 
 async function newTournament(client: Client, sportLeagueId: string, name: string): Promise<string> {
-  const tournament = await createEvent({
+  const tournament = await createTestEvent({
     client,
     body: {
       name: `${name} ${RUN}`,
       startDate: '2099-07-16T08:00:00.000Z',
       endDate: '2099-07-19T20:00:00.000Z',
-      rounds: 4,
-      sportLeagueId: await inCurrentSeason(sportLeagueId, 2099),
+      sportLeagueId,
+      championshipYear: 2099,
       autoLifecycleEnabled: false,
     },
   });

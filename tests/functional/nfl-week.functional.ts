@@ -7,7 +7,6 @@ import {
   autoAssignEventTiers,
   cancelEventMatch,
   createContest,
-  createEvent,
   createParticipant,
   createSportLeague,
   getEventBracket,
@@ -32,7 +31,7 @@ import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -131,9 +130,9 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
       created.participantIds.add(id);
       teamIds.push(id);
     }
-    const event = await createEvent({
+    const event = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Week 1 ${RUN}`, startDate: '2099-09-10T17:00:00.000Z', rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Week 1 ${RUN}`, startDate: '2099-09-10T17:00:00.000Z', rounds: 1, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
     created.sportEventIds.add(eventId);

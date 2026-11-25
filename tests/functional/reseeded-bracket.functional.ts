@@ -4,7 +4,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   clearEventMatchResult,
-  createEvent,
   createParticipant,
   createSportLeague,
   getEventBracket,
@@ -19,7 +18,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStandingStatus, Sport } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema, SportEventRoundMatchupsResponseSchema } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -93,9 +92,9 @@ describe('SDK Functional: Reseeded bracket', () => {
     expect(league.data?.sportLeague.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
-    const playoff = await createEvent({
+    const playoff = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Conference Playoff ${RUN}`, startDate: '2099-01-09T18:00:00.000Z', rounds: 3, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Conference Playoff ${RUN}`, startDate: '2099-01-09T18:00:00.000Z', rounds: 3, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(playoff.data).event.id;
     created.sportEventIds.add(eventId);

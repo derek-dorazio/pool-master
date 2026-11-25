@@ -10158,9 +10158,9 @@ export type CreateTestSlotRequest = {
      */
     startsAt: string;
     /**
-     * When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt.
+     * When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt. Omitted, the end is not known.
      */
-    endsAt: string;
+    endsAt?: string;
 };
 
 /**

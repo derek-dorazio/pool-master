@@ -438,7 +438,7 @@ export const CreateTestSlotRequestSchema = z.object({
   slotDefinitionId: z.uuid().describe('The slot definition it plays (SportLeagueSlotDefinitionDto), one of the league\'s: 404 SLOT_DEFINITION_NOT_FOUND otherwise.'),
   label: z.string().trim().min(1).max(64).describe('Tells it apart from the Season\'s other test slots of that definition: 409 TEST_SLOT_LABEL_TAKEN when one already has it.'),
   startsAt: DateTimeSchema.describe('When its test event starts.'),
-  endsAt: DateTimeSchema.describe('When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt.'),
+  endsAt: DateTimeSchema.optional().describe('When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt. Omitted, the end is not known.'),
 }).describe('A labelled test slot for the league\'s current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season.');
 export type CreateTestSlotRequest = z.infer<typeof CreateTestSlotRequestSchema>;
 

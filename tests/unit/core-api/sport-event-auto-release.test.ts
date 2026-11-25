@@ -49,6 +49,7 @@ function setup() {
     eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
+    seasons: store.seasonRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() }),
     bracket: new SportEventBracketService({ domainEvents: testDomainEvents(),
@@ -348,9 +349,11 @@ describe('SportEventAutoReleaseScheduler: the hourly sweep (#1823)', () => {
     }
   });
 
-  it('leaves alone a draft not linked to its league\'s sync provider', async () => {
+  it('leaves alone a test event on a test slot, which is released by hand only', async () => {
     const { store, sportLeague, scheduler, jobRows } = setup();
-    await readySyncedDraft(store, sportLeague.id, 3, { providerMappings: [] });
+    const draft = await readySyncedDraft(store, sportLeague.id, 3, { providerMappings: [] });
+    const seasonSlotId = store.addTestSlot(sportLeague, draft.startDate);
+    store.slotsByEvent.set(draft.id, store.seasonSlots.filter((slot) => slot.id === seasonSlotId));
 
     await scheduler.runSweep();
 

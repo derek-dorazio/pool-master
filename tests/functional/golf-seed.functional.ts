@@ -1,5 +1,4 @@
 import {
-  createEvent,
   getEventBracket,
   listEventParticipants,
   listParticipants,
@@ -18,7 +17,7 @@ import {
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents } from './builders';
+import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents, createTestEvent } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { sportLeagueRowDefaults } from '../support/league-profiles';
@@ -231,9 +230,9 @@ describe('Loading a golf test seed through the admin API', () => {
     const withFinale: SportDataFile = { ...seed, sportLeagues: [{ ...seed.sportLeagues[0], events: [...seed.sportLeagues[0].events, finale] }] };
     const finaleStart = shiftedEventDates(finale, seedDateOffsetDays(withFinale, NOW)).startDate;
     // What a run that stopped straight after creating the event leaves behind.
-    expectDefined((await createEvent({
+    expectDefined((await createTestEvent({
       client: admin.client,
-      body: { sportLeagueId: await inCurrentSeason(league.id, 2026), name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: league.id, championshipYear: 2026, name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
     })).data);
 
     const rows = await loadSportData(parsed(withFinale), { getClient, now: NOW, mode: LoadMode.APPLY });
