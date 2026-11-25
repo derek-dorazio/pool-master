@@ -129,7 +129,7 @@ const SEASONS = [
       id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [{
         id: 'slot-week-1', slotDefinitionId: 'def-week-1', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
         startsAt: '2026-10-20T00:00:00.000Z', endsAt: '2026-10-26T00:00:00.000Z', status: 'SCHEDULED',
-        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null,
+        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null, sportEventId: null,
       }],
     }],
   }),
@@ -345,7 +345,7 @@ describe('League page', () => {
     await waitFor(() => expect(syncLeagueEventsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'nba' } })));
   });
 
-  it('opens the Events grid on the current season, with every column, and a row leads to its event page', async () => {
+  it('opens the Events grid on the current season, with every column and a link to make a test event in the league, and a row leads to its event page', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({
       data: { events: [event({ id: 'evt-old', name: 'NBA Cup 2026', sportLeagueSeasonId: 's2026', status: 'COMPLETED', releaseMode: 'MANUAL', releaseAtKind: 'ACTUAL' }), event({})] },
     });
@@ -355,6 +355,7 @@ describe('League page', () => {
     expect(screen.queryByTestId('root-admin-league-event-evt-old')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-league-events-filter-summary')).toHaveTextContent('Season');
     expect(screen.getByTestId('root-admin-league-events-count')).toHaveTextContent('2 events');
+    expect(screen.getByTestId('root-admin-league-events-new-test-event')).toHaveAttribute('href', '/manage/sports/basketball/events/new?sportLeagueId=nba');
     expect(columnHeaders('root-admin-league-events-table')).toEqual(
       expect.arrayContaining(['Event', 'Season', 'Starts', 'Status', 'Release', 'Release date', 'Field', 'Issues', 'Last synced']),
     );

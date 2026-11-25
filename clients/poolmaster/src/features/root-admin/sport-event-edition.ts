@@ -1,3 +1,5 @@
+import type { SportLeagueSeasonDto, SportLeagueSeasonPhaseSlotDto } from '@/lib/api';
+
 /**
  * The tour a new event is created into (#2003: in its current Season, which the API sets), shared
  * by both creation modes.
@@ -14,4 +16,10 @@ export interface SportEventEdition {
 
 export function isCompleteEdition(edition: SportEventEdition): boolean {
   return edition.sportLeagueId !== '';
+}
+
+/** The current Season's test slots that no event covers yet, in the Season's play order. */
+export function freeTestSlotsOf(seasons: readonly SportLeagueSeasonDto[]): SportLeagueSeasonPhaseSlotDto[] {
+  const current = seasons.find((season) => season.isCurrent);
+  return (current?.phases ?? []).flatMap((phase) => phase.slots).filter((slot) => slot.isTestData && slot.sportEventId === null);
 }

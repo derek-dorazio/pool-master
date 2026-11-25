@@ -11,8 +11,8 @@ const preferences = { ...DEFAULT_DISPLAY_PREFERENCES, timeZone: 'UTC' };
 
 describe('eventPageTabs', () => {
   it('shows every tab, Tools last, on an event no provider syncs, and leaves Tools out on a synced one', () => {
-    expect(eventPageTabs(false).map((tab) => tab.segment)).toEqual(['field', 'rounds', 'contests', 'activity', 'tools']);
-    expect(eventPageTabs(true).map((tab) => tab.segment)).toEqual(['field', 'rounds', 'contests', 'activity']);
+    expect(eventPageTabs(false).map((tab) => tab.segment)).toEqual(['field', 'slots', 'rounds', 'contests', 'activity', 'tools']);
+    expect(eventPageTabs(true).map((tab) => tab.segment)).toEqual(['field', 'slots', 'rounds', 'contests', 'activity']);
   });
 });
 
