@@ -56,11 +56,11 @@ describe('extractErrorMessage', () => {
   });
 
   it('shows the screen\'s context wording for a code it words, with the screen\'s words in its placeholders', () => {
-    const err = new ApiError({ error: { code: 'BRACKET_MATCH_NOT_FOUND', message: 'Match m-1 is not in event e-1.' } });
+    const err = new ApiError({ error: { code: 'PREDICTION_GAME_STARTED', message: 'Match m-1 is not in event e-1.' } });
     expect(extractErrorMessage(err, {
-      context: 'bracketAdmin',
+      context: 'gamePicks',
       values: { match: 'game' },
-    })).toBe('That game is no longer in the bracket. Refresh the page.');
+    })).toBe('That game has started, so its pick is locked.');
   });
 
   it('shows the code\'s own display string when the screen\'s context has no wording for that code', () => {

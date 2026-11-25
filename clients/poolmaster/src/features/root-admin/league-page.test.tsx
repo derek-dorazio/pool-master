@@ -278,7 +278,6 @@ function renderLeaguePage(path: string) {
             <Route element={<LeagueActivityTab />} path="activity" />
             <Route element={<LeagueContestTemplatesTab />} path="contest-templates" />
             <Route element={<LeagueStructureTab />} path="structure" />
-            <Route element={<LocationProbe />} path="tools" />
           </Route>
           <Route element={<LocationProbe />} path="/manage/sports/:sport/events/:eventId" />
         </Routes>
@@ -301,7 +300,7 @@ describe('League page', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('heads a synced league with its name, On, sync health and provider, opens on Events, and leaves out the Tools tab', async () => {
+  it('heads a synced league with its name, On, sync health and provider, opens on Events, with no Tools tab', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba');
 
@@ -315,20 +314,13 @@ describe('League page', () => {
     await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-events')).toHaveAttribute('aria-current', 'page'));
   });
 
-  it('adds the Tools tab on a league no provider syncs, and offers no Sync now there', async () => {
+  it('shows the same tabs on a league no provider syncs, with no Tools tab, and offers no Sync now there', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/summer/events');
 
     await screen.findByTestId('root-admin-league-sync-EVENTS');
-    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure', 'Tools']);
+    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure']);
     expect(screen.queryByTestId('root-admin-league-sync-now')).not.toBeInTheDocument();
-  });
-
-  it('sends a synced league\'s old Tools link to its Events tab', async () => {
-    listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
-    renderLeaguePage('/manage/sports/basketball/leagues/nba/tools');
-
-    expect(await screen.findByTestId('root-admin-league-events-tab')).toBeInTheDocument();
   });
 
   it('shows the three syncs by name and queues the event list on Sync now', async () => {

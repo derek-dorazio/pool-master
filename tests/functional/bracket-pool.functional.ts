@@ -171,7 +171,7 @@ async function releasedKnockout(options: {
   expect((await applyEventParticipantUpload({
     client: a,
     path: { eventId },
-    body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed, oddsToWin: 2 + seed * 3 })) },
+    body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed })) },
   })).response?.status).toBe(200);
   expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: options.tierSize } })).response?.status).toBe(200);
   expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -377,8 +377,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
       const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
       expect([result.error, result.response?.status]).toEqual([undefined, 200]);
-      // A result entered on the admin's route is the admin's, which a provider's final never overwrites (#1531).
-      expect(result.data?.matches.find((match) => match.matchNumber === matchNumber)?.resultSource).toBe(MatchResultSource.ADMIN);
+      // A test event's result stands in for the feed's (#2074).
+      expect(result.data?.matches.find((match) => match.matchNumber === matchNumber)?.resultSource).toBe(MatchResultSource.PROVIDER);
     };
     // Round 1: chalk, except 9 beats 8 in game 2.
     for (const [matchNumber, seed] of [[1, 1], [2, 9], [3, 5], [4, 4], [5, 6], [6, 3], [7, 7], [8, 2]]) await win(matchNumber, seed);

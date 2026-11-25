@@ -1127,11 +1127,11 @@ export const RoundStatusOrder = explicitOrder<RoundStatus>({
 });
 
 /**
- * Who set a match's result (#1496, #1531): an admin, or the provider its game is linked to. A
- * provider's later final never overwrites an admin's result; the sync logs the disagreement.
+ * Who set a match's result (#1496): the provider its game is linked to, the only writer on a
+ * synced event (#2074). A test event's results are written by the test-data loader in its place.
+ * The column moves onto the Game in #2046, which drops it with PROVIDER its only value.
  */
 export const MatchResultSource = {
-  ADMIN: 'ADMIN',
   PROVIDER: 'PROVIDER',
 } as const;
 export type MatchResultSource = (typeof MatchResultSource)[keyof typeof MatchResultSource];

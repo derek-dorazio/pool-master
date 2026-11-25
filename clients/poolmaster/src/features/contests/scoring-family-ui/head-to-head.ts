@@ -9,7 +9,6 @@
  */
 
 import {
-  isMatchUnplayed,
   MatchSide,
   MatchStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
@@ -111,7 +110,7 @@ export const headToHeadUi: ScoringFamilyUi = {
         const latest = played.at(-1);
         // A team still in plays next in the earliest round it has a game not yet finished.
         const next = knockout?.isAlive
-          ? games.find((game) => isMatchUnplayed(game.match.status) || game.match.status === MatchStatus.IN_PROGRESS)
+          ? games.find((game) => game.match.isUnplayed || game.match.status === MatchStatus.IN_PROGRESS)
           : undefined;
         const facts = context ? [
           ...played.map((game) => ({ label: context.roundName(game.match.roundNumber), value: describeResult(game, nameOf) })),

@@ -24,6 +24,7 @@ import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../supp
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
 import { sportRowKeys } from '../../support/sport-rows';
+import { linkTestSlot } from '../../support/test-slots';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -52,6 +53,8 @@ async function createField(suffix: string) {
       status: 'IN_PROGRESS',
     },
   });
+  // The admin score correction writes only on a test event (#2074).
+  await linkTestSlot(prisma, created);
   // The provider's id for the event, which a live-score sync names it by (#2004).
   const event = { ...created, externalId: `golf-round-scores-${created.id}` };
   await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: event.externalId });

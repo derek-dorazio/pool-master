@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, JobTrigger, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import type { SportEventRoundMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
@@ -195,7 +195,7 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     expect((await repos().matches.findBySportEvent(event.id))[0]?.homeSpread).toBeNull();
   });
 
-  it('saves, replaces and deletes a game\'s period scores, reading them in period order, and drops them with the bracket (#772)', async () => {
+  it('saves and replaces a game\'s period scores, reading them in period order, and drops them with the bracket (#772)', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first] = await repos().matches.findBySportEvent(event.id);
@@ -207,10 +207,6 @@ describe('PrismaSportEventRoundMatchRepository', () => {
       { periodNumber: 1, homeScore: 7, awayScore: 3 },
       { periodNumber: 3, homeScore: 21, awayScore: 14 },
     ]);
-
-    await repos().matches.deletePeriodScore(first.id, 3);
-    await repos().matches.deletePeriodScore(first.id, 2);
-    expect((await repos().matches.findBySportEvent(event.id))[0]?.periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 3 }]);
 
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     await expect(getPrisma().sportEventMatchPeriodScore.count({ where: { sportEventRoundMatchId: first.id } })).resolves.toBe(0);
@@ -282,7 +278,7 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     const asOf = new Date('2027-03-19T04:00:00.000Z');
 
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80, ...NO_SHOOTOUT, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
       sideFill: { id: final.id, side: MatchSide.HOME, sportEventParticipantId: entryOf('Vermont').id },
       standings: [
         { sportEventParticipantId: entryOf('Vermont').id, position: 1, displayPosition: '1', status: 'ACTIVE', currentRound: 2, asOf },
@@ -290,13 +286,13 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
       ],
     });
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, ...NO_SHOOTOUT, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
       sideFill: null,
       standings: [{ sportEventParticipantId: entryOf('Duke').id, position: 3, displayPosition: 'T3', status: 'ELIMINATED', currentRound: 1, asOf }],
     });
 
     const [completed, , filled] = await repos().matches.findBySportEvent(event.id);
-    expect(completed).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT });
+    expect(completed).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT });
     expect(filled.homeSportEventParticipantId).toBe(entryOf('Vermont').id);
     const standings = await getPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } });
     expect(Object.fromEntries(standings.map((row) => [row.sportEventParticipantId, [row.displayPosition, row.status]]))).toEqual({
@@ -311,7 +307,7 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     const [, second, final] = await repos().matches.findBySportEvent(event.id);
 
     await repos().matches.applyResult({
-      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT },
+      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
       sideFill: { id: final.id, side: MatchSide.AWAY, sportEventParticipantId: entryOf('Houston').id },
       standings: [],
     });
@@ -326,7 +322,7 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
     const level = { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 };
 
-    await repos().matches.applyResult({ result: { ...level, homeShootoutScore: 3, awayShootoutScore: 4, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT }, sideFill: null, standings: [] });
+    await repos().matches.applyResult({ result: { ...level, homeShootoutScore: 3, awayShootoutScore: 4, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT }, sideFill: null, standings: [] });
     const [settled] = await repos().matches.findBySportEvent(event.id);
     await repos().matches.applyResult({
       result: { id: first.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT, resultSource: null, completedAt: null },
@@ -345,7 +341,7 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: null, awayScore: null, ...NO_SHOOTOUT, ending: MatchEnding.WALKOVER, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: null, awayScore: null, ...NO_SHOOTOUT, ending: MatchEnding.WALKOVER, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
       sideFill: null,
       standings: [],
     });
@@ -366,7 +362,7 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first, second] = await repos().matches.findBySportEvent(event.id);
     await repos().matches.applyResult({
-      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT },
+      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
       sideFill: null,
       standings: [],
     });
@@ -387,7 +383,7 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     await expect(repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.ADMIN, completedAt: RECORDED_AT },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
       sideFill: { id: randomUUID(), side: MatchSide.HOME, sportEventParticipantId: entryOf('Duke').id },
       standings: [],
     })).rejects.toThrow();
@@ -413,51 +409,6 @@ describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
 
     await expect(repos().field.findById(slot.id)).resolves.toMatchObject({ participantId: xavier.id, seedNumber: 11, isPlayInPlace: false });
     await expect(prisma.participant.findUnique({ where: { id: pairing.id } })).resolves.toMatchObject({ status: ParticipantStatus.INACTIVE });
-  });
-});
-
-describe('PrismaSportEventParticipantRepository.replaceWithdrawn', () => {
-  it('adds the replacement with its valuation, names it on the withdrawn row\'s side and inactivates that row as WITHDRAWN, together', async () => {
-    const { event, sportLeague, entryOf } = await createBracketEvent();
-    const prisma = getPrisma();
-    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
-    const tier = await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 } });
-    const luckyLoser = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: 'Lucky Loser', participantType: 'TEAM' } });
-    const [first] = await repos().matches.findBySportEvent(event.id);
-
-    const replacementId = await repos().field.replaceWithdrawn({
-      withdrawnId: entryOf('Vermont').id,
-      matchId: expectDefined(first).id,
-      side: MatchSide.AWAY,
-      replacementParticipantId: luckyLoser.id,
-      valuation: { sportEventTierId: tier.id, tierOrderIndex: 5, price: 4500 },
-    });
-
-    await expect(repos().field.findById(replacementId)).resolves.toMatchObject({ participantId: luckyLoser.id, isActive: true, seedNumber: undefined });
-    await expect(repos().field.findById(entryOf('Vermont').id)).resolves.toMatchObject({ isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, seedNumber: 2 });
-    const [replaced] = await repos().matches.findBySportEvent(event.id);
-    expect(replaced).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: replacementId });
-    const valuation = await prisma.sportEventParticipantValuation.findUniqueOrThrow({ where: { sportEventParticipantId: replacementId } });
-    expect(valuation).toMatchObject({ sportEventTierId: tier.id, tierOrderIndex: 5, tierAssignedSource: 'MANUAL', priceAssignedSource: 'MANUAL' });
-    expect(Number(valuation.price)).toBe(4500);
-  });
-
-  it('writes nothing when the replacement is already on the field, so the withdrawn row keeps its place', async () => {
-    const { event, entryOf } = await createBracketEvent();
-    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
-    const [first] = await repos().matches.findBySportEvent(event.id);
-
-    await expect(repos().field.replaceWithdrawn({
-      withdrawnId: entryOf('Vermont').id,
-      matchId: expectDefined(first).id,
-      side: MatchSide.AWAY,
-      replacementParticipantId: entryOf('Houston').participantId,
-      valuation: null,
-    })).rejects.toThrow();
-
-    await expect(repos().field.findById(entryOf('Vermont').id)).resolves.toMatchObject({ isActive: true });
-    const [unchanged] = await repos().matches.findBySportEvent(event.id);
-    expect(expectDefined(unchanged).awaySportEventParticipantId).toBe(entryOf('Vermont').id);
   });
 });
 
@@ -493,14 +444,6 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
       state: () => matchRows(context.event.id),
     };
   }],
-  ['a period score cleared', async (context) => {
-    const [first] = await loadedBracket(context);
-    await repos().matches.savePeriodScore(expectDefined(first).id, { periodNumber: 1, homeScore: 10, awayScore: 8 });
-    return {
-      write: (jobs) => repos().matches.deletePeriodScore(expectDefined(first).id, 1, jobs),
-      state: () => getPrisma().sportEventMatchPeriodScore.findMany({ where: { sportEventRoundMatchId: expectDefined(first).id } }),
-    };
-  }],
   ['teams added to the field', async (context) => {
     const team = await getPrisma().participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Added ${randomUUID()}`, participantType: 'TEAM' } });
     return { write: (jobs) => repos().field.createMany(context.event.id, [{ participantId: team.id }], jobs), state: () => fieldRows(context.event.id) };
@@ -522,16 +465,6 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
     return {
       write: (jobs) => repos().field.fillPlayInSlot({ id: slot.id, winnerParticipantId: winner.id, pairingParticipantId: pairing.id }, jobs),
       state: () => fieldRows(context.event.id),
-    };
-  }],
-  ['a withdrawn team replaced', async (context) => {
-    const [first] = await loadedBracket(context);
-    const luckyLoser = await getPrisma().participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Lucky ${randomUUID()}`, participantType: 'TEAM' } });
-    return {
-      write: (jobs) => repos().field.replaceWithdrawn({
-        withdrawnId: context.entryOf('Vermont').id, matchId: expectDefined(first).id, side: MatchSide.AWAY, replacementParticipantId: luckyLoser.id, valuation: null,
-      }, jobs),
-      state: () => Promise.all([fieldRows(context.event.id), matchRows(context.event.id)]),
     };
   }],
 ];

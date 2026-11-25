@@ -99,10 +99,6 @@
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 63
         },
-        "src/features/root-admin/bracket-test-context.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 71
-        },
         "src/features/root-admin/clears-save-error.ts": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 50
@@ -123,18 +119,6 @@
         "src/features/root-admin/event-contest-dialog.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 50
-        },
-        "src/features/root-admin/event-field-columns.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 72
-        },
-        "src/features/root-admin/event-match-dialog.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 75
-        },
-        "src/features/root-admin/event-participant-dialog.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 64
         },
         "src/features/root-admin/event-release-checks-dialog.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
@@ -168,10 +152,6 @@
         "src/features/root-admin/league-structure-phases-section.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 75
-        },
-        "src/features/root-admin/league-tools-tab.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "lines": 0
         },
         "src/features/root-admin/plan-row-dialog.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
@@ -211,27 +191,13 @@
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 72
         },
-        "src/features/root-admin/root-admin-participant-create-page.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "lines": 3,
-          "branches": 0
-        },
         "src/features/root-admin/root-admin-settings-utils.ts": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 62
         },
-        "src/features/root-admin/sport-league-event-calendar.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 50
-        },
         "src/features/root-admin/sport-league-page.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 66
-        },
-        "src/features/root-admin/sport-league-roster-upload-card.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "lines": 3,
-          "branches": 0
         },
         "src/features/root-admin/sync-finding-columns.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",

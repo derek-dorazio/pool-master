@@ -216,6 +216,33 @@ describe('SportEventService.createEvent', () => {
   });
 });
 
+describe('SportEventService.requireTestEvent (#2074)', () => {
+  it('answers a test event, one covering a test slot, so the admin result routes may write to it', async () => {
+    const { store, service, sportLeague } = setup();
+    const created = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
+
+    await expect(service.requireTestEvent(created.event.id)).resolves.toBeUndefined();
+  });
+
+  it('refuses an event covering only slots the sync keeps, or no slot, with 409 SPORT_EVENT_NOT_TEST_DATA', async () => {
+    const context = setup();
+    const { store, service, sportLeague } = context;
+    const synced = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
+    store.slotsByEvent.set(synced.event.id, [{ ...expectDefined(store.seasonSlots.at(0)), isTestData: false }]);
+    const slotless = await slotlessEvent(context, { name: 'Slotless Open' });
+
+    for (const eventId of [synced.event.id, slotless.event.id]) {
+      await expect(service.requireTestEvent(eventId)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_TEST_DATA', statusCode: 409 });
+    }
+  });
+
+  it('answers 404 EVENT_NOT_FOUND for an unknown event', async () => {
+    const { service } = setup();
+
+    await expect(service.requireTestEvent('missing')).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
 describe('SportEventService.updateEvent on an event with Season slots', () => {
   it('refuses a new start or end with 422 EVENT_DATES_FROM_SLOTS, since its dates are its slots\'', async () => {
     const { store, service, sportLeague } = setup();

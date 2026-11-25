@@ -2,7 +2,7 @@ import { enumLabel } from '@poolmaster/shared/display-strings';
 import { AutoReleaseCheckOutcome, SportEventStatus, SportLeagueIssueType } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
-import { Navigate, Outlet, useLocation, useParams } from 'react-router';
+import { Outlet, useLocation, useParams } from 'react-router';
 import {
   Button,
   formatDateDisplay,
@@ -16,7 +16,7 @@ import {
 } from '@/features/shared/ui';
 import type { SportEventDto, SportEventOverviewDto } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
-import { eventPageTabs, type EventPageContext } from './event-page-context';
+import { EVENT_PAGE_TABS, type EventPageContext } from './event-page-context';
 import { EventReleaseChecksDialog } from './event-release-checks-dialog';
 import { EventSettingsDialog } from './event-settings-dialog';
 import { isSyncedLeague } from './league-page-context';
@@ -91,12 +91,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
     : isSyncedLeague(sportLeague ?? { selectedProviderMapping: null }, leagueOverview);
   const overview = overviewQuery.data;
 
-  // A synced event has no Tools tab, so its old link lands on Field.
-  if (openSegment === 'tools' && isSynced) {
-    return <Navigate replace to={`${basePath}/field`} />;
-  }
-
-  const items: PageLinkTab[] = eventPageTabs(isSynced).map((tab) => ({
+  const items: PageLinkTab[] = EVENT_PAGE_TABS.map((tab) => ({
     ...(tab.segment === 'activity' && failedCount > 0
       ? { count: failedCount, countHint: 'Jobs that failed in the Activity grid\'s Started window, the past day unless you widen it' }
       : {}),

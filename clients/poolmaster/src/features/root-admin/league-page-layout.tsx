@@ -1,10 +1,10 @@
 import { getSportDefinition } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import { Button, PageHeader, PageTabs, Text, type PageLinkTab } from '@/features/shared/ui';
 import type { SportLeagueDto } from '@/lib/api';
-import { isSyncedLeague, leaguePageTabs, type LeaguePageContext } from './league-page-context';
+import { isSyncedLeague, LEAGUE_PAGE_TABS, type LeaguePageContext } from './league-page-context';
 import { buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
 import { OnOffChip } from './on-off-chip';
 import { SportLeagueIssueChips } from './sport-league-issue-chips';
@@ -47,13 +47,7 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
   // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const overview = overviews.find((candidate) => candidate.id === sportLeague.id);
   const isSynced = isSyncedLeague(sportLeague, overview);
-  const tabs = leaguePageTabs(isSynced);
-  // A synced league has no Tools tab, so its old link lands on Events.
-  if (openSegment === 'tools' && overview !== undefined && isSynced) {
-    return <Navigate replace to={`${basePath}/events`} />;
-  }
-
-  const items: PageLinkTab[] = tabs.map((tab) => ({
+  const items: PageLinkTab[] = LEAGUE_PAGE_TABS.map((tab) => ({
     ...(tab.segment === 'activity' && failedCount > 0
       ? { count: failedCount, countHint: 'Jobs that failed in the Activity grid\'s Started window, the past day unless you widen it' }
       : {}),

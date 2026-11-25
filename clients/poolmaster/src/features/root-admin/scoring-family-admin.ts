@@ -1,7 +1,6 @@
 import { ScoringFamily, type SportLeagueEvent } from '@poolmaster/shared/domain';
 import type { ComponentType } from 'react';
 import type { SportEventDto } from '@/lib/api';
-import { BracketPanel } from './bracket-panel';
 import { GolfRoundScoresPanel } from './golf-round-scores-panel';
 import { RaceFinishingOrderPanel } from './race-finishing-order-panel';
 
@@ -13,8 +12,11 @@ import { RaceFinishingOrderPanel } from './race-finishing-order-panel';
 export interface ScoringFamilyAdminUi {
   /** The event's results page, as its sub-menu and trail name it: "Scores", "Results". */
   resultsLabel: string;
-  /** The body of the event's results page: how an admin enters and corrects its results. */
-  ResultsPanel: ComponentType<{ event: SportEventDto }>;
+  /**
+   * The body of the event's results page on an unsynced event: how an admin enters its results.
+   * Null for a family whose results come only from the feed (head to head, #2074).
+   */
+  ResultsPanel: ComponentType<{ event: SportEventDto }> | null;
   /**
    * Whether the family scores a round a participant did not play against the event's par per
    * round (golf's 80 strokes), so the event's details show and edit that par.
@@ -40,7 +42,7 @@ export const SCORING_FAMILY_ADMIN_UI: Readonly<Record<ScoringFamily, ScoringFami
   },
   [ScoringFamily.HEAD_TO_HEAD]: {
     resultsLabel: 'Bracket',
-    ResultsPanel: BracketPanel,
+    ResultsPanel: null,
     scoresUnplayedRoundsAgainstPar: false,
   },
 };

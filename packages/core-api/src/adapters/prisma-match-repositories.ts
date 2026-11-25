@@ -90,18 +90,6 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
     });
   }
 
-  async deletePeriodScore(sportEventRoundMatchId: string, periodNumber: number, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
-    const remove = (db: Prisma.TransactionClient | PrismaClient) => db.sportEventMatchPeriodScore.deleteMany({ where: { sportEventRoundMatchId, periodNumber } });
-    if (jobs.length === 0) {
-      await remove(this.prisma);
-      return;
-    }
-    await this.prisma.$transaction(async (tx) => {
-      await remove(tx);
-      await insertBackgroundJobs(tx, jobs);
-    });
-  }
-
   async linkGames(links: readonly { id: string; externalGameId: string }[]): Promise<void> {
     if (links.length === 0) return;
     await this.prisma.$transaction(
