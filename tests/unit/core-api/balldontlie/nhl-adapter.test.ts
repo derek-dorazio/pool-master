@@ -110,14 +110,14 @@ describe('BalldontlieAdapter (NHL)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a finished postseason with its sixteen teams, by the feed\'s raw ids and the league\'s tour', async () => {
+    it('gives a finished postseason with its sixteen teams, by the feed\'s raw ids', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('nhl-2024-postseason');
 
       expect(detail).toMatchObject({ externalId: 'nhl-2024-postseason', sport: Sport.HOCKEY, status: 'COMPLETED', participantCount: 16, fieldLocked: true });
-      expect(detail?.participants[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', metadata: { tour: 'NHL', abbreviation: 'WSH' } });
+      expect(detail?.participants[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', metadata: { abbreviation: 'WSH' } });
       expect(requestLine(harness.api)).toEqual(['/nhl/v1/games?seasons=2024&postseason=true&per_page=100', '/nhl/v1/standings?season=2024']);
     });
 
@@ -178,7 +178,7 @@ describe('BalldontlieAdapter (NHL)', () => {
 
     expect(teams).toHaveLength(16);
     expect(teams.map((team) => team.externalId)).not.toContain('45');
-    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', sport: Sport.HOCKEY, metadata: { tour: 'NHL' } });
+    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', sport: Sport.HOCKEY, metadata: {} });
     expect(requestLine(harness.api)).toEqual(['/nhl/v1/teams?per_page=100']);
   });
 

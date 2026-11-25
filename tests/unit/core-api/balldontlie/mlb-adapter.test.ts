@@ -105,14 +105,14 @@ describe('BalldontlieAdapter (MLB)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a finished postseason with its twelve teams, by the feed\'s raw ids and the league\'s tour', async () => {
+    it('gives a finished postseason with its twelve teams, by the feed\'s raw ids', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('mlb-2025-postseason');
 
       expect(detail).toMatchObject({ externalId: 'mlb-2025-postseason', sport: Sport.BASEBALL, status: 'COMPLETED', participantCount: 12, fieldLocked: true });
-      expect(detail?.participants[0]).toMatchObject({ externalId: '10', name: 'New York Yankees', metadata: { tour: 'MLB', abbreviation: 'NYY' } });
+      expect(detail?.participants[0]).toMatchObject({ externalId: '10', name: 'New York Yankees', metadata: { abbreviation: 'NYY' } });
       expect(requestLine(harness.api)).toEqual(['/mlb/v1/games?seasons[]=2025&postseason=true&per_page=100', '/mlb/v1/standings?season=2025', '/mlb/v1/teams?']);
     });
 
@@ -207,7 +207,7 @@ describe('BalldontlieAdapter (MLB)', () => {
     const teams = await harness.adapter.getParticipants(Sport.BASEBALL);
 
     expect(teams).toHaveLength(12);
-    expect(teams[0]).toMatchObject({ externalId: '14', name: 'Toronto Blue Jays', sport: Sport.BASEBALL, metadata: { tour: 'MLB', league: 'American' } });
+    expect(teams[0]).toMatchObject({ externalId: '14', name: 'Toronto Blue Jays', sport: Sport.BASEBALL, metadata: { league: 'American' } });
     expect(requestLine(harness.api)).toEqual(['/mlb/v1/teams?']);
   });
 

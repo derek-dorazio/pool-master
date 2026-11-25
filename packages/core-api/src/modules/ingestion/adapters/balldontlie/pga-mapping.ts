@@ -22,11 +22,6 @@ import {
 
 export const BALLDONTLIE_PROVIDER_ID = 'balldontlie';
 
-/**
- * The PGA TOUR's tour word in the adapter's league table. A sport league's events are found
- * by the provider league code each event carries (`pga`), never by this name (#1997).
- */
-export const PGA_TOUR_NAME = 'PGA TOUR';
 
 /**
  * The port's event status for each vendor lifecycle state. `unknown` has none: the vendor

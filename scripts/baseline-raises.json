@@ -36,6 +36,30 @@
       "key": "deletePeriodScore",
       "now": 0,
       "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PGA_TOUR_NAME",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "NFL_LEAGUE_NAME",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "EPL_TOUR",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "FIFA_WC_TOUR",
+      "now": 0,
+      "reason": "retired by #2005"
     }
   ]
 }

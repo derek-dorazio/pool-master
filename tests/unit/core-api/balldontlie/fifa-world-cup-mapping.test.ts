@@ -96,9 +96,9 @@ describe('World Cup teams', () => {
       sport: Sport.SOCCER,
       name: 'Argentina',
       active: true,
-      metadata: { tour: 'FIFAWC', abbreviation: 'ARG' },
+      metadata: { abbreviation: 'ARG' },
     });
-    expect(toWorldCupTeamParticipant({ id: 99, name: 'Wales', abbreviation: null }, '/fifa/worldcup/v1/teams').metadata).toEqual({ tour: 'FIFAWC' });
+    expect(toWorldCupTeamParticipant({ id: 99, name: 'Wales', abbreviation: null }, '/fifa/worldcup/v1/teams').metadata).toEqual({});
   });
 
   it('refuses a team with no id or no name', () => {

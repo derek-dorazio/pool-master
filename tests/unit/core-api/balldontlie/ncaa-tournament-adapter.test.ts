@@ -134,7 +134,7 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
 
       expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, participantCount: 5, rounds: 6, status: 'COMPLETED' });
       expect(detail?.participants.map((team) => team.name)).not.toContain('Texas Longhorns');
-      expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ tour: 'NCAAM', seed: 1 });
+      expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ seed: 1 });
       expect(requestLine(harness.api)).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100']);
     });
 
@@ -194,7 +194,6 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       ['41', 'UConn Huskies'],
       ['150', 'Duke Blue Devils'],
     ]);
-    expect(teams.map((team) => team.metadata.tour)).toEqual(['NCAAM', 'NCAAM', 'NCAAM', 'NCAAW', 'NCAAW']);
     expect([...requestLine(harness.api)].sort()).toEqual(['/ncaab/v1/teams?', '/ncaaw/v1/teams?']);
   });
 

@@ -167,8 +167,8 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
     const teams = await harness.adapter.getParticipants(Sport.SOCCER);
 
     expect(teams).toHaveLength(14);
-    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Arsenal', metadata: { tour: 'EPL' } });
-    expect(teams[10]).toMatchObject({ externalId: '9', name: 'Argentina', metadata: { tour: 'FIFAWC' } });
+    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Arsenal', metadata: {} });
+    expect(teams[10]).toMatchObject({ externalId: '9', name: 'Argentina', metadata: {} });
     expect([...requestLine(harness.api)].sort()).toEqual(['/epl/v2/teams?season=2026', '/fifa/worldcup/v1/teams?']);
   });
 

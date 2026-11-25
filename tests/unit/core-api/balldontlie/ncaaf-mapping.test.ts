@@ -109,7 +109,7 @@ describe('a College Football Playoff as an event', () => {
     expect(toCfpEvent(CFP_2026, notStarted, false)).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
   });
 
-  it('names each team playing in the window once, with the league\'s tour so it links only to the site\'s playoff teams', () => {
+  it('names each team playing in the window once, by the feed\'s raw id', () => {
     const field = toCfpFieldParticipants(window2025);
     expect(field).toHaveLength(14);
     expect(field[0]).toEqual({
@@ -118,7 +118,7 @@ describe('a College Football Playoff as an event', () => {
       sport: Sport.AMERICAN_FOOTBALL,
       name: 'Navy Midshipmen',
       active: true,
-      metadata: { tour: 'CFP', abbreviation: 'NAVY', conference: 'American' },
+      metadata: { abbreviation: 'NAVY', conference: 'American' },
     });
   });
 
@@ -128,7 +128,7 @@ describe('a College Football Playoff as an event', () => {
   });
 
   it('carries no abbreviation or conference the vendor leaves out', () => {
-    expect(toNcaafTeamParticipant({ id: 64, full_name: 'Indiana Hoosiers' }, '/ncaaf/v1/teams').metadata).toEqual({ tour: 'CFP' });
+    expect(toNcaafTeamParticipant({ id: 64, full_name: 'Indiana Hoosiers' }, '/ncaaf/v1/teams').metadata).toEqual({});
   });
 });
 

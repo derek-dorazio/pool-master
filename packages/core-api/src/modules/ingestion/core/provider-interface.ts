@@ -257,11 +257,6 @@ export interface ProviderParticipant {
  * ones something reads back.
  */
 export interface ProviderParticipantMetadata {
-  /**
-   * The name of the league the participant plays in, for display, when the provider's sport
-   * covers more than one (a college team is a men's or a women's team).
-   */
-  tour?: string;
   seed?: number;
   /**
    * A play-in place (#1728): the participant stands for a First Four pairing until its winner

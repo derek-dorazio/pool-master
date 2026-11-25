@@ -126,8 +126,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
         endDate: new Date('2025-06-23T00:30:00Z'),
       });
       expect(detail?.participants.map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-        ['21', 'Oklahoma City Thunder', { abbreviation: 'OKC', conference: 'West', division: 'Northwest', tour: 'NBA' }],
-        ['12', 'Indiana Pacers', { abbreviation: 'IND', conference: 'East', division: 'Central', tour: 'NBA' }],
+        ['21', 'Oklahoma City Thunder', { abbreviation: 'OKC', conference: 'West', division: 'Northwest' }],
+        ['12', 'Indiana Pacers', { abbreviation: 'IND', conference: 'East', division: 'Central' }],
       ]);
       expect(requestLine(harness.api)).toEqual(['/nba/v1/games?seasons[]=2024&season_type=playoffs&per_page=100']);
     });
@@ -196,7 +196,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     const teams = await harness.adapter.getParticipants(Sport.BASKETBALL);
 
     expect(teams).toHaveLength(8);
-    expect(teams[0]).toMatchObject({ externalId: '21', name: 'Oklahoma City Thunder', sport: Sport.BASKETBALL, metadata: { tour: 'NBA' } });
+    expect(teams[0]).toMatchObject({ externalId: '21', name: 'Oklahoma City Thunder', sport: Sport.BASKETBALL, metadata: {} });
     expect(requestLine(harness.api)).toEqual(['/nba/v1/teams?']);
   });
 

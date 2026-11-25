@@ -20,11 +20,6 @@ import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
 import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
-/**
- * The NFL's tour word in the adapter's league table; the NFL
- * sport league finds them by their provider league code, `nfl` (#1997).
- */
-export const NFL_LEAGUE_NAME = 'NFL';
 
 /**
  * Games in a full NFL postseason: six Wild Card, four Divisional, two Conference Championship

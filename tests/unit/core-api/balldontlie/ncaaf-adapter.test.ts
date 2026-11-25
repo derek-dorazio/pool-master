@@ -172,15 +172,14 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
     });
   });
 
-  it('lists every college football team beside the NFL\'s, each toured CFP', async () => {
+  it('lists every college football team after the NFL\'s', async () => {
     const harness = setup();
     restore = harness.restore;
 
     const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
 
-    const college = teams.filter((team) => team.metadata.tour === 'CFP');
-    expect(college.map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
-    expect(teams.some((team) => team.metadata.tour === undefined)).toBe(true);
+    expect(teams.slice(-5).map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
+    expect(teams.length).toBeGreaterThan(5);
     expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/teams?']);
   });
 });

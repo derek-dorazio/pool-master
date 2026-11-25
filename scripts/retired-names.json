@@ -25,7 +25,11 @@
     "ROSTER_ROLLOVER_MONTH": "#2025 (21): the current Season's provider season id",
     "useProviderName": "#2101: providerName on the DTO",
     "getStatusTone": "#2101: dead; run status tones from the enum",
-    "SYNC_STATUS_OPTIONS": "#2101: ProviderSyncRunStatus from the generated types"
+    "SYNC_STATUS_OPTIONS": "#2101: ProviderSyncRunStatus from the generated types",
+    "PGA_TOUR_NAME": "#2005 (8): the Provider league row's name",
+    "NFL_LEAGUE_NAME": "#2005 (8): the Provider league row's name",
+    "EPL_TOUR": "#2005 (8): the Provider league row's name",
+    "FIFA_WC_TOUR": "#2005 (8): the Provider league row's name"
   },
   "ROUND_NAMES_FROM_FINAL": 10,
   "roundLabel": 61,
@@ -51,5 +55,9 @@
   "ROSTER_ROLLOVER_MONTH": 2,
   "useProviderName": 1,
   "getStatusTone": 1,
-  "SYNC_STATUS_OPTIONS": 2
+  "SYNC_STATUS_OPTIONS": 2,
+  "PGA_TOUR_NAME": 0,
+  "NFL_LEAGUE_NAME": 0,
+  "EPL_TOUR": 0,
+  "FIFA_WC_TOUR": 0
 }
