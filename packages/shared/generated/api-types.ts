@@ -2760,7 +2760,7 @@ export interface paths {
         post?: never;
         /**
          * Remove a test slot
-         * @description Removes a test slot (QA only, #2075): the test event on it, then the slot, then every test participant of the league no event field holds any more. How a browser journey cleans up after itself. 404 SEASON_SLOT_NOT_FOUND for a slot that is not the league's; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps; 409 EVENT_HAS_CONTESTS while a contest covers its event. Root admin only.
+         * @description Removes a test slot (QA only, #2075), all or nothing: the test event on it, the slot, and each test participant on that event's field that no other field holds; no other participant of the league. How a browser journey cleans up after itself. 404 SEASON_SLOT_NOT_FOUND for a slot that is not the league's; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps; 409 EVENT_HAS_CONTESTS while a contest covers its event. Root admin only.
          */
         delete: operations["deleteTestSlot"];
         options?: never;
@@ -3121,7 +3121,7 @@ export interface paths {
         };
         /**
          * List participants
-         * @description The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).
+         * @description The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league's catalog: 400 SEARCH_TERM_REQUIRED otherwise. It includes test participants (#2096), which no roster lists: the test-data loader finds its earlier ones here by name. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).
          */
         get: operations["listParticipants"];
         put?: never;

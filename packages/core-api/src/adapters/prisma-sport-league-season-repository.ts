@@ -115,10 +115,6 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     return { outcome: 'CREATED', slot: toSeasonSlot(row) };
   }
 
-  async deleteTestSlot(seasonSlotId: string): Promise<void> {
-    await this.prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { id: seasonSlotId, isTestData: true } });
-  }
-
   async findSyncSlots(sportLeagueSeasonId: string, sportLeagueProviderMappingId: string): Promise<SyncSeasonSlot[]> {
     const rows = await this.prisma.sportLeagueSeasonPhaseSlot.findMany({
       where: { sportLeagueSeasonId, isTestData: false },

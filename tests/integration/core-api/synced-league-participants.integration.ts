@@ -143,11 +143,13 @@ describe('Creating a participant in a provider-synced sport league (#2096)', () 
 });
 
 describe('Removing a test slot (#2075)', () => {
-  it('removes the slot, its event, and the test participants no other field holds, keeping one another test event still fields', async () => {
+  it('removes the slot, its event, and the test participants of its field no other field holds, keeping one another test event still fields and one never on its field', async () => {
     const headers = await rootAdminHeaders();
     const sportLeagueId = await golfLeague();
     const only = (await createParticipant(headers, { sportLeagueId, name: 'Only Here', isTestData: true })).json<ParticipantResponse>().participant.id;
     const shared = (await createParticipant(headers, { sportLeagueId, name: 'Also Elsewhere', isTestData: true })).json<ParticipantResponse>().participant.id;
+    // On no field at all, as a journey's players are between their create and its field add.
+    const bystander = (await createParticipant(headers, { sportLeagueId, name: 'Not Yet Fielded', isTestData: true })).json<ParticipantResponse>().participant.id;
     const removed = await testEvent(headers, sportLeagueId);
     const kept = await testEvent(headers, sportLeagueId);
     await getApp().inject({ method: 'POST', url: `/api/v1/events/${removed.eventId}/participants`, headers, payload: { participantIds: [only, shared] } });
@@ -158,7 +160,8 @@ describe('Removing a test slot (#2075)', () => {
     expect(response.statusCode).toBe(204);
     await expect(getPrisma().sportLeagueSeasonPhaseSlot.count({ where: { id: removed.slotId } })).resolves.toBe(0);
     await expect(getPrisma().sportEvent.count({ where: { id: removed.eventId } })).resolves.toBe(0);
-    await expect(getPrisma().participant.findMany({ where: { sportLeagueId }, select: { id: true } })).resolves.toEqual([{ id: shared }]);
+    await expect(getPrisma().participant.findMany({ where: { sportLeagueId }, select: { id: true }, orderBy: { id: 'asc' } }))
+      .resolves.toEqual([shared, bystander].sort().map((id) => ({ id })));
     await expect(getPrisma().sportEvent.count({ where: { id: kept.eventId } })).resolves.toBe(1);
   });
 

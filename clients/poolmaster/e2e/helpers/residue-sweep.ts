@@ -14,7 +14,7 @@ import {
  * that is cancelled or times out never reaches it, and leaves its whole set behind. The sweep finds
  * those leftovers by the one test-name marker (`test-marker.ts`) and removes them through the
  * admin API, with the same helpers the teardowns use: leagues (their contests, entries, squads and
- * cups go with them) → test slots (their events, and the test participants no other field holds,
+ * cups go with them) → test slots (their events, and their fields' test participants no other field holds,
  * go with them) → players → users. A run plays on its own labelled test slots of seeded sport
  * leagues (#2004), which stay. Each league is deleted on its own, as the API deletes one tenant
  * at a time; nothing here touches the database.
@@ -99,7 +99,7 @@ export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeade
     const { sportLeagues } = (await list.json()) as { sportLeagues: { id: string; name: string }[] };
     for (const sportLeague of sportLeagues) {
       // A run's events are on its own labelled test slots of a seeded league (#2004); removing a
-      // slot removes its event and the test participants no other field holds (#2075).
+      // slot removes its event and the test participants of its field that no other field holds (#2075).
       await remove(`test slots of "${sportLeague.name}" (listing)`, async () => {
         for (const slot of await listTestSlots(api, headers, sportLeague.id)) {
           if (slot.label === null || !due(runIdOfName(slot.label))) continue;

@@ -81,7 +81,7 @@ export interface SportLeagueServiceDeps {
   sportEvents: SportEventRepository;
   participants: ParticipantRepository;
   /** Where a labelled test slot is added (#2004) and removed (#2075). */
-  seasons: Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot' | 'deleteTestSlot'>;
+  seasons: Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot'>;
   /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
   mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
   /** Which providers can sync a sport league's events (ADR 0011). */
@@ -146,8 +146,8 @@ export class SportLeagueService {
   }
 
   /**
-   * Removes a test slot (#2075): the test event on it, then the slot, then every test participant
-   * of the league no field holds any more (#2096). How a browser journey cleans up after itself, and
+   * Removes a test slot (#2075) in one transaction: the test event on it, the slot, and each test
+   * participant on that event's field that no other field holds (#2096); no other participant. How a browser journey cleans up after itself, and
    * the residue sweep after a journey that could not. 404 SEASON_SLOT_NOT_FOUND for a slot that is
    * not the league's; 422 SEASON_SLOT_NOT_TEST for one the sync keeps; 409 EVENT_HAS_CONTESTS while
    * a contest still covers its event, which goes first. A slot holds at most one event.
@@ -165,10 +165,8 @@ export class SportLeagueService {
       if (contests > 0) {
         throw new SportCatalogError(`The test slot's event has ${contests} contest(s); remove them first.`, 'EVENT_HAS_CONTESTS', 409);
       }
-      await this.deps.sportEvents.delete(found.sportEventId);
     }
-    await this.deps.seasons.deleteTestSlot(seasonSlotId);
-    const testParticipants = await this.deps.participants.deleteUnfieldedTestParticipants(sportLeagueId);
+    const testParticipants = await this.deps.sportEvents.deleteTestSlot(seasonSlotId, found.sportEventId);
     this.deps.logger?.info({ sportLeagueId, seasonSlotId, sportEventId: found.sportEventId, testParticipants }, 'Removed test slot');
   }
 

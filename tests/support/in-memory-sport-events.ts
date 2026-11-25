@@ -354,7 +354,6 @@ export class InMemorySportEvents {
       countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.participants.filter((row) => row.sportLeagueId === id).length])),
       create: async () => { throw new Error('not used'); },
       createWithProviderMapping: async () => { throw new Error('not used'); },
-      deleteUnfieldedTestParticipants: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
       deleteUnlessOnAField: async () => { throw new Error('not used'); },
     };
@@ -453,6 +452,7 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(transition.jobs ?? []));
         return row;
       },
+      deleteTestSlot: async () => { throw new Error('not used'); },
       delete: async (id) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
         this.field = this.field.filter((row) => row.sportEventId !== id);

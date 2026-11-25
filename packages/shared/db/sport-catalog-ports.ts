@@ -260,6 +260,13 @@ export interface SportEventRepository {
   transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null>;
   /** Deletes the event with its rounds, tiers and field. Refuses nothing: the caller guards contests. */
   delete(id: string): Promise<void>;
+  /**
+   * Removes a test slot (#2075) in one transaction: its event (`sportEventId`, null when it has
+   * none) as `delete` does, the slot, and each test participant on that event's field that no other
+   * field holds. No other participant is touched. A synced slot is never removed. Returns how many
+   * test participants went.
+   */
+  deleteTestSlot(seasonSlotId: string, sportEventId: string | null): Promise<number>;
   /** Event participants per event, for each id asked about (0 where none). */
   countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /**
@@ -793,8 +800,6 @@ export interface SportLeagueSeasonRepository {
    * already has a test slot of that label on that definition.
    */
   createTestSlot(input: TestSeasonSlotCreate): Promise<TestSlotCreateResult>;
-  /** Removes a test slot with no event on it (#2075); a synced slot is never removed. */
-  deleteTestSlot(seasonSlotId: string): Promise<void>;
   /**
    * A Season's slots as its events sync reads them (#2005): each with the PROVIDER_CODE value the
    * league's provider mapping names its definition by, whether one of the league's active contest

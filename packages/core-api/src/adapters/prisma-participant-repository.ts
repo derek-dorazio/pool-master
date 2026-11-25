@@ -117,11 +117,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return mapToParticipant(row);
   }
 
-  async deleteUnfieldedTestParticipants(sportLeagueId: string): Promise<number> {
-    // A test participant never has a provider mapping, so its field rows are all that can hold it.
-    const { count } = await this.prisma.participant.deleteMany({ where: { sportLeagueId, isTestData: true, sportEventParticipants: { none: {} } } });
-    return count;
-  }
 
   async createWithProviderMapping(
     participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>,

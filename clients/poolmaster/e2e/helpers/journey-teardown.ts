@@ -139,12 +139,12 @@ export async function listTestSlots(api: APIRequestContext, headers: AuthHeaders
   return seasons.flatMap((season) => season.phases.flatMap((phase) => phase.slots)).filter((slot) => slot.isTestData);
 }
 
-/** Removes a test slot with its event and the test participants no other field holds (#2075). */
+/** Removes a test slot with its event and the test participants of its field that no other field holds (#2075). */
 export async function removeTestSlot(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string, slotId: string, label: string, log: Log) {
   await expectOk(api.delete(`/api/v1/sport-leagues/${sportLeagueId}/test-slots/${slotId}`, { headers }), `delete test slot ${label}`);
   const remaining = await listTestSlots(api, headers, sportLeagueId);
   if (remaining.some((slot) => slot.id === slotId)) throw new Error(`test slot "${label}" STILL PRESENT after delete`);
-  log(`test slot "${label}" removed with its event, field and unfielded test participants`);
+  log(`test slot "${label}" removed with its event, field and the field's test participants no other field holds`);
 }
 
 /**

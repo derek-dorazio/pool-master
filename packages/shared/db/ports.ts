@@ -463,11 +463,6 @@ export interface ParticipantRepository {
   countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   /**
-   * Removes the sport league's test participants no event field holds (#2096), in one statement:
-   * what a removed test slot's field leaves behind. Returns how many went.
-   */
-  deleteUnfieldedTestParticipants(sportLeagueId: string): Promise<number>;
-  /**
    * The participant and its feed id's provider mapping in one transaction (#2096), with the
    * mapping's follow-up `jobs`: how a provider-synced league takes a participant. Null, writing
    * nothing, when another participant of the league already holds the feed id.

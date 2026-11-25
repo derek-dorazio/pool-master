@@ -83,7 +83,7 @@ function buildService(overrides: {
   participants?: Parameters<typeof fakeParticipantRepo>[0];
   mappings?: Parameters<typeof fakeParticipantProviderMappingRepo>[0];
   providers?: SportDataProviderLookup;
-  seasons?: Partial<Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot' | 'deleteTestSlot'>>;
+  seasons?: Partial<Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot'>>;
   platformTierProfiles?: { findById: jest.Mock };
   platformPricingProfiles?: { findById: jest.Mock };
 } = {}) {
@@ -97,7 +97,7 @@ function buildService(overrides: {
     }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     participants: fakeParticipantRepo(overrides.participants),
-    seasons: { createTestSlot: jest.fn(), findSlot: jest.fn().mockResolvedValue(null), deleteTestSlot: jest.fn().mockResolvedValue(undefined), ...overrides.seasons },
+    seasons: { createTestSlot: jest.fn(), findSlot: jest.fn().mockResolvedValue(null), ...overrides.seasons },
     mappings: fakeParticipantProviderMappingRepo(overrides.mappings),
     providers: overrides.providers ?? registeredProviders({}),
     platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
@@ -474,35 +474,32 @@ describe('SportLeagueService — removing a test slot (#2075)', () => {
     slot: testSlot, sportLeagueId: 'sl-pga', sportLeagueSeasonId: 'season-2026', sportEventId: 'event-1', ...overrides,
   });
 
-  it('removes the slot\'s event, then the slot, then the league\'s test participants no field holds any more', async () => {
-    const deleteTestSlot = jest.fn().mockResolvedValue(undefined);
+  it('removes the slot with its event and that field\'s orphaned test participants in one repository write', async () => {
     const { service, deps } = buildService({
-      seasons: { findSlot: jest.fn().mockResolvedValue(found()), deleteTestSlot },
-      sportEvents: { countContests: jest.fn().mockResolvedValue(new Map([['event-1', 0]])) },
+      seasons: { findSlot: jest.fn().mockResolvedValue(found()) },
+      sportEvents: { countContests: jest.fn().mockResolvedValue(new Map([['event-1', 0]])), deleteTestSlot: jest.fn().mockResolvedValue(2) },
     });
 
     await service.deleteTestSlot('sl-pga', 'slot-1');
 
-    expect(deps.sportEvents.delete).toHaveBeenCalledWith('event-1');
-    expect(deleteTestSlot).toHaveBeenCalledWith('slot-1');
-    expect(deps.participants.deleteUnfieldedTestParticipants).toHaveBeenCalledWith('sl-pga');
+    expect(deps.sportEvents.deleteTestSlot).toHaveBeenCalledWith('slot-1', 'event-1');
+    expect(deps.sportEvents.delete).not.toHaveBeenCalled();
   });
 
-  it('removes a free test slot without deleting any event', async () => {
+  it('removes a free test slot, with no event to remove', async () => {
     const { service, deps } = buildService({ seasons: { findSlot: jest.fn().mockResolvedValue(found({ sportEventId: null })) } });
 
     await service.deleteTestSlot('sl-pga', 'slot-1');
 
-    expect(deps.sportEvents.delete).not.toHaveBeenCalled();
-    expect(deps.seasons.deleteTestSlot).toHaveBeenCalledWith('slot-1');
+    expect(deps.sportEvents.deleteTestSlot).toHaveBeenCalledWith('slot-1', null);
+    expect(deps.sportEvents.countContests).not.toHaveBeenCalled();
   });
 
   it('refuses a slot the sync keeps with 422 SEASON_SLOT_NOT_TEST, removing nothing', async () => {
     const { service, deps } = buildService({ seasons: { findSlot: jest.fn().mockResolvedValue(found({ slot: { ...testSlot, isTestData: false, label: null } })) } });
 
     await expect(service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_TEST', statusCode: 422 });
-    expect(deps.sportEvents.delete).not.toHaveBeenCalled();
-    expect(deps.seasons.deleteTestSlot).not.toHaveBeenCalled();
+    expect(deps.sportEvents.deleteTestSlot).not.toHaveBeenCalled();
   });
 
   it('refuses an unknown slot, and another league\'s, with 404 SEASON_SLOT_NOT_FOUND', async () => {
@@ -511,7 +508,7 @@ describe('SportLeagueService — removing a test slot (#2075)', () => {
 
     await expect(unknown.service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
     await expect(elsewhere.service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
-    expect(elsewhere.deps.seasons.deleteTestSlot).not.toHaveBeenCalled();
+    expect(elsewhere.deps.sportEvents.deleteTestSlot).not.toHaveBeenCalled();
   });
 
   it('refuses while a contest still covers the slot\'s event with 409 EVENT_HAS_CONTESTS, removing nothing', async () => {
@@ -521,7 +518,6 @@ describe('SportLeagueService — removing a test slot (#2075)', () => {
     });
 
     await expect(service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'EVENT_HAS_CONTESTS', statusCode: 409 });
-    expect(deps.sportEvents.delete).not.toHaveBeenCalled();
-    expect(deps.seasons.deleteTestSlot).not.toHaveBeenCalled();
+    expect(deps.sportEvents.deleteTestSlot).not.toHaveBeenCalled();
   });
 });

@@ -52,6 +52,7 @@ export function participantsModule(fastify: FastifyInstance, opts: DomainEventsM
       summary: 'List participants',
       description:
         'The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. '
+        + 'It includes test participants (#2096), which no roster lists: the test-data loader finds its earlier ones here by name. '
         + 'Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event\'s field by the event, never the catalog (#1348).',
       operationId: 'listParticipants',
       querystring: schemaRef('ParticipantListQuery'),
