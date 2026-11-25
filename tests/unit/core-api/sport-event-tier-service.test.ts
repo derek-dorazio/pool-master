@@ -1,4 +1,4 @@
-import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
@@ -72,6 +72,54 @@ describe('SportEventTierService — tiers', () => {
     const groups = await service.autoAssignTiers({ sportEventId: playoff.id });
 
     expect(groups.map((group) => group.participants.length)).toEqual([2, 2, 2, 2, 2, 2]);
+  });
+
+  it('places a 14-team, two-conference playoff field by seed range on a ranges profile: both 1 seeds in tier 1, seeds 2 to 4 in tier 2, the rest in tier 3, whatever their odds', async () => {
+    const { store, service } = setup();
+    const league = store.addLeagueWithRangesTierProfile(
+      [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }],
+      [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.RANKING],
+    );
+    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
+    await service.createDefaultTiers(league, [playoff.id]);
+    for (const conference of ['afc', 'nfc']) {
+      for (let seed = 1; seed <= 7; seed++) {
+        // The odds run against the seeds, so an order by odds would put the 7 seeds first.
+        store.addToField(playoff.id, `${conference}-${seed}`, { seedNumber: seed, oddsToWin: 100 - seed });
+      }
+    }
+
+    const groups = await service.autoAssignTiers({ sportEventId: playoff.id });
+
+    expect(groups.map((group) => group.participants.map((placement) => placement.participantId).sort())).toEqual([
+      ['afc-1', 'nfc-1'],
+      ['afc-2', 'afc-3', 'afc-4', 'nfc-2', 'nfc-3', 'nfc-4'],
+      ['afc-5', 'afc-6', 'afc-7', 'nfc-5', 'nfc-6', 'nfc-7'],
+    ]);
+    expect(store.valuationRows.every((valuation) => valuation.tierAssignedSource === 'AUTO_SEED')).toBe(true);
+    expect((await store.sportEventRepo().findById(playoff.id))?.tierConfig).toMatchObject({ type: 'RANGES' });
+  });
+
+  it('refuses (422 TIER_SIZE_NOT_FOR_RANGES) a tier size sent for a league whose tier profile is ranges, placing no one', async () => {
+    const { store, service } = setup();
+    const league = store.addLeagueWithRangesTierProfile([{ tierNumber: 1, fromValue: 1, toValue: 2 }, { tierNumber: 2, fromValue: 3, toValue: null }], [FieldOrderBasis.SEED]);
+    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
+    await service.createDefaultTiers(league, [playoff.id]);
+    store.addToField(playoff.id, 'p-1', { seedNumber: 1 });
+
+    await expect(service.autoAssignTiers({ sportEventId: playoff.id, tierSize: 3 })).rejects.toMatchObject({ code: 'TIER_SIZE_NOT_FOR_RANGES', statusCode: 422 });
+    expect(store.valuationRows.filter((valuation) => valuation.tierAssignedSource !== null)).toEqual([]);
+  });
+
+  it('keeps golf\'s six tiers of ten as they were: 72 golfers by odds are 10 in each of the first five tiers and 22 in the last', async () => {
+    const { store, event, service } = setup();
+    await service.createDefaultTiers({ id: event.sportLeagueId, platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID }, [event.id]);
+    addFieldByOdds(store, event.id, 72);
+
+    const groups = await service.autoAssignTiers({ sportEventId: event.id });
+
+    expect(groups.map((group) => group.participants.length)).toEqual([10, 10, 10, 10, 10, 22]);
+    expect(groups[0]?.participants.map((placement) => placement.participantId)).toEqual(['p-01', 'p-02', 'p-03', 'p-04', 'p-05', 'p-06', 'p-07', 'p-08', 'p-09', 'p-10']);
   });
 
   it('places the field in the new tiers at once when no tier was placed by hand, moving those in a removed tier without asking', async () => {
@@ -320,7 +368,7 @@ describe('SportEventTierService — assignment', () => {
     expect(outOfTiers).toHaveLength(3);
     expect(outOfTiers.every((row) => row.tierAssignedSource === 'AUTO_ODDS')).toBe(true);
     expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
-      profileName: '3 tiers of 2', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
+      profileName: '3 tiers of 2', type: 'EQUAL_GROUPS', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
     });
     await expect(store.sportEventRepo().countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 0]]));
   });

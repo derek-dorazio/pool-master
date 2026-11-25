@@ -794,7 +794,7 @@ describe('Every seeded contest template, whatever its sport', () => {
   async function activeTemplates() {
     return getPrisma().contestConfigTemplate.findMany({
       where: { active: true },
-      include: { sportLeague: { include: { platformTierProfile: true, sport: true } } },
+      include: { sportLeague: { include: { platformTierProfile: { include: { _count: { select: { ranges: true } } } }, sport: true } } },
       orderBy: [{ sportLeague: { sport: { sport: 'asc' } } }, { templateKey: 'asc' }],
     });
   }
@@ -846,7 +846,8 @@ describe('Every seeded contest template, whatever its sport', () => {
         switch (rules.selectionType) {
           case SelectionType.TIERED:
             return getTieredRosterSize(
-              getTiersInPlay(template.sportLeague.platformTierProfile.tierCount, rules.tiersUsed),
+              // A RANGES profile has one tier per range and no tier count (#2160).
+              getTiersInPlay(template.sportLeague.platformTierProfile.tierCount ?? template.sportLeague.platformTierProfile._count.ranges, rules.tiersUsed),
               rules.picksPerTier,
             );
           case SelectionType.BUDGET_PICK:
@@ -976,7 +977,7 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
     const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
     expect([cfp?.bracketAdvancement, cfp?.roundNames, platformTierProfileCodes.get(cfp?.platformTierProfileId ?? '')]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], 'TIERS_6_OF_2']);
     // The NFL keeps the sport's round names and football's seven tiers of two.
-    expect([nfl?.roundNames, platformTierProfileCodes.get(nfl?.platformTierProfileId ?? '')]).toEqual([[], 'TIERS_7_OF_2']);
+    expect([nfl?.roundNames, platformTierProfileCodes.get(nfl?.platformTierProfileId ?? '')]).toEqual([[], 'PLAYOFF_SEEDS_1_4_REST']);
   });
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default, picking one team from each of six tiers', async () => {

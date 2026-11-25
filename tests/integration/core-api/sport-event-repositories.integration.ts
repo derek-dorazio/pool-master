@@ -567,7 +567,7 @@ describe('SportEventTierRepository and valuations', () => {
     await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
     const [first, second] = await field.findBySportEvent(event.id);
     const [tier1] = await tiers.findBySportEvent(event.id);
-    const tierConfig = { profileName: '1 tier of 1, capped', tierCount: 1, tierSize: 1, lastTier: 'CAPPED' as const, lastTierMax: 1 };
+    const tierConfig = { profileName: '1 tier of 1, capped', type: 'EQUAL_GROUPS' as const, tierCount: 1, tierSize: 1, lastTier: 'CAPPED' as const, lastTierMax: 1 };
 
     await valuations.assignEventTiers({
       sportEventId: event.id,
