@@ -2123,6 +2123,7 @@ model SportEvent {
 model SportEventProviderMapping {
   id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId                 String   @map("sport_event_id") @db.Uuid
+  /// The Provider row whose id this is (a uuid, never the adapter's source id); one per event.
   providerId                   String   @map("provider_id") @db.Uuid
   /// The league's provider mapping the sync read the event under.
   sportLeagueProviderMappingId String   @map("sport_league_provider_mapping_id") @db.Uuid

@@ -77,7 +77,6 @@ function fakes() {
       requireAdminSummary: fn(summary),
       requireEvent: fn(sportEvent()),
       createEvent: fn(summary),
-      createEventFromProviderEvent: fn(summary),
       updateEvent: fn(summary),
       deleteEvent: fn(undefined),
       releaseEvent: fn(summary),

@@ -384,26 +384,25 @@ export class PrismaSportEventRepository implements SportEventRepository {
 
   /**
    * The provider mapping row of each new event the sync gives a provider id (#2004), under its
-   * series' league's selected provider mapping, in one read. A ref of a provider that is not that
+   * Season's league's selected provider mapping, in one read. A ref of a provider that is not that
    * league's sync provider is a broken caller, and throws before anything is written.
    */
   private async providerMappingRows(inputs: readonly SportEventCreate[], ids: readonly string[]): Promise<Prisma.SportEventProviderMappingCreateManyInput[]> {
-    const seriesIds = [...new Set(inputs.flatMap((input) => (input.providerRef === undefined ? [] : [input.eventSeriesId])))];
-    if (seriesIds.length === 0) return [];
-    const series = await this.prisma.eventSeries.findMany({
-      where: { id: { in: seriesIds } },
+    const seasonIds = [...new Set(inputs.flatMap((input) => (input.providerRef === undefined ? [] : [input.sportLeagueSeasonId])))];
+    if (seasonIds.length === 0) return [];
+    const seasons = await this.prisma.sportLeagueSeason.findMany({
+      where: { id: { in: seasonIds } },
       select: {
         id: true,
-        sportLeague: { select: { name: true, selectedProviderMapping: { select: { id: true, providerLeague: { select: { provider: { select: { id: true, code: true } } } } } } } },
+        sportLeague: { select: { selectedProviderMapping: { select: { id: true, providerLeague: { select: { provider: { select: { id: true, code: true } } } } } } } },
       },
     });
-    const selectedOf = new Map(series.map((row) => [row.id, row.sportLeague]));
+    const leagueOf = new Map(seasons.map((row) => [row.id, row.sportLeague]));
     return inputs.flatMap((input, index) => {
       if (input.providerRef === undefined) return [];
-      const league = selectedOf.get(input.eventSeriesId);
-      const selected = league?.selectedProviderMapping;
+      const selected = leagueOf.get(input.sportLeagueSeasonId)?.selectedProviderMapping;
       if (selected === null || selected === undefined || providerSourceIdOf(selected.providerLeague.provider.code) !== input.providerRef.providerId) {
-        throw new Error(`Event series ${input.eventSeriesId}'s league is not synced from provider ${input.providerRef.providerId}.`);
+        throw new Error(`Season ${input.sportLeagueSeasonId}'s league is not synced from provider ${input.providerRef.providerId}.`);
       }
       return [{
         sportEventId: ids[index],

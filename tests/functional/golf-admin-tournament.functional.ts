@@ -60,7 +60,7 @@ async function ensureGolfSportRow(): Promise<void> {
 
 // Track everything this suite creates so it can be torn down child-first — the
 // shared functional cleanup keys off @functional.test users / test provider ids
-// and does not know about manual-admin golf rows.
+// and does not know about this suite's own golf rows.
 const created = {
   sportEventIds: new Set<string>(),
   sportLeagueIds: new Set<string>(),
