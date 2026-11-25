@@ -179,6 +179,12 @@ own id for that Season, and records one `EVENTS` sync run. A Season the provider
 not read; when the last of them lacks one, the job raises one `SEASON_MISSING` ERROR finding per
 league and provider (*Sync findings* below), since only a migration can add it.
 
+**One league per read (#2005).** The provider is asked for the one league its selected mapping's
+provider league code names; there is no read of every league of a sport. A code the provider does
+not read (no enabled league row of the sport has it, or the adapter has no reader for it) reads
+nothing: the job raises one `PROVIDER_LEAGUE_UNKNOWN` ERROR finding per league and provider and
+fails for good until the mapping or the league row is fixed.
+
 **Matching games to Season slots (#2005).** The adapter reduces each provider event's games to
 plays: one per code the provider names their place by (`providerSlots`, each with its games'
 earliest and latest start). A code is the provider's own value, never ours: the season type and
@@ -384,9 +390,10 @@ column. Each finding names its sport league; its event, Provider row and the fee
   scores writer; its action is the Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR,
   raised per synced league when a worker task starts with the Provider's webhooks on and no
   signing secret; resolved once it is set, and on a league the Provider no longer syncs at the next check, #2070),
-  `SEASON_MISSING` (ERROR, *The run* above) and `SLOT_VALUE_UNMAPPED` (INFO, a provider code no
-  slot maps, *Matching games to Season slots* above; it has no action, since a mapping is added by
-  migration). Three are checked on an event by each sync that
+  `SEASON_MISSING` (ERROR, *The run* above), `PROVIDER_LEAGUE_UNKNOWN` (ERROR, a mapping's
+  provider league code the provider does not read, *The run* above) and `SLOT_VALUE_UNMAPPED`
+  (INFO, a provider code no slot maps, *Matching games to Season slots* above; it has no action,
+  since a mapping is added by migration). Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
@@ -441,17 +448,20 @@ jobs. Scores for an event not yet `IN_PROGRESS` are skipped
 
 All files are under `packages/core-api/src/modules/ingestion/adapters/balldontlie/`. Each league
 has a vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/`. The adapter
-routes by external id; an id no league claims is read as a PGA TOUR tournament.
+keeps only the vendor's league code mapped to the reader for its endpoints; which leagues it
+reads, their sport and their name are the Provider's league rows (#1997). An event's details and
+scores go to the enabled league whose reader knows the id; an id no enabled league knows reads
+nothing (#2005).
 
-| League | Keyword | External id | Participants | Category | Files |
+| League | Vendor code | External id | Participants | Category | Files |
 |---|---|---|---|---|---|
-| PGA TOUR | `PGA TOUR` | vendor tournament id | bare player id | `GOLF` | `pga-*` |
-| NFL | `NFL` | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | raw team id | `GAME` | `nfl-*` |
-| College Football Playoff | `CFP` | `ncaaf-<season>-cfp` | raw team id | `GAME` | `ncaaf-*` |
-| NCAA men / women | `NCAAM` / `NCAAW` | `ncaab-<season>-tournament`, `ncaaw-…` | raw team id | `GAME` | `ncaa-tournament-*` |
-| NBA / NHL / MLB / WNBA playoffs | `NBA` / `NHL` / `MLB` / `WNBA` | `<league>-<season>-postseason` | raw team id | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
-| Premier League | `EPL` | `epl-<season>-matchweek-<n>` | raw team id | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
-| FIFA World Cup | `FIFAWC` | `fifa-wc-<year>-knockout` | raw team id | `GAME` with shoot-outs | `fifa-world-cup-*` |
+| PGA TOUR | `pga` | vendor tournament id | bare player id | `GOLF` | `pga-*` |
+| NFL | `nfl` | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | raw team id | `GAME` | `nfl-*` |
+| College Football Playoff | `ncaaf` | `ncaaf-<season>-cfp` | raw team id | `GAME` | `ncaaf-*` |
+| NCAA men / women | `ncaab` / `ncaaw` | `ncaab-<season>-tournament`, `ncaaw-…` | raw team id | `GAME` | `ncaa-tournament-*` |
+| NBA / NHL / MLB / WNBA playoffs | `nba` / `nhl` / `mlb` / `wnba` | `<league>-<season>-postseason` | raw team id | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
+| Premier League | `epl` | `epl-<season>-matchweek-<n>` | raw team id | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
+| FIFA World Cup | `worldcup` | `fifa-wc-<year>-knockout` | raw team id | `GAME` with shoot-outs | `fifa-world-cup-*` |
 
 A participant id is the provider's raw feed id, never prefixed (#2040). The same raw id can name a
 team in two leagues, or a team and a player in one: the participant's provider mapping tells them
