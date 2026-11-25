@@ -182,8 +182,8 @@ In order:
    The public How to Play page and each league's Contest types page (the commissioner's menu
    of contest types) read the contest templates and sport leagues, so the sport's leagues and
    formats appear there once their templates exist. A league is named for what it is, the
-   sport included ("NCAA Men's Basketball"), never for its postseason; one whose name cannot
-   say the sport gets a `display_name` in its migration, so its How to Play chip says the sport, and every league gets a `display_order` there, its place among its
+   sport included ("NCAA Men's Basketball"), never for its postseason, and that name is the
+   only one screens show, so its How to Play chip says the sport. Every league gets a `display_order` in its migration, its place among its
    sport's leagues (major professional first, then NCAA); a new sport's own place comes from
    its row's `display_order` (step 1), which the web app reads from the API. The hand-written
    parts are the sport's line in `SPORT_BLURBS` and, for a new sport, its photo named by its URL

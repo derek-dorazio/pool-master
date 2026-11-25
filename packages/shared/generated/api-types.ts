@@ -9987,8 +9987,6 @@ export interface components {
              * @enum {string|null}
              */
             noun: "LEAGUE" | null;
-            /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request. */
-            displayName: string | null;
             /**
              * @description Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
              * @enum {string}
@@ -10128,8 +10126,6 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
-                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request. */
-                displayName: string | null;
                 /**
                  * @description Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
                  * @enum {string}
@@ -10255,8 +10251,6 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
-                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request. */
-                displayName: string | null;
                 /**
                  * @description Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
                  * @enum {string}

@@ -33,7 +33,6 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     squaresFromRound: null,
     ...sportPlay(Sport.GOLF),
     noun: null,
-    displayName: null,
     displayOrder: null,
     currentSeasonId: null,
     timeZone: 'America/New_York',

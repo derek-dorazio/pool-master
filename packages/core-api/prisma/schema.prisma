@@ -1176,10 +1176,6 @@ model SportLeague {
   /// tennis championships are leagues, not tours). Null: the sport's noun. Reference data, set by
   /// the migration that seeds the league.
   noun                       PrismaSportLeagueNoun?   @map("noun")
-  /// What screens call the sport league away from its sport's own pages, when its name alone
-  /// does not say the sport. Null: the name, as for every seeded league, each named with its sport
-  /// ("NCAA Men's Basketball"). Reference data, set by the migration that seeds the league.
-  displayName                String?                  @map("display_name") @db.VarChar(255)
   /// Where the sport league sits among its sport's leagues wherever they are listed together
   /// (How to Play's chips): the major professional leagues first, then the NCAA's. Lower comes
   /// first; null comes after every ordered league, by name. Reference data, set by the migration

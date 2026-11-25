@@ -5,6 +5,7 @@ import {
   type DisplayStringValues,
   type ErrorContext,
 } from '@poolmaster/shared/display-strings';
+import { z } from 'zod';
 import { ErrorEnvelopeSchema, isApiErrorCode, type ApiErrorCode, type ErrorEnvelope } from '@poolmaster/shared/dto';
 
 /**
@@ -134,4 +135,16 @@ export function throwApiError(payload: unknown, fallback?: string): never {
     throw new Error(fallback ?? DEFAULT_FALLBACK);
   }
   throw new ApiError(payload, fallback);
+}
+
+const IssuePathsSchema = z.array(z.object({ path: z.array(z.union([z.string(), z.number()])) }));
+
+/**
+ * Where each of a refusal's validation issues points: the paths of the Zod issues a 400 carries
+ * as its envelope's `details` (a SETTINGS_INVALID save, say). None for any other error.
+ */
+export function errorIssuePaths(error: unknown): (string | number)[][] {
+  const details = error instanceof ApiError ? error.details : isErrorEnvelope(error) ? error.error.details : undefined;
+  const parsed = IssuePathsSchema.safeParse(details);
+  return parsed.success ? parsed.data.map(({ path }) => path) : [];
 }

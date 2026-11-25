@@ -18837,13 +18837,6 @@
               null
             ]
           },
-          "displayName": {
-            "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport (\"NCAA Men's Basketball\"). Set with the league's reference data, never by a request.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "participantType": {
             "type": "string",
             "enum": [
@@ -18915,7 +18908,6 @@
           "matchPeriodLayout",
           "squaresFromRound",
           "noun",
-          "displayName",
           "participantType",
           "scoringFamily",
           "displayOrder",
@@ -19176,13 +19168,6 @@
                     null
                   ]
                 },
-                "displayName": {
-                  "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport (\"NCAA Men's Basketball\"). Set with the league's reference data, never by a request.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
                 "participantType": {
                   "type": "string",
                   "enum": [
@@ -19254,7 +19239,6 @@
                 "matchPeriodLayout",
                 "squaresFromRound",
                 "noun",
-                "displayName",
                 "participantType",
                 "scoringFamily",
                 "displayOrder",
@@ -19483,13 +19467,6 @@
                   null
                 ]
               },
-              "displayName": {
-                "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport (\"NCAA Men's Basketball\"). Set with the league's reference data, never by a request.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
               "participantType": {
                 "type": "string",
                 "enum": [
@@ -19561,7 +19538,6 @@
               "matchPeriodLayout",
               "squaresFromRound",
               "noun",
-              "displayName",
               "participantType",
               "scoringFamily",
               "displayOrder",

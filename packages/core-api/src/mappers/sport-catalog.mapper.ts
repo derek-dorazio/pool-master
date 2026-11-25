@@ -74,7 +74,6 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     matchPeriodLayout: sportLeague.matchPeriodLayout,
     squaresFromRound: sportLeague.squaresFromRound,
     noun: sportLeague.noun,
-    displayName: sportLeague.displayName,
     participantType: sportLeague.participantType,
     scoringFamily: sportLeague.scoringFamily,
     displayOrder: sportLeague.displayOrder,
