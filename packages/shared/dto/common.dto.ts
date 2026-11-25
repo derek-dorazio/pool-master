@@ -6,7 +6,6 @@ import { registerSchema } from './schema-registry';
 
 // --- Primitives ---
 
-export const UuidSchema = z.uuid().describe('UUID string.');
 export const DateTimeSchema = z.iso.datetime().describe('ISO 8601 datetime string.');
 export const JsonObjectSchema = z.record(z.string(), z.unknown()).describe('Arbitrary JSON object payload.');
 export const StringRecordSchema = z.record(z.string(), z.string()).describe('String-keyed record of string values.');

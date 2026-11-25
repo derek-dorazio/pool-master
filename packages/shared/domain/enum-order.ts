@@ -54,16 +54,6 @@ export function compareByEnumOrder<V extends string>(
   return (left, right) => words(left).localeCompare(words(right), locale ?? undefined, { sensitivity: 'base' });
 }
 
-/** The values, sorted by the enum's order: a new array, the given one untouched. */
-export function sortByEnumOrder<V extends string>(
-  values: readonly V[],
-  order: EnumOrder<V>,
-  label?: (value: V) => string,
-  locale?: string | null,
-): V[] {
-  return [...values].sort(compareByEnumOrder(order, label, locale));
-}
-
 /** An explicit order's values, first to last. */
 export function explicitOrderValues<V extends string>(order: ExplicitEnumOrder<V>): V[] {
   return (Object.keys(order.orderIndex) as V[]).sort((left, right) => order.orderIndex[left] - order.orderIndex[right]);

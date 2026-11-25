@@ -73,12 +73,6 @@ Holds the header's place while a page whose header names the thing being read lo
   `spacing` matches the loaded page's gap between header and body, so the body does not shift.
 - **Story:** [pending-page.stories.tsx](./pending-page.stories.tsx)
 
-### `SplitContentLayout`
-A main column and an aside that stack on a phone.
-- **Use when:** a page body has a main column and a narrower companion (a form beside its steps).
-- **Props that matter:** `main`, `aside`.
-- **Story:** [layout-presets.stories.tsx](./layout-presets.stories.tsx)
-
 ### `PublicInviteJoinPage`
 The frame of a public invitation or join page.
 - **Use when:** someone arrives from an invite link and is asked to join.

@@ -74,6 +74,7 @@ export function schemaRef(name: string): { $ref: string } {
 }
 
 /** Test seam: drop all registrations. */
+// poolmaster-allow-test-export: the registry is process-wide module state; its tests clear it between cases
 export function resetRegistryForTests(): void {
   registry.clear();
 }

@@ -183,7 +183,6 @@ paces (`notified-provider-cadence.ts`).
 | `domain/` | `enums.ts`, `types.ts`, `contest-scoring.ts`, `contest-management-types.ts` | Domain interfaces, enum types, and the participant scoring definitions (direction, unit, format) |
 | `domain/sports/` | `registry.ts`, `golf.ts`, `horse-racing.ts` | The sport registry: one `SportDefinition` per sport (scoring family, selection types, default rounds and tier layout, vocabulary, round labels). See `rules/architecture-rules.md` §4 *Sport extension* |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
-| `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
 
 ### Key Domain Concepts
 

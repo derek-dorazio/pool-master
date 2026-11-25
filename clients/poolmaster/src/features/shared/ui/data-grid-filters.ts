@@ -96,11 +96,6 @@ export type DataGridColumnKind = DataGridColumnType["kind"];
 /** A dateRange column's value: either end may be blank, leaving that side open. */
 export type DateRangeValue = { start: string | null; end: string | null };
 
-/** An enumerated column's values from a map of each value to its words, in the map's order. */
-export function optionsFromLabels(labels: Readonly<Record<string, string>>): DataGridOption[] {
-  return Object.entries(labels).map(([value, label]) => ({ value, label }));
-}
-
 /** The value "(None)" and "(Blank)" stand for: a cell holding no value. */
 export const NO_VALUE = "\u0000none";
 

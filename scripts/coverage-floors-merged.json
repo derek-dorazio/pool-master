@@ -88,10 +88,6 @@
         "packages/shared/openapi/nullable-to-3-1.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
           "branches": 78
-        },
-        "packages/shared/utils/id.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "lines": 0
         }
       }
     },

@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { DataGrid } from "./data-grid";
-import { optionsFromLabels } from "./data-grid-filters";
+import { optionsFromLabels } from "../../../test/data-grid-options";
 
 type Run = { id: string; name: string; status: string; issues: string[]; field?: number };
 

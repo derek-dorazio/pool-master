@@ -28,6 +28,7 @@ export function getOrCreateClientTraceId(): string {
   }
 }
 
+// poolmaster-allow-test-export: the trace id is module state held for the whole tab; tests clear it between cases
 export function resetClientTraceIdForTests() {
   inMemoryClientTraceId = null;
 }

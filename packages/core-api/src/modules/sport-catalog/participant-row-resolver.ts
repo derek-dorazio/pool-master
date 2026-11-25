@@ -49,11 +49,12 @@ export async function resolveParticipantRow(
   if (!query) {
     return { resolution: 'UNRESOLVED', participant: null };
   }
-  const matches = await findCandidates(query);
-  if (matches.length === 1) {
-    return { resolution: 'MATCHED', participant: matches[0] };
+  const candidates = await findCandidates(query);
+  if (candidates.length === 1) {
+    const [candidate] = candidates;
+    return { resolution: 'MATCHED', participant: candidate };
   }
-  return { resolution: matches.length > 1 ? 'AMBIGUOUS' : 'UNRESOLVED', participant: null };
+  return { resolution: candidates.length > 1 ? 'AMBIGUOUS' : 'UNRESOLVED', participant: null };
 }
 
 /**

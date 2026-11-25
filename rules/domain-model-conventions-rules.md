@@ -228,7 +228,7 @@ A new enum in `packages/shared/domain/enums.ts` states its order beside it, as
 `<Name>Order`: `explicitOrder({...})` giving every value its place, or
 `alphabeticalOrder('<Name>')` when the set has no natural order and its values sort A
 to Z by their display strings, in the reader's language. Every list, grid, picker and sort uses that
-order through `compareByEnumOrder` or `sortByEnumOrder`; no consumer keeps a
+order through `compareByEnumOrder`; no consumer keeps a
 `Record<Enum, number>` rank map of its own. A screen that genuinely needs another
 order (the Home page's current contests, Open before Live) gets a named order beside
 the enum, such as `ContestStatusOrderForHomeCurrent`, with a comment saying where it
@@ -825,6 +825,18 @@ by where it sits in an array or by counting.
   `SportLeague` or a league's positions), is fine.
 - Positions shift the moment a provider adds a round, a league adds a play-in or a season is
   shorter; a key does not.
+- **The rule:** never pick a domain item by its position when the model gives it a meaning,
+  such as a slot kind (`FINAL`), a round or game number, a phase, a covered slot or the
+  contest's event. Position is fine only when the order **is** the meaning: iterating, the
+  first item after sorting by a declared field (the earliest by `startsAt`), the one row a
+  nested create wrote, or destructuring a parsed value. Such a read carries
+  `// poolmaster-allow-position: <the order it relies on>` on the line before.
+- **Enforced (#2115):** `poolmaster/no-positional-pick` reports `[n]` with a literal index,
+  `.at(n)` and `[x.length - 1]` on a list named `rounds`, `slots`, `phases`, `events`,
+  `games`, `matches`, `sides`, `seasons`, `regions` or `fieldRows` in production source.
+  Files that still have one sit on a shrink-only count (`eslint-rules/positional-pick-baseline.json`).
+  It cannot see `indexOf(...) + 1`, a counter, or a list under another name; review still
+  owns those.
 
 ### Never build or parse an id string
 
@@ -1003,6 +1015,15 @@ screen renders what it is sent.
   bounds in their Zod schemas. Some of these are imported by the web app today; those imports
   are residue too. A change that touches one moves it to an API field, and no new import or
   constant is added.
+- *Enforced (#2107):* `rules:check:web-shared-imports` lets the web app import from
+  `@poolmaster/shared` and `/domain` only types, enums and the vocabulary patterns its
+  baseline lists with reasons (order lists, formatters, the brand, image paths, sport display
+  words, schemas); every other name sits on a per-name count that only falls. Three lint
+  rules hold the same line on the web's own code, each with a shrink-only per-file baseline:
+  `poolmaster/no-enum-string-literals` (a shared enum value compared, used as a `case` label
+  or written as a literal type), `poolmaster/no-dto-shaped-local-types` (a local type copying
+  a generated one under another name) and `poolmaster/no-local-enums` (an enum of the web
+  app's own).
 
 ### What stays in code
 

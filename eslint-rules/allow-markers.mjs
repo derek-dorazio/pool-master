@@ -6,7 +6,7 @@
  *
  * Usage, inside `create(context)`:
  *   const allow = allowMarkers(context, 'poolmaster-allow-…');
- *   if (!allow.covers(node)) context.report(...);
+ *   if (!allow.covers(node)) context.report(...);   // covers returns the marker comment, or null
  *   'Program:exit'() { allow.reportUnused(); }
  * The rule declares the `missingReason` and `unusedAllow` messages.
  */
@@ -44,10 +44,10 @@ export function allowMarkers(context, marker) {
         const comment = markers.get(line - 1);
         if (comment) {
           used.add(comment);
-          return true;
+          return comment;
         }
       }
-      return false;
+      return null;
     },
     reportUnused() {
       for (const comment of markers.values()) {
