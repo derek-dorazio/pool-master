@@ -302,7 +302,7 @@ async function syncedEvent(externalId: string) {
   const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: sport.id, name: `Contract Sync Tour ${randomUUID()}` } });
   await syncLeagueTo(prisma, tour.id, 'pga');
   const event = await prisma.sportEvent.create({
-    data: { ...(await freshEventEdition(prisma, { sportLeagueId: tour.id })), sport: 'GOLF', name: `Contract Sync ${externalId}`, startDate: new Date('2026-04-10T15:00:00.000Z') },
+    data: { ...(await freshEventEdition(prisma, { sportLeagueId: tour.id })), name: `Contract Sync ${externalId}`, startDate: new Date('2026-04-10T15:00:00.000Z') },
   });
   await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId });
   return event;
@@ -1078,7 +1078,7 @@ describe('Contract verification (root admin)', () => {
         payload: { feeds: ['EVENTLIVESCORES'] },
       });
       const testEvent = await getPrisma().sportEvent.create({
-        data: { ...(await freshEventEdition(getPrisma())), sport: 'GOLF', name: 'Contract Test Event', startDate: new Date('2026-04-10T15:00:00.000Z') },
+        data: { ...(await freshEventEdition(getPrisma())), name: 'Contract Test Event', startDate: new Date('2026-04-10T15:00:00.000Z') },
       });
       const missingEventRes = await syncOf(randomUUID());
       const unlinkedEventRes = await syncOf(testEvent.id);

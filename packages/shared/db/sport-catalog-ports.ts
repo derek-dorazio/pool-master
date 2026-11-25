@@ -148,7 +148,7 @@ export interface SportEventFilters {
 
 /**
  * The sport league comes from the series, so it is not supplied. `providerRef` is the provider's id
- * for an event the sync creates (#2004): it is kept under the series' league's selected provider
+ * for an event the sync creates (#2004): it is kept under its Season's league's selected provider
  * mapping, which must be that provider's. A test event has none.
  */
 export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {

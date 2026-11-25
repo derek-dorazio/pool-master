@@ -74,7 +74,7 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_events', 1],
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
-  ['SELECT sports', 1], // a sport is read through its event's series and league since #2042 (#2089)
+  ['SELECT sports', 1], // a sport is read through its event's Season and league since #2042 (#2089)
   ['UPDATE sport_event_round_matches', 1],
 ];
 
@@ -93,7 +93,7 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT sport_events', 2],
   ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
-  ['SELECT sports', 2], // a sport is read through its event's series and league since #2042 (#2089)
+  ['SELECT sports', 2], // a sport is read through its event's Season and league since #2042 (#2089)
   ['UPDATE sport_events', 1],
 ];
 
@@ -342,7 +342,7 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_tiers', 3],
       ['SELECT sport_events', 3],
-      ['SELECT sport_league_seasons', 1],
+      ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
       ['SELECT sport_leagues', 4],
       ['SELECT sports', 4],
       ['SELECT users', 1],
@@ -722,7 +722,7 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_provider_mappings', 2],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
-  ['SELECT sport_league_seasons', 2],
+  ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)
   ['SELECT sport_leagues', 3],
   ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
@@ -744,7 +744,7 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_rounds', 1],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
-  ['SELECT sport_league_seasons', 3],
+  ['SELECT sport_league_seasons', 4], // a sport is read through its event's Season and league (#2042, #2004)
   ['SELECT sport_leagues', 4],
   ['SELECT sports', 4],
   ['UPDATE contests', 1],

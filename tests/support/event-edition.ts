@@ -11,7 +11,7 @@
  * sport list validates names against the Sport enum; a made-up sport row would break any contract
  * test that lists sports. Each sport has its own fixture tour, playing as that sport's leagues are
  * seeded, since an event is scored by its league's family (#2001), and an event reads its sport
- * through its series' league (#2042): a test about another sport's event names that sport.
+ * through its Season's league (#2042, #2004): a test about another sport's event names that sport.
  */
 import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';

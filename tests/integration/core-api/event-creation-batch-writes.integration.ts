@@ -130,7 +130,7 @@ describe('Creating one event (#1253)', () => {
       ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
       ['SELECT event_series', 1], ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
       ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_events', 1], ['SELECT sport_league_provider_mappings', 2],
-      ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
+      ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);

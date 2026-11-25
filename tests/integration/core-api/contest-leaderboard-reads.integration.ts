@@ -476,7 +476,7 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     for (const table of ['contest_entries', 'contest_entry_picks', 'sport_event_participants', 'contest_configurations']) {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
-    // The contest (9: its sport is read through its events' series and league since #2042), the reader's squad membership (1; the league membership is kept by the
+    // The contest (9: its sport is read through its events' Season and league since #2042), the reader's squad membership (1; the league membership is kept by the
     // task since the first read, #1438), and the snapshot (1): pinned, however many entries,
     // picks and golfers.
     expect(statements).toHaveLength(11);

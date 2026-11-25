@@ -31,13 +31,11 @@ afterEach(() => getPrisma().contestConfigTemplate.deleteMany({ where: { template
 const TEMPLATE_KEY_PREFIX = 'read-through-';
 
 describe('a row\'s sport is its sport league\'s (#2042)', () => {
-  it('answers a sport event with its series\' league\'s sport and that sport\'s URL segment', async () => {
+  it('answers a sport event with its Season\'s league\'s sport and that sport\'s URL segment', async () => {
     const prisma = getPrisma();
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })),
-        externalId: `read-through-${randomUUID()}`,
-        providerId: 'integration-test',
         name: 'Read Through Classic',
         startDate: new Date('2099-03-19T16:00:00.000Z'),
         status: 'SCHEDULED',
