@@ -10,11 +10,11 @@ import type { AdminCredentials } from './admin-session';
  *   league (its contest, entry, squads, memberships and invite link go with it)
  *   → tournament (its field, rounds and tiers go with it; refused while a contest references it,
  *     which is why the league goes first)
- *   → tour → players → commissioner → member.
+ *   → players → commissioner → member.
  *
- * The tour goes once its tournaments have, taking its roster and the `event_series` rows the
- * tournaments made with it; each player goes once no event field holds them (#1400). (plans/147
- * removed the season the journey used to create, and with it a step here.)
+ * Each player goes once no event field holds them (#1400). The tour is a seeded sport league
+ * (#2004), so it stays, with the run's freed test slots; one the run switched on goes back off.
+ * (plans/147 removed the season the journey used to create, and with it a step here.)
  *
  * Every lookup is by the attempt's run-unique names rather than ids captured during the test, so
  * an attempt that failed between a write and reading its response is still found and removed.
@@ -44,7 +44,10 @@ export type JourneySport = 'GOLF' | 'HORSE_RACING' | 'BASKETBALL' | 'AMERICAN_FO
 export type JourneyRun = {
   runId: string;
   sport: JourneySport;
+  /** The seeded sport league the run plays in (#2004): found by name, and never removed. */
   tourName: string;
+  /** Set once the run switched its seeded sport league on, so teardown switches it off again. */
+  switchedTourOn?: boolean;
   playerNamePrefix: string;
   tournamentName: string;
   /** Further tournaments on the same tour, such as the golden journey's multi-event contest's. */
@@ -66,8 +69,8 @@ export async function removeJourneyRun(
   const headers = await adminApiHeaders(api, credentials);
   if (!headers) {
     log(
-      `admin login failed; nothing removed: league ${run.leagueCode}, tour "${run.tourName}" with its `
-      + `tournament and players, users ${run.commissioner.username} and ${run.member.username}`,
+      `admin login failed; nothing removed: league ${run.leagueCode}, the tournament on tour "${run.tourName}" `
+      + `and its players, users ${run.commissioner.username} and ${run.member.username}`,
     );
     return;
   }
@@ -78,17 +81,10 @@ export async function removeJourneyRun(
   for (const tournamentName of [run.tournamentName, ...(run.moreTournamentNames ?? [])]) {
     await attempt(log, `tournament "${tournamentName}"`, () => removeTournament(api, headers, run.sport, tournamentName, log));
   }
-  // A participant belongs to its tour (#1853), and a tour is refused while it has any: the players
-  // go before the tour.
+  // A participant belongs to its tour (#1853); each goes once no event field holds it.
   await attempt(log, `players "${run.playerNamePrefix} *"`, () => removePlayers(api, headers, run.playerNamePrefix, log));
-  const tourId = await findTourId(api, headers, run).catch((error: unknown) => {
-    log(`could not look up tour "${run.tourName}": ${error instanceof Error ? error.message : String(error)}`);
-    return null;
-  });
-  if (tourId) {
-    await attempt(log, `tour "${run.tourName}"`, () => removeTour(api, headers, tourId, run.tourName, log));
-  } else {
-    log(`tour "${run.tourName}" not found; no tour to remove`);
+  if (run.switchedTourOn) {
+    await attempt(log, `the switched-on tour "${run.tourName}"`, () => switchTourOff(api, headers, run, log));
   }
   await attempt(log, `user ${run.commissioner.username}`, () => removeUser(api, headers, run.commissioner, log));
   await attempt(log, `user ${run.member.username}`, () => removeUser(api, headers, run.member, log));
@@ -141,13 +137,17 @@ async function removeTournament(api: APIRequestContext, headers: AuthHeaders, sp
   log(`tournament "${tournamentName}" removed with its field, rounds, scores and tiers (re-read 404)`);
 }
 
-async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun): Promise<string | null> {
+/** A seeded tour the run switched on goes back off; the tour itself, and its test slots, stay. */
+async function switchTourOff(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun, log: Log) {
   const list = await expectOk(
     api.get('/api/v1/sport-leagues', { headers, params: { sport: run.sport } }),
     'list tours',
   );
   const { sportLeagues } = (await list.json()) as { sportLeagues: { id: string; name: string }[] };
-  return sportLeagues.find((candidate) => candidate.name === run.tourName)?.id ?? null;
+  const tour = sportLeagues.find((candidate) => candidate.name === run.tourName);
+  if (!tour) throw new Error(`tour "${run.tourName}" not found`);
+  await expectOk(api.patch(`/api/v1/sport-leagues/${tour.id}`, { headers, data: { isActive: false } }), 'switch tour off');
+  log(`tour "${run.tourName}" switched off again`);
 }
 
 /** Refused while it still has an event, a contest setup or a participant; its empty series go with it. */

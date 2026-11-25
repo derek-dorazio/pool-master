@@ -28,6 +28,7 @@ import {
 } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
+import { deleteTestSportLeagues, testSlotId } from '../../support/test-slots';
 import { Sport } from '@poolmaster/shared/domain';
 
 const createdSportLeagueIds: string[] = [];
@@ -37,9 +38,10 @@ afterAll(async () => {
   const series = { eventSeries: { sportLeagueId: { in: createdSportLeagueIds } } };
   await getPrisma().sportEventTier.deleteMany({ where: { sportEvent: series } });
   await getPrisma().sportEventRound.deleteMany({ where: { sportEvent: series } });
+  await getPrisma().sportEventSlot.deleteMany({ where: { sportEvent: series } });
   await getPrisma().sportEvent.deleteMany({ where: series });
   await getPrisma().eventSeries.deleteMany({ where: { sportLeagueId: { in: createdSportLeagueIds } } });
-  await getPrisma().sportLeague.deleteMany({ where: { id: { in: createdSportLeagueIds } } });
+  await deleteTestSportLeagues(getPrisma(), createdSportLeagueIds);
   await getPrisma().platformRuntimeConfigHistory.deleteMany({ where: { configKey: { in: ['PLAN_CONFIG', 'EMAIL_CONFIG'] } } });
   await getPrisma().platformRuntimeConfig.deleteMany({ where: { configKey: { in: ['PLAN_CONFIG', 'EMAIL_CONFIG'] } } });
   await teardownIntegrationTests();
@@ -200,23 +202,17 @@ describe('admin saves clear the public reads they change (#1181)', () => {
     expect(getCdnInvalidations().paths()).toEqual([PublicReadPath.PLANS]);
   });
 
-  it('an event created for a sport league clears the event pages at the CDN, since it can be the edition a page offers', async () => {
+  it('a test event created on a sport league\'s test slot clears the event pages at the CDN, since it can be the edition a page offers', async () => {
     const admin = await createTestUser({ displayName: 'Cache Event Admin', isRootAdmin: true });
     const sportLeagueId = await createSportLeague(admin.headers);
+    const seasonSlotId = await testSlotId(getPrisma(), sportLeagueId, new Date('2084-06-16T08:00:00.000Z'), new Date('2084-06-19T20:00:00.000Z'));
     getCdnInvalidations().reset();
 
     const response = await getApp().inject({
       method: 'POST',
       url: '/api/v1/events',
       headers: admin.headers,
-      payload: {
-        name: `Cache Open ${randomUUID()}`,
-        startDate: '2084-06-16T08:00:00.000Z',
-        endDate: '2084-06-19T20:00:00.000Z',
-        rounds: 4,
-        sportLeagueId,
-        autoLifecycleEnabled: false,
-      },
+      payload: { name: `Cache Open ${randomUUID()}`, seasonSlotId, autoLifecycleEnabled: false },
     });
 
     expect(response.statusCode).toBe(201);

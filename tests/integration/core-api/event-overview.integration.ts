@@ -21,6 +21,7 @@ import {
 import { SportEventOverviewResponseSchema } from '@poolmaster/shared/dto';
 import { syncLeagueTo } from '../../support/league-sync';
 import { mapEventToProvider } from '../../support/event-edition';
+import { linkTestSlot } from '../../support/test-slots';
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, get, okBody, seedEventWithField } from '../list-route-seeds';
 import { expectConstantQueries, measureQueryScaling } from '../query-scaling';
@@ -93,8 +94,10 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     expect(overview.fieldFeed.every((row) => row.feedId !== null && row.lastInFeedAt === seenAt.toISOString())).toBe(true);
   });
 
-  it('reads an event no provider syncs as OFF with a manual release, its field in name order and no feed ids', async () => {
+  it('reads a test event, which no provider syncs, as OFF with a manual release, its field in name order and no feed ids', async () => {
     const { event } = await seedEventWithField(2, { status: SportEventStatus.DRAFT });
+    // A test event is one on a test slot (#2004): the sync never reads it, so it is never released on its own.
+    await linkTestSlot(getPrisma(), event);
     const rootAdmin = await createTestUser({ isRootAdmin: true });
 
     const { overview } = okBody(await get(`/api/v1/events/${event.id}/overview`, rootAdmin), SportEventOverviewResponseSchema);
