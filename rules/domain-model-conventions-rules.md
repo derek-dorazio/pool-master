@@ -933,9 +933,9 @@ phase or slot definitions (`rules/domain-model-concepts.md`). They are never a c
   (`rules/ux-rules.md` §16 *Display Strings*); proper names are name columns on the model.
 - This is the data half of `rules/workflow-rules.md` §1 *One global solution, never one
   sport's*: a league's difference is data any league can carry, never a path one league takes.
-  It extends the sport registry (`rules/architecture-rules.md` §4 *Sport extension*) to
-  leagues and seasons: what one sport shares is in its definition; what one league or season
-  owns is in the model.
+  It replaces the sport registry (`rules/architecture-rules.md` §4 *Sport extension*, where
+  the registry is frozen and shrinking): what one sport, league or season owns is in the
+  model.
 
 ### One computation per fact
 

@@ -124,10 +124,13 @@ In order:
    adds a Season (it raises `SEASON_MISSING` instead) and `currentSeasonId` is never set by hand:
    the nightly recompute sets it. Open the league's Structure tab on the League page and read
    it back.
-2. **Sport definition.** Add its `SportDefinition` to the sport registry: tournament format,
-   default rounds, selection types, scoring definitions and round labels. Who competes and how
-   it is scored go on each of its sport league rows, never on the sport
-   (`rules/architecture-rules.md` §4 *Sport extension*). Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
+2. **Sport definition.** The sport registry is frozen (`rules/architecture-rules.md` §4
+   *Sport extension*): a new sport fills in the existing `SportDefinition` fields and adds no
+   field. Its one new definition export is a new entry in `scripts/sport-registry-frozen.json`,
+   declared in `scripts/baseline-raises.json` with the reason "new sport". Anything the sport
+   needs beyond the existing fields is a model column or row the API returns. Who competes and
+   how it is scored go on each of its sport league rows, never on the sport. Run `tsc`; every
+   exhaustive map that lacks the sport now fails. Fix each.
    Its words go in the display strings, not the definition: a `sport.<SPORT>` entry in
    `en-US.ts` for every role it uses (`rules/ux-rules.md` §16 *Display Strings*).
    A sport whose family lands before its scoring may register with no scoring definitions;

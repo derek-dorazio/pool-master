@@ -412,33 +412,36 @@ fall back on.
 
 ### Sport extension
 
-> This section describes today's code. ADR 0012 and `domain-model-conventions-rules.md` §11
-> *Open-Ended Additive Substrate Design* replace it: Clutch Cards become a contest type on the
-> parent league (no round leagues), and every scoring family reads one shared result shape
-> rather than its own tables. It is rewritten by the slices of #1917 as they land.
+A fact about a sport, a league or a Season is data in the model, set once (by migration, or by
+the feed) and returned by the API (`domain-model-conventions-rules.md` §17 *Rules Live In The
+Model, Not In Code*; ADR 0012). Behaviour that differs is the scoring family's. Nothing else
+varies by sport, so a new sport or league is added by migration rows and, at most, a scoring
+family, never by finding guards scattered through the code:
 
-What differs between sports lives in exactly two places, so a new sport is added by
-filling them in rather than by finding guards scattered through the code:
-
-- **The sport registry** (`packages/shared/domain/sports/`) holds what is data: default
-  tournament format, default round count,
-  allowed selection types, scoring definitions and round labels (never a league's choice such as its tier
-  layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). It holds
-  codes, never words: what a sport's audience calls things (golfer, tournament, "Cut") is a
-  display string, `sport.<SPORT>.<role>`, read through `sportWord` or `sportVocabulary`
-  (`rules/ux-rules.md` §16 *Display Strings*). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
-  sport added to the enum fails the build until it has a definition. A sport is supported
-  when it is in the registry; the `Sport` enum and the validity matrices are not a write
-  permission (§2 *Validity / Compatibility Matrices Source of Truth*).
-  Who competes and how a league is scored are the sport league's alone
-  (`SportLeague.participantType` and `scoringFamily`, both required, #2001); the registry and
-  the `sports` row carry neither, so no code reads either off a sport. Every event carries its
-  league's two, so a reader of an event's family, participant type, selection types, scoring
-  definitions, tiers, rounds or whether it plays matches reads `eventSportDefinition(event)`
-  (or `eventPlaysMatches(event)`, or the event's `scoringFamily` itself), never
-  `getSportDefinition(event.sport)`. No event has a parent
-  event: the old Clutch Card round leagues were removed (#1998), and the Clutch Card returns as
-  a contest type on the parent league.
+- **The model holds the facts.** Who competes and how a league is scored are the sport
+  league's (`SportLeague.participantType` and `scoringFamily`, both required). Phases, slot
+  definitions and their match format, whether games can end level and their period unit are
+  slot definition rows. Seasons, their names and championship years are Season rows. Each is
+  read from the row or from the API's answer, never worked out again in code. Every event
+  carries its league's family and participant type, so a reader of either reads the event's
+  own value (`eventSportDefinition(event)`, `eventPlaysMatches(event)`), never
+  `getSportDefinition(event.sport)`. No event has a parent event; the Clutch Card is a contest
+  type on the parent league.
+- **The sport registry is frozen and shrinking.** `packages/shared/domain/sports/` is what is
+  left of the old design, which kept per-sport facts in code: default tournament format,
+  default round count, round labels and round-name arrays, period layouts, pick'em and
+  shoot-out flags, selection types and scoring definitions. Each is a model column or row in
+  the league model plan, and the slice that owns it deletes it from the registry
+  (`scripts/retired-names.json` names the owner of each). Until then **nothing is added**: no
+  `SportDefinition` field and no new export from the folder (`rules:check:sport-registry-frozen`
+  fails on either), and no new reader of a retired one (`rules:check:retired-names`). A fact a
+  new feature needs about a sport or league goes in the model and comes from the API. What a
+  sport's audience calls things (golfer, tournament, "Cut") is a display string,
+  `sport.<SPORT>.<role>`, read through `sportWord` or `sportVocabulary` (`rules/ux-rules.md`
+  §16 *Display Strings*), never registry data.
+  `SPORT_DEFINITIONS` stays a `Record<Sport, …>` while it exists, so a sport added to the enum
+  fails the build until it has an entry; the `Sport` enum and the validity matrices are not a
+  write permission (§2 *Validity / Compatibility Matrices Source of Truth*).
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
   shown. Several sports share a family (golf is stroke play; basketball, American football,
   hockey, baseball, soccer and tennis are head to head; races are finish position), and each family owns one set of result
@@ -475,14 +478,15 @@ The rules that keep it that way:
 - **Never branch on a particular sport elsewhere.** `x.sport === Sport.GOLF`, a comparison
   of a sport to a string, or a `switch` on a sport, outside the registry and scoring-family
   folders, is the bug this structure exists to prevent. `poolmaster/no-sport-branching`
-  rejects it. Put the difference in the definition or the family. Finding one sport's row
+  rejects it. Put the difference in the model or the family, never in the registry (frozen,
+  above). Finding one sport's row
   among several is a lookup (`findSportRow`), not a branch.
   The design rule behind it is `workflow-rules.md` §1 *One global solution, never one sport's*.
 - **Every `switch` over a union or enum is exhaustive.** Name every member, or end in
   `default: assertNever(value)`. A bare `default` lets the next sport, family or live-score
   category fall through silently; `@typescript-eslint/switch-exhaustiveness-check` rejects it.
-- **Shared screens use the sport's words.** "Golfer", "tee time" and "Cut" belong to golf's
-  definition, not to a component every sport renders.
+- **Shared screens use the sport's words.** "Golfer", "tee time" and "Cut" are golf's display
+  strings (`sport.GOLF.<role>`), not words in a component every sport renders.
 - **Which contest templates an event offers is decided in one place.** A template is offered on
   an event when its sport matches, its sport league is the event's or none, and its event type
   is the event's kind of event or none: `isTemplateOfferedOn` in `@poolmaster/shared/domain`.
