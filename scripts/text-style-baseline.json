@@ -31,7 +31,6 @@
   "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-detail-page.tsx": 9,
   "clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx": 1,
   "clients/poolmaster/src/features/root-admin/root-admin-sport-event-create-page.tsx": 2,
-  "clients/poolmaster/src/features/root-admin/sport-event-columns.tsx": 6,
   "clients/poolmaster/src/features/root-admin/sport-event-manual-create-form.tsx": 4,
   "clients/poolmaster/src/features/teams/invites-page-invite-people-section.tsx": 1,
   "clients/poolmaster/src/features/teams/invites-page-row-actions.tsx": 1
