@@ -23,6 +23,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { linkTestSlot } from '../../support/test-slots';
 
 // An event's field against real Postgres (#1163): read in one repository call on one connection,
 // shared by every contest and pick screen on the event for 30 seconds, and read afresh once an
@@ -316,6 +317,8 @@ describe('A write to one field row', () => {
 
   it('answers a golf score correction with the corrected golfer alone', async () => {
     const { event, ana } = await golfEvent();
+    // The admin score correction writes only on a test event (#2074).
+    await linkTestSlot(getPrisma(), event);
     const admin = await createTestUser({ isRootAdmin: true });
 
     const res = await getApp().inject({

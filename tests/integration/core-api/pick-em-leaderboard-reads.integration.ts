@@ -23,6 +23,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { createContestService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { expectDefined } from '../../support/expect-defined';
+import { linkTestSlot } from '../../support/test-slots';
 import { writePicks } from '../../support/prediction-writes';
 import {
   cleanupTestData,
@@ -344,6 +345,8 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
   it('rebuilds the stored board in a job once an admin saves a game\'s result through the events routes (#1463)', async () => {
     const season = await midSeason();
     const admin = await createTestUser({ isRootAdmin: true });
+    // The admin result routes write only on a test event (#2074).
+    await linkTestSlot(getPrisma(), await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: season.liveWeek.event.id } }));
     await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     const saved = await getApp().inject({

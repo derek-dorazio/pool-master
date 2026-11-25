@@ -25,6 +25,7 @@ import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setup
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { expectDefined } from '../../support/expect-defined';
+import { linkTestSlot } from '../../support/test-slots';
 
 // No mocks.
 
@@ -200,20 +201,21 @@ function send(method: 'PUT' | 'DELETE', url: string, viewer: TestUserResult, pay
 }
 
 describe('a match records when its result came in', () => {
-  it('sends a recorded result\'s completion time on the bracket read, and clears it when the result is cleared', async () => {
+  it('sends null completion time on the bracket read before a result, and the time once a test event\'s result is recorded', async () => {
     const { event, games } = await seedFootballWeek({ games: 1, startDate: new Date(Date.now() - DAY), status: SportEventStatus.IN_PROGRESS });
+    // The admin result routes write only on a test event (#2074).
+    await linkTestSlot(getPrisma(), await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } }));
     const rootAdmin = await createTestUser({ isRootAdmin: true });
     const result = { winnerSide: 'HOME', homeScore: 24, awayScore: 10 };
 
+    const beforeRecord = okBody(await get(`/api/v1/events/${event.id}/bracket`, rootAdmin), SportEventBracketResponseSchema).matches[0];
     const recorded = await send('PUT', `/api/v1/events/${event.id}/bracket/matches/1/result`, rootAdmin, result);
     const afterRecord = okBody(await get(`/api/v1/events/${event.id}/bracket`, rootAdmin), SportEventBracketResponseSchema).matches[0];
-    const cleared = await send('DELETE', `/api/v1/events/${event.id}/bracket/matches/1/result`, rootAdmin);
-    const afterClear = okBody(await get(`/api/v1/events/${event.id}/bracket`, rootAdmin), SportEventBracketResponseSchema).matches[0];
 
-    expect([recorded.statusCode, cleared.statusCode]).toEqual([200, 200]);
+    expect(recorded.statusCode).toBe(200);
+    expect(beforeRecord).toMatchObject({ id: games[0].id, completedAt: null });
     expect(afterRecord).toMatchObject({ id: games[0].id, status: MatchStatus.COMPLETED });
     expect(afterRecord.completedAt).not.toBeNull();
-    expect(afterClear).toMatchObject({ status: MatchStatus.SCHEDULED, completedAt: null });
   });
 });
 

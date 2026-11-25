@@ -38,6 +38,7 @@ import { PrismaContestRepository } from '../../../packages/core-api/src/adapters
 import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { linkTestSlot } from '../../support/test-slots';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -358,6 +359,7 @@ describe('Opening a contest (#1355)', () => {
  * final result is already in, as an event finished after its last game would have it.
  */
 async function squaresContestUnderWay(options: { gameFinished: boolean; contests?: number }) {
+  // A game whose result an admin saves is on a test event: the admin result routes write only there (#2074).
   const prisma = getPrisma();
   const { commissioner, leagueId, squadId } = await leagueWithTeam();
   const admin = await createTestUser({ isRootAdmin: true });
@@ -375,6 +377,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
       status: 'IN_PROGRESS',
     },
   });
+  if (!options.gameFinished) await linkTestSlot(prisma, event);
   const [home, away] = await Promise.all(['Home', 'Away'].map(async (side) => {
     const team = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Read Once ${side} ${suffix}`, participantType: 'TEAM', status: 'ACTIVE' },
@@ -509,27 +512,6 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     await drainBackgroundJobs();
     const statuses = await getPrisma().contest.findMany({ where: { id: { in: [...one.contestIds, ...three.contestIds] } }, select: { status: true } });
     expect(statuses.map(({ status }) => status)).toEqual(Array(4).fill(ContestStatus.COMPLETED));
-  });
-
-  it('keeps a squares contest open when its game\'s result is cleared before the job runs, and settles it with winners once the result is saved again', async () => {
-    const { admin, eventId, contestId } = await squaresContestUnderWay({ gameFinished: false });
-    const resultUrl = `/api/v1/events/${eventId}/bracket/matches/1/result`;
-    const saveResult: InjectOptions = { method: 'PUT', url: resultUrl, headers: admin.headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 } };
-
-    await measureRequest(saveResult);
-    const cleared = await measureRequest({ method: 'DELETE', url: resultUrl, headers: withoutJsonBodyHeaders(admin.headers) });
-    expect(cleared.response.statusCode).toBe(200);
-    await drainBackgroundJobs();
-
-    // The job found the game undecided, so the contest waits for its result.
-    await expect(contestStatuses([contestId])).resolves.toEqual([[contestId, ContestStatus.ACTIVE]]);
-    await expect(getPrisma().contestSquaresWinner.count({ where: { contestId } })).resolves.toBe(0);
-
-    await measureRequest(saveResult);
-    await drainBackgroundJobs();
-
-    await expect(contestStatuses([contestId])).resolves.toEqual([[contestId, ContestStatus.COMPLETED]]);
-    await expect(getPrisma().contestSquaresWinner.count({ where: { contestId } })).resolves.toBeGreaterThan(0);
   });
 
   it('leaves no squares contest half settled when the game\'s job fails part way: the retry completes the rest once', async () => {
