@@ -122,7 +122,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   expect((await applyEventParticipantUpload({
     client: a,
     path: { eventId },
-    body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${run}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
+    body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${run}`, seedNumber: index + 1 })) },
   })).response?.status).toBe(200);
   expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
   expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);

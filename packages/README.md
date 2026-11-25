@@ -88,11 +88,11 @@ the schema is skipped (the leaderboard answers 400
 or none; the score publisher skips and warns on a batch its event's family does not accept.
 Stroke play accepts `GOLF`; head to head accepts `GAME` (#1496), writing a provider's final for
 each match linked to its game (`externalGameId`, on the event's own provider) through
-`MatchResultService`, the admin's result path, with the teams' provider mappings deciding which
+`MatchResultService`, with the teams' provider mappings deciding which
 side won. The sync links a game nobody has linked to the one open match of the event whose two
-teams it is, so nobody links games by hand. Each match records who set its result
-(`resultSource`, #1531): a provider's later final never overwrites an admin's result, and is
-logged instead, and the admin's bracket page names the feed a synced result came from. A live
+teams it is, so nobody links games by hand. The feed is the only writer of a synced
+event's results (#2074): its final overwrites whatever the match held, and the admin's bracket
+page names the feed a result came from. A live
 game's score goes on its match too, read-only (`IN_PROGRESS`, no winner), and comes off again if
 the provider postpones the game; scoring reads only completed matches. The golf round-score
 admin routes refuse an event whose family does not keep golf rounds (422

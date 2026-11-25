@@ -5,7 +5,6 @@
   "clients/poolmaster/src/features/leagues/unusable-invitation.ts": 2,
   "clients/poolmaster/src/features/leagues/use-league-context.ts": 3,
   "clients/poolmaster/src/features/root-admin/customer-user-edit.ts": 1,
-  "clients/poolmaster/src/features/root-admin/event-field-upload-card.tsx": 1,
   "clients/poolmaster/src/features/root-admin/event-release-checks-dialog.tsx": 1,
   "clients/poolmaster/src/features/root-admin/event-release-checks-text.ts": 9,
   "clients/poolmaster/src/features/root-admin/event-tiers-form.ts": 1,

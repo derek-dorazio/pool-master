@@ -9,7 +9,8 @@ import { expect } from '@jest/globals';
 import Fastify from 'fastify';
 import { z } from 'zod';
 import { STRING_TRANSFORM_KEYWORD, zodToJsonSchema } from '../../../packages/shared/dto/json-schema';
-import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
+import Ajv from 'ajv';
+import { FASTIFY_AJV_OPTIONS, stringTransformsAjvPlugin } from '../../../packages/core-api/src/plugins/string-transforms';
 
 describe('zodToJsonSchema string transforms', () => {
   it('records trim and lowercase on a string, in the order Zod applies them', () => {
@@ -66,5 +67,27 @@ describe('Fastify validation with the string-transform plugin', () => {
     const notAnEmail = await echo({ email: ' derek ', username: 'derek' });
 
     expect([tooShort.statusCode, innerSpace.statusCode, notAnEmail.statusCode]).toEqual([400, 400, 400]);
+  });
+
+  it('refuses at start-up a route schema naming a transform step it does not know', async () => {
+    const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
+    app.post('/echo', {
+      schema: { body: { type: 'object', properties: { name: { type: 'string', [STRING_TRANSFORM_KEYWORD]: ['reverse'] } } } },
+      handler: (request) => request.body,
+    });
+
+    await expect(app.ready()).rejects.toThrow(`Unknown ${STRING_TRANSFORM_KEYWORD} step: reverse`);
+    await app.close();
+  });
+});
+
+describe('stringTransformsAjvPlugin on its own', () => {
+  it('passes a root string value through unchanged, since it has no parent to write back to', () => {
+    const ajv = stringTransformsAjvPlugin(new Ajv());
+    const validate = ajv.compile({ type: 'string', [STRING_TRANSFORM_KEYWORD]: ['trim'] });
+    const value = '  padded  ';
+
+    expect(validate(value)).toBe(true);
+    expect(value).toBe('  padded  ');
   });
 });

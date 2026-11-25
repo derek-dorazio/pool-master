@@ -623,6 +623,26 @@ export class SportEventService {
   }
 
   /**
+   * The event, when it is a test event (#2074, ADR 0013): one that covers a test slot. Results,
+   * pairings and scores come only from the feed, so the admin result routes write them only on a
+   * test event, which the test-data loader and the journeys score through them. One read: 404
+   * EVENT_NOT_FOUND for no event, 409 SPORT_EVENT_NOT_TEST_DATA on any other event.
+   */
+  async requireTestEvent(sportEventId: string): Promise<void> {
+    const isTest = await this.deps.sportEvents.isTestEvent(sportEventId);
+    if (isTest === null) {
+      throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
+    }
+    if (!isTest) {
+      throw new SportEventError(
+        `Sport event ${sportEventId} covers no test slot: its results come only from the feed.`,
+        'SPORT_EVENT_NOT_TEST_DATA',
+        409,
+      );
+    }
+  }
+
+  /**
    * Creates new editions in a fixed number of queries, however many (#1253): the events in one
    * insert, then every event's rounds and default tiers in one insert each. A new event has no
    * field, no contests and every tier empty, so its summary is built from what was written

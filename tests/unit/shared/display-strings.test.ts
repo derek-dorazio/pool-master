@@ -55,13 +55,13 @@ describe('display string lookups', () => {
   });
 
   it('give a screen\'s own wording of an error code under error.<CODE>.<context>, with its placeholders filled', () => {
-    expect(displayString('error.BRACKET_INVALID.bracketAdmin', { participant: 'team', participants: 'teams', match: 'game' }))
-      .toBe('That pairing could not be saved. Each team plays one opening game, and two different teams meet in a game.');
-    expect(flattenDisplayStrings(enUS)['error.BRACKET_INVALID.bracketAdmin']).toBe(enUS.errorContext.BRACKET_INVALID.bracketAdmin);
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { participant: 'team' }))
+      .toBe('You picked that team in another week or round. Each team can be picked once.');
+    expect(flattenDisplayStrings(enUS)['error.PREDICTION_TEAM_ALREADY_USED.pickEm']).toBe(enUS.errorContext.PREDICTION_TEAM_ALREADY_USED.pickEm);
   });
 
   it('say whether a key built at run time has words, so a screen\'s context is tried before the code\'s own message', () => {
-    expect(hasDisplayString('error.BRACKET_INVALID.bracketAdmin')).toBe(true);
+    expect(hasDisplayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL.createEvent')).toBe(false);
     expect(hasDisplayString('error.CONTEST_FULL')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL', 'fr-CA')).toBe(true);
@@ -126,13 +126,13 @@ describe('display string lookups', () => {
   });
 
   it('refuse at compile time a screen\'s error wording without its placeholder values, and fill them when given', () => {
-    // @ts-expect-error The bracket wording needs its participant, participants and match.
-    expect(displayString('error.BRACKET_INVALID.bracketAdmin')).toContain('{{participant}}');
-    // @ts-expect-error The placeholder is match, not game.
-    expect(displayString('error.BRACKET_INVALID.bracketAdmin', { participant: 'team', participants: 'teams', game: 'game' }))
-      .toContain('{{match}}');
-    expect(displayString('error.BRACKET_INVALID.bracketAdmin', { participant: 'player', participants: 'players', match: 'match' }))
-      .toBe('That pairing could not be saved. Each player plays one opening match, and two different players meet in a match.');
+    // @ts-expect-error The pick'em wording needs its participant.
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm')).toContain('{{participant}}');
+    // @ts-expect-error The placeholder is participant, not team.
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { team: 'team' }))
+      .toContain('{{participant}}');
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { participant: 'player' }))
+      .toBe('You picked that player in another week or round. Each player can be picked once.');
   });
 
   it('refuse at compile time a key the modules do not hold', () => {

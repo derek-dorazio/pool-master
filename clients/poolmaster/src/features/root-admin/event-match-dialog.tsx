@@ -11,8 +11,8 @@ import { useSettleAgain } from './use-settle-again';
 
 /**
  * A match on the Event page's Matches grid (⤢, the Event page spec): its round, sides, start,
- * status, score, winner, who set the result and when. Results are entered and corrected in the
- * results tools below the grids on an event no feed syncs; a synced event's results are the feed's.
+ * status, score, winner, where the result came from and when. Results come only from the feed
+ * (#2074): nothing here enters or corrects one.
  * Once the match has a result, Settle again rebuilds the event's contests' boards from the results.
  */
 export function EventMatchDialog({

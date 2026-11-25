@@ -31,7 +31,7 @@
  * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
  * with that winner (`play-in-fill.ts`), so the game links to the place's match in the same sync.
  */
-import { MatchResultSource, requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventRoundMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -152,18 +152,9 @@ export async function writeGameScores(
       rows.push({ ...row, disposition: 'UNCHANGED' });
       continue;
     }
-    // An admin's result stands (#1531): the provider's different final is logged, not written.
-    if (match.resultSource === MatchResultSource.ADMIN) {
-      deps.logger?.warn(
-        { action: 'liveScore.game.adminResultKept', data: { sportEventId, matchNumber: match.matchNumber, externalGameId: externalId, before, provider: result } },
-        'Kept an admin\'s match result that the provider\'s final disagrees with',
-      );
-      rows.push({ ...row, disposition: 'UNCHANGED' });
-      continue;
-    }
     try {
       // One at a time: the bracket each result writes is the one the next is read against.
-      const bracket = await deps.results.recordResult(sportEventId, match.matchNumber, result, MatchResultSource.PROVIDER);
+      const bracket = await deps.results.recordResult(sportEventId, match.matchNumber, result);
       for (const each of bracket) rewritten.set(each.id, each);
       rows.push({ ...row, disposition: 'UPDATED' });
     } catch (error) {

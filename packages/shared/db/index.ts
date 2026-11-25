@@ -115,7 +115,6 @@ export type {
   PlatformPricingProfileWrite,
   ProfileRepository,
   ProfileTaken,
-  ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
   SportEventParticipantCreate,

@@ -43,7 +43,7 @@ import { sportPlay } from '../support/sport-play';
 
 const RUN = `basketball-${Date.now()}`;
 const PAIRING = 'Texas / Xavier';
-// Seeds, best first; the odds only order the field into its four tiers, one team to a tier.
+// Seeds, best first; the seeds also order the field into its four tiers, one team to a tier.
 const FIELD: readonly { name: string; seed: number }[] = [
   { name: 'Duke', seed: 1 },
   { name: 'Houston', seed: 2 },
@@ -122,7 +122,7 @@ describe('SDK Functional: Basketball bracket', () => {
     const upload = await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: FIELD.map((team, index) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed, oddsToWin: 2 + index * 5 })) },
+      body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);

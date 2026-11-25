@@ -1,5 +1,5 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
-import { deleteTestSportLeagues, testSlotDefinitionId } from '../../support/test-slots';
+import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId } from '../../support/test-slots';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
@@ -1729,7 +1729,7 @@ describe('Contract verification (root admin)', () => {
       create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[]) => {
+    const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[], { testEvent = true } = {}) => {
       const event = await prisma.sportEvent.create({
         data: {
           ...(await freshEventEdition(prisma, { sport })),
@@ -1738,6 +1738,8 @@ describe('Contract verification (root admin)', () => {
           status: 'SCHEDULED',
         },
       });
+      // The admin result routes write only on a test event (#2074).
+      if (testEvent) await linkTestSlot(prisma, event);
       for (const name of names) {
         const participant = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sportId), name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
         await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
@@ -1792,6 +1794,8 @@ describe('Contract verification (root admin)', () => {
     await expectRefusal(await send('POST', golfEvent.id, { isOfficial: false, rows: [finisher('Golfer', 1)] }), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
     await expectRefusal(await send('PUT', golfEvent.id, { isOfficial: false, rows: [finisher('Golfer', 1)] }), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
     await expectRefusal(await send('PUT', '00000000-0000-4000-8000-000000000000', { isOfficial: false, rows: [finisher('Arrow', 1)] }), 404);
+    const fedRace = await createEvent('HORSE_RACING', horseRacing.id, ['Comet'], { testEvent: false });
+    await expectRefusal(await send('PUT', fedRace.id, { isOfficial: false, rows: [finisher('Comet', 1)] }), 409, 'SPORT_EVENT_NOT_TEST_DATA');
     await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [{ ...finisher('Arrow', 0) }] }), 400);
     await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [finisher('Arrow', 1)] }, member.headers), 403);
   });

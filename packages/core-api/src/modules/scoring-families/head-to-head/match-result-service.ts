@@ -85,7 +85,7 @@ export interface PeriodScoreInput {
 
 export interface MatchResultServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
-  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'applyResult' | 'savePeriodScore' | 'deletePeriodScore'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'applyResult' | 'savePeriodScore'>;
   /**
    * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
    * second-chance bracket's starting round puts it live even where the scheduler leaves the event
@@ -182,9 +182,9 @@ export class MatchResultService {
    * MATCH_SIDES_NOT_SET while a side still waits for its team; 422 MATCH_RESULT_INVALID for one
    * score without the other, scores the winner did not win by, a tie that does not fit, a
    * shoot-out that does not fit, or an early ending that does not (`describeScoreProblem`); 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED for
-   * a new winner once the next match has a result. `source` records who set it (#1531).
+   * a new winner once the next match has a result. The feed is its only writer on a synced event (#2074).
    */
-  async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput, source: MatchResultSource): Promise<SportEventRoundMatch[]> {
+  async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput): Promise<SportEventRoundMatch[]> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
@@ -215,7 +215,7 @@ export class MatchResultService {
     }
 
     const now = this.deps.now?.() ?? new Date();
-    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending, resultSource: source, completedAt: now };
+    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending, resultSource: MatchResultSource.PROVIDER, completedAt: now };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
     // The game is decided: what follows (its squares contests' settling, the boards' rebuild) is
@@ -228,27 +228,6 @@ export class MatchResultService {
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
       await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now, after);
     }
-    return after;
-  }
-
-  /**
-   * Clears one match's result: the match is scheduled again and the side its winner filled is empty.
-   * 404 BRACKET_MATCH_NOT_FOUND; 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the next match has a result.
-   * Clearing a match with no result changes nothing.
-   */
-  async clearResult(sportEventId: string, matchNumber: number): Promise<SportEventRoundMatch[]> {
-    await this.requireReleasedBracketEvent(sportEventId);
-    const bracket = await this.deps.matches.findBySportEvent(sportEventId);
-    const match = this.requireMatch(sportEventId, bracket, matchNumber);
-    if (match.status !== MatchStatus.COMPLETED) {
-      return bracket;
-    }
-    this.assertNextMatchOpen(sportEventId, bracket, match);
-    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null, completedAt: null };
-    const rebuild = await this.rebuild(sportEventId);
-    const after = await this.write(sportEventId, bracket, result, this.advance(bracket, match, null), rebuild.jobs);
-    rebuild.queued();
-    this.deps.logger?.info({ sportEventId, matchNumber }, 'Cleared a match result');
     return after;
   }
 
@@ -285,41 +264,12 @@ export class MatchResultService {
       );
     }
     // Only an admin cancels a match.
-    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: MatchResultSource.ADMIN, completedAt: null };
+    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: MatchResultSource.PROVIDER, completedAt: null };
     // A squares contest on the game ends Final with no scores (#711, #743), in a job written with it.
     const jobs = await this.decided(sportEventId, match.id, this.deps.now?.() ?? new Date());
     const after = await this.write(sportEventId, bracket, result, null, jobs.jobs);
     jobs.queued();
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
-    return after;
-  }
-
-  /**
-   * Postpones one game of a released event before it begins (#1791): it is still to be played,
-   * shows as postponed, and keeps its picks open until its time, which an admin or the provider
-   * moves to the new one. A game of a bracket can be postponed too, since it is not called off.
-   * Postponing a postponed game changes nothing. 404 BRACKET_MATCH_NOT_FOUND; 409
-   * MATCH_ALREADY_PLAYED for a game with a result; 409 MATCH_CANCELLED for a cancelled game; 409
-   * MATCH_ALREADY_STARTED for a game under way or with a period score, whose picks have locked.
-   */
-  async postponeMatch(sportEventId: string, matchNumber: number): Promise<SportEventRoundMatch[]> {
-    await this.requireReleasedBracketEvent(sportEventId);
-    const bracket = await this.deps.matches.findBySportEvent(sportEventId);
-    const match = this.requireMatch(sportEventId, bracket, matchNumber);
-    if (match.status === MatchStatus.POSTPONED) {
-      return bracket;
-    }
-    const refusal = postponeRefusal(match);
-    if (refusal) {
-      this.deps.logger?.warn({ sportEventId, matchNumber, status: match.status, code: refusal.code }, 'Refused to postpone a game');
-      throw new SportEventError(`Match ${matchNumber} ${refusal.reason}, so it cannot be postponed.`, refusal.code, 409);
-    }
-    const result = { id: match.id, status: MatchStatus.POSTPONED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null, completedAt: null };
-    // The game's chip shows on the event's contests' boards, so they are rebuilt (#1466).
-    const rebuild = await this.rebuild(sportEventId);
-    const after = await this.write(sportEventId, bracket, result, null, rebuild.jobs);
-    rebuild.queued();
-    this.deps.logger?.info({ sportEventId, matchNumber }, 'Postponed a game');
     return after;
   }
 
@@ -362,22 +312,6 @@ export class MatchResultService {
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
       await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now);
     }
-    return this.deps.matches.findBySportEvent(sportEventId);
-  }
-
-  /**
-   * Clears the score at the end of one period of a game. Clearing one that is not entered changes
-   * nothing. The refusals of `recordPeriodScore` for the event, the period and the match.
-   */
-  async clearPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number): Promise<SportEventRoundMatch[]> {
-    const { match } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
-    if (!match.periodScores.some((score) => score.periodNumber === periodNumber)) {
-      return this.deps.matches.findBySportEvent(sportEventId);
-    }
-    const rebuild = await this.rebuild(sportEventId);
-    await this.deps.matches.deletePeriodScore(match.id, periodNumber, rebuild.jobs);
-    rebuild.queued();
-    this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Cleared a period score');
     return this.deps.matches.findBySportEvent(sportEventId);
   }
 
@@ -623,10 +557,3 @@ function describeFinalBelowPeriods(
   return higher ? `a side's final score is lower than at the end of ${periods.label.one} ${higher.periodNumber}` : null;
 }
 
-/** Why a game cannot be postponed: it has a result, was called off, or is under way. Undefined when it can. */
-function postponeRefusal(match: SportEventRoundMatch): { code: 'MATCH_ALREADY_PLAYED' | 'MATCH_CANCELLED' | 'MATCH_ALREADY_STARTED'; reason: string } | undefined {
-  if (match.status === MatchStatus.COMPLETED) return { code: 'MATCH_ALREADY_PLAYED', reason: 'has a result' };
-  if (match.status === MatchStatus.CANCELLED) return { code: 'MATCH_CANCELLED', reason: 'was cancelled' };
-  if (match.status === MatchStatus.IN_PROGRESS || match.periodScores.length > 0) return { code: 'MATCH_ALREADY_STARTED', reason: 'has started' };
-  return undefined;
-}

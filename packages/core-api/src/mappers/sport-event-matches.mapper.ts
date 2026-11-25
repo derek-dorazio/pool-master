@@ -2,7 +2,7 @@
  * Bracket mapper (#698) — an event's matches → their DTOs, dates as ISO strings.
  */
 
-import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { isMatchUnplayed, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
 
 export function mapSportEventRoundMatchToDto(match: SportEventRoundMatch): SportEventRoundMatchDto {
@@ -16,6 +16,7 @@ export function mapSportEventRoundMatchToDto(match: SportEventRoundMatch): Sport
     isNeutralSite: match.isNeutralSite,
     scheduledDate: match.scheduledDate?.toISOString() ?? null,
     status: match.status,
+    isUnplayed: isMatchUnplayed(match.status),
     winnerSide: match.winnerSide,
     homeScore: match.homeScore,
     awayScore: match.awayScore,

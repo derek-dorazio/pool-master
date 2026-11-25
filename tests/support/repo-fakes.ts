@@ -303,6 +303,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     countUnpricedActiveParticipants: noCounts(),
     countTiers: noCounts(),
     findSlots: noCounts(),
+    isTestEvent: jest.fn().mockResolvedValue(null),
     findEmptyTierLabels: noCounts(),
     countContests: noCounts(),
     countBySportLeagues: noCounts(),
@@ -336,7 +337,6 @@ export function fakeSportEventParticipantRepo(
     delete: nothing(),
     countPicks: jest.fn().mockResolvedValue(0),
     fillPlayInSlot: nothing(),
-    replaceWithdrawn: jest.fn().mockResolvedValue('replacement-row'),
     ...overrides,
   };
 }
