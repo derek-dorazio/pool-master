@@ -1003,6 +1003,15 @@ screen renders what it is sent.
   bounds in their Zod schemas. Some of these are imported by the web app today; those imports
   are residue too. A change that touches one moves it to an API field, and no new import or
   constant is added.
+- *Enforced (#2107):* `rules:check:web-shared-imports` lets the web app import from
+  `@poolmaster/shared` and `/domain` only types, enums and the vocabulary patterns its
+  baseline lists with reasons (order lists, formatters, the brand, image paths, sport display
+  words, schemas); every other name sits on a per-name count that only falls. Three lint
+  rules hold the same line on the web's own code, each with a shrink-only per-file baseline:
+  `poolmaster/no-enum-string-literals` (a shared enum value compared, used as a `case` label
+  or written as a literal type), `poolmaster/no-dto-shaped-local-types` (a local type copying
+  a generated one under another name) and `poolmaster/no-local-enums` (an enum of the web
+  app's own).
 
 ### What stays in code
 
