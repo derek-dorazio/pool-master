@@ -63,3 +63,15 @@ export function slotDatesChange(slot: Pick<SyncSeasonSlot, 'startsAt' | 'endsAt'
   const same = slot.startsAt?.getTime() === play.startsAt.getTime() && slot.endsAt?.getTime() === play.endsAt.getTime();
   return same ? null : { startsAt: play.startsAt, endsAt: play.endsAt };
 }
+
+/**
+ * The plays dated outside their Season's span (#2012): a game before the Season starts or after
+ * it ends. Each is still written; the sync raises one WARNING for it, since a span that misses a
+ * game is a Season row to fix, not a game to drop.
+ */
+export function playsOutsideSeason(
+  plays: readonly ProviderSlotPlay[],
+  season: { startsAt: Date; endsAt: Date },
+): ProviderSlotPlay[] {
+  return plays.filter((play) => play.startsAt < season.startsAt || play.endsAt > season.endsAt);
+}

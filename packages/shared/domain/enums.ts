@@ -922,6 +922,12 @@ export const ProviderSyncFindingKind = {
    * mapping or the league row is fixed. ERROR. Subject: league and Provider.
    */
   PROVIDER_LEAGUE_UNKNOWN: 'PROVIDER_LEAGUE_UNKNOWN',
+  /**
+   * The events sync placed games in a Season slot dated outside the Season's span (#2012): before
+   * it starts or after it ends. The games are still written. WARNING, since the Season row's span
+   * is what to check. Subject: league, Provider and the code.
+   */
+  SLOT_OUTSIDE_SEASON: 'SLOT_OUTSIDE_SEASON',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

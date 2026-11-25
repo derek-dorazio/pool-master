@@ -27,6 +27,7 @@ import {
   ProviderSyncFindingSeverity,
   ProviderSyncKind,
   seasonsToSync,
+  playsOutsideSeason,
   ProviderSyncRunStatus,
   JobTrigger,
   type BackgroundJob,
@@ -35,6 +36,7 @@ import {
   type ProviderSyncRunOutcome,
   type SportLeague,
   type SportLeagueProviderMapping,
+  type ProviderSlotPlay,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 import { SCHEDULE_START } from '../../core/job-start';
@@ -276,8 +278,40 @@ export class LeagueEventsSync {
       providerValue: value.code,
       providerValueName: value.eventName,
     })));
+    await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, providerEvents, imported.unmatched);
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
+  }
+
+  /**
+   * One WARNING SLOT_OUTSIDE_SEASON per league, Provider and code whose games the slot mappings
+   * place but which are dated outside the Season's span (#2012), before it or after it. The games
+   * are still written; the finding's subject dedupes it across syncs.
+   */
+  private async raiseSlotsOutsideSeason(
+    sportLeagueId: string,
+    providerId: string,
+    season: { startsAt: Date; endsAt: Date },
+    providerEvents: ReadonlyArray<{ name: string; providerSlots: readonly ProviderSlotPlay[] }>,
+    unmatched: ReadonlyArray<{ code: string }>,
+  ): Promise<void> {
+    const unmapped = new Set(unmatched.map((value) => value.code));
+    const outside = new Map<string, string>();
+    for (const providerEvent of providerEvents) {
+      const placed = providerEvent.providerSlots.filter((play) => !unmapped.has(play.code));
+      for (const play of playsOutsideSeason(placed, season)) {
+        if (!outside.has(play.code)) outside.set(play.code, providerEvent.name);
+      }
+    }
+    if (outside.size === 0) return;
+    await this.options.findings.raiseOfSource(providerId, [...outside].map(([code, eventName]) => ({
+      kind: ProviderSyncFindingKind.SLOT_OUTSIDE_SEASON,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: code,
+      providerValueName: eventName,
+    })));
   }
 
   /** An earlier try of this job that stopped mid-run left its run IN_PROGRESS: it is FAILED as interrupted. */

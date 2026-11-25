@@ -276,6 +276,7 @@ export const enUS = {
       GAMES_NOT_SYNCED: 'Games not synced',
       SLOT_VALUE_UNMAPPED: 'Provider code not mapped to a slot',
       PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
+      SLOT_OUTSIDE_SEASON: 'Games outside the Season',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',
