@@ -1,5 +1,5 @@
 import { TeamIconKey } from '@poolmaster/shared/domain';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { squadStandingColumns, type SquadStandingRow } from './squad-standing-columns';
@@ -7,7 +7,7 @@ import { SquadStandingsGrid } from './squad-standings-grid';
 
 const rows: SquadStandingRow[] = [
   { displayPosition: '1', points: 425, position: 1, squadIconKey: TeamIconKey.CAPTAIN_SMILE_OCEAN, squadId: 'squad-1', squadIsActive: true, squadName: 'Casey Crushers' },
-  { displayPosition: 'T2', points: 100, position: 2, squadId: 'squad-2', squadIsActive: true, squadName: 'Birdie Bandits' },
+  { displayPosition: 'T2', points: 100, position: 2, squadIconKey: TeamIconKey.CAPTAIN_SMILE_OCEAN, squadId: 'squad-2', squadIsActive: true, squadName: 'Birdie Bandits' },
 ];
 
 function renderGrid({ focusSquadId = null, searchable, squadPath }: { focusSquadId?: string | null; searchable?: boolean; squadPath?: (squadId: string) => string } = {}) {
@@ -63,5 +63,15 @@ describe('SquadStandingsGrid', () => {
 
     expect(screen.getByText('Casey Crushers')).toBeInTheDocument();
     expect(screen.queryByLabelText('Casey Crushers icon')).not.toBeInTheDocument();
+  });
+
+  it('sorts by place and by points as numbers', () => {
+    renderGrid();
+    const order = () => screen.getAllByTestId(/^board-standing-squad-\d$/).map((row) => row.getAttribute('data-testid'));
+
+    fireEvent.click(screen.getByTestId('data-grid-sort-points'));
+    expect(order()).toEqual(['board-standing-squad-2', 'board-standing-squad-1']);
+    fireEvent.click(screen.getByTestId('data-grid-sort-place'));
+    expect(order()).toEqual(['board-standing-squad-1', 'board-standing-squad-2']);
   });
 });

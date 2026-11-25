@@ -1,3 +1,4 @@
+import { InvitationStatus } from '@poolmaster/shared/domain';
 import type { InvitationPreview } from './invitation-preview';
 
 // League and team-owner previews share this generated status union.
@@ -16,7 +17,7 @@ export type UnusableInvitation = {
  * instead of offering a Join button the server will refuse. Keyed on every non-pending status, so
  * a new server status fails to compile here rather than silently showing Join.
  */
-const UNUSABLE_INVITATIONS: Record<Exclude<InvitationPreviewStatus, 'PENDING'>, UnusableInvitation> = {
+const UNUSABLE_INVITATIONS: Record<Exclude<InvitationPreviewStatus, typeof InvitationStatus.PENDING>, UnusableInvitation> = {
   EXPIRED: { kind: 'expired', title: 'This invitation has expired', body: 'Ask the commissioner for a new one.' },
   REVOKED: { kind: 'expired', title: 'This invitation was withdrawn', body: 'Ask the commissioner for a new one.' },
   ACCEPTED: { kind: 'expired', title: 'This invitation was already used', body: 'Open your leagues to reach it.' },
@@ -30,7 +31,7 @@ export const UNKNOWN_INVITATION: UnusableInvitation = {
 };
 
 export function describeUnusableInvitation(status: InvitationPreviewStatus | undefined): UnusableInvitation | null {
-  if (!status || status === 'PENDING') {
+  if (!status || status === InvitationStatus.PENDING) {
     return null;
   }
   return UNUSABLE_INVITATIONS[status];

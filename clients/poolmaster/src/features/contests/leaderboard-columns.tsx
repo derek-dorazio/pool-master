@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import type { ContestEntryStandingDto } from '@/lib/api';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
@@ -12,14 +13,8 @@ import { Text, cn } from '@/features/shared/ui';
 export const SETTLED_NOTE = 'Final result: these standings are frozen at settlement.';
 
 /** A board row: one entry, placed, and the squad it belongs to where the board names one. */
-export type BoardRow = {
-  entryId: string;
-  entryName: string;
-  displayPosition: string | null;
-  position?: number | null;
-  squadId?: string;
-  squadName?: string;
-};
+export type BoardRow = Pick<ContestEntryStandingDto, 'displayPosition' | 'entryId' | 'entryName'>
+  & Partial<Pick<ContestEntryStandingDto, 'position' | 'squadId' | 'squadName'>>;
 
 /** Place, as the server shows it ("T2" when shared), a dash until the entry is placed. */
 export function placeColumn<Row extends BoardRow>(testIdPrefix: string): ColumnDef<Row> {

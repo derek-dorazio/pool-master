@@ -27,79 +27,52 @@ export function MyTeamLifecycleDialogs({
   setActiveDialog,
 }: {
   lifecycle: MyTeamLifecycle;
-  selectedTeam: SquadDto | null;
+  /** The team the page shows; the dialogs open only once it has loaded. */
+  selectedTeam: SquadDto;
   activeDialog: ActiveTeamDialog;
   setActiveDialog: (dialog: ActiveTeamDialog) => void;
 }) {
   const { inactivateTeamMutation, deleteTeamMutation } = lifecycle;
+  // Each dialog is opened by its page button, so the one change it reports is a close (Escape),
+  // which Cancel shares. ConfirmDialog offers neither while its write is still running.
+  const closeInactivate = () => {
+    inactivateTeamMutation.reset();
+    setActiveDialog(null);
+  };
+  const closeDelete = () => {
+    deleteTeamMutation.reset();
+    setActiveDialog(null);
+  };
 
   return (
     <>
       <ConfirmDialog
         confirmLabel="Inactivate"
         confirmTestId="my-team-confirm-inactivate"
-        description={
-          selectedTeam
-            ? `${selectedTeam.name} will become inactive and its active owners will be removed from this league. Their accounts stay active, and inviting them back restores it.`
-            : 'Its active owners will be removed from this league.'
-        }
+        description={`${selectedTeam.name} will become inactive and its active owners will be removed from this league. Their accounts stay active, and inviting them back restores it.`}
         isPending={inactivateTeamMutation.isPending}
-        onCancel={() => {
-          if (!inactivateTeamMutation.isPending) {
-            inactivateTeamMutation.reset();
-            setActiveDialog(null);
-          }
-        }}
+        onCancel={closeInactivate}
         onConfirm={() => void inactivateTeamMutation.mutateAsync().catch(() => undefined)}
-        onOpenChange={(open) => {
-          if (open) {
-            setActiveDialog('inactivate');
-            return;
-          }
-
-          if (!inactivateTeamMutation.isPending) {
-            inactivateTeamMutation.reset();
-            setActiveDialog(null);
-          }
-        }}
+        onOpenChange={closeInactivate}
         open={activeDialog === 'inactivate'}
         pendingLabel="Inactivating..."
         testId="my-team-inactivate-dialog"
-        title={selectedTeam ? `Inactivate ${selectedTeam.name}` : 'Inactivate'}
+        title={`Inactivate ${selectedTeam.name}`}
         tone="danger"
       />
 
       <ConfirmDialog
         confirmLabel="Delete"
         confirmTestId="my-team-confirm-delete"
-        description={
-          selectedTeam
-            ? `${selectedTeam.name} will be permanently deleted. This is only available once it is inactive.`
-            : 'This will be permanently deleted.'
-        }
+        description={`${selectedTeam.name} will be permanently deleted. This is only available once it is inactive.`}
         isPending={deleteTeamMutation.isPending}
-        onCancel={() => {
-          if (!deleteTeamMutation.isPending) {
-            deleteTeamMutation.reset();
-            setActiveDialog(null);
-          }
-        }}
+        onCancel={closeDelete}
         onConfirm={() => void deleteTeamMutation.mutateAsync().catch(() => undefined)}
-        onOpenChange={(open) => {
-          if (open) {
-            setActiveDialog('delete');
-            return;
-          }
-
-          if (!deleteTeamMutation.isPending) {
-            deleteTeamMutation.reset();
-            setActiveDialog(null);
-          }
-        }}
+        onOpenChange={closeDelete}
         open={activeDialog === 'delete'}
         pendingLabel="Deleting..."
         testId="my-team-delete-dialog"
-        title={selectedTeam ? `Delete ${selectedTeam.name}` : 'Delete'}
+        title={`Delete ${selectedTeam.name}`}
         tone="danger"
       />
     </>

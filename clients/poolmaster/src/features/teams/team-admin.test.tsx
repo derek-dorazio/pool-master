@@ -190,6 +190,36 @@ describe('Commissioner tools › Teams', () => {
     expect(screen.queryByTestId('admin-team-team-1')).not.toBeInTheDocument();
   });
 
+  it('says the members could not be loaded and reads them again on Retry', async () => {
+    primeMocks();
+    listLeagueSquadsMock.mockReset().mockResolvedValueOnce({ error: { error: { code: 'INTERNAL_ERROR', message: 'down' } }, status: 500 });
+
+    renderAdmin('/league/BIGDAWGS/admin/teams');
+    expect(await screen.findByText('Members unavailable')).toBeInTheDocument();
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([memberTeam])));
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId('admin-team-team-2')).toBeInTheDocument();
+  });
+
+  it('says no one has joined yet when the league has no teams', async () => {
+    primeMocks();
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([])));
+
+    renderAdmin('/league/BIGDAWGS/admin/teams');
+
+    expect(await screen.findByText('No one has joined this league yet.')).toBeInTheDocument();
+  });
+
+  it('says no members match when a search finds no team, rather than that the league is empty', async () => {
+    primeMocks();
+
+    renderAdmin('/league/BIGDAWGS/admin/teams');
+    fireEvent.change(await screen.findByTestId('admin-teams-search'), { target: { value: 'Nobody By This Name' } });
+
+    expect(await screen.findByText('No members match.')).toBeInTheDocument();
+  });
+
   it('finds a team by its owner\'s name', async () => {
     primeMocks();
 
@@ -390,6 +420,29 @@ describe('Commissioner tools › Edit team', () => {
 });
 
 describe('Commissioner tools › Invites', () => {
+  it('draws neither page, nor reads its teams or members, until the league has loaded', () => {
+    primeMocks();
+    getLeagueByCodeMock.mockReset().mockReturnValue(new Promise(() => undefined));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/league/BIGDAWGS/admin/teams']}>
+            <Routes>
+              <Route element={<><ManageTeamsPage /><InvitesPage /></>} path="/league/:leagueCode/admin/teams" />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.queryByTestId('admin-teams-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('admin-invites-page')).not.toBeInTheDocument();
+    expect(listLeagueSquadsMock).not.toHaveBeenCalled();
+    expect(listLeagueMembersMock).not.toHaveBeenCalled();
+  });
+
   it('shows the league invitations under the Invites menu item', async () => {
     primeMocks();
 

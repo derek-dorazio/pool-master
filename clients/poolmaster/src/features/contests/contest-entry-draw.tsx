@@ -47,7 +47,7 @@ export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectio
           {dealtGolfers.map((golfer) => (
             <li className="px-4 py-3" key={golfer.sportEventParticipantId}>
               <ParticipantLine
-                affiliation={golfer.team ? participantAffiliation(golfer) : null}
+                affiliation={participantAffiliation(golfer)}
                 density="compact"
                 name={selectionParticipantLabel(golfer)}
               />

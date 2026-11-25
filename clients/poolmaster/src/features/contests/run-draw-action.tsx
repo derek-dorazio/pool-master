@@ -81,13 +81,8 @@ export function RunDrawAction({
         isPending={runDrawMutation.isPending}
         onCancel={closeDialog}
         onConfirm={() => void runDrawMutation.mutateAsync().catch(() => undefined)}
-        onOpenChange={(open) => {
-          if (open) {
-            setIsConfirmOpen(true);
-            return;
-          }
-          closeDialog();
-        }}
+        // Opened by its own button, so the one change the dialog reports is a close (Escape).
+        onOpenChange={closeDialog}
         open={isConfirmOpen}
         pendingLabel="Drawing..."
         testId="contest-run-draw-dialog"
