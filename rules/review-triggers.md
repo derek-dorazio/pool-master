@@ -46,6 +46,10 @@ Already enforced mechanically, and therefore **not** triggers:
 | A new use of a name a plan retired (the registry's round labels, `eventSeries`, `IngestionFeedType`…) | `rules:check:retired-names` (`scripts/retired-names.json`) |
 | A new field or export in the frozen sport registry | `rules:check:sport-registry-frozen` |
 | A year worked out from a date (`getFullYear`, `getUTCFullYear`), or a `Record`/`Map` keyed by sport, league or Season holding facts | `poolmaster/no-clock-year-or-league-tables` (ESLint, shrink-only baseline) |
+| A web import from `@poolmaster/shared` or `/domain` that is not contract vocabulary (a sport definition, a limit, a derivation) | `rules:check:web-shared-imports` (`scripts/web-shared-imports-baseline.json`, its `$allowed` patterns ratcheted too) |
+| A shared enum value written as a string in a web comparison, `case` label or literal type | `poolmaster/no-enum-string-literals` (ESLint, shrink-only baseline) |
+| A web interface or object type copying a generated hey-api type under another name | `poolmaster/no-dto-shaped-local-types` (ESLint, shrink-only baseline) |
+| An enum of the web app's own, declared or as a `const` object of codes | `poolmaster/no-local-enums` (ESLint, shrink-only baseline) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
