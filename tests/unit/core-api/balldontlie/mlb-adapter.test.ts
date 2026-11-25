@@ -72,7 +72,7 @@ describe('BalldontlieAdapter (MLB)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASEBALL, { from: new Date('2025-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASEBALL, { from: new Date('2025-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'mlb' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['mlb-2025-postseason', 'MLB Postseason', 'COMPLETED'],
@@ -88,7 +88,7 @@ describe('BalldontlieAdapter (MLB)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASEBALL);
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASEBALL, undefined, { providerLeagueCode: 'mlb' });
 
       expect(events).toEqual([]);
       expect(seasonsRead(harness.api)).toEqual([]);
@@ -98,21 +98,21 @@ describe('BalldontlieAdapter (MLB)', () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 1, 1));
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.BASEBALL, undefined, { providerSeasonId: '2025' });
+      await harness.adapter.getUpcomingEvents(Sport.BASEBALL, undefined, { providerLeagueCode: 'mlb', providerSeasonId: '2025' });
 
       expect(seasonsRead(harness.api)).toEqual(['2025']);
     });
   });
 
   describe('getEventDetails', () => {
-    it('gives a finished postseason with its twelve teams, by the feed\'s raw ids and the league\'s tour', async () => {
+    it('gives a finished postseason with its twelve teams, by the feed\'s raw ids', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('mlb-2025-postseason');
 
       expect(detail).toMatchObject({ externalId: 'mlb-2025-postseason', sport: Sport.BASEBALL, status: 'COMPLETED', participantCount: 12, fieldLocked: true });
-      expect(detail?.participants[0]).toMatchObject({ externalId: '10', name: 'New York Yankees', metadata: { tour: 'MLB', abbreviation: 'NYY' } });
+      expect(detail?.participants[0]).toMatchObject({ externalId: '10', name: 'New York Yankees', metadata: { abbreviation: 'NYY' } });
       expect(requestLine(harness.api)).toEqual(['/mlb/v1/games?seasons[]=2025&postseason=true&per_page=100', '/mlb/v1/standings?season=2025', '/mlb/v1/teams?']);
     });
 
@@ -207,7 +207,7 @@ describe('BalldontlieAdapter (MLB)', () => {
     const teams = await harness.adapter.getParticipants(Sport.BASEBALL);
 
     expect(teams).toHaveLength(12);
-    expect(teams[0]).toMatchObject({ externalId: '14', name: 'Toronto Blue Jays', sport: Sport.BASEBALL, metadata: { tour: 'MLB', league: 'American' } });
+    expect(teams[0]).toMatchObject({ externalId: '14', name: 'Toronto Blue Jays', sport: Sport.BASEBALL, metadata: { league: 'American' } });
     expect(requestLine(harness.api)).toEqual(['/mlb/v1/teams?']);
   });
 

@@ -53,11 +53,12 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import { ProviderCode, Sport, type ProviderLeagueSettings } from '@poolmaster/shared/domain';
+import { ProviderCode, type ProviderLeagueSettings, type Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { errorMessage } from '../../../../core/error-message';
 import {
   ProviderLeagueRefusedError,
+  ProviderLeagueUnknownError,
   type DateRange,
   type ProviderEventListOptions,
   type ProviderParticipant,
@@ -75,15 +76,15 @@ import { MLB_POSTSEASON, mlbPostseasonSource } from './mlb-mapping';
 import { NBA_PLAYOFFS, nbaPlayoffsSource } from './nba-mapping';
 import { WNBA_PLAYOFFS, wnbaPlayoffsSource } from './wnba-mapping';
 import { NHL_PLAYOFFS, nhlPlayoffsSource } from './nhl-mapping';
-import { parsePlayoffsScope } from './series-playoffs';
+import { parsePlayoffsScope, type PlayoffsLeague } from './series-playoffs';
 import { PlayoffsReader } from './series-playoffs-reader';
-import { EPL_TOUR, parseEplScope } from './epl-mapping';
+import { parseEplScope } from './epl-mapping';
 import { EplReader } from './epl-reader';
-import { FIFA_WC_TOUR, parseWorldCupScope } from './fifa-world-cup-mapping';
+import { parseWorldCupScope } from './fifa-world-cup-mapping';
 import { WorldCupReader } from './fifa-world-cup-reader';
-import { NFL_LEAGUE_NAME, parseNflScope } from './nfl-mapping';
+import { parseNflScope } from './nfl-mapping';
 import { NflReader } from './nfl-reader';
-import { CFP_LEAGUE, parseCfpScope } from './ncaaf-mapping';
+import { parseCfpScope } from './ncaaf-mapping';
 import { NcaafReader } from './ncaaf-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, BalldontlieRequestError, type BalldontlieConnection, type BalldontlieQuery } from './balldontlie-client';
 import { jobDeferredUntilOf } from '../../../background-jobs/job-error-type';
@@ -100,7 +101,6 @@ import {
   BALLDONTLIE_PROVIDER_ID,
   fieldPlayerIds,
   isClassifiedTournament,
-  PGA_TOUR_NAME,
   requireStrokePlay,
   toFieldParticipants,
   toGolfRoundUpdates,
@@ -116,7 +116,7 @@ export interface BalldontlieAdapterOptions {
    * The Provider's enabled leagues (#1997): only these are read, and the sports they play are the
    * ones the adapter covers.
    */
-  leagues: readonly Pick<ProviderLeagueSettings, 'code' | 'sport'>[];
+  leagues: readonly Pick<ProviderLeagueSettings, 'code' | 'sport' | 'name'>[];
   /** The most tasks that run background work at once, each taking an even share of the limit; 1 when unset. */
   maxTasks?: number;
   /** For tests: the client's clock and wait. */
@@ -138,27 +138,63 @@ export interface BalldontlieAdapterOptions {
 const MAX_SEASONS_FETCHED_ONE_BY_ONE = 3;
 
 /**
- * What the adapter reads for one league: its events in a date range, and everyone who plays in
- * it. `code` is the vendor's own code for the league (a ProviderLeague's `code`, #1997), stamped
- * on each of its events; `tour` is the league's word in the vendor's data, which names it in a
- * refusal and a log.
+ * One league's reads of one of its own events: the reader recognises the id by its own shape.
  */
-interface LeagueReads {
-  code: string;
-  sport: Sport;
-  tour: string;
+interface LeagueEventReads {
+  details(): Promise<SportEventDetail | null>;
+  liveScores(): Promise<LiveScoreResult>;
+}
+
+/**
+ * What the adapter reads for one of the vendor's leagues: its events in a date range, everyone
+ * who plays in it, and one of its events by id (null when the id is not one of its).
+ */
+interface LeagueReader {
   events(dateRange?: DateRange, season?: number): Promise<SportEvent[]>;
   participants(): Promise<ProviderParticipant[]>;
+  event(eventId: string): LeagueEventReads | null;
+}
+
+/** A Provider league row the adapter reads (#1997): the row's code, sport and name, with its reader. */
+interface EnabledLeague extends Pick<ProviderLeagueSettings, 'code' | 'sport' | 'name'> {
+  reader: LeagueReader;
+}
+
+/** A reader whose events are scopes of games, each id parsing to one of its scopes. */
+interface ScopeReader<Scope> {
+  upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]>;
+  teams(): Promise<ProviderParticipant[]>;
+  eventDetails(scope: Scope): Promise<SportEventDetail | null>;
+  liveScores(scope: Scope): Promise<LiveScoreResult>;
+}
+
+function scopedReader<Scope>(parse: (eventId: string) => Scope | null, reader: ScopeReader<Scope>): LeagueReader {
+  return {
+    events: (dateRange, season) => reader.upcomingEvents(dateRange, season),
+    participants: () => reader.teams(),
+    event: (eventId) => {
+      const scope = parse(eventId);
+      return scope === null ? null : { details: () => reader.eventDetails(scope), liveScores: () => reader.liveScores(scope) };
+    },
+  };
+}
+
+/** An NCAA tournament league's reader: its ids name the league's key and a season. */
+function ncaaReader(reader: NcaaTournamentReader, league: NcaaTournamentLeague): LeagueReader {
+  return scopedReader((eventId) => {
+    const scope = parseNcaaTournamentScope(eventId);
+    return scope !== null && scope.league.key === league.key ? scope.season : null;
+  }, reader);
+}
+
+/** A series playoffs league's reader: its ids name the league and a season. */
+function playoffsReader(league: PlayoffsLeague, reader: PlayoffsReader): LeagueReader {
+  return scopedReader((eventId) => parsePlayoffsScope(league, eventId), reader);
 }
 
 /** A vendor answer saying the plan does not include a read. */
 function isPlanRefusal(error: unknown): error is BalldontlieRequestError & { status: number } {
   return error instanceof BalldontlieRequestError && (error.status === 401 || error.status === 403);
-}
-
-/** A league's events, each stamped with the league's code. */
-function withLeagueCode(league: LeagueReads, events: SportEvent[]): SportEvent[] {
-  return events.map((event) => ({ ...event, providerLeagueCode: league.code }));
 }
 
 /** A vendor tournament id: a positive whole number. Anything else cannot name one. */
@@ -180,18 +216,8 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   readonly providerName = 'BALLDONTLIE';
   private readonly payloads = new ProviderPayloadRecorder('balldontlie.request');
   private readonly client: BalldontlieClient;
-  private readonly nfl: NflReader;
-  private readonly ncaaf: NcaafReader;
-  private readonly nba: PlayoffsReader;
-  private readonly nhl: PlayoffsReader;
-  private readonly mlb: PlayoffsReader;
-  private readonly wnba: PlayoffsReader;
-  private readonly epl: EplReader;
-  private readonly worldCup: WorldCupReader;
-  /** Each NCAA tournament league's reads, by its key. */
-  private readonly ncaa: Readonly<Record<NcaaTournamentLeague['key'], NcaaTournamentReader>>;
-  /** Each league's schedule and roster reads, by the sport it serves. */
-  private readonly leagues: ReadonlyMap<Sport, readonly LeagueReads[]>;
+  /** The Provider's enabled leagues the adapter has a reader for, in the rows' order. */
+  private readonly leagues: readonly EnabledLeague[];
   private readonly logger: FastifyBaseLogger | undefined;
   private readonly connection: () => BalldontlieConnection;
 
@@ -199,62 +225,47 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     this.client = new BalldontlieClient({ ...options, providerId: this.providerId, payloads: this.payloads });
     this.connection = options.connection;
     this.logger = options.logger;
-    this.nfl = new NflReader(this.client);
-    this.ncaaf = new NcaafReader(this.client, options.now ?? Date.now);
-    this.nba = new PlayoffsReader(nbaPlayoffsSource(this.client), options.logger);
-    this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.logger);
-    this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.logger);
-    this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.logger);
-    this.epl = new EplReader(this.client, options.now ?? Date.now);
-    this.worldCup = new WorldCupReader(this.client);
-    this.ncaa = {
-      ncaab: new NcaaTournamentReader(this.client, NCAA_MEN),
-      ncaaw: new NcaaTournamentReader(this.client, NCAA_WOMEN),
+    const now = options.now ?? Date.now;
+    // Each of the vendor's league codes with the reader for its endpoints: the vendor's own words,
+    // as its endpoint paths are. Which leagues are read, their sport and their name are the
+    // Provider's league rows (#1997).
+    const readers: Readonly<Record<string, () => LeagueReader>> = {
+      pga: () => ({
+        events: (dateRange, season) => this.pgaTournaments(dateRange, season),
+        participants: () => this.pgaPlayers(),
+        event: (eventId) => (TOURNAMENT_ID_PATTERN.test(eventId)
+          ? { details: () => this.tournamentDetails(eventId), liveScores: () => this.tournamentScores(eventId) }
+          : null),
+      }),
+      nfl: () => scopedReader(parseNflScope, new NflReader(this.client)),
+      ncaaf: () => scopedReader(parseCfpScope, new NcaafReader(this.client, now)),
+      ncaab: () => ncaaReader(new NcaaTournamentReader(this.client, NCAA_MEN), NCAA_MEN),
+      ncaaw: () => ncaaReader(new NcaaTournamentReader(this.client, NCAA_WOMEN), NCAA_WOMEN),
+      nba: () => playoffsReader(NBA_PLAYOFFS, new PlayoffsReader(nbaPlayoffsSource(this.client), options.logger)),
+      wnba: () => playoffsReader(WNBA_PLAYOFFS, new PlayoffsReader(wnbaPlayoffsSource(this.client), options.logger)),
+      nhl: () => playoffsReader(NHL_PLAYOFFS, new PlayoffsReader(nhlPlayoffsSource(this.client), options.logger)),
+      mlb: () => playoffsReader(MLB_POSTSEASON, new PlayoffsReader(mlbPostseasonSource(this.client), options.logger)),
+      epl: () => scopedReader(parseEplScope, new EplReader(this.client, now)),
+      worldcup: () => scopedReader(parseWorldCupScope, new WorldCupReader(this.client)),
     };
-    const reads = (code: string, sport: Sport, tour: string, reader: { upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]>; teams(): Promise<ProviderParticipant[]> }): LeagueReads => ({
-      code,
-      sport,
-      tour,
-      events: (dateRange, season) => reader.upcomingEvents(dateRange, season),
-      participants: () => reader.teams(),
-    });
-    // The vendor's own league codes, each with its reader: the adapter's mapping of the vendor's
-    // words, as its endpoint paths are. Which of them are read is the Provider's league rows.
-    const readers: readonly LeagueReads[] = [
-      { code: 'pga', sport: Sport.GOLF, tour: PGA_TOUR_NAME, events: (dateRange, season) => this.pgaTournaments(dateRange, season), participants: () => this.pgaPlayers() },
-      reads('nfl', Sport.AMERICAN_FOOTBALL, NFL_LEAGUE_NAME, this.nfl),
-      reads('ncaaf', Sport.AMERICAN_FOOTBALL, CFP_LEAGUE.tour, this.ncaaf),
-      reads('ncaab', Sport.BASKETBALL, NCAA_MEN.tour, this.ncaa.ncaab),
-      reads('ncaaw', Sport.BASKETBALL, NCAA_WOMEN.tour, this.ncaa.ncaaw),
-      reads('nba', Sport.BASKETBALL, NBA_PLAYOFFS.tour, this.nba),
-      reads('wnba', Sport.BASKETBALL, WNBA_PLAYOFFS.tour, this.wnba),
-      reads('epl', Sport.SOCCER, EPL_TOUR, this.epl),
-      reads('worldcup', Sport.SOCCER, FIFA_WC_TOUR, this.worldCup),
-      reads('nhl', Sport.HOCKEY, NHL_PLAYOFFS.tour, this.nhl),
-      reads('mlb', Sport.BASEBALL, MLB_POSTSEASON.tour, this.mlb),
-    ];
-    const enabled = new Set(options.leagues.map((league) => league.code));
+    const leagues: EnabledLeague[] = [];
     for (const league of options.leagues) {
-      if (!readers.some((reader) => reader.code === league.code && reader.sport === league.sport)) {
+      const reader = Object.hasOwn(readers, league.code) ? readers[league.code] : undefined;
+      if (reader === undefined) {
         options.logger?.error(
           { action: 'balldontlie.league.noReader', providerLeagueCode: league.code, sport: league.sport },
-          'A BALLDONTLIE league row names a league or sport the adapter has no reader for; it is not read',
+          'A BALLDONTLIE league row names a league the adapter has no reader for; it is not read',
         );
+        continue;
       }
-    }
-    // Each league is read on its own (#1797): a league the plan refuses (the NCAA brackets and
-    // the World Cup need the GOAT tier, college football a paid one) or whose read fails is
-    // left out of its sport's list and logged, and its neighbours still list.
-    const leagues = new Map<Sport, LeagueReads[]>();
-    for (const reader of readers.filter((each) => enabled.has(each.code))) {
-      leagues.set(reader.sport, [...(leagues.get(reader.sport) ?? []), reader]);
+      leagues.push({ code: league.code, sport: league.sport, name: league.name, reader: reader() });
     }
     this.leagues = leagues;
   }
 
   /** Whether one of the leagues it reads has this code: an enabled league row it has a reader for. */
   servesLeague(providerLeagueCode: string): boolean {
-    return [...this.leagues.values()].some((reads) => reads.some((each) => each.code === providerLeagueCode));
+    return this.leagues.some((league) => league.code === providerLeagueCode);
   }
 
   /** The Provider row's rate, read for each request (#1997). */
@@ -275,44 +286,68 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   }
 
   /**
-   * The sport's events starting inside `dateRange`; none for a sport the adapter does not cover.
-   * Given a `tour` that names one of the sport's leagues, only that league is read, and a refusal
-   * of it throws `ProviderLeagueRefusedError` (#1797); otherwise every league is read on its own
-   * (`eachLeague`).
+   * The events of the one league the code names, starting inside `dateRange`, each stamped with
+   * the code. A code that names no enabled league of the sport throws `ProviderLeagueUnknownError`
+   * and reads nothing (#2005); a refusal of the league by the plan throws
+   * `ProviderLeagueRefusedError` (#1797).
    */
-  async getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]> {
-    const leagues = this.leagues.get(sport) ?? [];
-    const code = options?.providerLeagueCode;
-    const season = seasonOf(options?.providerSeasonId);
-    if (code === undefined) {
-      return this.eachLeague(sport, leagues, 'events', async (league) => withLeagueCode(league, await league.events(dateRange, season)));
+  async getUpcomingEvents(sport: Sport, dateRange: DateRange | undefined, options: ProviderEventListOptions): Promise<SportEvent[]> {
+    const code = options.providerLeagueCode;
+    const league = this.leagues.find((each) => each.code === code && each.sport === sport);
+    if (league === undefined) throw new ProviderLeagueUnknownError(this.providerName, code);
+    try {
+      const events = await league.reader.events(dateRange, seasonOf(options.providerSeasonId));
+      return events.map((event) => ({ ...event, providerLeagueCode: league.code }));
+    } catch (error) {
+      if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.name, error.status, { cause: error });
+      throw error;
     }
-    const named = leagues.filter((league) => league.code === code);
-    if (named.length === 0) {
-      // A code no enabled league of the sport carries (a league switched off, or mapped to
-      // another sport) has no events here: reading every league instead would hand back
-      // another league's list as if it were this one's.
-      this.logger?.warn({ action: 'balldontlie.league.not_enabled', sport, providerLeagueCode: code }, 'BALLDONTLIE has no enabled league with this code for the sport');
-      return [];
-    }
-    return (await Promise.all(named.map(async (league) => {
-      try {
-        return withLeagueCode(league, await league.events(dateRange, season));
-      } catch (error) {
-        if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.tour, error.status, { cause: error });
-        throw error;
-      }
-    }))).flat();
   }
 
   /**
-   * Each of a sport's leagues read on its own, their lists together. A league whose read is
+   * The event with its field, from the enabled league whose reader knows the id; null when no
+   * enabled league does, or when the vendor has no such event. Nothing is read for an id no
+   * enabled league knows (#2005).
+   */
+  async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
+    const event = this.eventReads(eventId);
+    return event === null ? null : event.details();
+  }
+
+  /** Every active PGA TOUR golfer, or every team of each of the sport's enabled leagues; none for a sport the adapter does not cover. */
+  async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
+    return this.eachLeague(sport, this.leagues.filter((league) => league.sport === sport), (league) => league.reader.participants());
+  }
+
+  /**
+   * The event's scores, from the enabled league whose reader knows the id: a game league's games in
+   * the GAME category, or every started round of every golfer in a stroke-play tournament. An id no
+   * enabled league knows, a tournament id the vendor does not know, or a tournament of another
+   * format fails the sync rather than returning nothing.
+   */
+  async getLiveScores(eventId: string): Promise<LiveScoreResult> {
+    const event = this.eventReads(eventId);
+    if (event === null) throw new Error(`BALLDONTLIE reads no enabled league with an event ${eventId}.`);
+    return event.liveScores();
+  }
+
+  /** The reads of the event an id names, from the first enabled league that knows it. */
+  private eventReads(eventId: string): LeagueEventReads | null {
+    for (const league of this.leagues) {
+      const event = league.reader.event(eventId);
+      if (event !== null) return event;
+    }
+    return null;
+  }
+
+  /**
+   * Each of a sport's leagues' teams read on its own (#1797), together. A league whose read is
    * refused or fails is left out and logged (`balldontlie.league.unavailable`), so one league's
    * plan or outage never empties its neighbours' lists; when every league fails, the first
    * failure is thrown, as a one-league sport's always is. A league the provider rate limits is
    * never left out: its refusal is thrown, so the job is deferred rather than syncing a partial list.
    */
-  private async eachLeague<Item>(sport: Sport, leagues: readonly LeagueReads[], what: 'events' | 'participants', read: (league: LeagueReads) => Promise<Item[]>): Promise<Item[]> {
+  private async eachLeague<Item>(sport: Sport, leagues: readonly EnabledLeague[], read: (league: EnabledLeague) => Promise<Item[]>): Promise<Item[]> {
     const results = await Promise.allSettled(leagues.map(read));
     const failures = results.flatMap((result, index) => (result.status === 'rejected' ? [{ league: leagues[index], reason: result.reason as unknown }] : []));
     if (failures.length > 0 && failures.length === results.length) throw failures[0].reason;
@@ -325,15 +360,15 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         {
           action: 'balldontlie.league.unavailable',
           sport,
-          league: league.tour,
+          league: league.name,
           providerLeagueCode: league.code,
-          read: what,
+          read: 'participants',
           refused: isPlanRefusal(reason),
           status: reason instanceof BalldontlieRequestError ? reason.status : null,
           path: reason instanceof BalldontlieRequestError ? reason.path : null,
           error: errorMessage(reason),
         },
-        `Left a league out of the sport's ${what}: its read was refused or failed`,
+        'Left a league out of the sport\'s participants: its read was refused or failed',
       );
     }
     return results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
@@ -353,44 +388,8 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament, NFL scope, College Football Playoff, NCAA tournament, NBA, WNBA or NHL playoffs, MLB postseason, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
-  async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
-    const scope = parseNflScope(eventId);
-    if (scope) {
-      return this.nfl.eventDetails(scope);
-    }
-    const cfpScope = parseCfpScope(eventId);
-    if (cfpScope) {
-      return this.ncaaf.eventDetails(cfpScope);
-    }
-    const ncaaScope = parseNcaaTournamentScope(eventId);
-    if (ncaaScope) {
-      return this.ncaa[ncaaScope.league.key].eventDetails(ncaaScope.season);
-    }
-    const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
-    if (nbaSeason !== null) {
-      return this.nba.eventDetails(nbaSeason);
-    }
-    const wnbaSeason = parsePlayoffsScope(WNBA_PLAYOFFS, eventId);
-    if (wnbaSeason !== null) {
-      return this.wnba.eventDetails(wnbaSeason);
-    }
-    const nhlSeason = parsePlayoffsScope(NHL_PLAYOFFS, eventId);
-    if (nhlSeason !== null) {
-      return this.nhl.eventDetails(nhlSeason);
-    }
-    const mlbSeason = parsePlayoffsScope(MLB_POSTSEASON, eventId);
-    if (mlbSeason !== null) {
-      return this.mlb.eventDetails(mlbSeason);
-    }
-    const eplScope = parseEplScope(eventId);
-    if (eplScope) {
-      return this.epl.eventDetails(eplScope);
-    }
-    const worldCupScope = parseWorldCupScope(eventId);
-    if (worldCupScope) {
-      return this.worldCup.eventDetails(worldCupScope);
-    }
+  /** A tournament with its field and each golfer's world ranking; null when the vendor has no such tournament. */
+  private async tournamentDetails(eventId: string): Promise<SportEventDetail | null> {
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
       return null;
@@ -405,62 +404,8 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return { ...toSportEvent(tournament, participants.length), participants };
   }
 
-  /** Every active PGA TOUR golfer, every NFL and college football team, every Division I men's and women's basketball team, NBA team and WNBA team, every NHL team, every MLB team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
-  async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
-    return this.eachLeague(sport, this.leagues.get(sport) ?? [], 'participants', (league) => league.participants());
-  }
-
-  private async pgaPlayers(): Promise<ProviderParticipant[]> {
-    const players = await this.client.getAllPages(
-      '/pga/v1/players',
-      { active: true },
-      pgaPlayerListSchema,
-    );
-    return players.map(toTourParticipant);
-  }
-
-  /**
-   * An NFL scope's, a College Football Playoff's, an NCAA tournament's, an NBA, WNBA or NHL playoffs', an MLB postseason's, a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
-   * stroke-play tournament. A tournament id the vendor does not know, or a tournament of another
-   * format, fails the sync rather than returning nothing.
-   */
-  async getLiveScores(eventId: string): Promise<LiveScoreResult> {
-    const scope = parseNflScope(eventId);
-    if (scope) {
-      return this.nfl.liveScores(scope);
-    }
-    const cfpScope = parseCfpScope(eventId);
-    if (cfpScope) {
-      return this.ncaaf.liveScores(cfpScope);
-    }
-    const ncaaScope = parseNcaaTournamentScope(eventId);
-    if (ncaaScope) {
-      return this.ncaa[ncaaScope.league.key].liveScores(ncaaScope.season);
-    }
-    const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
-    if (nbaSeason !== null) {
-      return this.nba.liveScores(nbaSeason);
-    }
-    const wnbaSeason = parsePlayoffsScope(WNBA_PLAYOFFS, eventId);
-    if (wnbaSeason !== null) {
-      return this.wnba.liveScores(wnbaSeason);
-    }
-    const nhlSeason = parsePlayoffsScope(NHL_PLAYOFFS, eventId);
-    if (nhlSeason !== null) {
-      return this.nhl.liveScores(nhlSeason);
-    }
-    const mlbSeason = parsePlayoffsScope(MLB_POSTSEASON, eventId);
-    if (mlbSeason !== null) {
-      return this.mlb.liveScores(mlbSeason);
-    }
-    const eplScope = parseEplScope(eventId);
-    if (eplScope) {
-      return this.epl.liveScores(eplScope);
-    }
-    const worldCupScope = parseWorldCupScope(eventId);
-    if (worldCupScope) {
-      return this.worldCup.liveScores(worldCupScope);
-    }
+  /** Every started round of every golfer in a stroke-play tournament. */
+  private async tournamentScores(eventId: string): Promise<LiveScoreResult> {
     const tournament = await this.findTournament(eventId);
     if (!tournament) {
       throw new Error(`BALLDONTLIE has no PGA TOUR tournament ${eventId}.`);
@@ -472,6 +417,15 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       pgaTournamentResultListSchema,
     );
     return { category: 'GOLF', externalEventId: eventId, rounds: toGolfRoundUpdates(tournament, results) };
+  }
+
+  private async pgaPlayers(): Promise<ProviderParticipant[]> {
+    const players = await this.client.getAllPages(
+      '/pga/v1/players',
+      { active: true },
+      pgaPlayerListSchema,
+    );
+    return players.map(toTourParticipant);
   }
 
   /** One page of tournaments. Every tournament read goes through here or `listTournaments`. */

@@ -275,6 +275,7 @@ export const enUS = {
       NO_PROVIDER_LIVE_SCORES: 'No live scores from the provider',
       GAMES_NOT_SYNCED: 'Games not synced',
       SLOT_VALUE_UNMAPPED: 'Provider code not mapped to a slot',
+      PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',
@@ -1022,6 +1023,7 @@ export const enUS = {
     PROFILE_RATE_LIMITED: 'Too many requests. Wait a minute and try again.',
     PROVIDER_LEAGUE_NOT_FOUND: 'Provider league not found.',
     PROVIDER_LEAGUE_REFUSED: 'The provider refused this league.',
+    PROVIDER_LEAGUE_UNKNOWN: 'The provider does not read this league.',
     PROVIDER_NOT_FOUND: 'Provider not found.',
     PROVIDER_SPORT_MISMATCH: 'This provider does not cover this sport.',
     PROVIDER_WEBHOOK_SECRET_MISSING: 'Webhooks can’t be turned on until the provider’s signing secret is set.',

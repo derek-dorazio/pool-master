@@ -36,13 +36,12 @@ export interface SportDataProvider {
   readonly requestsPerMinute?: number;
 
   /**
-   * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
-   * without one, every event the provider has for the sport (#402). Called by the league events
-   * sync for one Season at a time (#2003). Given a
-   * `providerLeagueCode`, a provider that reads its sport league by league reads only that league
-   * (#1797, #1997).
+   * Fetch one league's events/schedule. With a `dateRange`, only events starting inside it;
+   * without one, every event the provider has for the league (#402). Called by the league events
+   * sync for one Season at a time (#2003). The league is the `providerLeagueCode` asked for
+   * (#1797, #1997, #2005).
    */
-  getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]>;
+  getUpcomingEvents(sport: Sport, dateRange: DateRange | undefined, options: ProviderEventListOptions): Promise<SportEvent[]>;
 
   /** Fetch details for a specific event. */
   getEventDetails(eventId: string): Promise<SportEventDetail | null>;
@@ -96,21 +95,40 @@ export function supportsProviderPayloadDiagnostics(
 
 // --- Shared types ---
 
-/** What a caller of `getUpcomingEvents` wants from a sport's list (#1797). */
+/** Which league's events a caller of `getUpcomingEvents` wants (#1797, #2005). */
 export interface ProviderEventListOptions {
   /**
-   * The provider's own code for one of its leagues (a ProviderLeague's `code`, #1997), when only
-   * that league's events are wanted. A provider that reads the sport league by league reads only
-   * that league, and throws `ProviderLeagueRefusedError` when the plan refuses it; one that cannot
-   * tell ignores it, and the caller filters by `SportEvent.providerLeagueCode`.
+   * The provider's own code for one of its leagues (a ProviderLeague's `code`, #1997). A provider
+   * that reads league by league reads only that league: it throws `ProviderLeagueUnknownError` when
+   * the code names none of its enabled leagues of the sport, and `ProviderLeagueRefusedError` when
+   * the plan refuses it. One that cannot tell leagues apart ignores it, and the caller filters by
+   * `SportEvent.providerLeagueCode`. There is no read of every league at once (#2005).
    */
-  providerLeagueCode?: string;
+  providerLeagueCode: string;
   /**
    * The provider's own id for one Season (a SportLeagueSeasonProviderMapping's `providerSeasonId`,
    * #2003), when that Season's whole schedule is wanted rather than a date range. A provider that
    * reads by season reads that one; one that does not ignores it.
    */
   providerSeasonId?: string;
+}
+
+/**
+ * A provider was asked for a league it does not read (#2005): the code names none of its enabled
+ * leagues of the sport, so nothing is read. Reading every league instead would hand back another
+ * league's events as this one's.
+ */
+export class ProviderLeagueUnknownError extends Error {
+  /** Activity's Error column (#1861). */
+  readonly jobErrorType = JobErrorType.PROVIDER_ERROR;
+
+  constructor(
+    readonly providerName: string,
+    readonly providerLeagueCode: string,
+  ) {
+    super(`${providerName} reads no enabled league with the code "${providerLeagueCode}" for this sport.`);
+    this.name = 'ProviderLeagueUnknownError';
+  }
 }
 
 /**
@@ -239,11 +257,6 @@ export interface ProviderParticipant {
  * ones something reads back.
  */
 export interface ProviderParticipantMetadata {
-  /**
-   * The name of the league the participant plays in, for display, when the provider's sport
-   * covers more than one (a college team is a men's or a women's team).
-   */
-  tour?: string;
   seed?: number;
   /**
    * A play-in place (#1728): the participant stands for a First Four pairing until its winner

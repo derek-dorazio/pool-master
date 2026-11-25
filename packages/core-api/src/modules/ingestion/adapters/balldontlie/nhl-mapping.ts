@@ -17,7 +17,6 @@ import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const NHL_PLAYOFFS: PlayoffsLeague = {
   key: 'nhl',
-  tour: 'NHL',
   sport: Sport.HOCKEY,
   eventName: 'NHL Playoffs',
   // Sixteen teams, every series best of seven.

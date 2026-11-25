@@ -9,9 +9,7 @@
  * event's externalId, as an NFL week's is.
  *
  * A match names its teams by id alone, so their names come from the season's teams list. Team
- * ids are the provider's own (`participantFeedId`, #2040). Each team
- * carries the league's keyword in `metadata.tour`, so it links by name only to the site's team
- * in the Premier League.
+ * ids are the provider's own (`participantFeedId`, #2040), mapped per sport league.
  *
  * A matchweek forms no bracket, so a drawn final is a result like any other.
  */
@@ -29,11 +27,6 @@ import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-sl
 export const EPL_MATCHES_PATH = '/epl/v2/matches';
 export const EPL_TEAMS_PATH = '/epl/v2/teams';
 
-/**
- * The tour name teams carry in `metadata.tour`, for display; a sport
- * league finds them by their provider league code (#1997).
- */
-export const EPL_TOUR = 'EPL';
 
 /** One Premier League matchweek. */
 export interface EplScope {
@@ -113,7 +106,7 @@ export function toEplTeamParticipant(team: SoccerTeam): ProviderParticipant {
     sport: Sport.SOCCER,
     name: required(team.name, EPL_TEAMS_PATH, `team ${String(id)}`, 'name'),
     active: true,
-    metadata: { tour: EPL_TOUR, ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}) },
+    metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }
 

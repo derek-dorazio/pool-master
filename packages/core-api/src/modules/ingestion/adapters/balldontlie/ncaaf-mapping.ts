@@ -13,8 +13,7 @@
  * playoff teams (2025: Indiana v Ohio State, the Big Ten title), and read with the bracket it
  * would link to the later playoff match between the same two teams.
  *
- * Team ids are the provider's own (`participantFeedId`, #2040). Each team carries the league's keyword in `metadata.tour`, so it links by name only to the
- * site's teams in the College Football Playoff league.
+ * Team ids are the provider's own (`participantFeedId`, #2040), mapped per sport league.
  */
 
 import { Sport } from '@poolmaster/shared/domain';
@@ -62,11 +61,6 @@ export function cfpGameWindow(season: number): GameWindow {
 
 /** The College Football Playoff's settings, in one place. */
 export const CFP_LEAGUE = {
-  /**
-   * The tour name teams carry in `metadata.tour`, for display; a sport
-   * league finds them by their provider league code (#1997).
-   */
-  tour: 'CFP',
   eventName: 'College Football Playoff',
   window: cfpGameWindow,
 } as const;
@@ -143,7 +137,6 @@ export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderP
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     active: true,
     metadata: {
-      tour: CFP_LEAGUE.tour,
       ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
       ...(team.conference ? { conference: team.conference } : {}),
     },

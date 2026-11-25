@@ -23,7 +23,6 @@ import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const NBA_PLAYOFFS: PlayoffsLeague = {
   key: 'nba',
-  tour: 'NBA',
   sport: Sport.BASKETBALL,
   eventName: 'NBA Playoffs',
   rounds: [

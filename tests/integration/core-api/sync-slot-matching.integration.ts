@@ -4,7 +4,10 @@ import { ProviderSyncFindingKind, ProviderSyncFindingSeverity, ProviderSyncFindi
 import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
-import type { ProviderEventDetailSummary } from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
+import { ProviderSeasonScheduleReader, type ProviderEventDetailSummary } from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
+import { BalldontlieAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
+import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../support/balldontlie-provider-rows';
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSportEventServices, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
@@ -61,12 +64,12 @@ async function footballLeague(slots: ReadonlyArray<{ code: string; covered?: boo
 }
 
 /** The league's events sync over `slate`, a list the test can change between runs. */
-function buildSync(slate: { events: SlateEvent[] }) {
+function buildSync(slate: { events: SlateEvent[] } | Pick<ProviderSeasonScheduleReader, 'listSeasonEvents'>) {
   const prisma = getAppPrisma();
   const backgroundJobs = integrationBackgroundJobs(prisma);
   return new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
-    seasonSchedule: { listSeasonEvents: async () => slate.events },
+    seasonSchedule: 'events' in slate ? { listSeasonEvents: async () => slate.events } : slate,
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
     findings: integrationSyncFindings(prisma),
     sportEvents: integrationSportEventServices(prisma).sportEvents,
@@ -178,5 +181,53 @@ describe('The events sync\'s findings name the Provider by its row', () => {
     expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.providerId]))
       .toEqual([[ProviderSyncFindingKind.SEASON_MISSING, provider.id]]);
     expect(outcome.changedCount).toBe(0);
+  });
+});
+
+describe('The events sync reads only a league its provider reads (#2005)', () => {
+  it('raises one PROVIDER_LEAGUE_UNKNOWN ERROR finding against the Provider row, reads nothing and fails the job for good, when the provider has no enabled league with the mapping\'s code', async () => {
+    const prisma = getPrisma();
+    const { league } = await footballLeague([{ code: 'REG:5' }]);
+    // BALLDONTLIE with golf alone enabled: the league's mapping names the NFL, which it does not read.
+    const requests: string[] = [];
+    const originalFetch = global.fetch;
+    global.fetch = (input) => { requests.push(String(input instanceof Request ? input.url : input)); return Promise.reject(new Error('no request expected')); };
+    try {
+      const registry = new ProviderRegistry();
+      registry.register(new BalldontlieAdapter({
+        connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
+        apiKey: 'test-api-key',
+        leagues: BALLDONTLIE_TEST_LEAGUES.filter((row) => row.code === 'pga'),
+      }));
+      const sync = buildSync(new ProviderSeasonScheduleReader(getAppPrisma(), registry));
+
+      await expect(runSync(sync, league.id)).rejects.toMatchObject({ name: 'PermanentBackgroundJobError', message: expect.stringContaining('PROVIDER_LEAGUE_UNKNOWN') as unknown });
+      await expect(runSync(sync, league.id)).rejects.toMatchObject({ name: 'PermanentBackgroundJobError' });
+    } finally {
+      global.fetch = originalFetch;
+    }
+
+    const provider = await prisma.provider.findFirstOrThrow({ where: { code: 'BALLDONTLIE' }, select: { id: true } });
+    expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.severity, finding.providerId, finding.seenCount]))
+      .toEqual([[ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, ProviderSyncFindingSeverity.ERROR, provider.id, 2]]);
+    expect(requests).toEqual([]);
+    expect(await eventsWithSlots(league.id)).toEqual([]);
+  });
+  it('resolves the league\'s open PROVIDER_LEAGUE_UNKNOWN finding when a later events sync of it completes', async () => {
+    const prisma = getPrisma();
+    const { league } = await footballLeague([{ code: 'REG:5' }]);
+    const provider = await prisma.provider.findFirstOrThrow({ where: { code: 'BALLDONTLIE' }, select: { id: true } });
+    const registry = new ProviderRegistry();
+    registry.register(new BalldontlieAdapter({
+      connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
+      apiKey: 'test-api-key',
+      leagues: BALLDONTLIE_TEST_LEAGUES.filter((row) => row.code === 'pga'),
+    }));
+    await expect(runSync(buildSync(new ProviderSeasonScheduleReader(getAppPrisma(), registry)), league.id)).rejects.toMatchObject({ name: 'PermanentBackgroundJobError' });
+
+    await runSync(buildSync({ events: [] }), league.id);
+
+    expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.providerId, finding.status]))
+      .toEqual([[ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, provider.id, ProviderSyncFindingStatus.RESOLVED]]);
   });
 });

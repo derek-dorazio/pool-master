@@ -18,7 +18,6 @@ import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const MLB_POSTSEASON: PlayoffsLeague = {
   key: 'mlb',
-  tour: 'MLB',
   sport: Sport.BASEBALL,
   eventName: 'MLB Postseason',
   // The four top seeds' byes are no series, so a seed's first series is the Division Series.

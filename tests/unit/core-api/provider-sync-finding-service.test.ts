@@ -247,6 +247,23 @@ describe('ProviderSyncFindingService rate-limit findings', () => {
     await findings.resolveProviderRateLimited(PROVIDER.id);
 
     expect(table.resolved).toEqual([{ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, providerId: PROVIDER.id }]);
+  });});
+
+describe('ProviderSyncFindingService league resolves by source', () => {
+  it('resolves only the named league\'s open findings of the kind against the Provider the source id names', async () => {
+    const { findings, table } = service();
+
+    await findings.resolveOfSource(providerSourceIdOf(PROVIDER.code), { kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, sportLeagueId: 'nfl' });
+
+    expect(table.resolved).toEqual([{ kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, sportLeagueId: 'nfl', providerId: PROVIDER.id }]);
+  });
+
+  it('resolves nothing for a source id no Provider row has', async () => {
+    const { findings, table } = service();
+
+    await expect(findings.resolveOfSource('mock-contest-feed', { kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, sportLeagueId: 'nfl' })).resolves.toBe(0);
+
+    expect(table.resolved).toEqual([]);
   });
 });
 

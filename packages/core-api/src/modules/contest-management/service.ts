@@ -73,7 +73,6 @@ import {
   ContestStatus,
   MatchStatus,
   SelectionType,
-  assertNever,
   canFillBudgetRoster,
   coversOneEvent,
   eventSportDefinition,
@@ -295,7 +294,7 @@ export class ContestManagementService {
     const sportEventIds = orderContestEvents(sportEvents);
     // Its season is its first event's Season's championship year (#841, #2003): a pick'em season's
     // January playoff weeks keep the season's year, because they are in the same Season.
-    const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.championshipYear ?? sportEvent.championshipYear;
+    const seasonYear = firstContestEvent(sportEvents, sportEvent).championshipYear;
     const limits = await this.seasonLimits(context.leagueId, sportEvent.sportLeagueId);
     const created = await this.contestRepo.create({
       leagueId: context.leagueId,
@@ -321,10 +320,7 @@ export class ContestManagementService {
       templateVersion: resolvedConfiguration.template?.schemaVersion,
       selectionType,
       configJson,
-      maxEntriesPerSquad:
-        resolvedConfiguration.configuration.maxEntriesPerSquad === null
-          ? null
-          : resolvedConfiguration.configuration.maxEntriesPerSquad,
+      maxEntriesPerSquad: resolvedConfiguration.configuration.maxEntriesPerSquad,
     });
 
     await syncDerivedScoring(
@@ -442,8 +438,7 @@ export class ContestManagementService {
 
     await this.contestConfigurationRepo.update(configuration.id, {
       configJson,
-      maxEntriesPerSquad:
-        input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
+      maxEntriesPerSquad: input.maxEntriesPerSquad,
     });
 
     const refreshedConfiguration =
@@ -623,8 +618,7 @@ export class ContestManagementService {
     );
     const sportEvents = [...kept, ...added];
     // The contest's league is its first event's; the new list must keep to it.
-    const first = current.at(0);
-    this.assertOneSportLeague(first ? [first, ...sportEvents] : sportEvents);
+    this.assertOneSportLeague([...current.slice(0, 1), ...sportEvents]);
     this.assertEventCountFitsSelectionType(contest.selectionType, sportEvents.length);
 
     const storedRules = ensureTypedConfiguration(configuration);
@@ -1131,17 +1125,7 @@ export class ContestManagementService {
     if (kept && offered(kept.participantScoringDefinitionId)) {
       return kept;
     }
-    const defaultDefinitionId = definition.scoringDefinitions.at(0);
-    if (defaultDefinitionId === undefined) {
-      this.logger.warn({
-        sportEventId: sportEvent.id,
-        sport: sportEvent.sport,
-      }, 'contest management scoring refused: the sport offers no scoring definition yet');
-      throw new ContestManagementError(
-        `A ${sportEvent.sport} contest can't be scored yet.`,
-        CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
-      );
-    }
+    const [defaultDefinitionId] = definition.scoringDefinitions;
     const defaults = defaultContestScoringSettings(defaultDefinitionId);
     if (!defaults) {
       this.logger.warn({
@@ -1200,8 +1184,6 @@ export class ContestManagementService {
           CONTEST_SCORING_ROUNDS_MISMATCH,
         );
       }
-      default:
-        return assertNever(scoring);
     }
   }
 
@@ -1403,8 +1385,6 @@ function defaultContestScoringSettings(
     case 'FINISH_POSITION_POINTS':
     case 'KNOCKOUT_ROUND_POINTS':
       return null;
-    default:
-      return assertNever(participantScoringDefinitionId);
   }
 }
 
@@ -1423,11 +1403,21 @@ function currentScoring(rules: readonly ParticipantContestScoringRule[]): Contes
   return rule?.scoring.success ? rule.scoring.data : null;
 }
 
-/** The contest's events in sequence order: by start date, then id, so the order is stable. */
-function orderContestEvents(sportEvents: readonly Pick<ContestCreateSportEventState, 'id' | 'startDate'>[]): string[] {
-  return [...sportEvents]
-    .sort((left, right) => left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id))
-    .map((sportEvent) => sportEvent.id);
+type ContestEventOrderKey = Pick<ContestCreateSportEventState, 'id' | 'startDate'>;
+
+/** Contest event sequence order: by start date, then id, so the order is stable. */
+function compareContestEvents(left: ContestEventOrderKey, right: ContestEventOrderKey): number {
+  return left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id);
+}
+
+/** The contest's events in sequence order. */
+function orderContestEvents(sportEvents: readonly ContestEventOrderKey[]): string[] {
+  return [...sportEvents].sort(compareContestEvents).map((sportEvent) => sportEvent.id);
+}
+
+/** The contest's first event in sequence order, starting the search from one of its events. */
+function firstContestEvent<T extends ContestEventOrderKey>(sportEvents: readonly T[], anyEvent: T): T {
+  return sportEvents.reduce((first, event) => (compareContestEvents(event, first) < 0 ? event : first), anyEvent);
 }
 
 function buildContestManagementDetail(

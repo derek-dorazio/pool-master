@@ -17,7 +17,6 @@ import {
 // whose final is a best of three, so a whole bracket fits in a few games.
 const LEAGUE: PlayoffsLeague = {
   key: 'tst',
-  tour: 'TST',
   sport: Sport.BASKETBALL,
   eventName: 'Test Playoffs',
   rounds: [
@@ -106,11 +105,11 @@ describe('toPlayoffsEvents', () => {
 });
 
 describe('toPlayoffsFieldParticipants', () => {
-  it('lists each team once, by the feed\'s raw id, keeping its facts and the league\'s tour', () => {
+  it('lists each team once, by the feed\'s raw id, keeping its facts', () => {
     const participants = toPlayoffsFieldParticipants(LEAGUE, semifinals());
 
     expect(participants.map((participant) => participant.externalId)).toEqual(['1', '4', '2', '3']);
-    expect(participants[0]).toMatchObject({ name: 'Team 1', sport: Sport.BASKETBALL, active: true, metadata: { abbreviation: 'T1', tour: 'TST' } });
+    expect(participants[0]).toMatchObject({ name: 'Team 1', sport: Sport.BASKETBALL, active: true, metadata: { abbreviation: 'T1' } });
   });
 });
 

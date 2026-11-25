@@ -29,7 +29,7 @@ const dodgers = rowAt(mlbTeamListSchema.parse(readBalldontlieFixture('mlb', 'tea
 
 describe('MLB postseason league', () => {
   it('is baseball\'s postseason, played in the season\'s own year, ending in a best-of-seven World Series', () => {
-    expect(MLB_POSTSEASON).toMatchObject({ key: 'mlb', tour: 'MLB', sport: Sport.BASEBALL, playoffYearOffset: 0 });
+    expect(MLB_POSTSEASON).toMatchObject({ key: 'mlb', sport: Sport.BASEBALL, playoffYearOffset: 0 });
     expect(MLB_POSTSEASON.rounds.at(-1)).toMatchObject({ name: 'World Series', seriesLength: 7 });
   });
 

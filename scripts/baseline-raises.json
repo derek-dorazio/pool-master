@@ -36,6 +36,90 @@
       "key": "deletePeriodScore",
       "now": 0,
       "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PGA_TOUR_NAME",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "NFL_LEAGUE_NAME",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "EPL_TOUR",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "FIFA_WC_TOUR",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "NFL_POSTSEASON_ROUNDS",
+      "now": 4,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "NFL_POSTSEASON_GAMES",
+      "now": 2,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "firstFourRound",
+      "now": 14,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "championshipRound",
+      "now": 5,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseNflScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parsePlayoffsScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseCfpScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseEplScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseWorldCupScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseNcaaTournamentScope",
+      "now": 3,
+      "reason": "retired by #2007"
     }
   ]
 }

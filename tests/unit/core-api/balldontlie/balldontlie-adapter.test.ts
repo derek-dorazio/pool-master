@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ParticipantRoundStatus, ProviderCode, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
+import { ProviderLeagueUnknownError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { UnsupportedPgaFormatError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-mapping';
 import {
   BalldontlieSpecViolation,
@@ -98,7 +99,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       const events = await harness.adapter.getUpcomingEvents(Sport.GOLF, {
         from: new Date('2026-08-01T00:00:00Z'),
         to: new Date('2026-08-31T23:59:59Z'),
-      });
+      }, { providerLeagueCode: 'pga' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['40', 'Wyndham Championship', 'COMPLETED'],
@@ -112,7 +113,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.GOLF, { from: new Date('2025-12-01T00:00:00Z'), to: new Date('2026-01-31T00:00:00Z') });
+      await harness.adapter.getUpcomingEvents(Sport.GOLF, { from: new Date('2025-12-01T00:00:00Z'), to: new Date('2026-01-31T00:00:00Z') }, { providerLeagueCode: 'pga' });
 
       expect(requestLine(harness.api)).toEqual([
         '/pga/v2/tournaments?season=2025&include_format=true&per_page=100',
@@ -124,8 +125,8 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const all = await harness.adapter.getUpcomingEvents(Sport.GOLF);
-      const openEnded = await harness.adapter.getUpcomingEvents(Sport.GOLF, { from: new Date(-8.64e15), to: new Date('2026-07-31T00:00:00Z') });
+      const all = await harness.adapter.getUpcomingEvents(Sport.GOLF, undefined, { providerLeagueCode: 'pga' });
+      const openEnded = await harness.adapter.getUpcomingEvents(Sport.GOLF, { from: new Date(-8.64e15), to: new Date('2026-07-31T00:00:00Z') }, { providerLeagueCode: 'pga' });
 
       expect(all.map((event) => event.externalId)).toEqual(['40', '41', '42', '44']);
       expect(openEnded.map((event) => event.externalId)).toEqual(['44']);
@@ -135,11 +136,11 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       ]);
     });
 
-    it('answers no events, and calls nothing, for a sport it does not cover', async () => {
+    it('throws an unknown-league error, and calls nothing, for a sport it does not cover', async () => {
       const harness = setup();
       restore = harness.restore;
 
-      expect(await harness.adapter.getUpcomingEvents(Sport.TENNIS)).toEqual([]);
+      await expect(harness.adapter.getUpcomingEvents(Sport.TENNIS, undefined, { providerLeagueCode: 'pga' })).rejects.toBeInstanceOf(ProviderLeagueUnknownError);
       expect(harness.api.requests).toEqual([]);
     });
   });
@@ -251,7 +252,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       restore = harness.restore;
 
       await expect(harness.adapter.getLiveScores('999')).rejects.toThrow('BALLDONTLIE has no PGA TOUR tournament 999.');
-      await expect(harness.adapter.getLiveScores('not-a-number')).rejects.toThrow('BALLDONTLIE has no PGA TOUR tournament not-a-number.');
+      await expect(harness.adapter.getLiveScores('not-a-number')).rejects.toThrow('BALLDONTLIE reads no enabled league with an event not-a-number.');
     });
 
     it('refuses a team-format tournament without reading its results', async () => {
