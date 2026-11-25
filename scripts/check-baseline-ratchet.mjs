@@ -50,16 +50,19 @@ function listedFiles(text) {
 function coverageFloors(text) {
   const { floors = [] } = JSON.parse(text);
   const entries = new Map();
+  // Lines and branches are separate keys, so lowering one and raising the other is still a raise.
+  const put = (key, held) => {
+    for (const metric of ['lines', 'branches']) entries.set(`${key}:${metric}`, 100 - held[metric]);
+  };
   for (const floor of floors) {
-    entries.set(floor.name, 200 - floor.lines - floor.branches);
+    put(floor.name, floor);
     for (const [file, exception] of Object.entries(floor.exceptions ?? {})) {
-      entries.set(`${floor.name}:${file}`, 200 - (exception.lines ?? floor.lines) - (exception.branches ?? floor.branches));
+      put(`${floor.name}:${file}`, { lines: exception.lines ?? floor.lines, branches: exception.branches ?? floor.branches });
     }
   }
   return entries;
 }
 
-/** Every ratcheted baseline and how its entries are read. A new baseline is added here. */
 export { coverageFloors };
 export const BASELINES = [
   { file: 'scripts/text-style-baseline.json', read: countsPerFile },

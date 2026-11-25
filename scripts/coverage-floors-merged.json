@@ -1,5 +1,5 @@
 {
-  "$comment": "#2103 -- per-file coverage floors over the merged service report: the unit run plus the four integration shards (scripts/merge-service-coverage.mjs), so a file counts as covered by whichever suite proves it. Checked by scripts/check-coverage-floors.mjs in CI's service-integration-tests job. Every backend and shared file must reach 80% lines and 80% branches; job code (bodies, runner, queue, domain events, schedulers, the job lock) is held to scoring's 100% / 96%. The Jest unit floors in tests/jest.config.js (scoring 100/96, logic 90/80) and the integration repository floor in scripts/coverage-floors.json stay as they are. An exception is a file's number when the floor came in, rounded down: it can only be raised or deleted, and rules:check:baseline-ratchet refuses a new or lowered one unless scripts/baseline-raises.json declares it. Job-file catch-up: #2106.",
+  "$comment": "#2103 -- per-file coverage floors over the merged service report: the unit run plus the four integration shards (scripts/merge-service-coverage.mjs), so a file counts as covered by whichever suite proves it. Checked by scripts/check-coverage-floors.mjs in CI's service-integration-tests job. Every backend and shared file must reach 80% lines and 80% branches; job code (bodies, runner, queue, domain events, schedulers, the job lock) is held to scoring's 100% / 96%. The Jest unit floors in tests/jest.config.js (scoring 100/96, logic 90/80) and the integration repository floor in scripts/coverage-floors.json stay as they are. An exception is a file's number when the floor came in, rounded down: it can only be raised or deleted, and rules:check:baseline-ratchet refuses a new or lowered one unless scripts/baseline-raises.json declares it. Job-file catch-up: #2106. The jobs floor takes in contests/service.ts, contest-management/service.ts and event-lifecycle-service.ts whole on purpose: they hold the job handlers that calculate standings and move contest and event status, so the whole file is held to the job bar. packages/shared/index.ts is excluded because it only re-exports.",
   "floors": [
     {
       "name": "backend-files",
@@ -75,7 +75,8 @@
       "include": "packages/shared/**/*.ts",
       "exclude": [
         "packages/shared/generated/**",
-        "packages/shared/dist/**"
+        "packages/shared/dist/**",
+        "packages/shared/index.ts"
       ],
       "lines": 80,
       "branches": 80,
@@ -83,10 +84,6 @@
         "packages/shared/api-routes.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
           "lines": 64
-        },
-        "packages/shared/index.ts": {
-          "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
-          "lines": 0
         },
         "packages/shared/openapi/nullable-to-3-1.ts": {
           "reason": "Under 80/80 when the per-file floor came in; raised by #2117.",
