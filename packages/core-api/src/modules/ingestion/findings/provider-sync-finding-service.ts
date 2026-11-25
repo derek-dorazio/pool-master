@@ -75,6 +75,24 @@ export class ProviderSyncFindingService {
   }
 
   /**
+   * Findings a sync raises knowing its provider by its source id (the feed's `providerId`, as a
+   * league's selected provider mapping carries it): each is raised against that Provider's row. A
+   * feed with no Provider row (the QA mock feed, until #2039) raises none, and says so.
+   */
+  async raiseOfSource(providerSourceId: string, raises: ReadonlyArray<Omit<ProviderSyncFindingRaise, 'providerId'>>): Promise<void> {
+    if (raises.length === 0) return;
+    const provider = this.providerOfSourceId(providerSourceId);
+    if (provider === undefined) {
+      this.deps.logger?.warn(
+        { action: 'ingestion.syncFinding.withoutProvider', providerId: providerSourceId, kinds: [...new Set(raises.map((raise) => raise.kind))], count: raises.length },
+        'A sync found something to raise, but its feed has no Provider row to raise it for',
+      );
+      return;
+    }
+    await this.raise(raises.map((raise) => ({ ...raise, providerId: provider.id })));
+  }
+
+  /**
    * The feed's participant ids that no participant of the league is mapped to: one WARNING per
    * league, Provider and id, whatever event it came up in. A feed with no Provider row (the QA
    * mock feed, until #2039) raises none, since there is nothing to map it from.

@@ -18,6 +18,7 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import { NflSeasonType, type NflGame, type NflStanding, type NflTeam } from './nfl-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 /**
  * The NFL's tour word in the adapter's league table; the NFL
@@ -115,7 +116,14 @@ export function toNflSportEvent(scope: NflScope, games: readonly NflGame[], part
     rounds: scope.kind === NflScopeKind.WEEK ? 1 : NFL_POSTSEASON_ROUNDS,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
+    providerSlots: slotPlaysOf(games.map((game, index) => ({ code: nflSlotCodeOf(game), start: times[index] }))),
   };
+}
+
+/** A game's code (#2005): its season type and the vendor's own week, which numbers the postseason too. */
+function nflSlotCodeOf(game: NflGame): string {
+  const seasonType = required(game.postseason, game.id, 'postseason') ? ProviderSeasonType.POSTSEASON : ProviderSeasonType.REGULAR_SEASON;
+  return providerSlotCode(seasonType, required(game.week, game.id, 'week'));
 }
 
 /** Every scope the games cover, as one event each, earliest first. */

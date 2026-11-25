@@ -31,6 +31,7 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import type { FifaMatch, FifaMatchTeamSource, FifaTeam } from './fifa-world-cup-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 export const FIFA_WC_MATCHES_PATH = '/fifa/worldcup/v1/matches';
 export const FIFA_WC_TEAMS_PATH = '/fifa/worldcup/v1/teams';
@@ -122,6 +123,10 @@ export function toWorldCupEvent(scope: WorldCupScope, matches: readonly FifaMatc
     ...(rounds !== undefined && { rounds }),
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
+    // A knockout match's code is its stage's place in the vendor's order of the edition's stages.
+    providerSlots: slotPlaysOf(matches.flatMap((match, index) => (match.stage?.order === undefined
+      ? []
+      : [{ code: providerSlotCode(ProviderSeasonType.POSTSEASON, match.stage.order), start: times[index] }]))),
   };
 }
 

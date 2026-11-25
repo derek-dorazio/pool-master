@@ -53,6 +53,7 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
     startDate: new Date('2027-07-15T12:00:00.000Z'),
     status: 'SCHEDULED',
     fieldLocked: false,
+    providerSlots: [],
     participants: [golfer],
   };
   // Each event on a sport league of its own, so a test sees only the participants it makes.

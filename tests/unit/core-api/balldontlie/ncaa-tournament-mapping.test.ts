@@ -62,6 +62,11 @@ describe('an NCAA men\'s tournament as an event', () => {
       rounds: 6,
       participantCount: 68,
       fieldLocked: true,
+      providerSlots: [
+        { code: 'POST:1', startsAt: new Date('2026-03-17T23:40:00.000Z'), endsAt: new Date('2026-03-17T23:40:00.000Z') },
+        { code: 'POST:2', startsAt: new Date('2026-03-19T16:15:00.000Z'), endsAt: new Date('2026-03-19T19:00:00.000Z') },
+        { code: 'POST:7', startsAt: new Date('2026-04-07T01:20:00.000Z'), endsAt: new Date('2026-04-07T01:20:00.000Z') },
+      ],
     });
   });
 
@@ -212,6 +217,11 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
       rounds: 6,
       participantCount: 64,
       fieldLocked: true,
+      providerSlots: [
+        { code: 'POST:0', startsAt: new Date('2026-03-18T23:00:00.000Z'), endsAt: new Date('2026-03-18T23:00:00.000Z') },
+        { code: 'POST:1', startsAt: new Date('2026-03-20T19:00:00.000Z'), endsAt: new Date('2026-03-20T21:30:00.000Z') },
+        { code: 'POST:6', startsAt: new Date('2026-04-05T19:00:00.000Z'), endsAt: new Date('2026-04-05T19:00:00.000Z') },
+      ],
     });
   });
 

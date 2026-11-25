@@ -274,6 +274,7 @@ export const enUS = {
       NO_PROVIDER_PARTICIPANTS: 'No field from the provider',
       NO_PROVIDER_LIVE_SCORES: 'No live scores from the provider',
       GAMES_NOT_SYNCED: 'Games not synced',
+      SLOT_VALUE_UNMAPPED: 'Provider code not mapped to a slot',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

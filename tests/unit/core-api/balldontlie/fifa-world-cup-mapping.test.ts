@@ -56,6 +56,11 @@ describe('a World Cup knockout bracket as an event', () => {
       status: 'COMPLETED',
       participantCount: 8,
       fieldLocked: true,
+      providerSlots: [
+        { code: 'POST:2', startsAt: new Date('2022-12-03T15:00:00.000Z'), endsAt: new Date('2022-12-05T15:00:00.000Z') },
+        { code: 'POST:5', startsAt: new Date('2022-12-17T15:00:00.000Z'), endsAt: new Date('2022-12-17T15:00:00.000Z') },
+        { code: 'POST:6', startsAt: new Date('2022-12-18T15:00:00.000Z'), endsAt: new Date('2022-12-18T15:00:00.000Z') },
+      ],
     });
   });
 

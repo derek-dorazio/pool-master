@@ -14,6 +14,7 @@ import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 import { testSlotId } from '../../support/test-slots';
+import { syncSlotsFor } from '../../support/sync-slots';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
 // Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
@@ -39,16 +40,28 @@ async function golfLeague({ synced = true, isActive = true }: { synced?: boolean
   });
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
   // A migration's league has its Seasons mapped to the provider's; this year's is current (#2003).
-  if (synced) await syncSeasonsTo(prisma, league.id, await syncLeagueTo(prisma, league.id, 'pga'), [2027, 2028]);
+  if (synced) {
+    const sportLeagueProviderMappingId = await syncLeagueTo(prisma, league.id, 'pga');
+    const seasonIds = await syncSeasonsTo(prisma, league.id, sportLeagueProviderMappingId, [2027, 2028]);
+    // Each Season's tournament has its slot, mapped by the provider's id for it and listed by a template (#2005).
+    for (const [index, year] of [2027, 2028].entries()) {
+      await syncSlotsFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId, code: tourEventId(league.name, year), seasonIds: [seasonIds[index]] });
+    }
+  }
   return league;
 }
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/** The provider's id for a tour's tournament in a year, which is also the code it names the tournament's place by. */
+const tourEventId = (tour: string, year: number) => `${tour}-${year}`;
+
 /** The provider's events for a tour and Season: one tournament a year, named by its tour, moved by `shiftDays`. */
 function tourEvent(tour: string, year: number, shiftDays = 0, name = `${tour} Open`) {
   const startDate = new Date(Date.UTC(year, 5, 10, 12) + shiftDays * DAY);
-  return { externalId: `${tour}-${year}`, name, venue: 'Course', startDate, endDate: new Date(Date.UTC(year, 5, 13, 12) + shiftDays * DAY) };
+  const endDate = new Date(Date.UTC(year, 5, 13, 12) + shiftDays * DAY);
+  const externalId = tourEventId(tour, year);
+  return { externalId, name, venue: 'Course', startDate, endDate, providerSlots: [{ code: externalId, startsAt: startDate, endsAt: endDate }] };
 }
 
 function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays: 0 }) {

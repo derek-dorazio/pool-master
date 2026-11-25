@@ -219,6 +219,7 @@ describe('IngestionScheduler', () => {
         startDate: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
         fieldLocked: false,
+        providerSlots: [],
         participants: [
           { externalId: 'player-1', providerId: 'mock-provider', sport: 'GOLF', name: 'Player One', active: true, metadata: {} },
           { externalId: 'player-2', providerId: 'mock-provider', sport: 'GOLF', name: 'Player Two', active: true, metadata: {} },
@@ -525,6 +526,7 @@ describe('IngestionScheduler', () => {
         startDate: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
         fieldLocked: false,
+        providerSlots: [],
         participants: [
           {
             externalId: 'player-1',
@@ -740,6 +742,7 @@ describe('IngestionScheduler', () => {
           startDate: now,
           status: 'IN_PROGRESS',
           fieldLocked: true,
+          providerSlots: [],
           participants: [],
         } satisfies SportEventDetail),
         getLiveScores: jest.fn().mockResolvedValue({
@@ -812,6 +815,7 @@ describe('IngestionScheduler', () => {
         startDate: new Date('2026-05-02T12:00:00.000Z'),
         status: 'SCHEDULED',
         fieldLocked: false,
+        providerSlots: [],
         participants: [],
       };
       const provider = fakeSportDataProvider({
@@ -870,6 +874,7 @@ describe('IngestionScheduler', () => {
           startDate: new Date('2026-04-10T12:00:00.000Z'),
           status: 'SCHEDULED',
           fieldLocked: false,
+          providerSlots: [],
           metadata: {},
           participants: [
             {
@@ -985,6 +990,7 @@ describe('IngestionScheduler job outcomes', () => {
     startDate: new Date('2026-04-10T12:00:00.000Z'),
     status: 'SCHEDULED',
     fieldLocked: false,
+    providerSlots: [],
     participants,
   });
 

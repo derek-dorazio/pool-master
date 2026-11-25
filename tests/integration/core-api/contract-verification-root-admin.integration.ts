@@ -1,5 +1,6 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId } from '../../support/test-slots';
+import { syncSlotsFor } from '../../support/sync-slots';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
@@ -166,6 +167,7 @@ class OperationalContractProvider implements SportDataProvider {
         rounds: 4,
         participantCount: 2,
         fieldLocked: false,
+        providerSlots: [],
       },
     ];
   }
@@ -188,6 +190,7 @@ class OperationalContractProvider implements SportDataProvider {
       rounds: 4,
       participantCount: 2,
       fieldLocked: false,
+      providerSlots: [],
       participants: [
         {
           externalId: 'golfer-1',
@@ -279,17 +282,12 @@ class TourSlateContractProvider extends OperationalContractProvider {
   }
 
   override async getUpcomingEvents(): Promise<SportEvent[]> {
-    const event = (externalId: string, name: string, providerLeagueCode: string, day: string): SportEvent => ({
-      externalId,
-      providerId: this.providerId,
-      sport: 'GOLF',
-      name,
-      startDate: new Date(`${day}T12:00:00.000Z`),
-      endDate: new Date(`${day.slice(0, 8)}${String(Number(day.slice(8)) + 3).padStart(2, '0')}T23:00:00.000Z`),
-      status: 'SCHEDULED',
-      fieldLocked: false,
-      providerLeagueCode,
-    });
+    const event = (externalId: string, name: string, providerLeagueCode: string, day: string): SportEvent => {
+      const startDate = new Date(`${day}T12:00:00.000Z`);
+      const endDate = new Date(`${day.slice(0, 8)}${String(Number(day.slice(8)) + 3).padStart(2, '0')}T23:00:00.000Z`);
+      // A tournament's code is its own id, which the test league's slots map (#2005).
+      return { externalId, providerId: this.providerId, sport: 'GOLF', name, startDate, endDate, status: 'SCHEDULED', fieldLocked: false, providerSlots: [{ code: externalId, startsAt: startDate, endsAt: endDate }], providerLeagueCode };
+    };
     return [
       event(`${this.tour}-alpha`, `${this.tour} Alpha Open`, 'pga', '2085-03-05'),
       event(`${this.tour}-bravo`, `${this.tour} Bravo Classic`, 'pga', '2085-04-09'),
@@ -1647,7 +1645,10 @@ describe('Contract verification (root admin)', () => {
     });
     const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
     // A migration's league has its Seasons mapped to the provider's, one of them current (#2003).
-    const [seasonId] = await syncSeasonsTo(prisma, synced.id, await syncLeagueTo(prisma, synced.id, 'pga'), [2085]);
+    const sportLeagueProviderMappingId = await syncLeagueTo(prisma, synced.id, 'pga');
+    const [seasonId] = await syncSeasonsTo(prisma, synced.id, sportLeagueProviderMappingId, [2085]);
+    // Each tournament plays a slot of the Season a template lists, so the sync creates its event.
+    for (const code of [`${tour}-alpha`, `${tour}-bravo`]) await syncSlotsFor(prisma, { sportLeagueId: synced.id, sportLeagueProviderMappingId, code, seasonIds: [seasonId] });
     const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
 
     try {
@@ -1707,6 +1708,7 @@ describe('Contract verification (root admin)', () => {
       await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
       await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
       await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
+      await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: synced.id } });
       await deleteTestSportLeagues(prisma, [synced.id, unsynced.id]);
       await app.close();
     }
