@@ -38,7 +38,7 @@
   "own:clients/poolmaster/src/features/root-admin/event-field-rows.ts": 1,
   "own:clients/poolmaster/src/features/root-admin/golf-round-score-patch.ts": 1,
   "own:clients/poolmaster/src/features/root-admin/manage-navigation.ts": 2,
-  "own:clients/poolmaster/src/features/root-admin/plan-settings-draft.ts": 2,
+  "own:clients/poolmaster/src/features/root-admin/plan-settings-draft.ts": 1,
   "own:clients/poolmaster/src/features/root-admin/root-admin-sync-utils.ts": 1,
   "own:clients/poolmaster/src/features/root-admin/scoring-family-admin.ts": 1,
   "own:clients/poolmaster/src/features/root-admin/sport-admin-utils.ts": 1,

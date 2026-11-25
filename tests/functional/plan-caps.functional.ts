@@ -58,6 +58,28 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: plan caps (#947)', () => {
+  it('refuses a cap that falls as the plan rises with 400 SETTINGS_INVALID naming the cell, so the Plans page can show it there', async () => {
+    const admin = await buildRegisteredUser({ displayName: 'Caps Checker' });
+    await promoteToRootAdmin(admin);
+    const plans = expectDefined((await getSettingsGroup({ client: admin.client, path: { key: 'PLAN_CONFIG' } })).data);
+    if (plans.key !== 'PLAN_CONFIG') throw new Error('Expected the PLAN_CONFIG settings group');
+
+    const refused = await updateSettingsGroup({
+      client: admin.client,
+      path: { key: 'PLAN_CONFIG' },
+      body: {
+        key: 'PLAN_CONFIG',
+        value: { ...plans.value, caps: { ...plans.value.caps, ENTRIES_PER_CONTEST: { FREE: 20, PRO: 10, PREMIUM: 100, PLATINUM: 500 } } },
+        expectedUpdatedAt: plans.updatedAt,
+      },
+    });
+
+    expect(refused.response?.status).toBe(400);
+    const error = expectDefined(refused.error).error;
+    expect(error.code).toBe('SETTINGS_INVALID');
+    expect(error.details).toEqual([expect.objectContaining({ path: ['caps', 'ENTRIES_PER_CONTEST', LeaguePlan.PRO] })]);
+  });
+
   it('lets a league on a plan with one sports league a year make contests in it, refusing a second with 409 and listing the one used', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Caps Director' });
     await promoteToRootAdmin(admin);

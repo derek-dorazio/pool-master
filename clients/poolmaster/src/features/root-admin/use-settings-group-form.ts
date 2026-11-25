@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useForm, type DefaultValues, type FieldValues, type Resolver } from 'react-hook-form';
+import { useForm, type DefaultValues, type FieldValues, type Path, type Resolver } from 'react-hook-form';
 import { updateSettingsGroup, type SettingsGroup, type UpdateSettingsGroupData } from '@/lib/api';
-import { hasErrorCode, throwApiError } from '@/lib/errors';
+import { errorIssuePaths, hasErrorCode, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -25,11 +25,13 @@ function saveBody<G extends SettingsGroup>(
  * `updatedAt` the draft was taken from; when someone else saved first the server answers 409,
  * `conflicted` is set, and `loadLatest` fetches the newer version and starts the draft from it.
  * `onTaken` hears each version the form takes up, after a save or a load, for state kept beside
- * the form.
+ * the form. `placeRefusal` puts a SETTINGS_INVALID refusal's issues on the fields they are about,
+ * for a rule only the server checks; a refusal placed on a field is not repeated above the form.
  */
 export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldValues>({
   group,
   onTaken,
+  placeRefusal,
   resolver,
   subject,
   toForm,
@@ -37,6 +39,8 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
 }: {
   group: G;
   onTaken?: (group: G) => void;
+  /** The field a refused save's issue path is about, and what it says there; null leaves it above the form. */
+  placeRefusal?: (path: (string | number)[]) => { name: Path<V>; message: string } | null;
   resolver: Resolver<V>;
   /** What the settings are called in the missing-data error, such as `Email settings`. */
   subject: string;
@@ -55,6 +59,10 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
   };
   const isThisGroup = (candidate: SettingsGroup): candidate is G => candidate.key === key;
 
+  const placedRefusals = (error: unknown) => (placeRefusal && hasErrorCode(error, 'SETTINGS_INVALID')
+    ? errorIssuePaths(error).map(placeRefusal).filter((placed) => placed !== null)
+    : []);
+
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (values: V) => {
       const response = await updateSettingsGroup({ path: { key }, body: saveBody<G>(key, toValue(values), baseUpdatedAt) });
@@ -64,6 +72,9 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
       return response.data;
     },
     onSuccess: take,
+    onError: (error) => {
+      for (const { name, message } of placedRefusals(error)) form.setError(name, { type: 'server', message });
+    },
     invalidates: [QueryKeys.rootAdmin.settings],
   });
 
@@ -86,6 +97,8 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
 
   return {
     conflicted: hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT'),
+    /** The failed save's reason when it shows above the form; null when it shows on its fields. */
+    formError: placedRefusals(saveMutation.error).length > 0 ? null : saveMutation.error,
     form,
     loadLatest,
     saveMutation,

@@ -1,10 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { explicitOrderValues, LeaguePlanOrder } from '@poolmaster/shared/domain';
+import { explicitOrderValues, LeaguePlanOrder, type LeaguePlan } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { Checkbox, FormField, Input, Text, useDisplayPreferences } from '@/features/shared/ui';
 import { formatPlanLimit, UNLIMITED_LABEL } from '@/features/plans/plan-labels';
 import { PlanRowDialog, type PlanSettingsGroup } from './plan-row-dialog';
+import { PLAN_CAP_FALLING_MESSAGE } from './plan-settings-draft';
 import { planCapFormSchema, planCapFormValues, withPlanCap, type PlanCapFormValues, type PlanCapGridRow } from './plan-rows';
+
+const LEAGUE_PLANS = explicitOrderValues(LeaguePlanOrder);
 
 /** One cap's dialog (#1884): its limit on each plan; Edit offers a number or Unlimited for each. */
 export function PlanCapDialog({ group, onClose, row }: { group: PlanSettingsGroup; onClose: () => void; row: PlanCapGridRow }) {
@@ -22,6 +25,11 @@ export function PlanCapDialog({ group, onClose, row }: { group: PlanSettingsGrou
       group={group}
       name={row.name}
       onClose={onClose}
+      // The one rule only the server checks: no cap falls as the plan rises. Its refusal names
+      // the cell, ['caps', cap, plan].
+      placeRefusal={([, cap, plan]) => (cap === row.cap && LEAGUE_PLANS.some((each) => each === plan)
+        ? { name: `${plan as LeaguePlan}.limit`, message: PLAN_CAP_FALLING_MESSAGE }
+        : null)}
       resolver={zodResolver(planCapFormSchema(group.value, row.cap))}
       testId={testId}
       toForm={(config) => planCapFormValues(config, row.cap)}
