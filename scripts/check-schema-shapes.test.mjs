@@ -39,10 +39,12 @@ describe('check-schema-shapes (#2112)', () => {
       '}',
       'model SportEventRoundMatch {',
       '  externalGameId String?',
+      '  externalCode   String?',
+      '  externalRef    String?',
       '  providerKey    String',
       '}',
     ]));
-    assert.deepEqual(entries, ['key:SportEventRoundMatch.externalGameId', 'key:SportEventRoundMatch.providerKey']);
+    assert.deepEqual(entries, ['key:SportEventRoundMatch.externalGameId', 'key:SportEventRoundMatch.externalCode', 'key:SportEventRoundMatch.externalRef', 'key:SportEventRoundMatch.providerKey']);
   });
 
   it('passes a providerId that is the foreign key of a relation to Provider, and reports one that is not', () => {

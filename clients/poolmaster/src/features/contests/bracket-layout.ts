@@ -57,7 +57,7 @@ export function buildBracketRounds(games: readonly BracketGame[], roundLabel: Br
  * round's first game ("the first game of the Sweet 16").
  */
 export function describeBracketClose(rounds: readonly BracketRound[], eventStart: string): string {
-  // poolmaster-allow-position: groupBracketRounds returns rounds sorted by round number
+  // poolmaster-allow-position: buildBracketRounds returns rounds sorted by round number
   const first = rounds.at(0);
   return first && first.roundNumber > 1 ? `the first game of the ${first.label}` : `the ${eventStart}`;
 }

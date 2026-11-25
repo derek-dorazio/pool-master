@@ -1607,6 +1607,8 @@ ruleTester.run('no-positional-pick', noPositionalPick, {
     { code: 'const away = match.sides[1];', errors: [{ messageId: 'positionalPick' }] },
     { code: '// poolmaster-allow-position\nconst final = rounds.at(-1);', errors: [{ messageId: 'missingReason' }] },
     { code: '// poolmaster-allow-position: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
+    // A marker excuses one pick: a second list in the same statement still needs its own reason.
+    { code: '// poolmaster-allow-position: sorted ascending, the last round is the final\nconst pair = [rounds.at(-1), games[0]];', errors: [{ messageId: 'positionalPick' }] },
     {
       code: 'const a = rounds[0];\nconst b = games.at(-1);',
       filename: 'legacy.ts',

@@ -6,7 +6,7 @@
  * `packages/core-api/prisma/schema.prisma` is read model by model:
  *
  * - every `Json` or `Json?` column is a `json:<Model>.<field>` entry;
- * - every column named like a feed key (`externalId`, `external…Id`, `providerKey`,
+ * - every column named like a feed key (`externalId`, any `external…` such as `externalCode`, `providerKey`,
  *   `providerCode`, `providerValue`, `provider…Id`) is a `key:<Model>.<field>` entry, unless it
  *   sits on a model named `…ProviderMapping`, `Provider…` or `ProviderSyncFinding`, or is the
  *   foreign key of a relation to `Provider` (a row id, not the feed's key).
@@ -23,7 +23,7 @@ import { pathToFileURL } from 'node:url';
 
 export const BASELINE_FILE = 'scripts/schema-shapes.json';
 export const SCHEMA_FILE = 'packages/core-api/prisma/schema.prisma';
-const FEED_KEY = /^(externalId|external\w*Id|providerKey|providerCode|providerValue|provider\w*Id)$/;
+const FEED_KEY = /^(external\w*|providerKey|providerCode|providerValue|provider\w*Id)$/;
 const FIELD = /^\s+(\w+)\s+(\w+)(\?|\[\])?(.*)$/;
 
 /** Whether a model is where feed keys belong: a mapping table, the provider's own lists, or a sync finding. */

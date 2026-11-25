@@ -12,7 +12,8 @@
  *
  * Position is fine only when the order is the meaning: the first item after sorting by a
  * declared field (the earliest by `startsAt`), or the one row a nested create wrote. Such a read
- * takes `// poolmaster-allow-position: <the order it relies on>` on the line before.
+ * takes `// poolmaster-allow-position: <the order it relies on>` on the line before. A marker
+ * excuses one pick, the first in its statement: a second pick there needs its own reason.
  *
  * Grandfathered files sit on a shrink-only count (`eslint-rules/positional-pick-baseline.json`).
  */
@@ -64,8 +65,14 @@ export default {
     const allow = allowMarkers(context, 'poolmaster-allow-position');
     const hits = [];
 
+    // One marker excuses one pick: its reason speaks for that list only.
+    const excusedBy = new Set();
     function hit(node, list) {
-      if (allow.covers(node)) return;
+      const marker = allow.covers(node);
+      if (marker && !excusedBy.has(marker)) {
+        excusedBy.add(marker);
+        return;
+      }
       hits.push({ node, data: { list, pick: context.sourceCode.getText(node) } });
     }
 
