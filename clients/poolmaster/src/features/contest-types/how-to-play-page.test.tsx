@@ -306,6 +306,14 @@ describe('How to Play', () => {
     expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play football');
   });
 
+  it('reads a link naming the football league\'s old long segment as no league, so it shows the whole sport', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage('/how-to-play?sport=football&league=college-football-playoff');
+
+    expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play football');
+    expect(chosenIn(leaguesColumn())).toEqual(['Football 2']);
+  });
+
   it('shows every sport when the link names a sport with no contest types', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage('/how-to-play?sport=curling');
