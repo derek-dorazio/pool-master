@@ -4,7 +4,7 @@ import {
   ProviderSeasonScheduleError,
   ProviderSeasonScheduleReader,
 } from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
-import { ProviderLeagueRefusedError, type SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { ProviderLeagueRefusedError, ProviderLeagueUnknownError, type SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { asPrismaClient } from '../../support/prisma-double';
 
@@ -89,6 +89,18 @@ describe('ProviderSeasonScheduleReader.listSeasonEvents', () => {
       code: 'PROVIDER_LEAGUE_REFUSED',
       statusCode: 422,
       message: expect.stringContaining('BALLDONTLIE refused NFL') as unknown,
+    });
+  });
+
+  it('refuses with 422 PROVIDER_LEAGUE_UNKNOWN, naming the code, when the provider reads no league with the code the mapping names', async () => {
+    const provider = syncedProvider({ getUpcomingEvents: jest.fn().mockRejectedValue(new ProviderLeagueUnknownError('BALLDONTLIE', 'pga')) });
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+    const service = new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider));
+
+    await expect(service.listSeasonEvents('pga', '2027')).rejects.toMatchObject({
+      code: 'PROVIDER_LEAGUE_UNKNOWN',
+      statusCode: 422,
+      message: expect.stringContaining('"pga"') as unknown,
     });
   });
 

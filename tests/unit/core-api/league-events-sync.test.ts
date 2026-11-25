@@ -456,6 +456,41 @@ describe('LeagueEventsSync', () => {
       expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'events.leagueSync.failed' }), expect.any(String));
     });
 
+    it('raises one PROVIDER_LEAGUE_UNKNOWN ERROR finding and fails the job at once, with no retry, when the provider does not read the league the mapping names', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const pga = syncedLeague(seasons);
+      const listSeasonEvents = jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>()
+        .mockRejectedValue(new ProviderSeasonScheduleError('BALLDONTLIE reads no enabled league with the code "xfl" for this sport.', 'PROVIDER_LEAGUE_UNKNOWN', 422));
+      const { sync, runner, jobs, syncRuns, findings } = build({ leagues: [pga], seasons, listSeasonEvents });
+
+      await sync.queueScheduled();
+      await runner.drain();
+
+      expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [{
+        kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN,
+        severity: ProviderSyncFindingSeverity.ERROR,
+        sportLeagueId: pga.id,
+        sportEventId: null,
+        providerValue: null,
+        providerValueName: null,
+      }]);
+      expect(jobs.rows[0]).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 1, lastError: expect.stringContaining('PROVIDER_LEAGUE_UNKNOWN') });
+      expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED });
+    });
+
+    it('raises no PROVIDER_LEAGUE_UNKNOWN finding when the provider refuses the league it does read', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const pga = syncedLeague(seasons);
+      const listSeasonEvents = jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>()
+        .mockRejectedValue(new ProviderSeasonScheduleError('Your plan does not include the PGA TOUR.', 'PROVIDER_LEAGUE_REFUSED', 422));
+      const { sync, runner, findings } = build({ leagues: [pga], seasons, listSeasonEvents });
+
+      await sync.queueScheduled();
+      await runner.drain();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalledWith(expect.anything(), [expect.objectContaining({ kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN })]);
+    });
+
     it('leaves a failure a retry may fix, such as the provider being unreachable, for the runner to try again, keeping the Seasons it finished on the run', async () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const pga = syncedLeague(seasons);

@@ -69,7 +69,7 @@ describe('BalldontlieAdapter (NHL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY, { from: new Date('2025-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY, { from: new Date('2025-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'nhl' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status, event.startDate.toISOString()])).toEqual([
         ['nhl-2024-postseason', 'NHL Playoffs', 'COMPLETED', '2025-04-19T00:00:00.000Z'],
@@ -85,7 +85,7 @@ describe('BalldontlieAdapter (NHL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'nhl' });
 
       expect(events.map((event) => event.externalId)).toEqual(['nhl-2025-postseason']);
     });
@@ -94,7 +94,7 @@ describe('BalldontlieAdapter (NHL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await expect(harness.adapter.getUpcomingEvents(Sport.HOCKEY, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') })).resolves.toEqual([]);
+      await expect(harness.adapter.getUpcomingEvents(Sport.HOCKEY, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'nhl' })).resolves.toEqual([]);
       expect(requestLine(harness.api).map((line) => /seasons=(\d+)/.exec(line)?.[1])).toEqual([]);
     });
 
@@ -102,7 +102,7 @@ describe('BalldontlieAdapter (NHL)', () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 4, 1));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY, undefined, { providerSeasonId: '2025' });
+      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY, undefined, { providerLeagueCode: 'nhl', providerSeasonId: '2025' });
 
       expect(events.map((event) => event.externalId)).toEqual(['nhl-2025-postseason']);
       expect(requestLine(harness.api).map((line) => /seasons=(\d+)/.exec(line)?.[1])).toEqual(['2025']);

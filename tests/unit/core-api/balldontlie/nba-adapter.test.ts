@@ -57,7 +57,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2025-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2025-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'nba' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['nba-2024-postseason', 'NBA Playoffs', 'COMPLETED'],
@@ -74,7 +74,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'nba' });
 
       expect(events.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
       expect(seasonsRead(harness.api)).toEqual(['2025']);
@@ -84,7 +84,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'nba' });
 
       expect(events).toEqual([]);
       expect(seasonsRead(harness.api)).toEqual([]);
@@ -94,7 +94,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await expect(harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerSeasonId: '2025-26' })).rejects.toThrow('2025-26');
+      await expect(harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerLeagueCode: 'nba', providerSeasonId: '2025-26' })).rejects.toThrow('2025-26');
       expect(seasonsRead(harness.api)).toEqual([]);
     });
 
@@ -102,7 +102,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       const harness = setup(nbaRoutes, Date.UTC(2026, 3, 20));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerSeasonId: '2025' });
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerLeagueCode: 'nba', providerSeasonId: '2025' });
 
       expect(events.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
       expect(seasonsRead(harness.api)).toEqual(['2025']);

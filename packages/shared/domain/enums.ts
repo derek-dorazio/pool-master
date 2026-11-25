@@ -915,6 +915,13 @@ export const ProviderSyncFindingKind = {
    * Provider and the code.
    */
   SLOT_VALUE_UNMAPPED: 'SLOT_VALUE_UNMAPPED',
+  /**
+   * The league's selected provider mapping names a provider league code its Provider does not read
+   * (#2005): no enabled league row of the sport has the code, or the adapter has no reader for it.
+   * Nothing is read, rather than every league of the sport, and the events sync fails until the
+   * mapping or the league row is fixed. ERROR. Subject: league and Provider.
+   */
+  PROVIDER_LEAGUE_UNKNOWN: 'PROVIDER_LEAGUE_UNKNOWN',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

@@ -82,7 +82,11 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const range = { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') };
+      const events = [
+        ...await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, range, { providerLeagueCode: 'ncaab' }),
+        ...await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, range, { providerLeagueCode: 'ncaaw' }),
+      ];
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['ncaab-2025-tournament', 'NCAA Men\'s Tournament', 'COMPLETED'],
@@ -95,7 +99,11 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
+      const range = { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') };
+      const events = [
+        ...await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, range, { providerLeagueCode: 'ncaab' }),
+        ...await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, range, { providerLeagueCode: 'ncaaw' }),
+      ];
 
       expect(events).toEqual([]);
       expect(seasonsRead(harness.api, 'ncaab')).toEqual([]);
@@ -106,7 +114,10 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 9, 31));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerSeasonId: '2025' });
+      const events = [
+        ...await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerLeagueCode: 'ncaab', providerSeasonId: '2025' }),
+        ...await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerLeagueCode: 'ncaaw', providerSeasonId: '2025' }),
+      ];
 
       expect(events.map((event) => event.externalId)).toEqual(['ncaab-2025-tournament', 'ncaaw-2025-tournament']);
       expect(seasonsRead(harness.api, 'ncaab')).toEqual(['2025']);
