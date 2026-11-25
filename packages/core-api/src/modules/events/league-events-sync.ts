@@ -235,7 +235,7 @@ export class LeagueEventsSync {
   }
 
   private async syncSeason(sportLeagueId: string, providerId: string, season: SyncableSportLeagueSeason & { providerSeasonId: string }): Promise<SeasonSync> {
-    const providerEvents = await this.options.seasonSchedule.listSeasonEvents(providerId, sportLeagueId, season.providerSeasonId);
+    const providerEvents = await this.options.seasonSchedule.listSeasonEvents(sportLeagueId, season.providerSeasonId);
     const imported = await this.options.sportEvents.importProviderSeason({ sportLeagueId, sportLeagueSeasonId: season.id, providerId, providerEvents });
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };

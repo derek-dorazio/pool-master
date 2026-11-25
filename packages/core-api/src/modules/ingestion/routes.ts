@@ -67,8 +67,8 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'Change a provider\'s settings',
-      description: 'The Providers page\'s edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. '
-        + '404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. '
+      description: 'The Providers page\'s edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling and the leagues read take effect when the server tasks next start. '
+        + '404 PROVIDER_NOT_FOUND when there is no such Provider row. '
         + '422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider\'s signing secret is not set in this environment. Root admin only.',
       operationId: 'updateProviderSettings',
       params: { type: 'object', required: ['providerId'], properties: { providerId: { type: 'string', format: 'uuid', description: 'The Provider row (ProviderSettingsDto.id).' } } },

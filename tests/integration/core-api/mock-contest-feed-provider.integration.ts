@@ -698,7 +698,7 @@ describe('mock contest feed provider event-first verification', () => {
     const prisma = getPrisma();
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
-    registry.register(Sport.GOLF, provider, 'PRIMARY');
+    registry.register(provider);
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     // A run's event is the SportEvent it links (#2040), found as the app finds it.
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
@@ -846,7 +846,7 @@ describe('mock contest feed provider event-first verification', () => {
     const prisma = getPrisma();
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
-    registry.register(Sport.GOLF, provider, 'PRIMARY');
+    registry.register(provider);
     const settlement = createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() });
     // One queue and one runner over the job table, as the app has: two runners here would each
     // claim the other's jobs and fail them as unexpected.
@@ -1103,7 +1103,7 @@ describe('mock contest feed provider event-first verification', () => {
     const registry = new ProviderRegistry();
     const getUpcomingEventsSpy = jest.spyOn(provider, 'getUpcomingEvents');
     const getEventDetailsSpy = jest.spyOn(provider, 'getEventDetails');
-    registry.register(Sport.GOLF, provider, 'PRIMARY');
+    registry.register(provider);
 
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const scheduler = new IngestionScheduler(registry, {

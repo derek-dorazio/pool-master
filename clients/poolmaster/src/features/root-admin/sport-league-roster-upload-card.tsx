@@ -42,8 +42,8 @@ function describeRow(row: RosterPreviewRow['row']): string {
  * Each row names one of the league's own participants; the upload never adds one.
  */
 export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
-  const { sport, sportUrlSegment, definition } = useManagedSport();
-  const { participant } = sportVocabulary(definition);
+  const { sport, sportUrlSegment } = useManagedSport();
+  const { participant } = sportVocabulary(sport);
   const sportLeague = useSportLeagueNoun(sport, leagueId);
   const logger = getLogger().child({
     feature: 'root-admin-sport-league-home-page',

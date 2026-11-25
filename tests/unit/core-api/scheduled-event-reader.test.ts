@@ -1,9 +1,9 @@
-import { MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchStatus, ProviderCode, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { createScheduledEventReader, ROUND_WITHOUT_END_UNDERWAY_MS } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { fakeLogger } from '../../support/fake-logger';
 
-// Which events a scheduled feed syncs: the events every provider serving the sport has an id for
-// (#2004), each provider's next two to load a field, or every event in progress for scores. The
+// Which events a scheduled feed syncs: the events of leagues whose selected mapping names a running
+// provider (#2004, #2073), each provider's next two to load a field, or every event in progress for scores. The
 // query itself runs in integration.
 
 const NOW = new Date('2026-11-09T12:00:00.000Z');
@@ -24,13 +24,13 @@ function reader(providerIds: string[], live: LiveRelations = {}) {
     })));
   });
   const logger = fakeLogger();
-  const registry = { getProvidersForSport: () => providerIds.map((providerId) => ({ providerId })) };
+  const registry = { all: () => providerIds.map((providerId) => ({ providerId })) };
   const read = createScheduledEventReader({ prisma: { sportEvent: { findMany } } as never, registry: registry as never, logger });
   return { read, findMany, logger };
 }
 
 describe('createScheduledEventReader', () => {
-  it('reads nothing and warns for a sport no provider is registered for, for fields and for scores', async () => {
+  it('reads nothing and warns when no provider is running here, for fields and for scores', async () => {
     const { read, findMany, logger } = reader([]);
 
     await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW })).resolves.toEqual([]);
@@ -84,7 +84,7 @@ describe('createScheduledEventReader', () => {
     expect(findMany).toHaveBeenCalledTimes(1);
   });
 
-  it('reads no scores events, asking nothing, when no provider serving the sport has a row', async () => {
+  it('reads no scores events, asking nothing, when no running provider has a row', async () => {
     const { read, findMany } = reader(['mock']);
 
     await expect(read.listLiveScoreEvents({ sport: Sport.GOLF, now: NOW })).resolves.toEqual([]);
@@ -150,6 +150,19 @@ describe('createScheduledEventReader', () => {
       expect(football.findMany.mock.calls[0]?.[0].select).toEqual(expect.objectContaining({
         matches: { where: { status: MatchStatus.IN_PROGRESS }, orderBy: { scheduledDate: { sort: 'asc', nulls: 'last' } }, take: 1, select: { scheduledDate: true } },
       }));
+    });
+  });
+
+  it('lists the sports with an active league whose selected mapping names a running provider, in sport display order, in one query', async () => {
+    const sportFindMany = jest.fn().mockResolvedValue([{ sport: Sport.GOLF }, { sport: Sport.BASKETBALL }]);
+    const read = createScheduledEventReader({ prisma: { sport: { findMany: sportFindMany } } as never, registry: { all: () => [] } });
+
+    await expect(read.listSyncedSports({ providerCodes: [ProviderCode.BALLDONTLIE] })).resolves.toEqual([Sport.GOLF, Sport.BASKETBALL]);
+    expect(sportFindMany).toHaveBeenCalledTimes(1);
+    expect(sportFindMany).toHaveBeenCalledWith({
+      where: { sportLeagues: { some: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: { in: [ProviderCode.BALLDONTLIE] } } } } } } } },
+      select: { sport: true },
+      orderBy: { displayOrder: 'asc' },
     });
   });
 });

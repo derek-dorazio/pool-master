@@ -53,7 +53,7 @@ function tourEvent(tour: string, year: number, shiftDays = 0, name = `${tour} Op
 
 function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays: 0 }) {
   const prisma = getAppPrisma();
-  const listSeasonEvents = jest.fn(async (_providerId: string, sportLeagueId: string, providerSeasonId: string) => {
+  const listSeasonEvents = jest.fn(async (sportLeagueId: string, providerSeasonId: string) => {
     const league = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId } });
     return [tourEvent(league.name, Number(providerSeasonId), feed.shiftDays, feed.name)];
   });
@@ -103,7 +103,7 @@ describe('Synced event creation (ADR 0011)', () => {
       [synced.id, 2027, [{ externalId: `${synced.name}-2027`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
       [synced.id, 2028, [{ externalId: `${synced.name}-2028`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
     ]);
-    expect(new Set(listSeasonEvents.mock.calls.map(([, sportLeagueId]) => sportLeagueId))).toEqual(new Set([synced.id]));
+    expect(new Set(listSeasonEvents.mock.calls.map(([sportLeagueId]) => sportLeagueId))).toEqual(new Set([synced.id]));
   });
 
   it('creates nothing on a second sweep: the events are already linked', async () => {

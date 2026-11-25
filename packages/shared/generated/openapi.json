@@ -68739,12 +68739,6 @@
             "type": "boolean",
             "description": "Whether the provider is used at all. A change takes effect when the server tasks next start."
           },
-          "priority": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100,
-            "description": "Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start."
-          },
           "leagues": {
             "type": "array",
             "items": {
@@ -68834,7 +68828,6 @@
           "webhookRoundPollMinutes",
           "hasPlayerStats",
           "isEnabled",
-          "priority",
           "leagues"
         ],
         "additionalProperties": false,
@@ -68878,46 +68871,6 @@
               "null"
             ],
             "format": "date-time"
-          },
-          "sportsCovered": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
-            },
-            "description": "Sports the provider's running adapter covers."
-          },
-          "primaryForSports": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
-            },
-            "description": "The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them."
           },
           "activeEventCount": {
             "type": "integer",
@@ -69012,12 +68965,6 @@
                 "type": "boolean",
                 "description": "Whether the provider is used at all. A change takes effect when the server tasks next start."
               },
-              "priority": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 100,
-                "description": "Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start."
-              },
               "leagues": {
                 "type": "array",
                 "items": {
@@ -69107,7 +69054,6 @@
               "webhookRoundPollMinutes",
               "hasPlayerStats",
               "isEnabled",
-              "priority",
               "leagues"
             ],
             "additionalProperties": false
@@ -69119,8 +69065,6 @@
           "status",
           "errorRate",
           "lastEventAt",
-          "sportsCovered",
-          "primaryForSports",
           "activeEventCount",
           "requestsPerMinute",
           "webhooksEnabled",
@@ -69163,12 +69107,6 @@
           },
           "isEnabled": {
             "type": "boolean"
-          },
-          "priority": {
-            "description": "409 PROVIDER_PRIORITY_TAKEN when another provider has it.",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100
           }
         },
         "additionalProperties": false,
@@ -69235,12 +69173,6 @@
                 "type": "boolean",
                 "description": "Whether the provider is used at all. A change takes effect when the server tasks next start."
               },
-              "priority": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 100,
-                "description": "Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start."
-              },
               "leagues": {
                 "type": "array",
                 "items": {
@@ -69330,7 +69262,6 @@
               "webhookRoundPollMinutes",
               "hasPlayerStats",
               "isEnabled",
-              "priority",
               "leagues"
             ],
             "additionalProperties": false,
@@ -69494,29 +69425,6 @@
             "additionalProperties": false,
             "description": "A provider's webhookPollMinutes and webhookRoundPollMinutes."
           },
-          "priority": {
-            "type": "object",
-            "properties": {
-              "min": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
-                "description": "The smallest value the API takes."
-              },
-              "max": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
-                "description": "The largest value the API takes."
-              }
-            },
-            "required": [
-              "min",
-              "max"
-            ],
-            "additionalProperties": false,
-            "description": "A provider's priority."
-          },
           "leagueMinutes": {
             "type": "object",
             "properties": {
@@ -69544,7 +69452,6 @@
         "required": [
           "requestsPerMinute",
           "pollMinutes",
-          "priority",
           "leagueMinutes"
         ],
         "additionalProperties": false,
@@ -69593,46 +69500,6 @@
                     "null"
                   ],
                   "format": "date-time"
-                },
-                "sportsCovered": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "GOLF",
-                      "HORSE_RACING",
-                      "AUTO_RACING",
-                      "CYCLING",
-                      "RUNNING",
-                      "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
-                      "HOCKEY",
-                      "BASEBALL",
-                      "SOCCER",
-                      "TENNIS"
-                    ]
-                  },
-                  "description": "Sports the provider's running adapter covers."
-                },
-                "primaryForSports": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "GOLF",
-                      "HORSE_RACING",
-                      "AUTO_RACING",
-                      "CYCLING",
-                      "RUNNING",
-                      "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
-                      "HOCKEY",
-                      "BASEBALL",
-                      "SOCCER",
-                      "TENNIS"
-                    ]
-                  },
-                  "description": "The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them."
                 },
                 "activeEventCount": {
                   "type": "integer",
@@ -69727,12 +69594,6 @@
                       "type": "boolean",
                       "description": "Whether the provider is used at all. A change takes effect when the server tasks next start."
                     },
-                    "priority": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 100,
-                      "description": "Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start."
-                    },
                     "leagues": {
                       "type": "array",
                       "items": {
@@ -69822,7 +69683,6 @@
                     "webhookRoundPollMinutes",
                     "hasPlayerStats",
                     "isEnabled",
-                    "priority",
                     "leagues"
                   ],
                   "additionalProperties": false
@@ -69834,8 +69694,6 @@
                 "status",
                 "errorRate",
                 "lastEventAt",
-                "sportsCovered",
-                "primaryForSports",
                 "activeEventCount",
                 "requestsPerMinute",
                 "webhooksEnabled",
@@ -69896,29 +69754,6 @@
                 "additionalProperties": false,
                 "description": "A provider's webhookPollMinutes and webhookRoundPollMinutes."
               },
-              "priority": {
-                "type": "object",
-                "properties": {
-                  "min": {
-                    "type": "integer",
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991,
-                    "description": "The smallest value the API takes."
-                  },
-                  "max": {
-                    "type": "integer",
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991,
-                    "description": "The largest value the API takes."
-                  }
-                },
-                "required": [
-                  "min",
-                  "max"
-                ],
-                "additionalProperties": false,
-                "description": "A provider's priority."
-              },
               "leagueMinutes": {
                 "type": "object",
                 "properties": {
@@ -69946,7 +69781,6 @@
             "required": [
               "requestsPerMinute",
               "pollMinutes",
-              "priority",
               "leagueMinutes"
             ],
             "additionalProperties": false,
@@ -88739,7 +88573,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "The Providers page's edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. 404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. 422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider's signing secret is not set in this environment. Root admin only.",
+        "description": "The Providers page's edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling and the leagues read take effect when the server tasks next start. 404 PROVIDER_NOT_FOUND when there is no such Provider row. 422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider's signing secret is not set in this environment. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {

@@ -3483,7 +3483,7 @@ export interface paths {
         head?: never;
         /**
          * Change a provider's settings
-         * @description The Providers page's edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. 404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. 422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider's signing secret is not set in this environment. Root admin only.
+         * @description The Providers page's edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling and the leagues read take effect when the server tasks next start. 404 PROVIDER_NOT_FOUND when there is no such Provider row. 422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider's signing secret is not set in this environment. Root admin only.
          */
         patch: operations["updateProviderSettings"];
         trace?: never;
@@ -24667,8 +24667,6 @@ export interface components {
             hasPlayerStats: boolean;
             /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
             isEnabled: boolean;
-            /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
-            priority: number;
             /** @description The provider's own leagues, by code. */
             leagues: {
                 /**
@@ -24716,10 +24714,6 @@ export interface components {
              * @description When one of the provider's events last changed; null when none is known.
              */
             lastEventAt: string | null;
-            /** @description Sports the provider's running adapter covers. */
-            sportsCovered: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
-            /** @description The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them. */
-            primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
             /** @description The provider's events that are scheduled or in progress. */
             activeEventCount: number;
             /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
@@ -24763,8 +24757,6 @@ export interface components {
                 hasPlayerStats: boolean;
                 /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
                 isEnabled: boolean;
-                /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
-                priority: number;
                 /** @description The provider's own leagues, by code. */
                 leagues: {
                     /**
@@ -24809,8 +24801,6 @@ export interface components {
             webhookRoundPollMinutes?: number;
             hasPlayerStats?: boolean;
             isEnabled?: boolean;
-            /** @description 409 PROVIDER_PRIORITY_TAKEN when another provider has it. */
-            priority?: number;
         };
         /** @description A provider's settings as saved. */
         ProviderSettingsResponse: {
@@ -24847,8 +24837,6 @@ export interface components {
                 hasPlayerStats: boolean;
                 /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
                 isEnabled: boolean;
-                /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
-                priority: number;
                 /** @description The provider's own leagues, by code. */
                 leagues: {
                     /**
@@ -24932,13 +24920,6 @@ export interface components {
                 /** @description The largest value the API takes. */
                 max: number;
             };
-            /** @description A provider's priority. */
-            priority: {
-                /** @description The smallest value the API takes. */
-                min: number;
-                /** @description The largest value the API takes. */
-                max: number;
-            };
             /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
             leagueMinutes: {
                 /** @description The smallest value the API takes. */
@@ -24966,10 +24947,6 @@ export interface components {
                  * @description When one of the provider's events last changed; null when none is known.
                  */
                 lastEventAt: string | null;
-                /** @description Sports the provider's running adapter covers. */
-                sportsCovered: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
-                /** @description The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them. */
-                primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description The provider's events that are scheduled or in progress. */
                 activeEventCount: number;
                 /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
@@ -25013,8 +24990,6 @@ export interface components {
                     hasPlayerStats: boolean;
                     /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
                     isEnabled: boolean;
-                    /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
-                    priority: number;
                     /** @description The provider's own leagues, by code. */
                     leagues: {
                         /**
@@ -25056,13 +25031,6 @@ export interface components {
                 };
                 /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
                 pollMinutes: {
-                    /** @description The smallest value the API takes. */
-                    min: number;
-                    /** @description The largest value the API takes. */
-                    max: number;
-                };
-                /** @description A provider's priority. */
-                priority: {
                     /** @description The smallest value the API takes. */
                     min: number;
                     /** @description The largest value the API takes. */

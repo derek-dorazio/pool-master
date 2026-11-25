@@ -71,14 +71,15 @@ import { sportPlay } from '../../support/sport-play';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
-/** A provider of one sport whose participants and events are whatever the current seed set. */
+/** A provider whose participants and events are whatever the current seed set. */
 class ScalingProvider implements SportDataProvider {
-  readonly sportsCovered: Sport[];
   participants: ProviderParticipant[] = [];
   events: SportEvent[] = [];
 
-  constructor(readonly providerId: string, readonly providerName: string, sport: Sport) {
-    this.sportsCovered = [sport];
+  constructor(readonly providerId: string, readonly providerName: string, readonly providerCode: ProviderCode) {}
+
+  servesLeague(): boolean {
+    return true;
   }
 
   async getUpcomingEvents(): Promise<SportEvent[]> {
@@ -99,14 +100,14 @@ class ScalingProvider implements SportDataProvider {
 }
 
 // BALLDONTLIE's id, so the leagues synced from its seeded Provider row read as this provider's (#1997).
-const provider = new ScalingProvider(SYNCED_PROVIDER_ID, 'BALLDONTLIE', Sport.GOLF);
+const provider = new ScalingProvider(SYNCED_PROVIDER_ID, 'BALLDONTLIE', ProviderCode.BALLDONTLIE);
 /** A second provider, so the provider list shows two and a read per provider would show. */
-const tennisProvider = new ScalingProvider('scaling-tennis-provider', 'Scaling Tennis Provider', Sport.TENNIS);
+const tennisProvider = new ScalingProvider('scaling-tennis-provider', 'Scaling Tennis Provider', 'SCALING_FEED' as ProviderCode);
 
 beforeAll(async () => {
   await setupIntegrationTests();
-  getProviderRegistry().register(Sport.GOLF, provider, 'PRIMARY');
-  getProviderRegistry().register(Sport.TENNIS, tennisProvider, 'PRIMARY');
+  getProviderRegistry().register(provider);
+  getProviderRegistry().register(tennisProvider);
 });
 afterAll(async () => {
   await cleanupTestData();

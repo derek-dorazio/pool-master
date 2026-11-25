@@ -2589,7 +2589,7 @@ export const listProviders = <ThrowOnError extends boolean = false>(options?: Op
 /**
  * Change a provider's settings
  *
- * The Providers page's edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. 404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. 422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider's signing secret is not set in this environment. Root admin only.
+ * The Providers page's edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling and the leagues read take effect when the server tasks next start. 404 PROVIDER_NOT_FOUND when there is no such Provider row. 422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider's signing secret is not set in this environment. Root admin only.
  */
 export const updateProviderSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateProviderSettingsData, ThrowOnError>): RequestResult<UpdateProviderSettingsResponses, UpdateProviderSettingsErrors, ThrowOnError> => (options.client ?? client).patch<UpdateProviderSettingsResponses, UpdateProviderSettingsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

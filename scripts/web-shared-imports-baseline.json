@@ -77,7 +77,7 @@
   "findTierLayoutProblem": 1,
   "GAME_PICKS_TIEBREAKER_MAX": 2,
   "getDefaultCountedScores": 1,
-  "getSportDefinition": 15,
+  "getSportDefinition": 13,
   "getTieredRosterSize": 2,
   "getTiersInPlay": 1,
   "hasSportEventStarted": 1,

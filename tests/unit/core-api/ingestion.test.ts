@@ -4,14 +4,14 @@
  * Tests the core ingestion classes with mocked providers.
  */
 
-import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import { LeagueProviderNotResolvedError, ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
 import type {
   SportDataProvider,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import type { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
@@ -21,8 +21,9 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDataProvider {
   return {
     providerId: 'mock-provider',
+    providerCode: ProviderCode.BALLDONTLIE,
     providerName: 'Mock Provider',
-    sportsCovered: ['GOLF'],
+    servesLeague: jest.fn().mockReturnValue(true),
     getUpcomingEvents: jest.fn().mockResolvedValue([]),
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
@@ -61,6 +62,14 @@ function emptyLiveScorePersistenceResult() {
 // ProviderRegistry
 // ---------------------------------------------------------------------------
 
+/** A second Provider code, which only test code has: production has one Provider. */
+const OTHER_PROVIDER = 'OTHER_FEED' as ProviderCode;
+
+/** A sport league whose selected mapping names the provider with this code. */
+function leagueSyncedFrom(name: string, providerCode: ProviderCode) {
+  return { name, selectedProviderMapping: { providerCode, providerName: `${providerCode} feed`, providerLeagueCode: name.toLowerCase() } };
+}
+
 describe('ProviderRegistry', () => {
   let registry: ProviderRegistry;
 
@@ -68,112 +77,68 @@ describe('ProviderRegistry', () => {
     registry = new ProviderRegistry();
   });
 
-  it('registers a provider and retrieves it by sport', () => {
+  it('finds a running provider by its Provider code and by the id its feed carries, and none for a code not running', () => {
+    const provider = createMockProvider({ providerId: 'balldontlie' });
+    registry.register(provider);
+
+    expect(registry.byCode(ProviderCode.BALLDONTLIE)).toBe(provider);
+    expect(registry.bySourceId('balldontlie')).toBe(provider);
+    expect(registry.byCode(OTHER_PROVIDER)).toBeNull();
+    expect(registry.bySourceId('nonexistent')).toBeNull();
+    expect(registry.all()).toEqual([provider]);
+  });
+
+  it('replaces a Provider\'s earlier adapter, which its old feed id no longer finds', () => {
+    const first = createMockProvider({ providerId: 'feed-v1' });
+    const second = createMockProvider({ providerId: 'feed-v2' });
+    registry.register(first);
+    registry.register(second);
+
+    expect(registry.byCode(ProviderCode.BALLDONTLIE)).toBe(second);
+    expect(registry.bySourceId('feed-v1')).toBeNull();
+    expect(registry.all()).toEqual([second]);
+  });
+
+  it('resolves a sport league to the provider its selected mapping names, with that mapping', () => {
     const provider = createMockProvider();
-    registry.register('GOLF', provider, 'PRIMARY');
+    registry.register(provider);
+    const league = leagueSyncedFrom('NBA', ProviderCode.BALLDONTLIE);
 
-    const result = registry.getProvider('GOLF');
-    expect(result).toBe(provider);
+    expect(registry.forLeague(league)).toEqual({ provider, mapping: league.selectedProviderMapping });
   });
 
-  it('returns null when no provider is registered for a sport', () => {
-    const result = registry.getProvider('NFL' as Sport);
-    expect(result).toBeNull();
+  it('resolves two leagues of one sport synced from different providers to each one\'s own provider', () => {
+    const balldontlie = createMockProvider({ providerId: 'balldontlie' });
+    const other = createMockProvider({ providerId: 'other-feed', providerCode: OTHER_PROVIDER });
+    registry.register(balldontlie);
+    registry.register(other);
+
+    expect(registry.forLeague(leagueSyncedFrom('NBA', ProviderCode.BALLDONTLIE)).provider).toBe(balldontlie);
+    expect(registry.forLeague(leagueSyncedFrom('WNBA', OTHER_PROVIDER)).provider).toBe(other);
   });
 
-  it('getSupportedSports returns all sports with registered providers', () => {
-    const golfProvider = createMockProvider({ providerId: 'golf-api' });
-    const nflProvider = createMockProvider({ providerId: 'nfl-api' });
+  it('refuses a league with no selected mapping as not synced (422), with no fallback to a provider of its sport', () => {
+    registry.register(createMockProvider());
 
-    registry.register('GOLF', golfProvider, 'PRIMARY');
-    registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
+    const refusal = (() => {
+      try {
+        registry.forLeague({ name: 'US Thoroughbred', selectedProviderMapping: null });
+      } catch (error) {
+        return error;
+      }
+      return undefined;
+    })();
 
-    const sports = registry.getSupportedSports();
-    expect(sports).toHaveLength(2);
-    expect(sports).toContain('GOLF');
-    expect(sports).toContain('NFL');
+    expect(refusal).toBeInstanceOf(LeagueProviderNotResolvedError);
+    expect(refusal).toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
   });
 
-  // --- Additional edge case tests (lines 60-88) ---
+  it('refuses a league whose selected provider is not running here (404 PROVIDER_NOT_FOUND)', () => {
+    registry.register(createMockProvider());
 
-  it('getAllProviders returns all registered providers with deduplication', () => {
-    const sharedProvider = createMockProvider({ providerId: 'espn-api' });
-    const nflProvider = createMockProvider({ providerId: 'nfl-api' });
-
-    // Register the same provider for two sports — should appear once in results
-    registry.register('GOLF', sharedProvider, 'PRIMARY');
-    registry.register('NFL' as Sport, sharedProvider, 'PRIMARY');
-    registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
-
-    const all = registry.getAllProviders();
-    expect(all).toHaveLength(2);
-    const ids = all.map((p) => p.providerId);
-    expect(ids).toContain('espn-api');
-    expect(ids).toContain('nfl-api');
-  });
-
-  it('getProviderById returns the matching provider or null', () => {
-    const golfProvider = createMockProvider({ providerId: 'golf-stats' });
-    const nflProvider = createMockProvider({ providerId: 'nfl-stats' });
-
-    registry.register('GOLF', golfProvider, 'PRIMARY');
-    registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
-
-    expect(registry.getProviderById('golf-stats')).toBe(golfProvider);
-    expect(registry.getProviderById('nfl-stats')).toBe(nflProvider);
-    expect(registry.getProviderById('nonexistent')).toBeNull();
-  });
-
-  it('getSupportedSports returns unique sport list across all registrations', () => {
-    const sharedProvider = createMockProvider({ providerId: 'multi-sport-api' });
-
-    // Same provider registered for multiple sports.
-    registry.register('GOLF', sharedProvider, 'PRIMARY');
-    registry.register('NFL' as Sport, sharedProvider, 'PRIMARY');
-    registry.register('NBA' as Sport, sharedProvider, 'PRIMARY');
-
-    const sports = registry.getSupportedSports();
-    expect(sports).toHaveLength(3);
-    expect(sports).toContain('GOLF');
-    expect(sports).toContain('NFL');
-    expect(sports).toContain('NBA');
-  });
-});
-
-describe('ProviderRegistry with two providers serving one sport', () => {
-  let registry: ProviderRegistry;
-  const mock = createMockProvider({ providerId: 'mock-contest-feed' });
-  const balldontlie = createMockProvider({ providerId: 'balldontlie' });
-
-  beforeEach(() => {
-    registry = new ProviderRegistry();
-  });
-
-  it('keeps the primary as the sport\'s default while a secondary also serves it, whatever order they register in', () => {
-    registry.register('GOLF', balldontlie, 'SECONDARY');
-    registry.register('GOLF', mock, 'PRIMARY');
-
-    expect(registry.getProvider('GOLF')).toBe(mock);
-    expect(registry.getProvidersForSport('GOLF')).toEqual([balldontlie, mock]);
-    expect(registry.getProviderById('balldontlie')).toBe(balldontlie);
-  });
-
-  it('lets a later primary replace the sport\'s earlier one, which no longer serves the sport', () => {
-    registry.register('GOLF', mock, 'PRIMARY');
-    registry.register('GOLF', balldontlie, 'PRIMARY');
-
-    expect(registry.getProvider('GOLF')).toBe(balldontlie);
-    expect(registry.getProvidersForSport('GOLF')).toEqual([balldontlie]);
-    expect(registry.getProviderById('mock-contest-feed')).toBeNull();
-    expect(registry.getAllProviders()).toEqual([balldontlie]);
-  });
-
-  it('has no default and no providers for a sport only secondaries serve, or none does', () => {
-    registry.register('GOLF', balldontlie, 'SECONDARY');
-
-    expect(registry.getProvider('GOLF')).toBeNull();
-    expect(registry.getProvidersForSport('GOLF')).toEqual([balldontlie]);
-    expect(registry.getProvidersForSport('TENNIS')).toEqual([]);
+    expect(() => registry.forLeague(leagueSyncedFrom('EPL', OTHER_PROVIDER))).toThrow(
+      expect.objectContaining({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 }) as Error,
+    );
   });
 });
 
@@ -208,7 +173,7 @@ describe('IngestionScheduler', () => {
       const provider = createMockProvider({
         getLiveScores: jest.fn().mockResolvedValue(mockResult),
       });
-      registry.register('GOLF', provider, 'PRIMARY');
+      registry.register(provider);
 
       const scheduler = new IngestionScheduler(registry, callbacks);
       const job = await scheduler.pollLiveScores('GOLF', 'mock-provider', 'evt-1');

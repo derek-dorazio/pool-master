@@ -1,6 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { AutoReleaseCheckOutcome, SportEventStatus, SportLeagueIssueType } from '@poolmaster/shared/domain';
-import { Settings } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, Outlet, useLocation, useParams } from 'react-router';
 import {
@@ -19,6 +18,7 @@ import { extractErrorMessage } from '@/lib/errors';
 import { eventPageTabs, type EventPageContext } from './event-page-context';
 import { EventReleaseChecksDialog } from './event-release-checks-dialog';
 import { EventSettingsDialog } from './event-settings-dialog';
+import { PageSettingsButton } from './page-settings-button';
 import { isSyncedLeague } from './league-page-context';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath, buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
@@ -113,17 +113,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        actions={(
-          <Button
-            aria-label={`${event.name} settings`}
-            data-testid="root-admin-event-settings"
-            onClick={() => setSettingsOpen(true)}
-            size="sm"
-            variant="icon"
-          >
-            <Settings aria-hidden size={16} />
-          </Button>
-        )}
+        actions={<PageSettingsButton name={event.name} onClick={() => setSettingsOpen(true)} testId="root-admin-event-settings" />}
         breadcrumbs={[
           { href: SPORTS_PATH, label: 'Sports' },
           { label: enumLabel('Sport', event.sport) },

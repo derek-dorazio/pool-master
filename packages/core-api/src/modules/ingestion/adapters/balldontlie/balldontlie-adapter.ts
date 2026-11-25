@@ -53,7 +53,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import { Sport, type ProviderLeagueSettings } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport, type ProviderLeagueSettings } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { errorMessage } from '../../../../core/error-message';
 import {
@@ -176,8 +176,8 @@ function withFormat(query: BalldontlieQuery): BalldontlieQuery {
 
 export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDiagnostics {
   readonly providerId = BALLDONTLIE_PROVIDER_ID;
+  readonly providerCode = ProviderCode.BALLDONTLIE;
   readonly providerName = 'BALLDONTLIE';
-  readonly sportsCovered: Sport[];
   private readonly payloads = new ProviderPayloadRecorder('balldontlie.request');
   private readonly client: BalldontlieClient;
   private readonly nfl: NflReader;
@@ -250,7 +250,11 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       leagues.set(reader.sport, [...(leagues.get(reader.sport) ?? []), reader]);
     }
     this.leagues = leagues;
-    this.sportsCovered = [...this.leagues.keys()];
+  }
+
+  /** Whether one of the leagues it reads has this code: an enabled league row it has a reader for. */
+  servesLeague(providerLeagueCode: string): boolean {
+    return [...this.leagues.values()].some((reads) => reads.some((each) => each.code === providerLeagueCode));
   }
 
   /** The Provider row's rate, read for each request (#1997). */

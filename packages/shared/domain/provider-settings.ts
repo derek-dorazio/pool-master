@@ -9,7 +9,6 @@ import type { ProviderCode, ProviderWebhookEventSet, Sport } from './enums';
 /** The ranges each provider setting is held to, in the API and the database alike. */
 export const PROVIDER_REQUESTS_PER_MINUTE_RANGE = { min: 1, max: 6000 } as const;
 export const PROVIDER_POLL_MINUTES_RANGE = { min: 1, max: 240 } as const;
-export const PROVIDER_PRIORITY_RANGE = { min: 1, max: 100 } as const;
 export const PROVIDER_LEAGUE_MINUTES_RANGE = { min: 1, max: 1440 } as const;
 
 /** One of a provider's own leagues. */
@@ -45,14 +44,12 @@ export interface ProviderSettings {
   webhookRoundPollMinutes: number;
   hasPlayerStats: boolean;
   isEnabled: boolean;
-  /** Which provider serves a sport first when more than one covers it: lower first. */
-  priority: number;
   leagues: ProviderLeagueSettings[];
 }
 
 /** What a root admin may change on a provider. */
 export type ProviderSettingsUpdate = Partial<Pick<ProviderSettings,
-  'baseUrl' | 'requestsPerMinute' | 'webhooksEnabled' | 'webhookPollMinutes' | 'webhookRoundPollMinutes' | 'hasPlayerStats' | 'isEnabled' | 'priority'>>;
+  'baseUrl' | 'requestsPerMinute' | 'webhooksEnabled' | 'webhookPollMinutes' | 'webhookRoundPollMinutes' | 'hasPlayerStats' | 'isEnabled'>>;
 
 /** What a root admin may change on one of a provider's leagues. */
 export type ProviderLeagueSettingsUpdate = Partial<Pick<ProviderLeagueSettings, 'quietAfterMinutes' | 'typicalGameMinutes' | 'isEnabled'>>;

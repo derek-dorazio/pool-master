@@ -19,7 +19,7 @@ export function SportEventEditionFields({
   onChange: (edition: SportEventEdition) => void;
   sportLeagues: readonly SportLeagueDto[];
 }) {
-  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(useManagedSport().definition);
+  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(useManagedSport().sport);
   return (
     <>
       <FormField

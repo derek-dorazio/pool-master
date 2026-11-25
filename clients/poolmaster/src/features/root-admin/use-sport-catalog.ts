@@ -31,7 +31,8 @@ export function useSportsQuery() {
   });
 }
 
-export function useSportLeaguesQuery(sport: Sport) {
+/** A sport's leagues; waits while no sport is given. */
+export function useSportLeaguesQuery(sport: Sport | undefined) {
   return useQuery({
     queryKey: QueryKeys.rootAdmin.manageSport.sportLeagues(sport),
     queryFn: async (): Promise<SportLeagueDto[]> => {
@@ -41,6 +42,7 @@ export function useSportLeaguesQuery(sport: Sport) {
       }
       return response.data.sportLeagues;
     },
+    enabled: sport !== undefined,
     retry: false,
   });
 }

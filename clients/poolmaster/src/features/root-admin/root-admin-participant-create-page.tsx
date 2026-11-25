@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -33,8 +34,8 @@ export function RootAdminParticipantCreatePage() {
     feature: 'root-admin-participant-create-page',
   });
   const navigate = useNavigate();
-  const { sport, sportUrlSegment, definition } = useManagedSport();
-  const { participant, sportLeague } = sportVocabulary(definition);
+  const { sport, sportUrlSegment } = useManagedSport();
+  const { participant, sportLeague } = sportVocabulary(sport);
   const leaguesQuery = useSportLeaguesQuery(sport);
   const [searchParams] = useSearchParams();
   const startLeagueId = searchParams.get('sportLeague');
@@ -87,7 +88,7 @@ export function RootAdminParticipantCreatePage() {
   const errorMessage = createMutation.isError
     ? extractErrorMessage(createMutation.error, { fallback: `We could not add this ${participant.one}.` })
     : leaguesQuery.isError
-      ? extractErrorMessage(leaguesQuery.error, { fallback: `We could not load ${definition.name.toLowerCase()}'s ${sportLeague.many}.` })
+      ? extractErrorMessage(leaguesQuery.error, { fallback: `We could not load ${enumLabel('Sport', sport).toLowerCase()}'s ${sportLeague.many}.` })
       : undefined;
 
   return (

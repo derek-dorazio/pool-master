@@ -59,14 +59,14 @@ describe('ProviderSettingsStore (#1997)', () => {
     expect(store.byCode(ProviderCode.BALLDONTLIE)?.requestsPerMinute).toBe(600);
   });
 
-  it('adds a saved provider it did not hold, in priority order', async () => {
-    const store = storeOf(() => Promise.resolve([balldontlieTestProvider({ priority: 5 })]));
+  it('adds a saved provider it did not hold, in Provider code order', async () => {
+    const store = storeOf(() => Promise.resolve([balldontlieTestProvider()]));
     await store.load();
-    const first = { ...balldontlieTestProvider({ priority: 1 }), id: '00000000-0000-4000-8000-0000000000f1' };
+    const earlier = { ...balldontlieTestProvider(), id: '00000000-0000-4000-8000-0000000000f1', code: 'AAA_FEED' as ProviderCode };
 
-    store.replace(first);
+    store.replace(earlier);
 
-    expect(store.all().map((provider) => [provider.id, provider.priority])).toEqual([[first.id, 1], [balldontlieTestProvider().id, 5]]);
+    expect(store.all().map((provider) => provider.id)).toEqual([earlier.id, balldontlieTestProvider().id]);
   });
 
   it('refreshes every minute by default, and keeps the last rows on a failed read even with no logger', async () => {

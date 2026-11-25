@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import type { ProviderCode } from '@poolmaster/shared/domain';
 import {
   ProviderSeasonScheduleError,
   ProviderSeasonScheduleReader,
@@ -58,7 +59,7 @@ describe('ProviderSeasonScheduleReader.listSeasonEvents', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider));
 
-    const events = await service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027');
+    const events = await service.listSeasonEvents('pga', '2027');
 
     expect(events).toEqual([{
       externalId: 'pga-1',
@@ -74,7 +75,7 @@ describe('ProviderSeasonScheduleReader.listSeasonEvents', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider));
 
-    await service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027');
+    await service.listSeasonEvents('pga', '2027');
 
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', undefined, { providerLeagueCode: 'pga', providerSeasonId: '2027' });
   });
@@ -84,7 +85,7 @@ describe('ProviderSeasonScheduleReader.listSeasonEvents', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider));
 
-    await expect(service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027')).rejects.toMatchObject({
+    await expect(service.listSeasonEvents('pga', '2027')).rejects.toMatchObject({
       code: 'PROVIDER_LEAGUE_REFUSED',
       statusCode: 422,
       message: expect.stringContaining('BALLDONTLIE refused NFL') as unknown,
@@ -97,29 +98,39 @@ describe('ProviderSeasonScheduleReader.listSeasonEvents', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider));
 
-    await expect(service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027')).rejects.toBe(outage);
+    await expect(service.listSeasonEvents('pga', '2027')).rejects.toBe(outage);
   });
 
-  it('refuses a league with no selected mapping, or one to another provider, with 422 SPORT_LEAGUE_NOT_SYNCED and never calls the provider', async () => {
+  it('refuses a league with no selected mapping with 422 SPORT_LEAGUE_NOT_SYNCED, with no fallback to a provider of its sport', async () => {
     const provider = syncedProvider();
-    const otherProvider = buildProvider();
-    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValueOnce(leagueRow(null)).mockResolvedValueOnce(pgaLeague) } };
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(leagueRow(null)) } };
 
-    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider)).listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027'))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
-    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(otherProvider)).listSeasonEvents('mock-golf', 'pga', '2027'))
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider)).listSeasonEvents('pga', '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
     expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
-    expect(otherProvider.getUpcomingEvents).not.toHaveBeenCalled();
   });
 
-  it('404s SPORT_LEAGUE_NOT_FOUND for an unknown league and PROVIDER_NOT_FOUND for an unknown provider', async () => {
-    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(null) } };
+  it('reads the provider the league\'s selected mapping names, never another running provider of its sport', async () => {
+    const selected = syncedProvider();
+    const other = buildProvider({ providerId: 'other-feed', providerCode: 'OTHER_FEED' as ProviderCode });
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
 
-    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(syncedProvider())).listSeasonEvents(SYNCED_PROVIDER, 'nope', '2027'))
+    await new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(other, selected)).listSeasonEvents('pga', '2027');
+
+    expect(selected.getUpcomingEvents).toHaveBeenCalled();
+    expect(other.getUpcomingEvents).not.toHaveBeenCalled();
+  });
+
+  it('404s SPORT_LEAGUE_NOT_FOUND for an unknown league and PROVIDER_NOT_FOUND when the league\'s provider is not running here', async () => {
+    const missing = { sportLeague: { findUnique: jest.fn().mockResolvedValue(null) } };
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+    const other = buildProvider({ providerId: 'other-feed', providerCode: 'OTHER_FEED' as ProviderCode });
+
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(missing), registryWith(syncedProvider())).listSeasonEvents('nope', '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
-    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(null)).listSeasonEvents('unknown', 'pga', '2027'))
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(other)).listSeasonEvents('pga', '2027'))
       .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
+    expect(other.getUpcomingEvents).not.toHaveBeenCalled();
   });
 });
 

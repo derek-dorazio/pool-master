@@ -1024,7 +1024,6 @@ export const enUS = {
     PROVIDER_LEAGUE_NOT_FOUND: 'Provider league not found.',
     PROVIDER_LEAGUE_REFUSED: 'The provider refused this league.',
     PROVIDER_NOT_FOUND: 'Provider not found.',
-    PROVIDER_PRIORITY_TAKEN: 'Another provider already has that priority.',
     PROVIDER_SPORT_MISMATCH: 'This provider does not cover this sport.',
     PROVIDER_WEBHOOK_SECRET_MISSING: 'Webhooks can’t be turned on until the provider’s signing secret is set.',
     PROVIDER_WEBHOOK_UNVERIFIED: 'This delivery is not signed by the provider.',

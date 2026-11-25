@@ -24,9 +24,9 @@ import {
   BracketAdvancement,
   getSportDefinition,
   isKnownTimeZone,
-  providerSourceIdOf,
   sportPlaysMatches,
   type Participant,
+  type ProviderCode,
   type ProviderLeagueSettings,
   type ProviderSettings,
   type Sport,
@@ -70,11 +70,12 @@ export interface RankingUploadPreviewRow {
 /**
  * The providers as far as a sport league's event sync needs them (#1997): a provider league by id
  * with its provider (the `ProviderSettingsStore`), and whether that provider is running here and
- * covers a sport (the app's `ProviderRegistry`).
+ * reads that league (the app's `ProviderRegistry`, by Provider code, #2073).
  */
 export interface SportDataProviderLookup {
   findLeague(providerLeagueId: string): { provider: Pick<ProviderSettings, 'code' | 'name' | 'isEnabled'>; league: Pick<ProviderLeagueSettings, 'sport' | 'isEnabled' | 'code'> } | undefined;
-  getProviderById(providerId: string): { sportsCovered: readonly Sport[] } | null;
+  /** Whether the Provider's adapter is running here and reads its league with this code. */
+  readsLeague(providerCode: ProviderCode, providerLeagueCode: string): boolean;
 }
 
 export interface SportLeagueServiceDeps {
@@ -272,8 +273,7 @@ export class SportLeagueService {
         422,
       );
     }
-    const running = this.deps.providers.getProviderById(providerSourceIdOf(found.provider.code));
-    if (!found.provider.isEnabled || !found.league.isEnabled || !running?.sportsCovered.includes(sportRow.sport)) {
+    if (!found.provider.isEnabled || !found.league.isEnabled || !this.deps.providers.readsLeague(found.provider.code, found.league.code)) {
       throw new SportCatalogError(
         `${found.provider.name}'s ${found.league.code} is switched off or not running, so it cannot sync ${sportLeague.name}'s events.`,
         'PROVIDER_NOT_FOUND',

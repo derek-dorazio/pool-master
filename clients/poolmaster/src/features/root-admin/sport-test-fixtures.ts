@@ -217,7 +217,6 @@ export function providerSettingsFixture(overrides: Partial<ProviderSettingsDto> 
     webhookRoundPollMinutes: 2,
     hasPlayerStats: false,
     isEnabled: true,
-    priority: 1,
     leagues: [
       providerLeagueFixture(),
       providerLeagueFixture({ id: '00000000-0000-4000-8000-0000000000c2', code: 'mlb', name: 'MLB', sport: 'BASEBALL', webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 210, typicalGameMinutes: 180 }),
@@ -235,8 +234,6 @@ export function providerSummaryFixture(overrides: Partial<ProviderSummaryDto> = 
     status: 'HEALTHY',
     errorRate: 0.004,
     lastEventAt: null,
-    sportsCovered: ['BASEBALL', 'BASKETBALL', 'GOLF'],
-    primaryForSports: ['BASEBALL', 'BASKETBALL', 'GOLF'],
     activeEventCount: 3,
     requestsPerMinute: 5,
     webhooksEnabled: true,

@@ -65,9 +65,6 @@ export interface ProviderSummary {
   status: ProviderHealthStatus | null;
   errorRate: number | null;
   lastEventAt: Date | null;
-  sportsCovered: Sport[];
-  /** The covered sports this provider is the default for (catalog browse, new links). */
-  primaryForSports: Sport[];
   activeEventCount: number;
   /** The request rate its adapter holds to, a minute; null when the adapter does not pace itself. */
   requestsPerMinute: number | null;
@@ -108,9 +105,10 @@ export const DEFAULT_SYNC_RUN_WINDOW_HOURS = 6;
 // Errors
 // ---------------------------------------------------------------------------
 
+/** A manual sync asked of a provider that is not running here (404 SPORT_PROVIDER_NOT_FOUND). */
 export class SportProviderNotFoundError extends Error {
   constructor(sport: Sport, providerId: string) {
-    super(`No provider ${providerId} is registered for sport ${sport}`);
+    super(`Provider ${providerId}, which syncs this ${sport} event, is not running here`);
     this.name = 'SportProviderNotFoundError';
   }
 }
@@ -210,7 +208,7 @@ export class IngestionService {
    * no route calls a provider live.
    */
   async listProviders(): Promise<ProviderSummary[]> {
-    const providers = this.registry.getAllProviders();
+    const providers = this.registry.all();
     const rows = this.providerSettings.all();
     const providerIds = [...new Set([...providers.map((provider) => provider.providerId), ...rows.map((row) => providerSourceIdOf(row.code))])];
     const [eventSummaries, syncedLeagues, rateLimited, runCounts] = await Promise.all([
@@ -232,19 +230,16 @@ export class IngestionService {
     const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
     const rowsById = new Map(rows.map((row) => [providerSourceIdOf(row.code), row]));
     const summaries = providerIds.map((providerId): ProviderSummary => {
-      const provider = this.registry.getProviderById(providerId);
+      const provider = this.registry.bySourceId(providerId);
       const row = rowsById.get(providerId);
       const health = providerHealthOfRuns(row === undefined ? undefined : runCountsByProvider.get(row.id));
       const events = eventSummaries.get(providerId);
-      const sportsCovered = provider?.sportsCovered ?? [];
       return {
         providerId,
         providerName: row?.name ?? provider?.providerName ?? providerId,
         status: health.status,
         errorRate: health.errorRate,
         lastEventAt: events?.lastChangedAt ?? null,
-        sportsCovered,
-        primaryForSports: sportsCovered.filter((sport) => this.registry.getProvider(sport)?.providerId === providerId),
         activeEventCount: events?.activeEventCount ?? 0,
         requestsPerMinute: row?.requestsPerMinute ?? provider?.requestsPerMinute ?? null,
         webhooksEnabled: row !== undefined && this.webhooks.isOn(row),
@@ -329,9 +324,9 @@ export class IngestionService {
       throw new Error('Ingestion scheduler is required for manual event sync');
     }
 
-    // The event's own provider, which must serve its sport (#1495).
-    const provider = this.registry.getProviderById(request.providerId);
-    if (!provider?.sportsCovered.includes(request.sport)) {
+    // The provider the event's league selects (#2073), by the id its feed gives the event.
+    const provider = this.registry.bySourceId(request.providerId);
+    if (provider === null) {
       this.logger?.error(
         { sport: request.sport, providerId: request.providerId, eventId: request.eventId },
         'Manual event sync was requested without a configured provider',

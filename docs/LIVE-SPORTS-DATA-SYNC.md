@@ -66,13 +66,19 @@ flowchart LR
 
 Each provider is a `Provider` row with its `ProviderLeague` rows (#1997), seeded by migration and
 edited on the root admin's Providers page: base URL, request rate, webhook switch, safety-net
-poll minutes, priority, and per league its webhook event set, `quietAfterMinutes`,
+poll minutes, and per league its webhook event set, `quietAfterMinutes`,
 `typicalGameMinutes` and whether it is read. Each environment's database holds its own values; the
 running tasks read the rows again every minute, so an edit needs no restart.
 `registerConfiguredProviders` (`ingestion/core/provider-bindings.ts`) registers each enabled row's
 adapter at startup, and reads only its enabled leagues. A sport league syncs from the provider
 league its selected `SportLeagueProviderMapping` names; the migration mapped the leagues it could
-match and selected the mapping of each league that was synced before.
+match and selected the mapping of each league that was synced before. The running adapters are
+held in `ProviderRegistry` by Provider code (#2073): `forLeague` resolves a league's provider
+through that selected mapping, and refuses a league with none (422 `SPORT_LEAGUE_NOT_SYNCED`) or
+whose provider is not running (404 `PROVIDER_NOT_FOUND`) rather than fall back to another provider
+of the sport. Providers have no priority: two leagues of one sport may sync from different
+providers. The scheduler runs its loops for the sports that have an active league whose selected
+mapping names a running provider.
 
 Secrets stay out of the database:
 

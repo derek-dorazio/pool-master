@@ -27,8 +27,8 @@ export function SportLeagueEventCalendar({
   sportLeague: SportNoun;
   tournaments: SportEventDto[];
 }) {
-  const { sportUrlSegment, definition } = useManagedSport();
-  const { event } = sportVocabulary(definition);
+  const { sport, sportUrlSegment } = useManagedSport();
+  const { event } = sportVocabulary(sport);
   const columns = useMemo(() => buildCalendarColumns(upperFirst(event.one)), [event.one]);
   return (
     <DataGrid

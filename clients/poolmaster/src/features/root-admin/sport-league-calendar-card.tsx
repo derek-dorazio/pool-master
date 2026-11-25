@@ -17,8 +17,8 @@ import { upperFirst } from '@/lib/upper-first';
  * the card only picks which Season to show; only that Season's events load (#1251).
  */
 export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLeagueDto }) {
-  const { sport, sportUrlSegment, definition } = useManagedSport();
-  const { event: eventNoun } = sportVocabulary(definition);
+  const { sport, sportUrlSegment } = useManagedSport();
+  const { event: eventNoun } = sportVocabulary(sport);
   const seasonsQuery = useSportLeagueSeasonsQuery(sportLeague.id);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
   // Computed during render so a refetch can't clobber an explicit pick.
