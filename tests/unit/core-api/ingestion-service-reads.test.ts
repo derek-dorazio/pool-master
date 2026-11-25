@@ -173,6 +173,15 @@ describe('IngestionService.listProviders', () => {
     ]);
   });
 
+  it('counts no league for any provider when the synced league read has no selected mapping', async () => {
+    const providers = await service({
+      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' })),
+      sportLeagues: { findEventSynced: jest.fn().mockResolvedValue([buildSportLeague({ name: 'Unmapped', selectedProviderMapping: null })]) },
+    }).listProviders();
+
+    expect(providers).toEqual([expect.objectContaining({ providerId: 'balldontlie', syncedSportLeagueCount: 0 })]);
+  });
+
   it('lists a provider that has a row but is not running here, as when its key is not set, with no status and its row\'s settings', async () => {
     const [summary] = await service({
       registry: registryWith(null),
@@ -423,6 +432,19 @@ describe('IngestionService manual sync job (#1441)', () => {
 
     expect(runEventSync).not.toHaveBeenCalled();
     expect(runs.rows.find((run) => run.id === started.id)?.status).toBe('IN_PROGRESS');
+  });
+
+  it('skips a run that is no longer stored, running no feed for it', async () => {
+    const runs = syncRuns();
+    const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
+
+    await ingestion.runManualEventSync({
+      syncRunIds: ['00000000-0000-4000-8000-000000000009'], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1',
+    }, { attempt: 1, jobId: 'job-1' });
+
+    expect(runEventSync).not.toHaveBeenCalled();
   });
 
   it('fails the job when no scheduler is wired on the task that runs it, so the runner retries it', async () => {
