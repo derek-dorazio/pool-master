@@ -1,0 +1,14 @@
+{
+  "$comment": "#2113 -- the poolmaster-allow-raw-sql markers each production file has, by repo path. Read by poolmaster/no-raw-sql (eslint.config.js). A new marker is a raise: rules:check:baseline-ratchet refuses it unless scripts/baseline-raises.json declares it with its reason, so a reviewer sees every new raw query.",
+  "packages/core-api/src/adapters/contest-row-lock.ts": 3,
+  "packages/core-api/src/adapters/member-row-lock.ts": 1,
+  "packages/core-api/src/adapters/prisma-background-job-repository.ts": 1,
+  "packages/core-api/src/adapters/prisma-contest-entry-repository.ts": 1,
+  "packages/core-api/src/adapters/prisma-contest-repository.ts": 1,
+  "packages/core-api/src/adapters/prisma-email-message-repository.ts": 1,
+  "packages/core-api/src/adapters/prisma-league-repository.ts": 3,
+  "packages/core-api/src/adapters/prisma-participant-repository.ts": 2,
+  "packages/core-api/src/adapters/prisma-platform-runtime-config-repository.ts": 1,
+  "packages/core-api/src/adapters/prisma-sport-catalog-repositories.ts": 3,
+  "packages/core-api/src/core/job-lock.ts": 1
+}

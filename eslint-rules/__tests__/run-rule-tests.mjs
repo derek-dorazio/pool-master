@@ -34,6 +34,8 @@ import noEnumStringLiterals from '../no-enum-string-literals.mjs';
 import noDtoShapedLocalTypes from '../no-dto-shaped-local-types.mjs';
 import noLocalEnums from '../no-local-enums.mjs';
 import noPositionalPick from '../no-positional-pick.mjs';
+import noRawSql from '../no-raw-sql.mjs';
+import noNameMatch from '../no-name-match.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
@@ -1611,6 +1613,80 @@ ruleTester.run('no-positional-pick', noPositionalPick, {
     { code: '// poolmaster-allow-position: sorted ascending, the last round is the final\nconst pair = [rounds.at(-1), games[0]];', errors: [{ messageId: 'positionalPick' }] },
     {
       code: 'const a = rounds[0];\nconst b = games.at(-1);',
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2113: no raw SQL unless a reviewed marker says what Prisma cannot express.
+ruleTester.run('no-raw-sql', noRawSql, {
+  valid: [
+    'await prisma.contest.findMany({ where: { id } });',
+    {
+      code: '// poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks\nawait tx.$queryRaw`SELECT id FROM "contests" WHERE id = ${id}::uuid FOR UPDATE`;',
+      filename: 'locks.ts',
+      options: [{ baseline: { 'locks.ts': 1 } }],
+    },
+    {
+      code: '// poolmaster-allow-raw-sql: a set-based update from unnest arrays\nawait prisma.$executeRaw<number>`UPDATE x SET y = 1`;',
+      filename: 'locks.ts',
+      options: [{ baseline: { 'locks.ts': 1 } }],
+    },
+  ],
+  invalid: [
+    { code: 'await tx.$queryRaw`SELECT 1`;', errors: [{ messageId: 'rawSql' }] },
+    { code: 'await prisma.$executeRaw`UPDATE x SET y = 1`;', errors: [{ messageId: 'rawSql' }] },
+    // The Unsafe forms are never excused, marker or not; the marker then excuses nothing.
+    {
+      code: '// poolmaster-allow-raw-sql: dynamic table name\nawait prisma.$queryRawUnsafe(sql);',
+      filename: 'locks.ts',
+      options: [{ baseline: { 'locks.ts': 1 } }],
+      errors: [{ messageId: 'unusedAllow' }, { messageId: 'unsafe' }],
+    },
+    { code: 'await tx.$executeRawUnsafe(`DELETE FROM ${table}`);', errors: [{ messageId: 'unsafe' }] },
+    { code: '// poolmaster-allow-raw-sql\nawait tx.$queryRaw`SELECT 1`;', filename: 'locks.ts', options: [{ baseline: { 'locks.ts': 1 } }], errors: [{ messageId: 'missingReason' }] },
+    { code: '// poolmaster-allow-raw-sql: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
+    // A new marker beyond the file's count is a raise a reviewer must see.
+    {
+      code: '// poolmaster-allow-raw-sql: a row lock\nawait tx.$queryRaw`SELECT 1 FOR UPDATE`;\n// poolmaster-allow-raw-sql: another row lock\nawait tx.$queryRaw`SELECT 2 FOR UPDATE`;',
+      filename: 'locks.ts',
+      options: [{ baseline: { 'locks.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2114: no domain row looked up by its name.
+ruleTester.run('no-name-match', noNameMatch, {
+  valid: [
+    // Lookups by id or code.
+    'const league = leagues.find((row) => row.id === leagueId);',
+    "await prisma.participant.findFirst({ where: { code: { equals: code } } });",
+    // Free-text search and writes.
+    "await prisma.participant.findMany({ where: { name: { contains: term, mode: 'insensitive' } } });",
+    "await prisma.participant.findMany({ where: { name: { startsWith: term } } });",
+    "await prisma.participant.update({ where: { id }, data: { name: newName } });",
+    // An error's name, a DOM target's name, and a presence check.
+    "if (error.name === 'AbortError') return;",
+    "const isAbort = errors.some((err) => err.name === 'AbortError');",
+    'const field = fields.find(() => event.target.name === key);',
+    'const missing = rows.filter((row) => row.name === undefined);',
+    // A comparison that is not a lookup takes a marker with its reason.
+    "// poolmaster-allow-name-match: the sync compares the feed's name with the stored one to update it\nconst changed = providerEvent.name !== event.name;",
+    { code: 'const p = profiles.find((row) => row.name === name);', filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
+  ],
+  invalid: [
+    { code: "await prisma.participant.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } });", errors: [{ messageId: 'nameMatch' }] },
+    { code: 'const p = profiles.find((profile) => profile.name === profileName);', errors: [{ messageId: 'nameMatch' }] },
+    { code: 'const hit = rows.some((row) => row.label.toLowerCase() === wanted);', errors: [{ messageId: 'nameMatch' }] },
+    { code: 'const i = rows.findIndex(function (row) { return row.name !== skip; });', errors: [{ messageId: 'nameMatch' }] },
+    { code: 'const same = left.name === right.name;', errors: [{ messageId: 'nameMatch' }] },
+    { code: '// poolmaster-allow-name-match\nconst same = left.name === right.name;', errors: [{ messageId: 'missingReason' }] },
+    { code: '// poolmaster-allow-name-match: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
+    {
+      code: 'const a = rows.find((row) => row.name === x);\nconst b = rows.find((row) => row.name === y);',
       filename: 'legacy.ts',
       options: [{ baseline: { 'legacy.ts': 1 } }],
       errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
