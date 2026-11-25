@@ -322,10 +322,13 @@ describe('sport league handlers', () => {
   });
 
   it('lists and re-ranks a sport league\'s own participants', async () => {
-    const listed = await callHandler(handlers.listParticipants, stubRequest({ params }));
+    const listed = await callHandler(handlers.listParticipants, stubRequest({ params, query: {} }));
+    await callHandler(handlers.listParticipants, stubRequest({ params, query: { testData: true } }));
     const ranked = await callHandler(handlers.updateParticipantRankings, stubRequest({ params, body: { rankings: [{ participantId: 'p1', ranking: 1 }] } }));
 
     expect(listed.body).toMatchObject({ participants: [{ id: 'p1', sportLeagueId: 'sl1' }] });
+    expect(service.listParticipants).toHaveBeenNthCalledWith(1, 'sl1', false);
+    expect(service.listParticipants).toHaveBeenNthCalledWith(2, 'sl1', true);
     expect(service.updateRankings).toHaveBeenCalledWith('sl1', [{ participantId: 'p1', ranking: 1 }]);
     expect(ranked.body).toMatchObject({ participants: [{ ranking: 1 }] });
   });

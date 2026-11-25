@@ -61,10 +61,10 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return rows.map(mapToParticipant);
   }
 
-  async findBySportLeague(sportLeagueId: string): Promise<Participant[]> {
+  async findBySportLeague(sportLeagueId: string, testData = false): Promise<Participant[]> {
     const rows = await this.prisma.participant.findMany({
-      // The roster: a test participant is on none (#2096).
-      where: { sportLeagueId, isTestData: false },
+      // The roster holds no test participant (#2096); a test event's field picks from the test ones.
+      where: { sportLeagueId, isTestData: testData },
       orderBy: [{ ranking: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
     });
     return rows.map(mapToParticipant);

@@ -2897,7 +2897,7 @@ export interface paths {
         };
         /**
          * List a sport league's participants
-         * @description Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.
+         * @description Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged. A test participant is on no roster; testData=true lists only the test participants, which a test event's field takes (#2096).
          */
         get: operations["listSportLeagueParticipants"];
         put?: never;
@@ -9943,6 +9943,11 @@ export interface components {
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Only active, or only inactive, sport leagues. */
             isActive?: boolean;
+        };
+        /** @description Which of a sport league's participants to list. */
+        SportLeagueParticipantListQuery: {
+            /** @description True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant. */
+            testData?: boolean;
         };
         /** @description Sport leagues matching the filters. */
         SportLeagueListResponse: {
@@ -35736,7 +35741,10 @@ export interface operations {
     };
     listSportLeagueParticipants: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant. */
+                testData?: boolean;
+            };
             header?: never;
             path: {
                 sportLeagueId: string;

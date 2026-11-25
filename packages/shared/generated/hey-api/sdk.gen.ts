@@ -2078,7 +2078,7 @@ export const listSportLeagueParticipantOverviews = <ThrowOnError extends boolean
 /**
  * List a sport league's participants
  *
- * Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.
+ * Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged. A test participant is on no roster; testData=true lists only the test participants, which a test event's field takes (#2096).
  */
 export const listSportLeagueParticipants = <ThrowOnError extends boolean = false>(options: Options<ListSportLeagueParticipantsData, ThrowOnError>): RequestResult<ListSportLeagueParticipantsResponses, ListSportLeagueParticipantsErrors, ThrowOnError> => (options.client ?? client).get<ListSportLeagueParticipantsResponses, ListSportLeagueParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

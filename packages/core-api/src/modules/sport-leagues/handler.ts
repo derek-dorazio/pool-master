@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
   CreateTestSlotRequest,
   SportLeagueListQuery,
+  SportLeagueParticipantListQuery,
   SportLeagueListResponse,
   SportLeagueParticipantRankingsRequest,
   SportLeagueRankingUploadPreviewResponse,
@@ -129,8 +130,10 @@ export function buildSportLeagueHandlers(
       return reply.status(204).send();
     },
 
-    listParticipants: async (request: FastifyRequest<SportLeagueParams>): Promise<ParticipantListResponse> => {
-      const participants = await sportLeagues.listParticipants(request.params.sportLeagueId);
+    listParticipants: async (
+      request: FastifyRequest<SportLeagueParams & { Querystring: SportLeagueParticipantListQuery }>,
+    ): Promise<ParticipantListResponse> => {
+      const participants = await sportLeagues.listParticipants(request.params.sportLeagueId, request.query.testData ?? false);
       return { participants: participants.map(mapParticipantToDto) };
     },
 

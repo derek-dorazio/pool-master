@@ -452,8 +452,11 @@ export interface ParticipantRepository {
    * out (#2096). Ordered by name.
    */
   findMatchingAny(sportLeagueId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
-  /** A sport league's roster (#1853), test participants left out (#2096): best rank first, unranked last, then by name. Never paged. */
-  findBySportLeague(sportLeagueId: string): Promise<Participant[]>;
+  /**
+   * A sport league's roster (#1853), test participants left out (#2096), or with `testData` only
+   * its test participants: best rank first, unranked last, then by name. Never paged.
+   */
+  findBySportLeague(sportLeagueId: string, testData?: boolean): Promise<Participant[]>;
   /** Re-ranks participants of the sport league, all or none. */
   updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void>;
   /** Rostered participants per sport league, test participants left out, for each id asked about (0 where none). */

@@ -18823,6 +18823,17 @@
         "additionalProperties": false,
         "description": "Filters for the sport-league list."
       },
+      "SportLeagueParticipantListQuery": {
+        "type": "object",
+        "properties": {
+          "testData": {
+            "description": "True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Which of a sport league's participants to list."
+      },
       "SportLeagueListResponse": {
         "type": "object",
         "properties": {
@@ -86358,8 +86369,17 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.",
+        "description": "Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged. A test participant is on no roster; testData=true lists only the test participants, which a test event's field takes (#2096).",
         "parameters": [
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "testData",
+            "required": false,
+            "description": "True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant."
+          },
           {
             "schema": {
               "type": "string",

@@ -8141,6 +8141,16 @@ export type SportLeagueListQuery = {
 };
 
 /**
+ * Which of a sport league's participants to list.
+ */
+export type SportLeagueParticipantListQuery = {
+    /**
+     * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+     */
+    testData?: boolean;
+};
+
+/**
  * Sport leagues matching the filters.
  */
 export type SportLeagueListResponse = {
@@ -36756,7 +36766,12 @@ export type ListSportLeagueParticipantsData = {
     path: {
         sportLeagueId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+         */
+        testData?: boolean;
+    };
     url: '/api/v1/sport-leagues/{sportLeagueId}/participants';
 };
 

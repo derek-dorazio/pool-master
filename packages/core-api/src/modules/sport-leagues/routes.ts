@@ -275,9 +275,10 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'List a sport league\'s participants',
-      description: 'Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.',
+      description: 'Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged. A test participant is on no roster; testData=true lists only the test participants, which a test event\'s field takes (#2096).',
       operationId: 'listSportLeagueParticipants',
       params: SPORT_LEAGUE_PARAMS,
+      querystring: schemaRef('SportLeagueParticipantListQuery'),
       response: { 200: schemaRef('ParticipantListResponse'), ...errors(404) },
     },
     handler: handler.listParticipants,

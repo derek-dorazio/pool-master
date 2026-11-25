@@ -347,8 +347,8 @@ export class InMemorySportEvents {
         && (query.externalId === undefined || this.mappings.some((mapping) => mapping.participantId === row.id && mapping.externalId === query.externalId))
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
       ))),
-      findBySportLeague: async (sportLeagueId) => this.participants
-        .filter((row) => row.sportLeagueId === sportLeagueId)
+      findBySportLeague: async (sportLeagueId, testData = false) => this.participants
+        .filter((row) => row.sportLeagueId === sportLeagueId && row.isTestData === testData)
         .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity) || left.name.localeCompare(right.name)),
       updateRankings: async () => undefined,
       countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.participants.filter((row) => row.sportLeagueId === id).length])),

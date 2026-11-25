@@ -88,13 +88,14 @@ describe('Creating a participant in a provider-synced sport league (#2096)', () 
     await expect(getPrisma().participant.count({ where: { sportLeagueId } })).resolves.toBe(1);
   });
 
-  it('writes a test participant with no mapping, leaves it off the league\'s roster, and refuses binding it a feed id with 422', async () => {
+  it('writes a test participant with no mapping, leaves it off the league\'s roster but lists it with testData=true, and refuses binding it a feed id with 422', async () => {
     const headers = await rootAdminHeaders();
     const sportLeagueId = await golfLeague();
 
     const created = await createParticipant(headers, { sportLeagueId, name: 'Test Golfer', isTestData: true });
     const participantId = created.json<ParticipantResponse>().participant.id;
     const roster = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${sportLeagueId}/participants`, headers });
+    const testChoices = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${sportLeagueId}/participants?testData=true`, headers });
     const bound = await getApp().inject({
       method: 'POST', url: `/api/v1/participants/${participantId}/provider-mappings`, headers,
       payload: { providerId: (await getPrisma().providerLeague.findFirstOrThrow({ where: { code: 'pga' } })).providerId, externalId: 'golfer-1' },
@@ -103,6 +104,7 @@ describe('Creating a participant in a provider-synced sport league (#2096)', () 
     expect(created.statusCode).toBe(201);
     await expect(getPrisma().participant.findUniqueOrThrow({ where: { id: participantId }, select: { isTestData: true } })).resolves.toEqual({ isTestData: true });
     expect(roster.json<ParticipantListResponse>().participants).toEqual([]);
+    expect(testChoices.json<ParticipantListResponse>().participants.map((participant) => participant.id)).toEqual([participantId]);
     expect(bound.statusCode).toBe(422);
     expect(bound.json()).toMatchObject({ error: { code: 'TEST_PARTICIPANT_FEED_ID' } });
     await expect(getPrisma().participantProviderMapping.count({ where: { participantId } })).resolves.toBe(0);

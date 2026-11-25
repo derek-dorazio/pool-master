@@ -322,10 +322,14 @@ export class SportLeagueService {
     }
   }
 
-  /** The sport league's participants, best rank first. 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */
-  async listParticipants(sportLeagueId: string): Promise<Participant[]> {
+  /**
+   * The sport league's participants, best rank first: its roster, or with `testData` only its test
+   * participants, which a test event's field takes (#2096). 404 SPORT_LEAGUE_NOT_FOUND for an
+   * unknown sport league.
+   */
+  async listParticipants(sportLeagueId: string, testData = false): Promise<Participant[]> {
     await this.requireSportLeague(sportLeagueId);
-    return this.deps.participants.findBySportLeague(sportLeagueId);
+    return this.deps.participants.findBySportLeague(sportLeagueId, testData);
   }
 
   async updateRankings(

@@ -286,7 +286,9 @@ describe('SportLeagueService — the sport league\'s participants', () => {
     const { service } = buildService({ participants: { findBySportLeague } });
 
     await expect(service.listParticipants('sl-pga')).resolves.toEqual(roster);
-    expect(findBySportLeague).toHaveBeenCalledWith('sl-pga');
+    expect(findBySportLeague).toHaveBeenCalledWith('sl-pga', false);
+    await service.listParticipants('sl-pga', true);
+    expect(findBySportLeague).toHaveBeenLastCalledWith('sl-pga', true);
 
     const { service: missing } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
     await expect(missing.listParticipants('missing')).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });

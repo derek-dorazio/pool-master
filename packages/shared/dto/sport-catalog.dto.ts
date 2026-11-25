@@ -120,6 +120,12 @@ export const SportLeagueListQuerySchema = z.object({
 }).describe('Filters for the sport-league list.');
 export type SportLeagueListQuery = z.infer<typeof SportLeagueListQuerySchema>;
 
+/** The roster, or a test event's choices (#2096). */
+export const SportLeagueParticipantListQuerySchema = z.object({
+  testData: z.boolean().optional().describe('True lists only the league\'s test participants, the ones a test event\'s field takes; false or omitted lists its roster, which holds no test participant.'),
+}).describe('Which of a sport league\'s participants to list.');
+export type SportLeagueParticipantListQuery = z.infer<typeof SportLeagueParticipantListQuerySchema>;
+
 export const SportLeagueListResponseSchema = z.object({
   sportLeagues: z.array(SportLeagueDtoSchema).describe('Matching sport leagues, by name.'),
 }).describe('Sport leagues matching the filters.');
@@ -502,6 +508,7 @@ registerSchema('SportListResponse', SportListResponseSchema);
 registerSchema('SportLeagueProviderMappingDto', SportLeagueProviderMappingDtoSchema);
 registerSchema('SportLeagueDto', SportLeagueDtoSchema);
 registerSchema('SportLeagueListQuery', SportLeagueListQuerySchema);
+registerSchema('SportLeagueParticipantListQuery', SportLeagueParticipantListQuerySchema);
 registerSchema('SportLeagueListResponse', SportLeagueListResponseSchema);
 registerSchema('SportLeagueResponse', SportLeagueResponseSchema);
 registerSchema('UpdateSportLeagueRequest', UpdateSportLeagueRequestSchema);
