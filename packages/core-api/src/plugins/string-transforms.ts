@@ -53,8 +53,9 @@ export function stringTransformsAjvPlugin(ajv: Ajv): Ajv {
         return APPLY[transform];
       });
       return (data: string, dataCxt) => {
-        // A schema's root value has no parent to write back to; route schemas are objects.
-        if (dataCxt === undefined) return true;
+        // A schema's root value has no parent to write back to; route schemas are objects. Ajv
+        // hands a root value a data context with no parentData, not no context at all.
+        if (dataCxt?.parentData === undefined) return true;
         const parent = dataCxt.parentData as Record<string | number, unknown>;
         parent[dataCxt.parentDataProperty] = steps.reduce((value, step) => step(value), data);
         return true;

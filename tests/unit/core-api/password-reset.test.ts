@@ -123,6 +123,29 @@ describe('SlidingWindowRateLimiter', () => {
   });
 });
 
+describe('SlidingWindowRateLimiter defaults and idle keys', () => {
+  it('counts against a one-minute window on the real clock when given only a limit', () => {
+    const limiter = new SlidingWindowRateLimiter(1);
+
+    expect(limiter.hit('a').allowed).toBe(true);
+    expect(limiter.hit('a').allowed).toBe(false);
+  });
+
+  it('forgets keys with no hit inside the window once a thousand are held, keeping the ones still in it', () => {
+    let now = 0;
+    const limiter = new SlidingWindowRateLimiter(1, 60_000, () => now);
+    for (let key = 0; key < 999; key += 1) limiter.hit(`idle-${String(key)}`);
+    now = 30_000;
+    limiter.hit('recent');
+    now = 61_000;
+
+    limiter.hit('fresh');
+
+    const held = (limiter as unknown as { windows: Map<string, number[]> }).windows;
+    expect([...held.keys()].sort()).toEqual(['fresh', 'recent']);
+  });
+});
+
 describe('PasswordResetService address limits', () => {
   it('refuses the sixth reset request from one address in a minute with PASSWORD_RESET_RATE_LIMITED 429', () => {
     const { service } = buildService({ now: () => new Date('2026-10-22T12:00:00.000Z') });
