@@ -18,7 +18,7 @@ afterAll(async () => {
 });
 
 describe('mock contest feed tour seeds through the adapter', () => {
-  it('lists the 2027 Masters from the PGA TOUR 2027 slate with its tour name and linking id', async () => {
+  it('lists the 2027 Masters from the PGA TOUR 2027 slate under its linking id', async () => {
     const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
 
     const events = await adapter.getUpcomingEvents(Sport.GOLF, {
@@ -30,7 +30,6 @@ describe('mock contest feed tour seeds through the adapter', () => {
       expect.objectContaining({
         externalId: 'pga-tour-2027-masters-tournament',
         name: 'Masters Tournament',
-        metadata: expect.objectContaining({ tour: 'PGA TOUR', scenarioId: 'pga-tour-2027' }),
       }),
     ]));
     expect(events.every((event) => event.startDate >= new Date('2027-04-05T00:00:00.000Z'))).toBe(true);

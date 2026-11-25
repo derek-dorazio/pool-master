@@ -18,7 +18,7 @@ const NOW = new Date('2026-05-02T22:30:00.000Z');
 function setup(sport: Sport = Sport.HORSE_RACING) {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
-  const event = store.addEvent({ sport, providerId: 'manual-admin' });
+  const event = store.addEvent({ sport });
   const [arrow, bolt, comet] = ['Arrow', 'Bolt', 'Comet'].map((name) => {
     const participant = store.addParticipant(sportRow.id, name);
     return store.addToField(event.id, participant.id);

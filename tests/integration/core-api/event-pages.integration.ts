@@ -180,7 +180,7 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     const make = async (eventYear: number, status: SportEventStatus, startDate: string) => prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventYear), status, startDate: new Date(startDate),
-        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', name: `${series.name} ${eventYear}`,
+        name: `${series.name} ${eventYear}`,
       },
     });
     await make(2025, SportEventStatus.COMPLETED, '2025-04-10T12:00:00.000Z');
@@ -193,7 +193,7 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     await prisma.sportEvent.create({
       data: {
         eventSeriesId: other.id, sportLeagueSeasonId: await seriesSeasonId(prisma, other.id, 2027), status: SportEventStatus.SCHEDULED, startDate: new Date('2027-01-10T12:00:00.000Z'),
-        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', name: `${other.name} 2027`,
+        name: `${other.name} 2027`,
       },
     });
     const unasked = { sportLeagueId: series.sportLeagueId, eventSeriesName: 'No such series' };
@@ -218,7 +218,6 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma, { name: 'Event page squares', sport: Sport.AMERICAN_FOOTBALL })),
-        externalId: `event-page-squares-${randomUUID()}`, providerId: 'integration-test',
         name: 'Event page squares', startDate: new Date('2030-01-09T18:00:00.000Z'), status: SportEventStatus.IN_PROGRESS,
       },
     });

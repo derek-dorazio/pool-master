@@ -133,7 +133,7 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
 
       const detail = await harness.adapter.getEventDetails('ncaaw-2025-tournament');
 
-      expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 5, rounds: 6, metadata: { tour: 'NCAAW', season: 2025 } });
+      expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 5, rounds: 6 });
       expect(detail?.participants.map((team) => team.externalId)).toEqual(['41', '2636', '150', '2655', '2579']);
       expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
     });

@@ -46,8 +46,6 @@ async function createField(suffix: string) {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `field-upload-${suffix}`,
-      providerId: 'integration-test',
       name: `Field Upload Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: 'SCHEDULED',

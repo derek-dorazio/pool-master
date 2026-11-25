@@ -23,7 +23,7 @@ import { participantFeedId } from './participant-feed-id';
 export interface PlayoffsLeague {
   /** The vendor's path segment and the scope and team id prefix: `nba`. */
   key: string;
-  /** Carried in `metadata.tour`, for display. */
+  /** The league's tour word, carried in each team's `metadata.tour`. */
   tour: string;
   sport: Sport;
   /** The event's name: "NBA Playoffs". */
@@ -154,7 +154,6 @@ export function toPlayoffsEvent(league: PlayoffsLeague, season: number, games: r
     status,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: league.tour, season },
   };
 }
 

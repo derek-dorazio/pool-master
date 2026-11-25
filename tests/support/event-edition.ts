@@ -11,11 +11,11 @@
  * sport list validates names against the Sport enum; a made-up sport row would break any contract
  * test that lists sports. Each sport has its own fixture tour, playing as that sport's leagues are
  * seeded, since an event is scored by its league's family (#2001), and an event reads its sport
- * through its series' league (#2042): a test about another sport's event names that sport.
+ * through its Season's league (#2042, #2004): a test about another sport's event names that sport.
  */
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
-import { getDefaultTournamentFormatForSport, Sport } from '@poolmaster/shared/domain';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport } from '@poolmaster/shared/domain';
 import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
 import { sportRowKeys } from './sport-rows';
@@ -94,14 +94,17 @@ export async function seriesSeasonId(
 
 export async function freshEventEdition(
   prisma: Db,
-  options: { name?: string; championshipYear?: number; onPgaTour?: boolean; sport?: Sport } = {},
+  options: { name?: string; championshipYear?: number; onPgaTour?: boolean; sport?: Sport; sportLeagueId?: string } = {},
 ): Promise<EventEdition> {
   const sport = await sportRow(prisma, options.sport ?? Sport.GOLF);
   // Every contest setup is one sport league's (#1825), and the fixture tour has none: an event a
-  // contest is made from a seeded setup on goes on the PGA TOUR, the migrations' own league.
-  const tour = options.onPgaTour
-    ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
-    : { id: await fixtureTourId(prisma, sport.sport) };
+  // contest is made from a seeded setup on goes on the PGA TOUR, the migrations' own league. An
+  // event is in its Season's league (#2004), so a test wanting a league of its own names it here.
+  const tour = options.sportLeagueId !== undefined
+    ? { id: options.sportLeagueId }
+    : options.onPgaTour
+      ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
+      : { id: await fixtureTourId(prisma, sport.sport) };
   const series = await prisma.eventSeries.create({
     data: { sportLeagueId: tour.id, name: `${FIXTURE_SERIES_PREFIX}${options.name ?? 'Fixture series'} ${randomUUID()}` },
   });
@@ -163,6 +166,11 @@ function sportRow(prisma: Db, sport: Sport) {
   return prisma.sport.upsert({ where: { sport }, create: { sport, ...sportRowKeys(sport), tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
 }
 
+/** The events made on a fixture edition, on the fixture tour or the PGA TOUR: a cleanup's own. */
+export const FIXTURE_EDITION_EVENTS: Prisma.SportEventWhereInput = {
+  eventSeries: { OR: [{ sportLeague: { name: FIXTURE_TOUR_NAME } }, { name: { startsWith: FIXTURE_SERIES_PREFIX } }] },
+};
+
 export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'eventSeries'>): Promise<void> {
   await prisma.eventSeries.deleteMany({
     where: {
@@ -173,30 +181,67 @@ export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'even
 }
 
 /**
- * plans/147 — sync updates only an event already linked to the provider event; it never
- * creates one. This is the row a sync test starts from: an event in a fresh series, holding
- * the provider identity, as an admin creating and linking it would leave it, already released
- * (the column default, SCHEDULED). Like an admin-created event it is
- * linked for scores (SCORES_ONLY) and has a four-round schedule, a round a day from the start,
- * because a feed never creates a round (#435).
+ * The events the provider with this adapter id knows by `externalId` (#2004): through their
+ * provider mappings, since an event holds no provider id of its own.
+ */
+export function providerEventWhere(providerId: string, externalId: string | Prisma.StringFilter): Prisma.SportEventWhereInput {
+  return { providerMappings: { some: { provider: { code: requireProviderCodeOfSourceId(providerId) }, externalId } } };
+}
+
+/**
+ * Gives an event its provider's id for it (#2004), as the sync writes it: a mapping under the
+ * event's league's mapping to the provider league `providerLeagueCode` names (BALLDONTLIE's
+ * `pga` unless a test names another), made on first use and not selected, so the league's own
+ * sync stays as the test left it.
+ */
+export async function mapEventToProvider(
+  prisma: Pick<PrismaClient, 'sportEvent' | 'providerLeague' | 'sportLeagueProviderMapping' | 'sportEventProviderMapping'>,
+  sportEventId: string,
+  ref: { providerId: string; externalId: string },
+  providerLeagueCode = 'pga',
+): Promise<void> {
+  const { sportLeagueSeason } = await prisma.sportEvent.findUniqueOrThrow({
+    where: { id: sportEventId },
+    select: { sportLeagueSeason: { select: { sportLeagueId: true } } },
+  });
+  const providerLeague = await prisma.providerLeague.findFirstOrThrow({
+    where: { code: providerLeagueCode, provider: { code: requireProviderCodeOfSourceId(ref.providerId) } },
+    select: { id: true, providerId: true },
+  });
+  const leagueMapping = await prisma.sportLeagueProviderMapping.upsert({
+    where: { sportLeagueId_providerLeagueId: { sportLeagueId: sportLeagueSeason.sportLeagueId, providerLeagueId: providerLeague.id } },
+    create: { sportLeagueId: sportLeagueSeason.sportLeagueId, providerLeagueId: providerLeague.id },
+    update: {},
+    select: { id: true },
+  });
+  await prisma.sportEventProviderMapping.create({
+    data: { sportEventId, providerId: providerLeague.providerId, sportLeagueProviderMappingId: leagueMapping.id, externalId: ref.externalId },
+  });
+}
+
+/**
+ * plans/147 — sync updates only an event already holding the provider's id for it; it never
+ * creates one. This is the row a sync test starts from: an event in a fresh series, mapped to the
+ * provider's event (#2004) as the sync leaves it, already released (the column default,
+ * SCHEDULED), with a four-round schedule, a round a day from the start, because a feed never
+ * creates a round (#435).
  */
 export async function linkedProviderEvent(
-  prisma: Db & Pick<PrismaClient, 'sportEvent'>,
+  prisma: Db & Pick<PrismaClient, 'sportEvent' | 'providerLeague' | 'sportLeagueProviderMapping' | 'sportEventProviderMapping'>,
   input: {
     providerId: string;
     externalId: string;
     name: string;
     startDate: Date;
+    /** The event's sport league, the fixture tour unless named. */
+    sportLeagueId?: string;
   },
 ) {
-  return prisma.sportEvent.create({
+  const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { name: input.name, championshipYear: input.startDate.getUTCFullYear() })),
-      providerId: input.providerId,
-      externalId: input.externalId,
+      ...(await freshEventEdition(prisma, { name: input.name, championshipYear: input.startDate.getUTCFullYear(), sportLeagueId: input.sportLeagueId })),
       name: input.name,
       startDate: input.startDate,
-      syncScope: 'SCORES_ONLY',
       rounds: LINKED_EVENT_ROUNDS,
       roundSchedule: {
         create: Array.from({ length: LINKED_EVENT_ROUNDS }, (_, index) => ({
@@ -206,4 +251,6 @@ export async function linkedProviderEvent(
       },
     },
   });
+  await mapEventToProvider(prisma, event.id, { providerId: input.providerId, externalId: input.externalId });
+  return event;
 }

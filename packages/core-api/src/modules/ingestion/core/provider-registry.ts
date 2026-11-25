@@ -6,7 +6,7 @@
  * mask real configuration and ingestion defects.
  */
 
-import { MANUAL_ADMIN_PROVIDER_ID, type Sport } from '@poolmaster/shared/domain';
+import type { Sport } from '@poolmaster/shared/domain';
 import type { SportDataProvider } from './provider-interface';
 
 /**
@@ -22,17 +22,9 @@ export class ProviderRegistry {
   private readonly sportProviders = new Map<Sport, Map<string, ProviderPriority>>();
 
   /**
-   * Registers a provider for a sport. A PRIMARY replaces the sport's previous primary. Refuses
-   * the reserved manual-admin placeholder identity (plans/124 §3.5) — no adapter may ever
-   * claim it, so an admin-authored tournament can never be scheduled or manually targeted by
-   * any sync route.
+   * Registers a provider for a sport. A PRIMARY replaces the sport's previous primary.
    */
   register(sport: Sport, provider: SportDataProvider, priority: ProviderPriority): void {
-    if (provider.providerId === MANUAL_ADMIN_PROVIDER_ID) {
-      throw new Error(
-        `Cannot register a provider with the reserved manual-admin providerId (${MANUAL_ADMIN_PROVIDER_ID}).`,
-      );
-    }
     const forSport = this.sportProviders.get(sport) ?? new Map<string, ProviderPriority>();
     if (priority === 'PRIMARY') {
       for (const [providerId, existing] of forSport) {

@@ -167,8 +167,7 @@ function seededEvents(overrides: Partial<SportEvent> = {}) {
   const store = new InMemorySportEvents();
   store.addEvent({
     id: 'sport-event-1',
-    providerId: 'mock-contest-feed',
-    externalId: 'provider-event-1',
+    providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' },
     name: 'Manual Test Golf Tournament',
     startDate: new Date('2026-05-02T20:00:00.000Z'),
     status: SportEventStatus.SCHEDULED,
@@ -723,7 +722,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
 
   it('writes the leagues\' postponed-event jobs with the POSTPONED status when the event first goes POSTPONED, and none on a repeated call', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
     const jobs = startedJobs();
     const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, undefined, notice);
@@ -740,7 +739,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
 
   it('writes no postponed-event job when another caller postponed the event first, since that caller\'s move wrote them', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
     const repo = store.sportEventRepo();
     const sportEvents = { ...repo, transitionStatus: mockFn<typeof repo.transitionStatus>(async () => null) };
     const jobs = startedJobs();
@@ -768,7 +767,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
 
   it('writes the leagues\' cancelled-event jobs with the CANCELLED status, while the contests are still open, and none on a repeated call', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
     const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, undefined, notice);
 

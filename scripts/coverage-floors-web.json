@@ -278,10 +278,6 @@
           "lines": 3,
           "branches": 0
         },
-        "src/features/root-admin/sport-provider-choice.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 75
-        },
         "src/features/root-admin/sync-finding-columns.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 50

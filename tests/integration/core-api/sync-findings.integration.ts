@@ -133,7 +133,7 @@ describe('the sync findings table', () => {
     const provider = await balldontlie();
     // One edition per event: a series has one event a year.
     const event = async (name: string) => prisma.sportEvent.create({
-      data: { ...(await freshEventEdition(prisma)), externalId: `findings-${randomUUID()}`, providerId: 'integration-test', name, startDate: NOW },
+      data: { ...(await freshEventEdition(prisma)), name, startDate: NOW },
       select: { id: true, eventSeries: { select: { sportLeagueId: true } } },
     });
     const [week1, week2] = [await event('Week 1'), await event('Week 2')];

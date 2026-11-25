@@ -62,7 +62,7 @@ async function ensureGolfSportRow(): Promise<void> {
 
 // Track everything this suite creates so it can be torn down child-first — the
 // shared functional cleanup keys off @functional.test users / test provider ids
-// and does not know about manual-admin golf rows.
+// and does not know about this suite's own golf rows.
 const created = {
   sportEventIds: new Set<string>(),
   sportLeagueIds: new Set<string>(),
@@ -198,7 +198,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
-    expect(expectDefined(tournament.data).event).toMatchObject({ syncScope: 'NONE', sportLeagueId, championshipYear: 2026 });
+    expect(expectDefined(tournament.data).event).toMatchObject({ providerMappings: [], providerSynced: false, sportLeagueId, championshipYear: 2026 });
 
     const rounds = await listEventRounds({ client: c, path: { eventId } });
     expect(expectDefined(rounds.data).rounds.length).toBe(4);

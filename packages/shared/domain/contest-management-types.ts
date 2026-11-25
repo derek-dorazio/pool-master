@@ -7,8 +7,8 @@ import type {
   SelectionType,
   Sport,
   SportEventStatus,
-  SportEventSyncScope,
 } from './enums';
+import type { SportEventProviderMapping } from './providers';
 import type { EventPricingConfig } from './budget-pricing';
 import type { EventTierConfig } from './tier-profiles';
 import type { AutoReleaseCheck } from './sport-league-overview';
@@ -30,9 +30,12 @@ export type SportEventReadinessReason =
 
 /** A real-world event a contest can be run on. `DRAFT` until an admin releases it (#431). */
 export interface SportEvent extends DomainEntity {
-  externalId: string;
-  providerId: string;
-  /** Its sport league's sport, read through its series (#2042); the event keeps no copy. */
+  /**
+   * The provider ids the sync gave the event (#2004), one per provider; empty for a test event.
+   * Read its league's provider's with `eventFeedRef`.
+   */
+  providerMappings: SportEventProviderMapping[];
+  /** Its sport league's sport, read through its Season (#2004, #2042); the event keeps no copy. */
   sport: Sport;
   /** That sport's stored URL segment, for the links and pictures that name the sport (#2042). */
   sportUrlSegment: string;
@@ -46,7 +49,6 @@ export interface SportEvent extends DomainEntity {
   /** Par for every round, when an admin set it; unset, contest scoring derives each round's par from the field (#478). */
   roundsPar?: number;
   participantCount?: number;
-  metadata: Record<string, unknown>;
   /** The event series — the recurring tournament — this is one edition of. */
   eventSeriesId: string;
   /** The Season the event is played in (#2003). */
@@ -56,7 +58,7 @@ export interface SportEvent extends DomainEntity {
    * Read through the Season, never stored on the event.
    */
   championshipYear: number;
-  /** The series' sport league, read through the series — never stored on the event (plans/147 decision 7). */
+  /** The event's sport league, read through its Season (#2004) — never stored on the event (plans/147 decision 7). */
   sportLeagueId: string;
   /**
    * The series' sport league's period layout when it is not its sport's (#786: men's college
@@ -78,13 +80,12 @@ export interface SportEvent extends DomainEntity {
   scoringFamily: ScoringFamily;
   /**
    * The provider whose sync creates and keeps the series' sport league's events (ADR 0011), read
-   * through the series like `sportLeagueId`; absent when an admin authors them. Whether this
+   * through the series like `sportLeagueId`; absent when no provider syncs the league. Whether this
    * event is one the sync keeps is `isProviderSyncedEvent`.
    */
   syncProviderId?: string;
   /** That provider's name (#1999), read with it; absent when an admin authors the league's events. */
   syncProviderName?: string;
-  syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;
   /**

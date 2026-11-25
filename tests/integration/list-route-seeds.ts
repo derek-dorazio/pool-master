@@ -68,18 +68,15 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
     update: {},
   });
   const startDate = new Date(Date.now() + startsInDays * DAY);
-  const edition = await freshEventEdition(prisma, { championshipYear: startDate.getUTCFullYear() });
-  if (ownSportLeague) {
-    const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Tour ${suffix}` } });
-    await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
-  }
+  const tour = ownSportLeague
+    ? await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Tour ${suffix}` } })
+    : undefined;
+  const edition = await freshEventEdition(prisma, { championshipYear: startDate.getUTCFullYear(), sportLeagueId: tour?.id });
   // The field's golfers belong to the event's sport league (#1853).
   const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId }, select: { sportLeagueId: true } });
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
-      externalId: `scaling-${suffix}`,
-      providerId: 'integration-test',
       name: `Scaling Open ${suffix}`,
       startDate,
       endDate: new Date(startDate.getTime() + 3 * DAY),
@@ -132,8 +129,6 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
     data: {
       eventSeriesId: eventSeries.id,
       sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, startDate.getUTCFullYear()),
-      externalId: `scaling-week-${suffix}`,
-      providerId: 'integration-test',
       name: `Scaling Week ${suffix}`,
       startDate,
       status,

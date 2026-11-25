@@ -56,7 +56,6 @@ describe('a World Cup knockout bracket as an event', () => {
       status: 'COMPLETED',
       participantCount: 8,
       fieldLocked: true,
-      metadata: { tour: 'FIFAWC', season: 2022 },
     });
   });
 

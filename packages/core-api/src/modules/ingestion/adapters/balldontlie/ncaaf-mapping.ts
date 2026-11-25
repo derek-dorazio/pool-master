@@ -63,7 +63,7 @@ export function cfpGameWindow(season: number): GameWindow {
 /** The College Football Playoff's settings, in one place. */
 export const CFP_LEAGUE = {
   /**
-   * The tour name events and teams carry in `metadata.tour`, for display; a sport
+   * The tour name teams carry in `metadata.tour`, for display; a sport
    * league finds them by their provider league code (#1997).
    */
   tour: 'CFP',
@@ -129,7 +129,6 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], windowC
     status,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: CFP_LEAGUE.tour, season: scope.season },
   };
 }
 

@@ -77,7 +77,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         name: true,
         selectionType: true,
         endsAt: true,
-        sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { eventSeries: { select: { sportLeague: { select: { name: true } } } } } } } },
+        sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { sportLeagueSeason: { select: { sportLeague: { select: { name: true } } } } } } } },
       },
     });
     // Every event of a contest is one sports league's, so the first event names it.
@@ -87,7 +87,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         id: row.id,
         name: row.name,
         selectionType: row.selectionType,
-        sportLeagueName: firstEvent.sportEvent.eventSeries.sportLeague.name,
+        sportLeagueName: firstEvent.sportEvent.sportLeagueSeason.sportLeague.name,
         completedAt: row.endsAt,
       }];
     });
@@ -107,8 +107,8 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
             sportEvent: {
               select: {
                 id: true,
-                sportLeagueSeason: { select: { championshipYear: true } },
-                eventSeries: { select: { id: true, name: true, sportLeague: { select: { name: true } } } },
+                sportLeagueSeason: { select: { championshipYear: true, sportLeague: { select: { name: true } } } },
+                eventSeries: { select: { id: true, name: true } },
               },
             },
           },
@@ -140,7 +140,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       cupWeight: row.cupWeight,
       eventSeriesId: event.eventSeries.id,
       seriesName: event.eventSeries.name,
-      sportLeagueName: event.eventSeries.sportLeague.name,
+      sportLeagueName: event.sportLeagueSeason.sportLeague.name,
       championshipYear: event.sportLeagueSeason.championshipYear,
       completedAt: row.endsAt,
       games: gamesByEvent.get(event.id) ?? { count: 0, roundCount: 0, sendingWinnerOn: 0 },

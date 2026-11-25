@@ -106,7 +106,6 @@ describe('toWnbaPlayoffGame', () => {
       status: 'COMPLETED',
       startDate: new Date('2025-09-14T23:30:00.000Z'),
       endDate: new Date('2025-10-09T23:30:00.000Z'),
-      metadata: { tour: 'WNBA', season: 2025 },
     });
   });
 });

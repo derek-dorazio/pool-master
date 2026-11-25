@@ -76,8 +76,6 @@ async function seedRandomDrawFixture() {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `draw-functional-event-${randomUUID().slice(0, 8)}`,
-      providerId: 'integration-test',
       name: 'Draw Functional Event',
       startDate: new Date('2099-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',

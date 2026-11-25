@@ -21,7 +21,6 @@ import {
   IngestionScheduleConfigSchema,
   ParticipantListResponseSchema,
   ParticipantProviderMappingListResponseSchema,
-  ProviderCatalogEventListResponseSchema,
   ProviderListResponseSchema,
   ProviderSyncFindingListResponseSchema,
   ProviderSyncFindingResponseSchema,
@@ -67,7 +66,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
-import { fixtureSeasonId, seriesSeasonId, withCurrentSeason } from '../../support/event-edition';
+import { fixtureSeasonId, mapEventToProvider, seriesSeasonId, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
@@ -217,7 +216,7 @@ async function seedLeagueActivity(jobs: number) {
     const event = onLeague ? null : await prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026 + index), name: `Activity Open ${suffix} ${String(index)}`,
-        providerId: provider.providerId, externalId: `activity-${suffix}-${String(index)}`, startDate: new Date(Date.now() + 7 * DAY),
+        startDate: new Date(Date.now() + 7 * DAY),
       },
     });
     const job = await prisma.backgroundJob.create({
@@ -252,9 +251,12 @@ async function seedRateLimitedJobs() {
   const events = await Promise.all([provider, tennisProvider].map(async (owner) => prisma.sportEvent.create({
     data: {
       eventSeriesId: (await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Limited ${owner.providerName} ${suffix}` } })).id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `Limited ${owner.providerName} ${suffix}`,
-      providerId: owner.providerId, externalId: `limited-${owner.providerId}-${suffix}`, startDate: new Date(Date.now() + 7 * DAY),
+      startDate: new Date(Date.now() + 7 * DAY),
     },
   })));
+  // The BALLDONTLIE event has its provider's id (#2004), so its job is BALLDONTLIE's. The tennis
+  // provider has no Provider row, so its event can hold no provider id and its job counts for none.
+  await mapEventToProvider(prisma, events[0].id, { providerId: provider.providerId, externalId: `limited-${suffix}` });
   await prisma.backgroundJob.createMany({
     data: [
       {
@@ -305,7 +307,7 @@ async function seedSyncFindings(findings: number) {
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Findings Open ${suffix} ${String(index)}` } });
     const event = await prisma.sportEvent.create({
       data: { eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Findings Open ${suffix} ${String(index)}`,
-        providerId: provider.providerId, externalId: `finding-${suffix}-${String(index)}`, startDate: new Date(Date.now() + 7 * DAY) },
+        startDate: new Date(Date.now() + 7 * DAY) },
     });
     const changer = await createTestUser({ isRootAdmin: true });
     await prisma.providerSyncFinding.create({
@@ -318,30 +320,6 @@ async function seedSyncFindings(findings: number) {
     });
   }
   return createTestUser({ isRootAdmin: true });
-}
-
-/** A root admin, a sports league synced from BALLDONTLIE's PGA TOUR, and a provider with `events` of that league's events. */
-async function seedCatalogEvents(events: number) {
-  const sport = await golf();
-  const suffix = randomUUID().slice(0, 8);
-  const tour = `Scaling Tour ${suffix}`;
-  const sportLeague = await getPrisma().sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: tour } });
-  await syncLeagueTo(getPrisma(), sportLeague.id, 'pga');
-  provider.events = Array.from({ length: events }, (_, index) => {
-    const startDate = new Date(Date.now() + (index + 1) * 7 * DAY);
-    return {
-      externalId: `event-${suffix}-${String(index)}`,
-      providerId: provider.providerId,
-      sport: Sport.GOLF,
-      name: `${tour} Open ${String(index)}`,
-      startDate,
-      status: 'SCHEDULED' as const,
-      fieldLocked: false,
-      providerLeagueCode: 'pga',
-      metadata: {},
-    };
-  });
-  return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
 /**
@@ -363,7 +341,7 @@ async function seedSportLeagueOverviews(leagues: number) {
     const event = async (key: string, eventYear: number, extra: Pick<Prisma.SportEventUncheckedCreateInput, 'status' | 'autoReleaseCheckedAt' | 'autoReleaseOutcome' | 'autoReleaseFailedChecks'> = {}) => prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventYear), name: `${name} ${key}`,
-        providerId: provider.providerId, externalId: `${suffix}-${String(index)}-${key}`, startDate: new Date(Date.now() + 7 * DAY), ...extra,
+        startDate: new Date(Date.now() + 7 * DAY), ...extra,
       },
     });
     const upcoming = await event('upcoming', 2026);
@@ -372,7 +350,7 @@ async function seedSportLeagueOverviews(leagues: number) {
     const overdue = await prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2025), name: `${name} overdue`, status: 'IN_PROGRESS',
-        providerId: provider.providerId, externalId: `${suffix}-${String(index)}-overdue`, startDate: new Date(Date.now() - 3 * DAY),
+        startDate: new Date(Date.now() - 3 * DAY),
       },
     });
     await prisma.sportEventRound.create({ data: { sportEventId: overdue.id, roundNumber: 1, scheduledDate: overdue.startDate, scheduledEndAt: new Date(Date.now() - DAY) } });
@@ -440,7 +418,7 @@ async function seedLeagueEventOverviews(events: number) {
     const event = await prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `League Page Open ${suffix} ${String(index)}`, status: overdue ? 'IN_PROGRESS' : 'DRAFT',
-        providerId: provider.providerId, externalId: `${suffix}-${String(index)}`, syncScope: 'SCORES_ONLY', startDate,
+        startDate,
         ...(!overdue && { autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'] }),
       },
     });
@@ -716,18 +694,6 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       statements: 6,
     });
   });
-
-  it("GET a provider's event catalog for a sports league: the same statements for 2 events as for 20", async () => {
-    await expectConstantQueries({
-      route: 'GET /api/v1/ingestion/providers/{providerId}/catalog-events',
-      seed: seedCatalogEvents,
-      call: ({ sportLeague, rootAdmin }) => get(
-        `/api/v1/ingestion/providers/${provider.providerId}/catalog-events?sport=${Sport.GOLF}&sportLeagueId=${sportLeague.id}`,
-        rootAdmin,
-      ),
-      rowsShown: (response) => okBody(response, ProviderCatalogEventListResponseSchema).events.length,
-    });
-  });
 });
 
 /** Saves the group's defaults as its value, as `admin`, so the group names who last saved it. */
@@ -809,10 +775,12 @@ describe('fixed-length root admin lists cost the same statements every time', ()
       call: () => get('/api/v1/ingestion/providers', rootAdmin),
       rowsShown: (response) => {
         const { providers } = okBody(response, ProviderListResponseSchema);
-        expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 2], [tennisProvider.providerId, 1]]);
+        expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 2], [tennisProvider.providerId, 0]]);
         return providers.length;
       },
-      statements: 10,
+      // The events' links read each event's provider ids, Season, league and its sync provider
+      // (mapping, provider league, provider): one read each for all of them (#2004).
+      statements: 16,
     });
   });
 });

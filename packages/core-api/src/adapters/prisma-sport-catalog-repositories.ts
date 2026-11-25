@@ -67,7 +67,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
-import { EventPricingConfigSchema, EventTierConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, providerSourceIdOf, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
+import { EventPricingConfigSchema, EventTierConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -253,7 +253,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       // Each use is counted where its sport league is: a relation `_count` would group every row of
       // the child table and join the groups back, reading the whole sport event catalog.
       const uses: SportLeagueUses = {
-        sportEventCount: await tx.sportEvent.count({ where: { eventSeries: { sportLeagueId: id } } }),
+        sportEventCount: await tx.sportEvent.count({ where: { sportLeagueSeason: { sportLeagueId: id } } }),
         contestTemplateCount: await tx.contestConfigTemplate.count({ where: { sportLeagueId: id } }),
         eventPageOfferCount: await tx.eventPageOffer.count({ where: { sportLeagueId: id } }),
         cupCount: await tx.cup.count({ where: { sportLeagueId: id } }),
@@ -294,20 +294,36 @@ export class PrismaSportEventRepository implements SportEventRepository {
     if (ids.length === 0) return [];
     const rows = await this.prisma.sportEvent.findMany({
       where: { id: { in: [...ids] } },
-      select: { id: true, name: true, providerId: true, eventSeries: { select: { sportLeagueId: true } } },
+      select: {
+        id: true,
+        name: true,
+        providerMappings: { select: { sportLeagueProviderMappingId: true } },
+        sportLeagueSeason: { select: { sportLeagueId: true, sportLeague: { select: { selectedProviderMappingId: true, ...SYNC_PROVIDER_SELECT } } } },
+      },
     });
-    return rows.map((row) => ({ id: row.id, name: row.name, sportLeagueId: row.eventSeries.sportLeagueId, providerId: row.providerId }));
+    return rows.map((row) => {
+      const league = row.sportLeagueSeason.sportLeague;
+      const synced = row.providerMappings.some((mapping) => mapping.sportLeagueProviderMappingId === league.selectedProviderMappingId);
+      return { id: row.id, name: row.name, sportLeagueId: row.sportLeagueSeason.sportLeagueId, providerId: synced ? syncProviderIdOf(league) : null };
+    });
   }
 
   async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
-    const row = await this.prisma.sportEvent.findFirst({ where: { providerId, externalId }, include: SPORT_EVENT_INCLUDE });
+    // An adapter id no Provider carries has no events.
+    const code = providerCodeOfSourceId(providerId);
+    if (code === undefined) return null;
+    const row = await this.prisma.sportEvent.findFirst({
+      where: { providerMappings: { some: { provider: { code }, externalId } } },
+      include: SPORT_EVENT_INCLUDE,
+    });
     return row ? toSportEvent(row) : null;
   }
 
   async findByProviderRefs(providerId: string, externalIds: readonly string[]): Promise<SportEvent[]> {
-    if (externalIds.length === 0) return [];
+    const code = providerCodeOfSourceId(providerId);
+    if (externalIds.length === 0 || code === undefined) return [];
     const rows = await this.prisma.sportEvent.findMany({
-      where: { providerId, externalId: { in: [...externalIds] } },
+      where: { providerMappings: { some: { provider: { code }, externalId: { in: [...externalIds] } } } },
       include: SPORT_EVENT_INCLUDE,
     });
     return rows.map(toSportEvent);
@@ -318,7 +334,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       where: {
         ...(filters.statuses !== undefined && { status: { in: [...filters.statuses] } }),
         ...((filters.sportLeagueId !== undefined || filters.activeSportLeaguesOnly || filters.sport !== undefined) && {
-          eventSeries: {
+          sportLeagueSeason: {
             ...(filters.sportLeagueId !== undefined && { sportLeagueId: filters.sportLeagueId }),
             ...((filters.activeSportLeaguesOnly || filters.sport !== undefined) && {
               sportLeague: {
@@ -345,34 +361,65 @@ export class PrismaSportEventRepository implements SportEventRepository {
 
   async createMany(inputs: readonly SportEventCreate[]): Promise<SportEvent[]> {
     if (inputs.length === 0) return [];
-    // Each event is given its id here, so the rows the insert answers can be put back in the
-    // order given whatever order the database returns them in.
+    // Each event is given its id here, so the rows read back can be put back in the order given.
     const ids = inputs.map(() => randomUUID());
-    const rows = await this.prisma.sportEvent.createManyAndReturn({
-      data: inputs.map((input, index) => ({
-        id: ids[index],
-        externalId: input.externalId,
-        providerId: input.providerId,
-        name: input.name,
-        venue: input.venue ?? null,
-        location: input.location ?? null,
-        startDate: input.startDate,
-        endDate: input.endDate ?? null,
-        status: input.status,
-        rounds: input.rounds ?? null,
-        roundsPar: input.roundsPar ?? null,
-        eventSeriesId: input.eventSeriesId,
-        sportLeagueSeasonId: input.sportLeagueSeasonId,
-        syncScope: input.syncScope,
-        autoLifecycleEnabled: input.autoLifecycleEnabled,
-      })),
-      include: SPORT_EVENT_INCLUDE,
+    const mappings = await this.providerMappingRows(inputs, ids);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.sportEvent.createMany({
+        data: inputs.map((input, index) => ({
+          id: ids[index],
+          name: input.name,
+          venue: input.venue ?? null,
+          location: input.location ?? null,
+          startDate: input.startDate,
+          endDate: input.endDate ?? null,
+          status: input.status,
+          rounds: input.rounds ?? null,
+          roundsPar: input.roundsPar ?? null,
+          eventSeriesId: input.eventSeriesId,
+          sportLeagueSeasonId: input.sportLeagueSeasonId,
+          autoLifecycleEnabled: input.autoLifecycleEnabled,
+        })),
+      });
+      if (mappings.length > 0) await tx.sportEventProviderMapping.createMany({ data: mappings });
     });
+    const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: ids } }, include: SPORT_EVENT_INCLUDE });
     const rowById = new Map(rows.map((row) => [row.id, row]));
     return ids.map((id) => {
       const row = rowById.get(id);
-      if (!row) throw new Error(`The insert did not answer sport event ${id}.`);
+      if (!row) throw new Error(`The insert did not write sport event ${id}.`);
       return toSportEvent(row);
+    });
+  }
+
+  /**
+   * The provider mapping row of each new event the sync gives a provider id (#2004), under its
+   * Season's league's selected provider mapping, in one read. A ref of a provider that is not that
+   * league's sync provider is a broken caller, and throws before anything is written.
+   */
+  private async providerMappingRows(inputs: readonly SportEventCreate[], ids: readonly string[]): Promise<Prisma.SportEventProviderMappingCreateManyInput[]> {
+    const seasonIds = [...new Set(inputs.flatMap((input) => (input.providerRef === undefined ? [] : [input.sportLeagueSeasonId])))];
+    if (seasonIds.length === 0) return [];
+    const seasons = await this.prisma.sportLeagueSeason.findMany({
+      where: { id: { in: seasonIds } },
+      select: {
+        id: true,
+        sportLeague: { select: { selectedProviderMapping: { select: { id: true, providerLeague: { select: { provider: { select: { id: true, code: true } } } } } } } },
+      },
+    });
+    const leagueOf = new Map(seasons.map((row) => [row.id, row.sportLeague]));
+    return inputs.flatMap((input, index) => {
+      if (input.providerRef === undefined) return [];
+      const selected = leagueOf.get(input.sportLeagueSeasonId)?.selectedProviderMapping;
+      if (selected === null || selected === undefined || providerSourceIdOf(selected.providerLeague.provider.code) !== input.providerRef.providerId) {
+        throw new Error(`Season ${input.sportLeagueSeasonId}'s league is not synced from provider ${input.providerRef.providerId}.`);
+      }
+      return [{
+        sportEventId: ids[index],
+        providerId: selected.providerLeague.provider.id,
+        sportLeagueProviderMappingId: selected.id,
+        externalId: input.providerRef.externalId,
+      }];
     });
   }
 
@@ -390,9 +437,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(updates.roundsPar !== undefined && { roundsPar: updates.roundsPar }),
         ...(updates.autoLifecycleEnabled !== undefined && { autoLifecycleEnabled: updates.autoLifecycleEnabled }),
         ...(updates.status !== undefined && { status: updates.status }),
-        ...(updates.providerId !== undefined && { providerId: updates.providerId }),
-        ...(updates.externalId !== undefined && { externalId: updates.externalId }),
-        ...(updates.syncScope !== undefined && { syncScope: updates.syncScope }),
       },
       include: SPORT_EVENT_INCLUDE,
     });
@@ -518,22 +562,22 @@ export class PrismaSportEventRepository implements SportEventRepository {
       where: {
         status: SportEventStatus.DRAFT,
         startDate: { gt: now, lte: horizon },
-        eventSeries: { sportLeague: { isActive: true, selectedProviderMappingId: { not: null }, autoReleaseDaysBeforeStart: { not: null } } },
+        sportLeagueSeason: { sportLeague: { isActive: true, selectedProviderMappingId: { not: null }, autoReleaseDaysBeforeStart: { not: null } } },
       },
       select: {
         id: true,
         startDate: true,
-        providerId: true,
-        syncScope: true,
-        eventSeries: { select: { sportLeague: { select: { ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true } } } },
+        providerMappings: { select: { sportLeagueProviderMappingId: true } },
+        sportLeagueSeason: { select: { sportLeague: { select: { ...SYNC_PROVIDER_SELECT, selectedProviderMappingId: true, autoReleaseDaysBeforeStart: true } } } },
       },
       orderBy: { startDate: 'asc' },
     });
     return rows.flatMap((row) => {
-      const { autoReleaseDaysBeforeStart } = row.eventSeries.sportLeague;
-      const syncProviderId = syncProviderIdOf(row.eventSeries.sportLeague);
+      const { autoReleaseDaysBeforeStart, selectedProviderMappingId } = row.sportLeagueSeason.sportLeague;
+      const syncProviderId = syncProviderIdOf(row.sportLeagueSeason.sportLeague);
       if (syncProviderId === null || autoReleaseDaysBeforeStart === null) return [];
-      return [{ id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope, syncProviderId, autoReleaseDaysBeforeStart }];
+      const providerSynced = row.providerMappings.some((mapping) => mapping.sportLeagueProviderMappingId === selectedProviderMappingId);
+      return [{ id: row.id, startDate: row.startDate, providerSynced, syncProviderId, autoReleaseDaysBeforeStart }];
     });
   }
 
@@ -570,23 +614,21 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>> {
-    // groupBy cannot group through a relation, so the events are counted per series and
-    // the series folded into their sport league.
-    const series = await this.prisma.eventSeries.findMany({
+    // groupBy cannot group through a relation, so the events are counted per Season and the
+    // Seasons folded into their sport league.
+    const seasons = await this.prisma.sportLeagueSeason.findMany({
       where: { sportLeagueId: { in: [...sportLeagueIds] } },
       select: { id: true, sportLeagueId: true },
     });
     const groups = await this.prisma.sportEvent.groupBy({
-      by: ['eventSeriesId'],
-      where: {
-        eventSeriesId: { in: series.map((row) => row.id) },
-      },
+      by: ['sportLeagueSeasonId'],
+      where: { sportLeagueSeasonId: { in: seasons.map((row) => row.id) } },
       _count: { _all: true },
     });
-    const leagueBySeries = new Map(series.map((row) => [row.id, row.sportLeagueId]));
+    const leagueBySeason = new Map(seasons.map((row) => [row.id, row.sportLeagueId]));
     const counts = new Map(sportLeagueIds.map((id) => [id, 0]));
     for (const group of groups) {
-      const sportLeagueId = leagueBySeries.get(group.eventSeriesId);
+      const sportLeagueId = leagueBySeason.get(group.sportLeagueSeasonId);
       if (sportLeagueId) counts.set(sportLeagueId, (counts.get(sportLeagueId) ?? 0) + group._count._all);
     }
     return counts;
@@ -594,30 +636,43 @@ export class PrismaSportEventRepository implements SportEventRepository {
 
   async sportLeagueHasLoadedBracket(sportLeagueId: string): Promise<boolean> {
     const match = await this.prisma.sportEventRoundMatch.findFirst({
-      where: { sportEvent: { eventSeries: { sportLeagueId } } },
+      where: { sportEvent: { sportLeagueSeason: { sportLeagueId } } },
       select: { id: true },
     });
     return match !== null;
   }
 
   async summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>> {
+    // An adapter id no Provider carries has no events.
+    const codes = providerIds.flatMap((providerId) => {
+      const code = providerCodeOfSourceId(providerId);
+      return code === undefined ? [] : [[providerId, code] as const];
+    });
+    const codeOf = new Map(codes);
     const [active, latest] = await Promise.all([
-      this.prisma.sportEvent.groupBy({
+      // An event has one mapping per provider, so its mappings count its events.
+      this.prisma.sportEventProviderMapping.groupBy({
         by: ['providerId'],
-        where: { providerId: { in: [...providerIds] }, status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] } },
+        where: {
+          provider: { code: { in: codes.map(([, code]) => code) } },
+          sportEvent: { status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] } },
+        },
         _count: { _all: true },
       }),
-      this.prisma.sportEvent.groupBy({
-        by: ['providerId'],
-        where: { providerId: { in: [...providerIds] } },
+      // One read per provider, and there are a handful (one today): the latest change of its events.
+      // poolmaster-allow-query-in-loop: one read per registered provider, a small fixed bound (one today)
+      Promise.all(codes.map(async ([providerId, code]) => [providerId, (await this.prisma.sportEvent.aggregate({
+        where: { providerMappings: { some: { provider: { code } } } },
         _max: { updatedAt: true },
-      }),
+      }))._max.updatedAt] as const)),
     ]);
-    const activeCounts = new Map(active.map((group) => [group.providerId, group._count._all]));
-    const lastChanged = new Map(latest.map((group) => [group.providerId, group._max.updatedAt]));
-    return new Map(providerIds.map((id) => [id, {
-      activeEventCount: activeCounts.get(id) ?? 0,
-      lastChangedAt: lastChanged.get(id) ?? null,
+    const providerRows = await this.prisma.provider.findMany({ where: { code: { in: codes.map(([, code]) => code) } }, select: { id: true, code: true } });
+    const codeOfRow = new Map(providerRows.map((row) => [row.id, row.code]));
+    const activeByCode = new Map(active.map((group) => [codeOfRow.get(group.providerId), group._count._all]));
+    const lastChanged = new Map(latest);
+    return new Map(providerIds.map((providerId) => [providerId, {
+      activeEventCount: activeByCode.get(codeOf.get(providerId)) ?? 0,
+      lastChangedAt: lastChanged.get(providerId) ?? null,
     }]));
   }
 
@@ -625,10 +680,15 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const { gameId, startedBy } = query;
     const rows = await this.prisma.sportEvent.findMany({
       where: {
-        providerId: query.providerId,
         ...sportEventSportWhere(query.sport),
-        externalId: 'externalId' in query ? query.externalId : { startsWith: query.externalIdPrefix },
-        syncScope: SportEventSyncScope.SCORES_ONLY,
+        providerMappings: {
+          some: {
+            provider: { code: requireProviderCodeOfSourceId(query.providerId) },
+            ...('externalId' in query
+              ? { externalId: query.externalId }
+              : { sportLeagueProviderMapping: { providerLeague: { code: query.providerLeagueCode } } }),
+          },
+        },
         ...(startedBy === undefined
           ? { status: SportEventStatus.IN_PROGRESS }
           : {
@@ -641,27 +701,27 @@ export class PrismaSportEventRepository implements SportEventRepository {
       select: {
         id: true,
         ...SPORT_EVENT_SPORT_SELECT,
-        providerId: true,
-        externalId: true,
+        providerMappings: { where: { provider: { code: requireProviderCodeOfSourceId(query.providerId) } }, select: { externalId: true } },
         status: true,
         // An event holds a game at most once (sportEventId, externalGameId is unique).
         ...(gameId !== undefined && { matches: { where: { externalGameId: gameId }, select: { id: true } } }),
       },
     });
-    return rows.map((row) => ({
+    // The where clause keeps only events with a mapping of this provider, and an event has one.
+    return rows.flatMap((row) => row.providerMappings.map((mapping) => ({
       sportEventId: row.id,
       sport: sportOfEvent(row),
-      providerId: row.providerId,
-      externalId: row.externalId,
+      providerId: query.providerId,
+      externalId: mapping.externalId,
       holdsGame: 'matches' in row && row.matches.length > 0,
       inProgress: row.status === SportEventStatus.IN_PROGRESS,
-    }));
+    })));
   }
 
   async recordProviderNotification(receipt: ProviderNotificationReceipt): Promise<void> {
     if (receipt.externalIds.length === 0) return;
     await this.prisma.sportEvent.updateMany({
-      where: { providerId: receipt.providerId, externalId: { in: [...receipt.externalIds] } },
+      where: { providerMappings: { some: { provider: { code: requireProviderCodeOfSourceId(receipt.providerId) }, externalId: { in: [...receipt.externalIds] } } } },
       data: { lastProviderNotificationAt: receipt.receivedAt },
     });
   }
@@ -1257,27 +1317,31 @@ function toSportLeague(row: SportLeagueRow): SportLeague {
 }
 
 /**
- * Every SportEvent read carries its series' sport league, the event's one path to it, and what
- * the league plays differently from its sport: its period layout, first squares round,
- * participant type and scoring family; and its Season's championship year (#2003).
+ * Every SportEvent read carries its sport league through its Season (#2004), and what the league
+ * plays differently from its sport: its period layout, first squares round,
+ * participant type and scoring family; its Season's championship year (#2003); and the provider
+ * ids the sync gave it, by provider name (#2004).
  */
 const SPORT_EVENT_INCLUDE = {
-  sportLeagueSeason: { select: { championshipYear: true } },
-  eventSeries: {
+  sportLeagueSeason: {
     select: {
+      championshipYear: true,
       sportLeagueId: true,
       sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, ...SPORT_LEAGUE_SPORT_SELECT, ...SYNC_PROVIDER_SELECT } },
     },
   },
+  providerMappings: {
+    select: { externalId: true, provider: { select: { code: true, name: true } } },
+    orderBy: { provider: { name: 'asc' } },
+  },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
-  const syncProviderId = syncProviderIdOf(row.eventSeries.sportLeague);
-  const syncProviderName = syncProviderNameOf(row.eventSeries.sportLeague);
+  const syncProviderId = syncProviderIdOf(row.sportLeagueSeason.sportLeague);
+  const syncProviderName = syncProviderNameOf(row.sportLeagueSeason.sportLeague);
   return {
     id: row.id,
-    externalId: row.externalId,
-    providerId: row.providerId,
+    providerMappings: row.providerMappings.map((mapping) => ({ providerCode: mapping.provider.code, providerName: mapping.provider.name, externalId: mapping.externalId })),
     sport: sportOfEvent(row),
     sportUrlSegment: sportUrlSegmentOfEvent(row),
     name: row.name,
@@ -1289,18 +1353,16 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     rounds: row.rounds ?? undefined,
     roundsPar: row.roundsPar ?? undefined,
     participantCount: row.participantCount ?? undefined,
-    metadata: (row.metadata ?? {}) as Record<string, unknown>,
     eventSeriesId: row.eventSeriesId,
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
-    sportLeagueId: row.eventSeries.sportLeagueId,
-    ...(row.eventSeries.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.eventSeries.sportLeague.matchPeriodLayout }),
-    ...(row.eventSeries.sportLeague.squaresFromRound !== null && { squaresFromRound: row.eventSeries.sportLeague.squaresFromRound }),
-    participantType: row.eventSeries.sportLeague.participantType,
-    scoringFamily: row.eventSeries.sportLeague.scoringFamily,
+    sportLeagueId: row.sportLeagueSeason.sportLeagueId,
+    ...(row.sportLeagueSeason.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.sportLeagueSeason.sportLeague.matchPeriodLayout }),
+    ...(row.sportLeagueSeason.sportLeague.squaresFromRound !== null && { squaresFromRound: row.sportLeagueSeason.sportLeague.squaresFromRound }),
+    participantType: row.sportLeagueSeason.sportLeague.participantType,
+    scoringFamily: row.sportLeagueSeason.sportLeague.scoringFamily,
     ...(syncProviderId !== null && { syncProviderId }),
     ...(syncProviderName !== null && { syncProviderName }),
-    syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
     ...(row.tierConfig !== null && { tierConfig: EventTierConfigSchema.parse(row.tierConfig) }),

@@ -112,7 +112,6 @@ describe('toMlbPlayoffGame', () => {
       status: 'COMPLETED',
       startDate: new Date('2025-09-30T23:08:00.000Z'),
       endDate: new Date('2025-10-30T23:08:00.000Z'),
-      metadata: { tour: 'MLB', season: 2025 },
     });
   });
 

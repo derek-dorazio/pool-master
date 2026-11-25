@@ -5,7 +5,7 @@
  *
  * For each Season it reads (the league's current Season and every later one, or the one an admin
  * named, #2003), the events of the provider league the league's selected provider mapping names,
- * asked for by the provider's own id for that Season (`EventScoreSourceService.listSeasonEvents`,
+ * asked for by the provider's own id for that Season (`ProviderSeasonScheduleReader.listSeasonEvents`,
  * #1997), become its events in that Season (`SportEventService.importProviderSeason`, the one
  * creation path: series, rounds and default tiers seeded alike, and a re-run skips what is there),
  * and the events already linked keep their provider's name, venue and dates
@@ -39,7 +39,7 @@ import { errorMessage } from '../../core/error-message';
 import { SCHEDULE_START } from '../../core/job-start';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { PermanentBackgroundJobError, type BackgroundJobContext } from '../background-jobs/background-job-runner';
-import { EventScoreSourceError, type EventScoreSourceService } from './event-score-source-service';
+import { ProviderSeasonScheduleError, type ProviderSeasonScheduleReader } from './provider-season-schedule-reader';
 import { SportEventError } from './errors';
 import { syncLeagueEventsJob, type SyncLeagueEventsJobPayload } from './league-events-sync-job';
 import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
@@ -55,7 +55,7 @@ const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT
 export interface LeagueEventsSyncOptions {
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findEventSynced'>;
   seasons: Pick<SportLeagueSeasonRepository, 'findForSync'>;
-  scoreSource: Pick<EventScoreSourceService, 'listSeasonEvents'>;
+  seasonSchedule: Pick<ProviderSeasonScheduleReader, 'listSeasonEvents'>;
   sportEvents: Pick<SportEventService, 'importProviderSeason' | 'keepProviderEventsCurrent'>;
   findings: Pick<ProviderSyncFindingService, 'raise'>;
   syncRuns: Pick<ProviderSyncRunRepository, 'create' | 'update' | 'findByBackgroundJobIds'>;
@@ -169,7 +169,7 @@ export class LeagueEventsSync {
         action: 'events.leagueSync.failed',
         data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, error: errorMessage(error) },
       }, 'A sport league\'s events sync failed');
-      if (error instanceof EventScoreSourceError && PERMANENT_SOURCE_ERRORS.has(error.code)) {
+      if (error instanceof ProviderSeasonScheduleError && PERMANENT_SOURCE_ERRORS.has(error.code)) {
         throw new PermanentBackgroundJobError(`${error.code}: ${error.message}`, { cause: error });
       }
       throw error;
@@ -235,7 +235,7 @@ export class LeagueEventsSync {
   }
 
   private async syncSeason(sportLeagueId: string, providerId: string, season: SyncableSportLeagueSeason & { providerSeasonId: string }): Promise<SeasonSync> {
-    const providerEvents = await this.options.scoreSource.listSeasonEvents(providerId, sportLeagueId, season.providerSeasonId);
+    const providerEvents = await this.options.seasonSchedule.listSeasonEvents(providerId, sportLeagueId, season.providerSeasonId);
     const imported = await this.options.sportEvents.importProviderSeason({ sportLeagueId, sportLeagueSeasonId: season.id, providerId, providerEvents });
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
@@ -279,7 +279,7 @@ export class LeagueEventsSync {
           error: {
             ...(error instanceof Error && { name: error.name }),
             message,
-            ...(error instanceof EventScoreSourceError && { code: error.code }),
+            ...(error instanceof ProviderSeasonScheduleError && { code: error.code }),
           },
         },
       },

@@ -170,13 +170,13 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
 /** What a run reads with its row (#2040): its Provider's name, and its event's id at the provider. */
 const RUN_RELATIONS = {
   provider: { select: { name: true } },
-  sportEvent: { select: { externalId: true } },
+  sportEvent: { select: { providerMappings: { select: { providerId: true, externalId: true } } } },
   sportLeague: { select: SPORT_LEAGUE_SPORT_SELECT },
 } as const;
 
 type RunRow = Omit<ProviderSyncRunRow, 'detailsJson'> & {
   provider: { name: string };
-  sportEvent: { externalId: string } | null;
+  sportEvent: { providerMappings: Array<{ providerId: string; externalId: string }> } | null;
   sportLeague: SportLeagueSportRow | null;
 };
 
@@ -186,7 +186,7 @@ function toProviderSyncRun(row: RunRow): ProviderSyncRun {
     providerId: row.providerId,
     providerName: row.provider.name,
     sport: row.sportLeague?.sport.sport ?? null,
-    eventId: row.sportEvent?.externalId ?? null,
+    eventId: row.sportEvent?.providerMappings.find((mapping) => mapping.providerId === row.providerId)?.externalId ?? null,
     kind: row.kind,
     trigger: row.trigger,
     sportLeagueId: row.sportLeagueId,

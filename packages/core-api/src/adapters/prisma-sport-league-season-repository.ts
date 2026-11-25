@@ -9,7 +9,7 @@ import type {
   SportLeagueSeasonRepository,
   SyncableSportLeagueSeason,
 } from '@poolmaster/shared/db';
-import { SportEventSyncScope, type SportLeagueSeason } from '@poolmaster/shared/domain';
+import type { SportLeagueSeason } from '@poolmaster/shared/domain';
 
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
 
@@ -36,10 +36,10 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     const [leagues, seasons, synced] = await Promise.all([
       this.prisma.sportLeague.findMany({ select: { id: true, currentSeasonId: true }, orderBy: { id: 'asc' } }),
       this.prisma.sportLeagueSeason.findMany({ select: { id: true, sportLeagueId: true, startsAt: true, endsAt: true } }),
-      // A Season the sync has made an event in; slice 7 reads this from its slots instead.
+      // A Season the sync has made an event in: one with a provider id (#2004).
       this.prisma.sportEvent.groupBy({
         by: ['sportLeagueSeasonId'],
-        where: { syncScope: { not: SportEventSyncScope.NONE } },
+        where: { providerMappings: { some: {} } },
       }),
     ]);
     const withSyncedEvent = new Set(synced.map((group) => group.sportLeagueSeasonId));

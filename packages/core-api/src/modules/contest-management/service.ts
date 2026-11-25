@@ -107,7 +107,7 @@ export interface ContestCreateSportEventState {
   status: SportEventStatus;
   startDate: Date;
   sport: Sport;
-  /** The event's sport league, read through its series. */
+  /** The event's sport league, read through its Season. */
   sportLeagueId: string;
   /** Its Season's championship year (#2003): a majors pool's events share one (#714). */
   championshipYear: number;

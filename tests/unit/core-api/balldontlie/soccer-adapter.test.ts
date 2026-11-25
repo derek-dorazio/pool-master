@@ -139,7 +139,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
 
       const detail = await harness.adapter.getEventDetails('epl-2026-matchweek-11');
 
-      expect(detail).toMatchObject({ externalId: 'epl-2026-matchweek-11', sport: Sport.SOCCER, participantCount: 10, rounds: 1, status: 'IN_PROGRESS', metadata: { tour: 'EPL', season: 2026 } });
+      expect(detail).toMatchObject({ externalId: 'epl-2026-matchweek-11', sport: Sport.SOCCER, participantCount: 10, rounds: 1, status: 'IN_PROGRESS' });
       expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.name])).toEqual([
         ['12', 'Manchester City'],
         ['9', 'Fulham'],

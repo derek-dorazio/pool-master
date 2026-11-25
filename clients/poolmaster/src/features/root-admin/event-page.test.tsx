@@ -107,8 +107,7 @@ const PGA = sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' });
 function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
   return sportEventFixture({
     id: 'tour-1',
-    externalId: 'feed-401',
-    providerId: 'balldontlie',
+    providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'feed-401' }],
     name: 'Rolling Weekend Invitational',
     venue: 'Mock Golf Club',
     location: 'Augusta, GA',
@@ -120,7 +119,6 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'league-1',
-    syncScope: 'NONE',
     autoLifecycleEnabled: true,
     allowedTransitions: ['IN_PROGRESS', 'CANCELLED'],
     ...overrides,
@@ -395,7 +393,7 @@ describe('Event page syncs', () => {
     await waitFor(() => expect(refreshEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'tour-1' } })));
   });
 
-  it('shows the live scores sync on Rounds and matches, and Sync now asks the provider for the event\'s live scores by its feed id', async () => {
+  it('shows the live scores sync on Rounds and matches, and Sync now asks the provider for the event\'s live scores by the event\'s own id', async () => {
     submitEventSyncMock.mockResolvedValue({ data: { syncRuns: [] } });
     renderEventPage('/manage/sports/golf/events/tour-1/rounds', { overview: syncedOverview, synced: true });
 
@@ -404,8 +402,8 @@ describe('Event page syncs', () => {
     await userEvent.click(within(row).getByTestId('root-admin-event-sync-now-SCORES'));
 
     await waitFor(() => expect(submitEventSyncMock).toHaveBeenCalledWith(expect.objectContaining({
-      path: { sport: 'GOLF', eventId: 'feed-401' },
-      body: { providerId: 'balldontlie', feeds: ['EVENTLIVESCORES'] },
+      path: { eventId: 'tour-1' },
+      body: { feeds: ['EVENTLIVESCORES'] },
     })));
   });
 
@@ -626,7 +624,8 @@ describe('Event page ⚙ dialog', () => {
 
     const dialog = await openSettings();
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-league')).toHaveTextContent('PGA Tour');
-    expect(within(dialog).getByTestId('root-admin-event-settings-dialog-feed-id')).toHaveTextContent('None');
+    // The ids each provider gave the event, with the provider's name.
+    expect(within(dialog).getByTestId('root-admin-event-settings-dialog-feed-id')).toHaveTextContent('feed-401 (BALLDONTLIE)');
     expect(await within(dialog).findByText('Six tiers')).toBeInTheDocument();
     expect(await within(dialog).findByText('Standard')).toBeInTheDocument();
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-tier-order')).toHaveTextContent('Rank');
@@ -796,7 +795,7 @@ describe('Event page ⚙ dialog Edit', () => {
 
   it('leaves a provider-synced event\'s name, venue and dates out of the form, and saves only what an admin still owns', async () => {
     updateEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, location: 'Hoylake' }) } });
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ providerSynced: true, syncScope: 'SCORES_ONLY' }) });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ providerSynced: true }) });
 
     const dialog = await openSettingsEdit();
     for (const field of ['name', 'venue', 'start', 'end']) {

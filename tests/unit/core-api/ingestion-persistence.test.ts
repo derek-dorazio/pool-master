@@ -26,10 +26,6 @@ function buildInProgressEvent(): SportEvent {
     startDate: new Date('2026-05-02T20:00:00.000Z'),
     status: 'IN_PROGRESS',
     fieldLocked: true,
-    metadata: {
-      releaseAt: '2026-05-01T20:00:00.000Z',
-      fieldLocksAt: '2026-05-02T19:00:00.000Z',
-    },
   };
 }
 
@@ -39,7 +35,6 @@ function linkedRow(overrides: Record<string, unknown> & { sport?: Sport } = {}) 
   return {
     id: 'sport-event-1',
     externalId: 'provider-event-1',
-    providerId: 'balldontlie',
     name: 'Manual Test Golf Tournament',
     venue: null,
     location: null,
@@ -52,10 +47,29 @@ function linkedRow(overrides: Record<string, unknown> & { sport?: Sport } = {}) 
     fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
     fieldLocked: false,
     metadata: {},
-    syncScope: 'SCORES_ONLY',
     // The event's sport league, which the sync's new participants belong to (#1853).
-    eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport } } },
+    sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport } } },
     ...rest,
+  };
+}
+
+/** The provider's mapping of an event row (#2004), as both event reads select it. */
+function mappingOf(row: Record<string, unknown>) {
+  return { externalId: row['externalId'], provider: { code: ProviderCode.BALLDONTLIE }, sportEvent: row };
+}
+
+/**
+ * The event reads, which go through the provider's mappings (#2004): the feed's linked events
+ * are `rows`, and the one event a field sync reads with its league is `linked`, or the row with
+ * the id asked for.
+ */
+function eventReads(rows: ReadonlyArray<Record<string, unknown>>, linked?: Record<string, unknown> | null) {
+  return {
+    findMany: jest.fn().mockResolvedValue(rows.map(mappingOf)),
+    findFirst: jest.fn(async (args: { where: { externalId: string } }) => {
+      const row = linked !== undefined ? linked : rows.find((candidate) => candidate['externalId'] === args.where.externalId);
+      return row === null || row === undefined ? null : { sportEvent: row };
+    }),
   };
 }
 
@@ -72,11 +86,8 @@ function fieldSyncPrisma(options: {
   createField?: jest.Mock;
 }) {
   return {
-    sportEvent: {
-      update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-      findMany: jest.fn().mockResolvedValue([options.eventRow]),
-      findUnique: jest.fn().mockResolvedValue(options.linkedEvent),
-    },
+    sportEvent: { update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }) },
+    sportEventProviderMapping: eventReads([options.eventRow], options.linkedEvent),
     participantProviderMapping: {
       findMany: jest.fn().mockResolvedValue([{
         id: 'mapping-1',
@@ -111,11 +122,9 @@ describe('IngestionPersistence', () => {
     const existingReleaseAt = new Date('2026-05-21T12:00:00.000Z');
     const existingFieldLocksAt = new Date('2026-06-03T16:00:00.000Z');
     const prisma = {
-      sportEvent: {
-        findMany: jest.fn().mockResolvedValue([{
+      sportEventProviderMapping: eventReads([{
             id: 'sport-event-1',
             externalId: 'golf-weekend-1',
-            providerId: 'balldontlie',
             sport: Sport.GOLF,
             name: 'Old Weekend 1 Name',
             venue: 'Old Links',
@@ -128,15 +137,8 @@ describe('IngestionPersistence', () => {
             releaseAt: existingReleaseAt,
             fieldLocksAt: existingFieldLocksAt,
             fieldLocked: false,
-            metadata: {
-              releaseAt: existingReleaseAt.toISOString(),
-              fieldLocksAt: existingFieldLocksAt.toISOString(),
-              eventType: 'stroke_play',
-            },
-            syncScope: 'SCORES_ONLY',
           }]),
-        update: jest.fn().mockResolvedValueOnce({ id: 'sport-event-1' }),
-      },
+      sportEvent: { update: jest.fn().mockResolvedValueOnce({ id: 'sport-event-1' }) },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
     const logger = fakeLogger();
@@ -154,11 +156,6 @@ describe('IngestionPersistence', () => {
         rounds: 4,
         participantCount: 80,
         fieldLocked: false,
-        metadata: {
-          releaseAt: existingReleaseAt.toISOString(),
-          fieldLocksAt: existingFieldLocksAt.toISOString(),
-          eventType: 'stroke_play',
-        },
       },
       {
         externalId: 'golf-weekend-2',
@@ -172,11 +169,6 @@ describe('IngestionPersistence', () => {
         rounds: 4,
         participantCount: 80,
         fieldLocked: false,
-        metadata: {
-          releaseAt: '2026-05-28T12:00:00.000Z',
-          fieldLocksAt: '2026-06-10T16:00:00.000Z',
-          eventType: 'stroke_play',
-        },
       },
     ];
 
@@ -256,9 +248,8 @@ describe('IngestionPersistence', () => {
         releaseAt: new Date('2026-05-01T20:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
         fieldLocked: true,
-        metadata: detail.metadata,
       },
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
+      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1',
         isActive: true,
@@ -328,7 +319,7 @@ describe('IngestionPersistence', () => {
       linkedEvent: {
         id: 'sport-event-1',
         status,
-        eventSeries: { sportLeague: { id: 'league-event', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: Sport.BASKETBALL } } },
+        sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: Sport.BASKETBALL } } },
       },
       fieldRow: {
         id: 'sport-event-participant-1',
@@ -362,7 +353,7 @@ describe('IngestionPersistence', () => {
       return fieldSyncPrisma({
         externalId: 'golfer-01',
         eventRow: linkedRow(),
-        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
+        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
         fieldRow: null,
         createField,
       });
@@ -448,9 +439,8 @@ describe('IngestionPersistence', () => {
         releaseAt: new Date('2026-05-01T20:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
         fieldLocked: true,
-        metadata: detail.metadata,
       },
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
+      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1',
         isActive: true,
@@ -492,8 +482,8 @@ describe('IngestionPersistence', () => {
     };
     const prisma = fieldSyncPrisma({
       externalId: 'golfer-01',
-      eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null, participantCount: null, metadata: detail.metadata },
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
+      eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null, participantCount: null },
+      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1', isActive: true, inactiveReason: null, ranking: 7, oddsToWin: 8.5, seedNumber: 1,
         metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
@@ -514,14 +504,11 @@ describe('IngestionPersistence', () => {
 
   it('reads every linked event of a feed in one query and writes only the changed ones in one transaction (#1247)', async () => {
     const prisma = {
-      sportEvent: {
-        findMany: jest.fn().mockResolvedValue([
-          linkedRow({ syncScope: 'SCORES_ONLY', participantCount: 60 }),
-          { ...linkedRow({ syncScope: 'SCORES_ONLY', participantCount: 80 }), id: 'sport-event-2', externalId: 'golf-unchanged' },
-        ]),
-        findUnique: jest.fn(),
-        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-      },
+      sportEventProviderMapping: eventReads([
+        linkedRow({ participantCount: 60 }),
+        { ...linkedRow({ participantCount: 80 }), id: 'sport-event-2', externalId: 'golf-unchanged' },
+      ]),
+      sportEvent: { update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }) },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
@@ -533,11 +520,11 @@ describe('IngestionPersistence', () => {
       { ...changed, externalId: 'golf-unlinked' },
     ]);
 
-    expect(prisma.sportEvent.findMany).toHaveBeenCalledTimes(1);
-    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith({
-      where: { OR: [{ providerId: changed.providerId, externalId: { in: ['provider-event-1', 'golf-unchanged', 'golf-unlinked'] } }] },
-    });
-    expect(prisma.sportEvent.findUnique).not.toHaveBeenCalled();
+    expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { OR: [{ provider: { code: ProviderCode.BALLDONTLIE }, externalId: { in: ['provider-event-1', 'golf-unchanged', 'golf-unlinked'] } }] },
+    }));
+    expect(prisma.sportEventProviderMapping.findFirst).not.toHaveBeenCalled();
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
     expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 80 } });
@@ -546,10 +533,8 @@ describe('IngestionPersistence', () => {
 
   it('takes a feed that names the same event twice at its last copy, writing and reporting that event once', async () => {
     const prisma = {
-      sportEvent: {
-        findMany: jest.fn().mockResolvedValue([linkedRow({ syncScope: 'SCORES_ONLY', participantCount: 60 })]),
-        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-      },
+      sportEventProviderMapping: eventReads([linkedRow({ participantCount: 60 })]),
+      sportEvent: { update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }) },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
@@ -561,33 +546,31 @@ describe('IngestionPersistence', () => {
     ]);
 
     expect(result.count).toBe(1);
-    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith({
-      where: { OR: [{ providerId: event.providerId, externalId: { in: [event.externalId] } }] },
-    });
+    expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { OR: [{ provider: { code: ProviderCode.BALLDONTLIE }, externalId: { in: [event.externalId] } }] },
+    }));
     expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
     expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 90 } });
     expect(result.writeDiagnostics.rows).toHaveLength(1);
   });
 
   it('reads and writes nothing for an empty feed', async () => {
-    const prisma = { sportEvent: { findMany: jest.fn() }, $transaction: jest.fn() };
+    const prisma = { sportEventProviderMapping: { findMany: jest.fn() }, $transaction: jest.fn() };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
 
     const result = await persistence.persistEventsWithDiagnostics([]);
 
     expect(result.count).toBe(0);
-    expect(prisma.sportEvent.findMany).not.toHaveBeenCalled();
+    expect(prisma.sportEventProviderMapping.findMany).not.toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  // #118, #435 — an admin owns the header, rounds and status of every event, linked for
-  // scores (SCORES_ONLY) or not (NONE). Sync may refresh the field size, and nothing else.
-  it.each(['SCORES_ONLY', 'NONE'])('reports a %s event\'s admin-owned header unchanged and only its participantCount updated', async (syncScope) => {
+  // #118, #435 — the stored header, rounds and status of a linked event are not the feed's to
+  // change here. Sync may refresh the field size, and nothing else.
+  it('reports a linked event\'s stored header unchanged and only its participantCount updated', async () => {
     const prisma = {
-      sportEvent: {
-        findMany: jest.fn().mockResolvedValue([linkedRow({ syncScope, name: 'Admin Open', rounds: 4, participantCount: 60 })]),
-        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-      },
+      sportEventProviderMapping: eventReads([linkedRow({ name: 'Admin Open', rounds: 4, participantCount: 60 })]),
+      sportEvent: { update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }) },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
@@ -628,10 +611,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
   function unmappedPrisma(siteParticipants: SiteParticipant[] = [], linked = true) {
     const double = {
       sportLeague: { findMany: jest.fn().mockResolvedValue([]) },
-      sportEvent: {
-        findMany: jest.fn().mockResolvedValue([]),
-        findUnique: jest.fn().mockResolvedValue(linked ? linkedRow() : null),
-      },
+      sportEventProviderMapping: eventReads([], linked ? linkedRow() : null),
       sportEventParticipant: {
         findMany: jest.fn().mockResolvedValue([]),
         createManyAndReturn: jest.fn(({ data }: { data: Array<{ participantId: string }> }) => Promise.resolve(

@@ -1,4 +1,4 @@
-import { eventProviderNameOf, ProviderCode, providerCodeOfSourceId, ProviderHealthStatus, providerHealthOfRuns, providerSourceIdOf } from '@poolmaster/shared/domain';
+import { eventFeedRef, eventProviderNameOf, isProviderSyncedEvent, ProviderCode, providerCodeOfSourceId, ProviderHealthStatus, providerHealthOfRuns, providerSourceIdOf } from '@poolmaster/shared/domain';
 
 // The providerId a Provider row's events carry, and back: a scheduled sync of synced leagues asks
 // only providers with a row, so a feed with none (the QA mock) syncs no league.
@@ -20,15 +20,38 @@ describe('provider source ids', () => {
   });
 });
 
-describe('eventProviderNameOf', () => {
-  it('names the league\'s sync provider for an event linked to it', () => {
-    expect(eventProviderNameOf({ providerId: 'balldontlie', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE' })).toBe('BALLDONTLIE');
+describe('an event\'s id at its league\'s sync provider (#2004)', () => {
+  const balldontlie = { providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId: '1133' };
+
+  it('reads the id the league\'s sync provider gave the event, with that provider\'s adapter id and name', () => {
+    const event = { providerMappings: [balldontlie], syncProviderId: 'balldontlie' };
+
+    expect(eventFeedRef(event)).toEqual({ providerId: 'balldontlie', externalId: '1133' });
+    expect(isProviderSyncedEvent(event)).toBe(true);
+    expect(eventProviderNameOf(event)).toBe('BALLDONTLIE');
   });
 
-  it('names none for an admin-authored event, an event linked to another provider, or a league no provider syncs', () => {
-    expect(eventProviderNameOf({ providerId: 'manual-admin', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE' })).toBeNull();
-    expect(eventProviderNameOf({ providerId: 'other-feed', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE' })).toBeNull();
-    expect(eventProviderNameOf({ providerId: 'balldontlie' })).toBeNull();
+  it('reads none for a test event, which no provider has an id for', () => {
+    const event = { providerMappings: [], syncProviderId: 'balldontlie' };
+
+    expect(eventFeedRef(event)).toBeUndefined();
+    expect(isProviderSyncedEvent(event)).toBe(false);
+    expect(eventProviderNameOf(event)).toBeNull();
+  });
+
+  it('reads none for an event of a league no provider syncs, even one a provider once gave an id', () => {
+    const event = { providerMappings: [balldontlie] };
+
+    expect(eventFeedRef(event)).toBeUndefined();
+    expect(isProviderSyncedEvent(event)).toBe(false);
+    expect(eventProviderNameOf(event)).toBeNull();
+  });
+
+  it('reads none when the league\'s sync provider is another than the one with an id for the event', () => {
+    const event = { providerMappings: [balldontlie], syncProviderId: 'other-feed' };
+
+    expect(eventFeedRef(event)).toBeUndefined();
+    expect(eventProviderNameOf(event)).toBeNull();
   });
 });
 

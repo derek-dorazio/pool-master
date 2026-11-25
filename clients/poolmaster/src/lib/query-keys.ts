@@ -274,26 +274,6 @@ export const QueryKeys = {
       participantMappings: (participantId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participant', participantId, 'provider-mappings'] as const,
     },
-    // plans/124 §6.4. `dateWindow` extends the documented (providerId, sport,
-    // search) signature: both callers (create browse, Home score-source picker)
-    // go through useProviderCatalog, which always passes a
-    // `${from}|${to}|${sportLeagueId}` string so the from/to/league filters are
-    // part of the cache identity, not just the search term.
-    providerCatalogEvents: (
-      providerId: QueryKeyId,
-      sport: QueryKeyId,
-      search: QueryKeyId,
-      dateWindow?: QueryKeyId,
-    ) =>
-      [
-        'poolmaster',
-        'root-admin',
-        'provider-catalog-events',
-        providerId,
-        sport,
-        search,
-        dateWindow ?? null,
-      ] as const,
     // Customers › Leagues (#1883): every league, which any league's plan or gift change refreshes.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,

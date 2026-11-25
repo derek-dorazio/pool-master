@@ -19,7 +19,6 @@ import {
   Sport,
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
-import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
 
 const SportDtoSchema = z.enum(Sport);
@@ -31,9 +30,6 @@ export const IngestionFeedTypeSchema = z.enum([
 export type IngestionFeedType = z.infer<typeof IngestionFeedTypeSchema>;
 
 export const EventSyncRequestSchema = z.object({
-  providerId: z.string().min(1).describe(
-    'The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only.',
-  ),
   feeds: z.array(IngestionFeedTypeSchema).min(1).describe(
     'Feed types to run for a specific event sync request.',
   ),
@@ -291,42 +287,6 @@ export const ProviderManualSyncSubmissionResponseSchema = z.object({
 }).describe('A manual sync submission. The runs execute asynchronously after the request is accepted.');
 export type ProviderManualSyncSubmissionResponse = z.infer<typeof ProviderManualSyncSubmissionResponseSchema>;
 
-// --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
-//
-// Lives in ingestion rather than golf because it is about a provider's catalog, not golf
-// domain state — reusable when another sport needs tournament-creation browse or score-source
-// linking. A plain filtered list: no scoring, no ranking.
-
-export const ProviderEventDtoSchema = z.object({
-  externalId: z.string().describe('The provider\'s identifier for the event.'),
-  providerId: z.string(),
-  sport: SportDtoSchema,
-  name: z.string(),
-  venue: z.string().nullable(),
-  location: z.string().nullable(),
-  startDate: DateTimeSchema,
-  endDate: DateTimeSchema.nullable(),
-  status: EventStatusDtoSchema,
-  rounds: z.number().int().nullable(),
-  participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one.'),
-  fieldLocked: z.boolean().describe('Whether the provider has locked the field.'),
-}).describe('An event as a provider\'s live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it.');
-export type ProviderEventDto = z.infer<typeof ProviderEventDtoSchema>;
-
-export const ProviderCatalogEventListQuerySchema = z.object({
-  sport: SportDtoSchema,
-  sportLeagueId: z.string().optional().describe('Keeps the events of the provider league that sport league\'s selected provider mapping names. A league with no selected mapping contributes no filter.'),
-  from: DateTimeSchema.optional().describe('Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.'),
-  to: DateTimeSchema.optional().describe('Only events starting at or before this.'),
-  search: z.string().optional(),
-}).describe('Filters over a provider\'s live catalog.');
-export type ProviderCatalogEventListQuery = z.infer<typeof ProviderCatalogEventListQuerySchema>;
-
-export const ProviderCatalogEventListResponseSchema = z.object({
-  events: z.array(ProviderEventDtoSchema),
-}).describe('Live provider catalog browse results — serves both tournament-creation browse and score-source linking.');
-export type ProviderCatalogEventListResponse = z.infer<typeof ProviderCatalogEventListResponseSchema>;
-
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('EventSyncRequest', EventSyncRequestSchema);
 registerSchema('ProviderLeagueDto', ProviderLeagueDtoSchema);
@@ -344,6 +304,3 @@ registerSchema('ProviderSyncRunListQuery', ProviderSyncRunListQuerySchema);
 registerSchema('ProviderSyncRunListResponse', ProviderSyncRunListResponseSchema);
 registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmissionResponseSchema);
 registerSchema('LeagueEventsSyncRequest', LeagueEventsSyncRequestSchema);
-registerSchema('ProviderEventDto', ProviderEventDtoSchema);
-registerSchema('ProviderCatalogEventListQuery', ProviderCatalogEventListQuerySchema);
-registerSchema('ProviderCatalogEventListResponse', ProviderCatalogEventListResponseSchema);

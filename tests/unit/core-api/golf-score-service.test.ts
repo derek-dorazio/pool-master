@@ -16,7 +16,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
-  const event = store.addEvent({ providerId: 'balldontlie', ...eventOverrides });
+  const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' }, ...eventOverrides });
   const ana = store.addParticipant(sport.id, 'Ana Park', { externalId: 'ext-ana' });
   const ben = store.addParticipant(sport.id, 'Ben Cole');
   const anaEntry = store.addToField(event.id, ana.id);
@@ -296,7 +296,7 @@ describe('GolfScoreService — provider sync', () => {
   async function syncSetup() {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.GOLF);
-    const event = store.addEvent({ providerId: 'balldontlie', syncScope: 'SCORES_ONLY' });
+    const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' } });
     const ana = store.addParticipant(sport.id, 'Ana Park');
     const ben = store.addParticipant(sport.id, 'Ben Cole');
     const anaEntry = store.addToField(event.id, ana.id);
@@ -325,7 +325,7 @@ describe('GolfScoreService — provider sync', () => {
     participantExternalId, round, strokes: 72 + scoreToPar, scoreToPar, thru: 18, status: 'COMPLETED' as const,
   });
 
-  it('skips and logs a round an admin did not schedule on a SCORES_ONLY event, so the golfer keeps their 72-hole score', async () => {
+  it('skips and logs a round an admin did not schedule on a linked event, so the golfer keeps their 72-hole score', async () => {
     const { store, service, event, anaEntry, logger } = await syncSetup();
     await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
 

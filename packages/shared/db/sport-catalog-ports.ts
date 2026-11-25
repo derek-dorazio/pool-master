@@ -12,6 +12,7 @@ import type {
   EventSeries,
   EventTierConfig,
   PlatformPricingProfile,
+  ProviderEventRef,
   MatchSide,
   OverdueEventFacts,
   ParticipantInactiveReason,
@@ -36,7 +37,6 @@ import type {
   SportEventParticipantValuation,
   SportEventRound,
   SportEventStatus,
-  SportEventSyncScope,
   SportEventTier,
   SportLeague,
   SportLeaguePosition,
@@ -146,8 +146,14 @@ export interface SportEventFilters {
   startsBefore?: Date;
 }
 
-/** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig'>;
+/**
+ * The sport league comes from the series, so it is not supplied. `providerRef` is the provider's id
+ * for an event the sync creates (#2004): it is kept under its Season's league's selected provider
+ * mapping, which must be that provider's. A test event has none.
+ */
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
+  providerRef?: ProviderEventRef;
+};
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -160,9 +166,6 @@ export interface SportEventUpdate {
   roundsPar?: number | null;
   autoLifecycleEnabled?: boolean;
   status?: SportEventStatus;
-  providerId?: string;
-  externalId?: string;
-  syncScope?: SportEventSyncScope;
 }
 
 export interface SportEventStatusTransition {
@@ -186,8 +189,8 @@ export interface SportEventProviderSummary {
 
 /**
  * Which of a provider's events a notification from it is about (#1498): the one it knows by
- * `externalId`, or every one whose id starts with `externalIdPrefix` (a league's scopes, such
- * as `nfl-`). `gameId` names the provider game the notification is about, when it is a game's.
+ * `externalId`, or every event it has an id for in the provider league `providerLeagueCode` names
+ * (`nfl`), found through the events' provider mappings (#2004). `gameId` names the provider game the notification is about, when it is a game's.
  * `startedBy` is set for a notification that play has started (#1499): it also finds the events
  * still `SCHEDULED` that started by then, which the lifecycle sweep has yet to move.
  */
@@ -196,7 +199,7 @@ export type ProviderNotifiedEventQuery = {
   sport: Sport;
   gameId?: string;
   startedBy?: Date;
-} & ({ externalId: string } | { externalIdPrefix: string });
+} & ({ externalId: string } | { providerLeagueCode: string });
 
 /** A provider-linked event a notification may sync, and whether it holds the notified game. */
 export interface ProviderNotifiedEvent {
@@ -228,14 +231,17 @@ export interface SportEventReleaseFacts {
 export interface SportEventAutoReleaseCandidate {
   id: string;
   startDate: Date;
-  providerId: string;
-  syncScope: SportEventSyncScope;
+  /** Whether its league's sync provider has an id for it (#2004): a test event has none. */
+  providerSynced: boolean;
   syncProviderId: string;
   autoReleaseDaysBeforeStart: number;
 }
 
-/** An event's identity and what names it, read without the rest of the row. */
-export type SportEventLink = { id: string; name: string; sportLeagueId: string; providerId: string };
+/**
+ * An event's identity and what names it, read without the rest of the row: `providerId` is the
+ * adapter id of its league's sync provider when that provider has an id for it, else null (#2004).
+ */
+export type SportEventLink = { id: string; name: string; sportLeagueId: string; providerId: string | null };
 
 export interface SportEventRepository {
   findById(id: string): Promise<SportEvent | null>;
@@ -322,8 +328,8 @@ export interface SportEventRepository {
    */
   summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>>;
   /**
-   * The provider's events a notification from it may sync (#1498): linked for scores
-   * (`SCORES_ONLY`) and `IN_PROGRESS`, as the scheduled live-score sweep reads them, and with
+   * The provider's events a notification from it may sync (#1498): ones it has an id for (#2004)
+   * and `IN_PROGRESS`, as the scheduled live-score sweep reads them, and with
    * `startedBy`, also `SCHEDULED` with auto lifecycle on and a start by then. Unordered.
    */
   findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]>;
@@ -651,8 +657,8 @@ export interface SportLeaguePageEvent {
   startDate: Date;
   endDate: Date | null;
   status: SportEventStatus;
-  providerId: string;
-  syncScope: SportEventSyncScope;
+  /** Whether the league's sync provider has an id for it (#2004); false for a test event. */
+  providerSynced: boolean;
   releasedAt: Date | null;
   lastReleaseCheck: AutoReleaseCheck | null;
 }

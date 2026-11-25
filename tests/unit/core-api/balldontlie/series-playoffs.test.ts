@@ -49,7 +49,7 @@ describe('series playoffs scopes', () => {
 });
 
 describe('toPlayoffsEvent', () => {
-  it('spans the games, carries the league\'s tour and season, and is in progress while any game has started', () => {
+  it('spans the games and is in progress while any game has started', () => {
     const event = toPlayoffsEvent(LEAGUE, 2025, [...semifinals(), game(9, 1, 2, null, null, CompetitionStatusState.SCHEDULED)], 4);
 
     expect(event).toMatchObject({
@@ -61,7 +61,6 @@ describe('toPlayoffsEvent', () => {
       status: 'IN_PROGRESS',
       participantCount: 4,
       fieldLocked: true,
-      metadata: { tour: 'TST', season: 2025 },
     });
   });
 

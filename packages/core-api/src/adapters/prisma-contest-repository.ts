@@ -196,16 +196,20 @@ export class PrismaContestRepository implements ContestRepository {
   }
 
   async findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]> {
-    const series = await this.prisma.eventSeries.findUnique({
-      where: { id: edition.eventSeriesId },
-      select: { sportLeagueId: true, name: true },
-    });
+    // The edition's league is its Season's (#2004), matched in the contest read itself; the
+    // series gives only the name templates list.
+    const series = await this.prisma.eventSeries.findUnique({ where: { id: edition.eventSeriesId }, select: { name: true } });
     if (!series) {
       return [];
     }
     const rows = await this.prisma.contest.findMany({
       where: {
-        configuration: { template: { sportLeagueId: series.sportLeagueId, eventSeriesNames: { has: series.name } } },
+        configuration: {
+          template: {
+            sportLeague: { seasons: { some: { id: edition.sportLeagueSeasonId } } },
+            eventSeriesNames: { has: series.name },
+          },
+        },
         status: { not: ContestStatus.COMPLETED },
         draw: null,
         squaresDraw: null,

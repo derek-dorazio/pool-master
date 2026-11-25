@@ -4,7 +4,6 @@
  * module's field refresh (plans/124 §4.4a), so there is one transform, not two.
  */
 import type {
-  ProviderEventDto,
   ProviderLeagueDto,
   ProviderSettingsDto,
   ProviderManualSyncSubmissionResponse,
@@ -24,7 +23,6 @@ import {
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
 } from '@poolmaster/shared/domain';
-import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
   ProviderManualSyncSubmissionResult,
   ProviderSummary,
@@ -133,19 +131,3 @@ export function toProviderManualSyncSubmissionResponse(
   };
 }
 
-export function toProviderEventDto(event: ProviderEvent): ProviderEventDto {
-  return {
-    externalId: event.externalId,
-    providerId: event.providerId,
-    sport: event.sport,
-    name: event.name,
-    venue: event.venue ?? null,
-    location: event.location ?? null,
-    startDate: event.startDate.toISOString(),
-    endDate: event.endDate?.toISOString() ?? null,
-    status: event.status,
-    rounds: event.rounds ?? null,
-    participantCount: event.participantCount ?? null,
-    fieldLocked: event.fieldLocked,
-  };
-}

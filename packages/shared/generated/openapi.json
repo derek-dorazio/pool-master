@@ -24767,6 +24767,33 @@
         "additionalProperties": false,
         "description": "The last automatic release try of an event: when, its result, and the checks that held it."
       },
+      "SportEventProviderMappingDto": {
+        "type": "object",
+        "properties": {
+          "providerCode": {
+            "type": "string",
+            "enum": [
+              "BALLDONTLIE"
+            ],
+            "description": "The provider that has this id for the event."
+          },
+          "providerName": {
+            "type": "string",
+            "description": "That provider's name."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The provider's own id for the event, as it sends it."
+          }
+        },
+        "required": [
+          "providerCode",
+          "providerName",
+          "externalId"
+        ],
+        "additionalProperties": false,
+        "description": "The provider's id for an event, written by the events sync when it created the event from the provider's schedule. (Admin-only: operational detail no member surface reads.)"
+      },
       "SportEventDto": {
         "type": "object",
         "properties": {
@@ -24775,16 +24802,39 @@
             "format": "uuid",
             "description": "Sport-event identifier."
           },
-          "externalId": {
-            "type": "string",
-            "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
-          },
-          "providerId": {
-            "type": "string",
-            "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+          "providerMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerCode": {
+                  "type": "string",
+                  "enum": [
+                    "BALLDONTLIE"
+                  ],
+                  "description": "The provider that has this id for the event."
+                },
+                "providerName": {
+                  "type": "string",
+                  "description": "That provider's name."
+                },
+                "externalId": {
+                  "type": "string",
+                  "description": "The provider's own id for the event, as it sends it."
+                }
+              },
+              "required": [
+                "providerCode",
+                "providerName",
+                "externalId"
+              ],
+              "additionalProperties": false,
+              "description": "The provider's id for an event, written by the events sync when it created the event from the provider's schedule. (Admin-only: operational detail no member surface reads.)"
+            },
+            "description": "The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)"
           },
           "providerName": {
-            "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+            "description": "The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)",
             "type": [
               "string",
               "null"
@@ -25114,17 +25164,9 @@
             ],
             "description": "How the event is scored. Read through the series' sport league."
           },
-          "syncScope": {
-            "type": "string",
-            "enum": [
-              "NONE",
-              "SCORES_ONLY"
-            ],
-            "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
-          },
           "providerSynced": {
             "type": "boolean",
-            "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+            "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
           },
           "autoLifecycleEnabled": {
             "type": "boolean",
@@ -25482,8 +25524,7 @@
         },
         "required": [
           "id",
-          "externalId",
-          "providerId",
+          "providerMappings",
           "providerName",
           "sport",
           "sportUrlSegment",
@@ -25510,7 +25551,6 @@
           "sportLeagueId",
           "participantType",
           "scoringFamily",
-          "syncScope",
           "providerSynced",
           "autoLifecycleEnabled",
           "tierCount",
@@ -25590,16 +25630,39 @@
                   "format": "uuid",
                   "description": "Sport-event identifier."
                 },
-                "externalId": {
-                  "type": "string",
-                  "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
-                },
-                "providerId": {
-                  "type": "string",
-                  "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+                "providerMappings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "providerCode": {
+                        "type": "string",
+                        "enum": [
+                          "BALLDONTLIE"
+                        ],
+                        "description": "The provider that has this id for the event."
+                      },
+                      "providerName": {
+                        "type": "string",
+                        "description": "That provider's name."
+                      },
+                      "externalId": {
+                        "type": "string",
+                        "description": "The provider's own id for the event, as it sends it."
+                      }
+                    },
+                    "required": [
+                      "providerCode",
+                      "providerName",
+                      "externalId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The provider's id for an event, written by the events sync when it created the event from the provider's schedule. (Admin-only: operational detail no member surface reads.)"
+                  },
+                  "description": "The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)"
                 },
                 "providerName": {
-                  "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                  "description": "The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)",
                   "type": [
                     "string",
                     "null"
@@ -25929,17 +25992,9 @@
                   ],
                   "description": "How the event is scored. Read through the series' sport league."
                 },
-                "syncScope": {
-                  "type": "string",
-                  "enum": [
-                    "NONE",
-                    "SCORES_ONLY"
-                  ],
-                  "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
-                },
                 "providerSynced": {
                   "type": "boolean",
-                  "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+                  "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
                 },
                 "autoLifecycleEnabled": {
                   "type": "boolean",
@@ -26297,8 +26352,7 @@
               },
               "required": [
                 "id",
-                "externalId",
-                "providerId",
+                "providerMappings",
                 "providerName",
                 "sport",
                 "sportUrlSegment",
@@ -26325,7 +26379,6 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
-                "syncScope",
                 "providerSynced",
                 "autoLifecycleEnabled",
                 "tierCount",
@@ -26359,16 +26412,39 @@
                 "format": "uuid",
                 "description": "Sport-event identifier."
               },
-              "externalId": {
-                "type": "string",
-                "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
-              },
-              "providerId": {
-                "type": "string",
-                "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+              "providerMappings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "providerCode": {
+                      "type": "string",
+                      "enum": [
+                        "BALLDONTLIE"
+                      ],
+                      "description": "The provider that has this id for the event."
+                    },
+                    "providerName": {
+                      "type": "string",
+                      "description": "That provider's name."
+                    },
+                    "externalId": {
+                      "type": "string",
+                      "description": "The provider's own id for the event, as it sends it."
+                    }
+                  },
+                  "required": [
+                    "providerCode",
+                    "providerName",
+                    "externalId"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The provider's id for an event, written by the events sync when it created the event from the provider's schedule. (Admin-only: operational detail no member surface reads.)"
+                },
+                "description": "The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)"
               },
               "providerName": {
-                "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                "description": "The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)",
                 "type": [
                   "string",
                   "null"
@@ -26698,17 +26774,9 @@
                 ],
                 "description": "How the event is scored. Read through the series' sport league."
               },
-              "syncScope": {
-                "type": "string",
-                "enum": [
-                  "NONE",
-                  "SCORES_ONLY"
-                ],
-                "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
-              },
               "providerSynced": {
                 "type": "boolean",
-                "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
+                "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
               },
               "autoLifecycleEnabled": {
                 "type": "boolean",
@@ -27066,8 +27134,7 @@
             },
             "required": [
               "id",
-              "externalId",
-              "providerId",
+              "providerMappings",
               "providerName",
               "sport",
               "sportUrlSegment",
@@ -27094,7 +27161,6 @@
               "sportLeagueId",
               "participantType",
               "scoringFamily",
-              "syncScope",
               "providerSynced",
               "autoLifecycleEnabled",
               "tierCount",
@@ -27160,38 +27226,6 @@
         ],
         "additionalProperties": false,
         "description": "An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released."
-      },
-      "CreateSportEventFromProviderEventRequest": {
-        "type": "object",
-        "properties": {
-          "sportLeagueId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
-          },
-          "providerId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "externalId": {
-            "type": "string",
-            "minLength": 1,
-            "description": "From a provider catalog browse (listProviderCatalogEvents)."
-          },
-          "rounds": {
-            "description": "Round count; omitted, the provider schedule decides.",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9007199254740991
-          }
-        },
-        "required": [
-          "sportLeagueId",
-          "providerId",
-          "externalId"
-        ],
-        "additionalProperties": false,
-        "description": "An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched."
       },
       "UpdateSportEventRequest": {
         "type": "object",
@@ -27273,26 +27307,6 @@
         ],
         "additionalProperties": false,
         "description": "Moves an event to its next lifecycle status, activating or settling its contests as that status requires."
-      },
-      "LinkSportEventScoreSourceRequest": {
-        "type": "object",
-        "properties": {
-          "providerId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "externalId": {
-            "type": "string",
-            "minLength": 1,
-            "description": "From a provider catalog browse."
-          }
-        },
-        "required": [
-          "providerId",
-          "externalId"
-        ],
-        "additionalProperties": false,
-        "description": "Links an event to a provider event for scores."
       },
       "SportEventRoundDto": {
         "type": "object",
@@ -67844,11 +67858,6 @@
       "EventSyncRequest": {
         "type": "object",
         "properties": {
-          "providerId": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only."
-          },
           "feeds": {
             "minItems": 1,
             "type": "array",
@@ -67864,7 +67873,6 @@
           }
         },
         "required": [
-          "providerId",
           "feeds"
         ],
         "additionalProperties": false,
@@ -70301,270 +70309,6 @@
         },
         "additionalProperties": false,
         "description": "A root admin's Sync now on a sport league's events."
-      },
-      "ProviderEventDto": {
-        "type": "object",
-        "properties": {
-          "externalId": {
-            "type": "string",
-            "description": "The provider's identifier for the event."
-          },
-          "providerId": {
-            "type": "string"
-          },
-          "sport": {
-            "type": "string",
-            "enum": [
-              "GOLF",
-              "HORSE_RACING",
-              "AUTO_RACING",
-              "CYCLING",
-              "RUNNING",
-              "BASKETBALL",
-              "AMERICAN_FOOTBALL",
-              "HOCKEY",
-              "BASEBALL",
-              "SOCCER",
-              "TENNIS"
-            ]
-          },
-          "name": {
-            "type": "string"
-          },
-          "venue": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "location": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "endDate": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "SCHEDULED",
-              "IN_PROGRESS",
-              "COMPLETED",
-              "CANCELLED",
-              "POSTPONED"
-            ]
-          },
-          "rounds": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "participantCount": {
-            "description": "Field size the provider reports, when it reports one.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "fieldLocked": {
-            "type": "boolean",
-            "description": "Whether the provider has locked the field."
-          }
-        },
-        "required": [
-          "externalId",
-          "providerId",
-          "sport",
-          "name",
-          "venue",
-          "location",
-          "startDate",
-          "endDate",
-          "status",
-          "rounds",
-          "participantCount",
-          "fieldLocked"
-        ],
-        "additionalProperties": false,
-        "description": "An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it."
-      },
-      "ProviderCatalogEventListQuery": {
-        "type": "object",
-        "properties": {
-          "sport": {
-            "type": "string",
-            "enum": [
-              "GOLF",
-              "HORSE_RACING",
-              "AUTO_RACING",
-              "CYCLING",
-              "RUNNING",
-              "BASKETBALL",
-              "AMERICAN_FOOTBALL",
-              "HOCKEY",
-              "BASEBALL",
-              "SOCCER",
-              "TENNIS"
-            ]
-          },
-          "sportLeagueId": {
-            "description": "Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter.",
-            "type": "string"
-          },
-          "from": {
-            "description": "Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.",
-            "type": "string",
-            "format": "date-time"
-          },
-          "to": {
-            "description": "Only events starting at or before this.",
-            "type": "string",
-            "format": "date-time"
-          },
-          "search": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "sport"
-        ],
-        "additionalProperties": false,
-        "description": "Filters over a provider's live catalog."
-      },
-      "ProviderCatalogEventListResponse": {
-        "type": "object",
-        "properties": {
-          "events": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "externalId": {
-                  "type": "string",
-                  "description": "The provider's identifier for the event."
-                },
-                "providerId": {
-                  "type": "string"
-                },
-                "sport": {
-                  "type": "string",
-                  "enum": [
-                    "GOLF",
-                    "HORSE_RACING",
-                    "AUTO_RACING",
-                    "CYCLING",
-                    "RUNNING",
-                    "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
-                    "HOCKEY",
-                    "BASEBALL",
-                    "SOCCER",
-                    "TENNIS"
-                  ]
-                },
-                "name": {
-                  "type": "string"
-                },
-                "venue": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "location": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "startDate": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "endDate": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "DRAFT",
-                    "SCHEDULED",
-                    "IN_PROGRESS",
-                    "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
-                  ]
-                },
-                "rounds": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "participantCount": {
-                  "description": "Field size the provider reports, when it reports one.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "fieldLocked": {
-                  "type": "boolean",
-                  "description": "Whether the provider has locked the field."
-                }
-              },
-              "required": [
-                "externalId",
-                "providerId",
-                "sport",
-                "name",
-                "venue",
-                "location",
-                "startDate",
-                "endDate",
-                "status",
-                "rounds",
-                "participantCount",
-                "fieldLocked"
-              ],
-              "additionalProperties": false,
-              "description": "An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it."
-            }
-          }
-        },
-        "required": [
-          "events"
-        ],
-        "additionalProperties": false,
-        "description": "Live provider catalog browse results — serves both tournament-creation browse and score-source linking."
       },
       "ActivityJobDto": {
         "type": "object",
@@ -81694,88 +81438,6 @@
         }
       }
     },
-    "/api/v1/events/from-provider-event": {
-      "post": {
-        "operationId": "createEventFromProviderEvent",
-        "summary": "Create a sport event from a provider event",
-        "tags": [
-          "Events"
-        ],
-        "description": "An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in the league's current Season, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. Root admin only.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSportEventFromProviderEventRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "One sport event.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/events/{eventId}/release": {
       "post": {
         "operationId": "releaseEvent",
@@ -81930,160 +81592,6 @@
             }
           },
           "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/events/{eventId}/score-source": {
-      "put": {
-        "operationId": "linkEventScoreSource",
-        "summary": "Link a sport event to a provider event for scores",
-        "tags": [
-          "Events"
-        ],
-        "description": "404 PROVIDER_NOT_FOUND when no provider is registered under the id; 422 PROVIDER_SPORT_MISMATCH when the provider does not cover the event's sport; 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LinkSportEventScoreSourceRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "eventId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "One sport event.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "unlinkEventScoreSource",
-        "summary": "Unlink a sport event from its provider",
-        "tags": [
-          "Events"
-        ],
-        "description": "Root admin only.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "eventId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "One sport event.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -88752,14 +88260,14 @@
         }
       }
     },
-    "/api/v1/ingestion/sports/{sport}/events/{eventId}/sync": {
+    "/api/v1/ingestion/events/{eventId}/sync": {
       "post": {
         "operationId": "submitEventSync",
-        "summary": "Submit a manual event sync",
+        "summary": "Sync an event now",
         "tags": [
           "Ingestion"
         ],
-        "description": "Submits one sync run per requested event-level feed for the provider event `eventId` of the provider `providerId` names, which must serve `sport` (404 otherwise). Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.",
+        "description": "Queues one sync run per requested event-level feed for the event, read from its sport league's provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. 404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider does not serve the event's sport; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.",
         "requestBody": {
           "required": true,
           "content": {
@@ -88774,27 +88282,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
-            },
-            "in": "path",
-            "name": "sport",
-            "required": true
-          },
-          {
-            "schema": {
-              "type": "string"
+              "format": "uuid"
             },
             "in": "path",
             "name": "eventId",
@@ -88936,126 +88424,6 @@
             }
           },
           "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/ingestion/providers/{providerId}/catalog-events": {
-      "get": {
-        "operationId": "listProviderCatalogEvents",
-        "summary": "Browse a provider's live event catalog",
-        "tags": [
-          "Ingestion"
-        ],
-        "description": "Calls the provider live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. Serves the tournament-creation browse mode and the score-source linking picker: a plain filtered list with no scoring or ranking.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
-            },
-            "in": "query",
-            "name": "sport",
-            "required": true
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "sportLeagueId",
-            "required": false,
-            "description": "Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "in": "query",
-            "name": "from",
-            "required": false,
-            "description": "Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "in": "query",
-            "name": "to",
-            "required": false,
-            "description": "Only events starting at or before this."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "search",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "providerId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Live provider catalog browse results — serves both tournament-creation browse and score-source linking.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProviderCatalogEventListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

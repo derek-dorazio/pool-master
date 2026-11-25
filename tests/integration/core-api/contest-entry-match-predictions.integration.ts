@@ -72,13 +72,10 @@ async function createWeek(label: string, startDate: Date) {
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
     sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
-    externalId: `pickem-${randomUUID()}`,
-    providerId: 'integration-test',
     name: label,
     startDate,
     status: 'SCHEDULED',
     rounds: 1,
-    syncScope: 'NONE',
     autoLifecycleEnabled: true,
   });
   await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);

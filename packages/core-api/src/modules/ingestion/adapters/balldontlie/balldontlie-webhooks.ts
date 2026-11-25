@@ -12,7 +12,7 @@
  */
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ProviderWebhookEventSet, type ProviderLeagueSettings, type Sport } from '@poolmaster/shared/domain';
+import { ProviderWebhookEventSet, type ProviderLeagueSettings } from '@poolmaster/shared/domain';
 import type { BalldontlieWebhookNotification } from '@poolmaster/shared/dto';
 import type { ProviderNotification, ProviderNotificationPhase } from '../../provider-notifications';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
@@ -26,24 +26,6 @@ const GAME_EVENTS_BY_SET: Readonly<Record<ProviderWebhookEventSet, readonly stri
   [ProviderWebhookEventSet.GAME_HALVES]: ['game.started', 'game.halftime', 'game.ended'],
   // Golf's events name a tournament, not a league's game.
   [ProviderWebhookEventSet.GOLF_ROUNDS]: [],
-};
-
-/**
- * The start every event id of a league has (its scopes, `nfl-2026-week-12`), by the vendor's
- * league code: the adapter's own event ids, which a game notification is routed by until slices 7
- * and 10 route by the game's provider mapping. Golf's tournament ids have none.
- */
-const EVENT_ID_PREFIXES: Readonly<Partial<Record<string, string>>> = {
-  nfl: 'nfl-',
-  ncaaf: 'ncaaf-',
-  nba: 'nba-',
-  ncaab: 'ncaab-',
-  ncaaw: 'ncaaw-',
-  nhl: 'nhl-',
-  mlb: 'mlb-',
-  wnba: 'wnba-',
-  epl: 'epl-',
-  worldcup: 'fifa-wc-',
 };
 
 /** Where in play each subscribed game event falls (#1499). */
@@ -66,22 +48,13 @@ const GOLF_EVENT_PHASES: Readonly<Record<string, ProviderNotificationPhase>> = {
 };
 const GOLF_EVENT_TYPES = Object.keys(GOLF_EVENT_PHASES);
 
-/** Whether an event id carries the league's prefix; false for a league whose ids carry none. */
-function isEventOfLeague(code: string, externalId: string): boolean {
-  const prefix = EVENT_ID_PREFIXES[code];
-  return prefix !== undefined && externalId.startsWith(prefix);
-}
-
 /**
  * How long an event of the provider may stay in play with no notification before its webhook is
- * taken to have stopped (#1499): its league row's `quietAfterMinutes` (a game league by its event
- * id's prefix, golf's by its sport), or the longest of them all for an event no league claims.
+ * taken to have stopped (#1499): the `quietAfterMinutes` of the provider league its sport league's
+ * mapping names (#2004), or the longest of them all for an event of a league not listed.
  */
-export function balldontlieQuietAfterMs(leagues: readonly BalldontlieWebhookLeague[], sport: Sport, externalId: string): number {
-  const league = leagues.find((candidate) => candidate.sport === sport && (
-    candidate.webhookEventSet === ProviderWebhookEventSet.GOLF_ROUNDS
-    || isEventOfLeague(candidate.code, externalId)
-  ));
+export function balldontlieQuietAfterMs(leagues: readonly BalldontlieWebhookLeague[], providerLeagueCode: string): number {
+  const league = leagues.find((candidate) => candidate.code === providerLeagueCode);
   const minutes = league?.quietAfterMinutes ?? Math.max(0, ...leagues.map((each) => each.quietAfterMinutes));
   return minutes * 60_000;
 }
@@ -119,8 +92,7 @@ export function readBalldontlieNotification(body: BalldontlieWebhookNotification
   const code = notificationType.slice(0, separator);
   const league = leagues.find((candidate) => candidate.code === code);
   const gameEvent = notificationType.slice(separator + 1);
-  const eventIdPrefix = Object.hasOwn(EVENT_ID_PREFIXES, code) ? EVENT_ID_PREFIXES[code] : undefined;
-  if (league === undefined || eventIdPrefix === undefined || !GAME_EVENTS_BY_SET[league.webhookEventSet].includes(gameEvent) || !body.game) {
+  if (league === undefined || !GAME_EVENTS_BY_SET[league.webhookEventSet].includes(gameEvent) || !body.game) {
     return null;
   }
   return {
@@ -131,7 +103,7 @@ export function readBalldontlieNotification(body: BalldontlieWebhookNotification
     phase: GAME_EVENT_PHASES[gameEvent],
     subject: 'GAME',
     gameId: String(body.game.id),
-    eventIdPrefix,
+    providerLeagueCode: league.code,
   };
 }
 

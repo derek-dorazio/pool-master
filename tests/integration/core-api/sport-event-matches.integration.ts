@@ -66,13 +66,10 @@ async function createBracketEvent() {
   const event = await createSportEventRow(events, {
     eventSeriesId: eventSeries.id,
     sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2027),
-    externalId: `bracket-${randomUUID()}`,
-    providerId: 'integration-test',
     name: 'NCAA Tournament',
     startDate: new Date('2027-03-18T16:00:00.000Z'),
     status: 'DRAFT',
     rounds: 2,
-    syncScope: 'NONE',
     autoLifecycleEnabled: true,
   });
   await createRoundRows(rounds, event.id, [

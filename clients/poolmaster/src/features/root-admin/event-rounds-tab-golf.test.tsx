@@ -71,7 +71,6 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'league-1',
-    syncScope: 'NONE',
     autoLifecycleEnabled: true,
     loadedParticipantCount: 2,
     tierCount: 6,
@@ -163,8 +162,8 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
   });
 
-  it('pool-master-r11 shows the sync-tick alert for a SCORES_ONLY tournament but keeps the tools usable', async () => {
-    seed({ tournament: { syncScope: 'SCORES_ONLY' } });
+  it('pool-master-r11 shows the sync-tick alert for a provider-synced tournament but keeps the tools usable', async () => {
+    seed({ tournament: { providerSynced: true } });
     renderPage();
 
     expect(await screen.findByTestId('root-admin-golf-scores-sync-alert')).toBeInTheDocument();

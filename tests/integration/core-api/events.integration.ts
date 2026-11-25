@@ -47,26 +47,20 @@ describe('events routes', () => {
         {
           ...(await freshEventEdition(prisma)),
           id: eligibleEventId,
-          providerId: 'integration-test',
-          externalId: `events-eligible-${eligibleEventId}`,
           name: 'Eligible Golf Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: new Date('2099-04-23T23:00:00.000Z'),
           status: 'SCHEDULED',
           participantCount: 144,
-          metadata: {},
         },
         {
           ...(await freshEventEdition(prisma)),
           id: filteredOutEventId,
-          providerId: 'integration-test',
-          externalId: `events-filtered-${filteredOutEventId}`,
           name: 'Filtered Out Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: new Date('2099-04-23T23:00:00.000Z'),
           status: 'COMPLETED',
           participantCount: 12,
-          metadata: {},
         },
       ],
     });
@@ -99,7 +93,7 @@ describe('events routes', () => {
       expect(events).toContainEqual(
         expect.objectContaining({
           id: eligibleEventId,
-          externalId: `events-eligible-${eligibleEventId}`,
+          providerMappings: [],
           sport: Sport.GOLF,
           readinessStatus: 'CONTEST_ELIGIBLE',
           readinessReasons: [],
@@ -154,27 +148,21 @@ describe('events routes', () => {
         {
           ...(await freshEventEdition(prisma)),
           id: notReleasedEventId,
-          providerId: 'integration-test',
-          externalId: `events-not-released-${notReleasedEventId}`,
           name: 'Not Released Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: null,
           status: 'DRAFT',
           participantCount: 100,
-          metadata: {},
         },
         {
           ...(await freshEventEdition(prisma)),
           id: lockedEventId,
-          providerId: 'integration-test',
-          externalId: `events-locked-${lockedEventId}`,
           name: 'Started Event',
           // Released, but its start time has passed: the contest cutoff.
           startDate: new Date('2000-04-20T15:00:00.000Z'),
           endDate: null,
           status: 'SCHEDULED',
           participantCount: 100,
-          metadata: {},
         },
       ],
     });
@@ -255,14 +243,11 @@ describe('events routes', () => {
         data: {
           ...(await freshEventEdition(prisma)),
           id: eventId,
-          providerId: 'integration-test',
-          externalId: `events-release-${eventId}`,
           name: 'Release Route Open',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: null,
           status: 'DRAFT',
           participantCount: 1,
-          metadata: {},
         },
       });
       await prisma.participant.create({
@@ -473,8 +458,6 @@ describe('events routes', () => {
         ].map((edition) => ({
           ...edition,
           sportLeagueSeasonId,
-          providerId: 'integration-test',
-          externalId: `events-season-${randomUUID()}`,
         })),
       });
       const url = `/api/v1/events?sportLeagueSeasonId=${sportLeagueSeasonId}`;
@@ -499,13 +482,10 @@ describe('editing an event moves its round schedule with it', () => {
       data: {
         ...(await freshEventEdition(prisma)),
         id: eventId,
-        providerId: 'integration-test',
-        externalId: `events-round-shift-${eventId}`,
         name: 'Round Shift Open',
         startDate: new Date('2099-06-04T12:00:00.000Z'),
         status: 'DRAFT',
         rounds: 2,
-        metadata: {},
       },
     });
     await prisma.sportEventRound.createMany({

@@ -13,7 +13,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 async function setup() {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
-  const event = store.addEvent({ providerId: 'balldontlie', syncScope: 'SCORES_ONLY', rounds: 4 });
+  const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' }, rounds: 4 });
   await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({
     roundNumber,
     scheduledDate: new Date('2026-06-04T12:00:00.000Z'),

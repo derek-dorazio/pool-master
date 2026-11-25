@@ -16,7 +16,6 @@ import {
   SportEventReleaseAtKind,
   SportEventReleaseMode,
   SportEventStatus,
-  SportEventSyncScope,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
@@ -64,7 +63,7 @@ function run(kind: ProviderSyncKind, overrides: Partial<SportLeaguePageRun> = {}
 function pageEvent(overrides: Partial<SportLeaguePageEvent> = {}): SportLeaguePageEvent {
   return {
     id: 'e1', name: 'Opening Day', sportLeagueSeasonId: '6e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f', startDate: at('2027-04-20T17:00:00.000Z'), endDate: null,
-    status: SportEventStatus.DRAFT, providerId: 'balldontlie', syncScope: SportEventSyncScope.SCORES_ONLY, releasedAt: null, lastReleaseCheck: null,
+    status: SportEventStatus.DRAFT, providerSynced: true, releasedAt: null, lastReleaseCheck: null,
     ...overrides,
   };
 }
@@ -133,7 +132,7 @@ describe('buildSportLeagueEvents', () => {
     const [auto, manual] = buildSportLeagueEvents(eventFacts({
       events: [
         pageEvent({ status: SportEventStatus.SCHEDULED, releasedAt }),
-        pageEvent({ id: 'e2', status: SportEventStatus.SCHEDULED, releasedAt, syncScope: SportEventSyncScope.NONE }),
+        pageEvent({ id: 'e2', status: SportEventStatus.SCHEDULED, releasedAt, providerSynced: false }),
       ],
     }), NOW);
 
@@ -143,7 +142,7 @@ describe('buildSportLeagueEvents', () => {
 
   it('gives a manual draft, and an event released before release times were kept, no release date', () => {
     const [unsynced, offLeague, oldRelease] = [
-      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ syncScope: SportEventSyncScope.NONE })] }), NOW)[0],
+      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ providerSynced: false })] }), NOW)[0],
       buildSportLeagueEvents(eventFacts({ league: league({ autoReleaseDaysBeforeStart: null }) }), NOW)[0],
       buildSportLeagueEvents(eventFacts({ events: [pageEvent({ status: SportEventStatus.COMPLETED })] }), NOW)[0],
     ];
@@ -210,8 +209,8 @@ describe('buildSportEventOverview', () => {
     expect(fresh).toMatchObject({ syncHealth: SportLeagueSyncHealth.NOT_RUN_YET, issues: [] });
   });
 
-  it('reads every sync OFF for an event no provider syncs, as one an admin made in a synced league', () => {
-    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE }) }), context);
+  it('reads every sync OFF for an event no provider syncs, as a test event in a synced league', () => {
+    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ providerSynced: false }) }), context);
 
     expect(overview.syncHealth).toBe(SportLeagueSyncHealth.OFF);
     expect(overview.syncs.map((sync) => sync.health)).toEqual([SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF]);
