@@ -39,6 +39,8 @@ import noEnumStringLiterals from './no-enum-string-literals.mjs';
 import noDtoShapedLocalTypes from './no-dto-shaped-local-types.mjs';
 import noLocalEnums from './no-local-enums.mjs';
 import noPositionalPick from './no-positional-pick.mjs';
+import noRawSql from './no-raw-sql.mjs';
+import noNameMatch from './no-name-match.mjs';
 import noArbitraryTypeSizes from './no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from './no-raw-theme-colors.mjs';
 import noUnawaitedSendError from './no-unawaited-send-error.mjs';
@@ -74,6 +76,8 @@ export default {
     'no-dto-shaped-local-types': noDtoShapedLocalTypes,
     'no-local-enums': noLocalEnums,
     'no-positional-pick': noPositionalPick,
+    'no-raw-sql': noRawSql,
+    'no-name-match': noNameMatch,
     'no-raw-theme-colors': noRawThemeColors,
     'no-arbitrary-type-sizes': noArbitraryTypeSizes,
     'no-unawaited-send-error': noUnawaitedSendError,

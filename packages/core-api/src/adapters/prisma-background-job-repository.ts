@@ -105,6 +105,7 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     const { now, limit, leaseUntil } = claim;
     return this.prisma.$transaction(async (tx) => {
       // SKIP LOCKED: two tasks never claim the same job (a row lock; raw SQL only for it).
+      // poolmaster-allow-raw-sql: claims due rows with FOR UPDATE SKIP LOCKED: Prisma can't lock rows or skip locked ones
       const due = await tx.$queryRaw<{ id: string }[]>`
         SELECT "id" FROM "background_jobs"
         WHERE ("status" = 'QUEUED' AND "run_at" <= ${now})

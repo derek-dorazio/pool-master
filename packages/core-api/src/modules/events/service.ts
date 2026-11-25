@@ -778,6 +778,7 @@ function providerDetailUpdates(
   providerEvent: ProviderEventDetail,
 ): Pick<SportEventUpdate, 'name' | 'venue' | 'startDate' | 'endDate'> {
   return {
+    // poolmaster-allow-name-match: the sync compares the feed's name with the stored one to update it, not to find a row
     ...(providerEvent.name !== event.name && { name: providerEvent.name }),
     ...(providerEvent.venue !== null && providerEvent.venue !== (event.venue ?? null) && { venue: providerEvent.venue }),
     ...(providerEvent.startDate.getTime() !== event.startDate.getTime() && { startDate: providerEvent.startDate }),
