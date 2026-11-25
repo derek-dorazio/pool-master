@@ -6,16 +6,10 @@
  * hide a new hand-written state. Member pages are never added.
  */
 export const QUERY_STATES_BASELINE = [
-  'clients/poolmaster/src/features/root-admin/bracket-panel.tsx',
   'clients/poolmaster/src/features/root-admin/event-field-add-participants-modal.tsx',
   'clients/poolmaster/src/features/root-admin/golf-round-score-corrections-card.tsx',
   'clients/poolmaster/src/features/root-admin/golf-round-scores-panel.tsx',
   'clients/poolmaster/src/features/root-admin/manage-sport-route.tsx',
-  'clients/poolmaster/src/features/root-admin/play-in-places-card.tsx',
   'clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx',
-  'clients/poolmaster/src/features/root-admin/root-admin-participant-create-page.tsx',
   'clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx',
-  'clients/poolmaster/src/features/root-admin/sport-league-calendar-card.tsx',
-  'clients/poolmaster/src/features/root-admin/sport-league-event-calendar.tsx',
-  'clients/poolmaster/src/features/root-admin/withdrawals-card.tsx',
 ];

@@ -116,9 +116,4 @@ export interface SportEventRoundMatchRepository {
    * jobs it causes in the same transaction.
    */
   savePeriodScore(sportEventRoundMatchId: string, score: SportEventMatchPeriodScore, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
-  /**
-   * Removes the score at the end of one period of a match, with any background jobs it causes in
-   * the same transaction; removing none changes nothing but still writes the jobs.
-   */
-  deletePeriodScore(sportEventRoundMatchId: string, periodNumber: number, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
 }

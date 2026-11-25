@@ -169,7 +169,7 @@ test('act 1: the root admin builds a race — the seeded circuit, eight horses, 
 
   const horseIds = await test.step(`create ${HORSE_COUNT} horses`, async () => {
     const names = Array.from({ length: HORSE_COUNT }, (_, index) => horseName(run, index + 1));
-    const ids = await addLeagueParticipants(page, 'horse-racing', circuitId, names);
+    const ids = await addLeagueParticipants(page, circuitId, 'INDIVIDUAL', names);
     await expectLeagueParticipants(page, 'horse-racing', circuitId, ids);
     return ids;
   });

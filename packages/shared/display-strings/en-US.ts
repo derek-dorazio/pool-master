@@ -335,7 +335,6 @@ export const enUS = {
       COMPLETED: 'Completed',
     },
     MatchResultSource: {
-      ADMIN: 'Admin',
       PROVIDER: 'Feed',
     },
     ProviderGameState: {
@@ -831,8 +830,6 @@ export const enUS = {
     BRACKET_INVALID: 'The bracket cannot be changed this way.',
     BRACKET_MATCH_NOT_FOUND: 'That match is not in the bracket.',
     BRACKET_NOT_RESEEDED: 'This bracket does not reseed: each winner\'s next match is fixed.',
-    BRACKET_PARTICIPANT_ALREADY_PLAYED: 'Their match has started, so a withdrawal is now a walkover.',
-    BRACKET_PLACE_NOT_FIRST_ROUND: 'Their place is not in the first round, so a withdrawal is a walkover.',
     BRACKET_ROUND_ALREADY_PLAYED: 'This round has already been played.',
     BRACKET_ROUND_NOT_FINISHED: 'The round before has not finished yet.',
     CLIENT_LOG_BATCH_TOO_LARGE: 'Too many log entries were sent at once.',
@@ -930,9 +927,7 @@ export const enUS = {
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: 'They are already on the field.',
     EVENT_PARTICIPANT_HAS_PICKS: 'Entries have picked them, so they cannot be removed. Withdraw them instead.',
     EVENT_PARTICIPANT_IN_BRACKET: 'They are in the bracket, so they cannot be removed. Take them out of their match first.',
-    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: 'This is a play-in place: fill it with its winner instead.',
     EVENT_PARTICIPANT_NOT_FOUND: 'They are not on this event\'s field.',
-    EVENT_PARTICIPANT_NOT_IN_BRACKET: 'They have no place in the bracket.',
     EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: 'This is not a play-in place, so it cannot take a play-in winner.',
     EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED: 'Some rows do not name exactly one participant on the field.',
     EVENT_SCORING_FAMILY_MISMATCH: 'This event is not scored this way.',
@@ -976,7 +971,6 @@ export const enUS = {
     LEAGUE_PLAN_NOT_AVAILABLE: 'That plan is not available yet.',
     LOCALE_UNKNOWN: 'That language and region is not offered.',
     MATCH_ALREADY_PLAYED: 'This match has a result: clear it first.',
-    MATCH_ALREADY_STARTED: 'This match has already started.',
     MATCH_CANCELLED: 'This match was cancelled, so it has no score.',
     MATCH_IN_BRACKET: 'This match is part of a bracket: change its time instead.',
     MATCH_PERIOD_INVALID: 'This game keeps no score for that period.',
@@ -1063,6 +1057,7 @@ export const enUS = {
     SPORT_EVENT_NOT_FOUND: 'Event not found.',
     SPORT_EVENT_NOT_READY: 'This event is not ready yet: one of its ready checks no longer passes. Reload it to see which.',
     SPORT_EVENT_NOT_RELEASED: 'This event is not released for contests yet.',
+    SPORT_EVENT_NOT_TEST_DATA: 'Results for this event come only from its data feed. Only a test event takes them by hand.',
     SPORT_EVENT_RELEASE_REQUIRED: 'This event is a draft: release it instead.',
     SPORT_EVENT_SEEDS_LOCKED: 'This event has been released, so its seeds are locked.',
     SPORT_EVENT_START_NOT_PLACEHOLDER: 'This event already has a real start time.',
@@ -1151,29 +1146,6 @@ export const enUS = {
    * context to extractErrorMessage. Placeholders take the sport's words from the screen.
    */
   errorContext: {
-    BRACKET_INVALID: {
-      bracketAdmin: 'That pairing could not be saved. Each {{participant}} plays one opening {{match}}, and two different {{participants}} meet in a {{match}}.',
-      reseedSave: 'These {{matches}} could not be saved. Each {{participant}} left plays once, against a {{participant}} from its own side of the bracket, and a {{participant}} with a bye keeps its place.',
-      reseedSuggest: 'The {{participants}} left don\'t fit this round\'s {{matches}}. Check the results of the round before.',
-    },
-    BRACKET_MATCH_NOT_FOUND: {
-      bracketAdmin: 'That {{match}} is no longer in the bracket. Refresh the page.',
-    },
-    BRACKET_NOT_RESEEDED: {
-      bracketAdmin: 'This round\'s {{participants}} come from the {{matches}} before it, so it isn\'t reseeded.',
-    },
-    BRACKET_PARTICIPANT_ALREADY_PLAYED: {
-      bracketAdmin: 'That {{participant}}\'s {{match}} has started, so enter the withdrawal as a walkover.',
-    },
-    BRACKET_PLACE_NOT_FIRST_ROUND: {
-      bracketAdmin: 'That {{participant}} skipped the first round, so enter the withdrawal as a walkover.',
-    },
-    BRACKET_ROUND_ALREADY_PLAYED: {
-      bracketAdmin: 'A {{match}} of this round has started, so its {{matches}} can no longer change.',
-    },
-    BRACKET_ROUND_NOT_FINISHED: {
-      bracketAdmin: 'Every {{match}} of the round before needs a result before this round\'s {{matches}} are set.',
-    },
     CONTEST_BRACKET_SINGLE_EVENT: {
       contestSetup: 'A bracket contest covers one tournament, so it can’t take another event.',
     },
@@ -1211,56 +1183,8 @@ export const enUS = {
     CONTEST_SQUARES_SINGLE_EVENT: {
       contestSetup: 'A squares contest is played on one game, so it can’t take another event.',
     },
-    EVENT_PARTICIPANT_ALREADY_ON_FIELD: {
-      bracketAdmin: 'That {{participant}} is already in the {{event}}.',
-    },
-    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: {
-      bracketAdmin: 'That is a {{playIn}} place. Name its {{participant}} there instead.',
-    },
-    EVENT_PARTICIPANT_NOT_IN_BRACKET: {
-      bracketAdmin: 'That {{participant}} no longer has a place in the bracket. Refresh the page.',
-    },
-    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: {
-      bracketAdmin: 'That place is not a {{playIn}} place, so its {{participant}} can\'t be replaced.',
-    },
     INTERNAL_ERROR: {
       eventTiers: 'The tiers may have saved, but placing the field in them failed. Save again to finish.',
-    },
-    MATCH_ALREADY_PLAYED: {
-      bracketAdmin: 'This {{match}} has a result. Clear it before cancelling the {{match}}.',
-    },
-    MATCH_ALREADY_STARTED: {
-      bracketAdmin: 'This {{match}} has started, so it can\'t be postponed.',
-    },
-    MATCH_CANCELLED: {
-      bracketAdmin: 'This {{match}} was cancelled, so it has no score.',
-    },
-    MATCH_IN_BRACKET: {
-      bracketAdmin: 'This {{match}} is part of a bracket, which can\'t lose a {{match}}. Change its time instead.',
-    },
-    MATCH_PERIOD_INVALID: {
-      bracketAdmin: 'This {{match}}\'s score at that point can\'t be entered here.',
-    },
-    MATCH_RESULT_INVALID: {
-      bracketAdmin: 'That result could not be saved. The winner\'s score is the higher, a {{tie}} has level scores, and a final score is never below an earlier one.',
-    },
-    MATCH_SIDES_NOT_SET: {
-      bracketAdmin: 'Both {{participants}} in this {{match}} aren\'t known yet. Enter the results of the {{matches}} before it first.',
-    },
-    MATCH_SPREAD_LOCKED: {
-      bracketAdmin: 'This {{match}} already has picks, so its spread can no longer change.',
-    },
-    MATCH_SPREAD_REQUIRED: {
-      bracketAdmin: 'The {{event}} has been released, so this {{match}}\'s spread can be changed but not cleared.',
-    },
-    PARTICIPANT_NOT_FOUND: {
-      bracketAdmin: 'That {{participant}} is no longer active. Pick another.',
-    },
-    PARTICIPANT_NOT_IN_SPORT_LEAGUE: {
-      replaceParticipant: 'That {{participant}} isn\'t on this {{sportLeague}}\'s roster, so they can\'t join this {{event}}. Pick another.',
-    },
-    PLAY_IN_SLOT_ALREADY_PLAYED: {
-      bracketAdmin: 'That place has already played a {{match}}, so its {{participant}} can\'t change.',
     },
     PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: {
       pickEm: 'The week has started, so a pick can be changed to the other {{participant}} but not removed.',
@@ -1300,16 +1224,6 @@ export const enUS = {
     SPORT_EVENT_ALREADY_STARTED: {
       contestSetup: 'This event has already started, so a contest can no longer be made on it.',
       createEvent: 'This {{event}} has already started, so it can’t be added.',
-    },
-    SPORT_EVENT_BRACKET_LOCKED: {
-      bracketAdmin: 'The {{event}} has been released, so its pairings are locked.',
-    },
-    SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED: {
-      bracketAdmin: 'This {{match}}\'s winner is already in its next {{match}}, which has a score. Clear that score first.',
-      bracketAdminNextMatch: 'This {{match}}\'s winner is already in {{match}} {{nextMatchNumber}}, which has a score. Clear {{match}} {{nextMatchNumber}}\'s score first.',
-    },
-    SPORT_EVENT_NOT_RELEASED: {
-      bracketAdmin: 'Release the {{event}} before entering results.',
     },
   },
   word: {

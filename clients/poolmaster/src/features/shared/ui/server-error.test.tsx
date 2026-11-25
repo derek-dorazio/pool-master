@@ -29,12 +29,12 @@ describe("ServerErrorBar", () => {
 
     render(
       <ServerErrorBar
-        context="bracketAdmin"
+        context="gamePicks"
         values={{ match: "game" }}
         error={
           new ApiError({
             error: {
-              code: "BRACKET_MATCH_NOT_FOUND",
+              code: "PREDICTION_GAME_STARTED",
               message: "Match m-1 is not in event e-1",
             },
           })
@@ -45,7 +45,7 @@ describe("ServerErrorBar", () => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent("Sync failed");
-    expect(screen.getByText("That game is no longer in the bracket. Refresh the page.")).toBeInTheDocument();
+    expect(screen.getByText("That game has started, so its pick is locked.")).toBeInTheDocument();
     expect(screen.queryByText("Match m-1 is not in event e-1")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));

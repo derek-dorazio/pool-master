@@ -27,7 +27,7 @@ export function buildSportPath(sportUrlSegment: string) {
   return `${SPORTS_PATH}/${sportUrlSegment}`;
 }
 
-export function buildSportEventListPath(sportUrlSegment: string) {
+function buildSportEventListPath(sportUrlSegment: string) {
   return `${buildSportPath(sportUrlSegment)}/events`;
 }
 

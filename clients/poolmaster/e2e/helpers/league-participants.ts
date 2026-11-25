@@ -1,23 +1,24 @@
 import { expect, type Page } from '@playwright/test';
-import { submitAndRead } from './browser-writes';
+import { readCsrfToken } from './browser-writes';
 
 /**
- * Adds participants to one sport league through Manage's Add page, reached from the League page's
- * Tools tab (#1853, #1866: a participant belongs to one league, and Add opens on the league it
- * names), one save each, returning their ids in order.
+ * Adds participants to one sport league through the participants API, one save each, returning
+ * their ids in order. A synced league's participants come from its feed, and the root admin has no
+ * Add participant page (#2074); a journey's own league is a test league, so it writes them itself,
+ * as the test-data loader does.
  */
-export async function addLeagueParticipants(page: Page, sportPath: string, sportLeagueId: string, names: readonly string[]): Promise<string[]> {
+export async function addLeagueParticipants(
+  page: Page,
+  sportLeagueId: string,
+  participantType: 'INDIVIDUAL' | 'TEAM',
+  names: readonly string[],
+): Promise<string[]> {
+  const headers = { 'x-csrf-token': await readCsrfToken(page) };
   const ids: string[] = [];
   for (const name of names) {
-    await page.goto(`/manage/sports/${sportPath}/participants/new?sportLeague=${sportLeagueId}`);
-    await expect(page.getByTestId('root-admin-participant-list-new-league')).toHaveValue(sportLeagueId);
-    await page.getByTestId('root-admin-participant-list-new-name').fill(name);
-    const created = await submitAndRead<{ participant: { id: string } }>(
-      page,
-      'root-admin-participant-list-new-save',
-      'POST',
-      '/api/v1/participants',
-    );
+    const response = await page.request.post('/api/v1/participants', { headers, data: { sportLeagueId, name, participantType } });
+    expect(response.ok(), `POST /api/v1/participants answered ${response.status()}`).toBe(true);
+    const created = (await response.json()) as { participant: { id: string } };
     ids.push(created.participant.id);
   }
   return ids;

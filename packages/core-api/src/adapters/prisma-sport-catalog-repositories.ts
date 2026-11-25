@@ -13,7 +13,6 @@ import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   PriceAssignment,
-  ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
   SportEventParticipantCreate,
@@ -66,7 +65,7 @@ import type {
   SportLeagueSeasonSlot,
   SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -544,6 +543,18 @@ export class PrismaSportEventRepository implements SportEventRepository {
       _count: { _all: true },
     });
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+  }
+
+  async isTestEvent(sportEventId: string): Promise<boolean | null> {
+    // One read answers both: the event row, remembered for the request's later point reads of it
+    // (the write behind the guard reads the event again), and whether it covers a test slot.
+    const row = await this.prisma.sportEvent.findUnique({
+      where: { id: sportEventId },
+      include: { ...SPORT_EVENT_INCLUDE, _count: { select: { slots: { where: COVERS_TEST_SLOT } } } },
+    });
+    if (row === null) return null;
+    await memoizedReadMany(this.prisma, ReadMemoKey.sportEvent, [sportEventId], () => Promise.resolve([toSportEvent(row)]));
+    return row._count.slots > 0;
   }
 
   async findSlots(sportEventIds: readonly string[]): Promise<Map<string, SportLeagueSeasonSlot[]>> {
@@ -1062,47 +1073,6 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       this.prisma.participant.update({ where: { id: input.pairingParticipantId }, data: { status: ParticipantStatus.INACTIVE } }),
       ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
-  }
-
-  async replaceWithdrawn(input: {
-    withdrawnId: string;
-    matchId: string;
-    side: MatchSide;
-    replacementParticipantId: string;
-    valuation: ReplacementValuation | null;
-  }, jobs: readonly BackgroundJobRequest[] = []): Promise<string> {
-    return this.prisma.$transaction(async (tx) => {
-      const withdrawn = await tx.sportEventParticipant.update({
-        where: { id: input.withdrawnId },
-        data: { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
-      });
-      const { valuation } = input;
-      const replacement = await tx.sportEventParticipant.create({
-        data: {
-          sportEventId: withdrawn.sportEventId,
-          participantId: input.replacementParticipantId,
-          ...(valuation && {
-            valuation: {
-              create: {
-                sportEventTierId: valuation.sportEventTierId,
-                tierOrderIndex: valuation.tierOrderIndex,
-                tierAssignedSource: valuation.sportEventTierId === null ? null : ValuationSource.MANUAL,
-                price: valuation.price,
-                priceAssignedSource: valuation.price === null ? null : ValuationSource.MANUAL,
-              },
-            },
-          }),
-        },
-      });
-      await tx.sportEventRoundMatch.update({
-        where: { id: input.matchId },
-        data: input.side === MatchSide.HOME
-          ? { homeSportEventParticipantId: replacement.id }
-          : { awaySportEventParticipantId: replacement.id },
-      });
-      await insertBackgroundJobs(tx, jobs);
-      return replacement.id;
-    });
   }
 }
 

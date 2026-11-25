@@ -118,14 +118,11 @@ matches on. Then:
 The field load matches players by provider id only. If the roster already holds a hand-made
 player with the same name as a provider golfer, you will see both.
 
-**Optional: adjust the field by bulk upload.** To set many rankings, odds, seeds or
-withdrawals at once (copied from a tournament site, say), use *Bulk upload* on the same
-page. Paste or upload CSV or JSON with `externalId` or `playerName` per row, preview it,
-then apply. It only changes golfers already on the field: a golfer it cannot find shows as
-unresolved, and Apply stays disabled until every row matches one golfer, once. A blank cell
-leaves a value alone; `null` clears it. Load the field first — the upload never adds a
-golfer. A later *Refresh Participant Field* replaces rankings, odds, seeds and withdrawals
-with the provider's again, as it does corrections made in a golfer's dialog (#415).
+The field upload has no page any more (its card lived on the deleted Tools tab, #2074). Its
+API (`previewEventParticipantUpload`, `applyEventParticipantUpload`) still sets rankings, seeds
+and withdrawals on golfers already on the field; odds come only from the feed, so it takes none
+(#2081). A later *Refresh Participant Field* replaces those values with the provider's again,
+as it does corrections made in a golfer's dialog (#415).
 
 ## 5. Build tiers
 
@@ -219,51 +216,30 @@ Final standings are built from the scores PoolMaster has already received.
 
 ## Knockout brackets
 
-A basketball tournament or a playoff is a knockout bracket, resulted by hand on its **Bracket** tab. Its
-field and games usually come from a sport data file ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md)
-*Loading sport data*, *Brackets*);
-otherwise the field is built on the Field tab and the games are loaded through
-`loadEventBracket` ([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventRoundMatch*). Then
-on the Bracket tab:
+A basketball tournament or a playoff is a knockout bracket. Its field, games and results come
+from the provider's feed, and nothing on the Event page enters or corrects them (ADR 0013,
+#2074): the Bracket tab, its pairing and play-in editors, *Withdrawals*, the quarter-score rows
+and the Tools tabs are gone. The Rounds and matches tab shows each game's score, winner and where
+the result came from, and a wrong result is fixed by the feed and applied with *Settle again*.
+Test data still loads through a sport data file ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md)
+*Loading sport data*, *Brackets*), which writes through the admin result routes
+([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventRoundMatch*).
 
-- **Before release**, *Edit pairing* changes a game's two teams. Only teams no other game holds
-  are offered, so to swap two teams, empty one side first. A side an earlier game's winner fills
-  cannot be edited. Under *Play-in places*, mark each field row that stands for a First Four
-  pairing ("Texas / Xavier").
 - **Before releasing a provider-synced NCAA men's tournament**, check which regions meet in
   national semifinals 61 and 62 against the official bracket's Final Four pairing. The provider's
   bracket pairs them by its region order, which the provider does not promise; the sync logs the
   pairing it loaded ("check them against the official bracket before release",
   `crossRegionPairings`). If it is wrong, hold the release: the links come from the code
-  (`toNcaaBracket`), not the Bracket tab, so it needs a fix there. Release before the
-  First Four games end, too: a play-in place takes its winner only once the event is released.
-- **After release**, choose the team that won each game; the winner moves to its next game and
-  the standings update. A wrong winner can be switched, or the result cleared, until the next
-  game has a result. Each play-in place takes its winner once, from the active teams on the
-  tournament's league roster not already in it (#830; every active team of the sport while the
-  league has no roster).
-- **Withdrawals**, in any sport (#704): a team or player who withdraws before their first game,
-  before or after release, is replaced under *Withdrawals* by one of the active participants on
-  the event's league roster not already in the event (a tennis lucky loser). Men's and women's
-  are separate leagues, so a WTA player is never offered for an ATP draw (#830); a league with no
-  roster yet offers every active participant of the sport. The replacement takes the place
-  unseeded, last in the event's last tier at its lowest price; the withdrawn row stays on the
-  field as withdrawn, and every pick of it scores as a first-round loss. Once their game has
-  started, or for a team placed straight into a later round (a bye), a withdrawal is a walkover,
-  entered with **Ended early**. A play-in place is filled
-  with its winner instead.
-- **Quarter scores**, for American football (#772): under each released game with both teams,
-  *Enter score* takes both teams' score at the end of the first, second and third quarters, as
-  the scoreboard shows it, and the final score, overtime included, which saves the game's result
-  with the higher score winning. A score can't go down as the game goes on, so a quarter's score
-  is refused below an earlier quarter's or above a later one's or the final score. Squares pools
-  read them. Men's college basketball takes a halftime score (#786), and hockey the scores at
-  the end of the first and second periods (#788), and soccer a half-time score (#787), each
-  before its final score.
+  (`toNcaaBracket`), so it needs a fix there. Release before the First Four games end, too: a
+  play-in place takes its winner only once the event is released.
+- **Withdrawals**: a team or player who withdraws is the feed's to report; one that withdraws
+  once their game has started is a walkover in the feed's result.
+- **Period scores** (quarters in American football, halves in men's college basketball and
+  soccer, periods in hockey) come from the feed, and squares pools read them.
 
 The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
-is one game of the bracket: choose the team that won the series, with the games each side won
-as the score (4-2). The NBA's 7 and 8 seeds in each conference are play-in places until the
+is one game of the bracket: the feed records the team that won the series, with the games each
+side won as the score (4-2). The NBA's 7 and 8 seeds in each conference are play-in places until the
 play-in tournament is played, as the First Four's are. Those leagues' rounds show their own
 names (Conference Finals, NBA Finals), not March Madness's.
 
@@ -292,9 +268,9 @@ games won, so baseball takes no squares pools. It starts on four tiers of three.
 Soccer (#787) has five sport leagues, every bracket fixed: the FIFA World Cup, the FIFA
 Women's World Cup, the UEFA European Championship and the Copa América, each event its
 knockout stage at neutral sites seeded by FIFA ranking, and the UEFA Champions League. A
-match's final score is the score after extra time. A match level after extra time asks for its
+match's final score is the score after extra time. A match level after extra time carries its
 shoot-out too (4-3 pens), and the shoot-out's winner goes through; the score stays level. The
-first half's score is entered for squares pools. The third-place match is not part of the
+first half's score, from the feed, feeds squares pools. The third-place match is not part of the
 bracket. The Champions League starts at its knockout play-offs, naming its own rounds: its
 league phase's top eight are placed straight into the Round of 16 (a bye scores nothing), and
 each two-legged tie is one game of the bracket, scored on aggregate, scheduled at the first
@@ -317,7 +293,7 @@ per Premier League matchweek, and one per group matchday of the World Cup, the E
 América, or per Champions League league phase matchday, each in its competition's own sport
 league. A week takes pick'em, with draw picks, and the Premier League's also takes Last Man
 Standing, a survivor pool whose teams can be picked again once an entry has used all 20. A drawn
-game's result is entered with no winner. A postponed match is cancelled from its week; when it is
+game's result has no winner. A postponed match is cancelled from its week; when it is
 replayed later, it is a game of the week it is played in.
 
 **Squares rounds.** A sport league whose early rounds are not single games names its first
@@ -329,7 +305,7 @@ not offer one. Every other league takes squares on any round.
 length, first to final (`roundSeriesLengths`, set by migration): the NBA and NHL 7, 7, 7, 7, MLB
 3, 5, 7, 7, the WNBA 3, 5, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
 synced event counts its games' winners against the length and records the series once a side has
-won more than half. An admin who enters a series' result by hand enters the games won (4-2).
+won more than half. A test data file gives a series' result as the games won (4-2).
 When a league changes its format, change its lengths by migration before the playoffs start.
 
 Tennis (#704) has two sport leagues, the ATP (men's singles) and the WTA (women's singles), each
@@ -337,11 +313,11 @@ holding the four Grand Slams; every bracket is fixed. A Slam singles draw is 128
 rounds, First round to Final, with the tournament's 32 seeds as seeds 1 to 32 and everyone else
 unseeded (the admin's "derive seeds from ranking" action is not used, because it would overwrite
 the real seeds). Each quarter of the draw is a region ("Top quarter" to "Bottom quarter")
-through the quarterfinals. The draw's qualifier places are play-in places, named "qualifier"
-on the Bracket tab, and are filled once qualifying ends. A player who withdraws before their first
-match is replaced by a lucky loser under *Withdrawals*. A match's score is sets won (3-1) and
-is optional: choosing the winner is enough. A match that ended early is entered with **Ended
-early**: a retirement, a walkover (no score) or a default; the winner advances in full. There
+through the quarterfinals. The draw's qualifier places are play-in places, named "qualifier",
+and are filled once qualifying ends. A player who withdraws before their first
+match is replaced by the lucky loser the feed reports. A match's score is sets won (3-1) and
+is optional: a winner alone is enough. A match that ended early carries how it ended: a
+retirement, a walkover (no score) or a default; the winner advances in full. There
 are no periods, so no squares pools. A draw starts on six tiers of eight by ranking, the last
 taking everyone else, so the first four tiers are the seeds.
 
@@ -350,14 +326,10 @@ taking everyone else, so the first four tiers are the seeds.
 before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,
 so the Divisional round and the conference championships are each placed by seed; the
 conference winners link to the Super Bowl. Release lets those rounds wait. Once every game of
-the round before has a result, the Bracket tab's *Reseeded rounds* card offers *Suggest games*
-for that round (`proposeEventRoundMatchups`): in each conference the best seed left hosts the
-worst, and each game's home and away team is filled in. Change any side to a pairing of your own
-that keeps each team in its conference and each bye in place, then *Save games*
-(`setEventRoundMatchups`), which sets every game of the round at once. Until the round before is
-finished the card names the games still without a result; once a game of the round has started,
-the round is no longer offered. A first-round result corrected after that moves the team it
-placed, until that team has played.
+the round before has a result, the feed places each such round: in each conference the best seed
+left hosts the worst. Test data sets a round through `proposeEventRoundMatchups` and
+`setEventRoundMatchups`, which set every game of the round at once; the Bracket tab's *Reseeded
+rounds* card is gone (#2074).
 
 ## Cancelling an event or a game
 
@@ -378,11 +350,11 @@ A cancelled event counts for nothing, whatever scores or results it already hold
 - A contest still in draft is not settled; delete it from its page.
 
 A single game is cancelled instead, for a week of games that forms no bracket (an NFL
-regular-season week): *Cancel game* on its row of the week's Rounds and matches tab, then confirm. It is
-offered only on a released week (a draft's games are edited freely) and an unplayed game; clear
-a result first. A cancelled game counts for nothing in any contest. A game put off to a later
-day of its own week, or of a bracket round, is postponed instead: *Postpone game* on its row,
-then set its new time on the game; its picks stay open until then. A game that moves to another
+regular-season week): the feed cancels it (test data through `cancelEventMatch`), only on a
+released week (a draft's games are edited freely) and an unplayed game. A
+cancelled game counts for nothing in any contest. A game put off to a later day of its own week,
+or of a bracket round, is postponed by the feed, which sets its new time; its picks stay open
+until then. A game that moves to another
 week is cancelled in its own week and added to the week it moves to while that week is still a
 draft. A bracket's
 games cannot be cancelled: every one of them decides who goes on.

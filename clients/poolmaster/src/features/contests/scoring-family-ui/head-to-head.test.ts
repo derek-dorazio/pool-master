@@ -1,6 +1,6 @@
 import { sportPlay } from '@/test/sport-play';
 import { describe, expect, it } from 'vitest';
-import { ScoringFamily, Sport, sportLeagueDefinitionOf } from '@poolmaster/shared/domain';
+import { MatchStatus, ScoringFamily, Sport, sportLeagueDefinitionOf } from '@poolmaster/shared/domain';
 import type {
   ContestEntryStandingDto,
   ContestLeaderboardResponse,
@@ -118,6 +118,8 @@ function game(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRound
     homeSpread: null,
     periodScores: [],
     ...overrides,
+    // As the server's mapper reads it from the status.
+    isUnplayed: overrides.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides.status),
   };
 }
 

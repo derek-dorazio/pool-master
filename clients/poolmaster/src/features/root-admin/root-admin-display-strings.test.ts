@@ -8,7 +8,6 @@ import {
   TemplateCoverageMode,
 } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
-import { matchEndingMark } from './bracket-copy';
 import { syncFailedText } from './sport-league-overview-text';
 
 /**
@@ -29,11 +28,10 @@ describe('root admin words come from the display strings', () => {
     expect(enumLabel('SportEventReleaseMode', SportEventReleaseMode.MANUAL, { form: 'short' })).toBe('Manual');
   });
 
-  it('a match that stopped early is marked ret., w/o or def., and a played match has no mark', () => {
-    expect(matchEndingMark(MatchEnding.PLAYED)).toBeNull();
-    expect(matchEndingMark(MatchEnding.RETIREMENT)).toBe('ret.');
-    expect(matchEndingMark(MatchEnding.WALKOVER)).toBe('w/o');
-    expect(matchEndingMark(MatchEnding.DEFAULT)).toBe('def.');
+  it('a match that stopped early is marked ret., w/o or def. in the short form', () => {
+    expect(enumLabel('MatchEnding', MatchEnding.RETIREMENT, { form: 'short' })).toBe('ret.');
+    expect(enumLabel('MatchEnding', MatchEnding.WALKOVER, { form: 'short' })).toBe('w/o');
+    expect(enumLabel('MatchEnding', MatchEnding.DEFAULT, { form: 'short' })).toBe('def.');
   });
 
   it('a race result preview row says what is wrong with it in the admin’s words', () => {

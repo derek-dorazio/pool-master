@@ -397,9 +397,10 @@ The family is the event's sport league's (`scoringFamilyForEvent`). Finish posit
 **GAME linking.** A single-game round links the game to the one open match between its two
 teams; two candidates link nothing until a later sync. A best-of series links no game: the
 writer counts each final game's winner and records the result once a side has more than half.
-A First Four winner first fills its play-in place. **An admin's result stands**: a different
-provider final is logged, not written; clearing the result hands the match back. A level
-knockout game takes its winner from the shoot-out.
+A First Four winner first fills its play-in place. **The feed is the only writer** (#2074): a
+provider final overwrites whatever the match holds, a result written by hand before included,
+and every result's `resultSource` is `PROVIDER`. A level knockout game takes its winner from the
+shoot-out.
 
 **Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
 `SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as

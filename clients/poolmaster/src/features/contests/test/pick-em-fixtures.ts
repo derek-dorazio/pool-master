@@ -1,3 +1,4 @@
+import { MatchStatus } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   ContestEntryDetailResponse,
@@ -403,6 +404,8 @@ export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Part
     homeSpread: null,
     periodScores: [],
     ...overrides[matchNumber],
+    // As the server's mapper reads it from the status.
+    isUnplayed: overrides[matchNumber]?.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides[matchNumber]?.status),
   });
   return [
     eventGame(3, '2099-09-22T00:15:00.000Z', NFL_TEAMS.bears, NFL_TEAMS.packers),

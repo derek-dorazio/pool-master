@@ -207,7 +207,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
       const names = Array.from({ length: PLAYER_COUNT }, (_, index) => `${run.playerNamePrefix} ${index + 1}`);
-      const ids = await addLeagueParticipants(page, 'golf', tourId, names);
+      const ids = await addLeagueParticipants(page, tourId, 'INDIVIDUAL', names);
       // The tour's Participants tab (#1866), read after every save, carries all six new golfers.
       await expectLeagueParticipants(page, 'golf', tourId, ids);
       return ids;
