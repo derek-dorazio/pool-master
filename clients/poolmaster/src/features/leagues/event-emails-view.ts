@@ -1,4 +1,5 @@
-import { EventEmailDelivery, PlanFeature, SUPPORTED_SPORTS, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { EventEmailDelivery, PlanFeature, type Sport } from '@poolmaster/shared/domain';
 import type { LeagueDto, SportLeagueDto } from '@/lib/api';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 
@@ -59,17 +60,21 @@ export interface EventEmailSport {
 }
 
 /**
- * The active sport leagues a league can hear about, in groups by sport in the platform's order,
- * each group's by name. Within its sport's group a sport league goes by its own name.
+ * The active sport leagues a league can hear about, in groups by sport in the sports' display
+ * order the API sends (`sportDisplayOrder`), each group's by name. Within its sport's group a
+ * sport league goes by its own name.
  */
 export function groupEventEmailSportLeagues(sportLeagues: readonly SportLeagueDto[]): EventEmailSport[] {
-  return SUPPORTED_SPORTS.flatMap((sport) => {
-    const group = sportLeagues
-      .filter((sportLeague) => sportLeague.sport === sport && sportLeague.isActive)
-      .map((sportLeague) => ({ id: sportLeague.id, name: sportLeague.name }))
-      .sort((left, right) => left.name.localeCompare(right.name));
-    return group.length ? [{ sport, name: getSportDefinition(sport).name, sportLeagues: group }] : [];
-  });
+  const active = sportLeagues
+    .filter((sportLeague) => sportLeague.isActive)
+    .sort((left, right) => left.sportDisplayOrder - right.sportDisplayOrder || left.name.localeCompare(right.name));
+  const groups = new Map<Sport, EventEmailSport>();
+  for (const sportLeague of active) {
+    const group = groups.get(sportLeague.sport) ?? { sport: sportLeague.sport, name: enumLabel('Sport', sportLeague.sport), sportLeagues: [] };
+    group.sportLeagues.push({ id: sportLeague.id, name: sportLeague.name });
+    groups.set(sportLeague.sport, group);
+  }
+  return [...groups.values()];
 }
 
 /** What League settings says the league hears about: every one, none, or how many of them. */

@@ -1,4 +1,3 @@
-import { isHallOfLameRecord } from '@poolmaster/shared/domain';
 import type { RecordDto } from '@/lib/api';
 import { ErrorState, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
 import { RECORD_WORDING, describeHeldRecord, describeRecordStand, recordsHeldBy } from './record-book-view';
@@ -16,8 +15,8 @@ export function RecordBook({ leagueId }: { leagueId: string }) {
     return <ErrorState body="We couldn't load the record book." onRetry={() => void recordsQuery.refetch()} testId="record-book-error" />;
   }
   const records = recordsQuery.data ?? [];
-  const book = records.filter((record) => !isHallOfLameRecord(record.type));
-  const hallOfLame = records.filter((record) => isHallOfLameRecord(record.type));
+  const book = records.filter((record) => !record.isHallOfLame);
+  const hallOfLame = records.filter((record) => record.isHallOfLame);
 
   return (
     <>

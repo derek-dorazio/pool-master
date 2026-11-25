@@ -435,6 +435,8 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       [RecordType.MOST_RUNNER_UPS, 1, [[null, null], [null, null]], null],
       [RecordType.LONGEST_DROUGHT, 1, [[year, null], [year, null]], null],
     ]);
+    // The API says which records are the Hall of Lame's, so the page lists them apart.
+    expect(records.filter((record) => record.isHallOfLame).map((record) => record.type)).toEqual([RecordType.MOST_RUNNER_UPS, RecordType.LONGEST_DROUGHT]);
     // Hiding the Hall of Lame takes its rows out for every member, and leaves the record book.
     await updateLeagueCupSettings({
       client: commissioner.client,

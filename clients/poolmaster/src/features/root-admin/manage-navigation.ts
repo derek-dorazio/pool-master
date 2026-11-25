@@ -1,4 +1,5 @@
-import { getSportDefinition, type Sport, sportVocabulary } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { type Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import type { PageLinkTab } from '@/features/shared/ui';
 import { upperFirst } from '@/lib/upper-first';
 
@@ -175,7 +176,7 @@ export function getManageBreadcrumbLabel(segments: readonly string[], index: num
   const segment = segments[index];
   const sport = segments[0] === 'sports' ? sports.find((candidate) => candidate.urlSegment === segments[1])?.sport ?? null : null;
   if (sport && index === 1) {
-    return getSportDefinition(sport).name;
+    return enumLabel('Sport', sport);
   }
   if (sport && index === 2 && isSportListSegment(segment)) {
     return SPORT_LIST_LABELS[segment](sport);

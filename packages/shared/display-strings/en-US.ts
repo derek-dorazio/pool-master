@@ -1027,7 +1027,7 @@ export const enUS = {
     PLATFORM_PRICING_PROFILE_NAME_TAKEN: 'A pricing profile already uses that name.',
     PLATFORM_PRICING_PROFILE_NOT_FOUND: 'Pricing profile not found.',
     PLATFORM_TIER_PROFILE_CODE_TAKEN: 'A tier profile already uses that code.',
-    PLATFORM_TIER_PROFILE_INVALID: 'This tier profile is not valid.',
+    PLATFORM_TIER_PROFILE_INVALID: 'A capped last tier needs the most it takes, and one that takes everyone left has no cap.',
     PLATFORM_TIER_PROFILE_IN_USE: 'This tier profile is in use, so it cannot be deleted.',
     PLATFORM_TIER_PROFILE_NAME_TAKEN: 'A tier profile already uses that name.',
     PLATFORM_TIER_PROFILE_NOT_FOUND: 'Tier profile not found.',

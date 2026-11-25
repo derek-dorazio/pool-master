@@ -24897,6 +24897,8 @@ export interface components {
              * @enum {string}
              */
             type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON" | "REPEAT_WINNER" | "MOST_RUNNER_UPS" | "MOST_FOURTHS" | "MOST_LAST_PLACES" | "LONGEST_DROUGHT";
+            /** @description True for a Hall of Lame record (MOST_RUNNER_UPS, MOST_FOURTHS, MOST_LAST_PLACES, LONGEST_DROUGHT), which screens list apart from the record book; decided by the API. */
+            isHallOfLame: boolean;
             /** @description One value of a record and who holds it. */
             best: {
                 /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */
@@ -24965,6 +24967,8 @@ export interface components {
                  * @enum {string}
                  */
                 type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON" | "REPEAT_WINNER" | "MOST_RUNNER_UPS" | "MOST_FOURTHS" | "MOST_LAST_PLACES" | "LONGEST_DROUGHT";
+                /** @description True for a Hall of Lame record (MOST_RUNNER_UPS, MOST_FOURTHS, MOST_LAST_PLACES, LONGEST_DROUGHT), which screens list apart from the record book; decided by the API. */
+                isHallOfLame: boolean;
                 /** @description One value of a record and who holds it. */
                 best: {
                     /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */

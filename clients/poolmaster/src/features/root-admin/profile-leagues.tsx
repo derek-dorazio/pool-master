@@ -1,4 +1,4 @@
-import { getSportDefinition } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SportLeagueDto } from '@/lib/api';
 import { QueryState, Text } from '@/features/shared/ui';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
@@ -28,7 +28,7 @@ export function ProfileLeagues({
       {(leagues) => {
         const naming = leagues
           .filter(names)
-          .map((league) => ({ id: league.id, sport: getSportDefinition(league.sport).name, name: league.displayName ?? league.name }))
+          .map((league) => ({ id: league.id, sport: enumLabel('Sport', league.sport), name: league.displayName ?? league.name }))
           .sort((left, right) => left.sport.localeCompare(right.sport) || left.name.localeCompare(right.name));
         if (naming.length === 0) {
           return <Text data-testid={`${testId}-none`} tone="muted">No sport league uses it.</Text>;

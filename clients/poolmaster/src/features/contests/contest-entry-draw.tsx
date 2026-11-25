@@ -1,4 +1,4 @@
-import { countParticipants, type SportNoun } from '@poolmaster/shared/domain';
+import { pluralize, type SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { Notice, formatDateTimeDisplay, Text, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { participantAffiliation, selectionParticipantLabel } from './contest-sport';
@@ -32,7 +32,7 @@ export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectio
     return (
       <Notice data-testid="contest-entry-draw-pending" title="Waiting for the draw">
         There is nothing to pick in this contest. Once entries are in, the commissioner runs the
-        draw, which deals this entry {countParticipants(rosterSize, noun)} at random and enters it.
+        draw, which deals this entry {pluralize(rosterSize, noun.one, noun.many)} at random and enters it.
       </Notice>
     );
   }
