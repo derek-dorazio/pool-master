@@ -1,3 +1,4 @@
+import { LeagueRole } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import {
@@ -38,8 +39,8 @@ export function TeamOwnerActionMenu({
 }) {
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
 
-  const canPromote = canManageLeagueRole && ownerRole === 'MEMBER';
-  const canDemote = canManageLeagueRole && ownerRole === 'COMMISSIONER';
+  const canPromote = canManageLeagueRole && ownerRole === LeagueRole.MEMBER;
+  const canDemote = canManageLeagueRole && ownerRole === LeagueRole.COMMISSIONER;
   const removeRequiresInactivation = activeOwnerCount <= 1;
   const testPrefix = 'team-home-owner-actions';
   const ownerKey = `${teamId}-${ownerUserId}`;
@@ -55,7 +56,7 @@ export function TeamOwnerActionMenu({
   ] as const;
 
   const changeRoleMutation = useInvalidatingMutation({
-    mutationFn: async (nextRole: 'COMMISSIONER' | 'MEMBER') => {
+    mutationFn: async (nextRole: LeagueRole) => {
       const response = await changeMemberRole({
         path: { id: leagueId, uid: ownerUserId },
         body: { role: nextRole },
@@ -70,7 +71,7 @@ export function TeamOwnerActionMenu({
     onSuccess: (_membership, nextRole) => {
       setActiveAction(null);
       showToast({
-        title: nextRole === 'COMMISSIONER' ? `${ownerName} is now a commissioner` : `${ownerName} is now a member`,
+        title: nextRole === LeagueRole.COMMISSIONER ? `${ownerName} is now a commissioner` : `${ownerName} is now a member`,
         tone: 'success',
       });
     },
@@ -182,9 +183,9 @@ export function TeamOwnerActionMenu({
           onCancel={closeDialog}
           onConfirm={() => {
             const run = activeAction === 'promote'
-              ? changeRoleMutation.mutateAsync('COMMISSIONER')
+              ? changeRoleMutation.mutateAsync(LeagueRole.COMMISSIONER)
               : activeAction === 'demote'
-                ? changeRoleMutation.mutateAsync('MEMBER')
+                ? changeRoleMutation.mutateAsync(LeagueRole.MEMBER)
                 : removeOwnerMutation.mutateAsync();
             void run.catch(() => undefined);
           }}

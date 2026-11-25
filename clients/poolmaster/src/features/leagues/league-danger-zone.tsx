@@ -175,11 +175,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         isPending={inactivateMutation.isPending}
         onCancel={() => setActiveDialog(null)}
         onConfirm={() => inactivateMutation.mutate()}
-        onOpenChange={(open) => {
-          if (!open && !inactivateMutation.isPending) {
-            setActiveDialog(null);
-          }
-        }}
+        // Opened by its row's button, so the one change the dialog reports is a close (Escape),
+        // which ConfirmDialog refuses while the write is still running.
+        onOpenChange={() => setActiveDialog(null)}
         open={activeDialog === 'inactivate'}
         pendingLabel="Inactivating..."
         testId="league-inactivate-modal"
@@ -201,11 +199,8 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         isPending={deleteMutation.isPending}
         onCancel={closeDeleteDialog}
         onConfirm={() => deleteMutation.mutate()}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeDeleteDialog();
-          }
-        }}
+        // Opened by its row's button, so the one change the dialog reports is a close (Escape).
+        onOpenChange={closeDeleteDialog}
         open={activeDialog === 'delete'}
         pendingLabel="Deleting..."
         testId="league-delete-modal"
