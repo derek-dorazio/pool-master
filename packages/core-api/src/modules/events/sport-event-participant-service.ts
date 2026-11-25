@@ -213,11 +213,15 @@ export class SportEventParticipantService implements EventFieldReads {
     return row;
   }
 
-  /** Adds any participants to the field; idempotent for ones already on it. */
+  /**
+   * Adds any participants to the field; idempotent for ones already on it. A test participant
+   * joins only a test slot's event (#2096): 422 TEST_PARTICIPANT_NOT_ON_TEST_SLOT otherwise.
+   */
   async addParticipants(sportEventId: string, participantIds: readonly string[]): Promise<AddFieldResult> {
     await this.requireEvent(sportEventId);
     const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.participantId));
     const toAdd = [...new Set(participantIds)].filter((participantId) => !onField.has(participantId));
+    if (toAdd.length > 0) await this.assertTestParticipantsFit(sportEventId, toAdd);
     if (toAdd.length > 0) {
       const rebuild = await this.rebuild(sportEventId);
       await this.deps.field.createMany(sportEventId, toAdd.map((participantId) => ({ participantId })), rebuild.jobs);
@@ -480,6 +484,18 @@ export class SportEventParticipantService implements EventFieldReads {
   /** The job rebuilding the event's boards, written with a field write that may change them (#1466, #1946). */
   private rebuild(sportEventId: string): Promise<JobsForWrite> {
     return this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
+  }
+
+  /** A test participant joins only a test slot's event (#2096); the event is read only when one is added. */
+  private async assertTestParticipantsFit(sportEventId: string, participantIds: readonly string[]): Promise<void> {
+    const testParticipants = (await this.deps.participants.findByIds(participantIds)).filter((participant) => participant.isTestData);
+    if (testParticipants.length === 0 || await this.deps.sportEvents.isTestEvent(sportEventId) === true) return;
+    this.deps.logger?.warn({ sportEventId, testParticipants: testParticipants.length }, 'Refused a test participant on an event the sync keeps');
+    throw new SportEventError(
+      'A test participant can only join the field of an event on a test slot.',
+      'TEST_PARTICIPANT_NOT_ON_TEST_SLOT',
+      422,
+    );
   }
 
   private async requireEvent(sportEventId: string): Promise<SportEvent> {

@@ -61,7 +61,7 @@ function finding(overrides: Partial<ProviderSyncFinding> = {}): ProviderSyncFind
 function participant(overrides: Partial<Participant> = {}): Participant {
   return {
     id: 'participant-1', createdAt: NOW, updatedAt: NOW, sportLeagueId: LEAGUE.id, ranking: null, name: 'Avery Hart',
-    participantType: ParticipantType.INDIVIDUAL, status: ParticipantStatus.ACTIVE, injuryStatus: { status: 'HEALTHY' },
+    participantType: ParticipantType.INDIVIDUAL, status: ParticipantStatus.ACTIVE, injuryStatus: { status: 'HEALTHY' }, isTestData: false,
     ...overrides,
   };
 }

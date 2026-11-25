@@ -65,7 +65,6 @@ import type {
   SportLeague,
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
-  SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
 import { compareCoveredSlots, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
@@ -168,17 +167,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return rows.map(toSportLeague);
   }
 
-  async findBySportAndName(sportId: string, name: string): Promise<SportLeague | null> {
-    // poolmaster-allow-name-match: the duplicate-name check on create; a league name is unique per sport
-    const row = await this.prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
-    return row ? toSportLeague(row) : null;
-  }
-
-  async findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null> {
-    const row = await this.prisma.sportLeague.findUnique({ where: { sportId_urlSegment: { sportId, urlSegment } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
-    return row ? toSportLeague(row) : null;
-  }
-
   async findEventSynced(): Promise<SportLeague[]> {
     const rows = await this.prisma.sportLeague.findMany({
       where: EVENT_SYNCED_LEAGUE,
@@ -186,36 +174,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       orderBy: { name: 'asc' },
     });
     return rows.map(toSportLeague);
-  }
-
-  async create(
-    input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
-    firstSeason: SportLeagueSeasonSpan,
-  ): Promise<SportLeague> {
-    // The current Season's composite key needs the league and its Season first: two writes.
-    return toSportLeague(await this.prisma.$transaction(async (tx) => {
-      const created = await tx.sportLeague.create({
-        data: {
-          sportId: input.sportId,
-          name: input.name,
-          urlSegment: input.urlSegment,
-          participantType: input.participantType,
-          scoringFamily: input.scoringFamily,
-          timeZone: input.timeZone,
-          bracketAdvancement: input.bracketAdvancement,
-          platformTierProfileId: input.platformTierProfileId,
-          platformPricingProfileId: input.platformPricingProfileId,
-          seasons: { create: firstSeason },
-        },
-        select: { id: true, seasons: { select: { id: true } } },
-      });
-      return tx.sportLeague.update({
-        where: { id: created.id },
-        // poolmaster-allow-position: the one Season this nested create writes
-        data: { currentSeasonId: created.seasons[0]?.id },
-        include: SELECTED_PROVIDER_MAPPING_INCLUDE,
-      });
-    }));
   }
 
   async update(id: string, updates: SportLeagueUpdate): Promise<SportLeague> {
@@ -490,10 +448,29 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async delete(id: string): Promise<void> {
-    // Every child holds a RESTRICT foreign key, so they go first, extension rows before
-    // their core rows. Deleting only the event row failed for any event with a round.
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(this.eventDeletes(id)));
+  }
+
+  async deleteTestSlot(seasonSlotId: string, sportEventId: string | null): Promise<number> {
+    // The test participants this slot's field held: only those can be left on no field by it.
+    const fieldIds = sportEventId === null ? [] : (await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId }, select: { participantId: true },
+    })).map((row) => row.participantId);
+    const results = await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
+      ...(sportEventId === null ? [] : this.eventDeletes(sportEventId)),
+      this.prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { id: seasonSlotId, isTestData: true } }),
+      // After the field rows went in the same transaction, so "no field" counts this event's as gone.
+      this.prisma.participant.deleteMany({ where: { id: { in: fieldIds }, isTestData: true, sportEventParticipants: { none: {} } } }),
+    ]));
+    const removed = results.at(-1) as { count: number };
+    return removed.count;
+  }
+
+  /** The event's delete, children first: every child holds a RESTRICT foreign key. */
+  private eventDeletes(id: string) {
+    // Extension rows before their core rows. Deleting only the event row failed for any event with a round.
     const field = { sportEventParticipant: { sportEventId: id } };
-    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
+    return [
       // The bracket first: its matches name field rows and rounds.
       this.prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
@@ -505,7 +482,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       this.prisma.sportEventRound.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventTier.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEvent.delete({ where: { id } }),
-    ]));
+    ];
   }
 
   async countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {

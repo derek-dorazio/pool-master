@@ -906,19 +906,31 @@ describe('Every seeded contest template, whatever its sport', () => {
   });
 });
 
+/**
+ * A seeded league of the sport, read back through the sport league repository: the migration names
+ * it, so the test finds its row by that name, then reads it as the app does, by id.
+ */
+function seededLeagueReader(sportId: string) {
+  const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
+  return async (name: string) => {
+    const { id } = await getPrisma().sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId, name } }, select: { id: true } });
+    return sportLeagues.findById(id);
+  };
+}
+
 // The NBA and WNBA playoffs (#706): two more basketball sport leagues, data only, each with its own
 // round names and knockout presets sized to its bracket.
 describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
   it('seeds the NBA and WNBA as fixed brackets that name their own rounds, read back through the sport league repository', async () => {
     const basketball = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL } });
-    const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
+    const seeded = seededLeagueReader(basketball.id);
 
-    const [nba, wnba] = await Promise.all([sportLeagues.findBySportAndName(basketball.id, 'NBA'), sportLeagues.findBySportAndName(basketball.id, 'WNBA')]);
+    const [nba, wnba] = await Promise.all([seeded('NBA'), seeded('WNBA')]);
 
     expect([nba?.bracketAdvancement, nba?.roundNames]).toEqual(['FIXED', ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']]);
     expect([wnba?.bracketAdvancement, wnba?.roundNames]).toEqual(['FIXED', ['First Round', 'Semifinals', 'WNBA Finals']]);
     // The NCAA tournaments keep the sport's March Madness names.
-    expect((await sportLeagues.findBySportAndName(basketball.id, 'NCAA Division I Men'))?.roundNames).toEqual([]);
+    expect((await seeded('NCAA Division I Men'))?.roundNames).toEqual([]);
   });
 
   it.each([
@@ -957,12 +969,9 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
 describe('The seeded College Football Playoff league and its knockout templates', () => {
   it('seeds the College Football Playoff as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
     const football = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.AMERICAN_FOOTBALL } });
-    const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
+    const seeded = seededLeagueReader(football.id);
 
-    const [cfp, nfl] = await Promise.all([
-      sportLeagues.findBySportAndName(football.id, 'College Football Playoff'),
-      sportLeagues.findBySportAndName(football.id, 'NFL'),
-    ]);
+    const [cfp, nfl] = await Promise.all([seeded('College Football Playoff'), seeded('NFL')]);
 
     const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
     expect([cfp?.bracketAdvancement, cfp?.roundNames, platformTierProfileCodes.get(cfp?.platformTierProfileId ?? '')]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], 'TIERS_6_OF_2']);

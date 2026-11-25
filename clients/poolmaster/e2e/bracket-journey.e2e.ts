@@ -107,7 +107,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourName: 'NCAA Division I Women',
+    tourUrlSegment: 'ncaa-division-i-women',
     playerNamePrefix: e2eName('Team', runId),
     tournamentName: e2eName('Bracket Classic', runId),
     commissioner: {
@@ -139,7 +139,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
     }
 
     // A league is added by migration, so a journey plays in a seeded one, on its own test slots (#2004).
-    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'BASKETBALL', run.tourName);
+    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'BASKETBALL', run.tourUrlSegment);
     // Four teams start at the semifinals.
     const event = await createTestEventThroughApi(api, headers, {
       sportLeagueId: sportLeague.id,
@@ -156,6 +156,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
     const participantIds: string[] = [];
     for (const { name } of FIELD) {
       const { participant } = await postJson<{ participant: { id: string } }>(api, headers, '/api/v1/participants/', {
+          isTestData: true,
         sportLeagueId: sportLeague.id,
         participantType: 'TEAM',
         name: teamName(run, name),

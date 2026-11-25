@@ -5,7 +5,7 @@
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { ParticipantType, ProviderCode, ScoringFamily, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { SportLeaguePositionListResponseSchema } from '@poolmaster/shared/dto';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
@@ -147,39 +147,5 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/positions', () => {
 
     expect(refused.statusCode).toBe(403);
     expect(missing.statusCode).toBe(404);
-  });
-});
-
-describe('POST /api/v1/sport-leagues', () => {
-  it('creates a sport league with the participant type and scoring family the request names', async () => {
-    const rootAdmin = await createTestUser({ isRootAdmin: true });
-    const profiles = await sportLeagueRowDefaults(getPrisma());
-
-    const response = await getApp().inject({
-      method: 'POST',
-      url: '/api/v1/sport-leagues',
-      headers: rootAdmin.headers,
-      payload: { sport: Sport.TENNIS, name: `Team Tennis ${randomUUID().slice(0, 8)}`, participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD, timeZone: 'UTC', ...profiles },
-    });
-
-    expect(response.statusCode).toBe(201);
-    const created = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: response.json<{ sportLeague: { id: string } }>().sportLeague.id } });
-    expect([created.participantType, created.scoringFamily]).toEqual([ParticipantType.TEAM, ScoringFamily.HEAD_TO_HEAD]);
-  });
-
-  it('refuses a request that leaves out the participant type or scoring family with 400, writing nothing', async () => {
-    const rootAdmin = await createTestUser({ isRootAdmin: true });
-    const profiles = await sportLeagueRowDefaults(getPrisma());
-    const name = `No Play Tour ${randomUUID().slice(0, 8)}`;
-
-    const response = await getApp().inject({
-      method: 'POST',
-      url: '/api/v1/sport-leagues',
-      headers: rootAdmin.headers,
-      payload: { sport: Sport.GOLF, name, scoringFamily: ScoringFamily.STROKE_PLAY, ...profiles },
-    });
-
-    expect(response.statusCode).toBe(400);
-    expect(await getPrisma().sportLeague.count({ where: { name } })).toBe(0);
   });
 });

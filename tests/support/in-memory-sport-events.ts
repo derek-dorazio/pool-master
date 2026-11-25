@@ -236,7 +236,7 @@ export class InMemorySportEvents {
     const sportLeagueId = this.sportLeagues.find((league) => league.sportId === sportId)?.id ?? UNPLACED_SPORT_LEAGUE_ID;
     const participant: Participant = stamp({
       id: this.id('participant'), sportLeagueId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-      injuryStatus: { status: 'HEALTHY' }, ranking: null, ...overrides,
+      injuryStatus: { status: 'HEALTHY' }, ranking: null, isTestData: false, ...overrides,
     });
     this.participants.push(participant);
     if (externalId !== undefined) {
@@ -325,14 +325,7 @@ export class InMemorySportEvents {
         (filters.sportId === undefined || row.sportId === filters.sportId)
         && (filters.isActive === undefined || row.isActive === filters.isActive)
       )),
-      findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
-      findBySportAndUrlSegment: async (sportId, urlSegment) => this.sportLeagues.find((row) => row.sportId === sportId && row.urlSegment === urlSegment) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
-      create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
-        this.sportLeagues.push(created);
-        return created;
-      },
       update: async (id, { syncProviderLeagueId, ...updates }) => {
         const row = this.sportLeagues.find((candidate) => candidate.id === id) as SportLeague;
         Object.assign(row, Object.fromEntries(Object.entries<unknown>(updates).filter(([, value]) => value !== undefined)));
@@ -355,12 +348,13 @@ export class InMemorySportEvents {
         && (query.externalId === undefined || this.mappings.some((mapping) => mapping.participantId === row.id && mapping.externalId === query.externalId))
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
       ))),
-      findBySportLeague: async (sportLeagueId) => this.participants
-        .filter((row) => row.sportLeagueId === sportLeagueId)
+      findBySportLeague: async (sportLeagueId, testData = false) => this.participants
+        .filter((row) => row.sportLeagueId === sportLeagueId && row.isTestData === testData)
         .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity) || left.name.localeCompare(right.name)),
       updateRankings: async () => undefined,
       countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.participants.filter((row) => row.sportLeagueId === id).length])),
       create: async () => { throw new Error('not used'); },
+      createWithProviderMapping: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
       deleteUnlessOnAField: async () => { throw new Error('not used'); },
     };
@@ -384,6 +378,7 @@ export class InMemorySportEvents {
         && externalIds.includes(row.externalId) && this.inScope(row.participantId, scope)),
       findByProviderAndSportLeague: async (providerId, sportLeagueId) => this.mappings.filter((row) => row.providerId === providerId
         && row.sportLeagueId === sportLeagueId),
+      findSyncProviderId: async () => { throw new Error('not used'); },
       bind: async (mapping) => {
         const provider = Object.values(TEST_PROVIDER_ROWS).find((candidate) => candidate.id === mapping.providerId);
         if (!provider) return null;
@@ -458,6 +453,7 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(transition.jobs ?? []));
         return row;
       },
+      deleteTestSlot: async () => { throw new Error('not used'); },
       delete: async (id) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
         this.field = this.field.filter((row) => row.sportEventId !== id);

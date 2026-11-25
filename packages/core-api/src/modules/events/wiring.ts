@@ -268,12 +268,12 @@ export function createSportEventServices(
     golfScores: createGolfScoreService(prisma, domainEvents, logger),
     raceResults: createRaceResultService(prisma, domainEvents, logger),
     matchResults: createMatchResultService(prisma, domainEvents, lifecycle, logger),
-    sportLeagues: createSportLeagueService(prisma, logger, providers),
+    sportLeagues: buildSportLeagueService(prisma, logger, providers),
   };
 }
 
 /** The sport league admin's service: its settings, its sync switch and its rankings. */
-export function createSportLeagueService(
+export function buildSportLeagueService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
   /** The provider leagues a sport league's event sync may name (ADR 0011, #1997); none, turning a league's sync on is refused. */

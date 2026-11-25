@@ -24,7 +24,8 @@ type AddCandidate = {
 
 /**
  * "Add more participants": the active participants of the event's sport league not yet on the
- * field (#1853: a participant belongs to one league, so the field is the league's own), narrowed
+ * field (#1853: a participant belongs to one league, so the field is the league's own), its test
+ * participants for a test event (#2096), narrowed
  * by name, ticked and added in one `addEventParticipants` call. A save closes the picker and says
  * what was added in a toast.
  */
@@ -34,6 +35,7 @@ export function EventFieldAddParticipantsModal({
   onClose,
   sport,
   sportLeagueId,
+  testEvent,
 }: {
   eventId: string;
   /** The event's sport, for its words. */
@@ -42,6 +44,8 @@ export function EventFieldAddParticipantsModal({
   sportLeagueId: string;
   existingParticipantIds: ReadonlySet<string>;
   onClose: () => void;
+  /** A test event's field takes the league's test participants, which are on no roster (#2096). */
+  testEvent: boolean;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-field-page',
@@ -50,7 +54,7 @@ export function EventFieldAddParticipantsModal({
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 
   const { participant, sportLeague } = sportVocabulary(sport);
-  const rosterQuery = useLeagueRosterQuery(sportLeagueId);
+  const rosterQuery = useLeagueRosterQuery(sportLeagueId, { testData: testEvent });
   const searchTerm = search.trim();
 
   const addMutation = useInvalidatingMutation({

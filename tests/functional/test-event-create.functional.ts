@@ -24,7 +24,7 @@ beforeAll(async () => {
   created.userIds.add(admin.userId);
   await promoteToRootAdmin(admin);
   client = admin.client;
-  sportLeagueId = await addRunSportLeague(client, Sport.GOLF, `Test Event Tour ${RUN}`);
+  sportLeagueId = await addRunSportLeague(Sport.GOLF, `Test Event Tour ${RUN}`);
   created.sportLeagueIds.add(sportLeagueId);
   const { currentSeasonId } = await getFunctionalPrisma().sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId }, select: { currentSeasonId: true } });
   slotDefinitionId = await testSlotDefinitionId(getFunctionalPrisma(), sportLeagueId, expectDefined(currentSeasonId ?? undefined));

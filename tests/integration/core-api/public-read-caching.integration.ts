@@ -7,7 +7,6 @@ import { randomUUID } from 'node:crypto';
 import type {
   ContestConfigTemplateListResponse,
   SportLeagueListResponse,
-  SportLeagueResponse,
 } from '@poolmaster/shared/dto';
 import type { SettingsGroup } from '@poolmaster/shared/dto/settings.dto';
 import {
@@ -26,8 +25,7 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
 } from '../helpers';
-import { sportLeagueRowDefaults } from '../../support/league-profiles';
-import { sportPlay } from '../../support/sport-play';
+import { insertTestSportLeague } from '../../support/test-sport-league';
 import { deleteTestSportLeagues, testSlotId } from '../../support/test-slots';
 import { Sport } from '@poolmaster/shared/domain';
 
@@ -50,15 +48,9 @@ beforeEach(async () => {
   getCdnInvalidations().reset();
 });
 
-async function createSportLeague(headers: Record<string, string>): Promise<string> {
-  const response = await getApp().inject({
-    method: 'POST',
-    url: '/api/v1/sport-leagues',
-    headers,
-    payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Cache Tour ${randomUUID()}` },
-  });
-  expect(response.statusCode).toBe(201);
-  const id = response.json<SportLeagueResponse>().sportLeague.id;
+/** A test's own golf sport league, inserted as a migration writes one; removed after the suite. */
+async function addSportLeague(): Promise<string> {
+  const { id } = await insertTestSportLeague(getPrisma(), { sport: Sport.GOLF, name: `Cache Tour ${randomUUID()}` });
   createdSportLeagueIds.push(id);
   return id;
 }
@@ -102,7 +94,7 @@ describe('public read headers (#1181)', () => {
 describe('admin saves clear the public reads they change (#1181)', () => {
   it('a sport league rename clears the sport league list and the event pages at the CDN, and the next list read shows the new name', async () => {
     const admin = await createTestUser({ displayName: 'Cache Sport League Admin', isRootAdmin: true });
-    const sportLeagueId = await createSportLeague(admin.headers);
+    const sportLeagueId = await addSportLeague();
     const before = await listGolfLeagueNames();
     getCdnInvalidations().reset();
     const renamed = `Renamed Cache Tour ${randomUUID()}`;
@@ -122,7 +114,7 @@ describe('admin saves clear the public reads they change (#1181)', () => {
 
   it('a ranking upload preview, which writes nothing, clears nothing', async () => {
     const admin = await createTestUser({ displayName: 'Cache Preview Admin', isRootAdmin: true });
-    const sportLeagueId = await createSportLeague(admin.headers);
+    const sportLeagueId = await addSportLeague();
     getCdnInvalidations().reset();
 
     const response = await getApp().inject({
@@ -140,10 +132,10 @@ describe('admin saves clear the public reads they change (#1181)', () => {
     const member = await createTestUser({ displayName: 'Cache Refused Member' });
 
     const response = await getApp().inject({
-      method: 'POST',
-      url: '/api/v1/sport-leagues',
+      method: 'PATCH',
+      url: `/api/v1/sport-leagues/${randomUUID()}`,
       headers: member.headers,
-      payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Refused Tour ${randomUUID()}` },
+      payload: { name: `Refused Tour ${randomUUID()}` },
     });
 
     expect(response.statusCode).toBe(403);
@@ -203,7 +195,7 @@ describe('admin saves clear the public reads they change (#1181)', () => {
 
   it('a test event created on a sport league\'s test slot clears the event pages at the CDN, since it can be the edition a page offers', async () => {
     const admin = await createTestUser({ displayName: 'Cache Event Admin', isRootAdmin: true });
-    const sportLeagueId = await createSportLeague(admin.headers);
+    const sportLeagueId = await addSportLeague();
     const seasonSlotId = await testSlotId(getPrisma(), sportLeagueId, new Date('2084-06-16T08:00:00.000Z'), new Date('2084-06-19T20:00:00.000Z'));
     getCdnInvalidations().reset();
 

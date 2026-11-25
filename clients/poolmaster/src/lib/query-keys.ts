@@ -229,8 +229,10 @@ export const QueryKeys = {
       // A sport league's participants (#1853). Under the `participants` prefix, so a participant's
       // create or edit refreshes its league's roster, and NOT under `leagues`: a league rename
       // must not wipe every league's roster cache, since TanStack invalidation is prefix-match.
-      leagueRoster: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId] as const,
+      // Its test participants (#2096), which a test event's field takes, sit under the roster's key.
+      leagueRoster: (sportLeagueId: QueryKeyId, testData = false) => (testData
+        ? ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'test-data'] as const
+        : ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId] as const),
       // The League page's Participants grid (#1866), under `participants` like the roster.
       leagueParticipantOverviews: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'overview'] as const,

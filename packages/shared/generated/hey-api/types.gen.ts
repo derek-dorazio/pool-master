@@ -7744,7 +7744,7 @@ export type ParticipantResponse = {
 };
 
 /**
- * A new participant for the shared catalog.
+ * A new participant of a sport league.
  */
 export type CreateParticipantRequest = {
     /**
@@ -7787,6 +7787,14 @@ export type CreateParticipantRequest = {
      * Current team affiliation.
      */
     teamAffiliation?: string;
+    /**
+     * The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.
+     */
+    feedId?: string;
+    /**
+     * A test participant (QA only), for a test event's field: it joins only a test slot's event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted.
+     */
+    isTestData?: boolean;
 };
 
 /**
@@ -8133,6 +8141,16 @@ export type SportLeagueListQuery = {
 };
 
 /**
+ * Which of a sport league's participants to list.
+ */
+export type SportLeagueParticipantListQuery = {
+    /**
+     * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+     */
+    testData?: boolean;
+};
+
+/**
  * Sport leagues matching the filters.
  */
 export type SportLeagueListResponse = {
@@ -8442,48 +8460,6 @@ export type SportLeagueResponse = {
          */
         updatedAt: string;
     };
-};
-
-/**
- * A new sport league. It has no Season until a migration adds one.
- */
-export type CreateSportLeagueRequest = {
-    /**
-     * The sport the new sport league belongs to.
-     */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
-     * Unique within the sport.
-     */
-    name: string;
-    /**
-     * The sport league's name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are.
-     */
-    urlSegment: string;
-    /**
-     * Who competes in its events: teams or individuals. Fixed once set.
-     */
-    participantType: 'INDIVIDUAL' | 'TEAM';
-    /**
-     * How its events are scored. Fixed once set.
-     */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
-    /**
-     * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
-     */
-    bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
-    /**
-     * The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.
-     */
-    platformTierProfileId: string;
-    /**
-     * The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.
-     */
-    platformPricingProfileId: string;
-    /**
-     * The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know.
-     */
-    timeZone: string;
 };
 
 /**
@@ -35246,6 +35222,10 @@ export type AddEventParticipantsErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type AddEventParticipantsError = AddEventParticipantsErrors[keyof AddEventParticipantsErrors];
@@ -36354,47 +36334,6 @@ export type ListSportLeaguesResponses = {
 
 export type ListSportLeaguesResponse = ListSportLeaguesResponses[keyof ListSportLeaguesResponses];
 
-export type CreateSportLeagueData = {
-    body: CreateSportLeagueRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sport-leagues/';
-};
-
-export type CreateSportLeagueErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type CreateSportLeagueError = CreateSportLeagueErrors[keyof CreateSportLeagueErrors];
-
-export type CreateSportLeagueResponses = {
-    /**
-     * One sport league.
-     */
-    201: SportLeagueResponse;
-};
-
-export type CreateSportLeagueResponse = CreateSportLeagueResponses[keyof CreateSportLeagueResponses];
-
 export type ListSportLeagueOverviewsData = {
     body?: never;
     path?: never;
@@ -36571,6 +36510,50 @@ export type CreateTestSlotResponses = {
 };
 
 export type CreateTestSlotResponse = CreateTestSlotResponses[keyof CreateTestSlotResponses];
+
+export type DeleteTestSlotData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/test-slots/{seasonSlotId}';
+};
+
+export type DeleteTestSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type DeleteTestSlotError = DeleteTestSlotErrors[keyof DeleteTestSlotErrors];
+
+export type DeleteTestSlotResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type DeleteTestSlotResponse = DeleteTestSlotResponses[keyof DeleteTestSlotResponses];
 
 export type ListSportLeagueSyncsData = {
     body?: never;
@@ -36783,7 +36766,12 @@ export type ListSportLeagueParticipantsData = {
     path: {
         sportLeagueId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+         */
+        testData?: boolean;
+    };
     url: '/api/v1/sport-leagues/{sportLeagueId}/participants';
 };
 
@@ -37437,6 +37425,18 @@ export type CreateParticipantErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type CreateParticipantError = CreateParticipantErrors[keyof CreateParticipantErrors];
@@ -37630,6 +37630,10 @@ export type BindParticipantProviderMappingErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type BindParticipantProviderMappingError = BindParticipantProviderMappingErrors[keyof BindParticipantProviderMappingErrors];
