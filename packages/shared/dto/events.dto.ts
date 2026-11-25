@@ -130,12 +130,12 @@ export const SportEventDtoSchema = z.object({
   contestEligible: z.boolean().describe('Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.'),
   contestOpenings: z.array(SportEventContestOpeningDtoSchema).describe('One row per selection type the event\'s sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN.'),
   tiersLocked: z.boolean().describe('Whether the event\'s tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED.'),
-  eventSeriesId: z.uuid().describe('The recurring tournament (event series) this is one edition of. One edition of a series per Season.'),
+  slotDefinitionIds: z.array(z.uuid()).describe('The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.'),
   sportLeagueSeasonId: z.uuid().describe('The Season the event is played in (SportLeagueSeasonDto).'),
   championshipYear: z.number().int().describe('The year the event\'s Season is named for: 2025 for the NFL 2025 Season\'s Super Bowl, played in February 2026; 2026 for an NBA 2025-26 game. Read through the Season.'),
-  sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
-  participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the series\' sport league.'),
-  scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the series\' sport league.'),
+  sportLeagueId: z.uuid().describe('The sport league the event belongs to; its Season is the same league\'s.'),
+  participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the sport league.'),
+  scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the sport league.'),
   providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
@@ -152,7 +152,7 @@ export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 export const SportEventListQuerySchema = z.object({
   sport: z.enum(Sport).optional().describe('Only events of this sport.'),
   status: z.array(EventStatusDtoSchema).optional().describe('Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.'),
-  sportLeagueId: z.uuid().optional().describe('Only events of this sport league\'s series.'),
+  sportLeagueId: z.uuid().optional().describe('Only events of this sport league.'),
   sportLeagueSeasonId: z.uuid().optional().describe('Only events of this Season (SportLeagueSeasonDto).'),
   q: z.string().optional().describe('Case-insensitive substring of the event name.'),
 }).describe('Filters for the sport-event list. At least one of sport, sportLeagueId and sportLeagueSeasonId is required.');
@@ -169,7 +169,7 @@ export const SportEventResponseSchema = z.object({
 export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
 
 export const CreateSportEventRequestSchema = z.object({
-  sportLeagueId: z.uuid().describe('The sport league the event runs on; it decides the sport. The event\'s series is found or created in it by name, and the event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.'),
+  sportLeagueId: z.uuid().describe('The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none.'),
   name: z.string().min(1),
   venue: z.string().optional(),
   location: z.string().optional(),

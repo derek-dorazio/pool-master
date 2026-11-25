@@ -1,5 +1,6 @@
 export type {
   ContestConfigTemplateRepository,
+  ContestConfigTemplateUpdate,
   ContestConfigurationRepository,
   ContestEntryEventPick,
   ContestEntryPickParticipant,
@@ -24,7 +25,6 @@ export type {
   ContestUpdate,
   ContestStatusFilter,
   PendingDrawReceipts,
-  ReleasedEdition,
   ContestStatusTransition,
   ReminderCheck,
   ContestCreateResult,
@@ -106,7 +106,6 @@ export type {
   SportEventRoundMatchWrite,
 } from './match-ports';
 export type {
-  EventSeriesRepository,
   ParticipantMatchQuery,
   ParticipantRanking,
   ParticipantRoundView,
@@ -203,7 +202,7 @@ export type {
   CupRepository,
 } from './cup-ports';
 export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
-export type { EventPageRepository, EventPageSeries } from './event-page-ports';
+export type { EventPageRepository } from './event-page-ports';
 export type {
   ContestExpansionRepository,
   ContestExpansionState,

@@ -1,6 +1,6 @@
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 
-/** A page's primary offer, the one whose edition heads it; none when its series is between editions. */
+/** A page's primary offer, the one whose next slot heads it; none when it is between seasons. */
 export function primaryOffer(page: EventPageDto): EventPageOfferDto | undefined {
   return page.offers.find((offer) => offer.isPrimary);
 }

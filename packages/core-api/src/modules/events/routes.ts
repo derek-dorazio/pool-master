@@ -165,7 +165,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       summary: 'Create a sport event',
       description:
         'An admin-authored edition of a series in its sport league\'s current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. '
-        + 'The series is found or created in the sport league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season; 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. '
+        + '422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. '
         + 'The sport comes from the sport league. Root admin only.',
       operationId: 'createEvent',
       body: schemaRef('CreateSportEventRequest'),

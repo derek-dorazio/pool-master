@@ -45,7 +45,7 @@ export interface SportLeagueSummary extends SportLeague {
   sportUrlSegment: string;
   sportDisplayOrder: number;
   participantCount: number;
-  /** Events across every series of the sport league, every year. */
+  /** Events of the sport league, every year. */
   sportEventCount: number;
 }
 
@@ -246,7 +246,7 @@ export class SportLeagueService {
   }
 
   /**
-   * Deletes a sport league nothing uses any more (#1400), with its series that have no events.
+   * Deletes a sport league nothing uses any more (#1400).
    * 404 SPORT_LEAGUE_NOT_FOUND; 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an
    * event, a contest setup, an event page offer, a league's cup, or a participant (#1853: a participant belongs to one sport league).
    */

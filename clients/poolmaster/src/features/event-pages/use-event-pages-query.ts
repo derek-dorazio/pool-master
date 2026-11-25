@@ -6,7 +6,7 @@ import { QueryKeys } from '@/lib/query-keys';
 
 /**
  * One event page by its address (#1007), its sport's URL segment and its own as the web address
- * spells them; public: active or retired, with its offers' editions.
+ * spells them; public: active or retired, with its offers' next slots.
  */
 export function useEventPageQuery(sportUrlSegment: string | undefined, urlSegment: string | undefined) {
   return useQuery({
@@ -25,7 +25,7 @@ export function useEventPageQuery(sportUrlSegment: string | undefined, urlSegmen
 
 /**
  * The active event pages, of one sport or every sport. With `upcoming`, only the pages with an
- * edition coming, soonest first (#1202): the Coming up rows and an event page's next up.
+ * slot coming, soonest first (#1202): the Coming up rows and an event page's next up.
  */
 export function useEventPagesQuery(sport?: Sport, { upcoming = false }: { upcoming?: boolean } = {}) {
   return useQuery({

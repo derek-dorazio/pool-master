@@ -37,15 +37,13 @@ import {
   type Contest,
   type ContestConfigTemplate,
   ContestStatus,
-  ContestTemplateEventType,
   DigestEventState,
-  contestTemplateEventTypeOf,
   countParticipants,
   EventEmailDelivery,
   type EventPage,
   eventSportDefinition,
   formatSelectionTypeName,
-  isTemplateOfferedOn,
+  isWeekEvent,
   type League,
   type SportEvent,
   type SportEventRoundMatch,
@@ -261,7 +259,7 @@ export class CommissionerNotices implements DueNotifications {
 
   /** False for a later week of a season whose events are weeks: only its first week is told of. */
   private async isToldOf(sportEvent: SportEvent, firstWeeks: Map<string, Promise<string | undefined>>): Promise<boolean> {
-    if (contestTemplateEventTypeOf(sportEvent) !== ContestTemplateEventType.WEEK) return true;
+    if (!isWeekEvent(sportEvent)) return true;
     const season = sportEvent.sportLeagueSeasonId;
     const firstWeek = firstWeeks.get(season) ?? this.firstWeekOf(sportEvent);
     firstWeeks.set(season, firstWeek);
@@ -342,7 +340,7 @@ export class CommissionerNotices implements DueNotifications {
     const season = await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, sportLeagueSeasonId: sportEvent.sportLeagueSeasonId });
     return season
       .filter((week) => week.status !== SportEventStatus.CANCELLED
-        && contestTemplateEventTypeOf(week) === ContestTemplateEventType.WEEK)
+        && isWeekEvent(week))
       .reduce<SportEvent | undefined>((first, week) => (first === undefined || week.startDate < first.startDate ? week : first), undefined)
       ?.id;
   }
@@ -394,8 +392,11 @@ export class CommissionerNotices implements DueNotifications {
 
   /** The default contest setups offered on `sportEvent`, in the order the contest types page shows them. */
   private async defaultSetupsOn(sportEvent: SportEvent): Promise<ContestConfigTemplate[]> {
-    return (await this.deps.templates.list({ sport: sportEvent.sport, active: true }))
-      .filter((template) => template.isDefault && isTemplateOfferedOn(template, sportEvent))
+    // Offered on the event: its league's, covering one of its slot definitions (#2010).
+    const slotDefinitionIds = sportEvent.slotDefinitions.map((definition) => definition.id);
+    if (slotDefinitionIds.length === 0) return [];
+    return (await this.deps.templates.list({ sportLeagueId: sportEvent.sportLeagueId, slotDefinitionIds, active: true }))
+      .filter((template) => template.isDefault)
       .sort((left, right) => left.sortOrder - right.sortOrder);
   }
 
@@ -416,10 +417,13 @@ export class CommissionerNotices implements DueNotifications {
 
   /** Each of `leagueIds`' settled one-event contests on the event's previous edition, with their winners. */
   private async lastYearWinners(sportEvent: SportEvent, leagueIds: Set<string>): Promise<Map<string, PreviousContestWinners[]>> {
-    // The series' latest edition before this one (#2003): last Season's, or the last World Cup's.
-    const previous = (await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, eventSeriesId: sportEvent.eventSeriesId, startsBefore: sportEvent.startDate }))
-      .reduce<SportEvent | undefined>((latest, edition) => (latest === undefined || edition.startDate > latest.startDate ? edition : latest), undefined);
+    // The latest event before this one on one of its slot definitions (#2010): last Season's, or
+    // the last World Cup's. An event with no Season slot has none.
+    const slotDefinitionIds = sportEvent.slotDefinitions.map((definition) => definition.id);
     const byLeague = new Map<string, PreviousContestWinners[]>();
+    if (slotDefinitionIds.length === 0) return byLeague;
+    const previous = (await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, slotDefinitionIds, startsBefore: sportEvent.startDate }))
+      .reduce<SportEvent | undefined>((latest, edition) => (latest === undefined || edition.startDate > latest.startDate ? edition : latest), undefined);
     if (!previous) return byLeague;
     const contests = (await this.deps.contests.findBySportEvent(previous.id, { statuses: [ContestStatus.COMPLETED] }))
       // A season contest that included the edition didn't make anyone its winner.

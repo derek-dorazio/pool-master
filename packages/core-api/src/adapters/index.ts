@@ -30,7 +30,6 @@ export {
   PrismaParticipantContestScoringRuleRepository,
 } from './prisma-contest-management-repositories';
 export {
-  PrismaEventSeriesRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,

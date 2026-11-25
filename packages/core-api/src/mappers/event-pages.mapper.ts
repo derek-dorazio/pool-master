@@ -8,18 +8,19 @@ export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto
     id: view.offer.id,
     sportLeagueId: view.offer.sportLeagueId,
     sportLeagueName: view.offer.sportLeagueName,
-    eventSeriesName: view.offer.eventSeriesName,
+    sportLeaguePhaseSlotId: view.offer.sportLeaguePhaseSlotId,
     template: mapContestConfigTemplateDto(view.offer.template),
     startsAtRound: view.startsAtRound,
     sortOrder: view.offer.sortOrder,
     isPrimary: view.offer.isPrimary,
     state: view.state,
-    edition: {
-      sportEventId: view.edition.sportEventId,
-      name: view.edition.name,
-      championshipYear: view.edition.championshipYear,
-      startDate: view.edition.startDate.toISOString(),
-      endDate: view.edition.endDate?.toISOString() ?? null,
+    nextSlot: {
+      seasonSlotId: view.nextSlot.seasonSlotId,
+      sportEventId: view.nextSlot.sportEventId,
+      name: view.nextSlot.name,
+      championshipYear: view.nextSlot.championshipYear,
+      startDate: view.nextSlot.startDate.toISOString(),
+      endDate: view.nextSlot.endDate?.toISOString() ?? null,
     },
   };
 }

@@ -50,7 +50,7 @@ export type SharedEnums = {
   RaceResultOrderError: Enums.RaceResultOrderError;
   RaceResultChange: Enums.RaceResultChange;
   SelectionType: Enums.SelectionType;
-  ContestTemplateEventType: Enums.ContestTemplateEventType;
+  TemplateCoverageMode: Enums.TemplateCoverageMode;
   PickEmMode: Enums.PickEmMode;
   PickOutcome: Enums.PickOutcome;
   PredictedResult: Enums.PredictedResult;

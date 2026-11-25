@@ -2,14 +2,14 @@ import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import type { PerpetualTrophyDto, PerpetualTrophyPlateDto } from '@/lib/api';
 import { joinNames } from './cup-view';
 
-/** A perpetual trophy's name, from its series and way of picking: "Super Bowl Squares". */
-export function perpetualTrophyName(trophy: Pick<PerpetualTrophyDto, 'seriesName' | 'selectionType'>): string {
-  return `${trophy.seriesName} ${formatSelectionTypeName(trophy.selectionType)}`;
+/** A perpetual trophy's name, from what it is run on and its way of picking: "Super Bowl Squares". */
+export function perpetualTrophyName(trophy: Pick<PerpetualTrophyDto, 'name' | 'selectionType'>): string {
+  return `${trophy.name} ${formatSelectionTypeName(trophy.selectionType)}`;
 }
 
 /**
  * A plate's line on a squad's trophy case, with the sports league so the men's and women's
- * trophies of a shared series tell apart: "2026 US Open Bracket (ATP)".
+ * trophies of a shared name tell apart: "2026 US Open Bracket (ATP)".
  */
 export function describeWonPlate({ trophy, plate }: WonPlate): string {
   return `${plate.year} ${perpetualTrophyName(trophy)} (${trophy.sportLeagueName})`;

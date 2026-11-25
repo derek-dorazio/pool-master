@@ -199,16 +199,16 @@ export const PerpetualTrophyPlateDtoSchema = z.object({
 export type PerpetualTrophyPlateDto = z.infer<typeof PerpetualTrophyPlateDtoSchema>;
 
 export const PerpetualTrophyDtoSchema = z.object({
-  eventSeriesId: z.uuid(),
-  seriesName: z.string().describe('The event series the contest is run on every year, such as "Masters Tournament".'),
+  trophyId: z.uuid().describe('The trophy\'s id until perpetual trophies are kept by template (#2024): the first slot definition, in play order, of the slots its contests cover. Two trophies on the same slots differ by selectionType.'),
+  name: z.string().describe('What the trophy is run on, built by the API: its first slot\'s proper name, such as "Masters", else its newest run\'s event name. Screens add the way of picking.'),
   sportLeagueName: z.string(),
-  selectionType: z.enum(SelectionType).describe('How the contest is picked: a series run as two ways of picking is two trophies.'),
+  selectionType: z.enum(SelectionType).describe('How the contest is picked: the same slots run as two ways of picking is two trophies.'),
   plates: z.array(PerpetualTrophyPlateDtoSchema).describe('Newest year first; a year the league did not run it has no plate.'),
 }).describe('A perpetual trophy: a contest of one event the league has run in two or more years.');
 export type PerpetualTrophyDto = z.infer<typeof PerpetualTrophyDtoSchema>;
 
 export const PerpetualTrophyListResponseSchema = z.object({
-  trophies: z.array(PerpetualTrophyDtoSchema).describe('In sports league, series and selection type order.'),
+  trophies: z.array(PerpetualTrophyDtoSchema).describe('In sports league, name and selection type order.'),
 }).describe('The league\'s perpetual trophies.');
 export type PerpetualTrophyListResponse = z.infer<typeof PerpetualTrophyListResponseSchema>;
 

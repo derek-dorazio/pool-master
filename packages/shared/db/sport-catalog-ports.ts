@@ -9,7 +9,6 @@ import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
   EventPricingConfig,
-  EventSeries,
   EventTierConfig,
   PlatformPricingProfile,
   ProviderEventRef,
@@ -70,15 +69,15 @@ export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 
 };
 
 /**
- * What still uses a sport league, each a reason it cannot be deleted (#1400). Its series with
- * no events are its own and go with it, so they are not counted; its participants are (#1853).
+ * What still uses a sport league, each a reason it cannot be deleted (#1400). Its participants
+ * are counted (#1853).
  */
 export interface SportLeagueUses {
-  /** Events across every series of the sport league, every year. */
+  /** Events of the sport league, every year. */
   sportEventCount: number;
   /** Contest setups offered for its events. */
   contestTemplateCount: number;
-  /** Event page offers on its series. */
+  /** Event page offers on its slots. */
   eventPageOfferCount: number;
   /** Leagues' season cups for it. */
   cupCount: number;
@@ -108,9 +107,8 @@ export interface SportLeagueRepository {
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
-   * it and its series first, so nothing can start using it between the count and the delete. Its
-   * series go with it, and every league that muted its event emails forgets
-   * it. Returns what uses it, counted under the lock: all zero means it was deleted. Null when no
+   * it first, so nothing can start using it between the count and the delete. Every league that
+   * muted its event emails forgets it. Returns what uses it, counted under the lock: all zero means it was deleted. Null when no
    * such sport league exists.
    */
   deleteUnlessUsed(id: string): Promise<SportLeagueUses | null>;
@@ -125,12 +123,12 @@ export interface SportEventFilters {
   sport?: Sport;
   /** Only events in one of these statuses. */
   statuses?: readonly SportEventStatus[];
-  /** Only events whose series belongs to this sport league. */
+  /** Only events of this sport league. */
   sportLeagueId?: string;
   /** Only events of this Season (#2003). */
   sportLeagueSeasonId?: string;
-  /** Only editions of this event series. */
-  eventSeriesId?: string;
+  /** Only events that own a Season slot of one of these slot definitions (#2010). */
+  slotDefinitionIds?: readonly string[];
   /** Case-insensitive substring of the event name. */
   q?: string;
   /** Leave out DRAFT events: what a non-admin may see (#431). */
@@ -147,11 +145,11 @@ export interface SportEventFilters {
 }
 
 /**
- * The sport league comes from the series, so it is not supplied. `providerRef` is the provider's id
+ * The sport league is stored with the event, and its Season must be that league's (#2010). `providerRef` is the provider's id
  * for an event the sync creates (#2004): it is kept under its Season's league's selected provider
  * mapping, which must be that provider's. A test event has none.
  */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'participantCount' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
   providerRef?: ProviderEventRef;
 };
 
@@ -257,8 +255,7 @@ export interface SportEventRepository {
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
   /**
    * Creates the events in one insert, all or none, answering them in the order given (#1253).
-   * Rejects a second edition of a series in one Season: the database's unique constraint on
-   * (eventSeriesId, sportLeagueSeasonId) raises, and the caller maps it (plans/147 decision 5).
+   * An event's Season must be its own sport league's: the composite key refuses another's (#2010).
    */
   createMany(inputs: readonly SportEventCreate[]): Promise<SportEvent[]>;
   /**
@@ -315,10 +312,10 @@ export interface SportEventRepository {
   findAutoReleaseCheck(sportEventId: string): Promise<AutoReleaseCheck | null>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
-  /** Events per sport league, through their series, for each id asked about (0 where none). */
+  /** Events per sport league, for each id asked about (0 where none). */
   countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
   /**
-   * Whether any event of the sport league, through its series and in any year, has a bracket
+   * Whether any event of the sport league, in any year, has a bracket
    * loaded: at least one match. While one has, the league's bracket rule cannot change (#730).
    */
   sportLeagueHasLoadedBracket(sportLeagueId: string): Promise<boolean>;
@@ -340,11 +337,6 @@ export interface SportEventRepository {
    * `IN_PROGRESS` or `POSTPONED`, whose contests follow its start (#1792). Unordered.
    */
   findAutoLifecycleCandidates(): Promise<SportEvent[]>;
-}
-
-export interface EventSeriesRepository {
-  /** The sport league's series of these names, each created on first use, in two queries (#1253). */
-  findOrCreateMany(sportLeagueId: string, names: readonly string[]): Promise<EventSeries[]>;
 }
 
 export interface SportEventRoundSchedule {

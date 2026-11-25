@@ -10,7 +10,6 @@ import {
   PrismaContestConfigurationRepository,
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestRepository,
-  PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
   PrismaPlatformPricingProfileRepository,
@@ -238,7 +237,6 @@ export function createSportEventServices(
   const bracket = createSportEventBracketService(prisma, domainEvents, logger);
   const sportEventService = new SportEventService({
     sportEvents: events,
-    eventSeries: new PrismaEventSeriesRepository(prisma),
     sportLeagues,
     sports,
     rounds,

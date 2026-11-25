@@ -22,6 +22,7 @@ export * from './provider-sync-findings';
 export * from './sport-catalog-types';
 export * from './sport-rows';
 export * from './tournament-format';
+export * from './template-coverage';
 export * from './sports';
 export * from './squares';
 export * from './predicted-choice';
@@ -79,6 +80,8 @@ export type {
   SportEventReadinessReason,
   SportEventReadinessStatus,
   SportEventParticipant,
+  SportEventSlotDefinition,
+  ContestTemplateSlot,
 } from './contest-management-types';
 export type {
   Contest,

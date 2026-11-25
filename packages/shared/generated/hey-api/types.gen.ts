@@ -4943,6 +4943,44 @@ export type ContestManagementDetailDto = {
 };
 
 /**
+ * One slot definition a contest template covers (#2010), with the facts screens show.
+ */
+export type ContestTemplateSlotDto = {
+    /**
+     * The slot definition's id (SportLeaguePhaseSlot).
+     */
+    id: string;
+    /**
+     * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+     */
+    key: string;
+    /**
+     * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+     */
+    name: string | null;
+    /**
+     * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+     */
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * For a WEEK slot, its week; null otherwise.
+     */
+    weekNumber: number | null;
+    /**
+     * The phase the slot is in.
+     */
+    sportLeaguePhaseId: string;
+    /**
+     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+     */
+    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+    /**
+     * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+     */
+    matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+};
+
+/**
  * Seeded commissioner-facing contest configuration template.
  */
 export type ContestConfigTemplateDto = {
@@ -4951,17 +4989,50 @@ export type ContestConfigTemplateDto = {
      */
     id: string;
     /**
-     * Sport this template applies to.
-     */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
      * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
      */
     sportLeagueId: string;
     /**
-     * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+     * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
      */
-    eventType?: 'KNOCKOUT' | 'WEEK' | null;
+    coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+    /**
+     * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+     */
+    slots: Array<{
+        /**
+         * The slot definition's id (SportLeaguePhaseSlot).
+         */
+        id: string;
+        /**
+         * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+         */
+        key: string;
+        /**
+         * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+         */
+        name: string | null;
+        /**
+         * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+         */
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * For a WEEK slot, its week; null otherwise.
+         */
+        weekNumber: number | null;
+        /**
+         * The phase the slot is in.
+         */
+        sportLeaguePhaseId: string;
+        /**
+         * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+         */
+        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+        /**
+         * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+         */
+        matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+    }>;
     /**
      * Contest type that may use the template.
      */
@@ -5681,17 +5752,13 @@ export type ContestManagementResponse = {
  */
 export type ListContestConfigTemplatesQuery = {
     /**
-     * Only templates for this sport.
-     */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
      * Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
      */
     sportLeagueId?: string;
     /**
-     * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
+     * Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds).
      */
-    eventType?: 'KNOCKOUT' | 'WEEK';
+    slotDefinitionIds?: Array<string>;
     /**
      * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
      */
@@ -5708,17 +5775,50 @@ export type ContestConfigTemplateListResponse = {
          */
         id: string;
         /**
-         * Sport this template applies to.
-         */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
         sportLeagueId: string;
         /**
-         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+         * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
          */
-        eventType?: 'KNOCKOUT' | 'WEEK' | null;
+        coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+        /**
+         * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+         */
+        slots: Array<{
+            /**
+             * The slot definition's id (SportLeaguePhaseSlot).
+             */
+            id: string;
+            /**
+             * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The phase the slot is in.
+             */
+            sportLeaguePhaseId: string;
+            /**
+             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            /**
+             * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+             */
+            matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+        }>;
         /**
          * Contest type that may use the template.
          */
@@ -6202,7 +6302,7 @@ export type UpdateContestConfigTemplateRequest = {
      */
     sortOrder?: number;
     /**
-     * Whether this template should be the default choice for future create flows in its scope.
+     * Whether this template should be the default choice for future create flows of its sport league and selection type. Setting it unsets the one that was the default.
      */
     isDefault?: boolean;
     /**
@@ -6636,6 +6736,14 @@ export type UpdateContestConfigTemplateRequest = {
             };
         };
     };
+    /**
+     * How future contests from the template cover its slots (#2010). Refused when the listed slots do not fit it: ALL_LISTED needs one event's slots.
+     */
+    coverageMode?: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+    /**
+     * The slot definitions the template covers from now on, each of its own sport league (#2010). Contests already made keep the slots they copied. A bracket lists only knockout slots.
+     */
+    slotDefinitionIds?: Array<string>;
 };
 
 /**
@@ -6651,17 +6759,50 @@ export type ContestConfigTemplateResponse = {
          */
         id: string;
         /**
-         * Sport this template applies to.
-         */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
         sportLeagueId: string;
         /**
-         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+         * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
          */
-        eventType?: 'KNOCKOUT' | 'WEEK' | null;
+        coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+        /**
+         * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+         */
+        slots: Array<{
+            /**
+             * The slot definition's id (SportLeaguePhaseSlot).
+             */
+            id: string;
+            /**
+             * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The phase the slot is in.
+             */
+            sportLeaguePhaseId: string;
+            /**
+             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            /**
+             * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+             */
+            matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+        }>;
         /**
          * Contest type that may use the template.
          */
@@ -10792,9 +10933,9 @@ export type SportEventDto = {
      */
     tiersLocked: boolean;
     /**
-     * The recurring tournament (event series) this is one edition of. One edition of a series per Season.
+     * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
      */
-    eventSeriesId: string;
+    slotDefinitionIds: Array<string>;
     /**
      * The Season the event is played in (SportLeagueSeasonDto).
      */
@@ -10804,15 +10945,15 @@ export type SportEventDto = {
      */
     championshipYear: number;
     /**
-     * The sport league the event's series belongs to. Read through the series, not stored on the event.
+     * The sport league the event belongs to; its Season is the same league's.
      */
     sportLeagueId: string;
     /**
-     * Who competes: teams or individuals. Read through the series' sport league.
+     * Who competes: teams or individuals. Read through the sport league.
      */
     participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * How the event is scored. Read through the series' sport league.
+     * How the event is scored. Read through the sport league.
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
@@ -10976,7 +11117,7 @@ export type SportEventListQuery = {
      */
     status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
     /**
-     * Only events of this sport league's series.
+     * Only events of this sport league.
      */
     sportLeagueId?: string;
     /**
@@ -11158,9 +11299,9 @@ export type SportEventListResponse = {
          */
         tiersLocked: boolean;
         /**
-         * The recurring tournament (event series) this is one edition of. One edition of a series per Season.
+         * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
          */
-        eventSeriesId: string;
+        slotDefinitionIds: Array<string>;
         /**
          * The Season the event is played in (SportLeagueSeasonDto).
          */
@@ -11170,15 +11311,15 @@ export type SportEventListResponse = {
          */
         championshipYear: number;
         /**
-         * The sport league the event's series belongs to. Read through the series, not stored on the event.
+         * The sport league the event belongs to; its Season is the same league's.
          */
         sportLeagueId: string;
         /**
-         * Who competes: teams or individuals. Read through the series' sport league.
+         * Who competes: teams or individuals. Read through the sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored. Read through the series' sport league.
+         * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
@@ -11499,9 +11640,9 @@ export type SportEventResponse = {
          */
         tiersLocked: boolean;
         /**
-         * The recurring tournament (event series) this is one edition of. One edition of a series per Season.
+         * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
          */
-        eventSeriesId: string;
+        slotDefinitionIds: Array<string>;
         /**
          * The Season the event is played in (SportLeagueSeasonDto).
          */
@@ -11511,15 +11652,15 @@ export type SportEventResponse = {
          */
         championshipYear: number;
         /**
-         * The sport league the event's series belongs to. Read through the series, not stored on the event.
+         * The sport league the event belongs to; its Season is the same league's.
          */
         sportLeagueId: string;
         /**
-         * Who competes: teams or individuals. Read through the series' sport league.
+         * Who competes: teams or individuals. Read through the sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored. Read through the series' sport league.
+         * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
@@ -11676,7 +11817,7 @@ export type SportEventResponse = {
  */
 export type CreateSportEventRequest = {
     /**
-     * The sport league the event runs on; it decides the sport. The event's series is found or created in it by name, and the event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.
+     * The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none.
      */
     sportLeagueId: string;
     name: string;
@@ -23341,38 +23482,42 @@ export type ChampionshipYearListResponse = {
 };
 
 /**
- * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+ * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
  */
-export type EventPageEditionDto = {
+export type EventPageNextSlotDto = {
     /**
-     * The edition's sport event: the one Create contest starts on.
+     * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+     */
+    seasonSlotId: string;
+    /**
+     * The sport event that owns the slot: the one Create contest starts on.
      */
     sportEventId: string;
     /**
-     * The edition's name, such as "Conference Championships".
+     * The event's name, such as "Conference Championships".
      */
     name: string;
     /**
-     * The year the edition's Season is named for (SportEventDto.championshipYear).
+     * The year the slot's Season is named for (SportEventDto.championshipYear).
      */
     championshipYear: number;
     /**
-     * When the edition starts. For a NOT_YET offer, when it is expected.
+     * When the event starts. For a NOT_YET offer, when it is expected.
      */
     startDate: string;
     /**
-     * When the edition ends, when known.
+     * When the event ends, when known.
      */
     endDate: string | null;
 };
 
 /**
- * One way to play on an event page: a contest setup on one sport league's series, with that series' next edition. An offer whose series has no edition that can still take the contest is left out.
+ * One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.
  */
 export type EventPageOfferDto = {
     id: string;
     /**
-     * The sport league whose series the offer runs on.
+     * The sport league whose slot the offer runs on.
      */
     sportLeagueId: string;
     /**
@@ -23380,9 +23525,9 @@ export type EventPageOfferDto = {
      */
     sportLeagueName: string;
     /**
-     * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+     * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
      */
-    eventSeriesName: string;
+    sportLeaguePhaseSlotId: string;
     /**
      * The contest setup the offer starts as: Create contest's ?template=.
      */
@@ -23392,17 +23537,50 @@ export type EventPageOfferDto = {
          */
         id: string;
         /**
-         * Sport this template applies to.
-         */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
         sportLeagueId: string;
         /**
-         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+         * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
          */
-        eventType?: 'KNOCKOUT' | 'WEEK' | null;
+        coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+        /**
+         * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+         */
+        slots: Array<{
+            /**
+             * The slot definition's id (SportLeaguePhaseSlot).
+             */
+            id: string;
+            /**
+             * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The phase the slot is in.
+             */
+            sportLeaguePhaseId: string;
+            /**
+             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            /**
+             * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+             */
+            matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+        }>;
         /**
          * Contest type that may use the template.
          */
@@ -23876,42 +24054,46 @@ export type EventPageOfferDto = {
      */
     sortOrder: number;
     /**
-     * The offer whose edition heads the page: its dates are the page's. A page has one.
+     * The offer whose next slot heads the page: its dates are the page's. A page has one.
      */
     isPrimary: boolean;
     /**
-     * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+     * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
      */
     state: 'OPEN' | 'NOT_YET';
     /**
-     * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+     * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
      */
-    edition: {
+    nextSlot: {
         /**
-         * The edition's sport event: the one Create contest starts on.
+         * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+         */
+        seasonSlotId: string;
+        /**
+         * The sport event that owns the slot: the one Create contest starts on.
          */
         sportEventId: string;
         /**
-         * The edition's name, such as "Conference Championships".
+         * The event's name, such as "Conference Championships".
          */
         name: string;
         /**
-         * The year the edition's Season is named for (SportEventDto.championshipYear).
+         * The year the slot's Season is named for (SportEventDto.championshipYear).
          */
         championshipYear: number;
         /**
-         * When the edition starts. For a NOT_YET offer, when it is expected.
+         * When the event starts. For a NOT_YET offer, when it is expected.
          */
         startDate: string;
         /**
-         * When the edition ends, when known.
+         * When the event ends, when known.
          */
         endDate: string | null;
     };
 };
 
 /**
- * A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event.
+ * A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event.
  */
 export type EventPageDto = {
     id: string;
@@ -23961,12 +24143,12 @@ export type EventPageDto = {
         path: string;
     } | null;
     /**
-     * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
+     * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
      */
     offers: Array<{
         id: string;
         /**
-         * The sport league whose series the offer runs on.
+         * The sport league whose slot the offer runs on.
          */
         sportLeagueId: string;
         /**
@@ -23974,9 +24156,9 @@ export type EventPageDto = {
          */
         sportLeagueName: string;
         /**
-         * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+         * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
          */
-        eventSeriesName: string;
+        sportLeaguePhaseSlotId: string;
         /**
          * The contest setup the offer starts as: Create contest's ?template=.
          */
@@ -23986,17 +24168,50 @@ export type EventPageDto = {
              */
             id: string;
             /**
-             * Sport this template applies to.
-             */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-            /**
              * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
              */
             sportLeagueId: string;
             /**
-             * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+             * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
              */
-            eventType?: 'KNOCKOUT' | 'WEEK' | null;
+            coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+            /**
+             * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+             */
+            slots: Array<{
+                /**
+                 * The slot definition's id (SportLeaguePhaseSlot).
+                 */
+                id: string;
+                /**
+                 * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+                 */
+                key: string;
+                /**
+                 * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+                 */
+                name: string | null;
+                /**
+                 * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                 */
+                slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                /**
+                 * For a WEEK slot, its week; null otherwise.
+                 */
+                weekNumber: number | null;
+                /**
+                 * The phase the slot is in.
+                 */
+                sportLeaguePhaseId: string;
+                /**
+                 * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                 */
+                phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                /**
+                 * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                 */
+                matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+            }>;
             /**
              * Contest type that may use the template.
              */
@@ -24470,35 +24685,39 @@ export type EventPageDto = {
          */
         sortOrder: number;
         /**
-         * The offer whose edition heads the page: its dates are the page's. A page has one.
+         * The offer whose next slot heads the page: its dates are the page's. A page has one.
          */
         isPrimary: boolean;
         /**
-         * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+         * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
          */
         state: 'OPEN' | 'NOT_YET';
         /**
-         * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+         * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
          */
-        edition: {
+        nextSlot: {
             /**
-             * The edition's sport event: the one Create contest starts on.
+             * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+             */
+            seasonSlotId: string;
+            /**
+             * The sport event that owns the slot: the one Create contest starts on.
              */
             sportEventId: string;
             /**
-             * The edition's name, such as "Conference Championships".
+             * The event's name, such as "Conference Championships".
              */
             name: string;
             /**
-             * The year the edition's Season is named for (SportEventDto.championshipYear).
+             * The year the slot's Season is named for (SportEventDto.championshipYear).
              */
             championshipYear: number;
             /**
-             * When the edition starts. For a NOT_YET offer, when it is expected.
+             * When the event starts. For a NOT_YET offer, when it is expected.
              */
             startDate: string;
             /**
-             * When the edition ends, when known.
+             * When the event ends, when known.
              */
             endDate: string | null;
         };
@@ -24510,7 +24729,7 @@ export type EventPageDto = {
  */
 export type EventPageResponse = {
     /**
-     * A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event.
+     * A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event.
      */
     eventPage: {
         id: string;
@@ -24560,12 +24779,12 @@ export type EventPageResponse = {
             path: string;
         } | null;
         /**
-         * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
+         * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
             /**
-             * The sport league whose series the offer runs on.
+             * The sport league whose slot the offer runs on.
              */
             sportLeagueId: string;
             /**
@@ -24573,9 +24792,9 @@ export type EventPageResponse = {
              */
             sportLeagueName: string;
             /**
-             * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
              */
-            eventSeriesName: string;
+            sportLeaguePhaseSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -24585,17 +24804,50 @@ export type EventPageResponse = {
                  */
                 id: string;
                 /**
-                 * Sport this template applies to.
-                 */
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
                  * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
                 sportLeagueId: string;
                 /**
-                 * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                 * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
                  */
-                eventType?: 'KNOCKOUT' | 'WEEK' | null;
+                coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+                /**
+                 * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+                 */
+                slots: Array<{
+                    /**
+                     * The slot definition's id (SportLeaguePhaseSlot).
+                     */
+                    id: string;
+                    /**
+                     * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+                     */
+                    key: string;
+                    /**
+                     * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+                     */
+                    name: string | null;
+                    /**
+                     * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                     */
+                    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                    /**
+                     * For a WEEK slot, its week; null otherwise.
+                     */
+                    weekNumber: number | null;
+                    /**
+                     * The phase the slot is in.
+                     */
+                    sportLeaguePhaseId: string;
+                    /**
+                     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     */
+                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                    /**
+                     * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                     */
+                    matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+                }>;
                 /**
                  * Contest type that may use the template.
                  */
@@ -25069,35 +25321,39 @@ export type EventPageResponse = {
              */
             sortOrder: number;
             /**
-             * The offer whose edition heads the page: its dates are the page's. A page has one.
+             * The offer whose next slot heads the page: its dates are the page's. A page has one.
              */
             isPrimary: boolean;
             /**
-             * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+             * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
              */
             state: 'OPEN' | 'NOT_YET';
             /**
-             * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+             * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
-            edition: {
+            nextSlot: {
                 /**
-                 * The edition's sport event: the one Create contest starts on.
+                 * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+                 */
+                seasonSlotId: string;
+                /**
+                 * The sport event that owns the slot: the one Create contest starts on.
                  */
                 sportEventId: string;
                 /**
-                 * The edition's name, such as "Conference Championships".
+                 * The event's name, such as "Conference Championships".
                  */
                 name: string;
                 /**
-                 * The year the edition's Season is named for (SportEventDto.championshipYear).
+                 * The year the slot's Season is named for (SportEventDto.championshipYear).
                  */
                 championshipYear: number;
                 /**
-                 * When the edition starts. For a NOT_YET offer, when it is expected.
+                 * When the event starts. For a NOT_YET offer, when it is expected.
                  */
                 startDate: string;
                 /**
-                 * When the edition ends, when known.
+                 * When the event ends, when known.
                  */
                 endDate: string | null;
             };
@@ -25114,7 +25370,7 @@ export type EventPageListQuery = {
      */
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+     * true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
      */
     upcoming?: boolean;
 };
@@ -25174,12 +25430,12 @@ export type EventPageListResponse = {
             path: string;
         } | null;
         /**
-         * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
+         * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
             /**
-             * The sport league whose series the offer runs on.
+             * The sport league whose slot the offer runs on.
              */
             sportLeagueId: string;
             /**
@@ -25187,9 +25443,9 @@ export type EventPageListResponse = {
              */
             sportLeagueName: string;
             /**
-             * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
              */
-            eventSeriesName: string;
+            sportLeaguePhaseSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -25199,17 +25455,50 @@ export type EventPageListResponse = {
                  */
                 id: string;
                 /**
-                 * Sport this template applies to.
-                 */
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
                  * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
                 sportLeagueId: string;
                 /**
-                 * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                 * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
                  */
-                eventType?: 'KNOCKOUT' | 'WEEK' | null;
+                coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+                /**
+                 * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+                 */
+                slots: Array<{
+                    /**
+                     * The slot definition's id (SportLeaguePhaseSlot).
+                     */
+                    id: string;
+                    /**
+                     * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+                     */
+                    key: string;
+                    /**
+                     * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+                     */
+                    name: string | null;
+                    /**
+                     * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                     */
+                    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                    /**
+                     * For a WEEK slot, its week; null otherwise.
+                     */
+                    weekNumber: number | null;
+                    /**
+                     * The phase the slot is in.
+                     */
+                    sportLeaguePhaseId: string;
+                    /**
+                     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     */
+                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                    /**
+                     * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                     */
+                    matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+                }>;
                 /**
                  * Contest type that may use the template.
                  */
@@ -25683,35 +25972,39 @@ export type EventPageListResponse = {
              */
             sortOrder: number;
             /**
-             * The offer whose edition heads the page: its dates are the page's. A page has one.
+             * The offer whose next slot heads the page: its dates are the page's. A page has one.
              */
             isPrimary: boolean;
             /**
-             * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+             * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
              */
             state: 'OPEN' | 'NOT_YET';
             /**
-             * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+             * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
-            edition: {
+            nextSlot: {
                 /**
-                 * The edition's sport event: the one Create contest starts on.
+                 * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+                 */
+                seasonSlotId: string;
+                /**
+                 * The sport event that owns the slot: the one Create contest starts on.
                  */
                 sportEventId: string;
                 /**
-                 * The edition's name, such as "Conference Championships".
+                 * The event's name, such as "Conference Championships".
                  */
                 name: string;
                 /**
-                 * The year the edition's Season is named for (SportEventDto.championshipYear).
+                 * The year the slot's Season is named for (SportEventDto.championshipYear).
                  */
                 championshipYear: number;
                 /**
-                 * When the edition starts. For a NOT_YET offer, when it is expected.
+                 * When the event starts. For a NOT_YET offer, when it is expected.
                  */
                 startDate: string;
                 /**
-                 * When the edition ends, when known.
+                 * When the event ends, when known.
                  */
                 endDate: string | null;
             };
@@ -27542,14 +27835,17 @@ export type PerpetualTrophyPlateDto = {
  * A perpetual trophy: a contest of one event the league has run in two or more years.
  */
 export type PerpetualTrophyDto = {
-    eventSeriesId: string;
     /**
-     * The event series the contest is run on every year, such as "Masters Tournament".
+     * The trophy's id until perpetual trophies are kept by template (#2024): the first slot definition, in play order, of the slots its contests cover. Two trophies on the same slots differ by selectionType.
      */
-    seriesName: string;
+    trophyId: string;
+    /**
+     * What the trophy is run on, built by the API: its first slot's proper name, such as "Masters", else its newest run's event name. Screens add the way of picking.
+     */
+    name: string;
     sportLeagueName: string;
     /**
-     * How the contest is picked: a series run as two ways of picking is two trophies.
+     * How the contest is picked: the same slots run as two ways of picking is two trophies.
      */
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
     /**
@@ -27583,17 +27879,20 @@ export type PerpetualTrophyDto = {
  */
 export type PerpetualTrophyListResponse = {
     /**
-     * In sports league, series and selection type order.
+     * In sports league, name and selection type order.
      */
     trophies: Array<{
-        eventSeriesId: string;
         /**
-         * The event series the contest is run on every year, such as "Masters Tournament".
+         * The trophy's id until perpetual trophies are kept by template (#2024): the first slot definition, in play order, of the slots its contests cover. Two trophies on the same slots differ by selectionType.
          */
-        seriesName: string;
+        trophyId: string;
+        /**
+         * What the trophy is run on, built by the API: its first slot's proper name, such as "Masters", else its newest run's event name. Screens add the way of picking.
+         */
+        name: string;
         sportLeagueName: string;
         /**
-         * How the contest is picked: a series run as two ways of picking is two trophies.
+         * How the contest is picked: the same slots run as two ways of picking is two trophies.
          */
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
         /**
@@ -28844,7 +29143,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
+    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -28973,7 +29272,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -29079,7 +29378,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -34074,17 +34373,13 @@ export type ListContestConfigTemplatesData = {
     path?: never;
     query?: {
         /**
-         * Only templates for this sport.
-         */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
          */
         sportLeagueId?: string;
         /**
-         * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
+         * Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds).
          */
-        eventType?: 'KNOCKOUT' | 'WEEK';
+        slotDefinitionIds?: Array<string>;
         /**
          * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
          */
@@ -34167,7 +34462,7 @@ export type ListEventsData = {
          */
         status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
         /**
-         * Only events of this sport league's series.
+         * Only events of this sport league.
          */
         sportLeagueId?: string;
         /**
@@ -36885,7 +37180,7 @@ export type ListEventPagesData = {
          */
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+         * true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
          */
         upcoming?: boolean;
     };

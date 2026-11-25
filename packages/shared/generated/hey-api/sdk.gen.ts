@@ -1327,7 +1327,7 @@ export const getHistorySummary = <ThrowOnError extends boolean = false>(options:
 /**
  * List the perpetual trophies
  *
- * The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, the same event series and the same way of picking, with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has TROPHY_SHELF (root admins too).
+ * The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, on the same slot definitions and the same way of picking (by template from #2024), with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has TROPHY_SHELF (root admins too).
  */
 export const listPerpetualTrophies = <ThrowOnError extends boolean = false>(options: Options<ListPerpetualTrophiesData, ThrowOnError>): RequestResult<ListPerpetualTrophiesResponses, ListPerpetualTrophiesErrors, ThrowOnError> => (options.client ?? client).get<ListPerpetualTrophiesResponses, ListPerpetualTrophiesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1382,7 +1382,7 @@ export const listContestResults = <ThrowOnError extends boolean = false>(options
 /**
  * List contest configuration templates
  *
- * The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport's active templates, narrowed to the chosen event's sport league (every template is one league's) and kind of event.
+ * The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for the chosen event's sport league's active templates (every template is one league's) covering one of the event's slot definitions.
  */
 export const listContestConfigTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListContestConfigTemplatesData, ThrowOnError>): RequestResult<ListContestConfigTemplatesResponses, ListContestConfigTemplatesErrors, ThrowOnError> => (options?.client ?? client).get<ListContestConfigTemplatesResponses, ListContestConfigTemplatesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1393,7 +1393,7 @@ export const listContestConfigTemplates = <ThrowOnError extends boolean = false>
 /**
  * Update a contest configuration template
  *
- * Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise).
+ * Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT) and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.
  */
 export const updateContestConfigTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateContestConfigTemplateData, ThrowOnError>): RequestResult<UpdateContestConfigTemplateResponses, UpdateContestConfigTemplateErrors, ThrowOnError> => (options.client ?? client).put<UpdateContestConfigTemplateResponses, UpdateContestConfigTemplateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1419,7 +1419,7 @@ export const listEvents = <ThrowOnError extends boolean = false>(options?: Optio
 /**
  * Create a sport event
  *
- * An admin-authored edition of a series in its sport league's current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season; 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. The sport comes from the sport league. Root admin only.
+ * An admin-authored edition of a series in its sport league's current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. The sport comes from the sport league. Root admin only.
  */
 export const createEvent = <ThrowOnError extends boolean = false>(options: Options<CreateEventData, ThrowOnError>): RequestResult<CreateEventResponses, CreateEventErrors, ThrowOnError> => (options.client ?? client).post<CreateEventResponses, CreateEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2014,7 +2014,7 @@ export const listSportLeagueOverviews = <ThrowOnError extends boolean = false>(o
 /**
  * Delete a sport league
  *
- * Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a participant: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
+ * Deletes a sport league nothing uses any more and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a participant: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
  */
 export const deleteSportLeague = <ThrowOnError extends boolean = false>(options: Options<DeleteSportLeagueData, ThrowOnError>): RequestResult<DeleteSportLeagueResponses, DeleteSportLeagueErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSportLeagueResponses, DeleteSportLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2297,7 +2297,7 @@ export const updatePlatformPricingProfile = <ThrowOnError extends boolean = fals
 /**
  * List event pages
  *
- * The active event pages, of one sport or every sport, each with its offers and their next editions; with `upcoming=true`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
+ * The active event pages, of one sport or every sport, each with its offers and their next Season slots; with `upcoming=true`, only the pages with a slot coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
  */
 export const listEventPages = <ThrowOnError extends boolean = false>(options?: Options<ListEventPagesData, ThrowOnError>): RequestResult<ListEventPagesResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListEventPagesResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2308,7 +2308,7 @@ export const listEventPages = <ThrowOnError extends boolean = false>(options?: O
 /**
  * Get an event page
  *
- * One event page by its address, the sport's URL segment then the page's, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.
+ * One event page by its address, the sport's URL segment then the page's, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its slot definition's next Season slot that can still take the contest (the one under way, else the soonest upcoming), with the event that owns it, and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such slot is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.
  */
 export const getEventPage = <ThrowOnError extends boolean = false>(options: Options<GetEventPageData, ThrowOnError>): RequestResult<GetEventPageResponses, GetEventPageErrors, ThrowOnError> => (options.client ?? client).get<GetEventPageResponses, GetEventPageErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
