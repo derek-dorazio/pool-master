@@ -11,7 +11,7 @@
   "clients/poolmaster/src/features/root-admin/event-release-checks-text.ts": 9,
   "clients/poolmaster/src/features/root-admin/event-tiers-form.ts": 1,
   "clients/poolmaster/src/features/root-admin/provider-facts.ts": 1,
-  "clients/poolmaster/src/features/root-admin/sport-admin-utils.ts": 8,
+  "clients/poolmaster/src/features/root-admin/sport-admin-utils.ts": 6,
   "clients/poolmaster/src/features/root-admin/sport-league-issue-chips.tsx": 4,
   "clients/poolmaster/src/features/root-admin/sync-run-detail.tsx": 2,
   "clients/poolmaster/src/features/root-admin/sync-run-status.ts": 5,
