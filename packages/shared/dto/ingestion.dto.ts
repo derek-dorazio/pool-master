@@ -9,7 +9,6 @@ import {
   JobTrigger,
   PROVIDER_LEAGUE_MINUTES_RANGE,
   PROVIDER_POLL_MINUTES_RANGE,
-  PROVIDER_PRIORITY_RANGE,
   PROVIDER_REQUESTS_PER_MINUTE_RANGE,
   ProviderCode,
   ProviderHealthStatus,
@@ -43,7 +42,6 @@ export const ProviderHealthStatusSchema = z.enum(ProviderHealthStatus);
 const RequestsPerMinuteSchema = z.number().int().min(PROVIDER_REQUESTS_PER_MINUTE_RANGE.min).max(PROVIDER_REQUESTS_PER_MINUTE_RANGE.max);
 const PollMinutesSchema = z.number().int().min(PROVIDER_POLL_MINUTES_RANGE.min).max(PROVIDER_POLL_MINUTES_RANGE.max);
 const LeagueMinutesSchema = z.number().int().min(PROVIDER_LEAGUE_MINUTES_RANGE.min).max(PROVIDER_LEAGUE_MINUTES_RANGE.max);
-const ProviderPrioritySchema = z.number().int().min(PROVIDER_PRIORITY_RANGE.min).max(PROVIDER_PRIORITY_RANGE.max);
 
 export const ProviderLeagueDtoSchema = z.object({
   id: z.uuid().describe('The provider league.'),
@@ -69,7 +67,6 @@ export const ProviderSettingsDtoSchema = z.object({
   webhookRoundPollMinutes: PollMinutesSchema.describe('How often a notified event played in rounds is polled while a round is under way, in minutes.'),
   hasPlayerStats: z.boolean().describe('Whether the provider plan includes player box scores.'),
   isEnabled: z.boolean().describe('Whether the provider is used at all. A change takes effect when the server tasks next start.'),
-  priority: ProviderPrioritySchema.describe('Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.'),
   leagues: z.array(ProviderLeagueDtoSchema).describe('The provider\'s own leagues, by code.'),
 }).describe('A data provider\'s settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager.');
 export type ProviderSettingsDto = z.infer<typeof ProviderSettingsDtoSchema>;
@@ -80,8 +77,6 @@ export const ProviderSummaryDtoSchema = z.object({
   status: ProviderHealthStatusSchema.nullable().describe('Health from the provider\'s sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.'),
   errorRate: z.number().nullable().describe('The share of the provider\'s sync runs of the last hour that failed, 0 to 1; null when none finished.'),
   lastEventAt: DateTimeSchema.nullable().describe('When one of the provider\'s events last changed; null when none is known.'),
-  sportsCovered: z.array(SportDtoSchema).describe('Sports the provider\'s running adapter covers.'),
-  primaryForSports: z.array(SportDtoSchema).describe('The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.'),
   activeEventCount: z.number().int().describe('The provider\'s events that are scheduled or in progress.'),
   requestsPerMinute: z.number().int().min(1).nullable().describe('The request rate core-api holds its calls to the provider to, a minute: its Provider row\'s requestsPerMinute. Null when the provider is not paced.'),
   webhooksEnabled: z.boolean().describe('True when the provider\'s webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted.'),
@@ -102,7 +97,6 @@ export const UpdateProviderRequestSchema = z.object({
   webhookRoundPollMinutes: PollMinutesSchema.optional(),
   hasPlayerStats: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
-  priority: ProviderPrioritySchema.optional().describe('409 PROVIDER_PRIORITY_TAKEN when another provider has it.'),
 }).refine((value) => Object.keys(value).length > 0, { message: 'At least one provider setting must be given.' })
   .describe('Changes to a provider\'s settings; omitted fields are left alone.');
 export type UpdateProviderRequest = z.infer<typeof UpdateProviderRequestSchema>;
@@ -133,7 +127,6 @@ const SettingRangeDtoSchema = z.object({
 export const ProviderSettingRangesDtoSchema = z.object({
   requestsPerMinute: SettingRangeDtoSchema.describe('A provider\'s requestsPerMinute.'),
   pollMinutes: SettingRangeDtoSchema.describe('A provider\'s webhookPollMinutes and webhookRoundPollMinutes.'),
-  priority: SettingRangeDtoSchema.describe('A provider\'s priority.'),
   leagueMinutes: SettingRangeDtoSchema.describe('A provider league\'s quietAfterMinutes and typicalGameMinutes.'),
 }).describe('The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself.');
 export type ProviderSettingRangesDto = z.infer<typeof ProviderSettingRangesDtoSchema>;

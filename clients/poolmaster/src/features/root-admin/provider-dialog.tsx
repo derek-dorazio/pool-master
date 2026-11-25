@@ -30,7 +30,6 @@ function settingsSchemaOf(ranges: ProviderSettingRangesDto | undefined) {
     webhookRoundPollMinutes: wholeNumberIn(ranges?.pollMinutes),
     hasPlayerStats: z.enum(['yes', 'no']),
     isEnabled: z.enum(['on', 'off']),
-    priority: wholeNumberIn(ranges?.priority),
   });
 }
 
@@ -45,7 +44,6 @@ function valuesOf(settings: ProviderSettingsDto): SettingsValues {
     webhookRoundPollMinutes: String(settings.webhookRoundPollMinutes),
     hasPlayerStats: settings.hasPlayerStats ? 'yes' : 'no',
     isEnabled: settings.isEnabled ? 'on' : 'off',
-    priority: String(settings.priority),
   };
 }
 
@@ -59,7 +57,6 @@ function changesOf(values: SettingsValues, current: SettingsValues) {
     ...(values.webhookRoundPollMinutes !== current.webhookRoundPollMinutes && { webhookRoundPollMinutes: Number(values.webhookRoundPollMinutes) }),
     ...(values.hasPlayerStats !== current.hasPlayerStats && { hasPlayerStats: values.hasPlayerStats === 'yes' }),
     ...(values.isEnabled !== current.isEnabled && { isEnabled: values.isEnabled === 'on' }),
-    ...(values.priority !== current.priority && { priority: Number(values.priority) }),
   };
 }
 
@@ -121,7 +118,6 @@ export function ProviderDialog({
       { id: 'poll', label: 'Webhook safety-net poll', value: minutes(settings.webhookPollMinutes), testId: `${testId}-poll` },
       { id: 'round-poll', label: 'Webhook poll during a round', value: minutes(settings.webhookRoundPollMinutes), testId: `${testId}-round-poll` },
       { id: 'player-stats', label: 'Player stats', value: settings.hasPlayerStats ? 'In its plan' : 'Not in its plan', testId: `${testId}-player-stats` },
-      { id: 'priority', label: 'Priority', value: settings.priority, testId: `${testId}-priority` },
     ]),
   ];
 
@@ -137,7 +133,7 @@ export function ProviderDialog({
       <HelpTip label={`About ${provider.providerName}`} testId={`${testId}-help`}>
         {settings === null
           ? 'This provider is set up outside the Provider table, so its settings are not edited here.'
-          : 'Its API key and webhook secret stay in Secrets Manager. The base URL, rate and polls reach every server within a minute; switching it on or off and its priority take effect when the servers next start.'}
+          : 'Its API key and webhook secret stay in Secrets Manager. The base URL, rate and polls reach every server within a minute; switching it on or off takes effect when the servers next start.'}
       </HelpTip>
     </span>
   );
@@ -186,9 +182,6 @@ export function ProviderDialog({
             <option value="yes">In its plan</option>
             <option value="no">Not in its plan</option>
           </Select>
-        </FormField>
-        <FormField error={form.formState.errors.priority?.message} label="Priority">
-          <Input data-testid={`${testId}-priority-input`} inputMode="numeric" {...form.register('priority')} />
         </FormField>
       </div>
     </DetailEditModal>

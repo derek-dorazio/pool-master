@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => ({
 bindApiMocks(mocks);
 
 function provider(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryDto {
-  return providerSummaryFixture({ sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], ...overrides });
+  return providerSummaryFixture(overrides);
 }
 
 const SCHEDULE: IngestionScheduleConfig = {
@@ -58,7 +58,6 @@ function scheduleGroup(value: IngestionScheduleConfig = SCHEDULE, saved = true):
 const settingRanges = {
   requestsPerMinute: { min: 2, max: 1000 },
   pollMinutes: { min: 1, max: 240 },
-  priority: { min: 1, max: 100 },
   leagueMinutes: { min: 5, max: 600 },
 };
 
@@ -141,7 +140,7 @@ describe('RootAdminProvidersPage', () => {
     expect(dialog.getByText('Rate limited (24 h)')).toBeInTheDocument();
     expect(dialog.getByTestId('root-admin-provider-dialog-base-url')).toHaveTextContent('https://api.balldontlie.io');
     expect(dialog.getByTestId('root-admin-provider-dialog-poll')).toHaveTextContent('15 minutes');
-    expect(dialog.getByTestId('root-admin-provider-dialog-priority')).toHaveTextContent('1');
+    expect(dialog.queryByTestId('root-admin-provider-dialog-priority')).not.toBeInTheDocument();
     expect(dialog.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
     await userEvent.click(dialog.getByTestId('root-admin-provider-dialog-help'));
     expect(await screen.findByText(/stay in Secrets Manager/)).toBeInTheDocument();

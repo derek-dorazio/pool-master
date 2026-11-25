@@ -28348,10 +28348,6 @@ export type ProviderSettingsDto = {
      */
     isEnabled: boolean;
     /**
-     * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-     */
-    priority: number;
-    /**
      * The provider's own leagues, by code.
      */
     leagues: Array<{
@@ -28414,14 +28410,6 @@ export type ProviderSummaryDto = {
      * When one of the provider's events last changed; null when none is known.
      */
     lastEventAt: string | null;
-    /**
-     * Sports the provider's running adapter covers.
-     */
-    sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-    /**
-     * The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.
-     */
-    primaryForSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
      * The provider's events that are scheduled or in progress.
      */
@@ -28491,10 +28479,6 @@ export type ProviderSummaryDto = {
          */
         isEnabled: boolean;
         /**
-         * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-         */
-        priority: number;
-        /**
          * The provider's own leagues, by code.
          */
         leagues: Array<{
@@ -28551,10 +28535,6 @@ export type UpdateProviderRequest = {
     webhookRoundPollMinutes?: number;
     hasPlayerStats?: boolean;
     isEnabled?: boolean;
-    /**
-     * 409 PROVIDER_PRIORITY_TAKEN when another provider has it.
-     */
-    priority?: number;
 };
 
 /**
@@ -28609,10 +28589,6 @@ export type ProviderSettingsResponse = {
          * Whether the provider is used at all. A change takes effect when the server tasks next start.
          */
         isEnabled: boolean;
-        /**
-         * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-         */
-        priority: number;
         /**
          * The provider's own leagues, by code.
          */
@@ -28736,19 +28712,6 @@ export type ProviderSettingRangesDto = {
         max: number;
     };
     /**
-     * A provider's priority.
-     */
-    priority: {
-        /**
-         * The smallest value the API takes.
-         */
-        min: number;
-        /**
-         * The largest value the API takes.
-         */
-        max: number;
-    };
-    /**
      * A provider league's quietAfterMinutes and typicalGameMinutes.
      */
     leagueMinutes: {
@@ -28788,14 +28751,6 @@ export type ProviderListResponse = {
          * When one of the provider's events last changed; null when none is known.
          */
         lastEventAt: string | null;
-        /**
-         * Sports the provider's running adapter covers.
-         */
-        sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-        /**
-         * The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.
-         */
-        primaryForSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * The provider's events that are scheduled or in progress.
          */
@@ -28865,10 +28820,6 @@ export type ProviderListResponse = {
              */
             isEnabled: boolean;
             /**
-             * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-             */
-            priority: number;
-            /**
              * The provider's own leagues, by code.
              */
             leagues: Array<{
@@ -28928,19 +28879,6 @@ export type ProviderListResponse = {
          * A provider's webhookPollMinutes and webhookRoundPollMinutes.
          */
         pollMinutes: {
-            /**
-             * The smallest value the API takes.
-             */
-            min: number;
-            /**
-             * The largest value the API takes.
-             */
-            max: number;
-        };
-        /**
-         * A provider's priority.
-         */
-        priority: {
             /**
              * The smallest value the API takes.
              */

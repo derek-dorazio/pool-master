@@ -39,7 +39,6 @@ function toProvider(row: ProviderRow): ProviderSettings {
     webhookRoundPollMinutes: row.webhookRoundPollMinutes,
     hasPlayerStats: row.hasPlayerStats,
     isEnabled: row.isEnabled,
-    priority: row.priority,
     leagues: row.leagues.map(toProviderLeague),
   };
 }
@@ -48,7 +47,7 @@ export class PrismaProviderSettingsRepository implements ProviderSettingsReposit
   constructor(private readonly prisma: PrismaClient) {}
 
   async findAll(): Promise<ProviderSettings[]> {
-    const rows = await this.prisma.provider.findMany({ include: PROVIDER_INCLUDE, orderBy: { priority: 'asc' } });
+    const rows = await this.prisma.provider.findMany({ include: PROVIDER_INCLUDE, orderBy: { code: 'asc' } });
     return rows.map(toProvider);
   }
 
@@ -57,13 +56,12 @@ export class PrismaProviderSettingsRepository implements ProviderSettingsReposit
     return row === null ? null : toProvider(row);
   }
 
-  async update(id: string, updates: ProviderSettingsUpdate): Promise<ProviderSettings | 'NOT_FOUND' | 'PRIORITY_TAKEN'> {
+  async update(id: string, updates: ProviderSettingsUpdate): Promise<ProviderSettings | 'NOT_FOUND'> {
     try {
       const row = await this.prisma.provider.update({ where: { id }, data: updates, include: PROVIDER_INCLUDE });
       return toProvider(row);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') return 'NOT_FOUND';
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'PRIORITY_TAKEN';
       throw error;
     }
   }

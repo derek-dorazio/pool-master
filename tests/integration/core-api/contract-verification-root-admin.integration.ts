@@ -118,7 +118,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
 
 // The shared package exports the participant response schema but not its inferred type.
@@ -145,7 +145,11 @@ function emptyLiveScorePersistenceResult() {
 class OperationalContractProvider implements SportDataProvider {
   providerId = 'balldontlie';
   providerName = 'Contract Provider';
-  sportsCovered: Sport[] = ['GOLF'];
+  readonly providerCode = ProviderCode.BALLDONTLIE;
+
+  servesLeague(): boolean {
+    return true;
+  }
 
   async getUpcomingEvents(): Promise<SportEvent[]> {
     return [
@@ -314,7 +318,7 @@ async function syncedEvent(externalId: string) {
 async function buildIngestionApp(provider: SportDataProvider | null): Promise<FastifyInstance> {
   const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   const registry = new ProviderRegistry();
-  if (provider) registry.register('GOLF', provider, 'PRIMARY');
+  if (provider) registry.register(provider);
   const scheduler = new IngestionScheduler(registry, {
     onEventDetail: async () => ({ writeDiagnostics: emptySyncWriteDiagnostics() }),
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
@@ -1812,10 +1816,15 @@ describe('Contract verification (root admin)', () => {
         const listed = ProviderListResponseSchema.parse(listRes.json()).providers.find((summary) => summary.settings?.code === 'BALLDONTLIE');
         expect(listed?.settings).toMatchObject({ id: before.id, name: 'BALLDONTLIE', webhookSecretSet: true });
         expect(listed?.settings?.leagues.map((league) => league.code)).toContain('mlb');
+        // A Provider has no priority (#2073): neither its listed settings nor the page's ranges carry one.
+        const listedBody = listRes.json<{ providers: Array<{ settings: Record<string, unknown> | null }>; settingRanges: Record<string, unknown> }>();
+        expect(listedBody.providers.find((summary) => summary.settings?.['code'] === 'BALLDONTLIE')?.settings).not.toHaveProperty('priority');
+        expect(listedBody.settingRanges).not.toHaveProperty('priority');
 
         const savedRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 600, webhookPollMinutes: 20 });
         expect(savedRes.statusCode).toBe(200);
         expect(ProviderSettingsResponseSchema.parse(savedRes.json()).provider).toMatchObject({ code: 'BALLDONTLIE', requestsPerMinute: 600, webhookPollMinutes: 20, webhookSecretSet: true });
+        expect(savedRes.json<{ provider: Record<string, unknown> }>().provider).not.toHaveProperty('priority');
 
         const leagueRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: 200, quietAfterMinutes: 120 });
         expect(leagueRes.statusCode).toBe(200);

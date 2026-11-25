@@ -198,7 +198,7 @@ describe('ProviderSeasonScheduleReader tour reads', () => {
   it('lists a league\'s Season from its selected provider league alone, asked for by the provider\'s Season id and filtered by the code the provider stamps on each event', async () => {
     const league = await createTourLeague('pga');
 
-    const events = await service().listSeasonEvents(SYNCED_PROVIDER_ID, league.id, '2027');
+    const events = await service().listSeasonEvents(league.id, '2027');
 
     expect(events.map((event) => event.externalId)).toEqual(['pga-1']);
     expect(getUpcomingEvents).toHaveBeenLastCalledWith(Sport.GOLF, undefined, { providerLeagueCode: 'pga', providerSeasonId: '2027' });
@@ -207,9 +207,9 @@ describe('ProviderSeasonScheduleReader tour reads', () => {
   it('refuses a Season read for an unknown league, and for a league with no selected provider league', async () => {
     const unsynced = await createTourLeague(null);
 
-    await expect(service().listSeasonEvents(SYNCED_PROVIDER_ID, randomUUID(), '2027'))
+    await expect(service().listSeasonEvents(randomUUID(), '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
-    await expect(service().listSeasonEvents(SYNCED_PROVIDER_ID, unsynced.id, '2027'))
+    await expect(service().listSeasonEvents(unsynced.id, '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
   });
 });

@@ -1,8 +1,9 @@
 /**
  * The sport data providers this task runs (#1997). Each enabled Provider row builds its adapter,
  * with its base URL and rate read from the row on every request and its enabled leagues read at
- * startup; its API key comes from Secrets Manager through the task definition. Lower priority
- * serves a sport first. Nothing about which providers run is read from the environment (#2039).
+ * startup; its API key comes from Secrets Manager through the task definition. A sport league
+ * syncs from the provider its selected mapping names (#2073), so no provider serves a sport ahead
+ * of another. Nothing about which providers run is read from the environment (#2039).
  */
 import type { FastifyBaseLogger } from 'fastify';
 import { ProviderCode, type ProviderLeagueSettings, type ProviderSettings } from '@poolmaster/shared/domain';
@@ -21,7 +22,7 @@ export interface ProviderRows {
 }
 
 /**
- * Builds the providers a task runs from the Provider rows, in serving order. The app takes it as a
+ * Builds the providers a task runs from the Provider rows. The app takes it as a
  * dependency, so a functional or integration test registers its own fake provider from test code.
  */
 export type SportDataProviderFactory = (rows: ProviderRows, env: NodeJS.ProcessEnv, logger?: FastifyBaseLogger, rateLimits?: ProviderRateLimitObservers) => SportDataProvider[];
@@ -57,10 +58,9 @@ const rowFactories: Readonly<Record<ProviderCode, RowFactory>> = {
   },
 };
 
-/** The enabled Provider rows' adapters, lowest priority first; a row whose secret is not set is left out. */
-export const buildProvidersFromRows: SportDataProviderFactory = (rows, env, logger, rateLimits) => [...rows.all()]
+/** The enabled Provider rows' adapters; a row whose secret is not set is left out. */
+export const buildProvidersFromRows: SportDataProviderFactory = (rows, env, logger, rateLimits) => rows.all()
   .filter((row) => row.isEnabled)
-  .sort((a, b) => a.priority - b.priority)
   .flatMap((row) => rowFactories[row.code](row, rows, env, logger, rateLimits) ?? []);
 
 function requireDefaultProviderConfigured(
@@ -91,9 +91,9 @@ export function registerConfiguredProviders(
   rateLimits?: ProviderRateLimitObservers,
 ): void {
   // Every provider is built before any is registered.
-  const ordered = buildProviders(rows, env, logger, rateLimits);
+  const providers = buildProviders(rows, env, logger, rateLimits);
 
-  if (ordered.length === 0) {
+  if (providers.length === 0) {
     requireDefaultProviderConfigured(env, logger);
     logger?.error(
       { action: 'ingestion.providers.unconfigured' },
@@ -102,17 +102,11 @@ export function registerConfiguredProviders(
     return;
   }
 
-  // The first provider covering a sport serves it as PRIMARY; the rest serve the events linked to them (#1495).
-  const served = new Set<string>();
-  for (const provider of ordered) {
-    const priorities = provider.sportsCovered.map((sport) => {
-      const priority = served.has(sport) ? 'SECONDARY' : 'PRIMARY';
-      served.add(sport);
-      registry.register(sport, provider, priority);
-      return { sport, priority };
-    });
+  // Each is registered by its Provider code; a league reaches it through its selected mapping (#2073).
+  for (const provider of providers) {
+    registry.register(provider);
     logger?.info(
-      { action: 'ingestion.providers.registered', providerId: provider.providerId, priorities },
+      { action: 'ingestion.providers.registered', providerId: provider.providerId, providerCode: provider.providerCode },
       'Registered configured sport data provider.',
     );
   }

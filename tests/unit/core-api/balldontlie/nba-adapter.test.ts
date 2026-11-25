@@ -262,7 +262,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(league) } };
     const service = new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(harness.adapter));
 
-    const events = await service.listSeasonEvents('balldontlie', 'league', '2023');
+    const events = await service.listSeasonEvents('league', '2023');
 
     expect(events.map((event) => event.externalId)).toEqual(['nba-2023-postseason']);
   });

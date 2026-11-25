@@ -55,7 +55,7 @@ function created(name: string): ProviderSeasonImport['created'][number] {
   return { event: { id: randomUUID(), name } } as ProviderSeasonImport['created'][number];
 }
 
-type ListSeasonEvents = jest.Mock<Promise<Array<ReturnType<typeof providerEvent>>>, [string, string, string]>;
+type ListSeasonEvents = jest.Mock<Promise<Array<ReturnType<typeof providerEvent>>>, [string, string]>;
 
 function build(options: {
   leagues: SportLeague[];
@@ -74,7 +74,7 @@ function build(options: {
   const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const seasonSchedule = {
     listSeasonEvents: options.listSeasonEvents
-      ?? jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>(async (_providerId, sportLeagueId, providerSeasonId) => [providerEvent(`${sportLeagueId}-${providerSeasonId}`)]),
+      ?? jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>(async (sportLeagueId, providerSeasonId) => [providerEvent(`${sportLeagueId}-${providerSeasonId}`)]),
   };
   const sportEvents = {
     importProviderSeason: options.importProviderSeason
@@ -161,7 +161,7 @@ describe('LeagueEventsSync', () => {
       await sync.run({ sportLeagueId: nfl.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
       // The playoffs under way in January 2027 are the 2026 Season's: it is read first, by its own id.
-      expect(seasonSchedule.listSeasonEvents.mock.calls.map(([, , providerSeasonId]) => providerSeasonId)).toEqual(['2026', '2027']);
+      expect(seasonSchedule.listSeasonEvents.mock.calls.map(([, providerSeasonId]) => providerSeasonId)).toEqual(['2026', '2027']);
     });
 
     it('makes every league\'s scheduled job due now, with no league held back behind another', async () => {
@@ -276,7 +276,7 @@ describe('LeagueEventsSync', () => {
       await sync.queueScheduled();
       await runner.drain();
 
-      expect(seasonSchedule.listSeasonEvents.mock.calls).toEqual([['balldontlie', pga.id, '2026'], ['balldontlie', pga.id, '2027']]);
+      expect(seasonSchedule.listSeasonEvents.mock.calls).toEqual([[pga.id, '2026'], [pga.id, '2027']]);
       expect(sportEvents.importProviderSeason.mock.calls).toEqual([
         [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2026`)] }],
         [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.next.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2027`)] }],
@@ -296,7 +296,7 @@ describe('LeagueEventsSync', () => {
 
       await sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.last.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.ADMIN });
 
-      expect(seasonSchedule.listSeasonEvents.mock.calls).toEqual([['balldontlie', pga.id, '2025']]);
+      expect(seasonSchedule.listSeasonEvents.mock.calls).toEqual([[pga.id, '2025']]);
     });
 
     it('skips a later Season the provider has no id for, reading the rest', async () => {
@@ -306,7 +306,7 @@ describe('LeagueEventsSync', () => {
 
       await sync.run({ sportLeagueId: pga.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
-      expect(seasonSchedule.listSeasonEvents.mock.calls.map(([, , providerSeasonId]) => providerSeasonId)).toEqual(['2026']);
+      expect(seasonSchedule.listSeasonEvents.mock.calls.map(([, providerSeasonId]) => providerSeasonId)).toEqual(['2026']);
     });
 
     it('raises one SEASON_MISSING ERROR finding when the last Season the provider has an id for has ended, and still completes its run', async () => {
@@ -434,7 +434,7 @@ describe('LeagueEventsSync', () => {
     it('leaves a failure a retry may fix, such as the provider being unreachable, for the runner to try again, keeping the Seasons it finished on the run', async () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const pga = syncedLeague(seasons);
-      const listSeasonEvents = jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>(async (_providerId, sportLeagueId, providerSeasonId) => {
+      const listSeasonEvents = jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>(async (sportLeagueId, providerSeasonId) => {
         if (providerSeasonId === '2027') throw new Error('vendor unavailable');
         return [providerEvent(`${sportLeagueId}-${providerSeasonId}`)];
       });

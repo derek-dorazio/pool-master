@@ -15,7 +15,6 @@ function rowsRepository(initial: ProviderSettings[]): ProviderSettingsRepository
     update: (id, updates) => {
       const row = rows.find((each) => each.id === id);
       if (row === undefined) return Promise.resolve('NOT_FOUND' as const);
-      if (updates.priority !== undefined && rows.some((each) => each.id !== id && each.priority === updates.priority)) return Promise.resolve('PRIORITY_TAKEN' as const);
       const saved = { ...row, ...updates };
       rows = rows.map((each) => (each.id === id ? saved : each));
       return Promise.resolve(saved);
@@ -73,13 +72,6 @@ describe('ProviderSettingsService (#1997)', () => {
 
     await expect(service.updateProvider(missing, { requestsPerMinute: 9 })).rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
     await expect(service.updateProvider(missing, { webhooksEnabled: true })).rejects.toBeInstanceOf(ProviderSettingsError);
-  });
-
-  it('answers 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority', async () => {
-    const other = balldontlieTestProvider({ id: '00000000-0000-4000-8000-0000000000e1', priority: 2 });
-    const { service } = await setup({ rows: [balldontlieTestProvider(), other] });
-
-    await expect(service.updateProvider(PROVIDER_ID, { priority: 2 })).rejects.toMatchObject({ code: 'PROVIDER_PRIORITY_TAKEN', statusCode: 409 });
   });
 
   it('saves one of a provider\'s leagues, and this task takes the provider with it at once', async () => {

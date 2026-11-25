@@ -22,8 +22,8 @@ const FIELD_EVENTS_PER_PROVIDER = 2;
 export const ROUND_WITHOUT_END_UNDERWAY_MS = 14 * 60 * 60 * 1000;
 
 export interface ScheduledEventReaderDependencies {
-  prisma: Pick<PrismaClient, 'sportEvent'>;
-  registry: Pick<ProviderRegistry, 'getProvidersForSport'>;
+  prisma: Pick<PrismaClient, 'sportEvent' | 'sport'>;
+  registry: Pick<ProviderRegistry, 'all'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -42,7 +42,7 @@ export function createScheduledEventReader({
         to: to?.toISOString() ?? null,
       }, 'Listing sport events for scheduled ingestion feed');
 
-      // Every provider serving the sport syncs the events it has an id for (#1495, #2004).
+      // Each running provider syncs the events of the leagues whose selected mapping names it (#2073).
       const providerIds = servingProviderIds(sport, feed);
       // Each provider loads the fields of its own next two events, so one provider's earlier
       // events never hold another's back.
@@ -50,7 +50,7 @@ export function createScheduledEventReader({
         // Events and leagues name a provider by its row (#1997, #2004); a provider with none syncs no event.
         const code = providerCodeOfSourceId(providerId);
         if (code === undefined) return [];
-        // poolmaster-allow-query-in-loop: once per provider serving the sport, one or two
+        // poolmaster-allow-query-in-loop: once per running provider, one or two
         const events = await prisma.sportEvent.findMany({
           where: {
             providerMappings: { some: { provider: { code } } },
@@ -96,7 +96,7 @@ export function createScheduledEventReader({
         return code === undefined ? [] : [code];
       });
       if (codes.length === 0) return [];
-      // Scores poll every in-progress event at once, by each serving provider's id for it.
+      // Scores poll every in-progress event at once, by each running provider's id for it.
       const where = {
         ...sportEventSportWhere(sport),
         providerMappings: { some: { provider: { code: { in: codes } } } },
@@ -142,12 +142,26 @@ export function createScheduledEventReader({
       logger?.debug({ sport, feed, providerIds, eventCount: events.length, events }, 'Listed sport events for scheduled ingestion feed');
       return events;
     },
+
+    async listSyncedSports({ providerCodes }) {
+      const rows = await prisma.sport.findMany({
+        where: {
+          sportLeagues: {
+            some: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: { in: [...providerCodes] } } } } } },
+          },
+        },
+        select: { sport: true },
+        orderBy: { displayOrder: 'asc' },
+      });
+      return rows.map((row) => row.sport);
+    },
   };
 
+  /** The running providers' ids, as their feeds name them: each syncs only the leagues that select it. */
   function servingProviderIds(sport: Sport, feed: EventSyncFeed): string[] {
-    const providerIds = registry.getProvidersForSport(sport).map((provider) => provider.providerId);
+    const providerIds = registry.all().map((provider) => provider.providerId);
     if (providerIds.length === 0) {
-      logger?.warn({ sport, feed }, 'Skipping scheduled event feed because no provider is registered for sport');
+      logger?.warn({ sport, feed }, 'Skipping scheduled event feed because no provider is running');
     }
     return providerIds;
   }
