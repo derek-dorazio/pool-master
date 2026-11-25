@@ -1,8 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
-import { LeaguePhaseOrder, SeasonSlotStatusOrder, SlotKindOrder, type LeaguePhase, type SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
+import { LeaguePhaseOrder, SeasonSlotStatusOrder, SlotKindOrder, SlotWindowStatusOrder, type LeaguePhase, type SeasonSlotStatus, type SlotKind, type SlotWindowStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { DataGrid, DetailEditModal, FactList, SectionCard, Text, type Fact } from '@/features/shared/ui';
+import { DataGrid, DetailEditModal, FactList, SectionCard, StatusBadge, Text, type Fact } from '@/features/shared/ui';
 import type { SportLeagueSeasonDto } from '@/lib/api';
 import { seasonSlotRowsOf, seasonMappingText, type SeasonSlotRow } from './league-structure-rows';
 
@@ -34,7 +34,17 @@ const seasonColumns = [
     header: 'Provider ids',
     meta: { info: 'Each provider\'s own id for the Season, as the sync asks for it. Blank: no provider syncs it.', type: { kind: 'text' } },
   }),
+  seasonColumnHelper.accessor('slotsNeedingDates', {
+    header: 'Needs dates',
+    meta: { info: 'How many of its slots its provider places by date window still have no window or only a tentative one, in a Season the sync reads. Games are placed only inside a slot\'s dates.', type: { kind: 'number' } },
+    cell: ({ getValue }) => <NeedsDatesBadge count={getValue()} />,
+  }),
 ];
+
+/** A warning badge with the count of slots that need dates, or a dash when none do (#1924). */
+function NeedsDatesBadge({ count }: { count: number }) {
+  return count === 0 ? <Text tone="muted">—</Text> : <StatusBadge tone="warning">{`Needs dates ${String(count)}`}</StatusBadge>;
+}
 
 /**
  * The Structure tab's Seasons section (#2003): the league's Seasons, latest first, added by
@@ -71,6 +81,7 @@ function SeasonDialog({ onClose, season }: { onClose: () => void; season: SportL
     { id: 'current', label: 'Current', value: season.isCurrent ? 'Yes' : 'No' },
     { id: 'providers', label: 'Provider ids', value: season.providerMappings.map(seasonMappingText).join(', ') || 'None' },
     { id: 'slots', label: 'Slots', value: String(season.phases.reduce((count, phase) => count + phase.slots.length, 0)) },
+    { id: 'needsDates', label: 'Needs dates', value: needsDatesText(season) },
   ];
   return (
     <DetailEditModal
@@ -83,6 +94,12 @@ function SeasonDialog({ onClose, season }: { onClose: () => void; season: SportL
       title={season.name}
     />
   );
+}
+
+/** Each phase with slots that need dates and how many ("Postseason 2"), or "None". */
+function needsDatesText(season: SportLeagueSeasonDto): string {
+  const phases = season.phases.filter((phase) => phase.slotsNeedingDates > 0);
+  return phases.length === 0 ? 'None' : phases.map((phase) => `${enumLabel('LeaguePhase', phase.phase)} ${String(phase.slotsNeedingDates)}`).join(', ');
 }
 
 const slotColumnHelper = createColumnHelper<SeasonSlotRow>();
@@ -113,7 +130,12 @@ function seasonSlotColumns(seasons: readonly SportLeagueSeasonDto[]) {
       id: 'slot',
       header: 'Slot',
       meta: { info: 'The slot definition it plays: its own name, else the word for its kind.', type: { kind: 'text' } },
-      cell: ({ getValue }) => <Text variant="strong">{getValue()}</Text>,
+      cell: ({ getValue, row }) => (
+        <span className="inline-flex flex-wrap items-center gap-2">
+          <Text variant="strong">{getValue()}</Text>
+          {row.original.needsDates ? <StatusBadge data-testid={`root-admin-league-structure-season-slot-${row.original.id}-needs-dates`} tone="warning">Needs dates</StatusBadge> : null}
+        </span>
+      ),
     }),
     slotColumnHelper.accessor('slotKind', {
       header: 'Kind',
@@ -127,6 +149,20 @@ function seasonSlotColumns(seasons: readonly SportLeagueSeasonDto[]) {
     slotColumnHelper.accessor('endsAt', {
       header: 'Ends',
       meta: { info: 'The latest end of its games. Blank until the sync has matched one.', type: { kind: 'datetime', direction: 'both' } },
+    }),
+    slotColumnHelper.accessor((slot) => ({ start: slot.window?.startsAt ?? null, end: slot.window?.endsAt ?? null }), {
+      id: 'window',
+      header: 'Date window',
+      meta: { info: 'For a slot its provider places by date window: the dates a game must start in to be placed in it, set as data each Season. Blank when it has none.', type: { kind: 'dateRange', direction: 'both' } },
+    }),
+    slotColumnHelper.accessor((slot) => slot.window?.status ?? null, {
+      id: 'windowStatus',
+      header: 'Window',
+      meta: { info: 'Tentative: a best guess until the sync places a game between two of the event\'s seeds in it, which confirms it. Blank when it has no window.', type: { kind: 'enum', order: SlotWindowStatusOrder, label: (status) => enumLabel('SlotWindowStatus', status as SlotWindowStatus) } },
+      cell: ({ getValue }) => {
+        const status = getValue();
+        return status === null ? '' : enumLabel('SlotWindowStatus', status);
+      },
     }),
     slotColumnHelper.accessor('status', {
       header: 'Status',
@@ -143,7 +179,8 @@ function seasonSlotColumns(seasons: readonly SportLeagueSeasonDto[]) {
 
 /**
  * The Structure tab's Season slots section (#2003): every Season's slots in play order, opening on
- * the current Season's. A slot's dates come from its games once the sync matches them.
+ * the current Season's. A slot's dates come from its games once the sync matches them; a slot placed
+ * by date window shows its window, and a badge while the API says it needs dates (#1924).
  */
 export function LeagueStructureSeasonSlotsSection({ seasons }: { seasons: readonly SportLeagueSeasonDto[] }) {
   return (

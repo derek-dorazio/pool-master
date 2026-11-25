@@ -261,12 +261,12 @@ const POSITIONS: SportLeaguePositionDto[] = [
   { id: '00000000-0000-4000-8000-00000000f002', code: 'K', displayOrder: 2, isFieldEligible: false, providerCodes: [] },
 ];
 
-function renderLeaguePage(path: string) {
+function renderLeaguePage(path: string, seasons: SportLeagueSeasonDto[] = SEASONS) {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [NBA, SUMMER] } });
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: OVERVIEWS } });
   listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }] } });
   listSportLeagueSyncsMock.mockResolvedValue({ data: { syncs: [sync('EVENTS'), sync('FIELD'), sync('SCORES')] } });
-  listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons: SEASONS } });
+  listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons } });
   const queryClient = sportsQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
@@ -313,6 +313,23 @@ describe('League page', () => {
     expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure']);
     // The league's bare address opens its Events tab.
     await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-events')).toHaveAttribute('aria-current', 'page'));
+  });
+
+  it('warns above every tab while a Season has slots that need dates, and leads to the Structure tab', async () => {
+    listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/events', [{ ...SEASONS[0], slotsNeedingDates: 1 }, SEASONS[1]]);
+
+    expect(await screen.findByTestId('root-admin-league-slot-dates-notice')).toHaveTextContent('2026-27 (1)');
+    await userEvent.click(screen.getByTestId('root-admin-league-slot-dates-open'));
+    await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-structure')).toHaveAttribute('aria-current', 'page'));
+  });
+
+  it('shows no slot dates warning on a league whose Seasons have every date they need', async () => {
+    listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/events');
+
+    await screen.findByTestId('root-admin-league-sync-EVENTS');
+    expect(screen.queryByTestId('root-admin-league-slot-dates-notice')).not.toBeInTheDocument();
   });
 
   it('shows the same tabs on a league no provider syncs, with no Tools tab, and offers no Sync now there', async () => {

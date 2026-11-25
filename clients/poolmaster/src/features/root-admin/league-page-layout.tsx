@@ -12,6 +12,7 @@ import { SyncHealthChip } from './sync-health-chip';
 import { SportLeaguePage } from './sport-league-page';
 import { PageSettingsButton } from './page-settings-button';
 import { SportLeagueSettingsDialog } from './sport-league-settings-dialog';
+import { SlotDatesNotice } from './slot-dates-notice';
 import { SyncRunByIdDialog } from './sync-run-by-id-dialog';
 import { failedJobCount, useActivity } from './use-activity';
 import { useManagedSport } from './use-managed-sport';
@@ -20,7 +21,7 @@ import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
 /**
  * /manage/sports/:sport/leagues/:leagueId, a sport league's own page (#1866): the breadcrumb back
  * to Sports, the header with the league's chips and provider, its ⚙, then the tab row
- * over the open tab. The Activity tab counts the league's failed jobs once they are read.
+ * over the open tab, with a banner while any Season's slots need dates (#1924). The Activity tab counts the league's failed jobs once they are read.
  */
 export function LeaguePageLayout() {
   return (
@@ -77,6 +78,7 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
         testId="root-admin-league-header"
         title={sportLeague.name}
       />
+      <SlotDatesNotice sportLeagueId={sportLeague.id} structurePath={`${basePath}/structure`} />
       <Outlet context={context} />
       {settingsOpen ? <SportLeagueSettingsDialog onClose={() => setSettingsOpen(false)} sportLeagueId={sportLeague.id} /> : null}
       {openSyncRunId === null ? null : <SyncRunByIdDialog onClose={() => setOpenSyncRunId(null)} syncRunId={openSyncRunId} />}

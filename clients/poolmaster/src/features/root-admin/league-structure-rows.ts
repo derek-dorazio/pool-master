@@ -6,7 +6,7 @@ import type {
   SportLeaguePositionProviderCodeDto,
   SportLeagueSeasonDto,
   SportLeagueSeasonProviderMappingDto,
-  SportLeagueSeasonSlotDto,
+  SportLeagueSeasonPhaseSlotDto,
   SportLeagueSlotDefinitionDto,
 } from '@/lib/api';
 
@@ -32,7 +32,7 @@ export function mappingText(mapping: SlotProviderMappingDto): string {
 }
 
 /** One Season slot on the Structure tab's grid, with its Season and phase. */
-export type SeasonSlotRow = SportLeagueSeasonSlotDto & { seasonId: string; seasonName: string; phase: LeaguePhase };
+export type SeasonSlotRow = SportLeagueSeasonPhaseSlotDto & { seasonId: string; seasonName: string; phase: LeaguePhase };
 
 /** Every Season's slots, in the order the API gave them: Seasons latest first, slots in play order. */
 export function seasonSlotRowsOf(seasons: readonly SportLeagueSeasonDto[]): SeasonSlotRow[] {
@@ -57,4 +57,10 @@ export function positionCodeText(code: SportLeaguePositionProviderCodeDto): stri
 /** What a slot's game is played in, with how many ("Quarters · 4"); "No periods" for a game kept by none. */
 export function periodsText(slot: Pick<SportLeagueSlotDefinitionDto, 'periodUnit' | 'periodCount'>): string {
   return slot.periodUnit === null || slot.periodCount === null ? 'No periods' : `${enumLabel('PeriodUnit', slot.periodUnit)} · ${String(slot.periodCount)}`;
+}
+
+/** Each Season with slots that need dates, as "2026-27 (2)", in the API's order: latest first. */
+export function seasonsNeedingDatesText(seasons: readonly Pick<SportLeagueSeasonDto, 'name' | 'slotsNeedingDates'>[]): string | null {
+  const needing = seasons.filter((season) => season.slotsNeedingDates > 0);
+  return needing.length === 0 ? null : needing.map((season) => `${season.name} (${String(season.slotsNeedingDates)})`).join(', ');
 }
