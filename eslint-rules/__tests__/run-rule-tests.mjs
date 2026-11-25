@@ -32,6 +32,7 @@ import noSportBranching from '../no-sport-branching.mjs';
 import noClockYearOrLeagueTables from '../no-clock-year-or-league-tables.mjs';
 import noEnumStringLiterals from '../no-enum-string-literals.mjs';
 import noDtoShapedLocalTypes from '../no-dto-shaped-local-types.mjs';
+import noLocalEnums from '../no-local-enums.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
@@ -1537,6 +1538,32 @@ ruleTester.run('no-dto-shaped-local-types', noDtoShapedLocalTypes, {
     { code: '// poolmaster-allow-dto-shape: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
     {
       code: 'interface A { id: string; name: string; leagueCode: string }\ninterface B { id: string; name: string; isActive: boolean }',
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2107: no enum of the web app's own, declared or as a const object of codes.
+ruleTester.run('no-local-enums', noLocalEnums, {
+  valid: [
+    // Display keys and mixed objects are not codes.
+    "const tabs = { details: 'details', actions: 'actions' };",
+    "const tone = { OPEN: 'success', FINAL: 'neutral' };",
+    "const sizes = { SMALL: 1, LARGE: 2 };",
+    // One entry is a constant, not a set of codes.
+    "const only = { A: 'A' };",
+    "let mutable = { A: 'A', B: 'B' };",
+    { code: 'enum Legacy { A = "A" }', filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
+  ],
+  invalid: [
+    { code: "export enum FeatureMark { INCLUDED = 'INCLUDED', LOCKED = 'LOCKED' }", errors: [{ messageId: 'localEnum' }] },
+    { code: 'const enum Mode { A, B }', errors: [{ messageId: 'localEnum' }] },
+    { code: "export const Mark = { INCLUDED: 'INCLUDED', LOCKED: 'LOCKED' } as const;", errors: [{ messageId: 'localEnum' }] },
+    { code: "const Mode = { PICK_EM: 'PICK_EM', SURVIVOR: 'SURVIVOR' } satisfies Record<string, string>;", errors: [{ messageId: 'localEnum' }] },
+    {
+      code: "enum A { X = 'X' }\nenum B { Y = 'Y' }",
       filename: 'legacy.ts',
       options: [{ baseline: { 'legacy.ts': 1 } }],
       errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],

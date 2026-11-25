@@ -87,6 +87,7 @@ export const BASELINES = [
   { file: 'eslint-rules/clock-year-baseline.json', read: countsPerFile },
   { file: 'eslint-rules/enum-string-literal-baseline.json', read: countsPerFile },
   { file: 'eslint-rules/dto-shape-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/local-enum-baseline.json', read: countsPerFile },
   { file: 'scripts/page-sections-baseline.json', read: countsPerFile },
   { file: 'scripts/retired-names.json', read: countsPerFile },
   { file: 'scripts/sport-registry-frozen.json', read: listedFiles },

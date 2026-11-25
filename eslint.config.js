@@ -42,6 +42,12 @@ const DTO_SHAPE_BASELINE = Object.fromEntries(
     .filter(([key]) => !key.startsWith('$')),
 );
 
+// #2107: the local enums each grandfathered web file may still have, by repo path.
+const LOCAL_ENUM_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/local-enum-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
 /**
  * Selector sets are hoisted to module scope on purpose.
  *
@@ -623,6 +629,8 @@ export default tseslint.config(
       'poolmaster/no-enum-string-literals': ['error', { baseline: ENUM_STRING_LITERAL_BASELINE }],
       // #2107: no local copy of a generated hey-api type under another name.
       'poolmaster/no-dto-shaped-local-types': ['error', { baseline: DTO_SHAPE_BASELINE }],
+      // #2107: no enum of the web app's own.
+      'poolmaster/no-local-enums': ['error', { baseline: LOCAL_ENUM_BASELINE }],
     },
   },
   {
