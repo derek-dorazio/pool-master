@@ -61,7 +61,7 @@ import {
 import type { ContestOpenedNotice } from '../../../packages/core-api/src/modules/notifications';
 import type { CupService } from '../../../packages/core-api/src/modules/cups/service';
 import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
-import { createBatchedContestOpeningReader, createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { createBatchedContestOpeningReader, createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/contest-sport-event-reader';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestRepo,
@@ -70,7 +70,7 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import { fakeLogger } from '../../support/fake-logger';
 import { expectDefined } from '../../support/expect-defined';
-import { EIGHT_SEEDS, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
+import { EIGHT_SEEDS, bracketMatches, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
@@ -3203,17 +3203,13 @@ describe('createContestSportEventReader event and game counts', () => {
   function addGame(store: InMemorySportEvents, sportEventId: string, game: {
     id: string; roundNumber: number; status?: MatchStatus; scheduledDate?: Date | null; home?: string | null; away?: string | null;
   }) {
-    store.matchRows.push({
-      id: game.id,
-      sportEventId,
+    const [row] = bracketMatches(sportEventId, [{
       matchNumber: store.matchRows.length + 1,
-      roundNumber: game.roundNumber,
-      status: game.status ?? MatchStatus.SCHEDULED,
-      scheduledDate: game.scheduledDate ?? null,
-      homeSportEventParticipantId: game.home === undefined ? 'home' : game.home,
-      awaySportEventParticipantId: game.away === undefined ? 'away' : game.away,
-      periodScores: [],
-    } as unknown as (typeof store.matchRows)[number]);
+      round: game.roundNumber,
+      home: game.home === undefined ? 'home' : game.home,
+      away: game.away === undefined ? 'away' : game.away,
+    }]);
+    store.matchRows.push({ ...expectDefined(row, 'game row'), id: game.id, status: game.status ?? MatchStatus.SCHEDULED, scheduledDate: game.scheduledDate ?? null });
   }
 
   it('falls back to the sport\'s default tournament format when its sport has no stored row', async () => {
@@ -3270,10 +3266,8 @@ describe('createBatchedContestOpeningReader', () => {
   }
 
   function addGame(store: InMemorySportEvents, sportEventId: string, id: string, roundNumber: number, scheduledDate: Date, status: MatchStatus = MatchStatus.SCHEDULED) {
-    store.matchRows.push({
-      id, sportEventId, matchNumber: store.matchRows.length + 1, roundNumber, status, scheduledDate,
-      homeSportEventParticipantId: 'home', awaySportEventParticipantId: 'away', periodScores: [],
-    } as unknown as (typeof store.matchRows)[number]);
+    const [row] = bracketMatches(sportEventId, [{ matchNumber: store.matchRows.length + 1, round: roundNumber, home: 'home', away: 'away' }]);
+    store.matchRows.push({ ...expectDefined(row, 'game row'), id, status, scheduledDate });
   }
 
   it('reads the sport rows once for every event asked about on one page', async () => {
