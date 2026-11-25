@@ -171,6 +171,7 @@ function refsOf(mappings: ReadonlyArray<{
  * until its scheduled end, or `ROUND_WITHOUT_END_UNDERWAY_MS` after its start with none recorded.
  */
 function roundUnderwaySince(rounds: { scheduledDate: Date; scheduledEndAt: Date | null }[], now: Date): Date | null {
+  // poolmaster-allow-position: the query takes the one latest started round (roundNumber desc, take 1)
   const round = rounds.at(0);
   if (round === undefined) return null;
   const endsAt = round.scheduledEndAt ?? new Date(round.scheduledDate.getTime() + ROUND_WITHOUT_END_UNDERWAY_MS);
@@ -182,6 +183,7 @@ function roundUnderwaySince(rounds: { scheduledDate: Date; scheduledEndAt: Date 
  * progress, or none has a scheduled start, since a row's last change is not when play began.
  */
 function matchUnderwaySince(matches: { scheduledDate: Date | null }[]): Date | null {
+  // poolmaster-allow-position: the query takes the one match in progress longest (scheduledDate asc, take 1)
   const match = matches.at(0);
   return match?.scheduledDate ?? null;
 }
