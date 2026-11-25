@@ -50,6 +50,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | A shared enum value written as a string in a web comparison, `case` label or literal type | `poolmaster/no-enum-string-literals` (ESLint, shrink-only baseline) |
 | A web interface or object type copying a generated hey-api type under another name | `poolmaster/no-dto-shaped-local-types` (ESLint, shrink-only baseline) |
 | An enum of the web app's own, declared or as a `const` object of codes | `poolmaster/no-local-enums` (ESLint, shrink-only baseline) |
+| An export nothing else uses, or one only tests, stories or fixtures use (a test-only path in production source) | `rules:check:dead-exports` (`scripts/dead-exports.json`; a test hook that must stay takes `poolmaster-allow-test-export: <reason>`) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.

@@ -46,12 +46,6 @@ export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 /** Every system email and the email settings (#1872). */
 export const NOTIFICATIONS_PATH = '/manage/notifications';
 
-/**
- * The old settings page's path, gone since every group moved to its own page (#1886). It redirects
- * to Pricing, the last group to leave it.
- */
-export const SETTINGS_PATH = '/manage/settings';
-
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
 

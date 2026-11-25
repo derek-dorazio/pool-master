@@ -20,7 +20,6 @@ import type { enUS } from './en-US';
 import { DISPLAY_STRING_MODULES, SOURCE_LOCALE } from './languages';
 import { isSportNounRole, type OptionalSportWordRole, type SportWordRole } from './sport-word-roles';
 
-const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
 type PluralBase<K extends string> = K extends `${infer Base}_${'zero' | 'one' | 'two' | 'few' | 'many' | 'other'}` ? Base : K;
 
 type EnumKey = { [E in SharedEnumName]: `enum.${E}.${SharedEnums[E]}` }[SharedEnumName];
@@ -127,11 +126,6 @@ export function flattenDisplayStrings(module: DisplayStringsModule): Record<stri
     for (const [role, entry] of Object.entries(roles)) add(`sport.${sport}.${role}`, entry);
   }
   return flat;
-}
-
-/** A key with its plural suffix taken off: `word.roundCount_one` is looked up as `word.roundCount`. */
-export function pluralBaseKey(key: string): string {
-  return key.replace(PLURAL_SUFFIX, '');
 }
 
 export type DisplayStrings = {
@@ -246,9 +240,4 @@ export function enumLabel<E extends SharedEnumName>(enumName: E, code: SharedEnu
  */
 export function hasDisplayString(key: string, locale?: string | null): boolean {
   return appDisplayStrings.hasDisplayString(key, locale);
-}
-
-/** The locale tag of the module a reader's locale reads. */
-export function displayStringLocaleFor(locale?: string | null): string {
-  return appDisplayStrings.moduleLocaleFor(locale);
 }
