@@ -392,14 +392,14 @@ describe('history mappers', () => {
 
   it('shows a perpetual trophy with a plate per year and each plate\'s winners', () => {
     expect(toPerpetualTrophyDto({
-      eventSeriesId: 'masters',
-      seriesName: 'Masters Tournament',
+      trophyId: 'masters',
+      name: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: SelectionType.TIERED,
       plates: [{ year: 2026, contestId: 'masters-2026', winners: [eagles] }, { year: 2025, contestId: 'masters-2025', winners: [] }],
     })).toEqual({
-      eventSeriesId: 'masters',
-      seriesName: 'Masters Tournament',
+      trophyId: 'masters',
+      name: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: SelectionType.TIERED,
       plates: [

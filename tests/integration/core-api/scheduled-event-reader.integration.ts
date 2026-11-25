@@ -54,7 +54,7 @@ async function seriesInLeague(name: string, synced: boolean, isActive = true) {
   });
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
   if (synced) await syncLeagueTo(prisma, league.id, 'pga');
-  return freshEventEdition(prisma, { name, sportLeagueId: league.id, championshipYear: 2026 });
+  return freshEventEdition(prisma, { sportLeagueId: league.id, championshipYear: 2026 });
 }
 
 /**

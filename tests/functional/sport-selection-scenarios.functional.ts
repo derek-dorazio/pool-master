@@ -142,8 +142,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     const field = { sportEventParticipant: { sportEventId: { in: eventIds } } };
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.contestEntryPick.deleteMany({ where: field });
@@ -158,12 +156,10 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
   const ownLeagues = await db.sportLeague.findMany({ where: { name: { contains: RUN } }, select: { id: true } });
-  await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: ownLeagues.map((league) => league.id) } } });
   await deleteTestSportLeagues(db, ownLeagues.map((league) => league.id));
 }
 
@@ -265,7 +261,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
 
       const templates = expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
-        query: { sport, sportLeagueId: sportLeague.id, active: true },
+        query: { sportLeagueId: sportLeague.id, active: true },
       })).data).templates
         .filter((template) => template.contestFormat === ContestFormat.ROSTER)
         .filter((template) => template.selectionType === selectionType)

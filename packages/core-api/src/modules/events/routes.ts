@@ -167,7 +167,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
         'A test event (QA only, #2004), DRAFT, on a free test slot of its league\'s current Season: the sync makes every other event. '
         + 'Its league, Season and dates are the slot\'s, with its league\'s default rounds and tiers. '
         + '404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. '
-        + 'The series is found or created in the league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season. Root admin only.',
+        + 'Root admin only.',
       operationId: 'createEvent',
       body: schemaRef('CreateSportEventRequest'),
       response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },

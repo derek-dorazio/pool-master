@@ -71,6 +71,7 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_provider_mappings', 1],
   ['SELECT sport_event_round_matches', 1],
   ['SELECT sport_event_rounds', 1],
+  ['SELECT sport_event_slots', 1], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_events', 1],
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
@@ -89,6 +90,7 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT contest_sport_events', 1],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 2],
   ['SELECT sport_league_season_phase_slots', 1], // the answer's event slots (#2004)
@@ -341,6 +343,7 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_event_participant_valuations', 2],
       ['SELECT sport_event_participants', 3],
       ['SELECT sport_event_provider_mappings', 1],
+      ['SELECT sport_event_slots', 1], // the slot definitions the event plays, read with it (#2010)
       ['SELECT sport_event_tiers', 3],
       ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
@@ -721,6 +724,7 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT contests', 2],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_season_phase_slots', 1], // the answer's event slots (#2004)
@@ -744,6 +748,7 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 3],
   ['SELECT sport_event_rounds', 1],
+  ['SELECT sport_event_slots', 3], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
   ['SELECT sport_league_season_phase_slots', 2], // whether the event has slots (its dates are theirs), and the answer's (#2004)

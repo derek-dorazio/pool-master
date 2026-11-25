@@ -1,6 +1,5 @@
-import { sportPlay } from '../../support/sport-play';
 import type { ContestConfigTemplateListResponse, SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestTemplateEventType, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, SelectionType, Sport, TemplateCoverageMode } from '@poolmaster/shared/domain';
 import { formatLoadReport, LoadAction, LoadMode, LoadSubject } from '../../../packages/core-api/scripts/seed-golf/load-report';
 import type { SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { chooseContestTemplate, choosePicks, refuseUnlessTestTarget, testLeagueCode, testLeagueName } from '../../../packages/core-api/scripts/seed-golf/test-participants-data';
@@ -99,7 +98,7 @@ describe('test participants: which template a test contest is built from', () =>
 
   function template(templateKey: string, fields: Partial<Template>): Template {
     return {
-      id: `tpl-${templateKey}`, sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, eventType: ContestTemplateEventType.KNOCKOUT,
+      id: `tpl-${templateKey}`, sportLeagueId: NFL, coverageMode: TemplateCoverageMode.ALL_LISTED, slots: [],
       contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateKey, name: templateKey, description: templateKey,
       sortOrder: 1, isDefault: false, active: true, schemaVersion: 1,
       configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, maxEntriesPerSquad: 1 },
@@ -107,35 +106,31 @@ describe('test participants: which template a test contest is built from', () =>
     } as Template;
   }
 
-  // The NFL's templates as seeded: roster ones for the playoffs, pick'em and survivor for a week, squares on any game.
-  const nflTemplates = [
+  // The NFL's templates as the API lists them for an event (#2010): those covering one of its
+  // slots. A week is offered pick'em, survivor and squares; the playoffs, the roster ones too.
+  const weekTemplates = [
+    template('nfl-pick-em-straight-up', { coverageMode: TemplateCoverageMode.ONE_SLOT, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.PICK_EM, isDefault: true }),
+    template('nfl-survivor', { coverageMode: TemplateCoverageMode.FROM_SLOT, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.SURVIVOR, sortOrder: 4, isDefault: true }),
+    template('nfl-squares', { coverageMode: TemplateCoverageMode.ONE_SLOT, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, sortOrder: 10, isDefault: true }),
+  ];
+  const playoffTemplates = [
     template('nfl-tiered-doubling', { sortOrder: 1 }),
     template('nfl-budget-doubling', { selectionType: SelectionType.BUDGET_PICK, sortOrder: 2, isDefault: true }),
     template('nfl-random-draw-doubling', { selectionType: SelectionType.RANDOM_DRAW, sortOrder: 3, isDefault: true }),
-    template('nfl-pick-em-straight-up', { eventType: ContestTemplateEventType.WEEK, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.PICK_EM, isDefault: true }),
-    template('nfl-survivor', { eventType: ContestTemplateEventType.WEEK, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.SURVIVOR, sortOrder: 4, isDefault: true }),
-    template('nfl-squares', { eventType: null, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, sortOrder: 10, isDefault: true }),
+    template('nfl-squares', { coverageMode: TemplateCoverageMode.ONE_SLOT, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, sortOrder: 10, isDefault: true }),
   ];
 
-  it('builds no test contest on an NFL week, which offers no roster template, instead of borrowing a playoff template whose round values do not fit one round', () => {
-    const week = { sport: Sport.AMERICAN_FOOTBALL, ...sportPlay(Sport.AMERICAN_FOOTBALL), sportLeagueId: NFL, rounds: 1 };
-
-    expect(chooseContestTemplate(nflTemplates, week)).toBeNull();
+  it('builds no test contest on an NFL week, whose offered templates hold no roster one, rather than borrowing a playoff template', () => {
+    expect(chooseContestTemplate(weekTemplates)).toBeNull();
   });
 
-  it('builds a playoff test contest from the league\'s default roster template, never a draw', () => {
-    const playoffs = { sport: Sport.AMERICAN_FOOTBALL, ...sportPlay(Sport.AMERICAN_FOOTBALL), sportLeagueId: NFL, rounds: 4 };
-
-    expect(chooseContestTemplate(nflTemplates, playoffs)?.templateKey).toBe('nfl-budget-doubling');
+  it('builds a playoff test contest from the offered default roster template, never a draw', () => {
+    expect(chooseContestTemplate(playoffTemplates)?.templateKey).toBe('nfl-budget-doubling');
   });
 
-  it('builds a test contest from the event\'s own sport league\'s default, never another league\'s copy of the same setup', () => {
-    const PGA = 'pga-league';
-    const LPGA = 'lpga-league';
-    const golf = (templateKey: string, sportLeagueId: string, isDefault: boolean) =>
-      template(templateKey, { sport: Sport.GOLF, sportLeagueId, eventType: null, isDefault });
-    const tournament = { sport: Sport.GOLF, ...sportPlay(Sport.GOLF), sportLeagueId: LPGA, rounds: 4 };
+  it('builds from the first roster template in sort order when none offered is a default', () => {
+    const offered = [template('second', { sortOrder: 2 }), template('first', { sortOrder: 1 })];
 
-    expect(chooseContestTemplate([golf('pga-default', PGA, true), golf('lpga-other', LPGA, false), golf('lpga-default', LPGA, true)], tournament)?.templateKey).toBe('lpga-default');
+    expect(chooseContestTemplate(offered)?.templateKey).toBe('first');
   });
 });

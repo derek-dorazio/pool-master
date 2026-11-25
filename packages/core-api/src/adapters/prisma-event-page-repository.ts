@@ -2,12 +2,12 @@
  * Prisma adapter for the EventPageRepository port (#1007).
  */
 import type { PrismaClient } from '@prisma/client';
-import type { EventPageRepository, EventPageSeries } from '@poolmaster/shared/db';
+import type { EventPageRepository } from '@poolmaster/shared/db';
 import {
   SportEventStatus,
   type EventPage,
   type EventPageAddress,
-  type EventPageEdition,
+  type EventPageNextSlot,
   type EventPageOffer,
   type Sport,
   NOT_OVER_SPORT_EVENT_STATUSES,
@@ -80,7 +80,7 @@ export class PrismaEventPageRepository implements EventPageRepository {
       eventPageId: row.eventPageId,
       sportLeagueId: row.sportLeagueId,
       sportLeagueName: row.sportLeague.displayName ?? row.sportLeague.name,
-      eventSeriesName: row.eventSeriesName,
+      sportLeaguePhaseSlotId: row.sportLeaguePhaseSlotId,
       template: mapContestConfigTemplate(row.template),
       bracketStartRound: row.bracketStartRound,
       sortOrder: row.sortOrder,
@@ -88,31 +88,33 @@ export class PrismaEventPageRepository implements EventPageRepository {
     }));
   }
 
-  async findEditionsNotOver(series: readonly EventPageSeries[]): Promise<EventPageEdition[][]> {
-    if (series.length === 0) return [];
-    const rows = await this.prisma.sportEvent.findMany({
+  async findSlotsNotOver(sportLeaguePhaseSlotIds: readonly string[]): Promise<EventPageNextSlot[][]> {
+    if (sportLeaguePhaseSlotIds.length === 0) return [];
+    // A Season slot is shown through the event that owns it (#2010); one no event owns yet is left out.
+    const rows = await this.prisma.sportEventSlot.findMany({
       where: {
-        // An event's league is its Season's (#2004); the series names the edition.
-        OR: series.map(({ sportLeagueId, eventSeriesName }) => ({ sportLeagueSeason: { sportLeagueId }, eventSeries: { name: eventSeriesName } })),
-        status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] },
+        seasonSlot: { sportLeaguePhaseSlotId: { in: [...new Set(sportLeaguePhaseSlotIds)] } },
+        sportEvent: { status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] } },
       },
       select: {
-        id: true, name: true, sportLeagueSeason: { select: { championshipYear: true, sportLeagueId: true } }, startDate: true, endDate: true, status: true,
-        eventSeries: { select: { name: true } },
+        sportLeagueSeasonPhaseSlotId: true,
+        seasonSlot: { select: { sportLeaguePhaseSlotId: true, season: { select: { championshipYear: true } } } },
+        sportEvent: { select: { id: true, name: true, startDate: true, endDate: true, status: true } },
       },
-      orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
+      orderBy: [{ sportEvent: { startDate: 'asc' } }, { id: 'asc' }],
     });
-    return series.map(({ sportLeagueId, eventSeriesName }) => {
-      const editions = rows.filter((row) => row.sportLeagueSeason.sportLeagueId === sportLeagueId && row.eventSeries.name === eventSeriesName);
-      // The edition under way comes first, then the rest soonest first.
-      const underWay = editions.filter((row) => row.status === SportEventStatus.IN_PROGRESS);
-      const rest = editions.filter((row) => row.status !== SportEventStatus.IN_PROGRESS);
+    return sportLeaguePhaseSlotIds.map((definitionId) => {
+      const slots = rows.filter((row) => row.seasonSlot.sportLeaguePhaseSlotId === definitionId);
+      // The slot under way comes first, then the rest soonest first.
+      const underWay = slots.filter((row) => row.sportEvent.status === SportEventStatus.IN_PROGRESS);
+      const rest = slots.filter((row) => row.sportEvent.status !== SportEventStatus.IN_PROGRESS);
       return [...underWay, ...rest].map((row) => ({
-        sportEventId: row.id,
-        name: row.name,
-        championshipYear: row.sportLeagueSeason.championshipYear,
-        startDate: row.startDate,
-        endDate: row.endDate,
+        seasonSlotId: row.sportLeagueSeasonPhaseSlotId,
+        sportEventId: row.sportEvent.id,
+        name: row.sportEvent.name,
+        championshipYear: row.seasonSlot.season.championshipYear,
+        startDate: row.sportEvent.startDate,
+        endDate: row.sportEvent.endDate,
       }));
     });
   }

@@ -57,8 +57,6 @@ async function cleanup(): Promise<void> {
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
     // The seeded series stays: only this run's event series goes with its race.
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -66,7 +64,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
@@ -136,7 +133,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     // The series' own templates, never IndyCar's.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AUTO_RACING, sportLeagueId: nascar.id, active: true },
+      query: { sportLeagueId: nascar.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
@@ -278,7 +275,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AUTO_RACING, sportLeagueId: formula1.id, active: true },
+      query: { sportLeagueId: formula1.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([

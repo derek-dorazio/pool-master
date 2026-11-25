@@ -134,10 +134,10 @@ describe('the sync findings table', () => {
     // One edition per event: a series has one event a year.
     const event = async (name: string) => prisma.sportEvent.create({
       data: { ...(await freshEventEdition(prisma)), name, startDate: NOW },
-      select: { id: true, eventSeries: { select: { sportLeagueId: true } } },
+      select: { id: true, sportLeagueId: true },
     });
     const [week1, week2] = [await event('Week 1'), await event('Week 2')];
-    const { sportLeagueId } = week1.eventSeries;
+    const { sportLeagueId } = week1;
     const noField = (sportEventId: string): ProviderSyncFindingRaise => ({
       kind: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS, severity: ProviderSyncFindingSeverity.WARNING, sportLeagueId, sportEventId, providerId: provider.id, providerValue: null, providerValueName: null,
     });

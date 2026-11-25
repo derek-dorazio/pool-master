@@ -1,5 +1,4 @@
 import {
-  contestTemplateEventTypeOf,
   eventPlaysMatches,
   eventSportDefinition,
   getSportDefinition,
@@ -41,11 +40,10 @@ describe('An event read through its sport league', () => {
     expect([definition.sport, definition.participantType, definition.scoringFamily]).toEqual([Sport.GOLF, ParticipantType.TEAM, ScoringFamily.STROKE_PLAY]);
   });
 
-  it('plays matches when its sport does, and is the kind of match event its sport\'s format names', () => {
+  it('plays matches when its sport does', () => {
     expect([
       eventPlaysMatches({ sport: Sport.BASEBALL, ...sportPlay(Sport.BASEBALL) }),
       eventPlaysMatches({ sport: Sport.GOLF, ...sportPlay(Sport.GOLF) }),
     ]).toEqual([true, false]);
-    expect(contestTemplateEventTypeOf({ sport: Sport.BASEBALL, ...sportPlay(Sport.BASEBALL), rounds: 4 })).toBe('KNOCKOUT');
   });
 });

@@ -12,16 +12,20 @@ export interface FinalContest {
 }
 
 /**
- * A final contest of exactly one event (#874): what a perpetual trophy is built from. An event is
- * one edition of its series a year, so the same series and selection type again is the same
- * contest run again.
+ * A final contest of exactly one event (#874): what a perpetual trophy is built from. Until #2024
+ * a trophy is keyed by the slot definitions the event covers (#2010): each Season has a slot of
+ * each, so the same definitions and selection type again is the same contest run again.
  */
 export interface SeriesContest {
   id: string;
   selectionType: SelectionType;
   cupWeight: CupWeight;
-  eventSeriesId: string;
-  seriesName: string;
+  /** The slot definitions of the event's Season slots, in play order; empty for an event with none. */
+  slotDefinitionIds: string[];
+  /** The event's name, such as "Masters Tournament 2026". */
+  eventName: string;
+  /** The league's proper name for the first of those definitions, such as "Masters"; null when it has none. */
+  slotName: string | null;
   sportLeagueName: string;
   /** The year the edition's Season is named for: the 2026 Masters. */
   championshipYear: number;
@@ -48,7 +52,7 @@ export interface ChampionshipRepository {
    * `contestIds` whenever they did (#837).
    */
   findFinalContests(leagueId: string, from: Date, to: Date, contestIds: readonly string[]): Promise<FinalContest[]>;
-  /** The league's completed contests of exactly one event, with that event's series (#874). */
+  /** The league's completed contests of exactly one event, with the slot definitions it covers (#874, #2010). */
   findSeriesContests(leagueId: string): Promise<SeriesContest[]>;
 }
 

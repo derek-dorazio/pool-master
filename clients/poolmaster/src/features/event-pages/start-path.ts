@@ -4,8 +4,8 @@ import { buildLeagueAdminContestCreatePath, buildLeaguePath } from '@/features/l
 
 /**
  * Where an event page's button points (#1008): one page, and the contest setup chosen on it,
- * when one was. The offer's edition and state are read again on arrival, so a link from an old
- * email starts on the edition that can still take a contest.
+ * when one was. The offer's next slot and state are read again on arrival, so a link from an old
+ * email starts on the slot that can still take a contest.
  */
 export interface StartRequest {
   /** The page's sport's URL segment, as the page's own address spells it. */
@@ -46,12 +46,12 @@ export function parseStartReturnPath(path: string): StartRequest | null {
 }
 
 /**
- * Where a commissioner goes in the league they start in: Create contest on the offer's edition
+ * Where a commissioner goes in the league they start in: Create contest on the offer's next slot's event
  * when it is open, else the league's home, which says when it opens.
  */
 export function buildStartDestination(leagueCode: string, request: StartRequest, offer: EventPageOfferDto | null): string {
   if (offer?.state === EventPageOfferState.OPEN) {
-    const query = new URLSearchParams({ template: offer.template.id, event: offer.edition.sportEventId });
+    const query = new URLSearchParams({ template: offer.template.id, event: offer.nextSlot.sportEventId });
     if (offer.startsAtRound !== null) {
       query.set('startRound', String(offer.startsAtRound));
     }

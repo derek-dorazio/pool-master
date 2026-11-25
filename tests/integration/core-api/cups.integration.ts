@@ -66,7 +66,7 @@ async function seedLeague() {
         data: { contestId: row.id, contestEntryId: entry.id, position, countingPickLimit: 4, scoredPickCount: 4, settledAt: new Date() },
       });
     }
-    return { contest: row, sportLeagueId: options.sportLeagueId ?? (await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } })).sportLeagueId };
+    return { contest: row, sportLeagueId: options.sportLeagueId ?? edition.sportLeagueId };
   };
   return { league, squads, contest };
 }

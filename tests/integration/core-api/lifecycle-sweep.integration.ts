@@ -8,7 +8,6 @@ import { randomUUID } from 'node:crypto';
 import { ContestStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
 import { PostgresJobLock } from '../../../packages/core-api/src/core/job-lock';
-import { createReleasedEditionContests } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { createEmailOutbox, EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
@@ -73,7 +72,6 @@ function lifecycleSweep(now: Date) {
   // What follows each change (#1946), as index.ts wires it.
   const domainEvents = new DomainEvents({
     queue: jobs.queue,
-    releasedEditionContests: createReleasedEditionContests(prisma, logger),
     sportEventChanged: contestNotices,
   });
   const eventLifecycleService = createEventLifecycleService(prisma, {

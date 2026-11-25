@@ -66,7 +66,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
-import { fixtureSeasonId, mapEventToProvider, seriesSeasonId, withCurrentSeason } from '../../support/event-edition';
+import { fixtureSeasonId, mapEventToProvider, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
@@ -211,12 +211,11 @@ async function seedLeagueActivity(jobs: number) {
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Tour ${suffix}` } });
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Open ${suffix}` } });
   for (let index = 0; index < jobs; index += 1) {
     const onLeague = index % 2 === 0;
     const event = onLeague ? null : await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026 + index), name: `Activity Open ${suffix} ${String(index)}`,
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026 + index), name: `Activity Open ${suffix} ${String(index)}`,
         startDate: new Date(Date.now() + 7 * DAY),
       },
     });
@@ -251,7 +250,7 @@ async function seedRateLimitedJobs() {
   await syncLeagueTo(prisma, sportLeague.id, 'pga');
   const events = await Promise.all([provider, tennisProvider].map(async (owner) => prisma.sportEvent.create({
     data: {
-      eventSeriesId: (await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Limited ${owner.providerName} ${suffix}` } })).id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `Limited ${owner.providerName} ${suffix}`,
+      sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `Limited ${owner.providerName} ${suffix}`,
       startDate: new Date(Date.now() + 7 * DAY),
     },
   })));
@@ -305,9 +304,8 @@ async function seedSyncFindings(findings: number) {
   const providerRow = await prisma.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
   for (let index = 0; index < findings; index += 1) {
     const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Findings Tour ${suffix} ${String(index)}` } });
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Findings Open ${suffix} ${String(index)}` } });
     const event = await prisma.sportEvent.create({
-      data: { eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Findings Open ${suffix} ${String(index)}`,
+      data: { sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `Findings Open ${suffix} ${String(index)}`,
         startDate: new Date(Date.now() + 7 * DAY) },
     });
     const changer = await createTestUser({ isRootAdmin: true });
@@ -338,10 +336,9 @@ async function seedSportLeagueOverviews(leagues: number) {
     await syncLeagueTo(prisma, sportLeague.id, 'pga');
     // Its current Season gives the row its season (#2003).
     await withCurrentSeason(prisma, sportLeague.id, 2026);
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${name} Open` } });
     const event = async (key: string, eventYear: number, extra: Pick<Prisma.SportEventUncheckedCreateInput, 'status' | 'autoReleaseCheckedAt' | 'autoReleaseOutcome' | 'autoReleaseFailedChecks'> = {}) => prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventYear), name: `${name} ${key}`,
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, eventYear), name: `${name} ${key}`,
         startDate: new Date(Date.now() + 7 * DAY), ...extra,
       },
     });
@@ -350,7 +347,7 @@ async function seedSportLeagueOverviews(leagues: number) {
     // Its results are overdue: in play, with its one round's scheduled end a day gone (#1865).
     const overdue = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2025), name: `${name} overdue`, status: 'IN_PROGRESS',
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2025), name: `${name} overdue`, status: 'IN_PROGRESS',
         startDate: new Date(Date.now() - 3 * DAY),
       },
     });
@@ -413,12 +410,11 @@ async function seedLeagueEventOverviews(events: number) {
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Tour ${suffix}` } });
   await syncLeagueTo(prisma, sportLeague.id, 'pga');
   for (let index = 0; index < events; index += 1) {
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Open ${suffix} ${String(index)}` } });
     const overdue = index % 2 === 0;
     const startDate = new Date(Date.now() + (overdue ? -3 : 3) * DAY);
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `League Page Open ${suffix} ${String(index)}`, status: overdue ? 'IN_PROGRESS' : 'DRAFT',
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `League Page Open ${suffix} ${String(index)}`, status: overdue ? 'IN_PROGRESS' : 'DRAFT',
         startDate,
         ...(!overdue && { autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'] }),
       },

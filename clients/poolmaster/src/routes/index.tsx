@@ -46,7 +46,6 @@ import { LeagueParticipantsTab } from '@/features/root-admin/league-participants
 import { LeagueToolsTab } from '@/features/root-admin/league-tools-tab';
 import { ParticipantLinkRedirect } from '@/features/root-admin/participant-link-redirect';
 import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin-participant-create-page';
-import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { EventPageLayout } from '@/features/root-admin/event-page-layout';
@@ -384,13 +383,10 @@ export const router = createBrowserRouter([
                     element: <ManageLandingRedirect />,
                   },
                   {
-                    // The old contest template list; each league's templates are on its League page (#1866).
-                    path: 'content-configuration',
+                    // The old contest template pages; each league's templates are on its League
+                    // page's Contest templates dialog, the one place to edit them (#1866, #2010).
+                    path: 'content-configuration/*',
                     element: <Navigate replace to={SPORTS_PATH} />,
-                  },
-                  {
-                    path: 'content-configuration/:templateKey',
-                    element: <RootAdminContentConfigurationDetailPage />,
                   },
                   {
                     // The old event list; each league's events are on its League page (#1866).

@@ -6,9 +6,8 @@ import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
 
 /**
- * The tour a tournament is created into, shared by both creation modes. A tournament is one
- * Season's edition of a series on a tour, and goes in the tour's current Season (#2003); the series
- * is found or created from its name. Both are fixed at creation.
+ * The tour a tournament is created into. A tournament goes in the tour's current Season
+ * (#2003), and its tour is fixed at creation.
  */
 export function SportEventEditionFields({
   edition,

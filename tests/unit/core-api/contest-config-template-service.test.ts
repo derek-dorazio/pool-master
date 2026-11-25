@@ -3,20 +3,30 @@
  * template store that filters the way the Prisma adapter does. Tests assert the stored rows.
  */
 import type { ContestConfigTemplateRepository } from '@poolmaster/shared/db';
-import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
-import { ContestFormat, ContestTemplateEventType, SelectionType, Sport } from '@poolmaster/shared/domain';
+import type { ContestConfigTemplate, ContestTemplateSlot } from '@poolmaster/shared/domain';
+import { ContestFormat, LeaguePhase, MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from '@poolmaster/shared/domain';
 import {
+  ContestConfigTemplateCoverageError,
   ContestConfigTemplateNotFoundError,
   ContestConfigTemplateRulesMismatchError,
   ContestConfigTemplateService,
 } from '../../../packages/core-api/src/modules/contest-config-templates/service';
 
+/** A slot definition of the PGA TOUR's regular season: a tournament of its own. */
+function slot(overrides: Partial<ContestTemplateSlot> & { id: string }): ContestTemplateSlot {
+  return {
+    key: overrides.id.toUpperCase(), name: null, slotKind: SlotKind.TOURNAMENT, weekNumber: null,
+    sportLeaguePhaseId: 'pga-regular', phase: LeaguePhase.REGULAR, matchFormat: MatchFormat.FIELD,
+    ...overrides,
+  };
+}
+
 function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTemplate {
   return {
     id: 'template',
-    sport: Sport.GOLF,
     sportLeagueId: 'pga-league',
-    eventType: null,
+    coverageMode: TemplateCoverageMode.ONE_SLOT,
+    slots: [slot({ id: 'masters' })],
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
     templateKey: 'golf-tiered',
@@ -26,7 +36,6 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
     isDefault: false,
     active: true,
     configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
-    eventSeriesNames: [],
     schemaVersion: 1,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
@@ -35,44 +44,58 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
 }
 
 /**
- * Mirrors PrismaContestConfigTemplateRepository.list: an event type also matches "any event type",
- * and a sport league matches only its own templates.
+ * Mirrors PrismaContestConfigTemplateRepository: the list matches a template covering any of the
+ * asked slot definitions, and a sport league only its own; an update takes the default off the
+ * other template of its sport league and selection type, and replaces the slots it is given.
+ * `definitions` are the slot definitions each sport league has.
  */
-function templateStore(rows: ContestConfigTemplate[]) {
+function templateStore(rows: ContestConfigTemplate[], definitions: Record<string, ContestTemplateSlot[]> = {}) {
   const store = new Map(rows.map((row) => [row.id, row]));
   const repository: ContestConfigTemplateRepository = {
     findById: async (id) => store.get(id) ?? null,
     list: async (input = {}) => [...store.values()]
       // No format filter: every template is ROSTER while that enum has one member.
       .filter((row) =>
-        (input.sport === undefined || row.sport === input.sport)
-        && (input.eventType === undefined || row.eventType === input.eventType || row.eventType == null)
+        (input.slotDefinitionIds === undefined || row.slots.some((covered) => input.slotDefinitionIds?.includes(covered.id) === true))
         && (input.sportLeagueId === undefined || row.sportLeagueId === input.sportLeagueId)
         && (input.active === undefined || row.active === input.active))
       .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name)),
-    update: async (id, updates) => {
+    update: async (id, { slotDefinitionIds, ...updates }) => {
       const existing = store.get(id);
       if (!existing) throw new Error(`Record to update not found: template ${id}`);
-      const updated = { ...existing, ...updates };
+      if (updates.isDefault === true) {
+        for (const other of store.values()) {
+          if (other.id !== id && other.sportLeagueId === existing.sportLeagueId && other.selectionType === existing.selectionType) {
+            store.set(other.id, { ...other, isDefault: false });
+          }
+        }
+      }
+      const slots = slotDefinitionIds === undefined
+        ? existing.slots
+        : (definitions[existing.sportLeagueId] ?? []).filter((definition) => slotDefinitionIds.includes(definition.id));
+      const updated = { ...existing, ...updates, slots };
       store.set(id, updated);
       return updated;
     },
+    findSlotDefinitions: async (sportLeagueId, ids) => (definitions[sportLeagueId] ?? []).filter((definition) => ids.includes(definition.id)),
   };
   return { store, service: new ContestConfigTemplateService(repository) };
 }
 
 describe('ContestConfigTemplateService.listTemplates', () => {
-  it('lists active templates for an event type together with the any-event-type ones, in sort order', async () => {
+  it('lists the active templates covering any of the asked slot definitions, in sort order, each with its coverage and slots', async () => {
+    const masters = slot({ id: 'masters' });
     const { service } = templateStore([
-      template({ id: 'knockout', eventType: ContestTemplateEventType.KNOCKOUT, sortOrder: 2, name: 'Knockout special' }),
-      template({ id: 'any', eventType: null, sortOrder: 1 }),
-      template({ id: 'other', eventType: ContestTemplateEventType.WEEK, sortOrder: 0 }),
-      template({ id: 'retired', eventType: ContestTemplateEventType.KNOCKOUT, active: false }),
+      template({ id: 'masters-special', slots: [masters], sortOrder: 2, name: 'Masters special' }),
+      template({ id: 'every-tournament', slots: [slot({ id: 'open' }), masters], sortOrder: 1 }),
+      template({ id: 'other', slots: [slot({ id: 'open' })], sortOrder: 0 }),
+      template({ id: 'retired', slots: [masters], active: false }),
     ]);
 
-    const listed = await service.listTemplates({ sport: Sport.GOLF, eventType: ContestTemplateEventType.KNOCKOUT, active: true });
+    const listed = await service.listTemplates({ slotDefinitionIds: ['masters'], active: true });
 
-    expect(listed.map((row) => row.id)).toEqual(['any', 'knockout']);
+    expect(listed.map((row) => row.id)).toEqual(['every-tournament', 'masters-special']);
+    expect(listed[0]).toMatchObject({ coverageMode: TemplateCoverageMode.ONE_SLOT, slots: [{ id: 'open' }, { id: 'masters' }] });
     expect(listed[0].configuration).toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
   });
 });
@@ -84,7 +107,7 @@ describe('ContestConfigTemplateService.listTemplates by sport league (#624)', ()
       template({ id: 'pga', sportLeagueId: 'pga-league', sortOrder: 3 }),
     ]);
 
-    const listed = await service.listTemplates({ sport: Sport.GOLF, sportLeagueId: 'lpga-league' });
+    const listed = await service.listTemplates({ sportLeagueId: 'lpga-league' });
 
     expect(listed.map((row) => [row.id, row.sportLeagueId])).toEqual([['lpga', 'lpga-league']]);
   });
@@ -112,7 +135,7 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     expect(dto.name).toBe('Pick 8, count 5');
   });
 
-  it('makes a template the default and takes the default off the other template for the same event type', async () => {
+  it('makes a template the default and takes the default off the other template of its sport league and selection type', async () => {
     const { store, service } = templateStore([
       template({ id: 'old-default', isDefault: true }),
       template({ id: 'new-default' }),
@@ -140,23 +163,11 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     expect(store.get('tiered-default')?.isDefault).toBe(true);
   });
 
-  it('keeps the any-event-type default when a default is set for one event type', async () => {
-    const { store, service } = templateStore([
-      template({ id: 'any-default', eventType: null, isDefault: true }),
-      template({ id: 'knockout', eventType: ContestTemplateEventType.KNOCKOUT }),
-    ]);
-
-    await service.updateTemplate('knockout', { isDefault: true });
-
-    expect(store.get('knockout')?.isDefault).toBe(true);
-    expect(store.get('any-default')?.isDefault).toBe(true);
-  });
-
   it('keeps another sport league\'s default when a default is set for one league, so each series keeps its own preset', async () => {
     const { store, service } = templateStore([
-      template({ id: 'indycar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'indycar', isDefault: true }),
-      template({ id: 'nascar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', isDefault: true }),
-      template({ id: 'nascar-tiered-big', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar' }),
+      template({ id: 'indycar-tiered', sportLeagueId: 'indycar', isDefault: true }),
+      template({ id: 'nascar-tiered', sportLeagueId: 'nascar', isDefault: true }),
+      template({ id: 'nascar-tiered-big', sportLeagueId: 'nascar' }),
     ]);
 
     await service.updateTemplate('nascar-tiered-big', { isDefault: true });
@@ -166,13 +177,13 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     expect(store.get('indycar-tiered')?.isDefault).toBe(true);
   });
 
-  it('keeps the LPGA Tour\'s default when PGA TOUR\'s copy of the same setup family takes a new default, so one league\'s change leaves the other\'s and another sport\'s alone', async () => {
+  it('keeps the LPGA Tour\'s default when PGA TOUR\'s copy of the same setup family takes a new default, so one league\'s change leaves the other\'s and another selection type\'s alone', async () => {
     const { store, service } = templateStore([
       template({ id: 'pga-pick-6', templateKey: 'golf-tiered-pick-6', sportLeagueId: 'pga-league', isDefault: true }),
       template({ id: 'pga-pick-12', templateKey: 'golf-tiered-pick-12', sportLeagueId: 'pga-league' }),
       template({ id: 'lpga-pick-6', templateKey: 'golf-tiered-pick-6', sportLeagueId: 'lpga-league', isDefault: true }),
-      template({ id: 'nascar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', isDefault: true }),
-      template({ id: 'auto-on-pga-id', sport: Sport.AUTO_RACING, sportLeagueId: 'pga-league', isDefault: true }),
+      template({ id: 'nascar-tiered', sportLeagueId: 'nascar', isDefault: true }),
+      template({ id: 'pga-budget', sportLeagueId: 'pga-league', selectionType: SelectionType.BUDGET_PICK, isDefault: true }),
     ]);
 
     await service.updateTemplate('pga-pick-12', { isDefault: true });
@@ -181,7 +192,7 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     expect(store.get('pga-pick-6')?.isDefault).toBe(false);
     expect(store.get('lpga-pick-6')?.isDefault).toBe(true);
     expect(store.get('nascar-tiered')?.isDefault).toBe(true);
-    expect(store.get('auto-on-pga-id')?.isDefault).toBe(true);
+    expect(store.get('pga-budget')?.isDefault).toBe(true);
   });
 
   it('takes the default off a template that is deactivated, even when the request also asks for default', async () => {
@@ -221,5 +232,67 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     await expect(failure).rejects.toThrow('This template is TIERED, so its configuration must be TIERED rules, not BUDGET_PICK.');
     expect(store.get('t1')?.configJson).toEqual(template({}).configJson);
   });
-});
 
+  describe('the slots it covers (#2010)', () => {
+    const regular = (id: string, overrides: Partial<ContestTemplateSlot> = {}) => slot({ id, ...overrides });
+    const week = (id: string, weekNumber: number) => slot({ id, slotKind: SlotKind.WEEK, weekNumber, matchFormat: MatchFormat.HEAD_TO_HEAD, sportLeaguePhaseId: 'nfl-regular' });
+    const playoff = (id: string, slotKind: SlotKind) => slot({ id, slotKind, phase: LeaguePhase.POSTSEASON, matchFormat: MatchFormat.HEAD_TO_HEAD, sportLeaguePhaseId: 'nfl-post' });
+    const nfl = [week('week-1', 1), week('week-2', 2), playoff('wild-card', SlotKind.ROUND_OF_16), playoff('final', SlotKind.FINAL)];
+
+    it('replaces the slots a template covers and its coverage mode with the ones the edit lists', async () => {
+      const { store, service } = templateStore([template({ id: 'pickem', sportLeagueId: 'nfl', slots: [nfl[0]] })], { nfl });
+
+      const dto = await service.updateTemplate('pickem', { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: ['week-1', 'week-2'] });
+
+      expect(store.get('pickem')).toMatchObject({ coverageMode: TemplateCoverageMode.FROM_SLOT, slots: [{ id: 'week-1' }, { id: 'week-2' }] });
+      expect(dto.slots.map((covered) => covered.id)).toEqual(['week-1', 'week-2']);
+    });
+
+    it('refuses a slot definition of another sport league with CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT and stores nothing', async () => {
+      const { store, service } = templateStore([template({ id: 't1' })], { 'pga-league': [regular('masters')], nfl });
+
+      const failure = service.updateTemplate('t1', { slotDefinitionIds: ['masters', 'week-1'] });
+
+      await expect(failure).rejects.toBeInstanceOf(ContestConfigTemplateCoverageError);
+      await expect(failure).rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT' });
+      expect(store.get('t1')?.slots.map((covered) => covered.id)).toEqual(['masters']);
+    });
+
+    it('refuses ALL_LISTED over two tournaments with CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS, since each tournament is an event of its own', async () => {
+      const definitions = { 'pga-league': [regular('masters'), regular('open')] };
+      const { store, service } = templateStore([template({ id: 't1' })], definitions);
+
+      const failure = service.updateTemplate('t1', { coverageMode: TemplateCoverageMode.ALL_LISTED, slotDefinitionIds: ['masters', 'open'] });
+
+      await expect(failure).rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS' });
+      expect(store.get('t1')?.coverageMode).toBe(TemplateCoverageMode.ONE_SLOT);
+    });
+
+    it('refuses switching a template already listing two phases to ALL_LISTED, checking the slots it keeps', async () => {
+      const { service } = templateStore([template({ id: 'nfl-season', sportLeagueId: 'nfl', coverageMode: TemplateCoverageMode.FROM_SLOT, slots: [nfl[1], nfl[2]] })], { nfl });
+
+      await expect(service.updateTemplate('nfl-season', { coverageMode: TemplateCoverageMode.ALL_LISTED }))
+        .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS' });
+    });
+
+    it('accepts ALL_LISTED over one phase\'s knockout rounds, the slots one event plays', async () => {
+      const { store, service } = templateStore([template({ id: 'playoffs', sportLeagueId: 'nfl', slots: [nfl[2]] })], { nfl });
+
+      await service.updateTemplate('playoffs', { coverageMode: TemplateCoverageMode.ALL_LISTED, slotDefinitionIds: ['wild-card', 'final'] });
+
+      expect(store.get('playoffs')).toMatchObject({ coverageMode: TemplateCoverageMode.ALL_LISTED, slots: [{ id: 'wild-card' }, { id: 'final' }] });
+    });
+
+    it('refuses a bracket listing a regular-season week with CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT, where a side need not advance', async () => {
+      const bracket = template({
+        id: 'bracket', sportLeagueId: 'nfl', selectionType: SelectionType.BRACKET, coverageMode: TemplateCoverageMode.ALL_LISTED, slots: [nfl[2], nfl[3]],
+        configJson: { selectionType: SelectionType.BRACKET } as unknown as ContestConfigTemplate['configJson'],
+      });
+      const { store, service } = templateStore([bracket], { nfl });
+
+      await expect(service.updateTemplate('bracket', { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: ['week-2', 'wild-card'] }))
+        .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT' });
+      expect(store.get('bracket')?.slots.map((covered) => covered.id)).toEqual(['wild-card', 'final']);
+    });
+  });
+});

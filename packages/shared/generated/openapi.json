@@ -10842,6 +10842,86 @@
         "additionalProperties": false,
         "description": "Golf-first contest-management detail returned to commissioner tooling."
       },
+      "ContestTemplateSlotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The slot definition's id (SportLeaguePhaseSlot)."
+          },
+          "key": {
+            "type": "string",
+            "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+          },
+          "name": {
+            "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slotKind": {
+            "type": "string",
+            "enum": [
+              "WEEK",
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "ROUND_OF_16",
+              "QUARTERFINAL",
+              "SEMIFINAL",
+              "THIRD_PLACE",
+              "FINAL",
+              "TOURNAMENT"
+            ],
+            "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+          },
+          "weekNumber": {
+            "description": "For a WEEK slot, its week; null otherwise.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "sportLeaguePhaseId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The phase the slot is in."
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRESEASON",
+              "REGULAR",
+              "POSTSEASON"
+            ],
+            "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+          },
+          "matchFormat": {
+            "type": "string",
+            "enum": [
+              "HEAD_TO_HEAD",
+              "FIELD"
+            ],
+            "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "slotKind",
+          "weekNumber",
+          "sportLeaguePhaseId",
+          "phase",
+          "matchFormat"
+        ],
+        "additionalProperties": false,
+        "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+      },
       "ContestConfigTemplateDto": {
         "type": "object",
         "properties": {
@@ -10850,39 +10930,103 @@
             "format": "uuid",
             "description": "Seeded contest template identifier."
           },
-          "sport": {
-            "type": "string",
-            "enum": [
-              "GOLF",
-              "HORSE_RACING",
-              "AUTO_RACING",
-              "CYCLING",
-              "RUNNING",
-              "BASKETBALL",
-              "AMERICAN_FOOTBALL",
-              "HOCKEY",
-              "BASEBALL",
-              "SOCCER",
-              "TENNIS"
-            ],
-            "description": "Sport this template applies to."
-          },
           "sportLeagueId": {
             "type": "string",
             "format": "uuid",
             "description": "Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey."
           },
-          "eventType": {
-            "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.",
-            "type": [
-              "string",
-              "null"
-            ],
+          "coverageMode": {
+            "type": "string",
             "enum": [
-              "KNOCKOUT",
-              "WEEK",
-              null
-            ]
+              "ONE_SLOT",
+              "ALL_LISTED",
+              "FROM_SLOT"
+            ],
+            "description": "How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season."
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                },
+                "name": {
+                  "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "slotKind": {
+                  "type": "string",
+                  "enum": [
+                    "WEEK",
+                    "PLAY_IN",
+                    "ROUND_OF_64",
+                    "ROUND_OF_32",
+                    "ROUND_OF_16",
+                    "QUARTERFINAL",
+                    "SEMIFINAL",
+                    "THIRD_PLACE",
+                    "FINAL",
+                    "TOURNAMENT"
+                  ],
+                  "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                },
+                "weekNumber": {
+                  "description": "For a WEEK slot, its week; null otherwise.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "sportLeaguePhaseId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The phase the slot is in."
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "PRESEASON",
+                    "REGULAR",
+                    "POSTSEASON"
+                  ],
+                  "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                },
+                "matchFormat": {
+                  "type": "string",
+                  "enum": [
+                    "HEAD_TO_HEAD",
+                    "FIELD"
+                  ],
+                  "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+                }
+              },
+              "required": [
+                "id",
+                "key",
+                "name",
+                "slotKind",
+                "weekNumber",
+                "sportLeaguePhaseId",
+                "phase",
+                "matchFormat"
+              ],
+              "additionalProperties": false,
+              "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+            },
+            "description": "The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them."
           },
           "contestFormat": {
             "type": "string",
@@ -12257,8 +12401,9 @@
         },
         "required": [
           "id",
-          "sport",
           "sportLeagueId",
+          "coverageMode",
+          "slots",
           "contestFormat",
           "selectionType",
           "templateKey",
@@ -12797,35 +12942,18 @@
       "ListContestConfigTemplatesQuery": {
         "type": "object",
         "properties": {
-          "sport": {
-            "description": "Only templates for this sport.",
-            "type": "string",
-            "enum": [
-              "GOLF",
-              "HORSE_RACING",
-              "AUTO_RACING",
-              "CYCLING",
-              "RUNNING",
-              "BASKETBALL",
-              "AMERICAN_FOOTBALL",
-              "HOCKEY",
-              "BASEBALL",
-              "SOCCER",
-              "TENNIS"
-            ]
-          },
           "sportLeagueId": {
             "description": "Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
             "type": "string",
             "format": "uuid"
           },
-          "eventType": {
-            "description": "Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.",
-            "type": "string",
-            "enum": [
-              "KNOCKOUT",
-              "WEEK"
-            ]
+          "slotDefinitionIds": {
+            "description": "Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds).",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           "active": {
             "description": "Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.",
@@ -12848,39 +12976,103 @@
                   "format": "uuid",
                   "description": "Seeded contest template identifier."
                 },
-                "sport": {
-                  "type": "string",
-                  "enum": [
-                    "GOLF",
-                    "HORSE_RACING",
-                    "AUTO_RACING",
-                    "CYCLING",
-                    "RUNNING",
-                    "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
-                    "HOCKEY",
-                    "BASEBALL",
-                    "SOCCER",
-                    "TENNIS"
-                  ],
-                  "description": "Sport this template applies to."
-                },
                 "sportLeagueId": {
                   "type": "string",
                   "format": "uuid",
                   "description": "Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey."
                 },
-                "eventType": {
-                  "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                "coverageMode": {
+                  "type": "string",
                   "enum": [
-                    "KNOCKOUT",
-                    "WEEK",
-                    null
-                  ]
+                    "ONE_SLOT",
+                    "ALL_LISTED",
+                    "FROM_SLOT"
+                  ],
+                  "description": "How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season."
+                },
+                "slots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                      },
+                      "name": {
+                        "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "slotKind": {
+                        "type": "string",
+                        "enum": [
+                          "WEEK",
+                          "PLAY_IN",
+                          "ROUND_OF_64",
+                          "ROUND_OF_32",
+                          "ROUND_OF_16",
+                          "QUARTERFINAL",
+                          "SEMIFINAL",
+                          "THIRD_PLACE",
+                          "FINAL",
+                          "TOURNAMENT"
+                        ],
+                        "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                      },
+                      "weekNumber": {
+                        "description": "For a WEEK slot, its week; null otherwise.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "sportLeaguePhaseId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The phase the slot is in."
+                      },
+                      "phase": {
+                        "type": "string",
+                        "enum": [
+                          "PRESEASON",
+                          "REGULAR",
+                          "POSTSEASON"
+                        ],
+                        "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                      },
+                      "matchFormat": {
+                        "type": "string",
+                        "enum": [
+                          "HEAD_TO_HEAD",
+                          "FIELD"
+                        ],
+                        "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "key",
+                      "name",
+                      "slotKind",
+                      "weekNumber",
+                      "sportLeaguePhaseId",
+                      "phase",
+                      "matchFormat"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+                  },
+                  "description": "The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them."
                 },
                 "contestFormat": {
                   "type": "string",
@@ -14255,8 +14447,9 @@
               },
               "required": [
                 "id",
-                "sport",
                 "sportLeagueId",
+                "coverageMode",
+                "slots",
                 "contestFormat",
                 "selectionType",
                 "templateKey",
@@ -14301,7 +14494,7 @@
             "maximum": 1000
           },
           "isDefault": {
-            "description": "Whether this template should be the default choice for future create flows in its scope.",
+            "description": "Whether this template should be the default choice for future create flows of its sport league and selection type. Setting it unsets the one that was the default.",
             "type": "boolean"
           },
           "active": {
@@ -15623,6 +15816,24 @@
                 "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
               }
             ]
+          },
+          "coverageMode": {
+            "description": "How future contests from the template cover its slots (#2010). Refused when the listed slots do not fit it: ALL_LISTED needs one event's slots.",
+            "type": "string",
+            "enum": [
+              "ONE_SLOT",
+              "ALL_LISTED",
+              "FROM_SLOT"
+            ]
+          },
+          "slotDefinitionIds": {
+            "description": "The slot definitions the template covers from now on, each of its own sport league (#2010). Contests already made keep the slots they copied. A bracket lists only knockout slots.",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         },
         "additionalProperties": false,
@@ -15639,39 +15850,103 @@
                 "format": "uuid",
                 "description": "Seeded contest template identifier."
               },
-              "sport": {
-                "type": "string",
-                "enum": [
-                  "GOLF",
-                  "HORSE_RACING",
-                  "AUTO_RACING",
-                  "CYCLING",
-                  "RUNNING",
-                  "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
-                  "HOCKEY",
-                  "BASEBALL",
-                  "SOCCER",
-                  "TENNIS"
-                ],
-                "description": "Sport this template applies to."
-              },
               "sportLeagueId": {
                 "type": "string",
                 "format": "uuid",
                 "description": "Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey."
               },
-              "eventType": {
-                "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+              "coverageMode": {
+                "type": "string",
                 "enum": [
-                  "KNOCKOUT",
-                  "WEEK",
-                  null
-                ]
+                  "ONE_SLOT",
+                  "ALL_LISTED",
+                  "FROM_SLOT"
+                ],
+                "description": "How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season."
+              },
+              "slots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                    },
+                    "name": {
+                      "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "slotKind": {
+                      "type": "string",
+                      "enum": [
+                        "WEEK",
+                        "PLAY_IN",
+                        "ROUND_OF_64",
+                        "ROUND_OF_32",
+                        "ROUND_OF_16",
+                        "QUARTERFINAL",
+                        "SEMIFINAL",
+                        "THIRD_PLACE",
+                        "FINAL",
+                        "TOURNAMENT"
+                      ],
+                      "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                    },
+                    "weekNumber": {
+                      "description": "For a WEEK slot, its week; null otherwise.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "sportLeaguePhaseId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The phase the slot is in."
+                    },
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "PRESEASON",
+                        "REGULAR",
+                        "POSTSEASON"
+                      ],
+                      "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                    },
+                    "matchFormat": {
+                      "type": "string",
+                      "enum": [
+                        "HEAD_TO_HEAD",
+                        "FIELD"
+                      ],
+                      "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "key",
+                    "name",
+                    "slotKind",
+                    "weekNumber",
+                    "sportLeaguePhaseId",
+                    "phase",
+                    "matchFormat"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+                },
+                "description": "The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them."
               },
               "contestFormat": {
                 "type": "string",
@@ -17046,8 +17321,9 @@
             },
             "required": [
               "id",
-              "sport",
               "sportLeagueId",
+              "coverageMode",
+              "slots",
               "contestFormat",
               "selectionType",
               "templateKey",
@@ -18255,6 +18531,26 @@
             "maximum": 9007199254740991,
             "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
           },
+          "sportName": {
+            "type": "string",
+            "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+          },
+          "selectionTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TIERED",
+                "BUDGET_PICK",
+                "RANDOM_DRAW",
+                "PICK_EM",
+                "BRACKET",
+                "SURVIVOR",
+                "SQUARES"
+              ]
+            },
+            "description": "The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats."
+          },
           "name": {
             "type": "string",
             "description": "Sport league name, e.g. \"PGA Tour\"."
@@ -18461,6 +18757,8 @@
           "sport",
           "sportUrlSegment",
           "sportDisplayOrder",
+          "sportName",
+          "selectionTypes",
           "name",
           "urlSegment",
           "currentSeasonId",
@@ -18560,6 +18858,26 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
                   "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
+                },
+                "sportName": {
+                  "type": "string",
+                  "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+                },
+                "selectionTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "TIERED",
+                      "BUDGET_PICK",
+                      "RANDOM_DRAW",
+                      "PICK_EM",
+                      "BRACKET",
+                      "SURVIVOR",
+                      "SQUARES"
+                    ]
+                  },
+                  "description": "The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats."
                 },
                 "name": {
                   "type": "string",
@@ -18767,6 +19085,8 @@
                 "sport",
                 "sportUrlSegment",
                 "sportDisplayOrder",
+                "sportName",
+                "selectionTypes",
                 "name",
                 "urlSegment",
                 "currentSeasonId",
@@ -18845,6 +19165,26 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
                 "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
+              },
+              "sportName": {
+                "type": "string",
+                "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+              },
+              "selectionTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "TIERED",
+                    "BUDGET_PICK",
+                    "RANDOM_DRAW",
+                    "PICK_EM",
+                    "BRACKET",
+                    "SURVIVOR",
+                    "SQUARES"
+                  ]
+                },
+                "description": "The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats."
               },
               "name": {
                 "type": "string",
@@ -19052,6 +19392,8 @@
               "sport",
               "sportUrlSegment",
               "sportDisplayOrder",
+              "sportName",
+              "selectionTypes",
               "name",
               "urlSegment",
               "currentSeasonId",
@@ -25474,10 +25816,13 @@
             "type": "boolean",
             "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
           },
-          "eventSeriesId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The recurring tournament (event series) this is one edition of. One edition of a series per Season."
+          "slotDefinitionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots."
           },
           "sportLeagueSeasonId": {
             "type": "string",
@@ -25493,7 +25838,7 @@
           "sportLeagueId": {
             "type": "string",
             "format": "uuid",
-            "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
+            "description": "The sport league the event belongs to; its Season is the same league's."
           },
           "participantType": {
             "type": "string",
@@ -25501,7 +25846,7 @@
               "INDIVIDUAL",
               "TEAM"
             ],
-            "description": "Who competes: teams or individuals. Read through the series' sport league."
+            "description": "Who competes: teams or individuals. Read through the sport league."
           },
           "scoringFamily": {
             "type": "string",
@@ -25510,7 +25855,7 @@
               "FINISH_POSITION",
               "HEAD_TO_HEAD"
             ],
-            "description": "How the event is scored. Read through the series' sport league."
+            "description": "How the event is scored. Read through the sport league."
           },
           "shootout": {
             "type": "boolean",
@@ -26024,7 +26369,7 @@
           "contestEligible",
           "contestOpenings",
           "tiersLocked",
-          "eventSeriesId",
+          "slotDefinitionIds",
           "sportLeagueSeasonId",
           "championshipYear",
           "sportLeagueId",
@@ -26081,7 +26426,7 @@
             }
           },
           "sportLeagueId": {
-            "description": "Only events of this sport league's series.",
+            "description": "Only events of this sport league.",
             "type": "string",
             "format": "uuid"
           },
@@ -26435,10 +26780,13 @@
                   "type": "boolean",
                   "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
                 },
-                "eventSeriesId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The recurring tournament (event series) this is one edition of. One edition of a series per Season."
+                "slotDefinitionIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "description": "The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots."
                 },
                 "sportLeagueSeasonId": {
                   "type": "string",
@@ -26454,7 +26802,7 @@
                 "sportLeagueId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
+                  "description": "The sport league the event belongs to; its Season is the same league's."
                 },
                 "participantType": {
                   "type": "string",
@@ -26462,7 +26810,7 @@
                     "INDIVIDUAL",
                     "TEAM"
                   ],
-                  "description": "Who competes: teams or individuals. Read through the series' sport league."
+                  "description": "Who competes: teams or individuals. Read through the sport league."
                 },
                 "scoringFamily": {
                   "type": "string",
@@ -26471,7 +26819,7 @@
                     "FINISH_POSITION",
                     "HEAD_TO_HEAD"
                   ],
-                  "description": "How the event is scored. Read through the series' sport league."
+                  "description": "How the event is scored. Read through the sport league."
                 },
                 "shootout": {
                   "type": "boolean",
@@ -26985,7 +27333,7 @@
                 "contestEligible",
                 "contestOpenings",
                 "tiersLocked",
-                "eventSeriesId",
+                "slotDefinitionIds",
                 "sportLeagueSeasonId",
                 "championshipYear",
                 "sportLeagueId",
@@ -27350,10 +27698,13 @@
                 "type": "boolean",
                 "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
               },
-              "eventSeriesId": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The recurring tournament (event series) this is one edition of. One edition of a series per Season."
+              "slotDefinitionIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots."
               },
               "sportLeagueSeasonId": {
                 "type": "string",
@@ -27369,7 +27720,7 @@
               "sportLeagueId": {
                 "type": "string",
                 "format": "uuid",
-                "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
+                "description": "The sport league the event belongs to; its Season is the same league's."
               },
               "participantType": {
                 "type": "string",
@@ -27377,7 +27728,7 @@
                   "INDIVIDUAL",
                   "TEAM"
                 ],
-                "description": "Who competes: teams or individuals. Read through the series' sport league."
+                "description": "Who competes: teams or individuals. Read through the sport league."
               },
               "scoringFamily": {
                 "type": "string",
@@ -27386,7 +27737,7 @@
                   "FINISH_POSITION",
                   "HEAD_TO_HEAD"
                 ],
-                "description": "How the event is scored. Read through the series' sport league."
+                "description": "How the event is scored. Read through the sport league."
               },
               "shootout": {
                 "type": "boolean",
@@ -27900,7 +28251,7 @@
               "contestEligible",
               "contestOpenings",
               "tiersLocked",
-              "eventSeriesId",
+              "slotDefinitionIds",
               "sportLeagueSeasonId",
               "championshipYear",
               "sportLeagueId",
@@ -27938,8 +28289,7 @@
           },
           "name": {
             "type": "string",
-            "minLength": 1,
-            "description": "The event's name; its series is found or created in the league by it. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in that Season."
+            "minLength": 1
           },
           "venue": {
             "type": "string"
@@ -55055,31 +55405,36 @@
         "additionalProperties": false,
         "description": "The league championship's years."
       },
-      "EventPageEditionDto": {
+      "EventPageNextSlotDto": {
         "type": "object",
         "properties": {
+          "seasonSlotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season."
+          },
           "sportEventId": {
             "type": "string",
             "format": "uuid",
-            "description": "The edition's sport event: the one Create contest starts on."
+            "description": "The sport event that owns the slot: the one Create contest starts on."
           },
           "name": {
             "type": "string",
-            "description": "The edition's name, such as \"Conference Championships\"."
+            "description": "The event's name, such as \"Conference Championships\"."
           },
           "championshipYear": {
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
+            "description": "The year the slot's Season is named for (SportEventDto.championshipYear)."
           },
           "startDate": {
             "type": "string",
             "format": "date-time",
-            "description": "When the edition starts. For a NOT_YET offer, when it is expected."
+            "description": "When the event starts. For a NOT_YET offer, when it is expected."
           },
           "endDate": {
-            "description": "When the edition ends, when known.",
+            "description": "When the event ends, when known.",
             "type": [
               "string",
               "null"
@@ -55088,6 +55443,7 @@
           }
         },
         "required": [
+          "seasonSlotId",
           "sportEventId",
           "name",
           "championshipYear",
@@ -55095,7 +55451,7 @@
           "endDate"
         ],
         "additionalProperties": false,
-        "description": "The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest."
+        "description": "The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest."
       },
       "EventPageOfferDto": {
         "type": "object",
@@ -55107,15 +55463,16 @@
           "sportLeagueId": {
             "type": "string",
             "format": "uuid",
-            "description": "The sport league whose series the offer runs on."
+            "description": "The sport league whose slot the offer runs on."
           },
           "sportLeagueName": {
             "type": "string",
             "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
           },
-          "eventSeriesName": {
+          "sportLeaguePhaseSlotId": {
             "type": "string",
-            "description": "The series the offer runs on, by name in its sport league, such as \"NFL Playoffs\"."
+            "format": "uuid",
+            "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
           },
           "template": {
             "type": "object",
@@ -55125,39 +55482,103 @@
                 "format": "uuid",
                 "description": "Seeded contest template identifier."
               },
-              "sport": {
-                "type": "string",
-                "enum": [
-                  "GOLF",
-                  "HORSE_RACING",
-                  "AUTO_RACING",
-                  "CYCLING",
-                  "RUNNING",
-                  "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
-                  "HOCKEY",
-                  "BASEBALL",
-                  "SOCCER",
-                  "TENNIS"
-                ],
-                "description": "Sport this template applies to."
-              },
               "sportLeagueId": {
                 "type": "string",
                 "format": "uuid",
                 "description": "Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey."
               },
-              "eventType": {
-                "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+              "coverageMode": {
+                "type": "string",
                 "enum": [
-                  "KNOCKOUT",
-                  "WEEK",
-                  null
-                ]
+                  "ONE_SLOT",
+                  "ALL_LISTED",
+                  "FROM_SLOT"
+                ],
+                "description": "How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season."
+              },
+              "slots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                    },
+                    "name": {
+                      "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "slotKind": {
+                      "type": "string",
+                      "enum": [
+                        "WEEK",
+                        "PLAY_IN",
+                        "ROUND_OF_64",
+                        "ROUND_OF_32",
+                        "ROUND_OF_16",
+                        "QUARTERFINAL",
+                        "SEMIFINAL",
+                        "THIRD_PLACE",
+                        "FINAL",
+                        "TOURNAMENT"
+                      ],
+                      "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                    },
+                    "weekNumber": {
+                      "description": "For a WEEK slot, its week; null otherwise.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "sportLeaguePhaseId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The phase the slot is in."
+                    },
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "PRESEASON",
+                        "REGULAR",
+                        "POSTSEASON"
+                      ],
+                      "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                    },
+                    "matchFormat": {
+                      "type": "string",
+                      "enum": [
+                        "HEAD_TO_HEAD",
+                        "FIELD"
+                      ],
+                      "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "key",
+                    "name",
+                    "slotKind",
+                    "weekNumber",
+                    "sportLeaguePhaseId",
+                    "phase",
+                    "matchFormat"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+                },
+                "description": "The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them."
               },
               "contestFormat": {
                 "type": "string",
@@ -56532,8 +56953,9 @@
             },
             "required": [
               "id",
-              "sport",
               "sportLeagueId",
+              "coverageMode",
+              "slots",
               "contestFormat",
               "selectionType",
               "templateKey",
@@ -56565,7 +56987,7 @@
           },
           "isPrimary": {
             "type": "boolean",
-            "description": "The offer whose edition heads the page: its dates are the page's. A page has one."
+            "description": "The offer whose next slot heads the page: its dates are the page's. A page has one."
           },
           "state": {
             "type": "string",
@@ -56573,33 +56995,38 @@
               "OPEN",
               "NOT_YET"
             ],
-            "description": "OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
+            "description": "OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
           },
-          "edition": {
+          "nextSlot": {
             "type": "object",
             "properties": {
+              "seasonSlotId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season."
+              },
               "sportEventId": {
                 "type": "string",
                 "format": "uuid",
-                "description": "The edition's sport event: the one Create contest starts on."
+                "description": "The sport event that owns the slot: the one Create contest starts on."
               },
               "name": {
                 "type": "string",
-                "description": "The edition's name, such as \"Conference Championships\"."
+                "description": "The event's name, such as \"Conference Championships\"."
               },
               "championshipYear": {
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
+                "description": "The year the slot's Season is named for (SportEventDto.championshipYear)."
               },
               "startDate": {
                 "type": "string",
                 "format": "date-time",
-                "description": "When the edition starts. For a NOT_YET offer, when it is expected."
+                "description": "When the event starts. For a NOT_YET offer, when it is expected."
               },
               "endDate": {
-                "description": "When the edition ends, when known.",
+                "description": "When the event ends, when known.",
                 "type": [
                   "string",
                   "null"
@@ -56608,6 +57035,7 @@
               }
             },
             "required": [
+              "seasonSlotId",
               "sportEventId",
               "name",
               "championshipYear",
@@ -56615,23 +57043,23 @@
               "endDate"
             ],
             "additionalProperties": false,
-            "description": "The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest."
+            "description": "The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest."
           }
         },
         "required": [
           "id",
           "sportLeagueId",
           "sportLeagueName",
-          "eventSeriesName",
+          "sportLeaguePhaseSlotId",
           "template",
           "startsAtRound",
           "sortOrder",
           "isPrimary",
           "state",
-          "edition"
+          "nextSlot"
         ],
         "additionalProperties": false,
-        "description": "One way to play on an event page: a contest setup on one sport league's series, with that series' next edition. An offer whose series has no edition that can still take the contest is left out."
+        "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
       },
       "EventPageDto": {
         "type": "object",
@@ -56656,6 +57084,10 @@
               "TENNIS"
             ],
             "description": "The sport the page belongs to."
+          },
+          "sportName": {
+            "type": "string",
+            "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
           },
           "sportUrlSegment": {
             "type": "string",
@@ -56705,6 +57137,10 @@
                 ],
                 "description": "The sport the page belongs to."
               },
+              "sportName": {
+                "type": "string",
+                "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+              },
               "sportUrlSegment": {
                 "type": "string",
                 "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -56722,6 +57158,7 @@
             },
             "required": [
               "sport",
+              "sportName",
               "sportUrlSegment",
               "urlSegment",
               "path"
@@ -56740,15 +57177,16 @@
                 "sportLeagueId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The sport league whose series the offer runs on."
+                  "description": "The sport league whose slot the offer runs on."
                 },
                 "sportLeagueName": {
                   "type": "string",
                   "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
                 },
-                "eventSeriesName": {
+                "sportLeaguePhaseSlotId": {
                   "type": "string",
-                  "description": "The series the offer runs on, by name in its sport league, such as \"NFL Playoffs\"."
+                  "format": "uuid",
+                  "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
                 },
                 "template": {
                   "type": "object",
@@ -56758,39 +57196,103 @@
                       "format": "uuid",
                       "description": "Seeded contest template identifier."
                     },
-                    "sport": {
-                      "type": "string",
-                      "enum": [
-                        "GOLF",
-                        "HORSE_RACING",
-                        "AUTO_RACING",
-                        "CYCLING",
-                        "RUNNING",
-                        "BASKETBALL",
-                        "AMERICAN_FOOTBALL",
-                        "HOCKEY",
-                        "BASEBALL",
-                        "SOCCER",
-                        "TENNIS"
-                      ],
-                      "description": "Sport this template applies to."
-                    },
                     "sportLeagueId": {
                       "type": "string",
                       "format": "uuid",
                       "description": "Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey."
                     },
-                    "eventType": {
-                      "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.",
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                    "coverageMode": {
+                      "type": "string",
                       "enum": [
-                        "KNOCKOUT",
-                        "WEEK",
-                        null
-                      ]
+                        "ONE_SLOT",
+                        "ALL_LISTED",
+                        "FROM_SLOT"
+                      ],
+                      "description": "How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season."
+                    },
+                    "slots": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                          },
+                          "key": {
+                            "type": "string",
+                            "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                          },
+                          "name": {
+                            "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "slotKind": {
+                            "type": "string",
+                            "enum": [
+                              "WEEK",
+                              "PLAY_IN",
+                              "ROUND_OF_64",
+                              "ROUND_OF_32",
+                              "ROUND_OF_16",
+                              "QUARTERFINAL",
+                              "SEMIFINAL",
+                              "THIRD_PLACE",
+                              "FINAL",
+                              "TOURNAMENT"
+                            ],
+                            "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                          },
+                          "weekNumber": {
+                            "description": "For a WEEK slot, its week; null otherwise.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "sportLeaguePhaseId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The phase the slot is in."
+                          },
+                          "phase": {
+                            "type": "string",
+                            "enum": [
+                              "PRESEASON",
+                              "REGULAR",
+                              "POSTSEASON"
+                            ],
+                            "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                          },
+                          "matchFormat": {
+                            "type": "string",
+                            "enum": [
+                              "HEAD_TO_HEAD",
+                              "FIELD"
+                            ],
+                            "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "key",
+                          "name",
+                          "slotKind",
+                          "weekNumber",
+                          "sportLeaguePhaseId",
+                          "phase",
+                          "matchFormat"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+                      },
+                      "description": "The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them."
                     },
                     "contestFormat": {
                       "type": "string",
@@ -58165,8 +58667,9 @@
                   },
                   "required": [
                     "id",
-                    "sport",
                     "sportLeagueId",
+                    "coverageMode",
+                    "slots",
                     "contestFormat",
                     "selectionType",
                     "templateKey",
@@ -58198,7 +58701,7 @@
                 },
                 "isPrimary": {
                   "type": "boolean",
-                  "description": "The offer whose edition heads the page: its dates are the page's. A page has one."
+                  "description": "The offer whose next slot heads the page: its dates are the page's. A page has one."
                 },
                 "state": {
                   "type": "string",
@@ -58206,33 +58709,38 @@
                     "OPEN",
                     "NOT_YET"
                   ],
-                  "description": "OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
+                  "description": "OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
                 },
-                "edition": {
+                "nextSlot": {
                   "type": "object",
                   "properties": {
+                    "seasonSlotId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season."
+                    },
                     "sportEventId": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "The edition's sport event: the one Create contest starts on."
+                      "description": "The sport event that owns the slot: the one Create contest starts on."
                     },
                     "name": {
                       "type": "string",
-                      "description": "The edition's name, such as \"Conference Championships\"."
+                      "description": "The event's name, such as \"Conference Championships\"."
                     },
                     "championshipYear": {
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991,
-                      "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
+                      "description": "The year the slot's Season is named for (SportEventDto.championshipYear)."
                     },
                     "startDate": {
                       "type": "string",
                       "format": "date-time",
-                      "description": "When the edition starts. For a NOT_YET offer, when it is expected."
+                      "description": "When the event starts. For a NOT_YET offer, when it is expected."
                     },
                     "endDate": {
-                      "description": "When the edition ends, when known.",
+                      "description": "When the event ends, when known.",
                       "type": [
                         "string",
                         "null"
@@ -58241,6 +58749,7 @@
                     }
                   },
                   "required": [
+                    "seasonSlotId",
                     "sportEventId",
                     "name",
                     "championshipYear",
@@ -58248,30 +58757,31 @@
                     "endDate"
                   ],
                   "additionalProperties": false,
-                  "description": "The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest."
+                  "description": "The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest."
                 }
               },
               "required": [
                 "id",
                 "sportLeagueId",
                 "sportLeagueName",
-                "eventSeriesName",
+                "sportLeaguePhaseSlotId",
                 "template",
                 "startsAtRound",
                 "sortOrder",
                 "isPrimary",
                 "state",
-                "edition"
+                "nextSlot"
               ],
               "additionalProperties": false,
-              "description": "One way to play on an event page: a contest setup on one sport league's series, with that series' next edition. An offer whose series has no edition that can still take the contest is left out."
+              "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
             },
-            "description": "The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons."
+            "description": "The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons."
           }
         },
         "required": [
           "id",
           "sport",
+          "sportName",
           "sportUrlSegment",
           "urlSegment",
           "path",
@@ -58281,7 +58791,7 @@
           "offers"
         ],
         "additionalProperties": false,
-        "description": "A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event."
+        "description": "A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event."
       },
       "EventPageResponse": {
         "type": "object",
@@ -58309,6 +58819,10 @@
                   "TENNIS"
                 ],
                 "description": "The sport the page belongs to."
+              },
+              "sportName": {
+                "type": "string",
+                "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
               },
               "sportUrlSegment": {
                 "type": "string",
@@ -58358,6 +58872,10 @@
                     ],
                     "description": "The sport the page belongs to."
                   },
+                  "sportName": {
+                    "type": "string",
+                    "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                  },
                   "sportUrlSegment": {
                     "type": "string",
                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -58375,6 +58893,7 @@
                 },
                 "required": [
                   "sport",
+                  "sportName",
                   "sportUrlSegment",
                   "urlSegment",
                   "path"
@@ -58393,15 +58912,16 @@
                     "sportLeagueId": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "The sport league whose series the offer runs on."
+                      "description": "The sport league whose slot the offer runs on."
                     },
                     "sportLeagueName": {
                       "type": "string",
                       "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
                     },
-                    "eventSeriesName": {
+                    "sportLeaguePhaseSlotId": {
                       "type": "string",
-                      "description": "The series the offer runs on, by name in its sport league, such as \"NFL Playoffs\"."
+                      "format": "uuid",
+                      "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
                     },
                     "template": {
                       "type": "object",
@@ -58411,39 +58931,103 @@
                           "format": "uuid",
                           "description": "Seeded contest template identifier."
                         },
-                        "sport": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF",
-                            "HORSE_RACING",
-                            "AUTO_RACING",
-                            "CYCLING",
-                            "RUNNING",
-                            "BASKETBALL",
-                            "AMERICAN_FOOTBALL",
-                            "HOCKEY",
-                            "BASEBALL",
-                            "SOCCER",
-                            "TENNIS"
-                          ],
-                          "description": "Sport this template applies to."
-                        },
                         "sportLeagueId": {
                           "type": "string",
                           "format": "uuid",
                           "description": "Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey."
                         },
-                        "eventType": {
-                          "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.",
-                          "type": [
-                            "string",
-                            "null"
-                          ],
+                        "coverageMode": {
+                          "type": "string",
                           "enum": [
-                            "KNOCKOUT",
-                            "WEEK",
-                            null
-                          ]
+                            "ONE_SLOT",
+                            "ALL_LISTED",
+                            "FROM_SLOT"
+                          ],
+                          "description": "How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season."
+                        },
+                        "slots": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                              },
+                              "key": {
+                                "type": "string",
+                                "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                              },
+                              "name": {
+                                "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "slotKind": {
+                                "type": "string",
+                                "enum": [
+                                  "WEEK",
+                                  "PLAY_IN",
+                                  "ROUND_OF_64",
+                                  "ROUND_OF_32",
+                                  "ROUND_OF_16",
+                                  "QUARTERFINAL",
+                                  "SEMIFINAL",
+                                  "THIRD_PLACE",
+                                  "FINAL",
+                                  "TOURNAMENT"
+                                ],
+                                "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                              },
+                              "weekNumber": {
+                                "description": "For a WEEK slot, its week; null otherwise.",
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "sportLeaguePhaseId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The phase the slot is in."
+                              },
+                              "phase": {
+                                "type": "string",
+                                "enum": [
+                                  "PRESEASON",
+                                  "REGULAR",
+                                  "POSTSEASON"
+                                ],
+                                "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                              },
+                              "matchFormat": {
+                                "type": "string",
+                                "enum": [
+                                  "HEAD_TO_HEAD",
+                                  "FIELD"
+                                ],
+                                "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "key",
+                              "name",
+                              "slotKind",
+                              "weekNumber",
+                              "sportLeaguePhaseId",
+                              "phase",
+                              "matchFormat"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+                          },
+                          "description": "The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them."
                         },
                         "contestFormat": {
                           "type": "string",
@@ -59818,8 +60402,9 @@
                       },
                       "required": [
                         "id",
-                        "sport",
                         "sportLeagueId",
+                        "coverageMode",
+                        "slots",
                         "contestFormat",
                         "selectionType",
                         "templateKey",
@@ -59851,7 +60436,7 @@
                     },
                     "isPrimary": {
                       "type": "boolean",
-                      "description": "The offer whose edition heads the page: its dates are the page's. A page has one."
+                      "description": "The offer whose next slot heads the page: its dates are the page's. A page has one."
                     },
                     "state": {
                       "type": "string",
@@ -59859,33 +60444,38 @@
                         "OPEN",
                         "NOT_YET"
                       ],
-                      "description": "OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
+                      "description": "OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
                     },
-                    "edition": {
+                    "nextSlot": {
                       "type": "object",
                       "properties": {
+                        "seasonSlotId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season."
+                        },
                         "sportEventId": {
                           "type": "string",
                           "format": "uuid",
-                          "description": "The edition's sport event: the one Create contest starts on."
+                          "description": "The sport event that owns the slot: the one Create contest starts on."
                         },
                         "name": {
                           "type": "string",
-                          "description": "The edition's name, such as \"Conference Championships\"."
+                          "description": "The event's name, such as \"Conference Championships\"."
                         },
                         "championshipYear": {
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991,
-                          "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
+                          "description": "The year the slot's Season is named for (SportEventDto.championshipYear)."
                         },
                         "startDate": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "When the edition starts. For a NOT_YET offer, when it is expected."
+                          "description": "When the event starts. For a NOT_YET offer, when it is expected."
                         },
                         "endDate": {
-                          "description": "When the edition ends, when known.",
+                          "description": "When the event ends, when known.",
                           "type": [
                             "string",
                             "null"
@@ -59894,6 +60484,7 @@
                         }
                       },
                       "required": [
+                        "seasonSlotId",
                         "sportEventId",
                         "name",
                         "championshipYear",
@@ -59901,30 +60492,31 @@
                         "endDate"
                       ],
                       "additionalProperties": false,
-                      "description": "The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest."
+                      "description": "The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest."
                     }
                   },
                   "required": [
                     "id",
                     "sportLeagueId",
                     "sportLeagueName",
-                    "eventSeriesName",
+                    "sportLeaguePhaseSlotId",
                     "template",
                     "startsAtRound",
                     "sortOrder",
                     "isPrimary",
                     "state",
-                    "edition"
+                    "nextSlot"
                   ],
                   "additionalProperties": false,
-                  "description": "One way to play on an event page: a contest setup on one sport league's series, with that series' next edition. An offer whose series has no edition that can still take the contest is left out."
+                  "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
                 },
-                "description": "The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons."
+                "description": "The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons."
               }
             },
             "required": [
               "id",
               "sport",
+              "sportName",
               "sportUrlSegment",
               "urlSegment",
               "path",
@@ -59934,7 +60526,7 @@
               "offers"
             ],
             "additionalProperties": false,
-            "description": "A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event."
+            "description": "A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event."
           }
         },
         "required": [
@@ -59964,7 +60556,7 @@
             ]
           },
           "upcoming": {
-            "description": "true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.",
+            "description": "true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.",
             "type": "boolean"
           }
         },
@@ -59999,6 +60591,10 @@
                     "TENNIS"
                   ],
                   "description": "The sport the page belongs to."
+                },
+                "sportName": {
+                  "type": "string",
+                  "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
                 },
                 "sportUrlSegment": {
                   "type": "string",
@@ -60048,6 +60644,10 @@
                       ],
                       "description": "The sport the page belongs to."
                     },
+                    "sportName": {
+                      "type": "string",
+                      "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                    },
                     "sportUrlSegment": {
                       "type": "string",
                       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -60065,6 +60665,7 @@
                   },
                   "required": [
                     "sport",
+                    "sportName",
                     "sportUrlSegment",
                     "urlSegment",
                     "path"
@@ -60083,15 +60684,16 @@
                       "sportLeagueId": {
                         "type": "string",
                         "format": "uuid",
-                        "description": "The sport league whose series the offer runs on."
+                        "description": "The sport league whose slot the offer runs on."
                       },
                       "sportLeagueName": {
                         "type": "string",
                         "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
                       },
-                      "eventSeriesName": {
+                      "sportLeaguePhaseSlotId": {
                         "type": "string",
-                        "description": "The series the offer runs on, by name in its sport league, such as \"NFL Playoffs\"."
+                        "format": "uuid",
+                        "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
                       },
                       "template": {
                         "type": "object",
@@ -60101,39 +60703,103 @@
                             "format": "uuid",
                             "description": "Seeded contest template identifier."
                           },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "HORSE_RACING",
-                              "AUTO_RACING",
-                              "CYCLING",
-                              "RUNNING",
-                              "BASKETBALL",
-                              "AMERICAN_FOOTBALL",
-                              "HOCKEY",
-                              "BASEBALL",
-                              "SOCCER",
-                              "TENNIS"
-                            ],
-                            "description": "Sport this template applies to."
-                          },
                           "sportLeagueId": {
                             "type": "string",
                             "format": "uuid",
                             "description": "Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey."
                           },
-                          "eventType": {
-                            "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.",
-                            "type": [
-                              "string",
-                              "null"
-                            ],
+                          "coverageMode": {
+                            "type": "string",
                             "enum": [
-                              "KNOCKOUT",
-                              "WEEK",
-                              null
-                            ]
+                              "ONE_SLOT",
+                              "ALL_LISTED",
+                              "FROM_SLOT"
+                            ],
+                            "description": "How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season."
+                          },
+                          "slots": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                                },
+                                "key": {
+                                  "type": "string",
+                                  "description": "Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                                },
+                                "name": {
+                                  "description": "The league's proper name for the slot, such as \"Super Bowl\"; null: screens use the word for its kind.",
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "slotKind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "WEEK",
+                                    "PLAY_IN",
+                                    "ROUND_OF_64",
+                                    "ROUND_OF_32",
+                                    "ROUND_OF_16",
+                                    "QUARTERFINAL",
+                                    "SEMIFINAL",
+                                    "THIRD_PLACE",
+                                    "FINAL",
+                                    "TOURNAMENT"
+                                  ],
+                                  "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                                },
+                                "weekNumber": {
+                                  "description": "For a WEEK slot, its week; null otherwise.",
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "sportLeaguePhaseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "description": "The phase the slot is in."
+                                },
+                                "phase": {
+                                  "type": "string",
+                                  "enum": [
+                                    "PRESEASON",
+                                    "REGULAR",
+                                    "POSTSEASON"
+                                  ],
+                                  "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                                },
+                                "matchFormat": {
+                                  "type": "string",
+                                  "enum": [
+                                    "HEAD_TO_HEAD",
+                                    "FIELD"
+                                  ],
+                                  "description": "How the slot's games are contested: HEAD_TO_HEAD or FIELD."
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "key",
+                                "name",
+                                "slotKind",
+                                "weekNumber",
+                                "sportLeaguePhaseId",
+                                "phase",
+                                "matchFormat"
+                              ],
+                              "additionalProperties": false,
+                              "description": "One slot definition a contest template covers (#2010), with the facts screens show."
+                            },
+                            "description": "The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them."
                           },
                           "contestFormat": {
                             "type": "string",
@@ -61508,8 +62174,9 @@
                         },
                         "required": [
                           "id",
-                          "sport",
                           "sportLeagueId",
+                          "coverageMode",
+                          "slots",
                           "contestFormat",
                           "selectionType",
                           "templateKey",
@@ -61541,7 +62208,7 @@
                       },
                       "isPrimary": {
                         "type": "boolean",
-                        "description": "The offer whose edition heads the page: its dates are the page's. A page has one."
+                        "description": "The offer whose next slot heads the page: its dates are the page's. A page has one."
                       },
                       "state": {
                         "type": "string",
@@ -61549,33 +62216,38 @@
                           "OPEN",
                           "NOT_YET"
                         ],
-                        "description": "OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
+                        "description": "OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date."
                       },
-                      "edition": {
+                      "nextSlot": {
                         "type": "object",
                         "properties": {
+                          "seasonSlotId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season."
+                          },
                           "sportEventId": {
                             "type": "string",
                             "format": "uuid",
-                            "description": "The edition's sport event: the one Create contest starts on."
+                            "description": "The sport event that owns the slot: the one Create contest starts on."
                           },
                           "name": {
                             "type": "string",
-                            "description": "The edition's name, such as \"Conference Championships\"."
+                            "description": "The event's name, such as \"Conference Championships\"."
                           },
                           "championshipYear": {
                             "type": "integer",
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991,
-                            "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
+                            "description": "The year the slot's Season is named for (SportEventDto.championshipYear)."
                           },
                           "startDate": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "When the edition starts. For a NOT_YET offer, when it is expected."
+                            "description": "When the event starts. For a NOT_YET offer, when it is expected."
                           },
                           "endDate": {
-                            "description": "When the edition ends, when known.",
+                            "description": "When the event ends, when known.",
                             "type": [
                               "string",
                               "null"
@@ -61584,6 +62256,7 @@
                           }
                         },
                         "required": [
+                          "seasonSlotId",
                           "sportEventId",
                           "name",
                           "championshipYear",
@@ -61591,30 +62264,31 @@
                           "endDate"
                         ],
                         "additionalProperties": false,
-                        "description": "The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest."
+                        "description": "The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest."
                       }
                     },
                     "required": [
                       "id",
                       "sportLeagueId",
                       "sportLeagueName",
-                      "eventSeriesName",
+                      "sportLeaguePhaseSlotId",
                       "template",
                       "startsAtRound",
                       "sortOrder",
                       "isPrimary",
                       "state",
-                      "edition"
+                      "nextSlot"
                     ],
                     "additionalProperties": false,
-                    "description": "One way to play on an event page: a contest setup on one sport league's series, with that series' next edition. An offer whose series has no edition that can still take the contest is left out."
+                    "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
                   },
-                  "description": "The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons."
+                  "description": "The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons."
                 }
               },
               "required": [
                 "id",
                 "sport",
+                "sportName",
                 "sportUrlSegment",
                 "urlSegment",
                 "path",
@@ -61624,7 +62298,7 @@
                 "offers"
               ],
               "additionalProperties": false,
-              "description": "A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event."
+              "description": "A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event."
             },
             "description": "The active pages, by sport then display order, or soonest first when only the upcoming ones are asked for. A page between seasons has no offers."
           }
@@ -68187,13 +68861,14 @@
       "PerpetualTrophyDto": {
         "type": "object",
         "properties": {
-          "eventSeriesId": {
+          "trophyId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "The trophy's id until perpetual trophies are kept by template (#2024): the first slot definition, in play order, of the slots its contests cover. Two trophies on the same slots differ by selectionType."
           },
-          "seriesName": {
+          "name": {
             "type": "string",
-            "description": "The event series the contest is run on every year, such as \"Masters Tournament\"."
+            "description": "What the trophy is run on, built by the API: its first slot's proper name, such as \"Masters\", else its newest run's event name. Screens add the way of picking."
           },
           "sportLeagueName": {
             "type": "string"
@@ -68209,7 +68884,7 @@
               "SURVIVOR",
               "SQUARES"
             ],
-            "description": "How the contest is picked: a series run as two ways of picking is two trophies."
+            "description": "How the contest is picked: the same slots run as two ways of picking is two trophies."
           },
           "plates": {
             "type": "array",
@@ -68369,8 +69044,8 @@
           }
         },
         "required": [
-          "eventSeriesId",
-          "seriesName",
+          "trophyId",
+          "name",
           "sportLeagueName",
           "selectionType",
           "plates"
@@ -68386,13 +69061,14 @@
             "items": {
               "type": "object",
               "properties": {
-                "eventSeriesId": {
+                "trophyId": {
                   "type": "string",
-                  "format": "uuid"
+                  "format": "uuid",
+                  "description": "The trophy's id until perpetual trophies are kept by template (#2024): the first slot definition, in play order, of the slots its contests cover. Two trophies on the same slots differ by selectionType."
                 },
-                "seriesName": {
+                "name": {
                   "type": "string",
-                  "description": "The event series the contest is run on every year, such as \"Masters Tournament\"."
+                  "description": "What the trophy is run on, built by the API: its first slot's proper name, such as \"Masters\", else its newest run's event name. Screens add the way of picking."
                 },
                 "sportLeagueName": {
                   "type": "string"
@@ -68408,7 +69084,7 @@
                     "SURVIVOR",
                     "SQUARES"
                   ],
-                  "description": "How the contest is picked: a series run as two ways of picking is two trophies."
+                  "description": "How the contest is picked: the same slots run as two ways of picking is two trophies."
                 },
                 "plates": {
                   "type": "array",
@@ -68568,8 +69244,8 @@
                 }
               },
               "required": [
-                "eventSeriesId",
-                "seriesName",
+                "trophyId",
+                "name",
                 "sportLeagueName",
                 "selectionType",
                 "plates"
@@ -68577,7 +69253,7 @@
               "additionalProperties": false,
               "description": "A perpetual trophy: a contest of one event the league has run in two or more years."
             },
-            "description": "In sports league, series and selection type order."
+            "description": "In sports league, name and selection type order."
           }
         },
         "required": [
@@ -70894,7 +71570,6 @@
               "SETTLE_SPORT_EVENT_CONTESTS",
               "SETTLE_GAME_CONTESTS",
               "REBUILD_LEADERBOARDS",
-              "ADD_RELEASED_EDITION_TO_CONTEST",
               "SYNC_LEAGUE_EVENTS",
               "RELEASE_SPORT_EVENT",
               "SYNC_EVENT_GAMES_AND_TIERS",
@@ -71203,7 +71878,6 @@
                     "SETTLE_SPORT_EVENT_CONTESTS",
                     "SETTLE_GAME_CONTESTS",
                     "REBUILD_LEADERBOARDS",
-                    "ADD_RELEASED_EDITION_TO_CONTEST",
                     "SYNC_LEAGUE_EVENTS",
                     "RELEASE_SPORT_EVENT",
                     "SYNC_EVENT_GAMES_AND_TIERS",
@@ -71471,7 +72145,6 @@
                   "SETTLE_SPORT_EVENT_CONTESTS",
                   "SETTLE_GAME_CONTESTS",
                   "REBUILD_LEADERBOARDS",
-                  "ADD_RELEASED_EDITION_TO_CONTEST",
                   "SYNC_LEAGUE_EVENTS",
                   "RELEASE_SPORT_EVENT",
                   "SYNC_EVENT_GAMES_AND_TIERS",
@@ -81038,7 +81711,7 @@
         "tags": [
           "History"
         ],
-        "description": "The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, the same event series and the same way of picking, with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has TROPHY_SHELF (root admins too).",
+        "description": "The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, on the same slot definitions and the same way of picking (by template from #2024), with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has TROPHY_SHELF (root admins too).",
         "parameters": [
           {
             "schema": {
@@ -81427,30 +82100,8 @@
         "tags": [
           "Contest Config Templates"
         ],
-        "description": "The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport's active templates, narrowed to the chosen event's sport league (every template is one league's) and kind of event.",
+        "description": "The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for the chosen event's sport league's active templates (every template is one league's) covering one of the event's slot definitions.",
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
-            },
-            "in": "query",
-            "name": "sport",
-            "required": false,
-            "description": "Only templates for this sport."
-          },
           {
             "schema": {
               "type": "string",
@@ -81463,16 +82114,16 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": [
-                "KNOCKOUT",
-                "WEEK"
-              ]
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
             },
             "in": "query",
-            "name": "eventType",
+            "name": "slotDefinitionIds",
             "required": false,
-            "description": "Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches."
+            "description": "Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds)."
           },
           {
             "schema": {
@@ -81515,7 +82166,7 @@
         "tags": [
           "Contest Config Templates"
         ],
-        "description": "Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise).",
+        "description": "Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT) and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.",
         "requestBody": {
           "required": true,
           "content": {
@@ -81659,7 +82310,7 @@
             "in": "query",
             "name": "sportLeagueId",
             "required": false,
-            "description": "Only events of this sport league's series."
+            "description": "Only events of this sport league."
           },
           {
             "schema": {
@@ -81730,7 +82381,7 @@
         "tags": [
           "Events"
         ],
-        "description": "A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's default rounds and tiers. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. The series is found or created in the league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season. Root admin only.",
+        "description": "A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's default rounds and tiers. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -85615,7 +86266,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a participant: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.",
+        "description": "Deletes a sport league nothing uses any more and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a participant: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -87184,7 +87835,7 @@
         "tags": [
           "Event pages"
         ],
-        "description": "The active event pages, of one sport or every sport, each with its offers and their next editions; with `upcoming=true`, only the pages with an edition coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.",
+        "description": "The active event pages, of one sport or every sport, each with its offers and their next Season slots; with `upcoming=true`, only the pages with a slot coming, soonest first, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.",
         "parameters": [
           {
             "schema": {
@@ -87215,7 +87866,7 @@
             "in": "query",
             "name": "upcoming",
             "required": false,
-            "description": "true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order."
+            "description": "true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order."
           }
         ],
         "responses": {
@@ -87239,7 +87890,7 @@
         "tags": [
           "Event pages"
         ],
-        "description": "One event page by its address, the sport's URL segment then the page's, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.",
+        "description": "One event page by its address, the sport's URL segment then the page's, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its slot definition's next Season slot that can still take the contest (the one under way, else the soonest upcoming), with the event that owns it, and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such slot is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.",
         "parameters": [
           {
             "schema": {

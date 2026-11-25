@@ -6,7 +6,6 @@
 import type { z } from 'zod';
 import { BackgroundJobType, providerCodeOfSourceId, type BackgroundJobScope, type ProviderCode } from '@poolmaster/shared/domain';
 import { SyncLeagueEventsJobPayloadSchema } from '../events/league-events-sync-job';
-import { AddReleasedEditionToContestJobPayloadSchema } from '../contest-management/released-edition-job-requests';
 import { ManualEventSyncJobPayloadSchema } from '../ingestion/manual-event-sync-job';
 import { ProviderEventSyncJobPayloadSchema } from '../ingestion/provider-event-sync-job';
 import {
@@ -33,7 +32,6 @@ export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS]: SettleSportEventContestsJobPayloadSchema,
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: SettleGameContestsJobPayloadSchema,
   [BackgroundJobType.REBUILD_LEADERBOARDS]: RebuildLeaderboardsJobPayloadSchema,
-  [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: AddReleasedEditionToContestJobPayloadSchema,
   [BackgroundJobType.SYNC_LEAGUE_EVENTS]: SyncLeagueEventsJobPayloadSchema,
   [BackgroundJobType.RELEASE_SPORT_EVENT]: ReleaseSportEventJobPayloadSchema,
   [BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS]: SyncEventGamesAndTiersJobPayloadSchema,
@@ -64,7 +62,6 @@ export const BACKGROUND_JOB_SCOPES: {
   [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.REBUILD_LEADERBOARDS]: ({ subject, id }) => (subject === LeaderboardRebuildSubject.EVENT ? { sportEventId: id } : {}),
-  [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.RELEASE_SPORT_EVENT]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.SYNC_LEAGUE_EVENTS]: ({ sportLeagueId }) => ({ sportLeagueId }),
   [BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS]: ({ sportEventId }) => ({ sportEventId }),

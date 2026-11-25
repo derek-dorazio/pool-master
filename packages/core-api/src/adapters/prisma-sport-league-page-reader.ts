@@ -237,10 +237,10 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   async readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null> {
     const event = await this.prisma.sportEvent.findUnique({
       where: { id: sportEventId },
-      select: { ...EVENT_SELECT, sportLeagueSeason: { select: { sportLeagueId: true } }, eventSeries: { select: { name: true } } },
+      select: { ...EVENT_SELECT, sportLeagueId: true },
     });
     if (event === null) return null;
-    const { eventSeries, sportLeagueSeason: { sportLeagueId }, ...eventRow } = event;
+    const { sportLeagueId, ...eventRow } = event;
     const [league, latestRunGroups, overdueCandidates, field, offer] = await Promise.all([
       this.league(sportLeagueId),
       this.prisma.providerSyncRun.groupBy({ by: ['kind'], where: { sportEventId }, _max: { createdAt: true } }),
@@ -250,14 +250,14 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         select: { id: true, participantId: true, isActive: true, oddsToWin: true, seedNumber: true, ranking: true, participant: { select: { name: true } } },
         orderBy: { id: 'asc' },
       }),
-      // An offer names its series by sport league and name, as a template's series names do.
+      // An offer names a slot definition (#2010): the event's page offers one of its slots.
       this.prisma.eventPageOffer.findFirst({
-        where: { sportLeagueId, eventSeriesName: eventSeries.name, eventPage: { isActive: true } },
+        where: { sportLeagueId, definition: { seasonSlots: { some: { eventSlot: { sportEventId } } } }, eventPage: { isActive: true } },
         select: { eventPage: { select: { urlSegment: true, sportConfig: { select: { urlSegment: true } } } } },
         orderBy: [{ eventPage: { displayOrder: 'asc' } }, { id: 'asc' }],
       }),
     ]);
-    // Every series names a sport league (a foreign key), so it is there.
+    // Every event names a sport league (a foreign key), so it is there.
     if (league === null) return null;
     const keys = latestRunGroups.flatMap((group) => (group._max.createdAt === null ? [] : [{ sportEventId, kind: group.kind, createdAt: group._max.createdAt }]));
     const participantIds = field.map((row) => row.participantId);

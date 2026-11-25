@@ -23,8 +23,8 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
       {trophies.map((trophy) => (
         <SectionCard
           headingLevel={3}
-          key={`${trophy.eventSeriesId}-${trophy.selectionType}`}
-          testId={`perpetual-trophy-${trophy.eventSeriesId}-${trophy.selectionType}`}
+          key={`${trophy.trophyId}-${trophy.selectionType}`}
+          testId={`perpetual-trophy-${trophy.trophyId}-${trophy.selectionType}`}
           title={(
             <>
               <Icon icon={Award} size={18} tone="primary" />

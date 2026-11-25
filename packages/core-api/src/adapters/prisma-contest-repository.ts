@@ -15,7 +15,6 @@ import type {
   ContestUpdate,
   DeletedDraftContest,
   PendingDrawReceipts,
-  ReleasedEdition,
   ReminderCheck,
 } from '@poolmaster/shared/db';
 import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
@@ -195,35 +194,6 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]> {
-    // The edition's league is its Season's (#2004), matched in the contest read itself; the
-    // series gives only the name templates list.
-    const series = await this.prisma.eventSeries.findUnique({ where: { id: edition.eventSeriesId }, select: { name: true } });
-    if (!series) {
-      return [];
-    }
-    const rows = await this.prisma.contest.findMany({
-      where: {
-        configuration: {
-          template: {
-            sportLeague: { seasons: { some: { id: edition.sportLeagueSeasonId } } },
-            eventSeriesNames: { has: series.name },
-          },
-        },
-        status: { not: ContestStatus.COMPLETED },
-        draw: null,
-        squaresDraw: null,
-        sportEvents: {
-          none: { sportEventId: edition.id },
-          every: { sportEvent: { sportLeagueSeasonId: edition.sportLeagueSeasonId } },
-        },
-      },
-      orderBy: [{ configuration: { createdAt: 'asc' } }, { id: 'asc' }],
-      include: CONTEST_INCLUDE,
-    });
-    return rows.map(mapToContest);
-  }
-
   async findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]> {
     const rows = await this.prisma.contest.findMany({
       where: { status: { in: [...statuses] } },
@@ -354,14 +324,12 @@ export class PrismaContestRepository implements ContestRepository {
     return mapToContest(row);
   }
 
-  async replaceSportEvents(id: string, sportEventIds: readonly string[], options: { replacing?: readonly string[] } = {}): Promise<boolean> {
+  async replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void> {
     // The contest row lock comes first, as every entry write and the draw take it (#644), so an
     // entry created meanwhile is either seen here or created after with the new events.
     return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, id);
       const current = await tx.contestSportEvent.findMany({ where: { contestId: id }, select: { sportEventId: true } });
-      const { replacing } = options;
-      if (replacing && !sameEvents(current.map((row) => row.sportEventId), replacing)) return false;
       const removed = current.map((row) => row.sportEventId).filter((eventId) => !sportEventIds.includes(eventId));
       if (removed.length > 0) {
         await tx.contestEntryPick.deleteMany({
@@ -384,7 +352,6 @@ export class PrismaContestRepository implements ContestRepository {
         data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
         skipDuplicates: true,
       });
-      return true;
     }));
   }
 
@@ -489,16 +456,9 @@ async function sportLeagueIdsBySeason(
   leagueId: string,
   seasonYear: number,
 ): Promise<string[]> {
-  const rows = await db.eventSeries.findMany({
-    where: {
-      sportEvents: {
-        some: {
-          contests: {
-            some: { contest: { leagueId, seasonYear } },
-          },
-        },
-      },
-    },
+  // An event names its sport league (#2010), so the league's contests' events give them.
+  const rows = await db.sportEvent.findMany({
+    where: { contests: { some: { contest: { leagueId, seasonYear } } } },
     select: { sportLeagueId: true },
     distinct: ['sportLeagueId'],
   });
@@ -534,9 +494,4 @@ function toStatusTransitionData(transition: ContestStatusTransition): Prisma.Con
     ...(transition.startsAt && { startsAt: transition.startsAt }),
     ...(transition.endsAt && { endsAt: transition.endsAt }),
   };
-}
-
-/** Whether two lists name the same events, in any order. */
-function sameEvents(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length && new Set([...left, ...right]).size === left.length;
 }

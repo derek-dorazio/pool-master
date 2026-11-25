@@ -184,9 +184,10 @@ export const enUS = {
       SURVIVOR: 'Survivor',
       SQUARES: 'Squares',
     },
-    ContestTemplateEventType: {
-      KNOCKOUT: { name: 'Playoffs and brackets', short: 'Playoffs' },
-      WEEK: { name: 'A week of games', short: 'Weekly' },
+    TemplateCoverageMode: {
+      ONE_SLOT: 'One of these',
+      ALL_LISTED: 'All of these',
+      FROM_SLOT: 'From one of these on',
     },
     PickEmMode: {
       STRAIGHT_UP: 'Straight up',
@@ -699,7 +700,6 @@ export const enUS = {
       SETTLE_SPORT_EVENT_CONTESTS: 'Settle contests',
       SETTLE_GAME_CONTESTS: 'Settle game contests',
       REBUILD_LEADERBOARDS: 'Rebuild leaderboards',
-      ADD_RELEASED_EDITION_TO_CONTEST: 'Add to contest',
       SYNC_LEAGUE_EVENTS: 'Event list',
       RELEASE_SPORT_EVENT: 'Release check',
       SYNC_EVENT_GAMES_AND_TIERS: 'Games, tiers and prices',
@@ -847,6 +847,9 @@ export const enUS = {
     CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH: 'That contest type is not offered in this league.',
     CONTEST_CONFIG_TEMPLATE_NOT_FOUND: 'That contest type was not found.',
     CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH: 'These settings do not match the contest type.',
+    CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT: 'Pick slots from this sport league only.',
+    CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS: 'Covering all of its slots needs one event\'s slots.',
+    CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT: 'A bracket can cover knockout slots only.',
     CONTEST_DELETE_STATUS_INVALID: 'A contest can only be deleted while it is being set up.',
     CONTEST_DRAW_ALREADY_RUN: 'This contest has already been drawn. The draw is final.',
     CONTEST_DRAW_ENTRIES_CHANGED: 'Someone entered or left while the draw was running, so nothing was dealt. Run the draw again.',
@@ -920,7 +923,6 @@ export const enUS = {
     ENTRY_OVER_BUDGET: 'Your picks cost more than the salary cap. Remove one to get under it, then submit.',
     EVENT_ADMIN_RATE_LIMITED: 'Too many requests. Wait a minute and try again.',
     EVENT_DATES_FROM_SLOTS: 'This event\'s dates come from its slots, so they can\'t be changed here.',
-    EVENT_EDITION_ALREADY_EXISTS: 'This event already exists for that year.',
     EVENT_HAS_CONTESTS: 'This event has contests, so it cannot be deleted.',
     EVENT_NOT_FOUND: 'Event not found.',
     EVENT_NOT_LINKED: 'This event is not linked to a provider.',
@@ -1207,9 +1209,6 @@ export const enUS = {
     },
     CONTEST_SQUARES_SINGLE_EVENT: {
       contestSetup: 'A squares contest is played on one game, so it can’t take another event.',
-    },
-    EVENT_EDITION_ALREADY_EXISTS: {
-      createEvent: 'This {{sportLeague}} already has this {{event}} in its current Season.',
     },
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: {
       bracketAdmin: 'That {{participant}} is already in the {{event}}.',

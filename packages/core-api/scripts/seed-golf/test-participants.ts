@@ -17,7 +17,7 @@
  * alone. A contest whose event has started is never touched.
  */
 
-import { ContestEntryStatus, ContestFormat, ContestStatus, ContestTemplateEventType, contestTemplateEventTypeOf, LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type { ContestConfigTemplateListResponse, ContestListResponse, SportEventListResponse } from '@poolmaster/shared/generated/hey-api';
 import {
@@ -220,11 +220,8 @@ class ParticipantLoader {
         const template = await this.template(client, event);
         if (!template) {
           // A week of games is picked game by game (#816), and the run makes roster picks only, so
-          // it has no contest to build there. Any other event without one is missing its templates.
-          if (contestTemplateEventTypeOf(event) !== ContestTemplateEventType.WEEK) {
-            throw new Error(`No tiered or budget contest template for ${event.name} (${event.sport}).`);
-          }
-          row(LoadSubject.CONTEST, LoadAction.SKIP, contestName, 'a week of games is picked game by game, so it has no tiered or budget contest');
+          // it has no contest to build there; nor has an event the sync has not given its slots.
+          row(LoadSubject.CONTEST, LoadAction.SKIP, contestName, 'no tiered or budget contest is offered on it');
           continue;
         }
         row(LoadSubject.CONTEST, LoadAction.ADD, contestName, 'created from the default template and opened');
@@ -248,11 +245,13 @@ class ParticipantLoader {
   }
 
   private async template(client: Client, event: StoredEvent): Promise<Template | null> {
+    // An event with no Season slot is offered no template (#2010).
+    if (event.slotDefinitionIds.length === 0) return null;
     const { templates } = await must(listContestConfigTemplates({
       client,
-      query: { sport: event.sport, sportLeagueId: event.sportLeagueId, active: true },
+      query: { sportLeagueId: event.sportLeagueId, slotDefinitionIds: event.slotDefinitionIds, active: true },
     }), `List contest templates for ${event.name}`);
-    return chooseContestTemplate(templates, event);
+    return chooseContestTemplate(templates);
   }
 
   /** Creates the contest from the template, then opens it; returns its id. */

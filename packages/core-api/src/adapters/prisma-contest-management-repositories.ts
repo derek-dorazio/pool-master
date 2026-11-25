@@ -1,8 +1,8 @@
 import type { PrismaClient } from '@prisma/client';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
-import { SPORT_LEAGUE_SPORT_SELECT, type SportLeagueSportRow } from './sport-of';
 import type {
   ContestConfigTemplateRepository,
+  ContestConfigTemplateUpdate,
   ContestConfigurationRepository,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
@@ -10,12 +10,17 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestFormat,
-  ContestTemplateEventType,
+  ContestTemplateSlot,
+  LeaguePhase,
+  MatchFormat,
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
   SelectionType,
+  SlotKind,
+  TemplateCoverageMode,
 } from '@poolmaster/shared/domain';
 import {
+  compareCoveredSlots,
   ContestRulesWithEntryLimitSchema,
   ContestSelectionConfigSchema,
   parseContestScoringSettings,
@@ -109,23 +114,21 @@ export class PrismaContestConfigTemplateRepository
   }
 
   async list(input: {
-    sport?: ContestConfigTemplate['sport'];
     sportLeagueId?: string;
-    eventType?: ContestTemplateEventType | null;
+    slotDefinitionIds?: readonly string[];
     active?: boolean;
   } = {}): Promise<ContestConfigTemplate[]> {
     const rows = await this.prisma.contestConfigTemplate.findMany({
       where: {
-        // The template's sport is its sport league's (#2042).
-        ...(input.sport !== undefined && { sportLeague: { sport: { sport: input.sport } } }),
-        // An event type narrows to that type's templates plus the ones for any event type.
-        ...(input.eventType !== undefined && { OR: [{ eventType: input.eventType }, { eventType: null }] }),
         ...(input.sportLeagueId !== undefined && { sportLeagueId: input.sportLeagueId }),
+        // Covering one of the slot definitions: where the template is offered (#2010).
+        ...(input.slotDefinitionIds !== undefined && { slots: { some: { sportLeaguePhaseSlotId: { in: [...input.slotDefinitionIds] } } } }),
         ...(input.active !== undefined && { active: input.active }),
       },
       include: TEMPLATE_INCLUDE,
       orderBy: [
         { sportLeague: { sport: { displayOrder: 'asc' } } },
+        { sportLeague: { name: 'asc' } },
         { contestFormat: 'asc' },
         { sortOrder: 'asc' },
         { name: 'asc' },
@@ -135,25 +138,48 @@ export class PrismaContestConfigTemplateRepository
     return rows.map(mapContestConfigTemplate);
   }
 
-  async update(
-    id: string,
-    updates: Partial<ContestConfigTemplate>,
-  ): Promise<ContestConfigTemplate> {
-    const row = await this.prisma.contestConfigTemplate.update({
-      where: { id },
-      data: {
-        ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.description !== undefined && { description: updates.description }),
-        ...(updates.sortOrder !== undefined && { sortOrder: updates.sortOrder }),
-        ...(updates.isDefault !== undefined && { isDefault: updates.isDefault }),
-        ...(updates.active !== undefined && { active: updates.active }),
-        ...(updates.configJson !== undefined && { configJson: updates.configJson }),
-        ...(updates.schemaVersion !== undefined && { schemaVersion: updates.schemaVersion }),
-      },
-      include: TEMPLATE_INCLUDE,
+  async update(id: string, updates: ContestConfigTemplateUpdate): Promise<ContestConfigTemplate> {
+    return this.prisma.$transaction(async (tx) => {
+      const { sportLeagueId, selectionType } = await tx.contestConfigTemplate.findUniqueOrThrow({ where: { id }, select: { sportLeagueId: true, selectionType: true } });
+      if (updates.isDefault === true) {
+        // One default per sport league and selection type, which a partial unique index keeps
+        // (#2010): the one that was the default stops being it in the same transaction.
+        await tx.contestConfigTemplate.updateMany({
+          where: { sportLeagueId, selectionType, isDefault: true, id: { not: id } },
+          data: { isDefault: false },
+        });
+      }
+      if (updates.slotDefinitionIds !== undefined) {
+        // The composite key keeps every definition in the template's own league.
+        await tx.contestConfigTemplateSlot.deleteMany({ where: { templateId: id } });
+        await tx.contestConfigTemplateSlot.createMany({
+          data: [...new Set(updates.slotDefinitionIds)].map((sportLeaguePhaseSlotId) => ({ sportLeagueId, templateId: id, sportLeaguePhaseSlotId })),
+        });
+      }
+      const row = await tx.contestConfigTemplate.update({
+        where: { id },
+        data: {
+          ...(updates.name !== undefined && { name: updates.name }),
+          ...(updates.description !== undefined && { description: updates.description }),
+          ...(updates.sortOrder !== undefined && { sortOrder: updates.sortOrder }),
+          ...(updates.isDefault !== undefined && { isDefault: updates.isDefault }),
+          ...(updates.active !== undefined && { active: updates.active }),
+          ...(updates.configJson !== undefined && { configJson: updates.configJson }),
+          ...(updates.coverageMode !== undefined && { coverageMode: updates.coverageMode }),
+        },
+        include: TEMPLATE_INCLUDE,
+      });
+      return mapContestConfigTemplate(row);
     });
+  }
 
-    return mapContestConfigTemplate(row);
+  async findSlotDefinitions(sportLeagueId: string, ids: readonly string[]): Promise<ContestTemplateSlot[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.sportLeaguePhaseSlot.findMany({
+      where: { sportLeagueId, id: { in: [...ids] } },
+      select: TEMPLATE_SLOT_DEFINITION_SELECT,
+    });
+    return rows.map(mapTemplateSlot).sort(compareCoveredSlots);
   }
 }
 
@@ -229,15 +255,52 @@ function mapContestConfiguration(row: {
   };
 }
 
-/** A template row as the domain reads it; the event page adapter maps its offers' templates with it too. */
-/** What every template read joins: its sport league's sport (#2042), the template's own. */
-export const TEMPLATE_INCLUDE = { sportLeague: { select: SPORT_LEAGUE_SPORT_SELECT } } as const;
+/** A slot definition as a template lists it (#2010), with its phase's kind. */
+const TEMPLATE_SLOT_DEFINITION_SELECT = {
+  id: true,
+  key: true,
+  name: true,
+  slotKind: true,
+  weekNumber: true,
+  matchFormat: true,
+  sportLeaguePhaseId: true,
+  phase: { select: { phase: true } },
+} as const;
 
+/** A slot definition row selected with `TEMPLATE_SLOT_DEFINITION_SELECT`. */
+interface TemplateSlotDefinitionRow {
+  id: string;
+  key: string;
+  name: string | null;
+  slotKind: SlotKind;
+  weekNumber: number | null;
+  matchFormat: MatchFormat;
+  sportLeaguePhaseId: string;
+  phase: { phase: LeaguePhase };
+}
+
+/** What every template read joins: the slot definitions it covers (#2010). The event page adapter maps its offers' templates with it too. */
+export const TEMPLATE_INCLUDE = { slots: { select: { definition: { select: TEMPLATE_SLOT_DEFINITION_SELECT } } } } as const;
+
+function mapTemplateSlot(row: TemplateSlotDefinitionRow): ContestTemplateSlot {
+  return {
+    id: row.id,
+    key: row.key,
+    name: row.name,
+    slotKind: row.slotKind,
+    weekNumber: row.weekNumber,
+    sportLeaguePhaseId: row.sportLeaguePhaseId,
+    phase: row.phase.phase,
+    matchFormat: row.matchFormat,
+  };
+}
+
+/** A template row as the domain reads it. */
 export function mapContestConfigTemplate(row: {
   id: string;
-  sportLeague: SportLeagueSportRow;
   sportLeagueId: string;
-  eventType: ContestTemplateEventType | null;
+  coverageMode: TemplateCoverageMode;
+  slots: readonly { definition: TemplateSlotDefinitionRow }[];
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   templateKey: string;
@@ -248,15 +311,14 @@ export function mapContestConfigTemplate(row: {
   active: boolean;
   configJson: unknown;
   schemaVersion: number;
-  eventSeriesNames: string[];
   createdAt: Date;
   updatedAt: Date;
 }): ContestConfigTemplate {
   return {
     id: row.id,
-    sport: row.sportLeague.sport.sport,
     sportLeagueId: row.sportLeagueId,
-    eventType: row.eventType ?? undefined,
+    coverageMode: row.coverageMode,
+    slots: row.slots.map(({ definition }) => mapTemplateSlot(definition)).sort(compareCoveredSlots),
     contestFormat: row.contestFormat,
     selectionType: row.selectionType,
     templateKey: row.templateKey,
@@ -267,7 +329,6 @@ export function mapContestConfigTemplate(row: {
     active: row.active,
     configJson: ContestRulesWithEntryLimitSchema.parse(row.configJson),
     schemaVersion: row.schemaVersion,
-    eventSeriesNames: row.eventSeriesNames,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

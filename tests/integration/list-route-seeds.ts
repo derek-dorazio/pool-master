@@ -10,7 +10,7 @@ import { MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/sha
 import type { Response } from 'light-my-request';
 import type { z } from 'zod';
 import { createTestUser, getApp, getPrisma, type TestUserResult } from './helpers';
-import { freshEventEdition, seriesSeasonId } from '../support/event-edition';
+import { freshEventEdition, fixtureSeasonId } from '../support/event-edition';
 import { sportLeagueRowDefaults } from '../support/league-profiles';
 import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
@@ -73,7 +73,7 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
     : undefined;
   const edition = await freshEventEdition(prisma, { championshipYear: startDate.getUTCFullYear(), sportLeagueId: tour?.id });
   // The field's golfers belong to the event's sport league (#1853).
-  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId }, select: { sportLeagueId: true } });
+  const { sportLeagueId } = edition;
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
@@ -124,11 +124,10 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
     create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
     update: {},
   });
-  const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Week ${suffix}` } });
   const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: eventSeries.id,
-      sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, startDate.getUTCFullYear()),
+      sportLeagueId: sportLeague.id,
+      sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, startDate.getUTCFullYear()),
       name: `Scaling Week ${suffix}`,
       startDate,
       status,

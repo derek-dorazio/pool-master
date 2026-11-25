@@ -116,7 +116,6 @@ export const BACKGROUND_JOB_KINDS = {
   [BackgroundJobType.CONTEST_REOPENED_EMAILS]: BackgroundJobKind.EMAIL,
   [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS]: BackgroundJobKind.SETTLEMENT,
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: BackgroundJobKind.SETTLEMENT,
-  [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: BackgroundJobKind.RELEASE,
   [BackgroundJobType.RELEASE_SPORT_EVENT]: BackgroundJobKind.RELEASE,
   [BackgroundJobType.REBUILD_LEADERBOARDS]: BackgroundJobKind.OTHER,
   [BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS]: BackgroundJobKind.SYNC,

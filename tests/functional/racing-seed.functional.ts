@@ -23,7 +23,7 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const leagueIds = [...created.sportLeagueIds];
   if (leagueIds.length) {
-    const series = { eventSeries: { sportLeagueId: { in: leagueIds } } };
+    const series = { sportLeagueId: { in: leagueIds } };
     const where = { sportEvent: series };
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: where } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: where } });
@@ -31,7 +31,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where });
     await db.sportEventTier.deleteMany({ where });
     await db.sportEvent.deleteMany({ where: series });
-    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).
   if (leagueIds.length) await db.participant.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });

@@ -50,7 +50,7 @@ async function golfEvent() {
     update: {},
   });
   const edition = await freshEventEdition(prisma);
-  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
+  const { sportLeagueId } = edition;
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
@@ -136,6 +136,8 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_matches', 2],
       ['SELECT sport_event_rounds', 1],
+      // The event's slot definitions (#2010), where templates are offered.
+      ['SELECT sport_event_slots', 1],
       ['SELECT sport_events', 1],
       ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
@@ -193,7 +195,7 @@ describe('An event\'s field', () => {
 
   it('is read afresh once a participant on it is renamed, or the event\'s sport league re-ranks one, so the next poll shows it', async () => {
     const { event, ana, bea } = await golfEvent();
-    const { sportLeagueId } = await getPrisma().eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const { sportLeagueId } = event;
     const admin = await createTestUser({ isRootAdmin: true });
     const readField = async () => (await getApp().inject({
       method: 'GET',
