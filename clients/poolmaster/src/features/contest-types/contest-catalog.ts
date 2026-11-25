@@ -18,7 +18,7 @@ export interface ContestCatalogLeague {
   sportLeagueId: string;
   /** What the page calls it, as How to Play does: the league's display name, else its name. */
   name: string;
-  /** Its stored URL segment, its name in the page's link: `?sport=golf&league=pga-tour`. */
+  /** Its stored URL segment, its name in the page's link: `?sport=golf&league=pga`. */
   urlSegment: string;
   tiles: ContestTypeTile[];
 }

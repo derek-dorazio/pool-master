@@ -125,7 +125,7 @@ test('act 1: the root admin builds a race — the seeded series, ten test driver
   const run: JourneyRun = {
     runId,
     sport: 'AUTO_RACING',
-    tourUrlSegment: 'formula-1',
+    tourUrlSegment: 'f1',
     playerNamePrefix: e2eName('Driver', runId),
     tournamentName: e2eName('Grand Prix', runId),
     commissioner: {
