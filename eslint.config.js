@@ -656,7 +656,15 @@ export default tseslint.config(
     // (rules/service-rules.md §5). Markers are counted per file, shrink-only; the Unsafe forms
     // are never allowed. Tests and scripts may query freely.
     files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
-    ignores: ['packages/shared/generated/**', 'packages/shared/dist/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    ignores: [
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      '**/test/**',
+      '**/__tests__/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-raw-sql': ['error', { baseline: RAW_SQL_BASELINE }] },
   },
@@ -667,7 +675,8 @@ export default tseslint.config(
     ignores: [
       'packages/shared/generated/**',
       'packages/shared/dist/**',
-      'clients/poolmaster/src/test/**',
+      '**/test/**',
+      '**/__tests__/**',
       '**/*.test.{ts,tsx}',
       '**/*.spec.{ts,tsx}',
       '**/*.stories.tsx',

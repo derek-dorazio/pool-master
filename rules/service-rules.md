@@ -358,7 +358,7 @@ Rules:
   queue claim, a Postgres advisory lock, a set-based update from `unnest` arrays or an
   `array_remove` across rows), the tagged `$queryRaw` / `$executeRaw` carries
   `// poolmaster-allow-raw-sql: <what Prisma can't express>` on the line before.
-  `$queryRawUnsafe` and `$executeRawUnsafe` are never used. `poolmaster/no-raw-sql` enforces
+  `$queryRawUnsafe`, `$executeRawUnsafe` and `Prisma.raw` are never used. `poolmaster/no-raw-sql` enforces
   it, and a new marker is a raise of `eslint-rules/raw-sql-baseline.json` declared in
   `scripts/baseline-raises.json`, so a reviewer sees each new raw query.
 - Keep persistence concerns out of handlers.

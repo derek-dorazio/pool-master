@@ -5,10 +5,14 @@
  * A name is display text: it is renamed, translated and duplicated. A row is found by its id,
  * code or key. Reported in production source:
  *
- * - `name: { equals: … }` in a Prisma `where`;
+ * - `name`, `name: value` or `name: { equals: … }` in a Prisma `where`, nested relation filters
+ *   included;
  * - a `.find`, `.filter`, `.some`, `.every` or `.findIndex` callback that compares `.name` or
  *   `.label` (or its `toLowerCase()` / `toUpperCase()`) with `===` or `!==`;
  * - `===` / `!==` between two `.name` members.
+ *
+ * Not caught, so still a review job: a `for` loop that compares names, `includes`,
+ * `startsWith`, regexes, keyword lists, and a name held under another property.
  *
  * Not reported: free-text search (`contains`, `startsWith`), an update that writes a name, an
  * error's `.name`, and a DOM event target's `.name`. Code that compares a provider's name with
@@ -89,9 +93,15 @@ export default {
 
     return {
       Property(node) {
-        if (node.computed || node.key.type !== 'Identifier' || node.key.name !== 'name' || node.value.type !== 'ObjectExpression') return;
+        if (node.computed || node.key.type !== 'Identifier' || node.key.name !== 'name' || !insideWhere(node)) return;
+        // `where: { name }`, `where: { name: n }` and `where: { name: { equals: n } }` are lookups;
+        // `{ contains }` / `{ startsWith }` is free-text search.
+        if (node.value.type !== 'ObjectExpression') {
+          hit(node);
+          return;
+        }
         const equals = node.value.properties.some((p) => p.type === 'Property' && !p.computed && p.key.type === 'Identifier' && p.key.name === 'equals');
-        if (equals && insideWhere(node)) hit(node);
+        if (equals) hit(node);
       },
       BinaryExpression(node) {
         if (node.operator !== '===' && node.operator !== '!==') return;

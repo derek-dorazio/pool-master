@@ -1646,6 +1646,13 @@ ruleTester.run('no-raw-sql', noRawSql, {
       errors: [{ messageId: 'unusedAllow' }, { messageId: 'unsafe' }],
     },
     { code: 'await tx.$executeRawUnsafe(`DELETE FROM ${table}`);', errors: [{ messageId: 'unsafe' }] },
+    // Prisma.raw splices a string into a tagged query, so it is as unsafe as the Unsafe forms.
+    {
+      code: '// poolmaster-allow-raw-sql: a row lock\nawait tx.$queryRaw`SELECT id FROM ${Prisma.raw(table)} FOR UPDATE`;',
+      filename: 'locks.ts',
+      options: [{ baseline: { 'locks.ts': 1 } }],
+      errors: [{ messageId: 'unsafe' }],
+    },
     { code: '// poolmaster-allow-raw-sql\nawait tx.$queryRaw`SELECT 1`;', filename: 'locks.ts', options: [{ baseline: { 'locks.ts': 1 } }], errors: [{ messageId: 'missingReason' }] },
     { code: '// poolmaster-allow-raw-sql: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
     // A new marker beyond the file's count is a raise a reviewer must see.
@@ -1679,6 +1686,11 @@ ruleTester.run('no-name-match', noNameMatch, {
   ],
   invalid: [
     { code: "await prisma.participant.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } });", errors: [{ messageId: 'nameMatch' }] },
+    // The plain Prisma lookup: shorthand, a value, and inside a nested relation filter.
+    { code: 'await prisma.sportLeague.findFirst({ where: { name } });', errors: [{ messageId: 'nameMatch' }] },
+    { code: 'await prisma.sportLeague.findFirst({ where: { name: leagueName } });', errors: [{ messageId: 'nameMatch' }] },
+    { code: "await prisma.sportLeague.findFirst({ where: { name: 'NBA' } });", errors: [{ messageId: 'nameMatch' }] },
+    { code: 'await prisma.event.findMany({ where: { sportLeague: { name: input.league } } });', errors: [{ messageId: 'nameMatch' }] },
     { code: 'const p = profiles.find((profile) => profile.name === profileName);', errors: [{ messageId: 'nameMatch' }] },
     { code: 'const hit = rows.some((row) => row.label.toLowerCase() === wanted);', errors: [{ messageId: 'nameMatch' }] },
     { code: 'const i = rows.findIndex(function (row) { return row.name !== skip; });', errors: [{ messageId: 'nameMatch' }] },

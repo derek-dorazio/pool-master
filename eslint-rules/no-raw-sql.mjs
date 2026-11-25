@@ -6,8 +6,11 @@
  * lock (`SELECT … FOR UPDATE`), a queue claimed with `SKIP LOCKED`, a Postgres advisory lock, a
  * set-based update from `unnest` arrays or an `array_remove` across rows. Each such call to
  * `$queryRaw` or `$executeRaw` takes `// poolmaster-allow-raw-sql: <what Prisma can't express>` on
- * the line before. `$queryRawUnsafe` and `$executeRawUnsafe` build SQL from strings and are never
- * excused.
+ * the line before. `$queryRawUnsafe`, `$executeRawUnsafe` and `Prisma.raw(…)` build SQL from
+ * strings and are never excused.
+ *
+ * Matched by member name, so a contrived alias (`tx['$queryRaw']`, `tx.$executeRaw.bind(tx)`)
+ * gets past it; a reviewer rejects those on sight.
  *
  * The markers are counted per file (`eslint-rules/raw-sql-baseline.json`). The baseline ratchet
  * refuses a new one unless `scripts/baseline-raises.json` declares it with its reason, so every
@@ -67,7 +70,13 @@ export default {
         check(node, node.tag.type === 'TSInstantiationExpression' ? node.tag.expression : node.tag);
       },
       CallExpression(node) {
-        check(node, node.callee);
+        const { callee } = node;
+        if (callee.type === 'MemberExpression' && !callee.computed && callee.object.type === 'Identifier'
+          && callee.object.name === 'Prisma' && callee.property.type === 'Identifier' && callee.property.name === 'raw') {
+          context.report({ node, messageId: 'unsafe', data: { method: 'Prisma.raw' } });
+          return;
+        }
+        check(node, callee);
       },
       'Program:exit'() {
         allow.reportUnused();

@@ -161,6 +161,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   }
 
   async findBySportAndName(sportId: string, name: string): Promise<SportLeague | null> {
+    // poolmaster-allow-name-match: the duplicate-name check on create; a league name is unique per sport
     const row = await this.prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
     return row ? toSportLeague(row) : null;
   }
