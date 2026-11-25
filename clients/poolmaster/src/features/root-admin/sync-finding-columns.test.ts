@@ -7,7 +7,7 @@ import { syncFindingColumns, syncFindingLeagueOptions } from './sync-finding-col
 function finding(overrides: Partial<ProviderSyncFindingDto> = {}): ProviderSyncFindingDto {
   return {
     id: 'finding-1', kind: 'SEASON_MISSING', severity: 'ERROR', status: 'OPEN',
-    sportLeague: { id: 'nfl', name: 'NFL', sport: 'AMERICAN_FOOTBALL' }, sportEvent: null, provider: { id: 'provider-1', name: 'BALLDONTLIE' },
+    sportLeague: { id: 'nfl', name: 'NFL', sport: 'FOOTBALL' }, sportEvent: null, provider: { id: 'provider-1', name: 'BALLDONTLIE' },
     providerValue: null, providerValueName: null, waiveNote: null,
     firstSeenAt: '2026-11-20T12:00:00.000Z', lastSeenAt: '2026-11-23T12:00:00.000Z', seenCount: 1,
     statusChangedAt: '2026-11-20T12:00:00.000Z', statusChangedBy: null, actions: ['RESOLVE', 'WAIVE'],
@@ -39,7 +39,7 @@ describe('syncFindingLeagueOptions', () => {
     const findings = [
       finding(),
       finding({ id: 'finding-2', sportLeague: { id: 'pga', name: 'PGA TOUR', sport: 'GOLF' } }),
-      finding({ id: 'finding-3', sportLeague: { id: 'nfl-2', name: 'NFL', sport: 'AMERICAN_FOOTBALL' } }),
+      finding({ id: 'finding-3', sportLeague: { id: 'nfl-2', name: 'NFL', sport: 'FOOTBALL' } }),
       finding({ id: 'finding-4' }),
     ];
 

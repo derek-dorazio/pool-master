@@ -44,7 +44,7 @@ describe('SportEventTierService — tiers', () => {
   it('creates each new event\'s default tiers, as many as its sport league\'s tier profile names, and answers them as written', async () => {
     const { store, event, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount: 4, tierSize: 3 });
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: league.id });
+    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
 
     const golf = await service.createDefaultTiers({ id: event.sportLeagueId, platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID }, [event.id]);
     const written = await service.createDefaultTiers(league, [playoff.id]);
@@ -65,7 +65,7 @@ describe('SportEventTierService — tiers', () => {
   it('starts an event with its league\'s six tiers of two (the College Football Playoff\'s profile) and places 12 playoff teams two to a tier', async () => {
     const { store, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount: 6, tierSize: 2 });
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: league.id });
+    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
 
     await service.createDefaultTiers(league, [playoff.id]);
     addFieldByOdds(store, playoff.id, 12);

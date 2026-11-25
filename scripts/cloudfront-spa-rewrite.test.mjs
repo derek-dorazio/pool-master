@@ -26,30 +26,30 @@ const APPLEBOT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/60
 describe('cloudfront spa-rewrite', () => {
   it('serves a file with an extension as-is, to anyone', () => {
     assert.equal(rewrite('/releases/abc/assets/index-1.js', SAFARI), '/releases/abc/assets/index-1.js');
-    assert.equal(rewrite('/releases/abc/og/american-football-championship-weekend.jpg', FACEBOOK), '/releases/abc/og/american-football-championship-weekend.jpg');
+    assert.equal(rewrite('/releases/abc/og/football-championship-weekend.jpg', FACEBOOK), '/releases/abc/og/football-championship-weekend.jpg');
   });
 
   it('gives a person the app for every route, event pages included', () => {
     assert.equal(rewrite('/league/OFFICE', SAFARI), '/index.html');
-    assert.equal(rewrite('/play/american-football/championship-weekend', SAFARI), '/index.html');
-    assert.equal(rewrite('/play/american-football/championship-weekend', undefined), '/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend', SAFARI), '/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend', undefined), '/index.html');
   });
 
   it('gives a link-preview crawler the event page\'s own shell, with or without a trailing slash', () => {
-    assert.equal(rewrite('/play/american-football/championship-weekend', FACEBOOK), '/play/american-football/championship-weekend/index.html');
-    assert.equal(rewrite('/play/american-football/championship-weekend/', SLACK), '/play/american-football/championship-weekend/index.html');
-    assert.equal(rewrite('/play/american-football/championship-weekend', WHATSAPP), '/play/american-football/championship-weekend/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend', FACEBOOK), '/play/football/championship-weekend/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend/', SLACK), '/play/football/championship-weekend/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend', WHATSAPP), '/play/football/championship-weekend/index.html');
   });
 
   it('gives a search crawler the app on an event page, so a page with no shell stays indexable', () => {
-    assert.equal(rewrite('/play/american-football/championship-weekend', GOOGLEBOT), '/index.html');
-    assert.equal(rewrite('/play/american-football/championship-weekend', BINGBOT), '/index.html');
-    assert.equal(rewrite('/play/american-football/championship-weekend', APPLEBOT), '/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend', GOOGLEBOT), '/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend', BINGBOT), '/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend', APPLEBOT), '/index.html');
   });
 
   it('gives a crawler the app for any route that is not an event page', () => {
     assert.equal(rewrite('/how-to-play', FACEBOOK), '/index.html');
-    assert.equal(rewrite('/play/american-football', FACEBOOK), '/index.html');
-    assert.equal(rewrite('/play/american-football/championship-weekend/extra', FACEBOOK), '/index.html');
+    assert.equal(rewrite('/play/football', FACEBOOK), '/index.html');
+    assert.equal(rewrite('/play/football/championship-weekend/extra', FACEBOOK), '/index.html');
   });
 });

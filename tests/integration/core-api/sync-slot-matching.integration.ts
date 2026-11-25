@@ -49,8 +49,8 @@ function slateEvent(externalId: string, name: string, plays: ReturnType<typeof p
 async function footballLeague(slots: ReadonlyArray<{ code: string; covered?: boolean }>) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
-    where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+    where: { sport: Sport.FOOTBALL },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Slot League ${randomUUID().slice(0, 8)}` } });
@@ -178,8 +178,8 @@ describe('The events sync matches games to Season slots by provider code (#2005)
 async function windowedLeague(slots: ReadonlyArray<{ key: string; window: TestSlotWindow | undefined }>) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
-    where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+    where: { sport: Sport.FOOTBALL },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Window League ${randomUUID().slice(0, 8)}` } });

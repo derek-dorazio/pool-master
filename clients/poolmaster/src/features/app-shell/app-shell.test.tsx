@@ -344,7 +344,7 @@ describe('AppShell', () => {
     ['a league page', '/league/LEAGUE1'],
     ['How to Play', '/how-to-play'],
     ['Plans', '/plans'],
-    ['an event page', '/play/american-football/championship-weekend'],
+    ['an event page', '/play/football/championship-weekend'],
   ])('makes the header brand a Home link to / on %s, signed in and signed out', async (_page, path) => {
     listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
     const { unmount } = renderAppShell([path]);

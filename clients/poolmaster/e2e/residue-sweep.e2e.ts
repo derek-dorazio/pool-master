@@ -36,7 +36,7 @@ test('the residue sweep removes a run left behind, league first, then its labell
     const commissioner = { username: e2eUsername('wc', runId), email: e2eEmail('wc', runId) };
 
     // --- The run a cancelled journey leaves behind ---------------------------------------
-    const sportLeague = await findSeededSportLeagueThroughApi(api, admin, 'GOLF', 'pga-tour');
+    const sportLeague = await findSeededSportLeagueThroughApi(api, admin, 'GOLF', 'pga');
     const event = await createTestEventThroughApi(api, admin, {
       sportLeagueId: sportLeague.id,
       slotKind: 'TOURNAMENT',

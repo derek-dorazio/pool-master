@@ -72,7 +72,7 @@ describe('NFL events', () => {
     expect(toNflSportEvent(WEEK_12, week12, 8)).toEqual({
       externalId: 'nfl-2026-week-12',
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       name: 'NFL Week 12',
       startDate: new Date('2026-11-26T17:30:00.000Z'),
       endDate: new Date('2026-12-01T01:15:00.000Z'),
@@ -136,7 +136,7 @@ describe('NFL teams', () => {
     expect(team).toEqual({
       externalId: '25',
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       name: 'Detroit Lions',
       active: true,
       metadata: { abbreviation: 'DET', conference: 'NFC', division: 'NORTH' },

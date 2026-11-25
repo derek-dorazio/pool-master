@@ -7,10 +7,10 @@ import { ContestFormat, EventPageOfferState, SelectionType, Sport, type EventPag
 import { toEventPageDto } from '../../../packages/core-api/src/mappers/event-pages.mapper';
 
 const STAMP = new Date('2026-10-01T00:00:00.000Z');
-const CURRENT: EventPage = { id: 'page-cw', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
+const CURRENT: EventPage = { id: 'page-cw', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
 const RETIRED: EventPage = {
-  id: 'page-old', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'conference-weekend', displayOrder: 30, isActive: false,
-  redirectTo: { sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'championship-weekend' },
+  id: 'page-old', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'conference-weekend', displayOrder: 30, isActive: false,
+  redirectTo: { sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend' },
 };
 const OFFER: EventPageOffer = {
   id: 'tiered',
@@ -55,12 +55,12 @@ describe('toEventPageDto (#2042)', () => {
     });
 
     expect([dto.sportName, dto.sportUrlSegment, dto.urlSegment, dto.path, dto.redirectTo, dto.offers.map((offer) => [offer.sportLeaguePhaseSlotId, offer.nextSlot.seasonSlotId, offer.nextSlot.endDate])])
-      .toEqual(['American football', 'american-football', 'championship-weekend', '/play/american-football/championship-weekend', null, [['conference-championships', 'cw-slot-2027', '2026-10-02T00:00:00.000Z'], ['conference-championships', 'cw-slot-2028', null]]]);
+      .toEqual(['Football', 'football', 'championship-weekend', '/play/football/championship-weekend', null, [['conference-championships', 'cw-slot-2027', '2026-10-02T00:00:00.000Z'], ['conference-championships', 'cw-slot-2028', null]]]);
   });
 
   it('answers a retired page with the address of the page it sends readers on to, its sport\'s name and path included', () => {
     const dto = toEventPageDto({ page: RETIRED, offers: [] });
 
-    expect(dto.redirectTo).toEqual({ sport: Sport.AMERICAN_FOOTBALL, sportName: 'American football', sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', path: '/play/american-football/championship-weekend' });
+    expect(dto.redirectTo).toEqual({ sport: Sport.FOOTBALL, sportName: 'Football', sportUrlSegment: 'football', urlSegment: 'championship-weekend', path: '/play/football/championship-weekend' });
   });
 });

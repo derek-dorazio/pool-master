@@ -73,8 +73,8 @@ describe('SDK Functional: Super Bowl squares', () => {
   it('runs a squares contest on the Super Bowl from claiming boxes to settled winners, each quarter\'s box winning', async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Squares Director' });
@@ -96,7 +96,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     await inCurrentSeason((await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { name: 'NFL', displayOrder: { not: null } }, select: { id: true } })).id, 2026);
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
     const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));
@@ -225,10 +225,10 @@ describe('SDK Functional: Super Bowl squares', () => {
 // sport's. Each test seed loads with every game played but the final; one entry holds the top
 // row, the other the left column, and every scoring moment lands in the top row.
 const LEAGUE_FINALS = [
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: MatchPeriodLayout.HALVES },
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS, leagueLayout: null },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Basketball', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: MatchPeriodLayout.HALVES },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Basketball', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS, leagueLayout: null },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Hockey', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Hockey', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
   { sport: Sport.SOCCER, file: 'soccer-2022-fifa-world-cup-test.json', league: 'FIFA World Cup', event: 'FIFA World Cup', templateKey: 'world-cup-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: null },
 ] as const;
 

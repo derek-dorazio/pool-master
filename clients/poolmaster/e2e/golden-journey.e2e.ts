@@ -151,7 +151,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const run: JourneyRun = {
       runId,
       sport: 'GOLF',
-      tourUrlSegment: 'pga-tour',
+      tourUrlSegment: 'pga',
       playerNamePrefix: e2eName('Golfer', runId),
       tournamentName: e2eName('Open', runId),
       moreTournamentNames: [e2eName('Classic', runId), e2eName('Invitational', runId)],

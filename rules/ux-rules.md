@@ -539,8 +539,9 @@ administration area (root admin included), reusing the same shared components.
     row's `displayOrder` (`SportDto.displayOrder`, carried on each sport league as
     `sportDisplayOrder`: the major team sports first, cycling and running last), and each sport's leagues
     by their `displayOrder`: major professional leagues first, then the NCAA's.
-    A league whose name alone doesn't say the sport ("NCAA Division I Men") gets
-    a `displayName` with its reference data, and every seeded league gets a
+    A league is named for what it is, the sport included ("NCAA Men's Basketball", never
+    "NCAA Division I Men" or the name of its postseason); a league whose name still cannot say
+    the sport gets a `displayName` with its reference data, and every seeded league gets a
     `displayOrder` there (the seeded-template integration test checks it); a league's Contest
     types page shows every sport league's tiles, with "Create this contest"
     links for its commissioners. Both read the templates, so a new template or

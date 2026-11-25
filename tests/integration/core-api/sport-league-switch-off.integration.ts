@@ -15,20 +15,20 @@ const SWITCHED_OFF = [
   'AUTO_RACING/NASCAR Cup Series',
   'CYCLING/UCI WorldTour',
   "CYCLING/UCI Women's WorldTour",
-  'HOCKEY/NCAA Division I Men',
-  'HOCKEY/NCAA Division I Women',
+  'HOCKEY/NCAA Men\'s Hockey',
+  'HOCKEY/NCAA Women\'s Hockey',
   'HOCKEY/PWHL',
   'HORSE_RACING/US Thoroughbred',
   'RUNNING/World Marathon Majors (men)',
   'RUNNING/World Marathon Majors (women)',
   'SOCCER/Copa América',
   "SOCCER/FIFA Women's World Cup",
-  'SOCCER/NCAA Division I Men',
-  'SOCCER/NCAA Division I Women',
+  'SOCCER/NCAA Men\'s Soccer',
+  'SOCCER/NCAA Women\'s Soccer',
   'SOCCER/NWSL',
   'SOCCER/UEFA European Championship',
-  'TENNIS/NCAA Division I Men',
-  'TENNIS/NCAA Division I Women',
+  'TENNIS/NCAA Men\'s Tennis',
+  'TENNIS/NCAA Women\'s Tennis',
 ].sort((left, right) => left.localeCompare(right));
 
 describe('Sport leagues with no data provider', () => {
@@ -45,7 +45,7 @@ describe('Sport leagues with no data provider', () => {
       where: {
         OR: [
           { name: 'Formula 1', sport: { sport: Sport.AUTO_RACING } },
-          { name: { in: ['NCAA Division I Men', 'NCAA Division I Women'] }, sport: { sport: Sport.BASKETBALL } },
+          { name: { in: ['NCAA Men\'s Basketball', 'NCAA Women\'s Basketball'] }, sport: { sport: Sport.BASKETBALL } },
         ],
       },
       select: { name: true, isActive: true },
@@ -53,8 +53,8 @@ describe('Sport leagues with no data provider', () => {
 
     expect(kept.map(({ name, isActive }) => [name, isActive]).sort(([left], [right]) => String(left).localeCompare(String(right)))).toEqual([
       ['Formula 1', true],
-      ['NCAA Division I Men', true],
-      ['NCAA Division I Women', true],
+      ['NCAA Men\'s Basketball', true],
+      ['NCAA Women\'s Basketball', true],
     ]);
   });
 

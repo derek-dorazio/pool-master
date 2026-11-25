@@ -373,13 +373,13 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
   const admin = await createTestUser({ isRootAdmin: true });
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
-    where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+    where: { sport: Sport.FOOTBALL },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
+      ...(await freshEventEdition(prisma, { sport: Sport.FOOTBALL })),
       name: `Read Once Bowl ${suffix}`,
       startDate: new Date(Date.now() - 3 * 60 * 60 * 1000),
       status: 'IN_PROGRESS',
@@ -653,7 +653,7 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
   const suffix = randomUUID().slice(0, 8);
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
+      ...(await freshEventEdition(prisma, { sport: Sport.FOOTBALL })),
       name: `Read Once Changed ${suffix}`,
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: 'SCHEDULED',

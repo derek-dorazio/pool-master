@@ -70,11 +70,11 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup(freePlan, logger);
     restore = harness.restore;
 
-    const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
+    const teams = await harness.adapter.getParticipants(Sport.FOOTBALL);
 
     expect(teams).toHaveLength(nflTeamCount);
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'balldontlie.league.unavailable', sport: Sport.AMERICAN_FOOTBALL, league: 'College Football', providerLeagueCode: 'ncaaf', read: 'participants', refused: true, status: 401, path: expect.stringContaining('/ncaaf/v1/teams') as unknown }),
+      expect.objectContaining({ action: 'balldontlie.league.unavailable', sport: Sport.FOOTBALL, league: 'College Football', providerLeagueCode: 'ncaaf', read: 'participants', refused: true, status: 401, path: expect.stringContaining('/ncaaf/v1/teams') as unknown }),
       expect.any(String),
     );
   });
@@ -84,7 +84,7 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup({ ...nflRoutes, '/ncaaf/v1/teams': failing }, logger);
     restore = harness.restore;
 
-    await expect(harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).resolves.toHaveLength(nflTeamCount);
+    await expect(harness.adapter.getParticipants(Sport.FOOTBALL)).resolves.toHaveLength(nflTeamCount);
     expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ providerLeagueCode: 'ncaaf', refused: false, status: 400 }), expect.any(String));
   });
 
@@ -93,7 +93,7 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup({ ...nflRoutes, '/ncaaf/v1/teams': rateLimited }, logger);
     restore = harness.restore;
 
-    await expect(harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).rejects.toBeInstanceOf(ProviderRateLimitedError);
+    await expect(harness.adapter.getParticipants(Sport.FOOTBALL)).rejects.toBeInstanceOf(ProviderRateLimitedError);
     expect(logger.warn).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'balldontlie.league.unavailable' }), expect.any(String));
   });
 
@@ -101,14 +101,14 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup({ '/nfl/v1/teams': refused, '/ncaaf/v1/teams': refused });
     restore = harness.restore;
 
-    await expect(harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).rejects.toThrow('/nfl/v1/teams');
+    await expect(harness.adapter.getParticipants(Sport.FOOTBALL)).rejects.toThrow('/nfl/v1/teams');
   });
 
   it('reads only the league with the code asked for, so the NFL year import never asks for college football', async () => {
     const harness = setup(freePlan);
     restore = harness.restore;
 
-    const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'nfl' });
+    const events = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, YEAR_2026, { providerLeagueCode: 'nfl' });
 
     expect(events.map((event) => event.externalId)).toEqual(['nfl-2026-week-12']);
     expect(pathsRead(harness.api)).toEqual(['/nfl/v1/games']);
@@ -118,7 +118,7 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup(freePlan);
     restore = harness.restore;
 
-    const read = harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'ncaaf' });
+    const read = harness.adapter.getUpcomingEvents(Sport.FOOTBALL, YEAR_2026, { providerLeagueCode: 'ncaaf' });
 
     await expect(read).rejects.toBeInstanceOf(ProviderLeagueRefusedError);
     await expect(read).rejects.toMatchObject({ providerName: 'BALLDONTLIE', league: 'College Football', status: 401 });
@@ -138,7 +138,7 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup({ ...nflRoutes, '/nfl/v1/games': failing });
     restore = harness.restore;
 
-    const read = harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'nfl' });
+    const read = harness.adapter.getUpcomingEvents(Sport.FOOTBALL, YEAR_2026, { providerLeagueCode: 'nfl' });
 
     await expect(read).rejects.not.toBeInstanceOf(ProviderLeagueRefusedError);
     await expect(read).rejects.toThrow('/nfl/v1/games');
@@ -148,7 +148,7 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup({ ...nflRoutes, '/ncaaf/v1/games': pagedRoute([]), '/ncaaf/v1/teams': () => ({ body: { data: [] } }) });
     restore = harness.restore;
 
-    const read = harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'xfl' });
+    const read = harness.adapter.getUpcomingEvents(Sport.FOOTBALL, YEAR_2026, { providerLeagueCode: 'xfl' });
 
     await expect(read).rejects.toBeInstanceOf(ProviderLeagueUnknownError);
     await expect(read).rejects.toMatchObject({ providerName: 'BALLDONTLIE', providerLeagueCode: 'xfl' });

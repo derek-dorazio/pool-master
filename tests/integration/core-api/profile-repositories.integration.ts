@@ -39,12 +39,12 @@ const OLD_STAT_POOL_PLATFORM_TIER_PROFILE_ID = '3ab96023-4255-43c1-ab20-f4c79ae9
 const STANDARD_VALUES = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 describe('The migration to tier and pricing profiles', () => {
-  it('points every seeded sport league at its old layout: its sport\'s, or the College Football Playoff\'s and the PWHL\'s own count of two', async () => {
+  it('points every seeded sport league at its old layout: its sport\'s, or NCAA Men\'s Football\'s and the PWHL\'s own count of two', async () => {
     const leagues = await getPrisma().sportLeague.findMany({
       include: { sport: true, platformTierProfile: true },
       orderBy: [{ sport: { sport: 'asc' } }, { name: 'asc' }],
     });
-    const overrides: Record<string, string> = { 'College Football Playoff': 'TIERS_6_OF_2', PWHL: 'TIERS_2_OF_2' };
+    const overrides: Record<string, string> = { 'NCAA Men\'s Football': 'TIERS_6_OF_2', PWHL: 'TIERS_2_OF_2' };
 
     const mismatched = leagues.flatMap((league) => {
       const expected = overrides[league.name] ?? SPORT_PLATFORM_TIER_PROFILE_CODE[league.sport.sport];

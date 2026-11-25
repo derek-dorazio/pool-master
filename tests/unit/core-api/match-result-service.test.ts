@@ -71,7 +71,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
       return `match-${sequence}`;
     },
   });
-  if (sport === Sport.BASKETBALL || sport === Sport.AMERICAN_FOOTBALL || sport === Sport.SOCCER) {
+  if (sport === Sport.BASKETBALL || sport === Sport.FOOTBALL || sport === Sport.SOCCER) {
     await brackets.loadBracket(event.id, [
       { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: duke.id, awaySportEventParticipantId: vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
       { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: houston.id, awaySportEventParticipantId: texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
@@ -89,8 +89,8 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
 /** A released week of two games that form no bracket, as an NFL regular-season week is. */
 async function week() {
   const store = new InMemorySportEvents();
-  const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
-  const event = store.addEvent({ sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
+  const sportRow = store.addSport(Sport.FOOTBALL);
+  const event = store.addEvent({ sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
   const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
     store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
@@ -337,7 +337,7 @@ describe('MatchResultService.recordResult', () => {
 // #772 review: quarter scores belong to the two teams playing, so a game with any is under way.
 describe('MatchResultService once the next game has quarter scores', () => {
   async function scoredFinal() {
-    const context = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    const context = await setup({ sport: Sport.FOOTBALL });
     await context.service.recordResult(context.event.id, 1, homeWins);
     await context.service.recordResult(context.event.id, 2, homeWins);
     await context.service.recordPeriodScore(context.event.id, 3, 1, { homeScore: 7, awayScore: 3 });
@@ -476,7 +476,7 @@ describe('MatchResultService matches that ended early (#704)', () => {
   });
 
   it('refuses (422 MATCH_RESULT_INVALID) a walkover for a game that already has quarter scores', async () => {
-    const { service, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    const { service, event } = await setup({ sport: Sport.FOOTBALL });
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
 
     await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER }))
@@ -484,7 +484,7 @@ describe('MatchResultService matches that ended early (#704)', () => {
   });
 
   it('refuses (422 MATCH_PERIOD_SCORE_INVALID) a quarter score for a game that was a walkover', async () => {
-    const { service, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    const { service, event } = await setup({ sport: Sport.FOOTBALL });
     await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
 
     await expect(service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 }))
@@ -910,7 +910,7 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
   });
 
   it('writes the rebuild job with a quarter score saved', async () => {
-    const { store, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    const { store, event } = await setup({ sport: Sport.FOOTBALL });
     const { service, domainEvents } = rebuilding(store);
 
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });

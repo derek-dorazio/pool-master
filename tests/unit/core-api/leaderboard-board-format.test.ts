@@ -33,6 +33,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   9: '39e1f479550d5d8165a2637da525300e23b9c80b0b46195c5e4e89888d417fd7',
   // #2001: every event's participant type and scoring family are its sport league's, never null.
   10: '58120758bdb8bdd2699cf553d78dd39c972dbcbc73e8a49f3bb546d7bee4d5fc',
+  // #2143: the sport code AMERICAN_FOOTBALL is FOOTBALL.
+  11: '6df4bde63c84186efd1fd31bb5ef8f38beb5c6dcbaabe1cb1e0cb672163bc807',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

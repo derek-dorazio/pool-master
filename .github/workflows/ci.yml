@@ -1650,7 +1650,7 @@ jobs:
           npm run build
           grep -q "/${WEB_RELEASE_PREFIX}/" dist/index.html
           test -f dist/version-info.json
-          grep -q 'property="og:image"' dist/play/american-football/championship-weekend/index.html
+          grep -q 'property="og:image"' dist/play/football/championship-weekend/index.html
 
       - name: Deploy PoolMaster webapp to S3 + invalidate CloudFront
         id: deploy-webapp
@@ -1668,7 +1668,7 @@ jobs:
             aws s3 sync clients/poolmaster/dist/email/ "s3://${BUCKET}/email/" --exclude "*.source.md" --cache-control "public, max-age=86400"
             aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
             aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
-            aws s3api head-object --bucket "${BUCKET}" --key "email/sports/american-football.jpg" >/dev/null || { echo "::error::email/ photos missing at the bucket root"; exit 1; }
+            aws s3api head-object --bucket "${BUCKET}" --key "email/sports/football.jpg" >/dev/null || { echo "::error::email/ photos missing at the bucket root"; exit 1; }
             if [ -n "$CF_ID" ]; then
               aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
             fi

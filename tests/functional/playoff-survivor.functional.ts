@@ -80,7 +80,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
     const seed = oneEventOf(FILE, 'NFL', 'NFL Playoffs', { withoutResults: true })(RUN, SEASON);
     await loadSportData(seed, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
     const played = playedSeedEvent(FILE, 'NFL', 'NFL Playoffs');
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((row) => row.name === 'NFL'), 'the NFL');
     const eventId = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id } })).data).events
       .find((row) => row.name === seed.sportLeagues[0].events[0].name), 'the playoffs').id;

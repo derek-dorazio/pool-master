@@ -78,8 +78,8 @@ describe('SDK Functional: American football', () => {
   it('scores and settles an entry on the played NFL playoffs from the NFL\'s default tiered template, a bye scoring nothing', async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });
@@ -99,7 +99,7 @@ describe('SDK Functional: American football', () => {
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
     const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));

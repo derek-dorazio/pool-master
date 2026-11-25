@@ -269,7 +269,7 @@ describe('ContestNotices', () => {
   describe('contestStarted (E1)', () => {
     it('wishes every active member good luck with the event, the rules and the entry count, and tells members without an entry they can follow along', async () => {
       const league = world.addLeague({ leagueCode: 'OFFICE24' });
-      const week = world.addSportEvent({ name: 'NFL Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: STARTS_AT });
+      const week = world.addSportEvent({ name: 'NFL Week 1', sport: Sport.FOOTBALL, startDate: STARTS_AT });
       const contest = world.addContest(league.id, { name: 'Week 1 Pick\'em', selectionType: SelectionType.PICK_EM, sportEventIds: [week.id] });
       world.addConfiguration(contest.id, {
         selectionType: SelectionType.PICK_EM,

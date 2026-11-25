@@ -52,8 +52,8 @@ function asLoaded(file: SportDataFile): SportDataFile {
 describe('SDK Functional: a test seed\'s results as its games are played', () => {
   it('loads the NFL playoffs with no game played, then a later run enters the games played since and moves the event to In Progress, and to Completed once the Super Bowl is in', async () => {
     await getFunctionalPrisma().sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Catch-up Loader' });
@@ -67,7 +67,7 @@ describe('SDK Functional: a test seed\'s results as its games are played', () =>
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
     await loadSportData(loaded, { getClient, now: new Date(), mode: LoadMode.APPLY });
 
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
     const readEvent = async () => expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === eventName), eventName);

@@ -292,7 +292,7 @@ describe('SDK Functional: Root Admin', () => {
     const submittedAt = new Date(Date.UTC(2001, 0, 1) + Math.floor(Math.random() * 365 * 24 * 3_600_000));
     const completedRunId = randomUUID();
     // A run's sport is its sport league's (#2042), so the runs go on the seeded PGA TOUR.
-    const { id: sportLeagueId } = await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { sport: { sport: 'GOLF' }, urlSegment: 'pga-tour' }, select: { id: true } });
+    const { id: sportLeagueId } = await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { sport: { sport: 'GOLF' }, urlSegment: 'pga' }, select: { id: true } });
 
     await getFunctionalPrisma().providerSyncRun.createMany({
       data: [

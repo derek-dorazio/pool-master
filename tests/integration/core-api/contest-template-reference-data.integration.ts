@@ -430,18 +430,18 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
       template.isDefault,
       template.active,
     ])).toEqual([
-      ['NCAA Division I Men', 'ncaa-men-budget-doubling', SelectionType.BUDGET_PICK, true, true],
-      ['NCAA Division I Men', 'ncaa-men-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false, true],
-      ['NCAA Division I Men', 'ncaa-men-random-draw-doubling', SelectionType.RANDOM_DRAW, true, true],
-      ['NCAA Division I Men', 'ncaa-men-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false, true],
-      ['NCAA Division I Men', 'ncaa-men-tiered-doubling', SelectionType.TIERED, true, true],
-      ['NCAA Division I Men', 'ncaa-men-tiered-doubling-upset-bonus', SelectionType.TIERED, false, true],
-      ['NCAA Division I Women', 'ncaa-women-budget-doubling', SelectionType.BUDGET_PICK, true, true],
-      ['NCAA Division I Women', 'ncaa-women-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false, true],
-      ['NCAA Division I Women', 'ncaa-women-random-draw-doubling', SelectionType.RANDOM_DRAW, true, true],
-      ['NCAA Division I Women', 'ncaa-women-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false, true],
-      ['NCAA Division I Women', 'ncaa-women-tiered-doubling', SelectionType.TIERED, true, true],
-      ['NCAA Division I Women', 'ncaa-women-tiered-doubling-upset-bonus', SelectionType.TIERED, false, true],
+      ['NCAA Men\'s Basketball', 'ncaa-men-budget-doubling', SelectionType.BUDGET_PICK, true, true],
+      ['NCAA Men\'s Basketball', 'ncaa-men-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false, true],
+      ['NCAA Men\'s Basketball', 'ncaa-men-random-draw-doubling', SelectionType.RANDOM_DRAW, true, true],
+      ['NCAA Men\'s Basketball', 'ncaa-men-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false, true],
+      ['NCAA Men\'s Basketball', 'ncaa-men-tiered-doubling', SelectionType.TIERED, true, true],
+      ['NCAA Men\'s Basketball', 'ncaa-men-tiered-doubling-upset-bonus', SelectionType.TIERED, false, true],
+      ['NCAA Women\'s Basketball', 'ncaa-women-budget-doubling', SelectionType.BUDGET_PICK, true, true],
+      ['NCAA Women\'s Basketball', 'ncaa-women-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false, true],
+      ['NCAA Women\'s Basketball', 'ncaa-women-random-draw-doubling', SelectionType.RANDOM_DRAW, true, true],
+      ['NCAA Women\'s Basketball', 'ncaa-women-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false, true],
+      ['NCAA Women\'s Basketball', 'ncaa-women-tiered-doubling', SelectionType.TIERED, true, true],
+      ['NCAA Women\'s Basketball', 'ncaa-women-tiered-doubling-upset-bonus', SelectionType.TIERED, false, true],
     ]);
     expect(new Set(templates.map((template) => template.sportLeague.sport.sport))).toEqual(new Set([Sport.BASKETBALL]));
   });
@@ -481,8 +481,8 @@ const SOCCER_COMPETITIONS = [
   ['UEFA Champions League', 'champions-league', [1, 2, 4, 8, 16], 4],
   ['MLS', 'mls', [1, 2, 4, 8, 16], 4],
   ['NWSL', 'nwsl', [1, 2, 4], 3],
-  ['NCAA Division I Men', 'ncaa-men-soccer', [1, 2, 4, 8, 16, 32], 4],
-  ['NCAA Division I Women', 'ncaa-women-soccer', [1, 2, 4, 8, 16, 32], 4],
+  ['NCAA Men\'s Soccer', 'ncaa-men-soccer', [1, 2, 4, 8, 16, 32], 4],
+  ['NCAA Women\'s Soccer', 'ncaa-women-soccer', [1, 2, 4, 8, 16, 32], 4],
 ] as const;
 
 describe('Seeded soccer competitions and their knockout templates', () => {
@@ -496,8 +496,8 @@ describe('Seeded soccer competitions and their knockout templates', () => {
       ['FIFA Women\'s World Cup', 'FIXED', []],
       ['FIFA World Cup', 'FIXED', []],
       ['MLS', 'FIXED', ['Wild Card', 'Round One', 'Conference Semifinals', 'Conference Finals', 'MLS Cup']],
-      ['NCAA Division I Men', 'FIXED', ncaaRounds],
-      ['NCAA Division I Women', 'FIXED', ncaaRounds],
+      ['NCAA Men\'s Soccer', 'FIXED', ncaaRounds],
+      ['NCAA Women\'s Soccer', 'FIXED', ncaaRounds],
       ['NWSL', 'FIXED', ['Quarterfinals', 'Semifinals', 'Championship']],
       ['Premier League', 'FIXED', []],
       ['UEFA Champions League', 'FIXED', ['Knockout phase play-offs', 'Round of 16', 'Quarter-finals', 'Semi-finals', 'Final']],
@@ -599,8 +599,8 @@ describe('Seeded tennis tours and their knockout templates', () => {
     const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
     expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, platformTierProfileCodes.get(league.platformTierProfileId)])).toEqual([
       ['ATP', 'FIXED', [], 'TIERS_6_OF_8'],
-      ['NCAA Division I Men', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
-      ['NCAA Division I Women', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
+      ['NCAA Men\'s Tennis', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
+      ['NCAA Women\'s Tennis', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
       ['WTA', 'FIXED', [], 'TIERS_6_OF_8'],
     ]);
   });
@@ -644,7 +644,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
     }
   });
 
-  it.each([['NCAA Division I Men', 'ncaa-men-tennis'], ['NCAA Division I Women', 'ncaa-women-tennis']] as const)('gives %s ten knockout templates, one default per format, each roster and bracket preset doubling from 1 to 32 in the six-round draw\'s final', async (name, prefix) => {
+  it.each([['NCAA Men\'s Tennis', 'ncaa-men-tennis'], ['NCAA Women\'s Tennis', 'ncaa-women-tennis']] as const)('gives %s ten knockout templates, one default per format, each roster and bracket preset doubling from 1 to 32 in the six-round draw\'s final', async (name, prefix) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { sportLeague: { sport: { sport: Sport.TENNIS }, name } },
       orderBy: [{ sortOrder: 'asc' }],
@@ -683,7 +683,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
 describe('The seeded NFL league and its knockout templates', () => {
   it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { sport: { sport: Sport.AMERICAN_FOOTBALL } }, templateKey: { startsWith: 'nfl-' }, contestFormat: ContestFormat.ROSTER },
+      where: { sportLeague: { sport: { sport: Sport.FOOTBALL } }, templateKey: { startsWith: 'nfl-' }, contestFormat: ContestFormat.ROSTER },
       include: { sportLeague: true },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -708,8 +708,8 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  // Squares (#711, #786, #787): the NFL's, the College Football Playoff's, each March Madness league's, each college hockey league's and each soccer league's squares preset, the default for its own format.
-  it('seeds one squares template on the NFL, the College Football Playoff, men\'s and women\'s March Madness, men\'s and women\'s college hockey and each soccer competition, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
+  // Squares (#711, #786, #787): the NFL's, NCAA men's football's, each March Madness league's, each college hockey league's and each soccer league's squares preset, the default for its own format.
+  it('seeds one squares template on the NFL, NCAA men\'s football, men\'s and women\'s March Madness, men\'s and women\'s college hockey and each soccer competition, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: { include: { sport: true } } },
@@ -717,18 +717,18 @@ describe('The seeded NFL league and its knockout templates', () => {
     });
 
     expect(templates.map((template) => [template.templateKey, template.sportLeague.sport.sport, template.selectionType, template.isDefault, template.sportLeague.name])).toEqual([
-      ['cfp-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'College Football Playoff'],
+      ['cfp-squares', Sport.FOOTBALL, SelectionType.SQUARES, true, 'NCAA Men\'s Football'],
       ['champions-league-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'UEFA Champions League'],
       ['copa-america-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'Copa América'],
       ['euro-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'UEFA European Championship'],
       ['mls-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'MLS'],
-      ['ncaa-men-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Men'],
-      ['ncaa-men-soccer-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NCAA Division I Men'],
-      ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Men'],
-      ['ncaa-women-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Women'],
-      ['ncaa-women-soccer-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NCAA Division I Women'],
-      ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Women'],
-      ['nfl-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
+      ['ncaa-men-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Men\'s Hockey'],
+      ['ncaa-men-soccer-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NCAA Men\'s Soccer'],
+      ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Men\'s Basketball'],
+      ['ncaa-women-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Women\'s Hockey'],
+      ['ncaa-women-soccer-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NCAA Women\'s Soccer'],
+      ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Women\'s Basketball'],
+      ['nfl-squares', Sport.FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
       ['nwsl-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NWSL'],
       ['womens-world-cup-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'FIFA Women\'s World Cup'],
       ['world-cup-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'FIFA World Cup'],
@@ -741,7 +741,7 @@ describe('The seeded NFL league and its knockout templates', () => {
 
   it('plays men\'s college basketball in two halves and leaves every other seeded sport league on its sport\'s periods (#786)', async () => {
     const leagues = await getPrisma().sportLeague.findMany({ where: { matchPeriodLayout: { not: null } }, select: { name: true, matchPeriodLayout: true } });
-    expect(leagues).toEqual([{ name: 'NCAA Division I Men', matchPeriodLayout: 'HALVES' }]);
+    expect(leagues).toEqual([{ name: 'NCAA Men\'s Basketball', matchPeriodLayout: 'HALVES' }]);
   });
 
   it('calls the NCAA Division I tennis championships leagues and leaves every other seeded sport league on its sport\'s noun (#834)', async () => {
@@ -751,8 +751,8 @@ describe('The seeded NFL league and its knockout templates', () => {
       orderBy: { name: 'asc' },
     });
     expect(leagues).toEqual([
-      { name: 'NCAA Division I Men', noun: 'LEAGUE', sport: { sport: 'TENNIS' } },
-      { name: 'NCAA Division I Women', noun: 'LEAGUE', sport: { sport: 'TENNIS' } },
+      { name: 'NCAA Men\'s Tennis', noun: 'LEAGUE', sport: { sport: 'TENNIS' } },
+      { name: 'NCAA Women\'s Tennis', noun: 'LEAGUE', sport: { sport: 'TENNIS' } },
     ]);
   });
 
@@ -770,14 +770,14 @@ describe('The seeded NFL league and its knockout templates', () => {
       const orders = leagues.filter((league) => league.sport.sport === sport).map((league) => league.displayOrder);
       expect(new Set(orders).size).toBe(orders.length);
     }
-    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff']);
-    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women']);
+    expect(namesBySport.get(Sport.FOOTBALL)).toEqual(['NFL', 'NCAA Men\'s Football']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Men\'s Basketball', 'NCAA Women\'s Basketball']);
     expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
     // #1716: horse racing's one league is reference data, as every other sport's leagues are.
     expect(namesBySport.get(Sport.HORSE_RACING)).toEqual(['US Thoroughbred']);
-    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women']);
-    expect(namesBySport.get(Sport.SOCCER)?.slice(-2)).toEqual(['NCAA Division I Men', 'NCAA Division I Women']);
+    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Men\'s Hockey', 'NCAA Women\'s Hockey']);
+    expect(namesBySport.get(Sport.SOCCER)?.slice(-2)).toEqual(['NCAA Men\'s Soccer', 'NCAA Women\'s Soccer']);
   });
 
   it('gives every seeded active event page with offers exactly one primary offer, whose edition dates the page', async () => {
@@ -930,7 +930,7 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
     expect([nba?.bracketAdvancement, nba?.roundNames]).toEqual(['FIXED', ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']]);
     expect([wnba?.bracketAdvancement, wnba?.roundNames]).toEqual(['FIXED', ['First Round', 'Semifinals', 'WNBA Finals']]);
     // The NCAA tournaments keep the sport's March Madness names.
-    expect((await seeded('NCAA Division I Men'))?.roundNames).toEqual([]);
+    expect((await seeded('NCAA Men\'s Basketball'))?.roundNames).toEqual([]);
   });
 
   it.each([
@@ -964,14 +964,14 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
   });
 });
 
-// The College Football Playoff (#707): an American football sport league, data only, with its own
-// round names, its own six tiers and knockout presets for its four rounds.
-describe('The seeded College Football Playoff league and its knockout templates', () => {
-  it('seeds the College Football Playoff as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
-    const football = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.AMERICAN_FOOTBALL } });
+// NCAA men's football (#707, renamed in #2143): a football sport league, data only, whose College
+// Football Playoff has its own round names, its own six tiers and knockout presets for its four rounds.
+describe('The seeded NCAA Men\'s Football league and its knockout templates', () => {
+  it('seeds NCAA Men\'s Football as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
+    const football = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.FOOTBALL } });
     const seeded = seededLeagueReader(football.id);
 
-    const [cfp, nfl] = await Promise.all([seeded('College Football Playoff'), seeded('NFL')]);
+    const [cfp, nfl] = await Promise.all([seeded('NCAA Men\'s Football'), seeded('NFL')]);
 
     const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
     expect([cfp?.bracketAdvancement, cfp?.roundNames, platformTierProfileCodes.get(cfp?.platformTierProfileId ?? '')]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], 'TIERS_6_OF_2']);
@@ -981,7 +981,7 @@ describe('The seeded College Football Playoff league and its knockout templates'
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default, picking one team from each of six tiers', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { sport: { sport: Sport.AMERICAN_FOOTBALL }, name: 'College Football Playoff' }, contestFormat: ContestFormat.ROSTER },
+      where: { sportLeague: { sport: { sport: Sport.FOOTBALL }, name: 'NCAA Men\'s Football' }, contestFormat: ContestFormat.ROSTER },
       orderBy: [{ templateKey: 'asc' }],
     });
 

@@ -321,7 +321,7 @@ describe('sport catalog mappers', () => {
   it('sends a sport league with a copy of its round names, its counts, and its sport\'s name and ways of picking', () => {
     const roundNames = ['Round 1', 'Final'];
     const summary = {
-      id: 'sl1', sportId: 's1', sport: 'AMERICAN_FOOTBALL', name: 'NFL', roundNames, participantCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
+      id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', roundNames, participantCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
     } as unknown as SportLeagueSummary;
 
     const dto = mapSportLeagueToDto(summary);
@@ -329,13 +329,13 @@ describe('sport catalog mappers', () => {
     expect(dto.roundNames).toEqual(roundNames);
     expect(dto.roundNames).not.toBe(roundNames);
     expect(dto).toEqual(expect.objectContaining({ participantCount: 32, sportEventCount: 18, createdAt: ISO }));
-    expect(dto.sportName).toBe(getSportDefinition(Sport.AMERICAN_FOOTBALL).name);
-    expect(dto.selectionTypes).toEqual(getSportDefinition(Sport.AMERICAN_FOOTBALL).selectionTypes);
-    expect(dto.selectionTypes).not.toBe(getSportDefinition(Sport.AMERICAN_FOOTBALL).selectionTypes);
+    expect(dto.sportName).toBe(getSportDefinition(Sport.FOOTBALL).name);
+    expect(dto.selectionTypes).toEqual(getSportDefinition(Sport.FOOTBALL).selectionTypes);
+    expect(dto.selectionTypes).not.toBe(getSportDefinition(Sport.FOOTBALL).selectionTypes);
   });
 
   it('sends a sport league\'s selected provider mapping as a copy with the provider\'s name, and null for a league not synced', () => {
-    const base = { id: 'sl1', sportId: 's1', sport: 'AMERICAN_FOOTBALL', name: 'NFL', roundNames: [], participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
+    const base = { id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', roundNames: [], participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
     const mapping = buildProviderMapping({ providerLeagueCode: 'nfl', providerLeagueName: 'NFL' });
 
     const synced = mapSportLeagueToDto({ ...base, selectedProviderMapping: mapping } as unknown as SportLeagueSummary);

@@ -882,7 +882,7 @@ and by the seeded-template test. A slot definition a template covers cannot be d
 ### EventPage — `event-pages`
 
 A public page for one event a fan would name, Championship Weekend at
-`/play/american-football/championship-weekend` (#1007, `plans/event-landing-pages.md`). A
+`/play/football/championship-weekend` (#1007, `plans/event-landing-pages.md`). A
 curated grouping: its `EventPageOffer` rows each name a contest template on one slot definition
 of its sport league (#2010), with an optional bracket starting round, a sort order and one
 primary offer, whose edition heads the page (at most one per page, by a partial unique index). Unique on `(sport, urlSegment)`; the URL segment is

@@ -18318,7 +18318,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -18329,7 +18329,7 @@
           "urlSegment": {
             "type": "string",
             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-            "description": "The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given."
+            "description": "The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given."
           },
           "displayOrder": {
             "type": "integer",
@@ -18391,7 +18391,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -18402,7 +18402,7 @@
                 "urlSegment": {
                   "type": "string",
                   "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                  "description": "The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given."
+                  "description": "The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given."
                 },
                 "displayOrder": {
                   "type": "integer",
@@ -18522,7 +18522,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -18543,7 +18543,7 @@
           },
           "sportName": {
             "type": "string",
-            "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+            "description": "Its sport's name, such as \"Football\", as screens title the sport (#2107)."
           },
           "selectionTypes": {
             "type": "array",
@@ -18706,7 +18706,7 @@
             ]
           },
           "displayName": {
-            "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.",
+            "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport (\"NCAA Men's Basketball\"). Set with the league's reference data, never by a request.",
             "type": [
               "string",
               "null"
@@ -18808,7 +18808,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -18861,7 +18861,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -18882,7 +18882,7 @@
                 },
                 "sportName": {
                   "type": "string",
-                  "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+                  "description": "Its sport's name, such as \"Football\", as screens title the sport (#2107)."
                 },
                 "selectionTypes": {
                   "type": "array",
@@ -19045,7 +19045,7 @@
                   ]
                 },
                 "displayName": {
-                  "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.",
+                  "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport (\"NCAA Men's Basketball\"). Set with the league's reference data, never by a request.",
                   "type": [
                     "string",
                     "null"
@@ -19168,7 +19168,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
+                  "FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
@@ -19189,7 +19189,7 @@
               },
               "sportName": {
                 "type": "string",
-                "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+                "description": "Its sport's name, such as \"Football\", as screens title the sport (#2107)."
               },
               "selectionTypes": {
                 "type": "array",
@@ -19352,7 +19352,7 @@
                 ]
               },
               "displayName": {
-                "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.",
+                "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport (\"NCAA Men's Basketball\"). Set with the league's reference data, never by a request.",
                 "type": [
                   "string",
                   "null"
@@ -19513,7 +19513,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -19950,7 +19950,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -25783,7 +25783,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -26681,7 +26681,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -26781,7 +26781,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -27733,7 +27733,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
+                  "FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
@@ -33640,7 +33640,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -34520,7 +34520,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -35602,7 +35602,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
+                  "FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
@@ -35871,7 +35871,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -57399,7 +57399,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -57409,12 +57409,12 @@
           },
           "sportName": {
             "type": "string",
-            "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+            "description": "The sport's name, such as \"Football\", as the page titles it (#2107)."
           },
           "sportUrlSegment": {
             "type": "string",
             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-            "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+            "description": "The sport's stored URL segment, such as football: the first segment of the page's web address."
           },
           "urlSegment": {
             "type": "string",
@@ -57451,7 +57451,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
+                  "FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
@@ -57461,12 +57461,12 @@
               },
               "sportName": {
                 "type": "string",
-                "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                "description": "The sport's name, such as \"Football\", as the page titles it (#2107)."
               },
               "sportUrlSegment": {
                 "type": "string",
                 "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                "description": "The sport's stored URL segment, such as football: the first segment of the page's web address."
               },
               "urlSegment": {
                 "type": "string",
@@ -59134,7 +59134,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
+                  "FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
@@ -59144,12 +59144,12 @@
               },
               "sportName": {
                 "type": "string",
-                "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                "description": "The sport's name, such as \"Football\", as the page titles it (#2107)."
               },
               "sportUrlSegment": {
                 "type": "string",
                 "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                "description": "The sport's stored URL segment, such as football: the first segment of the page's web address."
               },
               "urlSegment": {
                 "type": "string",
@@ -59186,7 +59186,7 @@
                       "CYCLING",
                       "RUNNING",
                       "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
+                      "FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
                       "SOCCER",
@@ -59196,12 +59196,12 @@
                   },
                   "sportName": {
                     "type": "string",
-                    "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                    "description": "The sport's name, such as \"Football\", as the page titles it (#2107)."
                   },
                   "sportUrlSegment": {
                     "type": "string",
                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                    "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                    "description": "The sport's stored URL segment, such as football: the first segment of the page's web address."
                   },
                   "urlSegment": {
                     "type": "string",
@@ -60870,7 +60870,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -60906,7 +60906,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -60916,12 +60916,12 @@
                 },
                 "sportName": {
                   "type": "string",
-                  "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                  "description": "The sport's name, such as \"Football\", as the page titles it (#2107)."
                 },
                 "sportUrlSegment": {
                   "type": "string",
                   "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                  "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                  "description": "The sport's stored URL segment, such as football: the first segment of the page's web address."
                 },
                 "urlSegment": {
                   "type": "string",
@@ -60958,7 +60958,7 @@
                         "CYCLING",
                         "RUNNING",
                         "BASKETBALL",
-                        "AMERICAN_FOOTBALL",
+                        "FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
                         "SOCCER",
@@ -60968,12 +60968,12 @@
                     },
                     "sportName": {
                       "type": "string",
-                      "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                      "description": "The sport's name, such as \"Football\", as the page titles it (#2107)."
                     },
                     "sportUrlSegment": {
                       "type": "string",
                       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-                      "description": "The sport's stored URL segment, such as american-football: the first segment of the page's web address."
+                      "description": "The sport's stored URL segment, such as football: the first segment of the page's web address."
                     },
                     "urlSegment": {
                       "type": "string",
@@ -69632,7 +69632,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -69764,7 +69764,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -69990,7 +69990,7 @@
                         "CYCLING",
                         "RUNNING",
                         "BASKETBALL",
-                        "AMERICAN_FOOTBALL",
+                        "FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
                         "SOCCER",
@@ -70198,7 +70198,7 @@
                         "CYCLING",
                         "RUNNING",
                         "BASKETBALL",
-                        "AMERICAN_FOOTBALL",
+                        "FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
                         "SOCCER",
@@ -70320,7 +70320,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
+                  "FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
@@ -70619,7 +70619,7 @@
                               "CYCLING",
                               "RUNNING",
                               "BASKETBALL",
-                              "AMERICAN_FOOTBALL",
+                              "FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
                               "SOCCER",
@@ -70820,7 +70820,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -70988,7 +70988,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -71163,7 +71163,7 @@
                       "CYCLING",
                       "RUNNING",
                       "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
+                      "FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
                       "SOCCER",
@@ -71428,7 +71428,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -71492,7 +71492,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -71652,7 +71652,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
-              "AMERICAN_FOOTBALL",
+              "FOOTBALL",
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
@@ -71709,7 +71709,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
+                    "FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
@@ -72776,7 +72776,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
-                  "AMERICAN_FOOTBALL",
+                  "FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
@@ -73158,7 +73158,7 @@
                         "CYCLING",
                         "RUNNING",
                         "BASKETBALL",
-                        "AMERICAN_FOOTBALL",
+                        "FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
                         "SOCCER",
@@ -73393,7 +73393,7 @@
                       "CYCLING",
                       "RUNNING",
                       "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
+                      "FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
                       "SOCCER",
@@ -82772,7 +82772,7 @@
                 "CYCLING",
                 "RUNNING",
                 "BASKETBALL",
-                "AMERICAN_FOOTBALL",
+                "FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
                 "SOCCER",
@@ -86129,7 +86129,7 @@
                 "CYCLING",
                 "RUNNING",
                 "BASKETBALL",
-                "AMERICAN_FOOTBALL",
+                "FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
                 "SOCCER",
@@ -88020,7 +88020,7 @@
                 "CYCLING",
                 "RUNNING",
                 "BASKETBALL",
-                "AMERICAN_FOOTBALL",
+                "FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
                 "SOCCER",
@@ -88073,7 +88073,7 @@
             "in": "path",
             "name": "sportUrlSegment",
             "required": true,
-            "description": "The page's sport, by the sport's stored URL segment, such as american-football: the first segment of the page's web address."
+            "description": "The page's sport, by the sport's stored URL segment, such as football: the first segment of the page's web address."
           },
           {
             "schema": {
@@ -89657,7 +89657,7 @@
                 "CYCLING",
                 "RUNNING",
                 "BASKETBALL",
-                "AMERICAN_FOOTBALL",
+                "FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
                 "SOCCER",

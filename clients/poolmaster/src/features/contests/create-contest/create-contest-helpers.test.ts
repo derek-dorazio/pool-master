@@ -45,7 +45,7 @@ describe('formatChoicesFor', () => {
   });
 
   it('offers every format a sport with an entry screen for each one plays, squares and survivor included', () => {
-    expect(formatChoicesFor(getSportDefinition(Sport.AMERICAN_FOOTBALL)).map((choice) => choice.selectionType)).toEqual([
+    expect(formatChoicesFor(getSportDefinition(Sport.FOOTBALL)).map((choice) => choice.selectionType)).toEqual([
       SelectionType.TIERED,
       SelectionType.BUDGET_PICK,
       SelectionType.RANDOM_DRAW,

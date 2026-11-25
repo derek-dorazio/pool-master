@@ -126,6 +126,12 @@
       "key": "own:packages/shared/dto/sync-findings.dto.ts",
       "now": 10,
       "reason": "#2011: ProviderSyncFindingSlotChoiceListResponseSchema is exported for the slot-choices contract verification, as the file's other response schemas are"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "AMERICAN_FOOTBALL",
+      "now": 0,
+      "reason": "retired by #2143"
     }
   ]
 }

@@ -4,8 +4,8 @@
     "sport": "BASKETBALL",
     "season": 2026,
     "sportLeagues": [
-      "NCAA Division I Men",
-      "NCAA Division I Women"
+      "NCAA Men's Basketball",
+      "NCAA Women's Basketball"
     ],
     "participantType": "TEAM",
     "scoringFamily": "HEAD_TO_HEAD",
@@ -130,7 +130,7 @@
   },
   "sportLeagues": [
     {
-      "name": "NCAA Division I Men",
+      "name": "NCAA Men's Basketball",
       "players": [
         {
           "key": "ncaam-duke-blue-devils",
@@ -2104,7 +2104,7 @@
       ]
     },
     {
-      "name": "NCAA Division I Women",
+      "name": "NCAA Women's Basketball",
       "players": [
         {
           "key": "ncaaw-uconn-huskies",

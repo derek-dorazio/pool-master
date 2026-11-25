@@ -6,7 +6,7 @@ import type { Sport } from '@poolmaster/shared/domain';
  * the one the migration made.
  */
 const SPORT_ROW_KEYS: Readonly<Record<Sport, { urlSegment: string; displayOrder: number }>> = {
-  AMERICAN_FOOTBALL: { urlSegment: 'american-football', displayOrder: 0 },
+  FOOTBALL: { urlSegment: 'football', displayOrder: 0 },
   BASKETBALL: { urlSegment: 'basketball', displayOrder: 1 },
   BASEBALL: { urlSegment: 'baseball', displayOrder: 2 },
   HOCKEY: { urlSegment: 'hockey', displayOrder: 3 },

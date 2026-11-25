@@ -122,8 +122,8 @@ describe('how the seeded slot definitions are played (#2043)', () => {
     const slots = await seededSlots();
     const periods = (sport: Sport, league: string) => [...new Set(slots.filter((slot) => slot.sport === sport && slot.league === league).map((slot) => `${String(slot.periodUnit)}:${String(slot.periodCount)}`))];
 
-    expect(periods(Sport.AMERICAN_FOOTBALL, 'NFL')).toEqual(['QUARTER:4']);
-    expect(periods(Sport.BASKETBALL, 'NCAA Division I Men')).toEqual(['HALF:2']);
+    expect(periods(Sport.FOOTBALL, 'NFL')).toEqual(['QUARTER:4']);
+    expect(periods(Sport.BASKETBALL, 'NCAA Men\'s Basketball')).toEqual(['HALF:2']);
     expect(periods(Sport.BASEBALL, 'MLB')).toEqual(['INNING:9']);
     expect(periods(Sport.GOLF, 'PGA TOUR')).toEqual(['HOLE:18']);
     expect(periods(Sport.AUTO_RACING, 'Formula 1')).toEqual(['null:null']);

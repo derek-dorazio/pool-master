@@ -26,7 +26,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
 } = {}) {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
-  const sportLeague = store.addSportLeague(sportRow.id, 'NCAA Division I Men');
+  const sportLeague = store.addSportLeague(sportRow.id, 'NCAA Men\'s Basketball');
   const event = store.addEvent({ sportLeagueId: sportLeague.id, sport, status, rounds: 2 });
   void store.addRounds(event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') },
@@ -66,7 +66,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
  */
 function withRosters(context: ReturnType<typeof setup>, ...onRoster: string[]) {
   for (const participantId of onRoster) context.store.affiliate(context.sportLeague.id, participantId);
-  const women = context.store.addSportLeague(context.sportRow.id, 'NCAA Division I Women');
+  const women = context.store.addSportLeague(context.sportRow.id, 'NCAA Women\'s Basketball');
   const otherLeagueTeam = context.store.addParticipant(context.sportRow.id, 'South Carolina', { participantType: 'TEAM' });
   context.store.affiliate(women.id, otherLeagueTeam.id);
   return otherLeagueTeam;
@@ -363,13 +363,13 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
    */
   async function conferenceSetup(divisional: (seed: (number: number) => string) => Array<[string | null, string | null]>, seedCount = 6) {
     const store = new InMemorySportEvents();
-    const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
+    const sportRow = store.addSport(Sport.FOOTBALL);
     const sportLeague = store.addSportLeague(sportRow.id, 'NFL');
     Object.assign(sportLeague, {
       bracketAdvancement: BracketAdvancement.RESEED_BY_SEED,
       roundNames: ['Wild Card', 'Divisional', 'Conference Championship'],
     });
-    const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 3 });
+    const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 3 });
     await store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({
       roundNumber, scheduledDate: new Date(Date.UTC(2027, 0, 7 * roundNumber)),
     })));

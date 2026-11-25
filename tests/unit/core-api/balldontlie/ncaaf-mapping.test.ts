@@ -38,7 +38,7 @@ describe('a College Football Playoff as an event', () => {
     expect(event).toEqual({
       externalId: 'ncaaf-2025-cfp',
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       name: 'College Football Playoff',
       startDate: new Date('2025-11-29T17:00:00.000Z'),
       endDate: new Date('2026-01-20T00:30:00.000Z'),
@@ -72,7 +72,7 @@ describe('a College Football Playoff as an event', () => {
     expect(teams.find((team) => team.externalId === '93')).toEqual({
       externalId: '93',
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       name: 'Navy Midshipmen',
       active: true,
       metadata: { abbreviation: 'NAVY', conference: 'American' },

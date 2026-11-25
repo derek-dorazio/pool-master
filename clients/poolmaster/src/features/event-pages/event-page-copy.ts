@@ -38,7 +38,7 @@ export const EVENT_PAGE_ACTIONS = {
  * to its template's own name and description.
  */
 export const EVENT_PAGE_COPY: Readonly<Record<string, Readonly<Record<string, EventPageCopy>>>> = {
-  'american-football': {
+  football: {
     'championship-weekend': {
       name: 'Championship Weekend',
       eyebrow: 'NFL conference championships',

@@ -102,7 +102,7 @@ export function toNflSportEvent(scope: NflScope, games: readonly NflGame[], part
   return {
     externalId: nflScopeId(scope),
     providerId: BALLDONTLIE_PROVIDER_ID,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     name: scope.kind === NflScopeKind.POSTSEASON ? 'NFL Playoffs' : `NFL Week ${String(scope.week)}`,
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
@@ -143,7 +143,7 @@ export function toNflTeamParticipant(team: NflTeam, path: string): ProviderParti
   return {
     externalId: participantFeedId(team.id),
     providerId: BALLDONTLIE_PROVIDER_ID,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     name: team.full_name,
     active: true,
     metadata: { abbreviation: team.abbreviation, conference: team.conference, division: team.division },

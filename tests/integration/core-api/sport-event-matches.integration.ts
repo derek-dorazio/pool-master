@@ -57,8 +57,8 @@ async function createBracketEvent() {
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({
-    where: { sportId_name: { sportId: sport.id, name: 'NCAA Division I Men' } },
-    create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NCAA Division I Men' },
+    where: { sportId_name: { sportId: sport.id, name: 'NCAA Men\'s Basketball' } },
+    create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NCAA Men\'s Basketball' },
     update: {},
   });
   const { events, rounds, field } = repos();

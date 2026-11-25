@@ -42,8 +42,8 @@ function template(id: string, configJson: ContestConfigTemplate['configJson']): 
   };
 }
 
-const PAGE: EventPage = { id: 'page-cw', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
-const RETIRED: EventPage = { id: 'page-old', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'conference-weekend', displayOrder: 30, isActive: false, redirectTo: { sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'championship-weekend' } };
+const PAGE: EventPage = { id: 'page-cw', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
+const RETIRED: EventPage = { id: 'page-old', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'conference-weekend', displayOrder: 30, isActive: false, redirectTo: { sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend' } };
 
 function offer(id: string, overrides: Partial<EventPageOffer>): EventPageOffer {
   return {
@@ -125,7 +125,7 @@ describe('EventPageService', () => {
       },
     });
 
-    const views = await service.listPages(Sport.AMERICAN_FOOTBALL);
+    const views = await service.listPages(Sport.FOOTBALL);
 
     expect(views.map((view) => [view.page.id, view.offers.map((each) => each.offer.id)])).toEqual([
       [PAGE.id, ['tiered', 'squares']],
@@ -144,7 +144,7 @@ describe('EventPageService', () => {
       openings: { 'cw-2027': ContestOpening.NOT_YET },
     });
 
-    const view = await service.getPage('american-football', 'championship-weekend');
+    const view = await service.getPage('football', 'championship-weekend');
 
     expect(view.offers.map((each) => [each.offer.id, each.nextSlot.sportEventId, each.state])).toEqual([
       ['tiered', 'cw-2027', EventPageOfferState.NOT_YET],
@@ -162,7 +162,7 @@ describe('EventPageService', () => {
       closesAt: { 'cw-2027': new Date('2027-01-24T20:00:00.000Z'), 'playoffs-2027': new Date('2027-01-16T21:30:00.000Z') },
     });
 
-    const view = await service.getPage('american-football', 'championship-weekend');
+    const view = await service.getPage('football', 'championship-weekend');
 
     expect(view.offers.map((each) => each.closesAt.toISOString())).toEqual([
       '2027-01-24T20:00:00.000Z', '2027-01-16T21:30:00.000Z', '2027-01-16T21:30:00.000Z',
@@ -174,7 +174,7 @@ describe('EventPageService', () => {
   it('asks about a bracket from the offer\'s own starting round, over its template\'s, and about anything else with none', async () => {
     const { service, asked } = build({ slots: { 'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')] } });
 
-    const view = await service.getPage('american-football', 'championship-weekend');
+    const view = await service.getPage('football', 'championship-weekend');
 
     expect(asked.map((each) => each.setup)).toEqual([
       { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
@@ -189,7 +189,7 @@ describe('EventPageService', () => {
       slots: { 'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')] },
     });
 
-    expect((await service.getPage('american-football', 'championship-weekend')).offers[0]?.startsAtRound).toBe(2);
+    expect((await service.getPage('football', 'championship-weekend')).offers[0]?.startsAtRound).toBe(2);
   });
 
   it('skips a slot past the contest\'s cutoff for the next one, and leaves out an offer with none left', async () => {
@@ -201,7 +201,7 @@ describe('EventPageService', () => {
       openings: { 'cw-2027': ContestOpening.CLOSED, 'cw-2028': ContestOpening.NOT_YET, 'playoffs-2027': ContestOpening.CLOSED },
     });
 
-    const view = await service.getPage('american-football', 'championship-weekend');
+    const view = await service.getPage('football', 'championship-weekend');
 
     expect(view.offers.map((each) => [each.offer.id, each.nextSlot.sportEventId, each.state])).toEqual([
       ['tiered', 'cw-2028', EventPageOfferState.NOT_YET],
@@ -211,7 +211,7 @@ describe('EventPageService', () => {
   it('shows an active page between seasons with no offers', async () => {
     const { service } = build({});
 
-    const view = await service.getPage('american-football', 'championship-weekend');
+    const view = await service.getPage('football', 'championship-weekend');
 
     expect([view.page.isActive, view.offers]).toEqual([true, []]);
   });
@@ -219,15 +219,15 @@ describe('EventPageService', () => {
   it('answers a retired page with its successor and no offers, without reading its offers\' slots', async () => {
     const { service, asked } = build({ pages: [PAGE, RETIRED], offers: [{ ...SQUARES, eventPageId: RETIRED.id }] });
 
-    const view = await service.getPage('american-football', 'conference-weekend');
+    const view = await service.getPage('football', 'conference-weekend');
 
-    expect([view.page.redirectTo, view.offers, asked]).toEqual([{ sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'championship-weekend' }, [], []]);
+    expect([view.page.redirectTo, view.offers, asked]).toEqual([{ sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend' }, [], []]);
   });
 
   it('refuses an address no page has with EventPageNotFoundError', async () => {
     const { service } = build({});
 
-    await expect(service.getPage('american-football', 'super-bowl')).rejects.toBeInstanceOf(EventPageNotFoundError);
+    await expect(service.getPage('football', 'super-bowl')).rejects.toBeInstanceOf(EventPageNotFoundError);
     await expect(service.getPage('basketball', 'championship-weekend')).rejects.toBeInstanceOf(EventPageNotFoundError);
   });
 
@@ -239,7 +239,7 @@ describe('EventPageService', () => {
       slots: { 'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')] },
     });
 
-    const football = await service.listPages(Sport.AMERICAN_FOOTBALL);
+    const football = await service.listPages(Sport.FOOTBALL);
     const every = await service.listPages();
 
     expect(football.map((view) => [view.page.urlSegment, view.offers.map((each) => each.offer.id)])).toEqual([['championship-weekend', ['squares']]]);
@@ -266,8 +266,8 @@ describe('EventPageService', () => {
       },
     });
 
-    const upcoming = await service.listPages(Sport.AMERICAN_FOOTBALL, true);
-    const every = await service.listPages(Sport.AMERICAN_FOOTBALL);
+    const upcoming = await service.listPages(Sport.FOOTBALL, true);
+    const every = await service.listPages(Sport.FOOTBALL);
 
     expect(upcoming.map((view) => view.page.urlSegment)).toEqual(['championship-weekend', 'super-bowl']);
     expect(every.map((view) => view.page.urlSegment)).toEqual(['super-bowl', 'championship-weekend', 'pro-bowl', 'between-seasons']);

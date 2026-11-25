@@ -14,7 +14,7 @@ import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import { etagPlugin } from '../../../packages/core-api/src/plugins/etag-support';
 
 const STAMP = new Date('2026-10-01T00:00:00.000Z');
-const PAGE: EventPage = { id: 'page-cw', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
+const PAGE: EventPage = { id: 'page-cw', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
 const OFFER: EventPageOffer = {
   id: 'tiered',
   eventPageId: PAGE.id,
@@ -82,7 +82,7 @@ describe('event page routes (#1181)', () => {
   it('lets a page whose offer closes in 10 minutes be kept 5 minutes in the browser and 10 at CloudFront, no longer', async () => {
     const { app } = await appClosingAt([inSeconds(600)]);
 
-    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
+    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/football/championship-weekend' });
     const list = await app.inject({ method: 'GET', url: '/api/v1/event-pages' });
 
     expect(page.headers['cache-control']).toBe('public, max-age=300, s-maxage=600');
@@ -93,7 +93,7 @@ describe('event page routes (#1181)', () => {
   it('keeps a page whose offers close more than an hour away for the full hour', async () => {
     const { app } = await appClosingAt([inSeconds(7200)]);
 
-    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
+    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/football/championship-weekend' });
 
     expect(page.headers['cache-control']).toBe(PUBLIC_CACHE_CONTROL);
     await app.close();
@@ -102,8 +102,8 @@ describe('event page routes (#1181)', () => {
   it('reads a page afresh, rather than answering from this task\'s copy, once an offer in the copy has closed', async () => {
     const { app, computed } = await appClosingAt([inSeconds(-5), inSeconds(7200)]);
 
-    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
-    const again = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
+    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/football/championship-weekend' });
+    const again = await app.inject({ method: 'GET', url: '/api/v1/event-pages/football/championship-weekend' });
 
     expect(computed()).toBe(2);
     expect(page.headers['cache-control']).toBe(PUBLIC_CACHE_CONTROL);

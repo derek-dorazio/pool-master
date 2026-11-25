@@ -216,7 +216,7 @@ export interface EmailSuppression extends DomainEntity {
  */
 export interface SportConfig extends DomainEntity {
   sport: Sport;
-  /** Its name in addresses (#2042): `american-football`. Stored, never built from the code. */
+  /** Its name in addresses (#2042): `football`. Stored, never built from the code. */
   urlSegment: string;
   /** Where it sits wherever sports are listed together, the most popular first; lower first. */
   displayOrder: number;
