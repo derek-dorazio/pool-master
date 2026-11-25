@@ -10,7 +10,9 @@ type SettingsGroupForm<G extends SettingsGroup, V extends FieldValues> = ReturnT
  * opened from outside that edits one settings group through `useSettingsGroupForm`: it opens on
  * the facts; Edit starts the draft from the group and clears a past save; Cancel goes back to
  * the facts; Save goes back to them once saved, after `onSaved`. Spread `modalProps` on
- * `DetailEditModal` and give it the facts, title and form.
+ * `DetailEditModal` and give it the facts, title and form. A dialog over one form of its own,
+ * not a settings group, uses `useDetailEditDialog`: its save keeps the saved values as the new
+ * baseline, where this one takes up the version the server answers.
  */
 export function useSettingsGroupDialog<G extends SettingsGroup, V extends FieldValues>({
   group,

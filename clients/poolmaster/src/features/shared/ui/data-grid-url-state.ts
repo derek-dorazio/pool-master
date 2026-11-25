@@ -35,7 +35,12 @@ const RANGE_MATCHES: readonly DateRangeMatch[] = ["overlaps", "startsWithin", "e
 const SPAN_UNITS: readonly SpanUnit[] = ["m", "h", "d", "w"];
 const PERIODS = Object.keys(CALENDAR_PERIOD_WORDS) as CalendarPeriod[];
 
-/** The grid's state as its link parameter; null when there is nothing to keep. */
+/** A state with at least one filter, which always has something to keep. */
+type FilteredGridUrlState = GridUrlState & { filters: [ColumnFiltersState[number], ...ColumnFiltersState] };
+
+/** The grid's state as its link parameter; null when there is nothing to keep, which a state with a filter never is. */
+export function encodeGridState(state: FilteredGridUrlState): string;
+export function encodeGridState(state: GridUrlState): string | null;
 export function encodeGridState(state: GridUrlState): string | null {
   const sorted = state.sorting.at(0);
   const filters = Object.fromEntries(state.filters.map(({ id, value }) => [id, storedFilter(value as DataGridFilter)]));
