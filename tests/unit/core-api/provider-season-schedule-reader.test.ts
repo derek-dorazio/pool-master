@@ -132,6 +132,25 @@ describe('ProviderSeasonScheduleReader.listSeasonEvents', () => {
       .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
     expect(other.getUpcomingEvents).not.toHaveBeenCalled();
   });
+  it('reads an event the provider gives no venue or end date as having none', async () => {
+    const provider = syncedProvider({
+      getUpcomingEvents: jest.fn().mockResolvedValue([buildProviderEvent({ externalId: 'pga-2', providerLeagueCode: 'pga', endDate: undefined })]),
+    });
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+
+    const [event] = await new ProviderSeasonScheduleReader(asPrismaClient(prisma), registryWith(provider)).listSeasonEvents('pga', '2027');
+
+    expect(event).toMatchObject({ externalId: 'pga-2', venue: null, endDate: null });
+  });
+
+  it('passes on a registry failure other than an unresolved provider unchanged', async () => {
+    const broken = new Error('registry unavailable');
+    const registry = registryWith(syncedProvider());
+    jest.spyOn(registry, 'forLeague').mockImplementation(() => { throw broken; });
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma), registry).listSeasonEvents('pga', '2027')).rejects.toBe(broken);
+  });
 });
 
 describe('ProviderSeasonScheduleError', () => {
