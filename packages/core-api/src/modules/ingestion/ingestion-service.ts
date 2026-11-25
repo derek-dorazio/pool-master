@@ -17,6 +17,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
+  eventFeedRef,
   JobErrorType,
   JobTrigger,
   type ProviderHealthStatus,
@@ -24,7 +25,6 @@ import {
   type BackgroundJobOutcome,
   type JobStart,
   type Sport,
-  SportEventSyncScope,
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
   type ProviderSettings,
@@ -123,16 +123,13 @@ export class ProviderSyncRunNotFoundError extends Error {
 }
 
 /**
- * A one-off manual sync can't bypass SportEvent.syncScope any more than the
- * scheduled feeds can (plans/124 §4.4) — thrown when any requested feed
- * isn't allowed for the target event's current scope.
+ * A manual sync of one of our events (#2004) that its league's provider has no id for (409
+ * EVENT_NOT_LINKED: a test event), or that does not exist (404 EVENT_NOT_FOUND).
  */
-export class SportEventSyncScopeError extends Error {
-  constructor(eventId: string, syncScope: string, disallowedFeeds: string[]) {
-    super(
-      `Event ${eventId} has syncScope ${syncScope}, which does not allow: ${disallowedFeeds.join(', ')}`,
-    );
-    this.name = 'SportEventSyncScopeError';
+export class SportEventNotSyncedError extends Error {
+  constructor(message: string, readonly code: 'EVENT_NOT_FOUND' | 'EVENT_NOT_LINKED', readonly statusCode: 404 | 409) {
+    super(message);
+    this.name = 'SportEventNotSyncedError';
   }
 }
 
@@ -193,41 +190,15 @@ export class IngestionService {
   }
 
   /**
-   * A one-off manual sync can't bypass SportEvent.syncScope any more than the
-   * scheduled feeds can (plans/124 §4.4). No-op when no local SportEvent row
-   * exists yet for (providerId, externalId) — there is no scope to violate.
-   *
-   * A linked event (`SCORES_ONLY`) accepts both event feeds: live scores, and the field
-   * feed (EVENTPARTICIPANTS), from the field loop or the admin's Load/Refresh field action.
-   * The field feed writes only the field and its size; a synced event's details are kept
-   * current by `SportEventService.keepProviderEventsCurrent`, never here (ADR 0011).
-   * An unlinked event (`NONE`) accepts neither.
+   * The event of ours the provider knows by this id (#2004), so the runs and their job name it;
+   * null when no event has it. Only the sync gives an event a provider id, so every such event is
+   * one the provider syncs: its live scores and its field (EVENTPARTICIPANTS). The field feed
+   * writes only the field and its size; a synced event's details are kept current by
+   * `SportEventService.keepProviderEventsCurrent`, never here (ADR 0011).
    */
-  private async assertFeedsAllowedForSyncScope(
-    providerId: string,
-    eventId: string,
-    feeds: string[],
-  ): Promise<{ sportEventId: string; sportLeagueId: string } | null> {
+  private async linkedEventOf(providerId: string, eventId: string): Promise<{ sportEventId: string; sportLeagueId: string } | null> {
     const event = await this.sportEvents.findByProviderRef(providerId, eventId);
-    if (!event) {
-      return null;
-    }
-
-    const allowedFeeds: string[] = event.syncScope === SportEventSyncScope.NONE
-      ? []
-      : ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'];
-    const disallowedFeeds = feeds.filter((feed) => !allowedFeeds.includes(feed));
-    if (disallowedFeeds.length > 0) {
-      this.logger?.warn({
-        providerId,
-        eventId,
-        syncScope: event.syncScope,
-        requestedFeeds: feeds,
-        disallowedFeeds,
-      }, 'Manual event sync rejected — requested feed(s) not allowed for this event\'s syncScope');
-      throw new SportEventSyncScopeError(eventId, event.syncScope, disallowedFeeds);
-    }
-    return { sportEventId: event.id, sportLeagueId: event.sportLeagueId };
+    return event ? { sportEventId: event.id, sportLeagueId: event.sportLeagueId } : null;
   }
 
   // -------------------------------------------------------------------------
@@ -330,6 +301,25 @@ export class IngestionService {
     return run;
   }
 
+  /**
+   * A root admin's Sync now on one of our events (#2004): the requested feeds of the event at its
+   * league's provider, by the id the sync gave it.
+   */
+  async syncSportEvent(
+    sportEventId: string,
+    feeds: EventSyncRequest['feeds'],
+    rootAdminUserId: string,
+    rootAdminEmail: string,
+  ): Promise<ProviderManualSyncSubmissionResult> {
+    const event = await this.sportEvents.findById(sportEventId);
+    if (!event) throw new SportEventNotSyncedError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
+    const feedRef = eventFeedRef(event);
+    if (feedRef === undefined) {
+      throw new SportEventNotSyncedError(`Sport event ${sportEventId} has no id at its league's provider, so nothing syncs it.`, 'EVENT_NOT_LINKED', 409);
+    }
+    return this.syncEventData({ sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, feeds }, rootAdminUserId, rootAdminEmail);
+  }
+
   async syncEventData(
     request: EventSyncRequest,
     rootAdminUserId: string,
@@ -364,11 +354,7 @@ export class IngestionService {
       },
     });
     const normalizedScope = normalizedRequest.scope;
-    const linkedEvent = await this.assertFeedsAllowedForSyncScope(
-      provider.providerId,
-      normalizedScope.eventId,
-      normalizedScope.feeds,
-    );
+    const linkedEvent = await this.linkedEventOf(provider.providerId, normalizedScope.eventId);
 
     const submittedAt = new Date();
     this.logger?.info({

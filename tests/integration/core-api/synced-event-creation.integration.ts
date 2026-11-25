@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository, PrismaSportRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
@@ -10,13 +10,13 @@ import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { heldHere } from '../../support/job-locks';
 import { leagueProfiles } from '../../support/league-profiles';
-import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportPlay } from '../../support/sport-play';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
 // Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
 // them, and they write the league's events; a second sweep writes nothing. The provider's tour list is the one stand-in: which provider events
-// belong to a league's tour is EventScoreSourceService's, tested on its own.
+// belong to a league's tour is ProviderSeasonScheduleReader's, tested on its own.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -25,7 +25,6 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-const PROVIDER_ID = SYNCED_PROVIDER_ID;
 const NOW = new Date('2027-03-01T12:00:00Z');
 
 /** A golf league named for its tour, synced from BALLDONTLIE's PGA TOUR unless `synced` is false. */
@@ -60,7 +59,7 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     sports: new PrismaSportRepository(prisma),
-    scoreSource: { listSeasonEvents },
+    seasonSchedule: { listSeasonEvents },
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
     findings: integrationSyncFindings(prisma),
     sportEvents: integrationSportEventServices(prisma).sportEvents,
@@ -95,12 +94,13 @@ describe('Synced event creation (ADR 0011)', () => {
 
     const events = await getPrisma().sportEvent.findMany({
       where: { eventSeries: { sportLeagueId: { in: [synced.id, unsynced.id, inactive.id] } } },
-      include: { eventSeries: true, sportLeagueSeason: true },
+      include: { eventSeries: true, sportLeagueSeason: true, providerMappings: { select: { externalId: true, provider: { select: { code: true } }, sportLeagueProviderMapping: { select: { selectedBy: { select: { id: true } } } } } } },
       orderBy: { startDate: 'asc' },
     });
-    expect(events.map((event) => [event.eventSeries.sportLeagueId, event.sportLeagueSeason.championshipYear, event.providerId, event.externalId, event.status, event.syncScope])).toEqual([
-      [synced.id, 2027, PROVIDER_ID, `${synced.name}-2027`, 'DRAFT', 'SCORES_ONLY'],
-      [synced.id, 2028, PROVIDER_ID, `${synced.name}-2028`, 'DRAFT', 'SCORES_ONLY'],
+    // Each created event is kept under the provider's id for it, through the league's selected mapping (#2004).
+    expect(events.map((event) => [event.eventSeries.sportLeagueId, event.sportLeagueSeason.championshipYear, event.providerMappings, event.status])).toEqual([
+      [synced.id, 2027, [{ externalId: `${synced.name}-2027`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
+      [synced.id, 2028, [{ externalId: `${synced.name}-2028`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
     ]);
     expect(new Set(listSeasonEvents.mock.calls.map(([, sportLeagueId]) => sportLeagueId))).toEqual(new Set([synced.id]));
   });
@@ -162,6 +162,6 @@ describe('Synced event creation (ADR 0011)', () => {
       [`${synced.name} Open`, true],
       [`${synced.name} Open`, true],
     ] as const).slice().sort(byName));
-    expect(manual.event.providerId).not.toBe(PROVIDER_ID);
+    expect(manual.event.providerMappings).toEqual([]);
   });
 });

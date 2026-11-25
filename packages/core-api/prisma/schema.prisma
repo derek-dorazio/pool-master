@@ -311,11 +311,6 @@ enum ParticipantInactiveReason {
   ELIMINATED
 }
 
-enum PrismaSportEventSyncScope {
-  NONE
-  SCORES_ONLY
-}
-
 /// How a SportEventParticipantValuation's tier or price was set.
 enum ValuationSource {
   AUTO_ODDS
@@ -2043,8 +2038,6 @@ model ContestEntryPick {
 
 model SportEvent {
   id                         String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalId                 String                         @map("external_id") @db.VarChar(255)
-  providerId                 String                         @map("provider_id") @db.VarChar(100)
   sport                      PrismaSport
   name                       String                         @db.VarChar(500)
   venue                      String?                        @db.VarChar(500)
@@ -2058,7 +2051,6 @@ model SportEvent {
   // only by contest scoring, to turn an unplayed round's 80 strokes into to-par.
   roundsPar                  Int?                           @map("rounds_par")
   participantCount           Int?                           @map("participant_count")
-  metadata                   Json                           @default("{}")
   // The series this is one edition of, and its path to a sport league (plans/147). Auto-resolved
   // by find-or-create on (sportLeagueId, name) at tournament creation, never an admin decision
   // (plans/124 §4.3a).
@@ -2066,10 +2058,6 @@ model SportEvent {
   // The Season the event is played in (#2003): the synced Season the sync read it from, or the
   // league's current Season for one made by hand. Its championship year is the event's year.
   sportLeagueSeasonId        String                         @map("sport_league_season_id") @db.Uuid
-  // Sync eligibility, separate from providerId/externalId identity: NONE for an
-  // unlinked event, SCORES_ONLY once an admin links it to a provider event. Every
-  // event is admin-owned; a provider never owns one (ADR-0009, #435).
-  syncScope                  PrismaSportEventSyncScope      @default(NONE) @map("sync_scope")
   // Admin escape hatch: false stops the lifecycle scheduler (plans/124 §3.6)
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
@@ -2113,8 +2101,11 @@ model SportEvent {
   syncFindings               ProviderSyncFinding[]
   eventSeries                EventSeries                 @relation(fields: [eventSeriesId], references: [id])
   sportLeagueSeason          SportLeagueSeason           @relation(fields: [sportLeagueSeasonId], references: [id], onDelete: Restrict)
+  providerMappings           SportEventProviderMapping[]
+  slots                      SportEventSlot[]
 
-  @@unique([providerId, externalId])
+  /// The target of an event slot's composite key, which keeps its slot in the event's own Season.
+  @@unique([id, sportLeagueSeasonId])
   // One edition of a series per Season: there is one 2026 Masters (plans/147 decision 5).
   @@unique([eventSeriesId, sportLeagueSeasonId])
   @@index([sportLeagueSeasonId])
@@ -2124,6 +2115,50 @@ model SportEvent {
   /// A trigram index serves the event name search, a substring match (#1301).
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "sport_events_name_trgm_idx")
   @@map("sport_events")
+}
+
+/// The provider's id for an event (#2004, plan §9d): the sync writes one when it creates the event
+/// from its provider's schedule, under the league's provider mapping it read. An event with none is
+/// a test event, made by hand on a test slot. A provider's event id names at most one event.
+model SportEventProviderMapping {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventId                 String   @map("sport_event_id") @db.Uuid
+  providerId                   String   @map("provider_id") @db.Uuid
+  /// The league's provider mapping the sync read the event under.
+  sportLeagueProviderMappingId String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's own id for the event, as it sends it.
+  externalId                   String   @map("external_id") @db.VarChar(255)
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEvent                 SportEvent                 @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
+  provider                   Provider                   @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueProviderMappingId], references: [id], onDelete: Restrict)
+
+  @@unique([providerId, externalId])
+  /// An event has one id per provider.
+  @@unique([sportEventId, providerId])
+  @@index([sportLeagueProviderMappingId])
+  @@map("sport_event_provider_mappings")
+}
+
+/// One Season slot an event covers (#2004, plan §3): a SINGLE_SLOT event has one, a bracket event
+/// one per round. The composite keys keep the slot in the event's own Season, and a slot belongs to
+/// at most one event.
+model SportEventSlot {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventId                 String   @map("sport_event_id") @db.Uuid
+  sportLeagueSeasonId          String   @map("sport_league_season_id") @db.Uuid
+  sportLeagueSeasonPhaseSlotId String   @map("sport_league_season_phase_slot_id") @db.Uuid
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  sportEvent SportEvent                 @relation(fields: [sportEventId, sportLeagueSeasonId], references: [id, sportLeagueSeasonId], onDelete: Cascade, map: "sport_event_slots_event_fkey")
+  seasonSlot SportLeagueSeasonPhaseSlot @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonPhaseSlotId], references: [sportLeagueSeasonId, id], onDelete: Restrict, map: "sport_event_slots_season_slot_fkey")
+
+  /// A slot belongs to at most one event (slot ids are unique, so the Season adds nothing).
+  @@unique([sportLeagueSeasonId, sportLeagueSeasonPhaseSlotId], map: "sport_event_slots_season_slot_key")
+  @@index([sportEventId, sportLeagueSeasonId], map: "sport_event_slots_event_idx")
+  @@map("sport_event_slots")
 }
 
 model SportEventParticipant {
@@ -2466,6 +2501,7 @@ model Provider {
   syncRuns            ProviderSyncRun[]
   backgroundJobs      BackgroundJob[]
   syncFindings        ProviderSyncFinding[]
+  eventMappings       SportEventProviderMapping[]
 
   @@map("providers")
 }
@@ -2516,6 +2552,7 @@ model SportLeagueProviderMapping {
   positionCodes  SportLeaguePositionProviderMapping[]
   slotMappings   SportLeaguePhaseSlotProviderMapping[]
   seasonMappings SportLeagueSeasonProviderMapping[]
+  eventMappings  SportEventProviderMapping[]
 
   @@unique([sportLeagueId, providerLeagueId])
   /// The target of SportLeague's composite key to its selected mapping.
@@ -2862,7 +2899,10 @@ model SportLeagueSeasonPhaseSlot {
   seasonPhase SportLeagueSeasonPhase @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonPhaseId], references: [sportLeagueSeasonId, id], onDelete: Cascade, map: "sport_league_season_phase_slots_season_phase_fkey")
   /// The composite key keeps the definition one of its own league's.
   definition  SportLeaguePhaseSlot   @relation(fields: [sportLeagueId, sportLeaguePhaseSlotId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_phase_slots_definition_fkey")
+  eventSlot   SportEventSlot?
 
+  /// The target of an event slot's composite key.
+  @@unique([sportLeagueSeasonId, id], map: "sport_league_season_phase_slots_season_id_key")
   @@index([sportLeagueSeasonId, sportLeagueSeasonPhaseId], map: "sport_league_season_phase_slots_season_phase_idx")
   @@index([sportLeagueId, sportLeaguePhaseSlotId], map: "sport_league_season_phase_slots_definition_idx")
   @@map("sport_league_season_phase_slots")

@@ -77,8 +77,7 @@ export function withEventOpenings<T>(response: T): T {
 export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEventDto {
   const event: Omit<SportEventDto, 'contestOpenings'> = {
     id: 'event-1',
-    externalId: 'ext-event-1',
-    providerId: 'manual-admin',
+    providerMappings: [],
     providerName: null,
     sport: 'GOLF',
     name: 'The Masters',
@@ -102,7 +101,6 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     championshipYear: 2099,
     sportLeagueId: '00000000-0000-4000-8000-000000000002',
     ...sportPlay(overrides.sport ?? 'GOLF'),
-    syncScope: 'SCORES_ONLY',
     providerSynced: false,
     autoLifecycleEnabled: true,
     tierCount: 6,

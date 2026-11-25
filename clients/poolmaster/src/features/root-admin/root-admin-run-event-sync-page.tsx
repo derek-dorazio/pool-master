@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getSportDefinition, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { getSportDefinition } from '@poolmaster/shared/domain';
 import { submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
@@ -54,7 +54,7 @@ function formatEventOptionLabel(event: SportEventDto, displayPreferences: Displa
     event.readinessStatus,
     formatDateTimeDisplay(event.startDate, displayPreferences),
     participantText,
-    event.externalId,
+    ...event.providerMappings.map((mapping) => mapping.externalId),
   ].join(' · ');
 }
 
@@ -112,11 +112,8 @@ export function RootAdminRunEventSyncPage() {
   const selectedPreset = getEventSyncPreset(eventSyncPresetId);
   const selectableEvents = useMemo(() => {
     const validStatuses = getValidEventStatusesForPreset(eventSyncPresetId);
-    // Only an event linked to a provider event can sync; the server refuses an unlinked one.
-    return (eventsQuery.data ?? []).filter((event) =>
-      event.syncScope !== SportEventSyncScope.NONE
-      && validStatuses.includes(event.status),
-    );
+    // Only an event its league's provider syncs can sync; the server refuses a test event.
+    return (eventsQuery.data ?? []).filter((event) => event.providerSynced && validStatuses.includes(event.status));
   }, [eventSyncPresetId, eventsQuery.data]);
   // Events are chosen by id: two providers' events can share an external id.
   const selectedEvent = selectableEvents.find((event) => event.id === chosenEventId);
@@ -126,20 +123,13 @@ export function RootAdminRunEventSyncPage() {
   const eventSyncMutation = useInvalidatingMutation({
     mutationFn: async (input: {
       sport: SyncSport;
-      providerId: string;
       eventId: string;
       presetId: EventSyncPresetId;
     }): Promise<EventSyncSubmission> => {
       const preset = getEventSyncPreset(input.presetId);
       const response = await submitEventSync({
-        path: {
-          sport: input.sport,
-          eventId: input.eventId,
-        },
-        body: {
-          providerId: input.providerId,
-          feeds: [...preset.feeds],
-        },
+        path: { eventId: input.eventId },
+        body: { feeds: [...preset.feeds] },
       });
 
       if (!response.data) {
@@ -188,8 +178,7 @@ export function RootAdminRunEventSyncPage() {
             action: 'rootAdmin.eventSync.failed',
             data: {
               sport: eventSyncSport,
-              providerId: selectedEvent?.providerId ?? null,
-            eventId: selectedEvent?.externalId ?? null,
+              eventId: selectedEvent?.id ?? null,
             },
             err: error,
           },
@@ -203,8 +192,7 @@ export function RootAdminRunEventSyncPage() {
           action: 'rootAdmin.eventSync.failed',
           data: {
             sport: eventSyncSport,
-            providerId: selectedEvent?.providerId ?? null,
-            eventId: selectedEvent?.externalId ?? null,
+            eventId: selectedEvent?.id ?? null,
           },
         },
         'Manual provider event sync failed',
@@ -222,7 +210,7 @@ export function RootAdminRunEventSyncPage() {
         title="Run event sync"
         titleAside={(
           <HelpTip label="About running an event sync" testId="root-admin-run-event-sync-help">
-            Use this action when a linked event needs a targeted refresh of its field or live
+            Use this action when a synced event needs a targeted refresh of its field or live
             scores.
           </HelpTip>
         )}
@@ -326,8 +314,8 @@ export function RootAdminRunEventSyncPage() {
 
           {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
             <Notice>
-              No linked {getSportDefinition(eventSyncSport).name.toLowerCase()} events match this preset. Link an event to a score
-              source on its page first; an unlinked event has nothing to sync.
+              No synced {getSportDefinition(eventSyncSport).name.toLowerCase()} events match this preset. A test event has
+              nothing to sync.
             </Notice>
           ) : null}
 
@@ -338,8 +326,7 @@ export function RootAdminRunEventSyncPage() {
               selectedEvent
                 ? eventSyncMutation.mutate({
                   sport: eventSyncSport,
-                  providerId: selectedEvent.providerId,
-                  eventId: selectedEvent.externalId,
+                  eventId: selectedEvent.id,
                   presetId: eventSyncPresetId,
                 })
                 : undefined}

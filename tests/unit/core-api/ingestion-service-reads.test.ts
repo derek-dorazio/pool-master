@@ -14,7 +14,7 @@ import { memoizedRead, ReadMemoKey, runWithReadMemo } from '../../../packages/co
 import type { PrismaClient } from '@prisma/client';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
-import { ProviderCode, Sport, SportEventSyncScope, type ProviderSettings, type SportEvent } from '../../../packages/shared/domain';
+import { ProviderCode, Sport, type ProviderSettings, type SportEvent } from '../../../packages/shared/domain';
 import { fakeSportEventRepo } from '../../support/repo-fakes';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
@@ -331,7 +331,7 @@ describe('IngestionService.syncEventData refusals', () => {
 
 describe('IngestionService manual sync job (#1441)', () => {
   function linkedEvent(): SportEvent {
-    return { id: 'event-1', syncScope: SportEventSyncScope.SCORES_ONLY } as SportEvent;
+    return { id: 'event-1', providerMappings: [] } as unknown as SportEvent;
   }
 
   const COMPLETED_JOB: IngestionJobRecord = {

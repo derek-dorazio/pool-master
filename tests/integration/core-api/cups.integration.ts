@@ -40,15 +40,10 @@ async function seedLeague() {
     sportLeagueId?: string;
     places?: Array<[squadId: string, position: number | null]>;
   } = {}) => {
-    const edition = await freshEventEdition(prisma, { championshipYear: options.seasonYear ?? 2026 });
-    if (options.sportLeagueId !== undefined) {
-      await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: options.sportLeagueId } });
-    }
+    const edition = await freshEventEdition(prisma, { championshipYear: options.seasonYear ?? 2026, sportLeagueId: options.sportLeagueId });
     const event = await prisma.sportEvent.create({
       data: {
         ...edition,
-        externalId: `cup-${randomUUID()}`,
-        providerId: 'integration-test',
         sport: 'GOLF',
         name: `${name} ${suffix}`,
         startDate: new Date(options.startDate ?? '2026-04-09T12:00:00.000Z'),

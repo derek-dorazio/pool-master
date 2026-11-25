@@ -881,9 +881,9 @@ ids; the mapping points at it.
   `externalId` on a table that is not a `…ProviderMapping`; an id prefix that says which
   provider an id came from; a provider code in a constant or a `Record`; a sync that falls
   back to a default when a provider value is unknown.
-- *Status:* today's schema still holds provider keys on rows (`SportEvent.externalId`,
-  `Participant.externalId`, `SportEventRoundMatch.externalGameId` and others;
-  `SportLeague.matchKeyword` was replaced by `SportLeagueProviderMapping` in #1997). A change that touches one adds no new reader of it; the league model
+- *Status:* today's schema still holds provider keys on rows (`SportEventRoundMatch.externalGameId`
+  and others; `SportLeague.matchKeyword` was replaced by `SportLeagueProviderMapping` in #1997,
+  and `SportEvent.providerId` and `externalId` by `SportEventProviderMapping` in #2004). A change that touches one adds no new reader of it; the league model
   redesign moves them (ADR 0012).
 
 ### Proper names are data, generic words are strings

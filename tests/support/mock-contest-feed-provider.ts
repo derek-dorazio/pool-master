@@ -63,6 +63,12 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   readonly sportsCovered: Sport[] = [Sport.GOLF];
   private readonly payloads = new ProviderPayloadRecorder('mock-contest-feed.request');
   private readonly scenarioIdByEventId = new Map<string, string>();
+  private readonly scenarioIdByExternalId = new Map<string, string>();
+
+  /** The scenario a listed event came from, by the event's provider id; undefined until it is listed. */
+  scenarioIdOf(externalId: string): string | undefined {
+    return this.scenarioIdByExternalId.get(externalId);
+  }
 
   /** `pinnedStates` may be shared with `servePinControls`, so another process can pin through HTTP. */
   constructor(
@@ -93,9 +99,11 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   }
 
   async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
-    const events = await this.mapScenarioEventDetails(sport, dateRange, (scenarioId, detail) =>
-      toSportEvent(this.providerId, detail, resolveParticipants(detail).length, scenarioId),
-    );
+    const events = await this.mapScenarioEventDetails(sport, dateRange, (scenarioId, detail) => {
+      const event = toSportEvent(this.providerId, detail, resolveParticipants(detail).length);
+      this.scenarioIdByExternalId.set(event.externalId, scenarioId);
+      return event;
+    });
     return events.filter((event) => isEventWithinDateRange(event.startDate.toISOString(), dateRange));
   }
 
@@ -114,7 +122,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const participants = resolveParticipants(detail);
 
     return {
-      ...toSportEvent(this.providerId, detail, participants.length, match.scenarioId),
+      ...toSportEvent(this.providerId, detail, participants.length),
       participants: participants.map((contestant) =>
         toProviderParticipant(this.providerId, detail.sport, contestant, detail.event.eventId),
       ),
@@ -383,7 +391,6 @@ function toSportEvent(
   providerId: string,
   detail: EventDetailResponse,
   participantCount: number,
-  scenarioId?: string,
 ): SportEvent {
   const domainSport = toDomainSport(detail.sport);
   if (!domainSport) {
@@ -405,14 +412,6 @@ function toSportEvent(
     fieldLocked:
       detail.event.field.status === 'locked'
       || detail.event.field.status === 'final',
-    metadata: {
-      seasonId: detail.season.seasonId,
-      seasonName: detail.season.name,
-      seasonYear: detail.season.year,
-      eventType: detail.event.metadata?.eventType,
-      tour: detail.event.metadata?.tour,
-      scenarioId,
-    },
   };
 }
 

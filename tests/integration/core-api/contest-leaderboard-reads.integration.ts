@@ -54,8 +54,6 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `leaderboard-reads-${randomUUID()}`,
-      providerId: 'integration-test',
       sport: Sport.GOLF,
       name: `${label} ${randomUUID().slice(0, 6)}`,
       startDate: new Date(Date.now() - daysAgo * DAY),

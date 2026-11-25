@@ -20,6 +20,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportEventOverviewResponseSchema } from '@poolmaster/shared/dto';
 import { syncLeagueTo } from '../../support/league-sync';
+import { mapEventToProvider } from '../../support/event-edition';
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, get, okBody, seedEventWithField } from '../list-route-seeds';
 import { expectConstantQueries, measureQueryScaling } from '../query-scaling';
@@ -36,9 +37,10 @@ beforeEach(() => cleanupTestData());
  * its latest run of each kind, whether it is overdue (the event, its rounds and their last match
  * starts), its field and the event page offering its series; then those latest runs and the
  * field's provider mappings; and the league's sync provider, its selected mapping, provider league
- * and provider one read each (#1997). A new read, or one sent per field row, moves it.
+ * and provider one read each (#1997); and the event's provider mappings and their providers, one
+read each (#2004). A new read, or one sent per field row, moves it.
  */
-const OVERVIEW_STATEMENTS = 14;
+const OVERVIEW_STATEMENTS = 16;
 
 /**
  * A draft golf event `golfers` strong in a synced tour of its own that releases a week out, each
@@ -51,7 +53,7 @@ async function seedSyncedEvent(golfers: number) {
   const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId }, select: { sportLeagueId: true } });
   await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { autoReleaseDaysBeforeStart: 7 } });
   await syncLeagueTo(prisma, sportLeagueId, 'pga');
-  await prisma.sportEvent.update({ where: { id: event.id }, data: { providerId: 'balldontlie', syncScope: 'SCORES_ONLY' } });
+  await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: `overview-${event.id}` });
   const seenAt = new Date(Date.now() - 60 * 60 * 1000);
   for (const [index, row] of field.entries()) {
     await prisma.sportEventParticipant.update({ where: { id: row.id }, data: { oddsToWin: 10 + index } });
@@ -142,7 +144,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     });
   });
 
-  it('sends exactly 14 statements, the session check included and the league\'s selected mapping, provider league and provider one read each, for a field of 2 and of 20 alike', async () => {
+  it('sends exactly 16 statements, the session check included, the league\'s selected mapping, provider league and provider one read each and the event\'s provider mappings and their providers one read each, for a field of 2 and of 20 alike', async () => {
     const { small, large } = await measureQueryScaling({
       seed: seedSyncedEvent,
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/overview`, rootAdmin),

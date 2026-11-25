@@ -54,8 +54,7 @@ export function mapSportEventToDto({
 
   return {
     id: event.id,
-    externalId: event.externalId,
-    providerId: event.providerId,
+    providerMappings: event.providerMappings.map((mapping) => ({ providerCode: mapping.providerCode, providerName: mapping.providerName, externalId: mapping.externalId })),
     providerName: eventProviderNameOf(event),
     sport: event.sport,
     name: event.name,
@@ -81,7 +80,6 @@ export function mapSportEventToDto({
     sportLeagueId: event.sportLeagueId,
     participantType: event.participantType,
     scoringFamily: event.scoringFamily,
-    syncScope: event.syncScope,
     providerSynced: isProviderSyncedEvent(event),
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,

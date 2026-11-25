@@ -10423,6 +10423,24 @@ export type SportEventAutoReleaseCheckDto = {
 };
 
 /**
+ * The provider's id for an event, written by the events sync when it created the event from the provider's schedule. (Admin-only: operational detail no member surface reads.)
+ */
+export type SportEventProviderMappingDto = {
+    /**
+     * The provider that has this id for the event.
+     */
+    providerCode: 'BALLDONTLIE';
+    /**
+     * That provider's name.
+     */
+    providerName: string;
+    /**
+     * The provider's own id for the event, as it sends it.
+     */
+    externalId: string;
+};
+
+/**
  * A real-world event a contest can be run on — a golf tournament, a race, a match.
  */
 export type SportEventDto = {
@@ -10431,15 +10449,24 @@ export type SportEventDto = {
      */
     id: string;
     /**
-     * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
+     * The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)
      */
-    externalId: string;
+    providerMappings: Array<{
+        /**
+         * The provider that has this id for the event.
+         */
+        providerCode: 'BALLDONTLIE';
+        /**
+         * That provider's name.
+         */
+        providerName: string;
+        /**
+         * The provider's own id for the event, as it sends it.
+         */
+        externalId: string;
+    }>;
     /**
-     * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
-     */
-    providerId: string;
-    /**
-     * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+     * The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)
      */
     providerName: string | null;
     /**
@@ -10598,11 +10625,7 @@ export type SportEventDto = {
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
-     * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
-     */
-    syncScope: 'NONE' | 'SCORES_ONLY';
-    /**
-     * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+     * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
      */
     providerSynced: boolean;
     /**
@@ -10788,15 +10811,24 @@ export type SportEventListResponse = {
          */
         id: string;
         /**
-         * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
+         * The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)
          */
-        externalId: string;
+        providerMappings: Array<{
+            /**
+             * The provider that has this id for the event.
+             */
+            providerCode: 'BALLDONTLIE';
+            /**
+             * That provider's name.
+             */
+            providerName: string;
+            /**
+             * The provider's own id for the event, as it sends it.
+             */
+            externalId: string;
+        }>;
         /**
-         * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
-         */
-        providerId: string;
-        /**
-         * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+         * The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)
          */
         providerName: string | null;
         /**
@@ -10955,11 +10987,7 @@ export type SportEventListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
-         */
-        syncScope: 'NONE' | 'SCORES_ONLY';
-        /**
-         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
         providerSynced: boolean;
         /**
@@ -11120,15 +11148,24 @@ export type SportEventResponse = {
          */
         id: string;
         /**
-         * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
+         * The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)
          */
-        externalId: string;
+        providerMappings: Array<{
+            /**
+             * The provider that has this id for the event.
+             */
+            providerCode: 'BALLDONTLIE';
+            /**
+             * That provider's name.
+             */
+            providerName: string;
+            /**
+             * The provider's own id for the event, as it sends it.
+             */
+            externalId: string;
+        }>;
         /**
-         * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
-         */
-        providerId: string;
-        /**
-         * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+         * The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)
          */
         providerName: string | null;
         /**
@@ -11287,11 +11324,7 @@ export type SportEventResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
-         */
-        syncScope: 'NONE' | 'SCORES_ONLY';
-        /**
-         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
         providerSynced: boolean;
         /**
@@ -11466,25 +11499,6 @@ export type CreateSportEventRequest = {
 };
 
 /**
- * An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched.
- */
-export type CreateSportEventFromProviderEventRequest = {
-    /**
-     * The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.
-     */
-    sportLeagueId: string;
-    providerId: string;
-    /**
-     * From a provider catalog browse (listProviderCatalogEvents).
-     */
-    externalId: string;
-    /**
-     * Round count; omitted, the provider schedule decides.
-     */
-    rounds?: number;
-};
-
-/**
  * Changes to an event; omitted fields are left alone.
  */
 export type UpdateSportEventRequest = {
@@ -11525,17 +11539,6 @@ export type TransitionSportEventRequest = {
      * One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).
      */
     toStatus: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-};
-
-/**
- * Links an event to a provider event for scores.
- */
-export type LinkSportEventScoreSourceRequest = {
-    providerId: string;
-    /**
-     * From a provider catalog browse.
-     */
-    externalId: string;
 };
 
 /**
@@ -27393,10 +27396,6 @@ export type PerpetualTrophyListResponse = {
  */
 export type EventSyncRequest = {
     /**
-     * The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only.
-     */
-    providerId: string;
-    /**
      * Feed types to run for a specific event sync request.
      */
     feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
@@ -28588,94 +28587,6 @@ export type LeagueEventsSyncRequest = {
      * The one Season to sync (SportLeagueSeasonDto); omitted, the league's current Season and every later one, as the schedule syncs. 404 SPORT_LEAGUE_SEASON_NOT_FOUND for one that is not the league's.
      */
     sportLeagueSeasonId?: string;
-};
-
-/**
- * An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it.
- */
-export type ProviderEventDto = {
-    /**
-     * The provider's identifier for the event.
-     */
-    externalId: string;
-    providerId: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    name: string;
-    venue: string | null;
-    location: string | null;
-    /**
-     * ISO 8601 datetime string.
-     */
-    startDate: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    endDate: string | null;
-    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-    rounds: number | null;
-    /**
-     * Field size the provider reports, when it reports one.
-     */
-    participantCount: number | null;
-    /**
-     * Whether the provider has locked the field.
-     */
-    fieldLocked: boolean;
-};
-
-/**
- * Filters over a provider's live catalog.
- */
-export type ProviderCatalogEventListQuery = {
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
-     * Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter.
-     */
-    sportLeagueId?: string;
-    /**
-     * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
-     */
-    from?: string;
-    /**
-     * Only events starting at or before this.
-     */
-    to?: string;
-    search?: string;
-};
-
-/**
- * Live provider catalog browse results — serves both tournament-creation browse and score-source linking.
- */
-export type ProviderCatalogEventListResponse = {
-    events: Array<{
-        /**
-         * The provider's identifier for the event.
-         */
-        externalId: string;
-        providerId: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        name: string;
-        venue: string | null;
-        location: string | null;
-        /**
-         * ISO 8601 datetime string.
-         */
-        startDate: string;
-        /**
-         * ISO 8601 datetime string.
-         */
-        endDate: string | null;
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-        rounds: number | null;
-        /**
-         * Field size the provider reports, when it reports one.
-         */
-        participantCount: number | null;
-        /**
-         * Whether the provider has locked the field.
-         */
-        fieldLocked: boolean;
-    }>;
 };
 
 /**
@@ -34200,47 +34111,6 @@ export type UpdateEventResponses = {
 
 export type UpdateEventResponse = UpdateEventResponses[keyof UpdateEventResponses];
 
-export type CreateEventFromProviderEventData = {
-    body: CreateSportEventFromProviderEventRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/events/from-provider-event';
-};
-
-export type CreateEventFromProviderEventErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type CreateEventFromProviderEventError = CreateEventFromProviderEventErrors[keyof CreateEventFromProviderEventErrors];
-
-export type CreateEventFromProviderEventResponses = {
-    /**
-     * One sport event.
-     */
-    201: SportEventResponse;
-};
-
-export type CreateEventFromProviderEventResponse = CreateEventFromProviderEventResponses[keyof CreateEventFromProviderEventResponses];
-
 export type ReleaseEventData = {
     body?: never;
     path: {
@@ -34322,84 +34192,6 @@ export type TransitionEventResponses = {
 };
 
 export type TransitionEventResponse = TransitionEventResponses[keyof TransitionEventResponses];
-
-export type UnlinkEventScoreSourceData = {
-    body?: never;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/score-source';
-};
-
-export type UnlinkEventScoreSourceErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type UnlinkEventScoreSourceError = UnlinkEventScoreSourceErrors[keyof UnlinkEventScoreSourceErrors];
-
-export type UnlinkEventScoreSourceResponses = {
-    /**
-     * One sport event.
-     */
-    200: SportEventResponse;
-};
-
-export type UnlinkEventScoreSourceResponse = UnlinkEventScoreSourceResponses[keyof UnlinkEventScoreSourceResponses];
-
-export type LinkEventScoreSourceData = {
-    body: LinkSportEventScoreSourceRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/score-source';
-};
-
-export type LinkEventScoreSourceErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type LinkEventScoreSourceError = LinkEventScoreSourceErrors[keyof LinkEventScoreSourceErrors];
-
-export type LinkEventScoreSourceResponses = {
-    /**
-     * One sport event.
-     */
-    200: SportEventResponse;
-};
-
-export type LinkEventScoreSourceResponse = LinkEventScoreSourceResponses[keyof LinkEventScoreSourceResponses];
 
 export type ListEventRoundsData = {
     body?: never;
@@ -37791,11 +37583,10 @@ export type GetProviderSyncRunResponse = GetProviderSyncRunResponses[keyof GetPr
 export type SubmitEventSyncData = {
     body: EventSyncRequest;
     path: {
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         eventId: string;
     };
     query?: never;
-    url: '/api/v1/ingestion/sports/{sport}/events/{eventId}/sync';
+    url: '/api/v1/ingestion/events/{eventId}/sync';
 };
 
 export type SubmitEventSyncErrors = {
@@ -37870,56 +37661,6 @@ export type SyncLeagueEventsResponses = {
 };
 
 export type SyncLeagueEventsResponse = SyncLeagueEventsResponses[keyof SyncLeagueEventsResponses];
-
-export type ListProviderCatalogEventsData = {
-    body?: never;
-    path: {
-        providerId: string;
-    };
-    query: {
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
-         * Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter.
-         */
-        sportLeagueId?: string;
-        /**
-         * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
-         */
-        from?: string;
-        /**
-         * Only events starting at or before this.
-         */
-        to?: string;
-        search?: string;
-    };
-    url: '/api/v1/ingestion/providers/{providerId}/catalog-events';
-};
-
-export type ListProviderCatalogEventsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type ListProviderCatalogEventsError = ListProviderCatalogEventsErrors[keyof ListProviderCatalogEventsErrors];
-
-export type ListProviderCatalogEventsResponses = {
-    /**
-     * Live provider catalog browse results — serves both tournament-creation browse and score-source linking.
-     */
-    200: ProviderCatalogEventListResponse;
-};
-
-export type ListProviderCatalogEventsResponse = ListProviderCatalogEventsResponses[keyof ListProviderCatalogEventsResponses];
 
 export type ListProviderSyncFindingsData = {
     body?: never;

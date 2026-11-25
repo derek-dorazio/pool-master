@@ -30,6 +30,6 @@ export function notifiedProviderCadenceOf(
     roundPollIntervalMs: provider.webhookRoundPollMinutes * 60_000,
     // Each league's own gap between notifications, not one window: a quarter of football
     // and a golf round's wait for its first finisher differ by hours.
-    quietAfterMs: (sport, event) => balldontlieQuietAfterMs(leagues, sport, event.externalId),
+    quietAfterMs: (_sport, event) => balldontlieQuietAfterMs(leagues, event.providerLeagueCode),
   };
 }

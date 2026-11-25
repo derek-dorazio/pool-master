@@ -86,7 +86,6 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'league-1',
-    syncScope: 'NONE',
     autoLifecycleEnabled: true,
     loadedParticipantCount: 2,
     tierCount: 6,
@@ -184,26 +183,15 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     // Seeding a field from the league roster is gone: seeds come from the feed or the upload.
     expect(screen.queryByTestId('root-admin-event-field-seed')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-event-field-add')).toBeInTheDocument();
-    // NONE sync scope -> no Load/Refresh action.
-    expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
-  });
-
-  it('pool-master-za4 shows the Load Participant Field action only for a linked tournament', async () => {
-    seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
-    renderPage();
-
-    const refresh = await screen.findByTestId('root-admin-event-field-refresh');
-    expect(refresh).toHaveTextContent('Load Participant Field');
   });
 
   it('offers no hand correction tools on a synced event (no add or load), only automatic tiers and prices', async () => {
-    seed({ tournament: { syncScope: 'SCORES_ONLY', status: 'DRAFT', tiersLocked: false } });
+    seed({ tournament: { status: 'DRAFT', tiersLocked: false } });
     renderPage({ isSynced: true });
 
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-tier-auto-tiers')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-event-field-add')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
   });
 
   it('hides automatic tiers and prices once the event is released, since its tiers and prices are locked', async () => {
@@ -231,31 +219,6 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     expect(screen.getByTestId('root-admin-event-field-row-sep-guest')).toHaveTextContent('Manual');
     expect(screen.getByTestId('root-admin-event-field-row-sep-new')).not.toHaveTextContent(/Auto|Manual/);
     expect(screen.queryByRole('columnheader', { name: /Last in feed/ })).not.toBeInTheDocument();
-  });
-
-  it('warns that hand-set rankings, odds, seeds and withdrawals are replaced before refreshing a loaded field, and refreshes only on confirm', async () => {
-    seed({ tournament: { syncScope: 'SCORES_ONLY' } });
-    refreshEventParticipantsMock.mockResolvedValue({ data: { syncRuns: [] } });
-    renderPage();
-
-    // The action's words follow the field, so they are read once it has loaded.
-    await screen.findByText('Rory McIlroy');
-    const refresh = screen.getByTestId('root-admin-event-field-refresh');
-    expect(refresh).toHaveTextContent('Refresh Participant Field');
-    await userEvent.click(refresh);
-
-    const modal = await screen.findByTestId('root-admin-event-field-refresh-modal');
-    expect(modal).toHaveTextContent(
-      "rankings, odds, seeds and withdrawals you set in the field grid or by bulk upload are replaced with the provider's values",
-    );
-    expect(refreshEventParticipantsMock).not.toHaveBeenCalled();
-
-    await userEvent.click(screen.getByTestId('root-admin-event-field-refresh-confirm'));
-    await waitFor(() =>
-      expect(refreshEventParticipantsMock).toHaveBeenCalledWith({
-        path: { eventId: 'evt-1' },
-      }),
-    );
   });
 
   it('opens a participant\'s details and its tier and price from the row\'s ⤢', async () => {
@@ -413,70 +376,6 @@ describe('Field editor header actions: refusals, singular counts and closing dia
   function refusal(code: string, message: string, status = 422) {
     return { error: { error: { code, message } }, response: { status } };
   }
-
-  describe('load or refresh the participant field', () => {
-    it('loads an empty linked field at once, without a confirmation, and says the sync started', async () => {
-      seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
-      refreshEventParticipantsMock.mockResolvedValue({ data: { syncRuns: [] } });
-      renderPage();
-
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-refresh'));
-
-      await waitFor(() =>
-        expect(refreshEventParticipantsMock).toHaveBeenCalledWith({ path: { eventId: 'evt-1' } }),
-      );
-      expect(screen.queryByTestId('root-admin-event-field-refresh-modal')).not.toBeInTheDocument();
-      expect(await screen.findByTestId('root-admin-event-field-refresh-result')).toHaveTextContent(
-        'Provider field sync started.',
-      );
-    });
-
-    it('shows the server\'s reason under the button when loading an empty field is refused', async () => {
-      seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
-      refreshEventParticipantsMock.mockResolvedValue(
-        refusal('PROVIDER_EVENT_NOT_FOUND', 'Provider mock-contest-feed has no event mock-weekend.', 404),
-      );
-      renderPage();
-
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-refresh'));
-
-      expect(await screen.findByTestId('root-admin-event-field-refresh-error')).toHaveTextContent(
-        'The provider has no such event.',
-      );
-      expect(screen.queryByTestId('root-admin-event-field-refresh-result')).not.toBeInTheDocument();
-    });
-
-    it('shows the server\'s reason inside the confirmation when refreshing a loaded field is refused', async () => {
-      seed({ tournament: { syncScope: 'SCORES_ONLY' } });
-      refreshEventParticipantsMock.mockResolvedValue(
-        refusal('SPORT_EVENT_INVALID_TRANSITION', 'A field sync is already running for this tournament.', 409),
-      );
-      renderPage();
-
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-refresh'));
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-refresh-confirm'));
-
-      const modal = screen.getByTestId('root-admin-event-field-refresh-modal');
-      expect(
-        await within(modal).findByText('This event changed while you were working. Reload and try again.'),
-      ).toBeInTheDocument();
-      expect(screen.queryByTestId('root-admin-event-field-refresh-error')).not.toBeInTheDocument();
-    });
-
-    it('closes the refresh confirmation from its close button without refreshing', async () => {
-      seed({ tournament: { syncScope: 'SCORES_ONLY' } });
-      renderPage();
-
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-refresh'));
-      const modal = await screen.findByTestId('root-admin-event-field-refresh-modal');
-      await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
-
-      await waitFor(() =>
-        expect(screen.queryByTestId('root-admin-event-field-refresh-modal')).not.toBeInTheDocument(),
-      );
-      expect(refreshEventParticipantsMock).not.toHaveBeenCalled();
-    });
-  });
 
   describe('add more participants', () => {
     function rosterOf(...golfers: Array<{ id: string; name: string; status?: 'ACTIVE' | 'INACTIVE' }>) {

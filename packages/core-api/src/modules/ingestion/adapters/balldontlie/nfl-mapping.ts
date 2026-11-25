@@ -20,7 +20,7 @@ import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
 
 /**
- * The tour name events carry in `metadata.tour`, for display; the NFL
+ * The NFL's tour word in the adapter's league table; the NFL
  * sport league finds them by their provider league code, `nfl` (#1997).
  */
 export const NFL_LEAGUE_NAME = 'NFL';
@@ -115,7 +115,6 @@ export function toNflSportEvent(scope: NflScope, games: readonly NflGame[], part
     rounds: scope.kind === NflScopeKind.WEEK ? 1 : NFL_POSTSEASON_ROUNDS,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: NFL_LEAGUE_NAME, season: scope.season, seasonType: seasonTypeOf(scope) },
   };
 }
 

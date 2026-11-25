@@ -12,13 +12,12 @@ import {
 import { Sport } from '@poolmaster/shared/domain';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
-import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
+import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
 // schedule an admin-created event starts with.
 const fourRoundSchedule = () => ({
-  syncScope: 'SCORES_ONLY' as const,
   rounds: 4,
   roundSchedule: {
     create: [1, 2, 3, 4].map((roundNumber) => ({
@@ -65,8 +64,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: 'golf-standing-event-1',
-        providerId: 'balldontlie',
         sport: 'GOLF',
         name: 'Golf Standing Invitational',
         startDate: new Date('2026-05-07T12:00:00.000Z'),
@@ -75,6 +72,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
         ...fourRoundSchedule(),
       },
     });
+    await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: 'golf-standing-event-1' });
     const sportEventParticipant = await prisma.sportEventParticipant.create({
       data: {
         sportEventId: event.id,
@@ -180,8 +178,6 @@ describe('Golf live-score persistence', () => {
     const createEvent = async (tag: string) => prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `golf-live-${suffix}-${tag}`,
-        providerId: PROVIDER,
         sport: 'GOLF',
         name: `Live ${suffix} ${tag}`,
         startDate: new Date('2026-05-07T12:00:00.000Z'),
@@ -189,7 +185,10 @@ describe('Golf live-score persistence', () => {
         ...fourRoundSchedule(),
       },
     });
-    const [event, otherEvent] = [await createEvent('a'), await createEvent('b')];
+    const [created, otherEvent] = [await createEvent('a'), await createEvent('b')];
+    // Only the named event is the provider's, so scoping to it is observable.
+    const event = { ...created, externalId: `live-${suffix}-${created.id}` };
+    await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId: event.externalId });
     const sepByKey = new Map<string, string>();
     const otherSepByKey = new Map<string, string>();
     for (const key of golferKeys) {

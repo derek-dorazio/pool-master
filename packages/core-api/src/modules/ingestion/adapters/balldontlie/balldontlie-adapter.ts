@@ -1,7 +1,7 @@
 /**
  * BalldontlieAdapter — the BALLDONTLIE provider behind the `SportDataProvider` port (#1495).
  *
- * PGA TOUR: the tournament schedule for the catalog browse and the year import, a
+ * PGA TOUR: the tournament schedule for the events sync, a
  * tournament's field with each golfer's world ranking, and live round scores in the GOLF
  * category. Plan tiers, as the vendor documents them: tournaments and players are free,
  * tournament results need ALL-STAR, the field (`tournament_competitors`) needs GOAT.

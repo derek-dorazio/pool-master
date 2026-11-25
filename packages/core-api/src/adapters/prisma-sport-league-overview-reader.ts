@@ -33,14 +33,14 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
       this.latestSyncRuns(),
       this.prisma.sportEvent.findMany({
         where: { status: SportEventStatus.DRAFT, autoReleaseOutcome: AutoReleaseCheckOutcome.HELD },
-        select: { id: true, name: true, eventSeriesId: true, autoReleaseCheckedAt: true, autoReleaseFailedChecks: true },
+        select: { id: true, name: true, sportLeagueSeasonId: true, autoReleaseCheckedAt: true, autoReleaseFailedChecks: true },
       }),
       this.prisma.sportEvent.groupBy({
-        by: ['eventSeriesId'],
+        by: ['sportLeagueSeasonId'],
         _count: { _all: true },
       }),
       this.prisma.sportEvent.groupBy({
-        by: ['eventSeriesId'],
+        by: ['sportLeagueSeasonId'],
         where: { status: notCancelled, startDate: { gt: now } },
         _min: { startDate: true },
       }),
@@ -52,9 +52,9 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         _count: { _all: true },
       }),
     ]);
-    // Read after the events, so every series an event read named is already there: a series is
+    // Read after the events, so every Season an event read named is already there: a Season is
     // written before its events.
-    const leagueOfSeries = seriesLeagues(await this.prisma.eventSeries.findMany({ select: { id: true, sportLeagueId: true } }));
+    const leagueOfSeason = seasonLeagues(await this.prisma.sportLeagueSeason.findMany({ select: { id: true, sportLeagueId: true } }));
 
     return {
       leagues: leagues.map((league) => ({
@@ -69,14 +69,14 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
       heldEvents: heldEvents.flatMap((event) => {
         // The check constraint sets the time with the outcome.
         if (event.autoReleaseCheckedAt === null) return [];
-        return [{ id: event.id, sportLeagueId: leagueOfSeries(event.eventSeriesId), name: event.name, checkedAt: event.autoReleaseCheckedAt, failedChecks: event.autoReleaseFailedChecks }];
+        return [{ id: event.id, sportLeagueId: leagueOfSeason(event.sportLeagueSeasonId), name: event.name, checkedAt: event.autoReleaseCheckedAt, failedChecks: event.autoReleaseFailedChecks }];
       }),
-      eventCounts: eventCounts(countGroups, leagueOfSeries),
+      eventCounts: eventCounts(countGroups, leagueOfSeason),
       currentSeasonSpans: new Map(leagues.flatMap((league) => (league.currentSeason === null
         ? []
         : [[league.id, { start: league.currentSeason.startsAt, end: league.currentSeason.endsAt }] as const]))),
-      nextEventStarts: earliestByLeague(nextGroups, leagueOfSeries),
-      overdueCandidates: overdueCandidates.map(({ eventSeriesId, ...event }) => ({ ...event, sportLeagueId: leagueOfSeries(eventSeriesId) })),
+      nextEventStarts: earliestByLeague(nextGroups, leagueOfSeason),
+      overdueCandidates,
       openFindings: findingGroups.map((group) => ({ sportLeagueId: group.sportLeagueId, severity: group.severity, count: group._count._all })),
     };
   }
@@ -112,37 +112,37 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
   }
 }
 
-/** Finds an event series' sport league among every series read. */
-type LeagueOfSeries = (eventSeriesId: string) => string;
+/** Finds a Season's sport league among every Season read. */
+type LeagueOfSeason = (sportLeagueSeasonId: string) => string;
 
-/** Every series is read, and every event belongs to one, so a series missing here is a broken read. */
-function seriesLeagues(series: readonly { id: string; sportLeagueId: string }[]): LeagueOfSeries {
-  const leagueOfSeries = new Map(series.map((row) => [row.id, row.sportLeagueId]));
-  return (eventSeriesId) => {
-    const sportLeagueId = leagueOfSeries.get(eventSeriesId);
-    if (sportLeagueId === undefined) throw new Error(`Event series ${eventSeriesId} was not read with the sport leagues`);
+/** Every Season is read, and every event belongs to one, so a Season missing here is a broken read. */
+function seasonLeagues(seasons: readonly { id: string; sportLeagueId: string }[]): LeagueOfSeason {
+  const leagueOfSeason = new Map(seasons.map((row) => [row.id, row.sportLeagueId]));
+  return (sportLeagueSeasonId) => {
+    const sportLeagueId = leagueOfSeason.get(sportLeagueSeasonId);
+    if (sportLeagueId === undefined) throw new Error(`Season ${sportLeagueSeasonId} was not read with the sport leagues`);
     return sportLeagueId;
   };
 }
 
-function eventCounts(groups: readonly { eventSeriesId: string; _count: { _all: number } }[], leagueOfSeries: LeagueOfSeries): Map<string, number> {
+function eventCounts(groups: readonly { sportLeagueSeasonId: string; _count: { _all: number } }[], leagueOfSeason: LeagueOfSeason): Map<string, number> {
   const counts = new Map<string, number>();
   for (const group of groups) {
-    const sportLeagueId = leagueOfSeries(group.eventSeriesId);
+    const sportLeagueId = leagueOfSeason(group.sportLeagueSeasonId);
     counts.set(sportLeagueId, (counts.get(sportLeagueId) ?? 0) + group._count._all);
   }
   return counts;
 }
 
 function earliestByLeague(
-  groups: readonly { eventSeriesId: string; _min: { startDate: Date | null } }[],
-  leagueOfSeries: LeagueOfSeries,
+  groups: readonly { sportLeagueSeasonId: string; _min: { startDate: Date | null } }[],
+  leagueOfSeason: LeagueOfSeason,
 ): Map<string, Date> {
   const earliest = new Map<string, Date>();
   for (const group of groups) {
     const startDate = group._min.startDate;
     if (startDate === null) continue;
-    const sportLeagueId = leagueOfSeries(group.eventSeriesId);
+    const sportLeagueId = leagueOfSeason(group.sportLeagueSeasonId);
     const known = earliest.get(sportLeagueId);
     if (known === undefined || startDate < known) earliest.set(sportLeagueId, startDate);
   }

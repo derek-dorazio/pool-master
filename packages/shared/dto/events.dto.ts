@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  ProviderCode,
   AutoReleaseCheckOutcome,
   ContestOpening,
   ContestStatus,
@@ -17,7 +18,6 @@ import {
   SelectionType,
   Sport,
   SportEventStatus,
-  SportEventSyncScope,
   ValuationSource,
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
@@ -100,11 +100,17 @@ export type SportEventContestOpeningDto = z.infer<typeof SportEventContestOpenin
  * loaded field). One shape for every caller; it replaced EventSummaryDto and
  * AdminEventSummaryDto, which each derived the same readiness in their own mapper.
  */
+export const SportEventProviderMappingDtoSchema = z.object({
+  providerCode: z.enum(ProviderCode).describe('The provider that has this id for the event.'),
+  providerName: z.string().describe('That provider\'s name.'),
+  externalId: z.string().describe('The provider\'s own id for the event, as it sends it.'),
+}).describe(`The provider's id for an event, written by the events sync when it created the event from the provider's schedule. ${ADMIN_ONLY}`);
+export type SportEventProviderMappingDto = z.infer<typeof SportEventProviderMappingDtoSchema>;
+
 export const SportEventDtoSchema = z.object({
   id: z.uuid().describe('Sport-event identifier.'),
-  externalId: z.string().describe(`Provider-side event identifier used by sync operations. ${ADMIN_ONLY}`),
-  providerId: z.string().describe(`Provider that emitted the event, or manual-admin for an admin-authored one. ${ADMIN_ONLY}`),
-  providerName: z.string().nullable().describe(`That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. ${ADMIN_ONLY}`),
+  providerMappings: z.array(SportEventProviderMappingDtoSchema).describe(`The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. ${ADMIN_ONLY}`),
+  providerName: z.string().nullable().describe(`The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. ${ADMIN_ONLY}`),
   sport: z.enum(Sport).describe('Sport the event belongs to.'),
   name: z.string().describe('Event name shown in contest and event selectors.'),
   venue: z.string().nullable().describe('Venue name when known; null otherwise.'),
@@ -129,8 +135,7 @@ export const SportEventDtoSchema = z.object({
   sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
   participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the series\' sport league.'),
   scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the series\' sport league.'),
-  syncScope: z.enum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
-  providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
+  providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
   releaseChecks: z.array(ReleaseCheckDtoSchema).nullable().describe('A DRAFT event\'s ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin\'s release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin\'s read of the one event; null on lists, on an admin action\'s answer, for anyone but a root admin, and once the event is released.'),
@@ -174,15 +179,6 @@ export const CreateSportEventRequestSchema = z.object({
 }).describe('An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
 
-export const CreateSportEventFromProviderEventRequestSchema = z.object({
-  sportLeagueId: z.uuid().describe('The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.'),
-  providerId: z.string().min(1),
-  externalId: z.string().min(1).describe('From a provider catalog browse (listProviderCatalogEvents).'),
-  rounds: z.number().int().min(1).optional().describe('Round count; omitted, the provider schedule decides.'),
-}).describe('An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched.');
-export type CreateSportEventFromProviderEventRequest = z.infer<typeof CreateSportEventFromProviderEventRequestSchema>;
-
-
 /** The par range an admin may set for an event's rounds. Never above 80, so an unplayed round's 80 strokes is never under par. */
 export const ROUNDS_PAR_MIN = 60;
 export const ROUNDS_PAR_MAX = 80;
@@ -206,12 +202,6 @@ export const TransitionSportEventRequestSchema = z.object({
   toStatus: EventStatusDtoSchema.describe('One of the event\'s allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).'),
 }).describe('Moves an event to its next lifecycle status, activating or settling its contests as that status requires.');
 export type TransitionSportEventRequest = z.infer<typeof TransitionSportEventRequestSchema>;
-
-export const LinkSportEventScoreSourceRequestSchema = z.object({
-  providerId: z.string().min(1),
-  externalId: z.string().min(1).describe('From a provider catalog browse.'),
-}).describe('Links an event to a provider event for scores.');
-export type LinkSportEventScoreSourceRequest = z.infer<typeof LinkSportEventScoreSourceRequestSchema>;
 
 // --- SportEventRound -------------------------------------------------------------
 
@@ -500,15 +490,15 @@ registerSchema('SportEventAdminCountsDto', SportEventAdminCountsDtoSchema);
 registerSchema('ReleaseCheckDto', ReleaseCheckDtoSchema);
 registerSchema('SportEventContestOpeningDto', SportEventContestOpeningDtoSchema);
 registerSchema('SportEventAutoReleaseCheckDto', SportEventAutoReleaseCheckDtoSchema);
+registerSchema('SportEventProviderMappingDto', SportEventProviderMappingDtoSchema);
+registerSchema('SportEventProviderMappingDto', SportEventProviderMappingDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);
 registerSchema('SportEventListResponse', SportEventListResponseSchema);
 registerSchema('SportEventResponse', SportEventResponseSchema);
 registerSchema('CreateSportEventRequest', CreateSportEventRequestSchema);
-registerSchema('CreateSportEventFromProviderEventRequest', CreateSportEventFromProviderEventRequestSchema);
 registerSchema('UpdateSportEventRequest', UpdateSportEventRequestSchema);
 registerSchema('TransitionSportEventRequest', TransitionSportEventRequestSchema);
-registerSchema('LinkSportEventScoreSourceRequest', LinkSportEventScoreSourceRequestSchema);
 registerSchema('SportEventRoundDto', SportEventRoundDtoSchema);
 registerSchema('SportEventRoundListResponse', SportEventRoundListResponseSchema);
 registerSchema('UpdateSportEventRoundsRequest', UpdateSportEventRoundsRequestSchema);

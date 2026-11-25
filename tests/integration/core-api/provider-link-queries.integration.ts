@@ -7,9 +7,8 @@ import {
   PrismaSportEventRepository,
 } from '../../../packages/core-api/src/adapters';
 import {
-  EventScoreSourceService,
-} from '../../../packages/core-api/src/modules/events/event-score-source-service';
-import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+  ProviderSeasonScheduleReader,
+} from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import {
   cleanupTestData,
   getAppPrisma,
@@ -18,15 +17,15 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { createSportEventRow } from '../../support/sport-event-rows';
-import { freshEventEdition } from '../../support/event-edition';
+import { freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { leagueProfiles } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { sportPlay } from '../../support/sport-play';
 
-// Sync-run history and score-source links, which only the HTTP contract tests reached before
-// (#508): which runs each filter keeps and in what order, and what a link or unlink writes.
+// Sync-run history, which only the HTTP contract tests reached before (#508): which runs each
+// filter keeps and in what order; and the provider Season schedule the events sync reads.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -85,19 +84,18 @@ describe('ProviderSyncRunRepository.findAll', () => {
 
   it('names each run\'s Provider row, and reads its event id from the sport event it is linked to', async () => {
     const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
+    const externalId = `feed-event-${randomUUID().slice(0, 8)}`;
     const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
       ...(await freshEventEdition(getPrisma())),
-      externalId: `feed-event-${randomUUID().slice(0, 8)}`,
-      providerId: SYNCED_PROVIDER_ID,
       sport: Sport.GOLF,
       name: `Run Event ${randomUUID().slice(0, 8)}`,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
       status: 'SCHEDULED',
       rounds: 4,
-      syncScope: 'NONE',
       autoLifecycleEnabled: true,
     });
+    await mapEventToProvider(getPrisma(), event.id, { providerId: SYNCED_PROVIDER_ID, externalId });
     const linked = await repo.create({
       ...SCHEDULED_SCORES_RUN, sportEventId: event.id, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF,
       status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, ...syncRunOutcome(),
@@ -107,9 +105,9 @@ describe('ProviderSyncRunRepository.findAll', () => {
       status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
 
-    expect(linked).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', sportEventId: event.id, eventId: event.externalId });
+    expect(linked).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', sportEventId: event.id, eventId: externalId });
     expect(unlinked).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', sportEventId: null, eventId: null });
-    await expect(repo.findById(linked.id)).resolves.toMatchObject({ providerName: 'BALLDONTLIE', eventId: event.externalId });
+    await expect(repo.findById(linked.id)).resolves.toMatchObject({ providerName: 'BALLDONTLIE', eventId: externalId });
   });
 });
 
@@ -162,92 +160,7 @@ describe('ProviderSyncRunRepository details (#1174)', () => {
   });
 });
 
-describe('EventScoreSourceService links', () => {
-  const provider = fakeSportDataProvider({ providerId: 'integration-feed' });
-
-  function service() {
-    return new EventScoreSourceService(getAppPrisma(), registryWith(provider));
-  }
-
-  async function createEvent(name: string) {
-    return createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
-      ...(await freshEventEdition(getPrisma())),
-      externalId: `manual-${randomUUID()}`,
-      providerId: 'integration-test',
-      sport: Sport.GOLF,
-      name,
-      startDate: new Date('2026-06-04T12:00:00.000Z'),
-      endDate: new Date('2026-06-07T12:00:00.000Z'),
-      status: 'SCHEDULED',
-      rounds: 4,
-      syncScope: 'NONE',
-      autoLifecycleEnabled: true,
-    });
-  }
-
-  it('links an event to a provider event for scores only, and unlinking returns it to a manual identity', async () => {
-    const event = await createEvent('Linked Open');
-
-    await service().linkScoreSource(event.id, { providerId: 'integration-feed', externalId: 'feed-open-2026' });
-    const linked = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
-    await service().unlinkScoreSource(event.id);
-    const unlinked = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
-
-    expect(linked).toEqual(expect.objectContaining({
-      providerId: 'integration-feed',
-      externalId: 'feed-open-2026',
-      syncScope: 'SCORES_ONLY',
-    }));
-    expect(unlinked).toEqual(expect.objectContaining({ providerId: 'manual-admin', syncScope: 'NONE' }));
-    expect(unlinked.externalId).toMatch(/^manual-/);
-  });
-
-  it('refuses a provider event another event is linked to, but relinks an event to the one it already has', async () => {
-    const first = await createEvent('First Open');
-    const second = await createEvent('Second Open');
-    const link = { providerId: 'integration-feed', externalId: 'feed-shared-2026' };
-    await service().linkScoreSource(first.id, link);
-
-    await expect(service().linkScoreSource(second.id, link))
-      .rejects.toMatchObject({ code: 'EXTERNAL_EVENT_ALREADY_LINKED', statusCode: 409 });
-    await expect(service().linkScoreSource(first.id, link)).resolves.toBeUndefined();
-    const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: second.id } });
-    expect(unchanged.providerId).toBe('integration-test');
-  });
-
-  it('refuses a link to a provider nobody registered, leaving the event unlinked', async () => {
-    const event = await createEvent('Unregistered Feed Open');
-
-    await expect(service().linkScoreSource(event.id, { providerId: 'no-such-feed', externalId: 'x-2026' }))
-      .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
-    const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
-    expect(unchanged).toEqual(expect.objectContaining({ providerId: 'integration-test', syncScope: 'NONE' }));
-  });
-
-  it('refuses a link to a provider that does not cover the event\'s sport, leaving the event unlinked', async () => {
-    const event = await createEvent('Uncovered Open');
-    // Registered by hand: a provider that covers no sport is otherwise never registered.
-    const uncovering = fakeSportDataProvider({ providerId: 'uncovering-feed', sportsCovered: [] });
-    const registry = new ProviderRegistry();
-    registry.register(Sport.GOLF, uncovering, 'PRIMARY');
-
-    await expect(new EventScoreSourceService(getAppPrisma(), registry).linkScoreSource(event.id, { providerId: 'uncovering-feed', externalId: 'uncovered-2026' }))
-      .rejects.toMatchObject({ code: 'PROVIDER_SPORT_MISMATCH', statusCode: 422 });
-    const unchanged = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
-    expect(unchanged).toEqual(expect.objectContaining({ providerId: 'integration-test', syncScope: 'NONE' }));
-  });
-
-  it('refuses to link or unlink an event that does not exist', async () => {
-    const missing = randomUUID();
-
-    await expect(service().linkScoreSource(missing, { providerId: 'integration-feed', externalId: 'x' }))
-      .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
-    await expect(service().unlinkScoreSource(missing))
-      .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
-  });
-});
-
-describe('EventScoreSourceService tour reads', () => {
+describe('ProviderSeasonScheduleReader tour reads', () => {
   // Synced leagues read their provider league through their selected mapping, which only a
   // provider with a row can have (#1997): the feed stands in for BALLDONTLIE here.
   const providerEvent = (externalId: string, name: string, providerLeagueCode: string | null) => ({
@@ -258,7 +171,6 @@ describe('EventScoreSourceService tour reads', () => {
     startDate: new Date('2027-04-08T00:00:00.000Z'),
     status: 'SCHEDULED' as const,
     ...(providerLeagueCode !== null && { providerLeagueCode }),
-    metadata: {},
   });
   const getUpcomingEvents = jest.fn().mockResolvedValue([
     providerEvent('pga-1', 'Spring Classic', 'pga'),
@@ -268,7 +180,7 @@ describe('EventScoreSourceService tour reads', () => {
   const provider = fakeSportDataProvider({ providerId: SYNCED_PROVIDER_ID, getUpcomingEvents });
 
   function service() {
-    return new EventScoreSourceService(getAppPrisma(), registryWith(provider));
+    return new ProviderSeasonScheduleReader(getAppPrisma(), registryWith(provider));
   }
 
   async function createTourLeague(providerLeagueCode: string | null) {
@@ -299,27 +211,5 @@ describe('EventScoreSourceService tour reads', () => {
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
     await expect(service().listSeasonEvents(SYNCED_PROVIDER_ID, unsynced.id, '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
-  });
-
-  it('narrows browsed candidates to the league\'s selected provider league, and leaves an unsynced league\'s unnarrowed', async () => {
-    const synced = await createTourLeague('pga');
-    const unsynced = await createTourLeague(null);
-
-    const narrowed = await service().listCandidateEvents(SYNCED_PROVIDER_ID, Sport.GOLF, { sportLeagueId: synced.id });
-    const all = await service().listCandidateEvents(SYNCED_PROVIDER_ID, Sport.GOLF, { sportLeagueId: unsynced.id });
-
-    expect(narrowed.map((event) => event.externalId)).toEqual(['pga-1']);
-    expect(all.map((event) => event.externalId)).toEqual(['pga-1', 'lpga-1', 'none-1']);
-  });
-
-  it('narrows a mapped league\'s browse to its provider league even before the mapping is selected for its sync', async () => {
-    const prisma = getPrisma();
-    const mapped = await createTourLeague(null);
-    const providerLeague = await prisma.providerLeague.findFirstOrThrow({ where: { code: 'pga', provider: { code: ProviderCode.BALLDONTLIE } }, select: { id: true } });
-    await prisma.sportLeagueProviderMapping.create({ data: { sportLeagueId: mapped.id, providerLeagueId: providerLeague.id } });
-
-    const narrowed = await service().listCandidateEvents(SYNCED_PROVIDER_ID, Sport.GOLF, { sportLeagueId: mapped.id });
-
-    expect(narrowed.map((event) => event.externalId)).toEqual(['pga-1']);
   });
 });

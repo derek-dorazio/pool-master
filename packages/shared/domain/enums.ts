@@ -735,23 +735,6 @@ export const ContestOpeningOrder = explicitOrder<ContestOpening>({
   [ContestOpening.CLOSED]: 2,
 });
 
-/**
- * Whether provider sync may touch a SportEvent — separate from providerId/externalId
- * identity. NONE: unlinked, nothing syncs. SCORES_ONLY: linked to a provider event, so live
- * scores and its field reach it. On a synced sport league the provider also owns its name, venue
- * and dates, never its status, which the lifecycle scheduler moves (ADR 0011).
- */
-export const SportEventSyncScope = {
-  NONE: 'NONE',
-  SCORES_ONLY: 'SCORES_ONLY',
-} as const;
-export type SportEventSyncScope = (typeof SportEventSyncScope)[keyof typeof SportEventSyncScope];
-/** The order the values are declared in. */
-export const SportEventSyncScopeOrder = explicitOrder<SportEventSyncScope>({
-  [SportEventSyncScope.NONE]: 0,
-  [SportEventSyncScope.SCORES_ONLY]: 1,
-});
-
 /** Where one provider sync run is in its lifecycle. */
 export const ProviderSyncRunStatus = {
   SUBMITTED: 'SUBMITTED',

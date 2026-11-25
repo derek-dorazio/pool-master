@@ -344,13 +344,13 @@ What the code does **today**, while the follow-up tickets of #1723 land:
   synced league, this calendar year and the next, so its events appear as linked drafts, then
   writes the provider's name, venue and dates over the league's linked events through
   `updateEvent` (#1727): every one before play, name, venue and end while in progress, nothing once
-  over. Every other
-  league's events are created by an admin: by hand, from one browsed provider event, or with the
-  year import.
-- The feeds that run on a schedule by default are live scores, for linked events
-  (`SportEventSyncScope` `SCORES_ONLY`; `NONE` is unlinked). The field loop loads synced
-  leagues' next events' fields always (#1726), and every linked event's when its switch is on; an
-  admin loads or refreshes one event's field.
+  over. Each event the sync creates is kept under the provider's id for it, a
+  `SportEventProviderMapping` row under the league's selected provider mapping, and only the sync
+  writes one (#2004): no admin links or unlinks an event by hand. An event made by hand has none
+  and is a test event; the year import still creates linked events.
+- The feeds that run on a schedule by default are live scores, for the events their provider has
+  an id for. The field loop loads synced leagues' next events' fields always (#1726), and every
+  linked event's when its switch is on; an admin can sync one linked event by its own id.
 - A sync writes scores, the field and the field size, and on a synced league the event's name,
   venue and dates, a synced game week's matches from the provider's games, and the whole bracket
   of the NFL postseason (placing its reseeded rounds from the provider's games), of the NCAA

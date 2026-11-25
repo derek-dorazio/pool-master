@@ -19,7 +19,7 @@ import { createEventLifecycleService } from '../../../packages/core-api/src/modu
 import { recordStatements, statementCounts } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
-import { seriesSeasonId } from '../../support/event-edition';
+import { mapEventToProvider, seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
@@ -59,16 +59,14 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const event = await createSportEventRow(events, {
     eventSeriesId: eventSeries.id,
     sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2027),
-    externalId,
-    providerId: PROVIDER,
     sport: sportOf,
     name: 'Final Four',
     startDate: new Date('2027-04-03T22:00:00.000Z'),
     status: 'IN_PROGRESS',
     rounds: 2,
-    syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: false,
   });
+  await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, sportOf === Sport.SOCCER ? 'worldcup' : 'ncaab');
   await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-04-03T22:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-04-05T01:00:00.000Z') },
@@ -327,15 +325,17 @@ describe('game scores from a provider', () => {
     // Pinned: the event's own reads, then one read of the matches, one of the sides, one of the
     // team mappings, and one update per live game, with no result path and no rebuild.
     expect(statementCounts(statements)).toEqual([
-      ['SELECT event_series', 1],
       ['SELECT participant_provider_mappings', 1],
       // The mappings' Provider rows, for their names (#2040): one read for the batch.
       ['SELECT providers', 1],
       ['SELECT sport_event_match_period_scores', 1],
       ['SELECT sport_event_participants', 1],
+      // The event's provider ids and its Season, the event's path to its league (#2004).
+      ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_matches', 1],
       ['SELECT sport_event_rounds', 1],
       ['SELECT sport_events', 1],
+      ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
       ['UPDATE sport_event_round_matches', 2],
     ]);
@@ -359,18 +359,19 @@ describe('game scores from a provider', () => {
       ['INSERT background_jobs', 2],
       ['INSERT sport_event_participant_standings', 2],
       ['SELECT contests', 2],
-      ['SELECT event_series', 3],
       ['SELECT participant_provider_mappings', 1],
-      // The mappings' Provider rows, for their names (#2040): one read for the batch.
-      ['SELECT providers', 1],
+      // The mappings' Provider rows, for their names (#2040), in one read for the batch; and each
+      // read of the event names its provider ids' providers (#2004), one more each.
+      ['SELECT providers', 3],
       ['SELECT sport_event_match_period_scores', 3],
       ['SELECT sport_event_participant_golf_standings', 1],
       ['SELECT sport_event_participant_standings', 2],
       ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_provider_mappings', 3],
       ['SELECT sport_event_round_matches', 3],
       ['SELECT sport_event_rounds', 3],
       ['SELECT sport_events', 3],
-      ['SELECT sport_league_seasons', 2],
+      ['SELECT sport_league_seasons', 3],
       ['SELECT sport_leagues', 3],
       ['UPDATE sport_event_round_matches', 4],
     ]);

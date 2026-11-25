@@ -69,7 +69,7 @@ async function seedSportLeague(participants: number) {
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Catalog Open ${suffix}` } });
   await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, new Date().getUTCFullYear()), externalId: `scaling-${suffix}`, providerId: 'integration-test',
+      eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, new Date().getUTCFullYear()), 
       sport: Sport.GOLF, name: `Scaling Catalog Open ${suffix}`, startDate: new Date(Date.now() + 30 * DAY),
     },
   });
@@ -101,7 +101,7 @@ async function seedSportLeagueEvents(events: number) {
     const startDate = new Date(Date.now() + (31 + index) * DAY);
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), externalId: `scaling-${randomUUID()}`, providerId: 'integration-test',
+        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), 
         sport: Sport.GOLF, name: `${sportLeague.name} Event ${String(index)}`, startDate,
       },
     });
@@ -149,7 +149,7 @@ async function seedReseededRound(matchups: number) {
   const startDate = new Date(Date.now() + 7 * DAY);
   const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), externalId: `scaling-${suffix}`, providerId: 'integration-test',
+      eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), 
       sport: Sport.AMERICAN_FOOTBALL, name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
     },
   });

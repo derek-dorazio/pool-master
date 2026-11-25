@@ -127,7 +127,12 @@ export function EventSettingsDialog({
     ...(scoresUnplayedRoundsAgainstPar
       ? [{ id: 'par', label: 'Par per round', value: event.roundsPar ?? 'From scores', testId: `${testId}-par` }]
       : []),
-    { id: 'feedId', label: 'Feed id', value: event.providerSynced ? event.externalId : 'None', testId: `${testId}-feed-id` },
+    {
+      id: 'feedId',
+      label: 'Feed ids',
+      value: event.providerMappings.length === 0 ? 'None' : event.providerMappings.map((mapping) => `${mapping.externalId} (${mapping.providerName})`).join(' · '),
+      testId: `${testId}-feed-id`,
+    },
     { id: 'platformTierProfile', label: 'Tier profile', value: platformTierProfileName, testId: `${testId}-tier-profile` },
     {
       id: 'tiers',

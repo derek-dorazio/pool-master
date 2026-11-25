@@ -27,8 +27,7 @@ export const STANDARD_PLATFORM_PRICING_PROFILE_ID = '00000000-0000-4000-8000-000
 export function sportEventFixture(overrides: Partial<SportEventDto> = {}): SportEventDto {
   return {
     id: 'event-1',
-    externalId: 'manual-event-1',
-    providerId: 'manual-admin',
+    providerMappings: [],
     providerName: null,
     sport: 'GOLF',
     name: 'Rolling Weekend Invitational',
@@ -57,7 +56,6 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     championshipYear: 2026,
     sportLeagueId: 'league-1',
     ...sportPlay(overrides.sport ?? 'GOLF'),
-    syncScope: 'NONE',
     providerSynced: false,
     autoLifecycleEnabled: true,
     tierCount: 6,

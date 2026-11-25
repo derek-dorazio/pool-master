@@ -11,10 +11,8 @@ import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 // tournament is created on a tour, in an event year, where it used to be created in a season.
 
 const {
-  createEventFromProviderEventMock,
   createEventMock,
   listSportLeaguesMock,
-  listProviderCatalogEventsMock,
   listProvidersMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -28,10 +26,8 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    createEventFromProviderEventMock: vi.fn(),
     createEventMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
-    listProviderCatalogEventsMock: vi.fn(),
     listProvidersMock: vi.fn(),
     mockLogger: logger,
   };
@@ -39,9 +35,7 @@ const {
 
 bindApiMocks({
   createEvent: createEventMock,
-  createEventFromProviderEvent: createEventFromProviderEventMock,
   listSportLeagues: listSportLeaguesMock,
-  listProviderCatalogEvents: listProviderCatalogEventsMock,
   listProviders: listProvidersMock,
 });
 
@@ -80,8 +74,6 @@ function renderPage(
 describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
   afterEach(() => {
     createEventMock.mockReset();
-    createEventFromProviderEventMock.mockReset();
-    listProviderCatalogEventsMock.mockReset();
     listProvidersMock.mockReset();
   });
 
@@ -144,50 +136,10 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
   });
 
-  it('pool-master-3dg browses provider events, selects one, and creates a linked tournament', async () => {
-    listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
-    });
-    listProviderCatalogEventsMock.mockResolvedValue({
-      data: {
-        events: [
-          {
-            externalId: 'pga-2026-masters',
-            name: 'The Masters 2026',
-            startDate: '2026-04-09T12:00:00.000Z',
-            endDate: '2026-04-12T22:00:00.000Z',
-            status: 'SCHEDULED',
-          },
-        ],
-      },
-    });
-    createEventFromProviderEventMock.mockResolvedValue({
-      data: { event: sportEventFixture({ id: 'linked-tour' }) },
-    });
-
+  it('offers only the hand-made form, with no way to browse or link a provider\'s events', async () => {
     renderPage();
 
-    fireEvent.click(await screen.findByRole('radio', { name: 'Browse provider events' }));
-
-    fireEvent.click(
-      await screen.findByTestId(
-        'root-admin-sport-event-create-select-pga-2026-masters',
-      ),
-    );
-
-    fireEvent.click(
-      await screen.findByTestId('root-admin-sport-event-create-provider-submit'),
-    );
-
-    await waitFor(() =>
-      expect(createEventFromProviderEventMock).toHaveBeenCalledTimes(1),
-    );
-    const body = (createEventFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
-    expect(body).toMatchObject({
-      sportLeagueId: 'league-1',
-      providerId: 'mock-contest-feed',
-      externalId: 'pga-2026-masters',
-    });
-    expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-sport-event-create-header')).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Browse provider events' })).not.toBeInTheDocument();
   });
 });

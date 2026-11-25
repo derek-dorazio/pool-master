@@ -17,7 +17,6 @@ import {
   fieldOrderDecision,
   orderSportLeagueSeasons,
   orderSportLeagueStructure,
-  isProviderSyncedEvent,
   ParticipantAddedBy,
   ProviderSyncKind,
   ProviderSyncKindOrder,
@@ -186,7 +185,7 @@ export function buildSportLeagueEvents(facts: SportLeagueEventFacts, now: Date):
  */
 export function sportEventReleaseOf(event: SportLeaguePageEvent, league: SportLeaguePageLeague): Pick<SportLeagueEventOverview, 'releaseMode' | 'releaseAt' | 'releaseAtKind'> {
   const days = league.isActive ? league.autoReleaseDaysBeforeStart : null;
-  const synced = isProviderSyncedEvent({ providerId: event.providerId, syncScope: event.syncScope, syncProviderId: league.syncProviderId ?? undefined });
+  const synced = event.providerSynced;
   const releaseMode = days !== null && synced ? SportEventReleaseMode.AUTO : SportEventReleaseMode.MANUAL;
   if (event.status !== SportEventStatus.DRAFT) {
     return event.releasedAt === null
@@ -213,7 +212,7 @@ export function buildSportEventOverview(
   context: { webhookProviderIds: readonly string[]; now: Date },
 ): SportEventOverview {
   const { league, event, latestRuns } = facts;
-  const synced = isProviderSyncedEvent({ providerId: event.providerId, syncScope: event.syncScope, syncProviderId: league.syncProviderId ?? undefined });
+  const synced = event.providerSynced;
   // An event no provider syncs reads as a league no provider syncs: every row OFF, nothing scheduled.
   const syncLeague = synced ? league : { ...league, syncProviderId: null };
   const eventRuns = latestRuns.filter((run) => EVENT_SYNC_KINDS.includes(run.kind));

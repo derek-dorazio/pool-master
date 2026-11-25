@@ -41,7 +41,7 @@ const CUP_CONTEST_SELECT = {
   cupWeight: true,
   endsAt: true,
   seasonYear: true,
-  sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { startDate: true, eventSeries: { select: { sportLeagueId: true } } } } } },
+  sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { startDate: true, sportLeagueSeason: { select: { sportLeagueId: true } } } } } },
 } as const;
 
 type CupContestRow = Prisma.ContestGetPayload<{ select: typeof CUP_CONTEST_SELECT }>;
@@ -56,7 +56,7 @@ function toCupContests(rows: readonly CupContestRow[]): LeagueCupContest[] {
       const firstEvent = row.sportEvents.at(0)?.sportEvent;
       return firstEvent === undefined ? [] : [{
         seasonYear: row.seasonYear,
-        sportLeagueId: firstEvent.eventSeries.sportLeagueId,
+        sportLeagueId: firstEvent.sportLeagueSeason.sportLeagueId,
         contest: {
           id: row.id,
           name: row.name,
@@ -133,7 +133,7 @@ export class PrismaCupRepository implements CupRepository {
         leagueId: key.leagueId,
         seasonYear: key.seasonYear,
         status: { not: ContestStatus.DRAFT },
-        sportEvents: { some: { sequence: 1, sportEvent: { eventSeries: { sportLeagueId: key.sportLeagueId } } } },
+        sportEvents: { some: { sequence: 1, sportEvent: { sportLeagueSeason: { sportLeagueId: key.sportLeagueId } } } },
       },
       select: CUP_CONTEST_SELECT,
     });

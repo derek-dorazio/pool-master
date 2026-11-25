@@ -87,8 +87,6 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `partial-uniques-${suffix}`,
-      providerId: 'integration-test',
       sport: Sport.GOLF,
       name: `Partial Uniques Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),

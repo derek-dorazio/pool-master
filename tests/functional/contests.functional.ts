@@ -132,7 +132,6 @@ async function cleanupContestArtifacts(): Promise<void> {
 async function seedImportedGolfEvent(options: {
   eventName: string;
   participantCount: number;
-  providerId?: string;
   /** How many tiers the field is split across, round-robin. Defaults to one tier. */
   tierCount?: number;
 }) {
@@ -148,8 +147,6 @@ async function seedImportedGolfEvent(options: {
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { onPgaTour: true })),
-      externalId: `managed-contest-event-${randomUUID().slice(0, 8)}`,
-      providerId: options.providerId ?? 'functional-test',
       sport: Sport.GOLF,
       name: options.eventName,
       startDate,
@@ -944,8 +941,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `entry-detail-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'Entry Detail Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),
@@ -1108,8 +1103,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `functional-contest-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'Functional Contest Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),
@@ -1257,8 +1250,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `visibility-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'Visibility Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),
@@ -1404,8 +1395,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `list-visibility-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
         sport: Sport.GOLF,
         name: 'List Visibility Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),

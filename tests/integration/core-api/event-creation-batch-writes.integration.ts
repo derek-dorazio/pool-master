@@ -1,12 +1,13 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { recordStatements, statementCounts } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
 import { leagueProfiles } from '../../support/league-profiles';
 import { fixtureSeasonId, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { syncLeagueTo } from '../../support/league-sync';
 
 // Creating and importing events against real Postgres (#1253): each writes its events,
 // their series, rounds and default tiers in a fixed number of queries however many events, and
@@ -19,10 +20,14 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-const PROVIDER_ID = 'integration-test';
+/** The provider the tour is synced from, under whose ids its imported events are kept (#2004). */
+const PROVIDER_ID = 'balldontlie';
 const DAY = 24 * 60 * 60 * 1000;
 
-/** A golf tour of its own, with no events, whose current Season is 2087's: a new event goes in it (#2003). */
+/**
+ * A golf tour of its own synced from BALLDONTLIE's PGA TOUR, with no events, whose current Season
+ * is 2087's: a new event goes in it (#2003).
+ */
 async function golfTour() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
@@ -32,6 +37,7 @@ async function golfTour() {
   });
   const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
   await withCurrentSeason(prisma, tour.id, 2087);
+  await syncLeagueTo(prisma, tour.id, 'pga');
   return tour;
 }
 
@@ -73,8 +79,8 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
 
     const { created } = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: slate });
 
-    expect(created.map(({ event }) => [event.name, event.externalId, event.providerId, event.syncScope, event.status, event.rounds])).toEqual(
-      slate.map((providerEvent) => [providerEvent.name, providerEvent.externalId, PROVIDER_ID, 'SCORES_ONLY', 'DRAFT', 4]),
+    expect(created.map(({ event }) => [event.name, event.providerMappings, event.status, event.rounds])).toEqual(
+      slate.map((providerEvent) => [providerEvent.name, [{ providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId: providerEvent.externalId }], 'DRAFT', 4]),
     );
     for (const summary of created) {
       expect(summary).toEqual(await sportEvents.requireAdminSummary(summary.event.id));
@@ -97,7 +103,7 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
       sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: [expectDefined(linked), expectDefined(edition), expectDefined(fresh), sameName],
     });
 
-    expect(result.created.map(({ event }) => event.externalId)).toEqual([expectDefined(fresh).externalId]);
+    expect(result.created.map(({ event }) => event.providerMappings.map((mapping) => mapping.externalId))).toEqual([[expectDefined(fresh).externalId]]);
     expect(result.skipped).toEqual([
       { externalId: expectDefined(linked).externalId, name: expectDefined(linked).name, reason: 'ALREADY_LINKED' },
       { externalId: expectDefined(edition).externalId, name: expectDefined(edition).name, reason: 'EDITION_EXISTS' },
@@ -117,9 +123,13 @@ describe('Creating one event (#1253)', () => {
 
     // One insert per table: the default rounds and tiers go in together, not one at a time; and
     // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
+    // The tour is synced: its selected mapping, provider league and provider are read with the
+    // league and again with the event read back, beside the event's own provider ids (#2004).
     expect(statementCounts(statements)).toEqual([
       ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
-      ['SELECT event_series', 2], ['SELECT platform_tier_profiles', 1], ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
+      ['SELECT event_series', 1], ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
+      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_events', 1], ['SELECT sport_league_provider_mappings', 2],
+      ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);

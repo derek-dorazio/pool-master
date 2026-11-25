@@ -29,7 +29,6 @@ import { requireRootAdmin } from '../../core/root-admin-guard';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type { IngestionService } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
-import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
 import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
 import { SportLeaguePageService } from '../sport-catalog/sport-league-page';
@@ -105,7 +104,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
   const handler = createEventHandlers({
     services: opts.services ?? createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle, opts.domainEvents),
     eventLifecycle,
-    scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,
     leaderboards: opts.leaderboards,
     eventOverviews: new SportLeaguePageService({
@@ -176,22 +174,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.createEvent,
   });
 
-  fastify.post('/from-provider-event', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Create a sport event from a provider event',
-      description:
-        'An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; '
-        + 'refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, '
-        + 'EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in the league\'s current Season, SPORT_EVENT_ALREADY_STARTED when the provider event\'s start has passed. Root admin only.',
-      operationId: 'createEventFromProviderEvent',
-      body: schemaRef('CreateSportEventFromProviderEventRequest'),
-      response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.createEventFromProviderEvent,
-  });
-
   fastify.patch('/:eventId', {
     ...write,
     schema: {
@@ -254,33 +236,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409) },
     },
     handler: handler.transitionEvent,
-  });
-
-  fastify.put('/:eventId/score-source', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Link a sport event to a provider event for scores',
-      description: '404 PROVIDER_NOT_FOUND when no provider is registered under the id; 422 PROVIDER_SPORT_MISMATCH when the provider does not cover the event\'s sport; 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.',
-      operationId: 'linkEventScoreSource',
-      params: EVENT_PARAMS,
-      body: schemaRef('LinkSportEventScoreSourceRequest'),
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.linkScoreSource,
-  });
-
-  fastify.delete('/:eventId/score-source', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Unlink a sport event from its provider',
-      description: 'Root admin only.',
-      operationId: 'unlinkEventScoreSource',
-      params: EVENT_PARAMS,
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404) },
-    },
-    handler: handler.unlinkScoreSource,
   });
 
   // --- Rounds --------------------------------------------------------------------------

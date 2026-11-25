@@ -15,6 +15,7 @@ import type { ProviderRegistry } from '../../../packages/core-api/src/modules/in
 import type { ProviderSettingsService } from '../../../packages/core-api/src/modules/ingestion/provider-settings-service';
 import { SyncRequestValidationError } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 
+const EVENT_ID = '00000000-0000-4000-8000-0000000000e1';
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 process.env.JWT_SECRET = JWT_SECRET;
 
@@ -38,9 +39,9 @@ function authHeaders(userId: string, isRootAdmin: boolean): Record<string, strin
 
 function createIngestionServiceMock() {
   return {
-    syncEventData: jest.fn().mockResolvedValue({
+    syncSportEvent: jest.fn().mockResolvedValue({
       sport: 'GOLF',
-      eventId: 'event-1',
+      eventId: EVENT_ID,
       requestedFeeds: ['EVENTLIVESCORES'],
       submittedAt: new Date('2026-05-30T00:00:00.000Z'),
       syncRuns: [],
@@ -88,86 +89,72 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
     });
 
     expect(res.statusCode).toBe(404);
-    expect(providerService.syncEventData).not.toHaveBeenCalled();
+    expect(providerService.syncSportEvent).not.toHaveBeenCalled();
 
     await app.close();
   });
 
-  it('pool-master-rop.68.4.1 rejects non-root users before event sync submission', async () => {
+  it('pool-master-rop.68.4.1 refuses a member\'s event sync with 403 ROOT_ADMIN_ACCESS_REQUIRED before it is submitted', async () => {
     const { app, providerService } = await buildIngestionSyncApp();
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
+      url: `/api/v1/ingestion/events/${EVENT_ID}/sync`,
       headers: authHeaders('member-user', false),
-      payload: {
-        providerId: 'mock-provider',
-        feeds: ['EVENTLIVESCORES'],
-      },
+      payload: { feeds: ['EVENTLIVESCORES'] },
     });
 
     expect(res.statusCode).toBe(403);
     expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
     expect(res.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
-    expect(providerService.syncEventData).not.toHaveBeenCalled();
+    expect(providerService.syncSportEvent).not.toHaveBeenCalled();
 
     await app.close();
   });
 
-  it('pool-master-rop.68.4.1 allows root admins to submit event syncs', async () => {
+  it('pool-master-rop.68.4.1 accepts a root admin\'s event sync by the event\'s own id with 202 and submits it as that admin', async () => {
     const { app, providerService } = await buildIngestionSyncApp();
 
     const eventRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
+      url: `/api/v1/ingestion/events/${EVENT_ID}/sync`,
       headers: authHeaders('root-admin-user', true),
-      payload: {
-        providerId: 'mock-provider',
-        feeds: ['EVENTLIVESCORES'],
-      },
+      payload: { feeds: ['EVENTLIVESCORES'] },
     });
     expect(eventRes.statusCode).toBe(202);
     expect(ProviderManualSyncSubmissionResponseSchema.safeParse(eventRes.json()).success).toBe(true);
-    expect(providerService.syncEventData).toHaveBeenCalledWith({
-      sport: 'GOLF',
-      providerId: 'mock-provider',
-      eventId: 'event-1',
-      feeds: ['EVENTLIVESCORES'],
-    }, 'root-admin-user', 'root-admin-user@example.test');
+    expect(providerService.syncSportEvent).toHaveBeenCalledWith(EVENT_ID, ['EVENTLIVESCORES'], 'root-admin-user', 'root-admin-user@example.test');
 
     await app.close();
   });
 
-  it('refuses with 400 an event sync that names no provider, since the event is synced from the provider it is linked to', async () => {
+  it('refuses with 400 an event sync whose event id is not a uuid, before any sync is submitted', async () => {
     const { app, providerService } = await buildIngestionSyncApp();
 
     const eventRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
+      url: '/api/v1/ingestion/events/event-1/sync',
       headers: authHeaders('root-admin-user', true),
       payload: { feeds: ['EVENTLIVESCORES'] },
     });
 
     expect(eventRes.statusCode).toBe(400);
-    expect(providerService.syncEventData).not.toHaveBeenCalled();
+    expect(providerService.syncSportEvent).not.toHaveBeenCalled();
 
     await app.close();
   });
 
   it('pool-master-rop.68.2.3 maps sync request validation errors to 422 responses', async () => {
     const { app, providerService } = await buildIngestionSyncApp();
-    providerService.syncEventData.mockRejectedValueOnce(
+    providerService.syncSportEvent.mockRejectedValueOnce(
       new SyncRequestValidationError('INVALID_EVENT_ID', 'Event-scoped sync requests require a non-empty provider event ID.'),
     );
 
     const eventRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
+      url: `/api/v1/ingestion/events/${EVENT_ID}/sync`,
       headers: authHeaders('root-admin-user', true),
-      payload: {
-        providerId: 'mock-provider',
-        feeds: ['EVENTLIVESCORES'],
-      },
+      payload: { feeds: ['EVENTLIVESCORES'] },
     });
     expect(eventRes.statusCode).toBe(422);
     expect(eventRes.json<ErrorEnvelope>().error).toEqual({

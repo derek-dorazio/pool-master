@@ -5,14 +5,12 @@
  */
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
-import { Sport, SportEventStatus, SportEventSyncScope, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import type { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
 import type { SportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import {
-  SportEventSyncScopeError,
   SportProviderNotFoundError,
   type IngestionService,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -28,19 +26,17 @@ const member = authUser('member');
 function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
   return {
     id: EVENT_ID,
-    externalId: 'masters-2026',
-    providerId: 'feed',
+    providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'masters-2026' }],
+    syncProviderId: 'balldontlie',
     sport: 'GOLF',
     name: 'The Masters',
     status: 'SCHEDULED',
     startDate: new Date('2999-04-09T12:00:00.000Z'),
     participantCount: 88,
-    metadata: {},
     eventSeriesId: 'series-1',
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'pga',
-    syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: true,
     createdAt: AT,
     updatedAt: AT,
@@ -121,23 +117,17 @@ function fakes() {
     },
   };
   const lifecycle = { applySportEventStatusTransition: fn(undefined) };
-  const scoreSource = {
-    getProviderEventDetail: fn({ externalId: 'x1' }),
-    linkScoreSource: fn(undefined),
-    unlinkScoreSource: fn(undefined),
-  };
   const eventOverviews = { getEventOverview: fn<SportEventOverview | null>(EVENT_OVERVIEW) };
   const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedFeeds: ['EVENTPARTICIPANTS'], submittedAt: AT, syncRuns: [] }) };
   const leaderboards = { eventsChanged: fn(undefined) };
   const handlers = createEventHandlers({
     services: services as unknown as SportEventServices,
     eventLifecycle: lifecycle as unknown as EventLifecycleService,
-    scoreSource: scoreSource as unknown as EventScoreSourceService,
     ingestion: ingestion as unknown as IngestionService,
     leaderboards,
     eventOverviews,
   });
-  return { services, lifecycle, scoreSource, ingestion, leaderboards, eventOverviews, handlers };
+  return { services, lifecycle, ingestion, leaderboards, eventOverviews, handlers };
 }
 const params = { eventId: EVENT_ID };
 
@@ -219,17 +209,6 @@ describe('event writes', () => {
     ]);
   });
 
-  it('creates an event from the provider event the body names, with 201', async () => {
-    const { services, scoreSource, handlers } = fakes();
-    const body = { sportLeagueId: 'pga', providerId: 'feed', externalId: 'x1', rounds: 4 };
-
-    const reply = await callHandler(handlers.createEventFromProviderEvent, stubRequest({ body }));
-
-    expect(scoreSource.getProviderEventDetail).toHaveBeenCalledWith('feed', 'x1');
-    expect(services.sportEvents.createEventFromProviderEvent).toHaveBeenCalledWith({ ...body, providerEvent: { externalId: 'x1' } });
-    expect(reply.statusCode).toBe(201);
-  });
-
   it('updates an event, telling members unless the body says not to, and clears an end sent as null', async () => {
     const { services, handlers } = fakes();
 
@@ -251,16 +230,13 @@ describe('event writes', () => {
     expect((await callHandler(handlers.releaseEvent, stubRequest({ params }))).body).toMatchObject({ event: { id: EVENT_ID } });
   });
 
-  it('moves an event\'s status through the lifecycle as the root admin, and links and unlinks its score source, each answering with the event', async () => {
-    const { lifecycle, scoreSource, handlers } = fakes();
+  it('moves an event\'s status through the lifecycle as the root admin, answering with the event', async () => {
+    const { lifecycle, handlers } = fakes();
 
     const moved = await callHandler(handlers.transitionEvent, stubRequest({ params, body: { toStatus: SportEventStatus.IN_PROGRESS } }));
-    await callHandler(handlers.linkScoreSource, stubRequest({ params, body: { providerId: 'feed', externalId: 'x1' } }));
-    const unlinked = await callHandler(handlers.unlinkScoreSource, stubRequest({ params }));
 
     expect(lifecycle.applySportEventStatusTransition).toHaveBeenCalledWith({ sportEventId: EVENT_ID, toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'ROOT_ADMIN' } });
-    expect(scoreSource.linkScoreSource).toHaveBeenCalledWith(EVENT_ID, { providerId: 'feed', externalId: 'x1' });
-    expect([moved.body, unlinked.body]).toEqual([expect.objectContaining({ event: expect.objectContaining({ id: EVENT_ID }) as unknown }), expect.objectContaining({ event: expect.anything() as unknown })]);
+    expect(moved.body).toEqual(expect.objectContaining({ event: expect.objectContaining({ id: EVENT_ID }) as unknown }));
   });
 
 });
@@ -271,13 +247,13 @@ describe('field refresh from the provider', () => {
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
 
-    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'feed', eventId: 'masters-2026', feeds: ['EVENTPARTICIPANTS'] }, 'admin', 'admin@example.test');
+    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'balldontlie', eventId: 'masters-2026', feeds: ['EVENTPARTICIPANTS'] }, 'admin', 'admin@example.test');
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'masters-2026' } });
   });
 
-  it('refuses a field sync for an event with no provider link with 409 EVENT_NOT_LINKED and syncs nothing', async () => {
+  it('refuses a field sync for a test event, which its provider has no id for, with 409 EVENT_NOT_LINKED and syncs nothing', async () => {
     const { services, ingestion, handlers } = fakes();
-    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ syncScope: SportEventSyncScope.NONE }));
+    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ providerMappings: [] }));
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
 
@@ -287,7 +263,6 @@ describe('field refresh from the provider', () => {
 
   it.each<[string, Error, number, string]>([
     ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF', 'mock-provider'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
-    ['a sync scope that leaves the field out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError(EVENT_ID, 'SCORES_ONLY', ['EVENTPARTICIPANTS']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],
   ])('answers a field sync refused for %s, with no session read as no actor', async (_label, error, status, code) => {
     const { ingestion, handlers } = fakes();
     ingestion.syncEventData.mockRejectedValueOnce(error);

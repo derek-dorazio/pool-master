@@ -18,7 +18,9 @@ specified in [`BACKGROUND-JOBS.md`](BACKGROUND-JOBS.md).
 - **Three syncs, one schedule.** Events (the league's event list), Field (participants and
   games) and Scores (live scores). One ingestion schedule covers every league; webhooks carry
   live scores between scheduled runs.
-- **An event links to a provider by `(provider_id, external_id)`.** For BALLDONTLIE, which has
+- **An event links to a provider by a `sport_event_provider_mappings` row** (#2004): the
+  provider, its id for the event (`external_id`, unique per provider) and the league's provider
+  mapping the event came under. Only the sync writes it; a test event has none. For BALLDONTLIE, which has
   games but no events, the external id is a *scope id* the adapter invents and parses back
   (`nfl-2026-week-12`, `nba-2025-postseason`).
 - **A participant links by feed id only**, within its event's sport league. Names are never
@@ -139,8 +141,7 @@ Seeded by migration on `sport_leagues`:
 
 | Column | Why the sync needs it |
 |---|---|
-| `match_keyword` | Must equal the `metadata.tour` the adapter puts on the league's events (`core/league-keyword.ts`, case-insensitive). Required before `event_sync_provider_id` can be set. |
-| `event_sync_provider_id` | Makes the league synced. Refused unless the provider is registered and covers the sport. |
+| `selected_provider_mapping_id` | Makes the league synced: its mapping to one provider league (#1997). The sync keeps the provider's events whose provider league code is that league's, never matching a name. |
 | `round_series_lengths` | Best-of lengths per round for series playoffs (NBA/NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`). Empty means single games. |
 | `platform_tier_profile_id`, `platform_pricing_profile_id` | The profiles the field's tiers and prices come from (§3). |
 | `auto_release_days_before_start` | The auto-release window (default 7, `null` never). |
@@ -164,7 +165,9 @@ not read; when the last of them lacks one, the job raises one `SEASON_MISSING` E
 league and provider (*Sync findings* below), since only a migration can add it. For each provider event:
 
 - **New, start in the future**: created as a `DRAFT` `sport_events` row in the Season it was
-  read for, in a find-or-create `event_series`, linked by `(provider_id, external_id)` (unique) with `sync_scope = SCORES_ONLY`.
+  read for, in a find-or-create `event_series`, kept under the provider's id for it: a
+  `sport_event_provider_mappings` row under the league's selected provider mapping, written in the
+  same transaction.
 - **New, start already passed**: never created (`ALREADY_STARTED`).
 - **Already linked**: kept current (`SportEventService.keepProviderEventsCurrent`) through
   `updateEvent`, the admin's own edit, so a moved start shifts the rounds and notifies leagues
@@ -275,7 +278,7 @@ never replace a multi-round event's bracket; a draft only takes their kickoffs.
 | Schedule, Event list policy | Events sync per synced league | `SYNC_LEAGUE_EVENTS` |
 | Root admin **Sync now** | Events sync for one league | `SYNC_LEAGUE_EVENTS` |
 | Schedule, participants policy | Field sync | `runConfiguredSportFieldSync` timer, one loop per sport |
-| Schedule, live scores policy | Scores sync of every `IN_PROGRESS`, `SCORES_ONLY` event with a field | `runConfiguredLiveScoreSweep` timer, lock `ingestion:<sport>:live-scores` |
+| Schedule, live scores policy | Scores sync of every `IN_PROGRESS` event its provider has an id for, with a field | `runConfiguredLiveScoreSweep` timer, lock `ingestion:<sport>:live-scores` |
 | Root admin event sync or field refresh | Field or scores for one event | `MANUAL_EVENT_SYNC` |
 | BALLDONTLIE webhook | Scores for the notified events | `PROVIDER_EVENT_SYNC` |
 | Hourly release sweep | Auto-release check | `RELEASE_SPORT_EVENT` |
@@ -305,7 +308,10 @@ provider league's `typicalGameMinutes`). A draft never released is never overdue
 `"{ts}.{raw body}"` (5 minute tolerance; bad or missing → 403), drops unsubscribed leagues and
 event types with a 200, and hands the rest to `ProviderNotificationService.receive`. It queues
 one `PROVIDER_EVENT_SYNC` per in-progress event the notification is about, 60 seconds out, deduped
-on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. The job runs the normal
+on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. A game notification names
+its provider league by its event type (`nfl.game.ended`), and is about the in-progress event
+whose match holds the game, or, while none does, every in-progress event mapped under that
+provider league (#2004); nothing is read off the event's id. The job runs the normal
 scores sync. **The delivery is a trigger, never a record**: nothing in its body is written.
 
 Subscribed types are `balldontlieWebhookEventTypes` of the enabled league rows, by each row's
@@ -365,7 +371,7 @@ sequenceDiagram
   A->>A: route by scope id to the league reader
   A-->>S: LiveScoreResult {GOLF | GAME}
   S->>P: onLiveScores(result, providerId)
-  P->>P: Zod-validate; find event by (provider_id, external_id); skip unless IN_PROGRESS
+  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless IN_PROGRESS
   P->>F: the event's scoring family's writer, if it accepts the category
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
@@ -459,8 +465,8 @@ A new league usually touches only these:
 6. **Migration**: the `provider_league` row (code, sport, webhook event set, `quiet_after_minutes`,
    `typical_game_minutes`) and the sport league's mapping to it; `round_series_lengths` for a
    series league.
-7. **Webhooks**: the league's event id prefix in `balldontlie-webhooks.ts`, or its notifications
-   are dropped.
+7. **Webhooks**: nothing beyond the `provider_league` row: its code is the event type's prefix,
+   and its webhook event set says which notifications it takes.
 8. **Docs**: this page.
 
 A change to `score-publisher.ts`, the schedulers, the writers or the persistence layer changes

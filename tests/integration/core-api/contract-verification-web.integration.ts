@@ -307,15 +307,12 @@ describe('Contract verification (web)', () => {
       data: {
         ...(await freshEventEdition(prisma)),
         id: eventId,
-        providerId: 'contract-events-provider',
-        externalId: `contract-event-${eventId}`,
         sport: Sport.GOLF,
         name: 'Contract Events Major',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
         participantCount: 144,
-        metadata: {},
       },
     });
     await prisma.participant.create({
@@ -415,15 +412,12 @@ describe('Contract verification (web)', () => {
       data: {
         ...(await freshEventEdition(prisma)),
         id: eventId,
-        providerId: 'contract-events-provider',
-        externalId: `contract-shallow-event-${eventId}`,
         sport: Sport.GOLF,
         name: 'Contract Shallow Event',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
         participantCount: 144,
-        metadata: {},
       },
     });
 
@@ -595,8 +589,6 @@ describe('Contract verification (web)', () => {
       data: {
         eventSeriesId: series.id,
         sportLeagueSeasonId: await seriesSeasonId(getPrisma(), series.id, eventTiming.startDate.getUTCFullYear()),
-        externalId: `contract-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
         sport: Sport.GOLF,
         name: 'Contract Event',
         startDate: eventTiming.startDate,
@@ -869,8 +861,6 @@ describe('Contract verification (web)', () => {
     const event = await getPrisma().sportEvent.create({
       data: {
         ...(await freshEventEdition(getPrisma())),
-        externalId: `contract-room-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
         sport: Sport.GOLF,
         name: 'Contract Room Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
@@ -937,8 +927,6 @@ describe('Contract verification (web)', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `contract-draw-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
         sport: Sport.GOLF,
         name: 'Contract Draw Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
@@ -1013,8 +1001,6 @@ describe('Contract verification (web)', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })),
-        externalId: `contract-pickem-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
         sport: Sport.BASKETBALL,
         name: 'Contract Pickem Event',
         startDate: new Date('2099-03-19T16:00:00.000Z'),

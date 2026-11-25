@@ -31,9 +31,8 @@ export interface SportDataProvider {
 
   /**
    * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
-   * without one, every event the provider has for the sport (#402: the catalog browse no
-   * longer defaults to a window around today). Called on demand by the catalog browse,
-   * score-source linking and the year import; nothing schedules it (#126). Given a
+   * without one, every event the provider has for the sport (#402). Called by the league events
+   * sync for one Season at a time (#2003). Given a
    * `providerLeagueCode`, a provider that reads its sport league by league reads only that league
    * (#1797, #1997).
    */
@@ -152,17 +151,6 @@ export interface SportEvent {
    * provider that does not read league by league.
    */
   providerLeagueCode?: string;
-  metadata: ProviderEventMetadata;
-}
-
-/**
- * Provider-specific extras on an event. Stored as given; the named keys are the ones
- * something reads back, so a provider that supplies them supplies them with these types.
- */
-export interface ProviderEventMetadata {
-  /** The provider's tour word for the event's league; provider data, stored as given. */
-  tour?: string;
-  [key: string]: unknown;
 }
 
 export interface SportEventDetail extends SportEvent {

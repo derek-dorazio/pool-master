@@ -46,8 +46,6 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.HORSE_RACING })),
-      externalId: `race-${suffix}`,
-      providerId: 'manual-admin',
       sport: Sport.HORSE_RACING,
       name: `Harbour Stakes ${suffix}`,
       startDate: new Date('2026-05-02T22:00:00.000Z'),

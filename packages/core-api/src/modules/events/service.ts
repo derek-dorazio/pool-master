@@ -15,7 +15,6 @@
  * the event is ready first.
  */
 
-import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestRepository,
@@ -35,7 +34,7 @@ import {
   eventSportDefinition,
   isProviderSyncedEvent,
   isWithinAutoReleaseWindow,
-  MANUAL_ADMIN_PROVIDER_ID,
+  providerSourceIdOf,
   ReleaseAttemptOutcome,
   type ReleaseAttemptResult,
   ReleaseAttemptSkipReason,
@@ -44,7 +43,6 @@ import {
   type Sport,
   type SportEvent,
   SportEventStatus,
-  SportEventSyncScope,
   type SportLeague,
   sportLeagueDefinitionOf,
   sportVocabulary,
@@ -209,8 +207,8 @@ export class SportEventService {
   }
 
   /**
-   * An admin-authored event: the reserved manual identity, DRAFT, accepting no provider data, in
-   * its league's current Season (#2003).
+   * An admin-authored event: DRAFT, with no provider id, so no provider syncs it (#2004), in its
+   * league's current Season (#2003).
    */
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
@@ -220,8 +218,6 @@ export class SportEventService {
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
       event: {
-        externalId: `manual-${randomUUID()}`,
-        providerId: MANUAL_ADMIN_PROVIDER_ID,
         sport,
         name: input.name,
         venue: input.venue,
@@ -233,7 +229,6 @@ export class SportEventService {
         roundsPar: input.roundsPar,
         eventSeriesId: seriesIdOf(seriesIdByName, input.name),
         sportLeagueSeasonId,
-        syncScope: SportEventSyncScope.NONE,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
       },
       rounds: dailyRoundSchedule(rounds, input.startDate),
@@ -247,51 +242,8 @@ export class SportEventService {
   }
 
   /**
-   * An event created straight from a browsed provider event (plans/124 §4.4a), pre-linked
-   * to that provider for scores (SCORES_ONLY). The field is not touched; loading it is
-   * its own action. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity;
-   * 409 SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed (#1821), since
-   * an event nobody can release or play is never created from a provider. It goes in the league's
-   * current Season (#2003).
-   */
-  async createEventFromProviderEvent(input: {
-    sportLeagueId: string;
-    providerId: string;
-    externalId: string;
-    rounds?: number;
-    providerEvent: ProviderEventDetail;
-  }): Promise<SportEventAdminSummary> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
-    const sportLeagueSeasonId = currentSeasonIdOf(sportLeague);
-    if (await this.deps.sportEvents.findByProviderRef(input.providerId, input.externalId)) {
-      throw new SportEventError(
-        `Another sport event is already linked to ${input.providerId}/${input.externalId}.`,
-        'EXTERNAL_EVENT_ALREADY_LINKED',
-        409,
-      );
-    }
-    if (providerEventStarted(input.providerEvent, this.now())) {
-      throw new SportEventError(
-        `Provider event ${input.providerId}/${input.externalId} started at ${input.providerEvent.startDate.toISOString()}; an event is created from a provider only before it starts.`,
-        'SPORT_EVENT_ALREADY_STARTED',
-        409,
-      );
-    }
-    const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
-    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId, sportLeagueSeasonId });
-    const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
-
-    this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId, providerId: input.providerId, externalId: input.externalId, rounds: edition.rounds.length },
-      'Created sport event from provider event',
-    );
-    return summary;
-  }
-
-  /**
    * #385, #2003 — one Season's provider slate, created in that Season in one action, in a fixed number of
-   * queries however long the slate (#1253). Each event is created and linked exactly as a single
-   * browse-and-create would be. Events PoolMaster already has are skipped rather than refused,
+   * queries however long the slate (#1253), each with the provider's id for it (#2004). Events PoolMaster already has are skipped rather than refused,
    * so the import can be run again: one already linked to the provider event, or a series that
    * already has an edition that Season (an admin-authored one, say, or an earlier event of the
    * same name in this slate). A provider event whose start has passed is skipped too (#1821):
@@ -310,7 +262,7 @@ export class SportEventService {
     const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
       input.providerId,
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
-    )).map((event) => event.externalId));
+    )).flatMap((event) => externalIdsAt(event, input.providerId)));
     const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !providerEventStarted(providerEvent, now));
     const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
     const seriesWithEdition = new Set(unlinked.length === 0
@@ -375,18 +327,19 @@ export class SportEventService {
     const providerEventById = new Map(input.providerEvents.map((providerEvent) => [providerEvent.externalId, providerEvent]));
     const changes: ProviderEventDetailsChange[] = [];
     for (const event of linked) {
-      const providerEvent = providerEventById.get(event.externalId);
-      if (!providerEvent || event.sportLeagueId !== input.sportLeagueId) continue;
+      const externalId = externalIdsAt(event, input.providerId).at(0);
+      const providerEvent = externalId === undefined ? undefined : providerEventById.get(externalId);
+      if (externalId === undefined || !providerEvent || event.sportLeagueId !== input.sportLeagueId) continue;
       const updates = providerDetailUpdates(event, providerEvent);
       const changed = PROVIDER_DETAILS_BY_STATUS[event.status].filter((field) => updates[field] !== undefined);
       if (changed.length === 0) continue;
       try {
         await this.updateEvent(event.id, Object.fromEntries(changed.map((field) => [field, updates[field]])), { tellMembers: true });
-        changes.push({ sportEventId: event.id, externalId: event.externalId, changed });
+        changes.push({ sportEventId: event.id, externalId, changed });
       } catch (error) {
         // One event's refused update must not hold back the rest; the next sweep tries it again.
         this.deps.logger?.error(
-          { sportLeagueId: input.sportLeagueId, sportEventId: event.id, externalId: event.externalId, changed, error: error instanceof Error ? error.message : String(error) },
+          { sportLeagueId: input.sportLeagueId, sportEventId: event.id, externalId, changed, error: error instanceof Error ? error.message : String(error) },
           'Could not keep a synced event current with its provider',
         );
       }
@@ -779,6 +732,11 @@ function seriesIdOf(seriesIdByName: ReadonlyMap<string, string>, name: string): 
   return id;
 }
 
+/** The event's ids at one provider, as the adapter keys it: one at most, since an event has one id per provider. */
+function externalIdsAt(event: SportEvent, providerId: string): string[] {
+  return event.providerMappings.filter((mapping) => providerSourceIdOf(mapping.providerCode) === providerId).map((mapping) => mapping.externalId);
+}
+
 /** The one summary of a single-edition create. */
 function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminSummary {
   const summary = summaries.at(0);
@@ -787,8 +745,8 @@ function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminS
 }
 
 /**
- * A provider event as a new edition, pre-linked to its provider for scores (SCORES_ONLY). The
- * rounds follow its dates unless a round count is given, which falls back to sequential days, so
+ * A provider event as a new edition, with the provider's id for it (#2004). The rounds follow its
+ * dates unless a round count is given, which falls back to sequential days, so
  * `rounds` always matches the rounds created.
  */
 function providerEdition(
@@ -801,8 +759,7 @@ function providerEdition(
     : dailyRoundSchedule(input.rounds, input.startDate);
   return {
     event: {
-      externalId: input.externalId,
-      providerId: input.providerId,
+      providerRef: { providerId: input.providerId, externalId: input.externalId },
       sport,
       name: input.name,
       venue: input.venue ?? undefined,
@@ -812,7 +769,6 @@ function providerEdition(
       rounds: schedule.length,
       eventSeriesId: seriesIdOf(seriesIdByName, input.name),
       sportLeagueSeasonId: input.sportLeagueSeasonId,
-      syncScope: SportEventSyncScope.SCORES_ONLY,
       autoLifecycleEnabled: true,
     },
     rounds: schedule,

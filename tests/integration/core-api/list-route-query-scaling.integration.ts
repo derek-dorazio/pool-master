@@ -122,20 +122,17 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
     const endsAt = new Date(`${String(year)}-06-15T12:00:00.000Z`);
     for (let index = 0; index < contestsPerYear; index += 1) {
       const recurringSeriesId = recurring ? seriesByIndex.get(index) : undefined;
+      // A cup per contest puts each new series on a sport league of its own.
+      const ownTour = cupPerContest && recurringSeriesId === undefined
+        ? await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } })
+        : undefined;
       const edition = recurringSeriesId === undefined
-        ? await freshEventEdition(prisma, { championshipYear: year })
+        ? await freshEventEdition(prisma, { championshipYear: year, sportLeagueId: ownTour?.id })
         : { eventSeriesId: recurringSeriesId, sportLeagueSeasonId: await seriesSeasonId(prisma, recurringSeriesId, year) };
       seriesByIndex.set(index, edition.eventSeriesId);
-      if (cupPerContest && recurringSeriesId === undefined) {
-        const { sportId } = await prisma.sportLeague.findFirstOrThrow({ where: { eventSeries: { some: { id: edition.eventSeriesId } } } });
-        const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } });
-        await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
-      }
       const event = await prisma.sportEvent.create({
         data: {
           ...edition,
-          externalId: `scaling-${randomUUID()}`,
-          providerId: 'integration-test',
           sport: Sport.GOLF,
           name: `Scaling Final ${seeded.suffix} ${String(year)} ${String(index)}`,
           startDate: new Date(`${String(year)}-06-11T12:00:00.000Z`),
@@ -190,8 +187,6 @@ async function seedSportLeagueWithSeasons(years: number) {
       data: {
         eventSeriesId: series.id,
         sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, year),
-        externalId: `scaling-${randomUUID()}`,
-        providerId: 'integration-test',
         sport: Sport.GOLF,
         name: `Scaling Seasons Open ${suffix} ${String(year)}`,
         startDate: new Date(`${String(year)}-06-11T12:00:00.000Z`),

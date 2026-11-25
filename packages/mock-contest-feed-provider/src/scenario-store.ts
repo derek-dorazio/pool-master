@@ -1151,12 +1151,9 @@ function loadJsonFile(filePath: string): ContestFeedScenarioRecord {
 
 /**
  * #402 — any event id with this prefix, in the sandbox scenario, is a golf event built on
- * request from the shared player pool. PoolMaster links an admin-created tournament to
- * `sandbox-<its own event id>`, so every made-up tournament gets its own mock event without
+ * request from the shared player pool, so any made-up event id gets its own mock event without
  * a JSON entry and without its dates having to match anything.
  */
-// Copies: core-api's mock-contest-feed-adapter.ts (both constants) and the web app's
-// sport-event-score-source-card.tsx (the prefix). Rename all three together.
 export const sandboxGolfScenarioId = 'golf-sandbox';
 export const sandboxEventIdPrefix = 'sandbox-';
 

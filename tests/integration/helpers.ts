@@ -118,7 +118,7 @@ import {
   PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../packages/core-api/src/modules/events/league-events-sync';
-import { EventScoreSourceService } from '../../packages/core-api/src/modules/events/event-score-source-service';
+import { ProviderSeasonScheduleReader } from '../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import { createSportEventServices } from '../../packages/core-api/src/modules/events/wiring';
 import { activityModule } from '../../packages/core-api/src/modules/activity/routes';
 import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestion/findings/routes';
@@ -134,14 +134,6 @@ import { NO_SETTLE_JOBS } from '../support/event-settlement';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
-const INTEGRATION_TEST_PROVIDER_IDS = [
-  'integration-test',
-  'TEST_PROVIDER',
-  'contract-provider',
-  'contract-events-provider',
-  'PGA',
-] as const;
-
 /**
  * League codes that integration tests insert DIRECTLY with `prisma.league.create`, giving
  * them no membership and therefore no link to a test user.
@@ -388,7 +380,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
     sports: new PrismaSportRepository(prisma),
-    scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
+    seasonSchedule: new ProviderSeasonScheduleReader(prisma, providerRegistry),
     sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providers).sportEvents,
     findings: integrationSyncFindings(prisma, providerSettings),
     syncRuns: providerSyncRuns,
@@ -943,14 +935,8 @@ export async function cleanupTestData(): Promise<void> {
     select: { id: true },
   });
   const userIds = users.map((user) => user.id);
-  const providerSportEvents = await prisma.sportEvent.findMany({
-    where: {
-      providerId: {
-        in: [...INTEGRATION_TEST_PROVIDER_IDS],
-      },
-    },
-    select: { id: true },
-  });
+  // Every event goes below, so every contest on one goes first.
+  const providerSportEvents = await prisma.sportEvent.findMany({ select: { id: true } });
   const providerSportEventIds = providerSportEvents.map((event) => event.id);
   const providerSportEventParticipants = providerSportEventIds.length
     ? await prisma.sportEventParticipant.findMany({

@@ -92,7 +92,6 @@ describe('a College Football Playoff as an event', () => {
       status: 'COMPLETED',
       participantCount: 14,
       fieldLocked: true,
-      metadata: { tour: 'CFP', season: 2025 },
     });
   });
 

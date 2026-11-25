@@ -59,7 +59,7 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     const leagueEventIds = filter.sportLeagueId === undefined
       ? undefined
       : (await this.prisma.sportEvent.findMany({
-        where: { eventSeries: { sportLeagueId: filter.sportLeagueId } },
+        where: { sportLeagueSeason: { sportLeagueId: filter.sportLeagueId } },
         select: { id: true },
       })).map((event) => event.id);
     const rows = await this.prisma.backgroundJob.findMany({

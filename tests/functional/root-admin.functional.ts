@@ -10,7 +10,6 @@ import {
   submitEventSync,
   setUserRootAdmin,
   listContestConfigTemplates,
-  listProviderCatalogEvents,
   listProviderSyncRuns,
   resetUserPassword,
   getUser,
@@ -88,14 +87,8 @@ describe('SDK Functional: Root Admin', () => {
 
     const prepareSyncResponse = await submitEventSync({
       client: user.client,
-      path: {
-        sport: 'GOLF',
-        eventId: 'masters-2026',
-      },
-      body: {
-        providerId: 'balldontlie',
-        feeds: ['EVENTLIVESCORES'],
-      },
+      path: { eventId: randomUUID() },
+      body: { feeds: ['EVENTLIVESCORES'] },
     });
 
     expectFunctionalError(prepareSyncResponse, {
@@ -361,28 +354,6 @@ describe('SDK Functional: Root Admin', () => {
     expect(runResponse.data?.details?.jobPayload).toMatchObject({ recordsProcessed: 2 });
     // Runs linked to no event are not the shared cleanup's, so this test's go here.
     await getFunctionalPrisma().providerSyncRun.deleteMany({ where: { providerId, createdAt: submittedAt } });
-  });
-
-  it('answers 404 PROVIDER_NOT_FOUND when a root admin browses an unknown provider\'s catalog', async () => {
-    const user = await buildRegisteredUser({
-      displayName: 'Root Admin Provider Error User',
-    });
-    await promoteToRootAdmin(user);
-
-    const catalogResponse = await listProviderCatalogEvents({
-      client: user.client,
-      path: {
-        providerId: 'missing-provider',
-      },
-      query: {
-        sport: 'GOLF',
-      },
-    });
-
-    expectFunctionalError(catalogResponse, {
-      status: 404,
-      code: 'PROVIDER_NOT_FOUND',
-    });
   });
 
   it('lets a promoted root-admin user change the live score and event list intervals of the one ingestion schedule', async () => {

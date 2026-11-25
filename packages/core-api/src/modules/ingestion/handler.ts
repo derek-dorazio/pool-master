@@ -1,32 +1,26 @@
 /**
- * Ingestion route handlers (#205). Each extracts the request, delegates to IngestionService
- * (or EventScoreSourceService for the catalog browse), and maps the result through
- * `mappers/ingestion.mapper.ts`.
+ * Ingestion route handlers (#205). Each extracts the request, delegates to IngestionService, and
+ * maps the result through `mappers/ingestion.mapper.ts`.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { Sport } from '@poolmaster/shared/domain';
 import type {
-  ProviderCatalogEventListQuery,
+  EventSyncRequest,
   ProviderSyncRunListQuery,
   UpdateProviderLeagueRequest,
   UpdateProviderRequest,
 } from '@poolmaster/shared/dto';
 import { ProviderSettingsError, type ProviderSettingsService } from './provider-settings-service';
 import type { IngestionService } from './ingestion-service';
-import type { EventSyncRequest } from './core/ingestion-scheduler';
 import { SyncRequestValidationError } from './core/sync-orchestrator';
 import {
   ProviderSyncRunNotFoundError,
-  SportEventSyncScopeError,
+  SportEventNotSyncedError,
   SportProviderNotFoundError,
 } from './ingestion-service';
-import type { EventScoreSourceService } from '../events/event-score-source-service';
-import { EventScoreSourceError } from '../events/event-score-source-service';
 import { sendError } from '../../core/error-handler';
 import { requireAuthUser } from '../../plugins/auth-guard';
 import {
-  toProviderEventDto,
   toProviderLeagueDto,
   toProviderSettingsDto,
   toProviderManualSyncSubmissionResponse,
@@ -37,7 +31,6 @@ import {
 
 export function createIngestionHandlers(
   ingestionService: IngestionService,
-  eventScoreSourceService: EventScoreSourceService,
   providerSettings: ProviderSettingsService,
 ) {
   return {
@@ -47,7 +40,6 @@ export function createIngestionHandlers(
     listSyncRuns,
     getSyncRun,
     submitEventSync,
-    listProviderCatalogEvents,
   };
 
   async function listProviders(request: FastifyRequest, reply: FastifyReply) {
@@ -124,77 +116,31 @@ export function createIngestionHandlers(
 
   async function submitEventSync(
     request: FastifyRequest<{
-      Params: { sport: Sport; eventId: string };
+      Params: { eventId: string };
       Body: EventSyncRequest;
     }>,
     reply: FastifyReply,
   ) {
     const { userId: rootAdminUserId, email: rootAdminEmail } = requireAuthUser(request);
     const logger = request.contextLogger ?? request.log;
-    logger.debug({
-      sport: request.params.sport,
-      eventId: request.params.eventId,
-      requestedFeeds: request.body.feeds,
-    }, 'Running manual event sync');
+    const { eventId } = request.params;
+    logger.debug({ eventId, requestedFeeds: request.body.feeds }, 'Running manual event sync');
 
     try {
-      const result = await ingestionService.syncEventData({
-        sport: request.params.sport,
-        providerId: request.body.providerId,
-        eventId: request.params.eventId,
-        feeds: request.body.feeds,
-      }, rootAdminUserId, rootAdminEmail);
-
+      const result = await ingestionService.syncSportEvent(eventId, request.body.feeds, rootAdminUserId, rootAdminEmail);
       return reply.code(202).send(toProviderManualSyncSubmissionResponse(result));
     } catch (err) {
+      if (err instanceof SportEventNotSyncedError) {
+        logger.warn({ eventId, code: err.code }, 'Manual event sync refused: the event is not one its provider syncs');
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
       if (err instanceof SportProviderNotFoundError) {
-        logger.warn({
-          sport: request.params.sport,
-          eventId: request.params.eventId,
-        }, 'Manual event sync failed because no providers were registered');
+        logger.warn({ eventId }, 'Manual event sync failed because no providers were registered');
         return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
       }
-      if (err instanceof SportEventSyncScopeError) {
-        logger.warn({
-          sport: request.params.sport,
-          eventId: request.params.eventId,
-        }, 'Manual event sync failed because a requested feed is not allowed for this event\'s syncScope');
-        return sendError(reply, 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED', err.message);
-      }
       if (err instanceof SyncRequestValidationError) {
-        logger.warn({
-          sport: request.params.sport,
-          eventId: request.params.eventId,
-          validationCode: err.code,
-        }, 'Manual event sync failed validation');
+        logger.warn({ eventId, validationCode: err.code }, 'Manual event sync failed validation');
         return sendError(reply, 422, 'SYNC_REQUEST_INVALID', err.message, { validationCode: err.code });
-      }
-      throw err;
-    }
-  }
-
-  // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
-
-  async function listProviderCatalogEvents(
-    request: FastifyRequest<{
-      Params: { providerId: string };
-      Querystring: ProviderCatalogEventListQuery;
-    }>,
-    reply: FastifyReply,
-  ) {
-    const { providerId } = request.params;
-    const { sport, sportLeagueId, from, to, search } = request.query;
-    try {
-      const events = await eventScoreSourceService.listCandidateEvents(providerId, sport, {
-        sportLeagueId,
-        from: from ? new Date(from) : undefined,
-        to: to ? new Date(to) : undefined,
-        search,
-      });
-      return reply.send({ events: events.map(toProviderEventDto) });
-    } catch (err) {
-      if (err instanceof EventScoreSourceError) {
-        return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }

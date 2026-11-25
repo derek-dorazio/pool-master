@@ -79,7 +79,7 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
 /** The mappings in a lookup's scope: the league's own column, or the league reached by its event or sport, in the same read. */
 function scopeWhere(scope: ProviderMappingScope): Prisma.ParticipantProviderMappingWhereInput {
   if ('sportLeagueId' in scope) return { sportLeagueId: scope.sportLeagueId };
-  if ('sportEventId' in scope) return { sportLeague: { eventSeries: { some: { sportEvents: { some: { id: scope.sportEventId } } } } } };
+  if ('sportEventId' in scope) return { sportLeague: { seasons: { some: { sportEvents: { some: { id: scope.sportEventId } } } } } };
   return { sportLeague: { sport: { sport: scope.sport } } };
 }
 

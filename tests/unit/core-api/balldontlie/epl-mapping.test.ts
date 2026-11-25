@@ -62,7 +62,6 @@ describe('a Premier League matchweek as an event', () => {
       rounds: 1,
       participantCount: 10,
       fieldLocked: true,
-      metadata: { tour: 'EPL', season: 2026 },
     });
   });
 

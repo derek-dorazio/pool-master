@@ -16,6 +16,7 @@ import {
   SportEventStatus,
   eventPlaysMatches,
   providerSourceIdOf,
+  providerCodeOfSourceId,
   requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
 import type {
@@ -237,16 +238,23 @@ export class IngestionPersistence {
     return { count: latestByKey.size, participantIdByKey };
   }
 
-  /** The sport events linked to these provider events, in one query grouped by provider. */
+  /**
+   * The sport events the provider has these ids for (#2004), in one query grouped by provider, each
+   * with the provider's id for it under that adapter's id, as the feed names it.
+   */
   private async findLinkedEvents(events: readonly SportEvent[]) {
-    const externalIdsByProvider = new Map<string, string[]>();
+    const externalIdsByCode = new Map<ProviderCode, string[]>();
     for (const event of events) {
-      externalIdsByProvider.set(event.providerId, [...(externalIdsByProvider.get(event.providerId) ?? []), event.externalId]);
+      // An adapter id no Provider carries has no events.
+      const code = providerCodeOfSourceId(event.providerId);
+      if (code !== undefined) externalIdsByCode.set(code, [...(externalIdsByCode.get(code) ?? []), event.externalId]);
     }
-    if (externalIdsByProvider.size === 0) return [];
-    return this.prisma.sportEvent.findMany({
-      where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
+    if (externalIdsByCode.size === 0) return [];
+    const mappings = await this.prisma.sportEventProviderMapping.findMany({
+      where: { OR: [...externalIdsByCode].map(([code, externalIds]) => ({ provider: { code }, externalId: { in: externalIds } })) },
+      select: { externalId: true, provider: { select: { code: true } }, sportEvent: true },
     });
+    return mappings.map(({ externalId, provider, sportEvent }) => ({ ...sportEvent, providerId: providerSourceIdOf(provider.code), externalId }));
   }
 
   /**
@@ -282,19 +290,16 @@ export class IngestionPersistence {
     }, 'Persisting event detail from ingestion');
     const eventResult = await this.persistEventsWithDiagnostics([detail]);
     const eventsPersisted = eventResult.count;
-    const persistedEvent = await this.prisma.sportEvent.findUnique({
-      where: {
-        providerId_externalId: {
-          providerId: detail.providerId,
-          externalId: detail.externalId,
+    // The event the provider has this id for (#2004), and its league through its Season.
+    const providerCode = providerCodeOfSourceId(detail.providerId);
+    const persistedEvent = providerCode === undefined ? null : (await this.prisma.sportEventProviderMapping.findFirst({
+      where: { provider: { code: providerCode }, externalId: detail.externalId },
+      select: {
+        sportEvent: {
+          include: { sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true } } } } },
         },
       },
-      include: {
-        eventSeries: {
-          select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true } } },
-        },
-      },
-    });
+    }))?.sportEvent ?? null;
     const detailRows: SyncWriteDetailRow[] = [];
 
     if (!persistedEvent) {
@@ -308,7 +313,7 @@ export class IngestionPersistence {
       };
     }
 
-    const { sportLeague } = persistedEvent.eventSeries;
+    const { sportLeague } = persistedEvent.sportLeagueSeason;
     const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants, {
       id: sportLeague.id,
       participantType: sportLeague.participantType,
@@ -459,9 +464,9 @@ type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participa
 function seedsLockedOn(event: {
   sport: Sport;
   status: SportEventStatus;
-  eventSeries: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily'] } };
+  sportLeagueSeason: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily'] } };
 }): boolean {
-  const { sportLeague } = event.eventSeries;
+  const { sportLeague } = event.sportLeagueSeason;
   return eventPlaysMatches({ sport: event.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
 }
 
@@ -538,7 +543,6 @@ function normalizeSportEventRow(row: {
   status: SportEventStatus;
   rounds: number | null;
   participantCount: number | null;
-  metadata: Prisma.JsonValue;
 }): Record<string, unknown> {
   return {
     externalId: row.externalId,
@@ -552,7 +556,6 @@ function normalizeSportEventRow(row: {
     status: row.status,
     rounds: row.rounds,
     participantCount: row.participantCount,
-    metadata: jsonClone(row.metadata),
   };
 }
 

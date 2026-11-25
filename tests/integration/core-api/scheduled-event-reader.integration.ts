@@ -10,7 +10,7 @@ import type { Prisma } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { freshEventEdition } from '../../support/event-edition';
+import { freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { leagueProfiles } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
@@ -37,25 +37,30 @@ function reader(provider = fakeSportDataProvider({ providerId: PROVIDER })) {
   return createScheduledEventReader({ prisma: getAppPrisma(), registry: registryWith(provider) });
 }
 
+/** The provider league an event of each sport here is kept under. */
+const PROVIDER_LEAGUE_OF: Partial<Record<Sport, string>> = { [Sport.GOLF]: 'pga', [Sport.AMERICAN_FOOTBALL]: 'nfl' };
+
+/**
+ * An event the provider has `externalId` for (#2004), under its sport's provider league, unless
+ * `linked` is false, when it has no provider id at all.
+ */
 async function createEvent(
   externalId: string,
-  overrides: Partial<Prisma.SportEventUncheckedCreateInput> & { withField?: boolean } = {},
+  overrides: Partial<Prisma.SportEventUncheckedCreateInput> & { withField?: boolean; linked?: boolean } = {},
 ) {
   const prisma = getPrisma();
-  const { withField = false, ...data } = overrides;
+  const { withField = false, linked = true, ...data } = overrides;
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId,
-      providerId: PROVIDER,
       sport: Sport.GOLF,
       name: `Reader ${externalId}`,
       startDate: new Date('2026-04-30T12:00:00.000Z'),
       status: 'SCHEDULED',
-      syncScope: 'SCORES_ONLY',
       ...data,
     },
   });
+  if (linked) await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, PROVIDER_LEAGUE_OF[event.sport]);
   if (withField) {
     const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const participant = await prisma.participant.create({
@@ -70,7 +75,7 @@ describe('ScheduledEventReader — live scores', () => {
   it('polls only in-progress events linked for scores that already have a field', async () => {
     await createEvent('live-with-field', { status: 'IN_PROGRESS', withField: true });
     await createEvent('live-without-field', { status: 'IN_PROGRESS' });
-    await createEvent('live-unlinked', { status: 'IN_PROGRESS', syncScope: 'NONE', withField: true });
+    await createEvent('live-unlinked', { status: 'IN_PROGRESS', linked: false, withField: true });
     await createEvent('scheduled-with-field', { status: 'SCHEDULED', withField: true });
     await createEvent('completed-with-field', { status: 'COMPLETED', withField: true });
 
@@ -79,13 +84,12 @@ describe('ScheduledEventReader — live scores', () => {
     expect(externalIds(events)).toEqual(['live-with-field']);
   });
 
-  it('polls only the events held by the sport\'s registered provider', async () => {
+  it('polls nothing for a registered provider with no Provider row, which holds no event\'s id', async () => {
     await createEvent('ours', { status: 'IN_PROGRESS', withField: true });
-    await createEvent('theirs', { status: 'IN_PROGRESS', providerId: 'TEST_PROVIDER', withField: true });
 
-    const events = await reader().listLiveScoreEvents({ sport: Sport.GOLF, now });
+    const events = await reader(fakeSportDataProvider({ providerId: 'integration-test-rowless' })).listLiveScoreEvents({ sport: Sport.GOLF, now });
 
-    expect(externalIds(events)).toEqual(['ours']);
+    expect(events).toEqual([]);
   });
 
   it('polls nothing when no provider is registered for the sport', async () => {
@@ -113,7 +117,7 @@ describe('ScheduledEventReader — play under way and notifications (#1499)', ()
 
     const [listed] = await reader().listLiveScoreEvents({ sport: Sport.GOLF, now });
 
-    expect(listed).toEqual({ providerId: PROVIDER, externalId: 'golf-round-2', playedInRounds: true, playUnderwaySince: roundTwoStart, lastProviderNotificationAt: notifiedAt });
+    expect(listed).toEqual({ providerId: PROVIDER, externalId: 'golf-round-2', providerLeagueCode: 'pga', playedInRounds: true, playUnderwaySince: roundTwoStart, lastProviderNotificationAt: notifiedAt });
   });
 
   it('reads a game event as in play since its earliest-scheduled match in progress, and not in play between its matches', async () => {
@@ -149,7 +153,7 @@ describe('ScheduledEventReader — field hydration', () => {
     await createEvent('completed-event', { status: 'COMPLETED', startDate: new Date('2026-04-27T12:00:00.000Z') });
     await createEvent('already-started-event', { status: 'SCHEDULED', startDate: new Date('2026-04-26T12:00:00.000Z') });
     await createEvent('past-window-event', { status: 'SCHEDULED', startDate: new Date('2026-05-04T12:00:00.000Z') });
-    await createEvent('unlinked-event', { status: 'SCHEDULED', syncScope: 'NONE', startDate: new Date('2026-04-29T12:00:00.000Z') });
+    await createEvent('unlinked-event', { status: 'SCHEDULED', linked: false, startDate: new Date('2026-04-29T12:00:00.000Z') });
 
     const events = await reader().listEventsForFeed({
       sport: Sport.GOLF,
@@ -213,8 +217,8 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     });
     const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
     if (synced) await syncLeagueTo(prisma, league.id, 'pga');
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `${name} series ${randomUUID()}` } });
-    return { eventSeriesId: series.id };
+    // The event is in its Season's league (#2004).
+    return freshEventEdition(prisma, { name, sportLeagueId: league.id, championshipYear: 2026 });
   }
 
   it('offers only the events of active sport leagues whose sync names the event\'s provider, and offers every linked event without the switch', async () => {
@@ -232,7 +236,7 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
   it('offers none of the events of a provider with no Provider row, which syncs no league, even in a synced league', async () => {
     const rowless = 'integration-test-rowless';
     const registry = registryWith(fakeSportDataProvider({ providerId: rowless }));
-    await createEvent('rowless', { providerId: rowless, ...(await seriesInLeague('Synced', true)), startDate: new Date('2026-04-29T12:00:00.000Z') });
+    await createEvent('rowless', { ...(await seriesInLeague('Synced', true)), startDate: new Date('2026-04-29T12:00:00.000Z') });
 
     const events = await createScheduledEventReader({ prisma: getAppPrisma(), registry })
       .listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater, syncedLeaguesOnly: true });
@@ -255,7 +259,9 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
   });
 });
 
-describe('ScheduledEventReader — two providers serving the sport', () => {
+describe('ScheduledEventReader — a second provider serving the sport', () => {
+  // BALLDONTLIE is the one provider with a row, so a second registered provider holds no event's
+  // id: it adds nothing, and never holds BALLDONTLIE's events back.
   const OTHER = 'integration-test-secondary';
   const twoProviders = () => {
     const registry = registryWith(fakeSportDataProvider({ providerId: PROVIDER }));
@@ -263,31 +269,24 @@ describe('ScheduledEventReader — two providers serving the sport', () => {
     return createScheduledEventReader({ prisma: getAppPrisma(), registry });
   };
 
-  it('loads each provider\'s own two soonest fields, so one provider\'s earlier events never hold the other\'s back', async () => {
+  it('loads the provider\'s own two soonest fields, the second provider with no row adding none', async () => {
     await createEvent('ours-first', { startDate: new Date('2026-04-27T12:00:00.000Z') });
     await createEvent('ours-second', { startDate: new Date('2026-04-28T12:00:00.000Z') });
     await createEvent('ours-third', { startDate: new Date('2026-04-29T12:00:00.000Z') });
-    await createEvent('theirs-first', { providerId: OTHER, startDate: new Date('2026-05-01T12:00:00.000Z') });
 
     const events = await twoProviders().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, from: now, to: weekLater });
 
     expect(events).toEqual([
       { providerId: PROVIDER, externalId: 'ours-first' },
       { providerId: PROVIDER, externalId: 'ours-second' },
-      { providerId: OTHER, externalId: 'theirs-first' },
     ]);
   });
 
-  it('polls the live events of both providers, each named with the provider it is linked to', async () => {
+  it('polls the live events by the provider each is linked to, the second provider with no row adding none', async () => {
     await createEvent('shared-id', { status: 'IN_PROGRESS', withField: true });
-    await createEvent('shared-id', { status: 'IN_PROGRESS', providerId: OTHER, withField: true });
 
     const events = await twoProviders().listLiveScoreEvents({ sport: Sport.GOLF, now });
 
-    expect(events).toEqual(expect.arrayContaining([
-      expect.objectContaining({ providerId: PROVIDER, externalId: 'shared-id' }),
-      expect.objectContaining({ providerId: OTHER, externalId: 'shared-id' }),
-    ]));
-    expect(events).toHaveLength(2);
+    expect(events).toEqual([expect.objectContaining({ providerId: PROVIDER, externalId: 'shared-id', providerLeagueCode: 'pga' })]);
   });
 });

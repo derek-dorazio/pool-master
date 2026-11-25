@@ -71,8 +71,6 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `draw-${suffix}`,
-      providerId: 'integration-test',
       sport: Sport.GOLF,
       name: `Draw Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),
@@ -362,8 +360,6 @@ describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171
     const later = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `draw-later-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
         sport: Sport.GOLF,
         name: 'Draw Later Event',
         startDate: new Date('2031-01-01T12:00:00.000Z'),

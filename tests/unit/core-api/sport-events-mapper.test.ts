@@ -12,20 +12,17 @@ import { standardEventPricing } from '../../support/budget-pricing';
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
   return {
     id: '11111111-1111-4111-8111-111111111111',
-    externalId: 'mock-major-2026',
-    providerId: 'mock-contest-feed',
+    providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'mock-major-2026' }],
     sport: 'GOLF',
     name: 'Mock Major',
     status: 'SCHEDULED',
     // Far ahead, so the mapper's own clock always reads it as not yet started.
     startDate: new Date('2999-04-12T16:00:00.000Z'),
     participantCount: 144,
-    metadata: {},
     eventSeriesId: '22222222-2222-4222-8222-222222222222',
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: '33333333-3333-4333-8333-333333333333',
-    syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-02T00:00:00.000Z'),
@@ -224,19 +221,20 @@ describe('the event\'s rounds and tiers on the wire', () => {
 });
 
 describe('SportEvent provider sync on the wire (ADR 0011)', () => {
-  it('marks an event provider-synced when its sport league\'s sync names the provider it is linked to for scores', () => {
-    expect(mapSportEventToDto(summary(event({ syncProviderId: 'mock-contest-feed' }), 72)).providerSynced).toBe(true);
+  it('marks an event provider-synced, naming its provider, when its sport league\'s sync provider has an id for it, and sends every provider\'s id', () => {
+    const dto = mapSportEventToDto(summary(event({ syncProviderId: 'balldontlie' }), 72));
+
+    expect(dto).toMatchObject({ providerSynced: true, providerName: 'BALLDONTLIE' });
+    expect(dto.providerMappings).toEqual([{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'mock-major-2026' }]);
   });
 
   it('leaves an event admin-owned when its sport league is not synced', () => {
-    expect(mapSportEventToDto(summary(event(), 72)).providerSynced).toBe(false);
+    expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({ providerSynced: false, providerName: null });
   });
 
-  it('leaves an event admin-owned when it is linked to another provider than the one syncing its league', () => {
-    expect(mapSportEventToDto(summary(event({ syncProviderId: 'balldontlie' }), 72)).providerSynced).toBe(false);
-  });
+  it('leaves a test event admin-owned, with no provider ids, even in a synced league', () => {
+    const dto = mapSportEventToDto(summary(event({ syncProviderId: 'balldontlie', providerMappings: [] }), 72));
 
-  it('leaves an event admin-owned when its score source is unlinked, even in a synced league', () => {
-    expect(mapSportEventToDto(summary(event({ syncProviderId: 'mock-contest-feed', syncScope: 'NONE' }), 72)).providerSynced).toBe(false);
+    expect(dto).toMatchObject({ providerSynced: false, providerName: null, providerMappings: [] });
   });
 });

@@ -704,7 +704,7 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
       errors: [{ messageId: 'widenedEnum' }],
     },
     {
-      code: 'interface R { syncScope: string }',
+      code: 'interface R { scoringFamily: string }',
       errors: [{ messageId: 'widenedEnum' }],
     },
     {
@@ -718,13 +718,13 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
 ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
   valid: [
     // Naming the member is the point of the rule.
-    'const a = x.syncScope === SportEventSyncScope.SCORES_ONLY;',
+    'const a = x.scoringFamily === ScoringFamily.HEAD_TO_HEAD;',
     // Not an enum-backed column.
-    "const a = x.name === 'SCORES_ONLY';",
+    "const a = x.name === 'HEAD_TO_HEAD';",
     // A value that is not a member of the column's enum is a different bug (tsc's).
-    "const a = x.syncScope === 'NOT_A_MEMBER';",
+    "const a = x.scoringFamily === 'NOT_A_MEMBER';",
     // Not a comparison this rule owns.
-    "const a = x.syncScope > 'SCORES_ONLY';",
+    "const a = x.scoringFamily > 'HEAD_TO_HEAD';",
   ],
   invalid: [
     {
@@ -733,8 +733,8 @@ ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
       errors: [{ messageId: 'bareLiteral', data: { field: 'status', value: 'ACTIVE' } }],
     },
     {
-      code: "const a = x.syncScope === 'SCORES_ONLY';",
-      errors: [{ messageId: 'bareLiteral', data: { field: 'syncScope', value: 'SCORES_ONLY' } }],
+      code: "const a = x.scoringFamily === 'HEAD_TO_HEAD';",
+      errors: [{ messageId: 'bareLiteral', data: { field: 'scoringFamily', value: 'HEAD_TO_HEAD' } }],
     },
     {
       code: "const a = x.participantType !== 'TEAM';",

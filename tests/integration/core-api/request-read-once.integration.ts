@@ -65,9 +65,9 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
   ['INSERT sport_event_participant_standings', 1],
   ['SELECT contests', 1],
-  ['SELECT event_series', 1],
   ['SELECT sport_event_match_period_scores', 1],
   ['SELECT sport_event_participant_standings', 1],
+  ['SELECT sport_event_provider_mappings', 1],
   ['SELECT sport_event_round_matches', 1],
   ['SELECT sport_event_rounds', 1],
   ['SELECT sport_events', 1],
@@ -85,8 +85,8 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
 const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
   ['SELECT contest_sport_events', 1],
-  ['SELECT event_series', 2],
   ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_provider_mappings', 2],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 2],
   ['SELECT sport_league_seasons', 2],
@@ -269,8 +269,6 @@ async function tieredGolfEvent(name: string) {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `read-once-${randomUUID()}`,
-      providerId: 'integration-test',
       sport: Sport.GOLF,
       name,
       startDate: buildContestEligibleEventTiming().startDate,
@@ -334,12 +332,12 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT contest_squares_draws', 2],
       ['SELECT contest_squares_games', 2],
       ['SELECT contests', 2],
-      ['SELECT event_series', 1],
       ['SELECT league_memberships', 1], // the commissioner's own membership is kept from creating the contest (#1438)
       ['SELECT leagues', 1],
       ['SELECT participant_contest_scoring_rules', 1],
       ['SELECT sport_event_participant_valuations', 2],
       ['SELECT sport_event_participants', 3],
+      ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_tiers', 3],
       ['SELECT sport_events', 3],
       ['SELECT sport_league_seasons', 1],
@@ -369,8 +367,6 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      externalId: `read-once-squares-${suffix}`,
-      providerId: 'integration-test',
       sport: Sport.AMERICAN_FOOTBALL,
       name: `Read Once Bowl ${suffix}`,
       startDate: new Date(Date.now() - 3 * 60 * 60 * 1000),
@@ -666,8 +662,6 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      externalId: `read-once-changed-${suffix}`,
-      providerId: 'integration-test',
       sport: Sport.AMERICAN_FOOTBALL,
       name: `Read Once Changed ${suffix}`,
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -724,8 +718,8 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 2],
-  ['SELECT event_series', 2],
   ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_provider_mappings', 2],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 2],
@@ -744,8 +738,8 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 1],
-  ['SELECT event_series', 3],
   ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_provider_mappings', 3],
   ['SELECT sport_event_rounds', 1],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],

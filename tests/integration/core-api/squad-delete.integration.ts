@@ -69,8 +69,6 @@ async function seedLeagueWithContestHistory() {
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `delete-team-${suffix}`,
-      providerId: 'integration-test',
       sport: Sport.GOLF,
       name: `Delete Team Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),
