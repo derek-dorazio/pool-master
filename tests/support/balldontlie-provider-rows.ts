@@ -51,7 +51,6 @@ export function balldontlieTestProvider(overrides: Partial<ProviderSettings> = {
     webhookRoundPollMinutes: 2,
     hasPlayerStats: false,
     isEnabled: true,
-    priority: 1,
     leagues: [...BALLDONTLIE_TEST_LEAGUES],
     ...overrides,
   };

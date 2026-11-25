@@ -52,11 +52,10 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
 interface TestProviderLeague { id: string; code: string; sport: Sport; isEnabled?: boolean; providerEnabled?: boolean }
 
 /**
- * The providers for the test: the provider leagues their rows list, and which providers run here,
- * by id, each with the sports it covers.
+ * The providers for the test: the provider leagues their rows list, and which provider leagues the
+ * adapters running here read, by Provider code and league code.
  */
-function registeredProviders(sportsById: Record<string, Sport[]>, leagues: TestProviderLeague[] = []): SportDataProviderLookup {
-  const covered = new Map(Object.entries(sportsById));
+function registeredProviders(readLeagues: Partial<Record<ProviderCode, readonly string[]>>, leagues: TestProviderLeague[] = []): SportDataProviderLookup {
   return {
     findLeague: (providerLeagueId) => {
       const league = leagues.find((candidate) => candidate.id === providerLeagueId);
@@ -65,10 +64,7 @@ function registeredProviders(sportsById: Record<string, Sport[]>, leagues: TestP
         league: { code: league.code, sport: league.sport, isEnabled: league.isEnabled ?? true },
       };
     },
-    getProviderById: (providerId) => {
-      const sportsCovered = covered.get(providerId);
-      return sportsCovered ? { sportsCovered } : null;
-    },
+    readsLeague: (providerCode, providerLeagueCode) => readLeagues[providerCode]?.includes(providerLeagueCode) ?? false,
   };
 }
 
@@ -262,7 +258,7 @@ describe('SportLeagueService — event sync (ADR 0011)', () => {
     { id: 'pl-off', code: 'lpga', sport: Sport.GOLF, isEnabled: false },
     { id: 'pl-provider-off', code: 'pga', sport: Sport.GOLF, providerEnabled: false },
   ];
-  const golfProviders = registeredProviders({ balldontlie: [Sport.GOLF, Sport.BASKETBALL] }, leagues);
+  const golfProviders = registeredProviders({ [ProviderCode.BALLDONTLIE]: ['pga', 'nba'] }, leagues);
   const golfSport = { findById: jest.fn().mockResolvedValue(GOLF) };
 
   it('turns a league\'s event sync on with an enabled provider league of its sport whose provider runs here', async () => {
@@ -298,6 +294,13 @@ describe('SportLeagueService — event sync (ADR 0011)', () => {
     const { service } = buildService({ providers: registeredProviders({}, leagues), sports: golfSport });
     await expect(service.updateSportLeague('sl-pga', { syncProviderLeagueId: 'pl-pga' }))
       .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 422 });
+  });
+
+  it('refuses a provider league its running adapter does not read, as one enabled since the task started, with 422 PROVIDER_NOT_FOUND', async () => {
+    const { service, deps } = buildService({ providers: registeredProviders({ [ProviderCode.BALLDONTLIE]: ['nba'] }, leagues), sports: golfSport });
+    await expect(service.updateSportLeague('sl-pga', { syncProviderLeagueId: 'pl-pga' }))
+      .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 422 });
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });
 
   it('turns sync off with null even once the provider is no longer running', async () => {

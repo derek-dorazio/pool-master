@@ -41,7 +41,7 @@ export class ProviderSettingsStore {
     this.timer = undefined;
   }
 
-  /** Every provider, by priority. */
+  /** Every provider, by code. */
   all(): readonly ProviderSettings[] {
     return this.providers;
   }
@@ -79,7 +79,7 @@ export class ProviderSettingsStore {
   replace(saved: ProviderSettings): void {
     this.providers = this.providers.some((provider) => provider.id === saved.id)
       ? this.providers.map((provider) => (provider.id === saved.id ? saved : provider))
-      : [...this.providers, saved].sort((a, b) => a.priority - b.priority);
+      : [...this.providers, saved].sort((a, b) => a.code.localeCompare(b.code));
   }
 }
 

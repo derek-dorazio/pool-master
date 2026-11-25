@@ -1,8 +1,7 @@
-import { getSportDefinition } from '@poolmaster/shared/domain';
-import { Settings } from 'lucide-react';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
-import { Button, PageHeader, PageTabs, Text, type PageLinkTab } from '@/features/shared/ui';
+import { PageHeader, PageTabs, Text, type PageLinkTab } from '@/features/shared/ui';
 import type { SportLeagueDto } from '@/lib/api';
 import { isSyncedLeague, LEAGUE_PAGE_TABS, type LeaguePageContext } from './league-page-context';
 import { buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
@@ -11,6 +10,7 @@ import { SportLeagueIssueChips } from './sport-league-issue-chips';
 import { providerText } from './sport-league-overview-columns';
 import { SyncHealthChip } from './sync-health-chip';
 import { SportLeaguePage } from './sport-league-page';
+import { PageSettingsButton } from './page-settings-button';
 import { SportLeagueSettingsDialog } from './sport-league-settings-dialog';
 import { SyncRunByIdDialog } from './sync-run-by-id-dialog';
 import { failedJobCount, useActivity } from './use-activity';
@@ -61,18 +61,8 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        actions={(
-          <Button
-            aria-label={`${sportLeague.name} settings`}
-            data-testid="root-admin-league-settings"
-            onClick={() => setSettingsOpen(true)}
-            size="sm"
-            variant="icon"
-          >
-            <Settings aria-hidden size={16} />
-          </Button>
-        )}
-        breadcrumbs={[{ href: SPORTS_PATH, label: 'Sports' }, { label: getSportDefinition(sport).name }]}
+        actions={<PageSettingsButton name={sportLeague.name} onClick={() => setSettingsOpen(true)} testId="root-admin-league-settings" />}
+        breadcrumbs={[{ href: SPORTS_PATH, label: 'Sports' }, { label: enumLabel('Sport', sport) }]}
         meta={overview === undefined ? undefined : (
           <span className="inline-flex flex-wrap items-center gap-2" data-testid="root-admin-league-facts">
             <SyncHealthChip health={overview.syncHealth} />

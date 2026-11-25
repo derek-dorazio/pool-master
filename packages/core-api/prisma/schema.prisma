@@ -2469,8 +2469,6 @@ model Provider {
   /// Whether its plan includes player box scores.
   hasPlayerStats          Boolean            @default(false) @map("has_player_stats")
   isEnabled               Boolean            @default(true) @map("is_enabled")
-  /// Which provider a sport is served by first when more than one covers it: lower first.
-  priority                Int                @unique
   createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz
 

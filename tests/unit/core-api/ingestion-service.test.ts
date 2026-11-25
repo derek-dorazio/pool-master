@@ -40,7 +40,6 @@ describe('IngestionService manual sync submission', () => {
     const registry = registryWith(fakeSportDataProvider({
       providerId: 'balldontlie',
       providerName: 'Mock Contest Feed Provider',
-      sportsCovered: [Sport.GOLF],
       getEventDetails: jest.fn(),
     }));
     const scheduler = stubInstance(IngestionScheduler, {
@@ -110,7 +109,7 @@ describe('IngestionService manual sync submission', () => {
     });
     const service = new IngestionService({
       ...ports({ syncRuns }),
-      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie', sportsCovered: [Sport.GOLF] })),
+      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })),
       scheduler,
       logger: fakeLogger(),
       syncOrchestrator: new SyncOrchestrator({ now: () => new Date() }),
@@ -142,8 +141,7 @@ describe('IngestionService manual sync submission', () => {
       const registry = registryWith(fakeSportDataProvider({
         providerId: 'balldontlie',
         providerName: 'Mock Contest Feed Provider',
-        sportsCovered: [Sport.GOLF],
-      }));
+        }));
       const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
       const syncRuns = inMemorySyncRuns();
       const service = new IngestionService({

@@ -67,8 +67,8 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'Change a provider\'s settings',
-      description: 'The Providers page\'s edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. '
-        + '404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. '
+      description: 'The Providers page\'s edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling and the leagues read take effect when the server tasks next start. '
+        + '404 PROVIDER_NOT_FOUND when there is no such Provider row. '
         + '422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider\'s signing secret is not set in this environment. Root admin only.',
       operationId: 'updateProviderSettings',
       params: { type: 'object', required: ['providerId'], properties: { providerId: { type: 'string', format: 'uuid', description: 'The Provider row (ProviderSettingsDto.id).' } } },
@@ -132,7 +132,7 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
       tags: ['Ingestion'],
       summary: 'Sync an event now',
       description: 'Queues one sync run per requested event-level feed for the event, read from its sport league\'s provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. '
-        + '404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider does not serve the event\'s sport; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.',
+        + '404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.',
       operationId: 'submitEventSync',
       params: {
         type: 'object',

@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { sportVocabulary } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -18,9 +19,9 @@ export function RootAdminSportEventCreatePage() {
 
   const [selection, setSelection] = useState<Partial<SportEventEdition>>({});
 
-  const { sport, definition } = useManagedSport();
-  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(definition);
-  const sportName = definition.name.toLowerCase();
+  const { sport } = useManagedSport();
+  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(sport);
+  const sportName = enumLabel('Sport', sport).toLowerCase();
   const sportLeaguesQuery = useSportLeaguesQuery(sport);
 
   // A tournament is created on an active tour only.

@@ -7,7 +7,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { freshEventEdition, mapEventToProvider } from '../../support/event-edition';
@@ -139,7 +139,7 @@ describe('ScheduledEventReader — play under way and notifications (#1499)', ()
   });
 
   it('reads a game event as in play since its earliest-scheduled match in progress, and not in play between its matches', async () => {
-    const provider = fakeSportDataProvider({ providerId: PROVIDER, sportsCovered: [Sport.AMERICAN_FOOTBALL] });
+    const provider = fakeSportDataProvider({ providerId: PROVIDER });
     const playing = await createEvent('nfl-week-live', { sport: Sport.AMERICAN_FOOTBALL, status: 'IN_PROGRESS', withField: true });
     const between = await createEvent('nfl-week-between', { sport: Sport.AMERICAN_FOOTBALL, status: 'IN_PROGRESS', withField: true });
     const early = new Date('2026-04-26T17:00:00.000Z');
@@ -265,13 +265,14 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
   });
 });
 
-describe('ScheduledEventReader — a second provider serving the sport', () => {
-  // BALLDONTLIE is the one provider with a row, so a second registered provider holds no event's
-  // id: it adds nothing, and never holds BALLDONTLIE's events back.
-  const OTHER = 'integration-test-secondary';
+describe('ScheduledEventReader — a second provider running', () => {
+  // BALLDONTLIE is the one provider with a row, so a second running provider holds no event's
+  // id and no league's selected mapping: it adds nothing, and never holds BALLDONTLIE's events back.
   const twoProviders = () => {
-    const registry = registryWith(fakeSportDataProvider({ providerId: PROVIDER }));
-    registry.register(Sport.GOLF, fakeSportDataProvider({ providerId: OTHER }), 'SECONDARY');
+    const registry = registryWith(
+      fakeSportDataProvider({ providerId: PROVIDER }),
+      fakeSportDataProvider({ providerId: 'integration-test-secondary', providerCode: 'SECONDARY_FEED' as ProviderCode }),
+    );
     return createScheduledEventReader({ prisma: getAppPrisma(), registry });
   };
 
@@ -294,5 +295,25 @@ describe('ScheduledEventReader — a second provider serving the sport', () => {
     const events = await twoProviders().listLiveScoreEvents({ sport: Sport.GOLF, now });
 
     expect(events).toEqual([expect.objectContaining({ providerId: PROVIDER, externalId: 'shared-id', providerLeagueCode: 'pga' })]);
+  });
+});
+
+describe('ScheduledEventReader — the sports the scheduler runs loops for (#2073)', () => {
+  it('lists each sport with an active league whose selected mapping names a running provider, once, in display order', async () => {
+    // A synced golf league made inactive adds nothing of its own; an active one keeps golf listed.
+    await seriesInLeague('Inactive synced', true, false);
+    await seriesInLeague('Active synced', true);
+    const leagues = await getPrisma().sportLeague.findMany({
+      select: { isActive: true, sport: { select: { sport: true, displayOrder: true } }, selectedProviderMapping: { select: { providerLeague: { select: { provider: { select: { code: true } } } } } } },
+    });
+    const expected = [...new Map(leagues
+      .filter((league) => league.isActive && league.selectedProviderMapping?.providerLeague.provider.code === 'BALLDONTLIE')
+      .sort((a, b) => a.sport.displayOrder - b.sport.displayOrder)
+      .map((league) => [league.sport.sport, league.sport.sport])).values()];
+
+    const sports = await reader().listSyncedSports({ providerCodes: [ProviderCode.BALLDONTLIE] });
+
+    expect(sports).toContain(Sport.GOLF);
+    expect(sports).toEqual(expected);
   });
 });

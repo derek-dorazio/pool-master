@@ -10,18 +10,24 @@
  * result with Zod and persists it through the event's scoring family.
  */
 
-import type { MatchSide, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import type { MatchSide, ParticipantInactiveReason, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
 // --- Provider Interface ---
 
 export interface SportDataProvider {
+  /** The adapter's id, as its feed's events and sync runs name it (`balldontlie`). */
   providerId: string;
+  /** The Provider row it runs for (#2073): the registry's key. */
+  readonly providerCode: ProviderCode;
   providerName: string;
 
-  /** Which sports this provider covers. */
-  sportsCovered: Sport[];
+  /**
+   * Whether the adapter reads this provider league (its own code, such as `nfl`): one of its
+   * Provider's enabled leagues that it has a reader for, as it was built at startup.
+   */
+  servesLeague(providerLeagueCode: string): boolean;
 
   /**
    * The request rate the adapter holds its calls to, a minute: the provider plan's limit, from its

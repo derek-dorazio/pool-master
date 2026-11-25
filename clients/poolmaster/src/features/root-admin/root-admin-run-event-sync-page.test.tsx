@@ -4,10 +4,11 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminRunEventSyncPage } from './root-admin-run-event-sync-page';
+import type { SportLeagueOverviewDto } from '@/lib/api';
 import { sportLeagueFixture } from './sport-test-fixtures';
 
 const {
-  listProvidersMock,
+  listSportLeagueOverviewsMock,
   submitEventSyncMock,
   listEventsMock,
   listSportLeaguesMock,
@@ -25,7 +26,7 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
-    listProvidersMock: vi.fn(),
+    listSportLeagueOverviewsMock: vi.fn(),
     submitEventSyncMock: vi.fn(),
     listEventsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
@@ -35,12 +36,32 @@ const {
 });
 
 bindApiMocks({
-  listProviders: listProvidersMock,
+  listSportLeagueOverviews: listSportLeagueOverviewsMock,
   submitEventSync: submitEventSyncMock,
   listEvents: listEventsMock,
   listSportLeagues: listSportLeaguesMock,
   listSportLeagueSeasons: listSportLeagueSeasonsMock,
 });
+
+/** A sport league as the Sports page lists it: active, and synced from BALLDONTLIE unless overridden. */
+function overview(overrides: Partial<SportLeagueOverviewDto> = {}): SportLeagueOverviewDto {
+  return {
+    id: 'pga-tour',
+    sport: 'GOLF',
+    sportUrlSegment: 'golf',
+    sportDisplayOrder: 5,
+    name: 'PGA TOUR',
+    providerId: 'balldontlie',
+    providerName: 'BALLDONTLIE',
+    isActive: true,
+    syncHealth: 'OK',
+    issues: [],
+    season: null,
+    nextEventStartsAt: null,
+    eventCount: 3,
+    ...overrides,
+  };
+}
 
 /** Each sport's one league, whose current Season is its 2026 one; every league has a 2025 and a 2026 Season. */
 const SEASONS = ['2026', '2025'].map((year) => ({
@@ -74,7 +95,7 @@ function renderPage() {
 
 describe('RootAdminRunEventSyncPage', () => {
   beforeEach(() => {
-    listProvidersMock.mockReset();
+    listSportLeagueOverviewsMock.mockReset();
     submitEventSyncMock.mockReset();
     listEventsMock.mockReset();
     listSportLeaguesMock.mockImplementation(({ query }: { query: { sport: string } }) => Promise.resolve({
@@ -82,19 +103,7 @@ describe('RootAdminRunEventSyncPage', () => {
     }));
     listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons: SEASONS } });
 
-    listProvidersMock.mockResolvedValue({
-      data: {
-        providers: [
-          {
-            providerId: 'mock-contest-feed',
-            providerName: 'Mock contest feed',
-            status: 'HEALTHY',
-            sportsCovered: ['GOLF'],
-            primaryForSports: ['GOLF'],
-          },
-        ],
-      },
-    });
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: [overview()] } });
     submitEventSyncMock.mockResolvedValue({
       data: {
         sport: 'GOLF',
@@ -213,11 +222,14 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
   });
 
-  it('falls back to the first sport a provider syncs when no provider covers golf, and reads that sport\'s events', async () => {
-    listProvidersMock.mockResolvedValue({
+  it('offers only the sports with an active synced league, in the sports\' order, and opens on the first', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({
       data: {
-        providers: [
-          { providerId: 'espn', providerName: 'ESPN', status: 'HEALTHY', sportsCovered: ['BASKETBALL'], primaryForSports: ['BASKETBALL'] },
+        sportLeagues: [
+          overview(),
+          overview({ id: 'nba', sport: 'BASKETBALL', sportUrlSegment: 'basketball', sportDisplayOrder: 3, name: 'NBA' }),
+          overview({ id: 'mlb', sport: 'BASEBALL', sportUrlSegment: 'baseball', sportDisplayOrder: 2, name: 'MLB', isActive: false }),
+          overview({ id: 'thoroughbred', sport: 'HORSE_RACING', sportUrlSegment: 'horse-racing', sportDisplayOrder: 9, name: 'US Thoroughbred', providerId: null, providerName: null }),
         ],
       },
     });
@@ -230,6 +242,18 @@ describe('RootAdminRunEventSyncPage', () => {
       expect(listEventsMock).toHaveBeenCalledWith({ query: { sportLeagueSeasonId: 'season-2026' } });
     });
     expect(screen.getByTestId('root-admin-event-sync-sport')).toHaveValue('BASKETBALL');
+    expect(screen.getAllByRole('option', { name: /^(Basketball|Golf|Baseball|Horse racing)$/ }).map((option) => option.textContent)).toEqual(['Basketball', 'Golf']);
+  });
+
+  it('says there is nothing to sync when no active league is synced from a provider', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: [overview({ providerId: null, providerName: null })] } });
+
+    renderPage();
+
+    expect(await screen.findByText('No active sport league is synced from a provider, so there is nothing to sync.')).toBeInTheDocument();
+    expect(listSportLeaguesMock).not.toHaveBeenCalled();
+    expect(listEventsMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
   });
 
   it('drops the selected event when the preset rules it out, so sync cannot run on it', async () => {
@@ -251,14 +275,6 @@ describe('RootAdminRunEventSyncPage', () => {
   });
 
   it('sends the chosen event by its own id when two providers\' events share an external id', async () => {
-    listProvidersMock.mockResolvedValue({
-      data: {
-        providers: [
-          { providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: [] },
-          { providerId: 'feed-b', providerName: 'Feed B', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] },
-        ],
-      },
-    });
     const linkedEvent = {
       sport: 'GOLF',
       venue: 'QA Course',
@@ -294,13 +310,20 @@ describe('RootAdminRunEventSyncPage', () => {
 
   });
 
-  it('says so when provider health or the Season\'s events fail to load', async () => {
-    listProvidersMock.mockResolvedValue({ error: { error: { code: 'TEST_UNKNOWN', message: 'Providers are down.' } } });
+  it('says the sport leagues could not be loaded when their list fails, and offers no sport', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ error: { error: { code: 'TEST_UNKNOWN', message: 'Leagues are down.' } } });
+
+    renderPage();
+
+    expect(await screen.findByText(/The sport leagues could not be loaded|Leagues are down/)).toBeInTheDocument();
+    expect(listEventsMock).not.toHaveBeenCalled();
+  });
+
+  it('says so when the Season\'s events fail to load', async () => {
     listEventsMock.mockResolvedValue({ error: { error: { code: 'TEST_UNKNOWN', message: 'Events are down.' } } });
 
     renderPage();
 
-    expect(await screen.findByText(/Provider health context is unavailable/)).toBeInTheDocument();
     expect(await screen.findByText('Loaded events are unavailable right now.')).toBeInTheDocument();
   });
 

@@ -21,10 +21,9 @@ import {
   FEED_LABELS,
   formatJsonPayload,
   getEventSyncPreset,
-  getSupportedSyncSports,
+  syncedSports,
   type EventSyncPresetId,
   type EventSyncSubmission,
-  type SyncSport,
 } from './root-admin-sync-utils';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -32,7 +31,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { SeasonSelect } from './season-select';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { seasonIdOrCurrent, useSportLeagueSeasonsQuery } from '@/features/contests/use-sport-league-seasons';
-import { useProvidersQuery } from './use-providers-query';
+import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
+import type { Sport } from '@poolmaster/shared/domain';
 
 function getValidEventStatusesForPreset(presetId: EventSyncPresetId): SportEventDto['status'][] {
   switch (presetId) {
@@ -64,7 +64,7 @@ export function RootAdminRunEventSyncPage() {
     feature: 'root-admin-run-event-sync-page',
   });
   // The viewer's choices; the values the page uses fall back while a choice is not available.
-  const [chosenSyncSport, setEventSyncSport] = useState<SyncSport>('GOLF');
+  const [chosenSyncSport, setEventSyncSport] = useState<Sport | null>(null);
   const [eventSyncPresetId, setEventSyncPresetId] = useState<EventSyncPresetId>(
     'EVENTPARTICIPANTS',
   );
@@ -72,16 +72,17 @@ export function RootAdminRunEventSyncPage() {
   const [chosenSeasonId, setChosenSeasonId] = useState<string | null>(null);
   const [chosenEventId, setChosenEventId] = useState('');
 
-  const providersQuery = useProvidersQuery();
+  const leagueOverviewsQuery = useSportLeagueOverviewsQuery();
 
+  // The sports a provider syncs an active league of (#2073), read from the leagues' own sync.
   const supportedSyncSports = useMemo(
-    () => getSupportedSyncSports(providersQuery.data),
-    [providersQuery.data],
+    () => syncedSports(leagueOverviewsQuery.data),
+    [leagueOverviewsQuery.data],
   );
-  // A sport no provider syncs falls back to the first one that does.
-  const eventSyncSport = supportedSyncSports.includes(chosenSyncSport)
+  // Until the viewer picks one, or once their pick is not synced, the first synced sport.
+  const eventSyncSport = chosenSyncSport !== null && supportedSyncSports.includes(chosenSyncSport)
     ? chosenSyncSport
-    : supportedSyncSports.at(0) ?? chosenSyncSport;
+    : supportedSyncSports.at(0);
 
   // The events are one Season's (#2003): a sport league, then its Season, opening on the first
   // league and its current Season.
@@ -105,7 +106,7 @@ export function RootAdminRunEventSyncPage() {
 
       return response.data.events;
     },
-    enabled: supportedSyncSports.includes(eventSyncSport) && seasonId !== null,
+    enabled: eventSyncSport !== undefined && seasonId !== null,
     retry: false,
   });
 
@@ -122,7 +123,6 @@ export function RootAdminRunEventSyncPage() {
 
   const eventSyncMutation = useInvalidatingMutation({
     mutationFn: async (input: {
-      sport: SyncSport;
       eventId: string;
       presetId: EventSyncPresetId;
     }): Promise<EventSyncSubmission> => {
@@ -144,7 +144,7 @@ export function RootAdminRunEventSyncPage() {
         {
           action: 'rootAdmin.eventSync.started',
           data: {
-            sport: input.sport,
+            sport: eventSyncSport ?? null,
             eventId: input.eventId,
             requestedFeeds: preset.feeds,
           },
@@ -177,7 +177,7 @@ export function RootAdminRunEventSyncPage() {
           {
             action: 'rootAdmin.eventSync.failed',
             data: {
-              sport: eventSyncSport,
+              sport: eventSyncSport ?? null,
               eventId: selectedEvent?.id ?? null,
             },
             err: error,
@@ -191,7 +191,7 @@ export function RootAdminRunEventSyncPage() {
         {
           action: 'rootAdmin.eventSync.failed',
           data: {
-            sport: eventSyncSport,
+            sport: eventSyncSport ?? null,
             eventId: selectedEvent?.id ?? null,
           },
         },
@@ -239,8 +239,8 @@ export function RootAdminRunEventSyncPage() {
               data-testid="root-admin-event-sync-sport"
               disabled={eventSyncMutation.isPending}
               onChange={(event) =>
-                setEventSyncSport(event.target.value as SyncSport)}
-              value={eventSyncSport}
+                setEventSyncSport(event.target.value as Sport)}
+              value={eventSyncSport ?? ''}
             >
               {supportedSyncSports.map((sport) => (
                 <option key={sport} value={sport}>
@@ -294,13 +294,17 @@ export function RootAdminRunEventSyncPage() {
             {`Requested feeds: ${selectedPreset.feeds.map((feed) => FEED_LABELS[feed]).join(' · ')}`}
           </SectionNote>
 
-          {providersQuery.isError ? (
+          {leagueOverviewsQuery.isError ? (
             <Notice>
               {extractErrorMessage(
-                providersQuery.error,
-                { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
+                leagueOverviewsQuery.error,
+                { fallback: 'The sport leagues could not be loaded, so no sport can be picked.' },
               )}
             </Notice>
+          ) : null}
+
+          {leagueOverviewsQuery.isSuccess && supportedSyncSports.length === 0 ? (
+            <Notice>No active sport league is synced from a provider, so there is nothing to sync.</Notice>
           ) : null}
 
           {eventsQuery.isError ? (
@@ -312,7 +316,7 @@ export function RootAdminRunEventSyncPage() {
             </Notice>
           ) : null}
 
-          {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
+          {eventSyncSport !== undefined && !eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
             <Notice>
               No synced {enumLabel('Sport', eventSyncSport).toLowerCase()} events match this preset. A test event has
               nothing to sync.
@@ -325,7 +329,6 @@ export function RootAdminRunEventSyncPage() {
             onClick={() =>
               selectedEvent
                 ? eventSyncMutation.mutate({
-                  sport: eventSyncSport,
                   eventId: selectedEvent.id,
                   presetId: eventSyncPresetId,
                 })

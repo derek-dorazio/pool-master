@@ -1,7 +1,8 @@
-import { Sport } from '@poolmaster/shared/domain';
+import type { Sport } from '@poolmaster/shared/domain';
 import type {
   ProviderManualSyncSubmissionResponse,
   ProviderSummaryDto,
+  SportLeagueOverviewDto,
   ProviderSyncRunDetailDto,
   ProviderSyncRunDto,
 } from '@/lib/api';
@@ -11,9 +12,6 @@ export type ProviderSyncRun = ProviderSyncRunDto;
 export type ProviderSyncRunDetail = ProviderSyncRunDetailDto;
 export type ProviderSummary = ProviderSummaryDto;
 export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
-
-export const ALL_SYNC_SPORT_OPTIONS: readonly Sport[] = Object.values(Sport);
-export type SyncSport = Sport;
 
 export const SYNC_STATUS_OPTIONS = [
   'SUBMITTED',
@@ -71,18 +69,15 @@ export function formatJsonPayload(payload: unknown) {
   return JSON.stringify(payload, null, 2);
 }
 
-export function getSupportedSyncSports(
-  providers: ProviderSummary[] | undefined,
-): SyncSport[] {
-  const configuredSports = Array.from(
-    new Set((providers ?? []).flatMap((provider) => provider.sportsCovered)),
-  ).filter((sport): sport is SyncSport =>
-    ALL_SYNC_SPORT_OPTIONS.includes(sport),
-  );
-
-  if (configuredSports.length === 0) {
-    return [...ALL_SYNC_SPORT_OPTIONS];
-  }
-
-  return ALL_SYNC_SPORT_OPTIONS.filter((sport) => configuredSports.includes(sport));
+/**
+ * The sports a provider syncs an active sport league of (#2073): each league's own sync, never a
+ * provider's sports. In the sports' display order.
+ */
+export function syncedSports(
+  leagues: readonly Pick<SportLeagueOverviewDto, 'sport' | 'sportDisplayOrder' | 'providerId' | 'isActive'>[] | undefined,
+): Sport[] {
+  const synced = (leagues ?? [])
+    .filter((league) => league.isActive && league.providerId !== null)
+    .sort((a, b) => a.sportDisplayOrder - b.sportDisplayOrder);
+  return [...new Set(synced.map((league) => league.sport))];
 }
