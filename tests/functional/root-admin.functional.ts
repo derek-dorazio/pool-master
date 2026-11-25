@@ -412,7 +412,7 @@ describe('SDK Functional: Root Admin', () => {
       client: user.client,
       body: { EVENTS: { intervalMinutes: 120 } },
     });
-    expect(eventListUpdate.data?.EVENTS).toEqual({ enabled: true, intervalMinutes: 120 });
+    expect(eventListUpdate.data?.EVENTS).toEqual({ enabled: true, intervalMinutes: 120, runs: true, switchable: true });
     expect(eventListUpdate.data?.SCORES.intervalSeconds).toBe(45);
   });
 

@@ -4,13 +4,14 @@
  * takes effect within a minute rather than after a whole interval.
  */
 
-import type { IngestionFeedSchedulePolicy } from '@poolmaster/shared/dto/config.dto';
+import type { IngestionAlwaysOnSchedulePolicy, IngestionFeedSchedulePolicy } from '@poolmaster/shared/dto/config.dto';
 
 /** How soon a sync whose policy is off, or has no interval, looks at the schedule again. */
 export const SCHEDULE_RECHECK_MS = 60 * 1000;
 
-export function schedulePolicyDelayMs(policy: IngestionFeedSchedulePolicy): number {
-  if (!policy.enabled) {
+/** A policy with no switch (`enabled` absent) always runs on its interval (#2086). */
+export function schedulePolicyDelayMs(policy: IngestionFeedSchedulePolicy | IngestionAlwaysOnSchedulePolicy): number {
+  if ('enabled' in policy && !policy.enabled) {
     return SCHEDULE_RECHECK_MS;
   }
   if (policy.intervalSeconds) {

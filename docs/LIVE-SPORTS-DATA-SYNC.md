@@ -90,10 +90,13 @@ registered provider covers is scheduled. Its keys are the sync kinds, `ProviderS
 | Policy | Default | Runs |
 |---|---|---|
 | `EVENTS.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
-| `FIELD.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3) |
+| `FIELD.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3); it has no `enabled` switch and always runs (#2086) |
 | `SCORES.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
 
 Each loop re-reads its interval after every run, so a saved change applies without a restart.
+The schedule read (`GET /api/v1/platform/ingestion-schedule`) answers each kind's policy with
+`runs` and `switchable`, read from whether the policy has an `enabled` switch, so the Providers
+page draws its Sync schedules rows from those fields alone (#2086).
 
 There is no health check loop and no route calls a provider live (#1999). A provider's health on
 the Providers page comes from its own sync runs of the last hour: HEALTHY when none failed, DOWN
@@ -217,7 +220,9 @@ A participant the site holds by name with no mapping stays beside the new one: m
 bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`).
 A feed id the live scores name that no participant of the league is mapped to raises an
 `UNMAPPED_PARTICIPANT` sync finding (see *Sync findings* below); its Map participant action binds
-it and resolves the finding. Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
+it and resolves the finding. A mapping made any other way (the participant page's bind, or a later
+roster or field sync creating the participant) resolves it too: each mapping write says
+`PARTICIPANT_PROVIDER_MAPPED`, whose handler queues a `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` job (#2069). Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
 The mapping's sport league and participant type keep a team and a player with the same raw id
 apart.
 
@@ -339,7 +344,7 @@ column. Each finding names its sport league; its event, Provider row and the fee
   answer, *Rate limit and retries* above), `UNMAPPED_PARTICIPANT` (WARNING, raised by the live
   scores writer; its action is the Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR,
   raised per synced league when a worker task starts with the Provider's webhooks on and no
-  signing secret; resolved once it is set). Three are checked on an event by each sync that
+  signing secret; resolved once it is set, and on a league the Provider no longer syncs at the next check, #2070). Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the

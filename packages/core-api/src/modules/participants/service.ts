@@ -15,6 +15,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import { InjuryStatusCode, ParticipantStatus } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 
 // --- Input DTOs ---
 
@@ -60,6 +61,8 @@ export class ParticipantService {
   constructor(
     private readonly participantRepo: ParticipantRepository,
     private readonly providerMappingRepo: ParticipantProviderMappingRepository,
+    /** What follows a mapping (#2069): the mapped feed id's unmapped participant finding resolves. */
+    private readonly domainEvents: Pick<DomainEvents, 'collect'>,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -242,6 +245,12 @@ export class ParticipantService {
     if (!participant) {
       throw new ParticipantNotFoundError(participantId);
     }
+    const followUps = await this.domainEvents.collect({
+      type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED,
+      sportLeagueId: participant.sportLeagueId,
+      providerId,
+      externalIds: [externalId],
+    });
     const mapping = await this.providerMappingRepo.bind({
       participantId,
       sportLeagueId: participant.sportLeagueId,
@@ -249,7 +258,7 @@ export class ParticipantService {
       providerId,
       externalId,
       mappedAt: new Date(),
-    });
+    }, followUps.jobs);
     if (!mapping) {
       this.logger?.warn(
         { action: 'participants.service.bindProviderMapping.providerNotFound', data: { participantId, providerId } },
@@ -257,6 +266,7 @@ export class ParticipantService {
       );
       throw new ProviderNotFoundError(providerId);
     }
+    followUps.queued();
     this.logger?.info(
       { action: 'participants.service.bindProviderMapping.success', data: { participantId, providerId, externalId } },
       'Bound provider identity to participant',

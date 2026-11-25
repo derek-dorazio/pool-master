@@ -9,7 +9,7 @@ import {
   UserResetPasswordResponseSchema,
   ContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
-  IngestionScheduleConfigSchema,
+  IngestionScheduleSchema,
   ProviderCatalogEventListResponseSchema,
   CustomerLeagueListResponseSchema,
   LeagueResponseSchema,
@@ -48,7 +48,7 @@ import type {
   ContestConfigTemplateListResponse,
   ContestConfigTemplateResponse,
   ErrorEnvelope,
-  IngestionScheduleConfig,
+  IngestionSchedule,
   LeagueResponse,
   ParticipantListResponse,
   ParticipantProviderMappingResponse,
@@ -354,7 +354,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     providerSettings: providerRows.settingsService,
   });
   await app.register(activityModule, { prefix: '/api/v1/activity', activity });
-  await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
+  await app.register(participantsModule, { prefix: '/api/v1/participants', domainEvents: testDomainEvents({ queue: backgroundJobs.queue }) });
   await app.register(eventsModule, {
     prefix: '/api/v1/events',
     eventLifecycleService: integrationEventLifecycle(prisma),
@@ -668,9 +668,14 @@ describe('Contract verification (root admin)', () => {
       headers: rootAdmin.headers,
     });
     expect(ingestionReadRes.statusCode).toBe(200);
-    expect(IngestionScheduleConfigSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
+    expect(IngestionScheduleSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
     // One schedule for every sport a running provider covers (#1997): the policies, with no sports list.
-    expect(ingestionReadRes.json<IngestionScheduleConfig>()).not.toHaveProperty('scheduledSports');
+    expect(ingestionReadRes.json<IngestionSchedule>()).not.toHaveProperty('scheduledSports');
+    // Each sync says whether it runs and has a switch (#2086): the field sync has none and always runs.
+    const read = ingestionReadRes.json<IngestionSchedule>();
+    expect(read.FIELD).toEqual(expect.objectContaining({ runs: true, switchable: false }));
+    expect(read.FIELD).not.toHaveProperty('enabled');
+    expect(read.SCORES).toEqual(expect.objectContaining({ enabled: read.SCORES.runs, switchable: true }));
 
     const ingestionUpdateRes = await getApp().inject({
       method: 'PUT',
@@ -683,8 +688,8 @@ describe('Contract verification (root admin)', () => {
       },
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
-    expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().SCORES.intervalSeconds).toBe(45);
+    expect(IngestionScheduleSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
+    expect(ingestionUpdateRes.json<IngestionSchedule>().SCORES.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
       method: 'GET',

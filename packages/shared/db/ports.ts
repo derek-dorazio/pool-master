@@ -484,9 +484,10 @@ export interface ParticipantProviderMappingRepository {
   /**
    * Binds a provider identity to a participant. A provider identity maps to one participant per
    * sport league and kind, so an identity already bound to another of the league's participants
-   * moves here. Null when `providerId` names no Provider row.
+   * moves here. Null when `providerId` names no Provider row. `jobs`, the mapping's follow-ups
+   * (#2069), are written in the same transaction.
    */
-  bind(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt' | 'providerName'>): Promise<ParticipantProviderMapping | null>;
+  bind(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt' | 'providerName'>, jobs?: readonly BackgroundJobRequest[]): Promise<ParticipantProviderMapping | null>;
 }
 
 // --- Contest ---

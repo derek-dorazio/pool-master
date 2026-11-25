@@ -127,6 +127,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'rebuild-moved-contest-leaderboards',
       ],
       SPORT_EVENT_FIELD_SYNCED: ['sync-games-then-tier-field'],
+      PARTICIPANT_PROVIDER_MAPPED: ['resolve-mapped-participant-findings'],
     });
   });
 
@@ -357,6 +358,25 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
     for (const status of [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
       expect(follow.when?.(fieldSynced(status))).toBe(false);
     }
+  });
+});
+
+describe('PARTICIPANT_PROVIDER_MAPPED handlers', () => {
+  const [resolve] = DOMAIN_EVENT_HANDLERS.PARTICIPANT_PROVIDER_MAPPED;
+
+  it('queues one job that resolves the unmapped participant findings of every feed id the write mapped', async () => {
+    const mapped = { type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED, sportLeagueId: 'league-1', providerId: 'provider-row-1', externalIds: ['p-1', 'p-2'] } as const;
+
+    expect(resolve.when?.(mapped)).toBe(true);
+    expect(await resolve.jobs(mapped, { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD })).toEqual([expect.objectContaining({
+      type: BackgroundJobType.RESOLVE_MAPPED_PARTICIPANT_FINDINGS,
+      payload: { sportLeagueId: 'league-1', providerId: 'provider-row-1', externalIds: ['p-1', 'p-2'] },
+      sportLeagueId: 'league-1',
+    })]);
+  });
+
+  it('queues nothing for a write that mapped no feed id', () => {
+    expect(resolve.when?.({ type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED, sportLeagueId: 'league-1', providerId: 'provider-row-1', externalIds: [] })).toBe(false);
   });
 });
 
@@ -632,12 +652,13 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-settled` | `CONTEST_SETTLED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `rebuild-moved-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_FIELD_SYNCED` | `sync-games-then-tier-field` | `SYNC_EVENT_GAMES_AND_TIERS` |',
+      '| `PARTICIPANT_PROVIDER_MAPPED` | `resolve-mapped-participant-findings` | `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));
   });
 
   it('says so on purpose for an event type nothing follows', () => {
-    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [] };
+    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [], PARTICIPANT_PROVIDER_MAPPED: [] };
 
     expect(renderDomainEventTable(nothingFollows)).toContain('| `SPORT_EVENT_RESCHEDULED` | none | none |');
   });

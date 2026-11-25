@@ -122,6 +122,7 @@ import { createSportEventServices } from '../../packages/core-api/src/modules/ev
 import { activityModule } from '../../packages/core-api/src/modules/activity/routes';
 import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestion/findings/routes';
 import { ProviderSyncFindingService } from '../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
+import { resolveMappedParticipantFindingsJobHandler } from '../../packages/core-api/src/modules/ingestion/findings/mapped-participant-findings-job';
 import { PrismaProviderSyncFindingRepository } from '../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
 import { PrismaSportLeagueSeasonRepository } from '../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { ParticipantService } from '../../packages/core-api/src/modules/participants/service';
@@ -262,7 +263,7 @@ export function integrationSyncFindings(
   return new ProviderSyncFindingService({
     repository: new PrismaProviderSyncFindingRepository(prisma),
     providers,
-    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma)),
+    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), testDomainEvents()),
   });
 }
 
@@ -405,6 +406,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
     ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
+    RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(integrationSyncFindings(prisma)),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });
@@ -438,7 +440,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
   testApp.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
   testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
-  testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
+  testApp.register(participantsModule, { prefix: '/api/v1/participants', domainEvents });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, {
     prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, domainEvents, leaderboards, webhookProviderIds,
