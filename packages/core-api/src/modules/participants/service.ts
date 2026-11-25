@@ -331,7 +331,7 @@ export class ParticipantInUseError extends Error {
 }
 
 /** 409: a provider-synced league takes a participant only with its feed id, or as a test participant (#2096). */
-export class ParticipantFeedIdRequiredError extends Error {
+class ParticipantFeedIdRequiredError extends Error {
   readonly code: ApiErrorCode = 'PARTICIPANT_FEED_ID_REQUIRED';
   readonly statusCode = 409;
 
@@ -342,7 +342,7 @@ export class ParticipantFeedIdRequiredError extends Error {
 }
 
 /** 409: another participant of the league already holds the feed id (#2096). */
-export class ParticipantFeedIdTakenError extends Error {
+class ParticipantFeedIdTakenError extends Error {
   readonly code: ApiErrorCode = 'PARTICIPANT_FEED_ID_TAKEN';
   readonly statusCode = 409;
 
@@ -353,7 +353,7 @@ export class ParticipantFeedIdTakenError extends Error {
 }
 
 /** 422: a test participant never has a provider mapping (#2096). */
-export class TestParticipantFeedIdError extends Error {
+class TestParticipantFeedIdError extends Error {
   readonly code: ApiErrorCode = 'TEST_PARTICIPANT_FEED_ID';
   readonly statusCode = 422;
 
@@ -363,7 +363,7 @@ export class TestParticipantFeedIdError extends Error {
   }
 }
 
-export class SportLeagueNotFoundError extends Error {
+class SportLeagueNotFoundError extends Error {
   readonly code: ApiErrorCode = 'SPORT_LEAGUE_NOT_FOUND';
   readonly statusCode = 404;
 
@@ -374,7 +374,7 @@ export class SportLeagueNotFoundError extends Error {
 }
 
 /** 422: a feed id names a participant at the league's sync provider, and this league has none (#2096). */
-export class SportLeagueNotSyncedError extends Error {
+class SportLeagueNotSyncedError extends Error {
   readonly code: ApiErrorCode = 'SPORT_LEAGUE_NOT_SYNCED';
   readonly statusCode = 422;
 

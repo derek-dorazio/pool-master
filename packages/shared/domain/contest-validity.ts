@@ -1,30 +1,27 @@
-import { ContestFormat, ParticipantType, SelectionType, type Sport, TournamentFormat } from './enums';
+import { ContestFormat, MatchFormat, ParticipantType, SelectionType, type Sport, TournamentFormat } from './enums';
 import { getSportDefinition } from './sports/registry';
 import { ScoringFamily } from './sports/scoring-family';
 
 /**
- * The scoring families and participant types a sport league may pair with its sport's tournament
- * format (#2083): a stroke-play tournament is scored in strokes by individuals, a race by finishing
- * place by individuals, and matches head to head by teams or individuals (tennis). Every sport
- * league is added by a migration, so the reference-data test that checks each seeded league
- * against this table is its one reader; a league that no row admits fails that test.
+ * The match formats and participant types each scoring family plays (#2083): strokes and finishing
+ * places score a whole field of individuals, and head to head scores two sides, teams or
+ * individuals (tennis). A sport league's scoring family is checked against the match format of
+ * each of its slot definitions, the model home of how its games are played. Every sport league is
+ * added by a migration, so the reference-data test that checks each seeded league against this
+ * table is its one reader; a league that no row admits fails that test.
  */
 // poolmaster-allow-test-export: sport leagues are written only by migrations, so the reference-data test that checks every seeded league is the table's reader
-export const VALID_LEAGUE_PLAY_BY_TOURNAMENT_FORMAT = {
-  [TournamentFormat.STROKE_PLAY_TOURNAMENT]: { scoringFamilies: [ScoringFamily.STROKE_PLAY], participantTypes: [ParticipantType.INDIVIDUAL] },
-  [TournamentFormat.RACE]: { scoringFamilies: [ScoringFamily.FINISH_POSITION], participantTypes: [ParticipantType.INDIVIDUAL] },
-  [TournamentFormat.MATCHES]: { scoringFamilies: [ScoringFamily.HEAD_TO_HEAD], participantTypes: [ParticipantType.TEAM, ParticipantType.INDIVIDUAL] },
-} as const satisfies Record<TournamentFormat, { scoringFamilies: readonly ScoringFamily[]; participantTypes: readonly ParticipantType[] }>;
+export const LEAGUE_PLAY_BY_SCORING_FAMILY = {
+  [ScoringFamily.STROKE_PLAY]: { matchFormats: [MatchFormat.FIELD], participantTypes: [ParticipantType.INDIVIDUAL] },
+  [ScoringFamily.FINISH_POSITION]: { matchFormats: [MatchFormat.FIELD], participantTypes: [ParticipantType.INDIVIDUAL] },
+  [ScoringFamily.HEAD_TO_HEAD]: { matchFormats: [MatchFormat.HEAD_TO_HEAD], participantTypes: [ParticipantType.TEAM, ParticipantType.INDIVIDUAL] },
+} as const satisfies Record<ScoringFamily, { matchFormats: readonly MatchFormat[]; participantTypes: readonly ParticipantType[] }>;
 
-/** Whether a sport league of this tournament format may score with this family and field these participants. */
+/** Whether a sport league of this scoring family may field these participants in games of this match format. */
 // poolmaster-allow-test-export: sport leagues are written only by migrations, so the reference-data test that checks every seeded league is its reader
-export function isLeaguePlayValidForTournamentFormat(
-  tournamentFormat: TournamentFormat,
-  scoringFamily: ScoringFamily,
-  participantType: ParticipantType,
-): boolean {
-  const play = VALID_LEAGUE_PLAY_BY_TOURNAMENT_FORMAT[tournamentFormat];
-  return (play.scoringFamilies as readonly ScoringFamily[]).includes(scoringFamily)
+export function isLeaguePlayValid(scoringFamily: ScoringFamily, participantType: ParticipantType, matchFormat: MatchFormat): boolean {
+  const play = LEAGUE_PLAY_BY_SCORING_FAMILY[scoringFamily];
+  return (play.matchFormats as readonly MatchFormat[]).includes(matchFormat)
     && (play.participantTypes as readonly ParticipantType[]).includes(participantType);
 }
 
