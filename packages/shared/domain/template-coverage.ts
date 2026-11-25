@@ -1,52 +1,13 @@
 /**
  * Contest template coverage (#2010, plan §7 and §9c): a template lists the slot definitions it
  * covers and a coverage mode, and a contest covers the template's definitions ∩ the chosen
- * event's or Season's slots, as the mode allows. Every rule here reads slot facts (phase kind,
+ * event's or Season's slots, as the mode allows (resolved when a contest copies its slots, #2014). Every rule here reads slot facts (phase kind,
  * slot kind, match format), never a name.
  */
 import { LeaguePhaseOrder, MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
 import type { ContestTemplateSlot } from './contest-management-types';
 import { compareByEnumOrder } from './enum-order';
 import { compareSlotDefinitions } from './sport-league-structure';
-
-/** One Season slot a coverage is resolved against: its definition, its owning event, in play order. */
-export interface CoverageSeasonSlot {
-  id: string;
-  sportLeaguePhaseSlotId: string;
-  /** The event that owns the slot, or null while no event has it. */
-  sportEventId: string | null;
-}
-
-/** What the commissioner chose: the event (ALL_LISTED), the one slot (ONE_SLOT) or the starting slot (FROM_SLOT). */
-export type CoverageChoice =
-  | { coverageMode: typeof TemplateCoverageMode.ONE_SLOT; seasonSlotId: string }
-  | { coverageMode: typeof TemplateCoverageMode.ALL_LISTED; sportEventId: string }
-  | { coverageMode: typeof TemplateCoverageMode.FROM_SLOT; startingSeasonSlotId: string };
-
-/**
- * The Season slots a contest from this template covers, in play order: the template's slot
- * definitions ∩ the Season's slots, as the mode allows. ONE_SLOT, the chosen slot; ALL_LISTED, the
- * chosen event's slots; FROM_SLOT, the starting slot and every later one. Empty when the choice
- * names no slot the template lists.
- */
-export function coveredSeasonSlots(
-  templateDefinitionIds: readonly string[],
-  seasonSlots: readonly CoverageSeasonSlot[],
-  choice: CoverageChoice,
-): CoverageSeasonSlot[] {
-  const listed = new Set(templateDefinitionIds);
-  const offered = seasonSlots.filter((slot) => listed.has(slot.sportLeaguePhaseSlotId));
-  switch (choice.coverageMode) {
-    case TemplateCoverageMode.ONE_SLOT:
-      return offered.filter((slot) => slot.id === choice.seasonSlotId);
-    case TemplateCoverageMode.ALL_LISTED:
-      return offered.filter((slot) => slot.sportEventId === choice.sportEventId);
-    case TemplateCoverageMode.FROM_SLOT: {
-      const start = offered.findIndex((slot) => slot.id === choice.startingSeasonSlotId);
-      return start === -1 ? [] : offered.slice(start);
-    }
-  }
-}
 
 /** Why a template's listed slots are refused (#2010). */
 export const TemplateCoverageProblem = {
@@ -62,7 +23,7 @@ export type TemplateCoverageProblem = (typeof TemplateCoverageProblem)[keyof typ
  * season's games (Derek 2026-11-25). A playoff round and a tennis Slam alike, whatever the phase:
  * one side always advances, so a bracket never meets a tie.
  */
-export function isBracketSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>): boolean {
+function isBracketSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>): boolean {
   return slot.matchFormat === MatchFormat.HEAD_TO_HEAD && slot.slotKind !== SlotKind.WEEK;
 }
 

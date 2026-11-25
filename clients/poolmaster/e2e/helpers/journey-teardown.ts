@@ -12,8 +12,8 @@ import type { AdminCredentials } from './admin-session';
  *     which is why the league goes first)
  *   → tour → players → commissioner → member.
  *
- * The tour goes once its tournaments have, taking its roster and the `event_series` rows the
- * tournaments made with it; each player goes once no event field holds them (#1400). (plans/147
+ * The tour goes once its tournaments have, taking its roster with it; each player goes once no
+ * event field holds them (#1400). (plans/147
  * removed the season the journey used to create, and with it a step here.)
  *
  * Every lookup is by the attempt's run-unique names rather than ids captured during the test, so

@@ -256,7 +256,7 @@ function mapContestConfiguration(row: {
 }
 
 /** A slot definition as a template lists it (#2010), with its phase's kind. */
-export const TEMPLATE_SLOT_DEFINITION_SELECT = {
+const TEMPLATE_SLOT_DEFINITION_SELECT = {
   id: true,
   key: true,
   name: true,
@@ -268,7 +268,7 @@ export const TEMPLATE_SLOT_DEFINITION_SELECT = {
 } as const;
 
 /** A slot definition row selected with `TEMPLATE_SLOT_DEFINITION_SELECT`. */
-export interface TemplateSlotDefinitionRow {
+interface TemplateSlotDefinitionRow {
   id: string;
   key: string;
   name: string | null;
@@ -282,7 +282,7 @@ export interface TemplateSlotDefinitionRow {
 /** What every template read joins: the slot definitions it covers (#2010). The event page adapter maps its offers' templates with it too. */
 export const TEMPLATE_INCLUDE = { slots: { select: { definition: { select: TEMPLATE_SLOT_DEFINITION_SELECT } } } } as const;
 
-export function mapTemplateSlot(row: TemplateSlotDefinitionRow): ContestTemplateSlot {
+function mapTemplateSlot(row: TemplateSlotDefinitionRow): ContestTemplateSlot {
   return {
     id: row.id,
     key: row.key,

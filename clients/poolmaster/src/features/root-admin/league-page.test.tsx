@@ -546,6 +546,39 @@ describe('League page', () => {
     expect(await screen.findByTestId('root-admin-league-structure-position-QB')).toBeInTheDocument();
   });
 
+  it('shows the league default switched off as Default and Off, keeps the dialog open with the refusal when its save is refused, and closes on Escape', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [template({ isDefault: true, active: false })] } });
+    updateContestConfigTemplateMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', message: 'Contest template not found.' } },
+      response: { status: 404 },
+    });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/contest-templates');
+
+    const row = await screen.findByTestId('root-admin-league-contest-template-nba-bracket');
+    expect(within(row).getByText('Default')).toBeInTheDocument();
+    expect(within(row).getByText('Off')).toBeInTheDocument();
+
+    await userEvent.click(within(row).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-contest-template');
+    expect(within(dialog).getByTestId('root-admin-league-contest-template-default')).toHaveTextContent('Yes');
+    expect(within(dialog).getByTestId('root-admin-league-contest-template-status')).toHaveTextContent('Off');
+
+    await userEvent.click(within(dialog).getByTestId('root-admin-league-contest-template-edit'));
+    await userEvent.selectOptions(within(dialog).getByTestId('root-admin-league-contest-template-status-input'), 'on');
+    await userEvent.click(within(dialog).getByTestId('root-admin-league-contest-template-save'));
+
+    await waitFor(() => expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'leaguePage.contestTemplate.failed' }),
+      'Contest template update was refused',
+    ));
+    expect(updateContestConfigTemplateMock).toHaveBeenCalledWith(expect.objectContaining({ body: { active: true } }));
+    expect(screen.getByTestId('root-admin-league-contest-template')).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-contest-template')).not.toBeInTheDocument());
+  });
+
   it('saves a contest template\'s Default alone', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [template()] } });
     updateContestConfigTemplateMock.mockResolvedValue({ data: { template: template({ isDefault: true }) } });

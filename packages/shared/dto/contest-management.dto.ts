@@ -217,7 +217,7 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
-export const ContestTemplateSlotDtoSchema = z.object({
+const ContestTemplateSlotDtoSchema = z.object({
   id: z.uuid().describe('The slot definition\'s id (SportLeaguePhaseSlot).'),
   key: z.string().describe('Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.'),
   name: z.string().nullable().describe('The league\'s proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.'),
@@ -227,7 +227,6 @@ export const ContestTemplateSlotDtoSchema = z.object({
   phase: z.enum(LeaguePhase).describe('That phase\'s kind: PRESEASON, REGULAR or POSTSEASON.'),
   matchFormat: z.enum(MatchFormat).describe('How the slot\'s games are contested: HEAD_TO_HEAD or FIELD.'),
 }).describe('One slot definition a contest template covers (#2010), with the facts screens show.');
-export type ContestTemplateSlotDto = z.infer<typeof ContestTemplateSlotDtoSchema>;
 
 export const ContestConfigTemplateDtoSchema = z.object({
   id: z.uuid().describe('Seeded contest template identifier.'),

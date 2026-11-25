@@ -120,6 +120,41 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
   });
 
+  it('creates the tournament on the tour picked from the list, with its venue, location and end date', async () => {
+    createEventMock.mockResolvedValue({ data: { event: sportEventFixture({ id: 'new-tour' }) } });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-sport-event-create-name'), { target: { value: 'Spring Classic' } });
+    fireEvent.change(screen.getByLabelText('Venue'), { target: { value: ' Augusta National ' } });
+    fireEvent.change(screen.getByLabelText('Location'), { target: { value: ' Augusta, GA ' } });
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-start'), { target: { value: '2026-03-12T13:00' } });
+    fireEvent.change(screen.getByLabelText('Ends (optional)'), { target: { value: '2026-03-15T18:00' } });
+    await screen.findByRole('option', { name: 'LPGA Tour' });
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-tour'), { target: { value: 'league-2' } });
+    fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
+
+    await waitFor(() => expect(createEventMock).toHaveBeenCalledTimes(1));
+    const body = (createEventMock.mock.calls[0][0] as { body: CreateSportEventRequest }).body;
+    expect(body).toMatchObject({ sportLeagueId: 'league-2', venue: 'Augusta National', location: 'Augusta, GA' });
+    expect(body.endDate).toContain('2026-03-15T');
+  });
+
+  it('shows the API\'s refusal inline and stays on the form when the tour has no Season', async () => {
+    createEventMock.mockResolvedValue({
+      error: { error: { code: 'SPORT_LEAGUE_HAS_NO_SEASON', message: 'This tour has no current Season.' } },
+      response: { status: 422 },
+    });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-sport-event-create-name'), { target: { value: 'Spring Classic' } });
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-start'), { target: { value: '2026-03-12T13:00' } });
+    fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByTestId('tournament-home')).not.toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.create.manual.failed' }), expect.any(String));
+  });
+
   it('offers only the hand-made form, with no way to browse or link a provider\'s events', async () => {
     renderPage();
 

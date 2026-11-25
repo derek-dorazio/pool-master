@@ -563,7 +563,7 @@ roster, pick'em, survivor or bracket contest is `ACTIVE`, one goes after each mo
   end, at the latest of their rounds' `completed_at`, or when the score was last written for a
   round with none. Not after the event's last round, and not for an event with no round count or
   only one round.
-- **After an event of a season contest** ("After The Masters: Majors Pool"): the event's
+- **After an event of a contest across several events**: the event's
   standings settled and another event of the contest remains to play. It shows each entry's
   result in that event and the next event, with when its picks close. Not after the last event:
   the final results cover it.
@@ -648,7 +648,7 @@ in the Commissioner updates category:
   contests yet, shows the default contest setups offered on the event as tiles linking to the
   event's page (the league's contest types page when no event page offers it), names last
   year's winners of the league's own contests on the
-  event's previous edition (same series, the year before), and links to the league's contests
+  event's previous edition (the latest earlier event on one of its slot definitions, #2010), and links to the league's contests
   page.
 - **Ready for contests** (`EVENT_READY_FOR_CONTESTS`): a released event starts within 7 days, at
   the later of its release and 7 days before it starts, and the league has no contest on it. It
