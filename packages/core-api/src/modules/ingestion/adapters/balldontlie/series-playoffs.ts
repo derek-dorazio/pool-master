@@ -18,6 +18,7 @@ import type { ProviderParticipant, SportEvent } from '../../core/provider-interf
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, isDone, PROGRESS_BY_STATE } from './competition-status';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 /** One league's playoffs, as the shared mapping needs it. */
 export interface PlayoffsLeague {
@@ -113,6 +114,35 @@ export function pairOf(game: PlayoffGame): string {
   return [game.home.id, game.away.id].sort((left, right) => left - right).join('|');
 }
 
+/** One series: its round and its games in the order they start. */
+export interface PlayoffSeries {
+  round: number;
+  games: PlayoffGame[];
+}
+
+/**
+ * Every series the games make, each with its round, earliest first. The vendor marks a game as
+ * postseason but names no round, so a series' round is worked out from the bracket: a team's
+ * first series is round 1, and each later series is one round past the later of its two teams'
+ * previous series. A team with a bye into round 2 (MLB's top seeds) meets a
+ * round 1 winner, so its series is still round 2. Two teams meet in one series a postseason.
+ */
+export function playoffSeries(games: readonly PlayoffGame[]): PlayoffSeries[] {
+  const byPair = new Map<string, PlayoffGame[]>();
+  for (const game of games) byPair.set(pairOf(game), [...(byPair.get(pairOf(game)) ?? []), game]);
+  const series = [...byPair.values()]
+    .map((seriesGames) => [...seriesGames].sort((left, right) => left.start - right.start || left.id - right.id))
+    .sort((left, right) => left[0].start - right[0].start || pairOf(left[0]).localeCompare(pairOf(right[0])));
+  const lastRoundOf = new Map<number, number>();
+  return series.map((seriesGames) => {
+    const { home, away } = seriesGames[0];
+    const round = 1 + Math.max(lastRoundOf.get(home.id) ?? 0, lastRoundOf.get(away.id) ?? 0);
+    lastRoundOf.set(home.id, round);
+    lastRoundOf.set(away.id, round);
+    return { round, games: seriesGames };
+  });
+}
+
 /** The side that won a final game, or null when it has no winner on the board. */
 export function winnerOf(game: PlayoffGame): PlayoffTeam | null {
   if (game.state !== CompetitionStatusState.FINAL || game.homeScore === null || game.awayScore === null) return null;
@@ -154,6 +184,11 @@ export function toPlayoffsEvent(league: PlayoffsLeague, season: number, games: r
     status,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
+    // The vendor names no round, so a game's code takes its series' round in the bracket (`playoffSeries`).
+    providerSlots: slotPlaysOf(playoffSeries(games).flatMap((series) => series.games.map((game) => ({
+      code: providerSlotCode(ProviderSeasonType.POSTSEASON, series.round),
+      start: game.start,
+    })))),
   };
 }
 

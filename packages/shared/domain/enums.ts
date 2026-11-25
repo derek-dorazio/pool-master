@@ -907,6 +907,14 @@ export const ProviderSyncFindingKind = {
    * Subject: league, event and Provider; the next field follow-up that writes them resolves it.
    */
   GAMES_NOT_SYNCED: 'GAMES_NOT_SYNCED',
+  /**
+   * The events sync read a code the provider names a game's place by (`REG:5`, `POST:3`, a
+   * tournament id) that none of the league's slot provider mappings includes (#2005): its games are
+   * not synced. INFO, since a preseason week or an all-star game is left out on purpose; waiving it
+   * marks the code as known and excluded, and the sync then leaves it quiet. Subject: league,
+   * Provider and the code.
+   */
+  SLOT_VALUE_UNMAPPED: 'SLOT_VALUE_UNMAPPED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

@@ -132,9 +132,47 @@ export class InMemorySportEvents {
     return id;
   }
 
-  /** The Season slot reads an event create makes. */
-  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot'> {
+  /** The PROVIDER_CODE value each synced slot's definition is mapped by, as `findSyncSlots` reads it (#2005). */
+  slotProviderCodes = new Map<string, string>();
+  /** The synced slots an active contest template lists (#2005). */
+  templateCoveredSlotIds = new Set<string>();
+
+  /**
+   * A synced Season slot of the league's current Season (#2005), with no dates yet, mapped by
+   * `providerCode` and listed by a template unless `covered` is false. Answers its id.
+   */
+  addSyncSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, providerCode: string | null, options: { covered?: boolean } = {}): string {
+    const id = this.addTestSlot(sportLeague, new Date(0), { isTestData: false, label: null, startsAt: null });
+    if (providerCode !== null) this.slotProviderCodes.set(id, providerCode);
+    if (options.covered ?? true) this.templateCoveredSlotIds.add(id);
+    return id;
+  }
+
+  /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
+  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'recordSyncedSlots'> {
+    const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
     return {
+      findSyncSlots: async (sportLeagueSeasonId) => this.seasonSlots
+        .filter((slot) => slot.sportLeagueSeasonId === sportLeagueSeasonId && !slot.isTestData)
+        .map((slot) => ({
+          seasonSlotId: slot.id,
+          providerCode: this.slotProviderCodes.get(slot.id) ?? null,
+          coveredByTemplate: this.templateCoveredSlotIds.has(slot.id),
+          sportEventId: ownerOf(slot.id),
+          startsAt: slot.startsAt,
+          endsAt: slot.endsAt,
+        })),
+      recordSyncedSlots: async ({ eventSlots, slotDates }) => {
+        for (const change of slotDates) {
+          const slot = this.seasonSlots.find((candidate) => candidate.id === change.seasonSlotId);
+          if (slot) Object.assign(slot, { startsAt: change.startsAt, endsAt: change.endsAt });
+        }
+        for (const row of eventSlots) {
+          const slot = this.seasonSlots.find((candidate) => candidate.id === row.seasonSlotId);
+          if (!slot || ownerOf(slot.id) !== null) continue;
+          this.slotsByEvent.set(row.sportEventId, [...(this.slotsByEvent.get(row.sportEventId) ?? []), slot]);
+        }
+      },
       findSlot: async (id) => {
         const slot = this.seasonSlots.find((candidate) => candidate.id === id);
         if (!slot) return null;

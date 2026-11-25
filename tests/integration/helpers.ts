@@ -11,6 +11,7 @@
  *   const res = await app.inject({ method: 'GET', url: '/api/v1/leagues', headers });
  */
 
+import { COVERING_TEMPLATE_KEY } from '../support/sync-slots';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
@@ -1040,6 +1041,8 @@ export async function cleanupTestData(): Promise<void> {
   // A test's league goes with its Seasons, whose slots and phases hold RESTRICT foreign keys to
   // the league's slot and phase definitions, so they clear first (#2010: tests put events in
   // Season slots). A test's Season slot in a seeded league goes too.
+  // A test's synced-slot template (`syncSlotsFor`) is no reference data: it goes, so its league does.
+  await prisma.contestConfigTemplate.deleteMany({ where: { templateKey: COVERING_TEMPLATE_KEY } });
   const testLeagues = { contestConfigTemplates: { none: {} }, displayOrder: null };
   const testLeagueIds = (await prisma.sportLeague.findMany({ where: testLeagues, select: { id: true } })).map(({ id }) => id);
   await prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }] } });

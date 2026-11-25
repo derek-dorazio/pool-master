@@ -62,6 +62,9 @@ describe('a Premier League matchweek as an event', () => {
       rounds: 1,
       participantCount: 10,
       fieldLocked: true,
+      providerSlots: [
+        { code: 'REG:11', startsAt: new Date('2026-11-21T12:30:00.000Z'), endsAt: new Date('2026-11-23T20:00:00.000Z') },
+      ],
     });
   });
 

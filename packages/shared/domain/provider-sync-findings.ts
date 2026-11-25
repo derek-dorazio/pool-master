@@ -77,6 +77,7 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS]: [],
   [ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES]: [],
   [ProviderSyncFindingKind.GAMES_NOT_SYNCED]: [],
+  [ProviderSyncFindingKind.SLOT_VALUE_UNMAPPED]: [],
 };
 
 /**
