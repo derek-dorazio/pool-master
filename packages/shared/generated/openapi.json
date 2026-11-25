@@ -25692,6 +25692,18 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "roundsParMin": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The lowest par per round an update takes; a lower one is refused with 400."
+          },
+          "roundsParMax": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The highest par per round an update takes; a higher one is refused with 400."
+          },
           "participantCount": {
             "description": "Field size the provider reports, when it reports one; null otherwise.",
             "type": [
@@ -26440,6 +26452,8 @@
           "endDate",
           "rounds",
           "roundsPar",
+          "roundsParMin",
+          "roundsParMax",
           "participantCount",
           "loadedParticipantCount",
           "pricing",
@@ -26655,6 +26669,18 @@
                   ],
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
+                },
+                "roundsParMin": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The lowest par per round an update takes; a lower one is refused with 400."
+                },
+                "roundsParMax": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The highest par per round an update takes; a higher one is refused with 400."
                 },
                 "participantCount": {
                   "description": "Field size the provider reports, when it reports one; null otherwise.",
@@ -27404,6 +27430,8 @@
                 "endDate",
                 "rounds",
                 "roundsPar",
+                "roundsParMin",
+                "roundsParMax",
                 "participantCount",
                 "loadedParticipantCount",
                 "pricing",
@@ -27573,6 +27601,18 @@
                 ],
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
+              },
+              "roundsParMin": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The lowest par per round an update takes; a lower one is refused with 400."
+              },
+              "roundsParMax": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The highest par per round an update takes; a higher one is refused with 400."
               },
               "participantCount": {
                 "description": "Field size the provider reports, when it reports one; null otherwise.",
@@ -28322,6 +28362,8 @@
               "endDate",
               "rounds",
               "roundsPar",
+              "roundsParMin",
+              "roundsParMax",
               "participantCount",
               "loadedParticipantCount",
               "pricing",

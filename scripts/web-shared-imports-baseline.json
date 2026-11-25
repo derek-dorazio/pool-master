@@ -93,8 +93,6 @@
   "PLAN_FEATURE_GROUP": 3,
   "priceOnBudgetCurve": 1,
   "RANDOM_DRAW_PICKS_PER_ENTRY_MAX": 2,
-  "ROUNDS_PAR_MAX": 1,
-  "ROUNDS_PAR_MIN": 1,
   "sportAllowsSelectionType": 1,
   "SQUARES_GRID_SIZE": 1,
   "SQUARES_PER_ENTRY_MAX": 2,

@@ -51,6 +51,8 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     endDate: '2026-05-10T22:00:00.000Z',
     rounds: 4,
     roundsPar: null,
+    roundsParMin: 60,
+    roundsParMax: 80,
     participantCount: null,
     loadedParticipantCount: 0,
     pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },

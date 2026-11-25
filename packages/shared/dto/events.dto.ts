@@ -121,6 +121,8 @@ export const SportEventDtoSchema = z.object({
   endDate: DateTimeSchema.nullable().describe('Scheduled or actual end time when known; null otherwise.'),
   rounds: z.number().int().nullable().describe('Number of rounds when the format has them; null otherwise.'),
   roundsPar: z.number().int().nullable().describe('Par for every round, when an admin set it. Null: contest scoring derives each round\'s par from the field\'s finished rounds. Contest scoring uses it to turn an unplayed round\'s 80 strokes into to-par.'),
+  roundsParMin: z.number().int().describe('The lowest par per round an update takes; a lower one is refused with 400.'),
+  roundsParMax: z.number().int().describe('The highest par per round an update takes; a higher one is refused with 400.'),
   participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one; null otherwise.'),
   loadedParticipantCount: z.number().int().describe('Number of event participants currently persisted for the event.'),
   pricing: EventPricingConfigSchema.nullable().describe('The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.'),

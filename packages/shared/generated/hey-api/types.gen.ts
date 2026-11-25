@@ -11055,6 +11055,14 @@ export type SportEventDto = {
      */
     roundsPar: number | null;
     /**
+     * The lowest par per round an update takes; a lower one is refused with 400.
+     */
+    roundsParMin: number;
+    /**
+     * The highest par per round an update takes; a higher one is refused with 400.
+     */
+    roundsParMax: number;
+    /**
      * Field size the provider reports, when it reports one; null otherwise.
      */
     participantCount: number | null;
@@ -11468,6 +11476,14 @@ export type SportEventListResponse = {
          */
         roundsPar: number | null;
         /**
+         * The lowest par per round an update takes; a lower one is refused with 400.
+         */
+        roundsParMin: number;
+        /**
+         * The highest par per round an update takes; a higher one is refused with 400.
+         */
+        roundsParMax: number;
+        /**
          * Field size the provider reports, when it reports one; null otherwise.
          */
         participantCount: number | null;
@@ -11855,6 +11871,14 @@ export type SportEventResponse = {
          * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
          */
         roundsPar: number | null;
+        /**
+         * The lowest par per round an update takes; a lower one is refused with 400.
+         */
+        roundsParMin: number;
+        /**
+         * The highest par per round an update takes; a higher one is refused with 400.
+         */
+        roundsParMax: number;
         /**
          * Field size the provider reports, when it reports one; null otherwise.
          */
