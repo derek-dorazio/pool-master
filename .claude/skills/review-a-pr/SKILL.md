@@ -123,6 +123,10 @@ done
    fails a count that dropped without it, but not one the slice forgot to remove).
 4. **Search for the old computation by what it computes**, not by its name, for each fact
    the slice moves into the model (`rules/review-triggers.md` §9 item 5).
+5. **Read every raise the PR declares** in `scripts/baseline-raises.json`. Each one lets a
+   baseline go up, and the reason must justify it. A new `poolmaster-allow-raw-sql` marker names
+   what Prisma cannot express (`rules/service-rules.md` §5 *Prisma and Persistence*). A raise
+   whose reason does not hold is blocking.
 
 Report the result as a table in the review, one row per checklist line: the line, ✓ or the
 finding, and the file or ticket that settles it.

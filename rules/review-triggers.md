@@ -53,6 +53,8 @@ Already enforced mechanically, and therefore **not** triggers:
 | An export nothing else uses, or one only tests, stories or fixtures use (a test-only path in production source) | `rules:check:dead-exports` (`scripts/dead-exports.json`; a test hook that must stay takes `poolmaster-allow-test-export: <reason>`) |
 | A round, slot, phase, event, game, match, side, season, region or field row picked by a literal index, `.at(n)` or `length - 1` | `poolmaster/no-positional-pick` (ESLint, shrink-only baseline) |
 | A `Json` column, or a feed key (`externalId`, `provider…Id`, `providerCode`) outside a `…ProviderMapping` table, in the Prisma schema | `rules:check:schema-shapes` (listed with owner or reason, shrink-only) |
+| A `$queryRaw` / `$executeRaw` without a `poolmaster-allow-raw-sql` reason, any `…Unsafe` raw query or `Prisma.raw`, or a new marker not declared in `scripts/baseline-raises.json` | `poolmaster/no-raw-sql` (ESLint, per-file marker count, shrink-only) |
+| A Prisma `where` on `name` (plain or `equals`), or a `find`/`filter`/`some` callback or `a.name === b.name` comparing names or labels, without a `poolmaster-allow-name-match` reason | `poolmaster/no-name-match` (ESLint, shrink-only baseline) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
@@ -407,6 +409,10 @@ Read every added or changed line for these, and report each one found:
    agree. Only a provider adapter may match a provider's string, and only through an
    inclusion-only mapping table whose miss raises the one deduplicated finding `domain-model-conventions-rules.md` §17 *Provider
    keys live only in ProviderMapping tables* describes.
+   `poolmaster/no-name-match` catches a Prisma `where` on `name` (plain, `equals`, or in a
+   relation filter) and a lookup callback or two-record comparison on `.name` / `.label`; a
+   `for` loop that compares names, `includes`, `startsWith`, regexes, keyword lists and a name
+   under another property still need this reading.
 2. **Id strings built or parsed** — a template literal or `join` producing an id or scope
    key; `split`, `match`, `replace`, `startsWith` or a regex on an id, slug or provider ref; a
    regex that chooses an adapter, reader or handler.

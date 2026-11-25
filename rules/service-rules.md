@@ -354,6 +354,13 @@ Rules:
 ## 5. Prisma and Persistence
 
 - Use Prisma for database access.
+- No raw SQL. Where Prisma's query API cannot express a query (a row lock, a `SKIP LOCKED`
+  queue claim, a Postgres advisory lock, a set-based update from `unnest` arrays or an
+  `array_remove` across rows), the tagged `$queryRaw` / `$executeRaw` carries
+  `// poolmaster-allow-raw-sql: <what Prisma can't express>` on the line before.
+  `$queryRawUnsafe`, `$executeRawUnsafe` and `Prisma.raw` are never used. `poolmaster/no-raw-sql` enforces
+  it, and a new marker is a raise of `eslint-rules/raw-sql-baseline.json` declared in
+  `scripts/baseline-raises.json`, so a reviewer sees each new raw query.
 - Keep persistence concerns out of handlers.
 - Keep Prisma row shapes from leaking directly into API responses.
 - When Prisma models change, update DTOs, mappers, route schemas, and tests in the same work.

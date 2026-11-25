@@ -7,6 +7,7 @@ import type { Prisma } from '@prisma/client';
  * entry write sees the draw that closed the contest.
  */
 export async function lockContestRow(tx: Prisma.TransactionClient, contestId: string): Promise<void> {
+  // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
   await tx.$queryRaw`SELECT id FROM "contests" WHERE id = ${contestId}::uuid FOR UPDATE`;
 }
 
@@ -27,6 +28,7 @@ export async function lockContestRows(tx: Prisma.TransactionClient, contestIds: 
  * pick of one golfer finds the first instead of tripping the one-pick-per-golfer index.
  */
 export async function lockContestEntryRow(tx: Prisma.TransactionClient, entryId: string): Promise<void> {
+  // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
   await tx.$queryRaw`SELECT id FROM "contest_entries" WHERE id = ${entryId}::uuid FOR UPDATE`;
 }
 
@@ -37,5 +39,6 @@ export async function lockContestEntryRow(tx: Prisma.TransactionClient, entryId:
  */
 export async function lockContestRowsAtOnce(tx: Prisma.TransactionClient, contestIds: readonly string[]): Promise<void> {
   if (contestIds.length === 0) return;
+  // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
   await tx.$queryRaw`SELECT id FROM "contests" WHERE id = ANY(${[...contestIds]}::uuid[]) ORDER BY id FOR UPDATE`;
 }

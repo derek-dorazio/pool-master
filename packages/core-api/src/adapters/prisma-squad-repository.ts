@@ -78,6 +78,7 @@ export class PrismaSquadRepository implements SquadRepository {
     // Resolves against the @@unique([leagueId, name]) index, so at most one row, and
     // deliberately unfiltered by isActive — the constraint covers inactive squads too.
     const row = await this.prisma.squad.findUnique({
+      // poolmaster-allow-name-match: the duplicate-name check; a team name the member chooses is unique per league
       where: { leagueId_name: { leagueId, name } },
     });
     return row ? mapToSquad(row) : null;
