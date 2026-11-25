@@ -208,6 +208,22 @@ export const SeasonSlotStatusOrder = explicitOrder<SeasonSlotStatus>({
   [SeasonSlotStatus.CANCELLED]: 3,
 });
 
+/**
+ * Whether a Season slot's date window (#2012) is the schedule's published dates or a best guess,
+ * loaded while the shape is known and the games are not. In the order a window moves through them.
+ */
+export const SlotWindowStatus = {
+  /** A best guess: the sync places games by it, and a finding asks for the published dates. */
+  TENTATIVE: 'TENTATIVE',
+  /** The schedule's published dates. */
+  CONFIRMED: 'CONFIRMED',
+} as const;
+export type SlotWindowStatus = (typeof SlotWindowStatus)[keyof typeof SlotWindowStatus];
+export const SlotWindowStatusOrder = explicitOrder<SlotWindowStatus>({
+  [SlotWindowStatus.TENTATIVE]: 0,
+  [SlotWindowStatus.CONFIRMED]: 1,
+});
+
 /** How a provider's games are matched to a slot definition (#2002, plan §1 and §6), in matching order. */
 export const SlotProviderMatchType = {
   /** The code the provider's adapter reduces a game to (`REG:5`, `POST:3`). */
@@ -944,6 +960,27 @@ export const ProviderSyncFindingKind = {
    * added. Subject: league, Provider and the normalized name, with the feed's name.
    */
   SLOT_SEASON_PHASE_MISSING: 'SLOT_SEASON_PHASE_MISSING',
+  /**
+   * The events sync placed games in a Season slot dated outside the Season's span (#2012): before
+   * it starts or after it ends. The games are still written. WARNING, since the Season row's span
+   * is what to check. Subject: league, Provider and the code.
+   */
+  SLOT_OUTSIDE_SEASON: 'SLOT_OUTSIDE_SEASON',
+  /**
+   * The events sync read games whose feed names no place for them (no round or week) that no
+   * Season slot's date window holds (#2012): they are not synced. INFO, since a feed with no round
+   * marker lists every game of its days (college football's other bowls); inclusion only. Only
+   * games inside the Season's span count. Subject: league, Provider and the provider's id for the
+   * Season.
+   */
+  GAMES_UNPLACED: 'GAMES_UNPLACED',
+  /**
+   * A Season still open or to come has slots its provider places by date window whose window is
+   * missing or still tentative (#2012, #1924): games in them may not be placed. WARNING; it
+   * resolves once every such slot of the Season has a confirmed window. Subject: league, Provider
+   * and the provider's id for the Season.
+   */
+  SLOT_DATES_NEEDED: 'SLOT_DATES_NEEDED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

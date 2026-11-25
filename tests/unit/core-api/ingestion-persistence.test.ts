@@ -63,14 +63,14 @@ function mappingOf(row: Record<string, unknown>) {
 /**
  * The event reads, which go through the provider's mappings (#2004): the feed's linked events
  * are `rows`, and the one event a field sync reads with its league is `linked`, or the row with
- * the id asked for.
+ * the id asked for, playing no slot placed by date window unless the row says so.
  */
 function eventReads(rows: ReadonlyArray<Record<string, unknown>>, linked?: Record<string, unknown> | null) {
   return {
     findMany: jest.fn().mockResolvedValue(rows.map(mappingOf)),
     findFirst: jest.fn(async (args: { where: { externalId: string } }) => {
       const row = linked !== undefined ? linked : rows.find((candidate) => candidate['externalId'] === args.where.externalId);
-      return row === null || row === undefined ? null : { sportEvent: row };
+      return row === null || row === undefined ? null : { sportEvent: { slots: [], ...row } };
     }),
   };
 }
@@ -393,6 +393,22 @@ describe('IngestionPersistence', () => {
       await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger(), undefined, cdn).persistEventDetailWithDiagnostics(detail);
 
       expect(cdn.calls).toEqual([[PublicReadPath.EVENT_PAGES]]);
+    });
+
+    it('adds no feed team to the field of an event playing a slot placed by date window, whose field is the seeds placed on it (#1715)', async () => {
+      const createField = jest.fn().mockResolvedValue([]);
+      const prisma = fieldSyncPrisma({
+        externalId: 'golfer-01',
+        eventRow: linkedRow(),
+        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', slots: [{ id: 'event-slot-1' }], sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
+        fieldRow: null,
+        createField,
+      });
+
+      const result = await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger()).persistEventDetailWithDiagnostics(detail);
+
+      expect(createField).not.toHaveBeenCalled();
+      expect(result.value.sportEventParticipantsPersisted).toBe(0);
     });
 
     it('forgets it too when writing the field fails partway, since some rows may have been written', async () => {

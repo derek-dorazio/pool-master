@@ -23813,6 +23813,36 @@
         "additionalProperties": false,
         "description": "A provider's id for one Season."
       },
+      "SlotWindowDto": {
+        "type": "object",
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Exclusive."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "TENTATIVE",
+              "CONFIRMED"
+            ],
+            "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "status"
+        ],
+        "additionalProperties": false,
+        "description": "The dates a provider that names no place for its games has them placed by (DATE_WINDOW), kept apart from the dates its Games give."
+      },
       "SportLeagueSeasonSlotDto": {
         "type": "object",
         "properties": {
@@ -23915,6 +23945,39 @@
               "string",
               "null"
             ]
+          },
+          "window": {
+            "description": "Its date window, set as data (#2012); null when it has none.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "startsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "endsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Exclusive."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "TENTATIVE",
+                  "CONFIRMED"
+                ],
+                "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+              }
+            },
+            "required": [
+              "startsAt",
+              "endsAt",
+              "status"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -23931,7 +23994,8 @@
           "seriesGames",
           "pairing",
           "isTestData",
-          "label"
+          "label",
+          "window"
         ],
         "additionalProperties": false,
         "description": "One slot of one Season."
@@ -24039,6 +24103,39 @@
               "null"
             ]
           },
+          "window": {
+            "description": "Its date window, set as data (#2012); null when it has none.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "startsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "endsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Exclusive."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "TENTATIVE",
+                  "CONFIRMED"
+                ],
+                "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+              }
+            },
+            "required": [
+              "startsAt",
+              "endsAt",
+              "status"
+            ],
+            "additionalProperties": false
+          },
           "sportEventId": {
             "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
             "type": [
@@ -24050,6 +24147,14 @@
           "takesTestEvent": {
             "type": "boolean",
             "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
+          },
+          "placedByWindow": {
+            "type": "boolean",
+            "description": "Whether the league's selected provider places its games by date window (DATE_WINDOW)."
+          },
+          "needsDates": {
+            "type": "boolean",
+            "description": "Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one)."
           }
         },
         "required": [
@@ -24067,8 +24172,11 @@
           "pairing",
           "isTestData",
           "label",
+          "window",
           "sportEventId",
-          "takesTestEvent"
+          "takesTestEvent",
+          "placedByWindow",
+          "needsDates"
         ],
         "additionalProperties": false,
         "description": "One slot of one Season, as its Season lists it."
@@ -24214,6 +24322,39 @@
                   "string",
                   "null"
                 ]
+              },
+              "window": {
+                "description": "Its date window, set as data (#2012); null when it has none.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "startsAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 datetime string."
+                  },
+                  "endsAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Exclusive."
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "TENTATIVE",
+                      "CONFIRMED"
+                    ],
+                    "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                  }
+                },
+                "required": [
+                  "startsAt",
+                  "endsAt",
+                  "status"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -24230,7 +24371,8 @@
               "seriesGames",
               "pairing",
               "isTestData",
-              "label"
+              "label",
+              "window"
             ],
             "additionalProperties": false,
             "description": "One slot of one Season."
@@ -24366,6 +24508,39 @@
                     "null"
                   ]
                 },
+                "window": {
+                  "description": "Its date window, set as data (#2012); null when it has none.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "startsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "endsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Exclusive."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "TENTATIVE",
+                        "CONFIRMED"
+                      ],
+                      "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                    }
+                  },
+                  "required": [
+                    "startsAt",
+                    "endsAt",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                },
                 "sportEventId": {
                   "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
                   "type": [
@@ -24377,6 +24552,14 @@
                 "takesTestEvent": {
                   "type": "boolean",
                   "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
+                },
+                "placedByWindow": {
+                  "type": "boolean",
+                  "description": "Whether the league's selected provider places its games by date window (DATE_WINDOW)."
+                },
+                "needsDates": {
+                  "type": "boolean",
+                  "description": "Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one)."
                 }
               },
               "required": [
@@ -24394,20 +24577,30 @@
                 "pairing",
                 "isTestData",
                 "label",
+                "window",
                 "sportEventId",
-                "takesTestEvent"
+                "takesTestEvent",
+                "placedByWindow",
+                "needsDates"
               ],
               "additionalProperties": false,
               "description": "One slot of one Season, as its Season lists it."
             },
             "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
+          },
+          "slotsNeedingDates": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "How many of its slots need dates (needsDates)."
           }
         },
         "required": [
           "id",
           "phase",
           "isSynced",
-          "slots"
+          "slots",
+          "slotsNeedingDates"
         ],
         "additionalProperties": false,
         "description": "One phase of one Season."
@@ -24606,6 +24799,39 @@
                           "null"
                         ]
                       },
+                      "window": {
+                        "description": "Its date window, set as data (#2012); null when it has none.",
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "startsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string."
+                          },
+                          "endsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Exclusive."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "TENTATIVE",
+                              "CONFIRMED"
+                            ],
+                            "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                          }
+                        },
+                        "required": [
+                          "startsAt",
+                          "endsAt",
+                          "status"
+                        ],
+                        "additionalProperties": false
+                      },
                       "sportEventId": {
                         "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
                         "type": [
@@ -24617,6 +24843,14 @@
                       "takesTestEvent": {
                         "type": "boolean",
                         "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
+                      },
+                      "placedByWindow": {
+                        "type": "boolean",
+                        "description": "Whether the league's selected provider places its games by date window (DATE_WINDOW)."
+                      },
+                      "needsDates": {
+                        "type": "boolean",
+                        "description": "Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one)."
                       }
                     },
                     "required": [
@@ -24634,25 +24868,41 @@
                       "pairing",
                       "isTestData",
                       "label",
+                      "window",
                       "sportEventId",
-                      "takesTestEvent"
+                      "takesTestEvent",
+                      "placedByWindow",
+                      "needsDates"
                     ],
                     "additionalProperties": false,
                     "description": "One slot of one Season, as its Season lists it."
                   },
                   "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
+                },
+                "slotsNeedingDates": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "How many of its slots need dates (needsDates)."
                 }
               },
               "required": [
                 "id",
                 "phase",
                 "isSynced",
-                "slots"
+                "slots",
+                "slotsNeedingDates"
               ],
               "additionalProperties": false,
               "description": "One phase of one Season."
             },
             "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
+          },
+          "slotsNeedingDates": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "How many of its slots need dates (needsDates), across its phases."
           }
         },
         "required": [
@@ -24663,7 +24913,8 @@
           "endsAt",
           "isCurrent",
           "providerMappings",
-          "phases"
+          "phases",
+          "slotsNeedingDates"
         ],
         "additionalProperties": false,
         "description": "One Season of a sport league, added by migration."
@@ -24867,6 +25118,39 @@
                                 "null"
                               ]
                             },
+                            "window": {
+                              "description": "Its date window, set as data (#2012); null when it has none.",
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "startsAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "ISO 8601 datetime string."
+                                },
+                                "endsAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "Exclusive."
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "TENTATIVE",
+                                    "CONFIRMED"
+                                  ],
+                                  "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                                }
+                              },
+                              "required": [
+                                "startsAt",
+                                "endsAt",
+                                "status"
+                              ],
+                              "additionalProperties": false
+                            },
                             "sportEventId": {
                               "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
                               "type": [
@@ -24878,6 +25162,14 @@
                             "takesTestEvent": {
                               "type": "boolean",
                               "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
+                            },
+                            "placedByWindow": {
+                              "type": "boolean",
+                              "description": "Whether the league's selected provider places its games by date window (DATE_WINDOW)."
+                            },
+                            "needsDates": {
+                              "type": "boolean",
+                              "description": "Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one)."
                             }
                           },
                           "required": [
@@ -24895,25 +25187,41 @@
                             "pairing",
                             "isTestData",
                             "label",
+                            "window",
                             "sportEventId",
-                            "takesTestEvent"
+                            "takesTestEvent",
+                            "placedByWindow",
+                            "needsDates"
                           ],
                           "additionalProperties": false,
                           "description": "One slot of one Season, as its Season lists it."
                         },
                         "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
+                      },
+                      "slotsNeedingDates": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "How many of its slots need dates (needsDates)."
                       }
                     },
                     "required": [
                       "id",
                       "phase",
                       "isSynced",
-                      "slots"
+                      "slots",
+                      "slotsNeedingDates"
                     ],
                     "additionalProperties": false,
                     "description": "One phase of one Season."
                   },
                   "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
+                },
+                "slotsNeedingDates": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "How many of its slots need dates (needsDates), across its phases."
                 }
               },
               "required": [
@@ -24924,7 +25232,8 @@
                 "endsAt",
                 "isCurrent",
                 "providerMappings",
-                "phases"
+                "phases",
+                "slotsNeedingDates"
               ],
               "additionalProperties": false,
               "description": "One Season of a sport league, added by migration."
@@ -25996,6 +26305,39 @@
                     "string",
                     "null"
                   ]
+                },
+                "window": {
+                  "description": "Its date window, set as data (#2012); null when it has none.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "startsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "endsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Exclusive."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "TENTATIVE",
+                        "CONFIRMED"
+                      ],
+                      "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                    }
+                  },
+                  "required": [
+                    "startsAt",
+                    "endsAt",
+                    "status"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -26012,7 +26354,8 @@
                 "seriesGames",
                 "pairing",
                 "isTestData",
-                "label"
+                "label",
+                "window"
               ],
               "additionalProperties": false,
               "description": "One slot of one Season."
@@ -26974,6 +27317,39 @@
                           "string",
                           "null"
                         ]
+                      },
+                      "window": {
+                        "description": "Its date window, set as data (#2012); null when it has none.",
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "startsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string."
+                          },
+                          "endsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Exclusive."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "TENTATIVE",
+                              "CONFIRMED"
+                            ],
+                            "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                          }
+                        },
+                        "required": [
+                          "startsAt",
+                          "endsAt",
+                          "status"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -26990,7 +27366,8 @@
                       "seriesGames",
                       "pairing",
                       "isTestData",
-                      "label"
+                      "label",
+                      "window"
                     ],
                     "additionalProperties": false,
                     "description": "One slot of one Season."
@@ -27906,6 +28283,39 @@
                         "string",
                         "null"
                       ]
+                    },
+                    "window": {
+                      "description": "Its date window, set as data (#2012); null when it has none.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "startsAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "endsAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Exclusive."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "TENTATIVE",
+                            "CONFIRMED"
+                          ],
+                          "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                        }
+                      },
+                      "required": [
+                        "startsAt",
+                        "endsAt",
+                        "status"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -27922,7 +28332,8 @@
                     "seriesGames",
                     "pairing",
                     "isTestData",
-                    "label"
+                    "label",
+                    "window"
                   ],
                   "additionalProperties": false,
                   "description": "One slot of one Season."
@@ -72457,7 +72868,10 @@
               "PROVIDER_LEAGUE_UNKNOWN",
               "SLOT_NAME_UNMATCHED",
               "SLOT_NAME_AMBIGUOUS",
-              "SLOT_SEASON_PHASE_MISSING"
+              "SLOT_SEASON_PHASE_MISSING",
+              "SLOT_OUTSIDE_SEASON",
+              "GAMES_UNPLACED",
+              "SLOT_DATES_NEEDED"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
           },
@@ -72836,7 +73250,10 @@
                     "PROVIDER_LEAGUE_UNKNOWN",
                     "SLOT_NAME_UNMATCHED",
                     "SLOT_NAME_AMBIGUOUS",
-                    "SLOT_SEASON_PHASE_MISSING"
+                    "SLOT_SEASON_PHASE_MISSING",
+                    "SLOT_OUTSIDE_SEASON",
+                    "GAMES_UNPLACED",
+                    "SLOT_DATES_NEEDED"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
                 },
@@ -73068,7 +73485,10 @@
                   "PROVIDER_LEAGUE_UNKNOWN",
                   "SLOT_NAME_UNMATCHED",
                   "SLOT_NAME_AMBIGUOUS",
-                  "SLOT_SEASON_PHASE_MISSING"
+                  "SLOT_SEASON_PHASE_MISSING",
+                  "SLOT_OUTSIDE_SEASON",
+                  "GAMES_UNPLACED",
+                  "SLOT_DATES_NEEDED"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
               },

@@ -79,6 +79,10 @@ export const enUS = {
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
     },
+    SlotWindowStatus: {
+      TENTATIVE: 'Tentative',
+      CONFIRMED: 'Confirmed',
+    },
     SlotProviderMatchType: {
       PROVIDER_CODE: 'Provider code',
       NAME_PATTERN: 'Name pattern',
@@ -279,6 +283,9 @@ export const enUS = {
       SLOT_NAME_UNMATCHED: 'Tournament name not matched to a slot',
       SLOT_NAME_AMBIGUOUS: 'Tournament name matches more than one slot',
       SLOT_SEASON_PHASE_MISSING: 'Tournament slot has no phase in the season',
+      SLOT_OUTSIDE_SEASON: 'Games outside the Season',
+      GAMES_UNPLACED: 'Games in no slot',
+      SLOT_DATES_NEEDED: 'Slot dates needed',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

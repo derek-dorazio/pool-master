@@ -32,7 +32,7 @@ export function seasonSlotFixture(overrides: Partial<SportLeagueSeasonSlotDto> =
   return {
     id: 'slot-1', slotDefinitionId: 'def-1', key: 'TEST_EVENT', slotKind: 'TOURNAMENT', weekNumber: null, name: null,
     startsAt: '2026-05-07T12:00:00.000Z', endsAt: '2026-05-10T22:00:00.000Z', status: 'SCHEDULED',
-    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: 'QA 1', ...overrides,
+    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: 'QA 1', window: null, ...overrides,
   };
 }
 

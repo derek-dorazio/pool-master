@@ -55,14 +55,14 @@ function slot(id: string, overrides: Partial<SportLeagueSeasonPhaseSlotDto> = {}
   return {
     id, slotDefinitionId: 'def-masters', key: 'MASTERS', slotKind: 'TOURNAMENT', weekNumber: null, name: 'The Masters',
     startsAt: '2026-04-09T12:00:00.000Z', endsAt: '2026-04-12T22:00:00.000Z', status: 'SCHEDULED',
-    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: `QA ${id}`, sportEventId: null, takesTestEvent: true, ...overrides,
+    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: `QA ${id}`, window: null, sportEventId: null, takesTestEvent: true, placedByWindow: false, needsDates: false, ...overrides,
   };
 }
 
 function season(id: string, isCurrent: boolean, slots: SportLeagueSeasonPhaseSlotDto[]): SportLeagueSeasonDto {
   return {
     id, name: id, championshipYear: 2026, startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-12-31T23:59:59.999Z',
-    isCurrent, providerMappings: [], phases: [{ id: `phase-${id}`, phase: 'REGULAR', isSynced: true, slots }],
+    isCurrent, providerMappings: [], phases: [{ id: `phase-${id}`, phase: 'REGULAR', isSynced: true, slots, slotsNeedingDates: 0 }], slotsNeedingDates: 0,
   };
 }
 

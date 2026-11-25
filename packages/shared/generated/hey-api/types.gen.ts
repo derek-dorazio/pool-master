@@ -10285,6 +10285,24 @@ export type SportLeagueSeasonProviderMappingDto = {
 };
 
 /**
+ * The dates a provider that names no place for its games has them placed by (DATE_WINDOW), kept apart from the dates its Games give.
+ */
+export type SlotWindowDto = {
+    /**
+     * ISO 8601 datetime string.
+     */
+    startsAt: string;
+    /**
+     * Exclusive.
+     */
+    endsAt: string;
+    /**
+     * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+     */
+    status: 'TENTATIVE' | 'CONFIRMED';
+};
+
+/**
  * One slot of one Season.
  */
 export type SportLeagueSeasonSlotDto = {
@@ -10326,6 +10344,23 @@ export type SportLeagueSeasonSlotDto = {
      * A test slot's label, unique per Season and definition; null on a synced slot.
      */
     label: string | null;
+    /**
+     * Its date window, set as data (#2012); null when it has none.
+     */
+    window: {
+        /**
+         * ISO 8601 datetime string.
+         */
+        startsAt: string;
+        /**
+         * Exclusive.
+         */
+        endsAt: string;
+        /**
+         * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+         */
+        status: 'TENTATIVE' | 'CONFIRMED';
+    } | null;
 };
 
 /**
@@ -10371,6 +10406,23 @@ export type SportLeagueSeasonPhaseSlotDto = {
      */
     label: string | null;
     /**
+     * Its date window, set as data (#2012); null when it has none.
+     */
+    window: {
+        /**
+         * ISO 8601 datetime string.
+         */
+        startsAt: string;
+        /**
+         * Exclusive.
+         */
+        endsAt: string;
+        /**
+         * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+         */
+        status: 'TENTATIVE' | 'CONFIRMED';
+    } | null;
+    /**
      * The event covering it; null while it is free, as a test slot is before its test event is made on it.
      */
     sportEventId: string | null;
@@ -10378,6 +10430,14 @@ export type SportLeagueSeasonPhaseSlotDto = {
      * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
      */
     takesTestEvent: boolean;
+    /**
+     * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+     */
+    placedByWindow: boolean;
+    /**
+     * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+     */
+    needsDates: boolean;
 };
 
 /**
@@ -10448,6 +10508,23 @@ export type SportLeagueSeasonSlotResponse = {
          * A test slot's label, unique per Season and definition; null on a synced slot.
          */
         label: string | null;
+        /**
+         * Its date window, set as data (#2012); null when it has none.
+         */
+        window: {
+            /**
+             * ISO 8601 datetime string.
+             */
+            startsAt: string;
+            /**
+             * Exclusive.
+             */
+            endsAt: string;
+            /**
+             * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+             */
+            status: 'TENTATIVE' | 'CONFIRMED';
+        } | null;
     };
 };
 
@@ -10504,6 +10581,23 @@ export type SportLeagueSeasonPhaseDto = {
          */
         label: string | null;
         /**
+         * Its date window, set as data (#2012); null when it has none.
+         */
+        window: {
+            /**
+             * ISO 8601 datetime string.
+             */
+            startsAt: string;
+            /**
+             * Exclusive.
+             */
+            endsAt: string;
+            /**
+             * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+             */
+            status: 'TENTATIVE' | 'CONFIRMED';
+        } | null;
+        /**
          * The event covering it; null while it is free, as a test slot is before its test event is made on it.
          */
         sportEventId: string | null;
@@ -10511,7 +10605,19 @@ export type SportLeagueSeasonPhaseDto = {
          * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
          */
         takesTestEvent: boolean;
+        /**
+         * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+         */
+        placedByWindow: boolean;
+        /**
+         * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+         */
+        needsDates: boolean;
     }>;
+    /**
+     * How many of its slots need dates (needsDates).
+     */
+    slotsNeedingDates: number;
 };
 
 /**
@@ -10608,6 +10714,23 @@ export type SportLeagueSeasonDto = {
              */
             label: string | null;
             /**
+             * Its date window, set as data (#2012); null when it has none.
+             */
+            window: {
+                /**
+                 * ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 */
+                status: 'TENTATIVE' | 'CONFIRMED';
+            } | null;
+            /**
              * The event covering it; null while it is free, as a test slot is before its test event is made on it.
              */
             sportEventId: string | null;
@@ -10615,8 +10738,24 @@ export type SportLeagueSeasonDto = {
              * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
              */
             takesTestEvent: boolean;
+            /**
+             * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+             */
+            placedByWindow: boolean;
+            /**
+             * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+             */
+            needsDates: boolean;
         }>;
+        /**
+         * How many of its slots need dates (needsDates).
+         */
+        slotsNeedingDates: number;
     }>;
+    /**
+     * How many of its slots need dates (needsDates), across its phases.
+     */
+    slotsNeedingDates: number;
 };
 
 /**
@@ -10717,6 +10856,23 @@ export type SportLeagueSeasonListResponse = {
                  */
                 label: string | null;
                 /**
+                 * Its date window, set as data (#2012); null when it has none.
+                 */
+                window: {
+                    /**
+                     * ISO 8601 datetime string.
+                     */
+                    startsAt: string;
+                    /**
+                     * Exclusive.
+                     */
+                    endsAt: string;
+                    /**
+                     * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                     */
+                    status: 'TENTATIVE' | 'CONFIRMED';
+                } | null;
+                /**
                  * The event covering it; null while it is free, as a test slot is before its test event is made on it.
                  */
                 sportEventId: string | null;
@@ -10724,8 +10880,24 @@ export type SportLeagueSeasonListResponse = {
                  * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
                  */
                 takesTestEvent: boolean;
+                /**
+                 * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+                 */
+                placedByWindow: boolean;
+                /**
+                 * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+                 */
+                needsDates: boolean;
             }>;
+            /**
+             * How many of its slots need dates (needsDates).
+             */
+            slotsNeedingDates: number;
         }>;
+        /**
+         * How many of its slots need dates (needsDates), across its phases.
+         */
+        slotsNeedingDates: number;
     }>;
 };
 
@@ -11207,6 +11379,23 @@ export type SportEventDto = {
          * A test slot's label, unique per Season and definition; null on a synced slot.
          */
         label: string | null;
+        /**
+         * Its date window, set as data (#2012); null when it has none.
+         */
+        window: {
+            /**
+             * ISO 8601 datetime string.
+             */
+            startsAt: string;
+            /**
+             * Exclusive.
+             */
+            endsAt: string;
+            /**
+             * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+             */
+            status: 'TENTATIVE' | 'CONFIRMED';
+        } | null;
     }>;
     /**
      * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
@@ -11628,6 +11817,23 @@ export type SportEventListResponse = {
              * A test slot's label, unique per Season and definition; null on a synced slot.
              */
             label: string | null;
+            /**
+             * Its date window, set as data (#2012); null when it has none.
+             */
+            window: {
+                /**
+                 * ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 */
+                status: 'TENTATIVE' | 'CONFIRMED';
+            } | null;
         }>;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
@@ -12024,6 +12230,23 @@ export type SportEventResponse = {
              * A test slot's label, unique per Season and definition; null on a synced slot.
              */
             label: string | null;
+            /**
+             * Its date window, set as data (#2012); null when it has none.
+             */
+            window: {
+                /**
+                 * ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 */
+                status: 'TENTATIVE' | 'CONFIRMED';
+            } | null;
         }>;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
@@ -29801,7 +30024,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -29954,7 +30177,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -30042,7 +30265,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */

@@ -6,7 +6,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { type Prisma, type PrismaClient } from '@prisma/client';
+import { PrismaSlotProviderMatchType, type Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   ParticipantStatus,
@@ -309,7 +309,18 @@ export class IngestionPersistence {
       where: { provider: { code: providerCode }, externalId: detail.externalId },
       select: {
         sportEvent: {
-          include: { sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } } } },
+          include: {
+            sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } } },
+            // A slot this provider's games reach by date window (#1715): one is enough to know.
+            slots: {
+              where: { seasonSlot: { definition: { providerMappings: { some: {
+                matchType: PrismaSlotProviderMatchType.DATE_WINDOW,
+                sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } },
+              } } } } },
+              select: { id: true },
+              take: 1,
+            },
+          },
         },
       },
     }))?.sportEvent ?? null;
@@ -345,7 +356,10 @@ export class IngestionPersistence {
     });
 
     try {
-      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows, followUps);
+      // A date window holds every game in its dates, other schools' too, so its feed names no field:
+      // the field is the one placed on the event, and the feed only refreshes it (#1715).
+      const fieldFromFeed = persistedEvent.slots.length === 0;
+      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, { seedsLocked, fieldFromFeed }, participantIdByKey, detailRows, followUps);
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
       this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
@@ -375,7 +389,8 @@ export class IngestionPersistence {
 
   /**
    * Writes the provider's field onto the event's rows, one row per mapped participant, and
-   * returns how many (#1183). The rows are read in one query; an unchanged row is not
+   * returns how many (#1183). When the feed's teams are not the field (`fieldFromFeed` false: an
+   * event placed by date window, #1715), it only refreshes the rows already on the event. The rows are read in one query; an unchanged row is not
    * written, and the new and changed ones are written in one transaction, with the field sync's
    * follow-up jobs. A field with no row to write still writes those jobs, on their own: the
    * provider's games may have changed when its field did not.
@@ -383,7 +398,7 @@ export class IngestionPersistence {
   private async persistEventField(
     detail: FieldFeed,
     sportEventId: string,
-    seedsLocked: boolean,
+    { seedsLocked, fieldFromFeed }: { seedsLocked: boolean; fieldFromFeed: boolean },
     participantIdByKey: ReadonlyMap<string, string>,
     detailRows: SyncWriteDetailRow[],
     followUps: JobsForWrite,
@@ -399,7 +414,8 @@ export class IngestionPersistence {
       })).map((row) => [row.participantId, row]),
     );
 
-    const plans = [...mapped].map(([participantId, participant]) => {
+    const onField = fieldFromFeed ? [...mapped] : [...mapped].filter(([participantId]) => existingByParticipantId.has(participantId));
+    const plans = onField.map(([participantId, participant]) => {
       const existing = existingByParticipantId.get(participantId);
       const seedNumber = seedsLocked && existing
         ? existing.seedNumber

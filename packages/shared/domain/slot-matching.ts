@@ -4,15 +4,26 @@
  * `POST:3`, a tournament id); the sport league's slot provider mappings say which slot a code is.
  * This is the one matcher: the events sync reads a Season's slots once and matches every provider
  * event's codes here. PROVIDER_CODE mappings and the Season slots a tournament was linked to by its
- * name (NAME_PATTERN, slice 12, #2011) match by code; date windows and calendar weeks come with
- * slice 13 (#2012).
+ * name (NAME_PATTERN, slice 12, #2011) match by code; a game whose feed names no place for it
+ * (BALLDONTLIE's college football) matches a DATE_WINDOW slot whose Season window holds its start
+ * (#2012). Calendar weeks come with #2142.
  */
 
-/** One place a provider event's games are in, by the provider's code, with its games' earliest and latest start. */
+import type { SlotWindow } from './sport-league-seasons';
+
+/**
+ * One place a provider event's games are in, by the provider's code, with its games' earliest and
+ * latest start. A null code is one game whose feed names no place for it: it is placed by date.
+ */
 export interface ProviderSlotPlay {
-  code: string;
+  code: string | null;
   startsAt: Date;
   endsAt: Date;
+  /**
+   * A game with no code: the provider's feed ids of the teams playing it. A window takes its dates
+   * from it, and is confirmed by it, only when every one is on the event's field (#2012).
+   */
+  teams?: readonly string[];
 }
 
 /** A Season slot as the events sync reads it: what it is matched by, who covers it, and who plays it. */
@@ -20,6 +31,8 @@ export interface SyncSeasonSlot {
   seasonSlotId: string;
   /** The slot definition the Season slot plays. */
   slotDefinitionId: string;
+  /** Its definition's key. */
+  key: string;
   /**
    * The PROVIDER_CODE value the league's selected provider mapping names the slot's definition by;
    * null when that provider has no such mapping for it (a tournament matched by name).
@@ -36,32 +49,81 @@ export interface SyncSeasonSlot {
   sportEventId: string | null;
   startsAt: Date | null;
   endsAt: Date | null;
+  /** Whether the league's selected provider mapping matches the slot's definition by DATE_WINDOW. */
+  placedByWindow: boolean;
+  /** The Season slot's date window, when it is placed by one and the Season has dates for it; null otherwise. */
+  window: SlotWindow | null;
 }
 
 /** A provider event's plays, each matched to its Season slot or left unmatched. */
 export interface ProviderSlotMatches<Slot extends SyncSeasonSlot> {
-  matched: Array<{ slot: Slot; play: ProviderSlotPlay }>;
+  /**
+   * Each slot its plays reach. `fromGames` says whether the play is the slot's own games: always
+   * for a code; for a window, only when a game between teams on the event's field is in it, and the
+   * play is then those games, from the first to the last. A window holding only other games (a bowl
+   * between two unseeded schools, or any game before the seeds are placed) still places the event
+   * on the slot, so its seeds can be placed, but its play is the window itself: it takes no dates
+   * and confirms no window.
+   */
+  matched: Array<{ slot: Slot; play: ProviderSlotPlay; fromGames: boolean }>;
   /** The plays whose code no mapping includes: not synced, and raised as a finding. */
-  unmatched: ProviderSlotPlay[];
+  unmatched: CodedSlotPlay[];
+  /** The games with no code that no slot's window holds: not synced, and raised as a finding. */
+  unplaced: ProviderSlotPlay[];
 }
 
 /**
  * Matches each play to the Season slot whose PROVIDER_CODE mapping names its code, or that a
  * tournament of that code was linked to by name. A code names at most one slot (the mappings'
- * unique keys), so a match is never ambiguous.
+ * unique keys), so a match is never ambiguous. A game with no code goes to the slot whose window
+ * holds its start, its window `from` inclusive and `to` exclusive; a Season's windows do not
+ * overlap, so that too is one slot at most. Of a window's games, only those whose teams are all on
+ * `field` (the feed ids of the event's field, empty before its seeds are placed) are the slot's
+ * own, and they are one play, from the earliest start to the latest.
  */
 export function matchProviderSlots<Slot extends SyncSeasonSlot>(
   plays: readonly ProviderSlotPlay[],
   slots: readonly Slot[],
+  field: ReadonlySet<string> = new Set(),
 ): ProviderSlotMatches<Slot> {
   const slotByCode = new Map(slots.flatMap((slot) => [slot.providerCode, slot.linkedCode].flatMap((code) => (code === null ? [] : [[code, slot] as const]))));
-  const matches: ProviderSlotMatches<Slot> = { matched: [], unmatched: [] };
+  const windowed = slots.flatMap((slot) => (slot.window === null ? [] : [{ slot, window: slot.window }]));
+  const matches: ProviderSlotMatches<Slot> = { matched: [], unmatched: [], unplaced: [] };
+  /** Each window a game is in, with the span of its games between field teams; null while it has none. */
+  const byWindow = new Map<Slot, { window: SlotWindow; games: ProviderSlotPlay | null }>();
   for (const play of plays) {
+    if (play.code === null) {
+      const found = windowed.find(({ window }) => play.startsAt >= window.startsAt && play.startsAt < window.endsAt);
+      if (found === undefined) {
+        matches.unplaced.push(play);
+        continue;
+      }
+      const placed = byWindow.get(found.slot) ?? { window: found.window, games: null };
+      const onField = play.teams !== undefined && play.teams.length > 0 && play.teams.every((team) => field.has(team));
+      if (onField) placed.games = spanOf(placed.games, play);
+      byWindow.set(found.slot, placed);
+      continue;
+    }
     const slot = slotByCode.get(play.code);
-    if (slot === undefined) matches.unmatched.push(play);
-    else matches.matched.push({ slot, play });
+    if (slot === undefined) matches.unmatched.push({ ...play, code: play.code });
+    else matches.matched.push({ slot, play, fromGames: true });
+  }
+  for (const [slot, { window, games }] of byWindow) {
+    matches.matched.push(games === null
+      ? { slot, play: { code: null, startsAt: window.startsAt, endsAt: window.endsAt }, fromGames: false }
+      : { slot, play: games, fromGames: true });
   }
   return matches;
+}
+
+/** The games of one window as one play, from the earliest start to the latest. */
+function spanOf(span: ProviderSlotPlay | null, play: ProviderSlotPlay): ProviderSlotPlay {
+  if (span === null) return { code: null, startsAt: play.startsAt, endsAt: play.endsAt };
+  return {
+    code: null,
+    startsAt: play.startsAt < span.startsAt ? play.startsAt : span.startsAt,
+    endsAt: play.endsAt > span.endsAt ? play.endsAt : span.endsAt,
+  };
 }
 
 /**
@@ -71,6 +133,18 @@ export function matchProviderSlots<Slot extends SyncSeasonSlot>(
 export function slotDatesChange(slot: Pick<SyncSeasonSlot, 'startsAt' | 'endsAt'>, play: ProviderSlotPlay): { startsAt: Date; endsAt: Date } | null {
   const same = slot.startsAt?.getTime() === play.startsAt.getTime() && slot.endsAt?.getTime() === play.endsAt.getTime();
   return same ? null : { startsAt: play.startsAt, endsAt: play.endsAt };
+}
+
+/**
+ * The plays dated outside their Season's span (#2012): a game before the Season starts or after
+ * it ends. Each is still written; the sync raises one WARNING for it, since a span that misses a
+ * game is a Season row to fix, not a game to drop.
+ */
+export function playsOutsideSeason<Play extends ProviderSlotPlay>(
+  plays: readonly Play[],
+  season: { startsAt: Date; endsAt: Date },
+): Play[] {
+  return plays.filter((play) => play.startsAt < season.startsAt || play.endsAt > season.endsAt);
 }
 
 /**
@@ -96,15 +170,19 @@ export interface SlotNamePattern {
 /** A provider event whose plays no code placed, by its name and its first play. */
 export interface UnplacedProviderEvent {
   name: string;
-  play: ProviderSlotPlay;
+  /** A play with a code: a game with none is placed by date window, never by name. */
+  play: CodedSlotPlay;
 }
+
+/** A play whose feed names its place by a code. */
+export type CodedSlotPlay = ProviderSlotPlay & { code: string };
 
 /** Where a tournament's name placed it, or why it placed it nowhere. */
 type SlotNamePlacement =
   /** One pattern matched and the Season already has that definition's slot, still unlinked: link it. */
-  | { outcome: 'LINK'; seasonSlotId: string; play: ProviderSlotPlay; name: string }
+  | { outcome: 'LINK'; seasonSlotId: string; play: CodedSlotPlay; name: string }
   /** One pattern matched and the Season has no slot of that definition yet: add it, linked. */
-  | { outcome: 'CREATE'; slotDefinitionId: string; play: ProviderSlotPlay; name: string; normalizedName: string }
+  | { outcome: 'CREATE'; slotDefinitionId: string; play: CodedSlotPlay; name: string; normalizedName: string }
   /** No pattern matched: nothing is created, and a finding offers "link to existing". */
   | { outcome: 'UNMATCHED'; normalizedName: string; name: string }
   /**
