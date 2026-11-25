@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import type { DefaultValues, FieldValues, UseFormReturn } from 'react-hook-form';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { hasErrorCode } from '@/lib/errors';
 import { DetailEditModal, type MutationActionWorkflowResult } from '@/features/shared/ui';
 import type { ProfileEditorProps } from './profile-dialog';
 
@@ -13,6 +15,7 @@ export function ProfileFormModal<TValues extends FieldValues, TSaved, TProfile e
   children,
   dialog,
   errorFallback,
+  fieldRefusal,
   form,
   formValues,
   save,
@@ -23,6 +26,8 @@ export function ProfileFormModal<TValues extends FieldValues, TSaved, TProfile e
   children: ReactNode;
   dialog: ProfileEditorProps<TProfile>;
   errorFallback: string;
+  /** A refusal the form shows under the field it is about, so the dialog does not repeat it above the form. */
+  fieldRefusal?: ApiErrorCode;
   form: UseFormReturn<TValues>;
   /** The form's values for the profile as it is now, which Edit starts from. */
   formValues: DefaultValues<TValues>;
@@ -46,7 +51,7 @@ export function ProfileFormModal<TValues extends FieldValues, TSaved, TProfile e
   const title = name === null ? newTitle : dialog.mode === 'edit' ? `${name} · Edit` : name;
   return (
     <DetailEditModal
-      error={save.error}
+      error={fieldRefusal !== undefined && hasErrorCode(save.error, fieldRefusal) ? null : save.error}
       errorFallback={errorFallback}
       facts={dialog.facts}
       isPending={save.isPending}

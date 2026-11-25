@@ -111,7 +111,7 @@ describe('RootAdminProfilesPage', () => {
     expect(screen.queryByTestId('root-admin-tier-profile-editor-name')).not.toBeInTheDocument();
   });
 
-  it('asks a new tier profile for the most in its last tier once Capped is chosen, shows the server\'s refusal of a cap left blank, and creates it with that cap', async () => {
+  it('asks a new tier profile for the most in its last tier once Capped is chosen, shows the server\'s refusal of a cap left blank under the cap field alone, and creates it with that cap', async () => {
     seed();
     mocks.createPlatformTierProfile
       .mockResolvedValueOnce({
@@ -133,7 +133,8 @@ describe('RootAdminProfilesPage', () => {
 
     await userEvent.selectOptions(screen.getByTestId('root-admin-tier-profile-editor-last-tier'), 'CAPPED');
     await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-save'));
-    expect(await screen.findByText('A capped last tier needs the most it takes, and one that takes everyone left has no cap.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter the most the last tier takes.')).toBeInTheDocument();
+    expect(screen.queryByText('A capped last tier needs the most it takes, and one that takes everyone left has no cap.')).not.toBeInTheDocument();
     expect(mocks.createPlatformTierProfile).toHaveBeenCalledTimes(1);
 
     await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-last-tier-max'), '9');
