@@ -23,6 +23,12 @@ specified in [`BACKGROUND-JOBS.md`](BACKGROUND-JOBS.md).
   mapping the event came under. Only the sync writes it; a test event has none. For BALLDONTLIE, which has
   games but no events, the external id is a *scope id* the adapter invents and parses back
   (`nfl-2026-week-12`, `nba-2025-postseason`).
+- **An event covers Season slots by `sport_event_slots` rows** (#2004): each slot at most one
+  event's, in the event's own Season, and an event with slots takes its dates from them. Only a
+  test event and the migration backfill write them until slice 8 makes the sync write them. A
+  test event is one on a labelled **test slot** (`is_test_data`), which the sync never reads or
+  writes; every other event is the sync's, so an event is synced exactly when it covers no test
+  slot (`isTestData` on the event).
 - **A participant links by feed id only**, within its event's sport league. Names are never
   compared. Test data shares a row with the sync by carrying the same feed id.
 - **Each league adds a reader, not a pipeline**: a scope id format, a few vendor reads, and a
@@ -319,7 +325,7 @@ whose match holds the game, or, while none does, every in-progress event mapped 
 provider league (#2004); nothing is read off the event's id. The job runs the normal
 scores sync. **The delivery is a trigger, never a record**: nothing in its body is written.
 
-Subscribed types are `balldontlieWebhookEventTypes` of the enabled league rows, by each row's
+Subscribed types are the events `GAME_EVENTS_BY_SET` and `GOLF_EVENT_PHASES` name, by each enabled league row's
 webhook event set: `game.started`, `game.period_ended` (`game.halftime` for soccer, `GAME_HALVES`)
 and `game.ended` for a game league, and the four PGA tournament and round events for
 `GOLF_ROUNDS`.

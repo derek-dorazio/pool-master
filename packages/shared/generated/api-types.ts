@@ -2791,7 +2791,7 @@ export interface paths {
         put?: never;
         /**
          * Add a test slot to the current Season
-         * @description A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
+         * @description A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
          */
         post: operations["createTestSlot"];
         delete?: never;
@@ -12341,6 +12341,8 @@ export interface components {
              * @enum {string}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+            /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+            shootout: boolean;
             /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
             isTestData: boolean;
             /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -12653,6 +12655,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+                shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -12944,6 +12948,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+                shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */

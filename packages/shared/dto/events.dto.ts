@@ -136,6 +136,7 @@ export const SportEventDtoSchema = z.object({
   sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
   participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the series\' sport league.'),
   scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the series\' sport league.'),
+  shootout: z.boolean().describe('Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer\'s does. Read through its sport.'),
   isTestData: z.boolean().describe(`Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. ${ADMIN_ONLY}`),
   slots: z.array(SportLeagueSeasonSlotDtoSchema).describe('The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.'),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),

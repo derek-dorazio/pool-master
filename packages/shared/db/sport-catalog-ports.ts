@@ -822,12 +822,18 @@ export interface SportLeagueSeasonRepository {
   findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null>;
   /**
    * Adds a labelled test slot of a definition to a Season (#2004), copying the definition's series
-   * format and pairing, in the Season's phase for the definition's phase. Null when the definition
-   * is not one of the league's. Raises the database's unique violation for a label the Season
-   * already has on that definition.
+   * format and pairing, in the Season's phase for the definition's phase. Says why when it adds
+   * none: the definition is not one of the league's, or the Season lacks its phase. Raises the
+   * database's unique violation for a label the Season already has on that definition.
    */
-  createTestSlot(input: TestSeasonSlotCreate): Promise<SportLeagueSeasonSlot | null>;
+  createTestSlot(input: TestSeasonSlotCreate): Promise<TestSlotCreateResult>;
 }
+
+/** What adding a test slot did: the slot, or why there is none. */
+export type TestSlotCreateResult =
+  | { outcome: 'CREATED'; slot: SportLeagueSeasonSlot }
+  | { outcome: 'DEFINITION_NOT_FOUND' }
+  | { outcome: 'PHASE_NOT_IN_SEASON' };
 
 /** A Season slot as an event create reads it: where it is, and the event already on it. */
 export interface SeasonSlotWithEvent {

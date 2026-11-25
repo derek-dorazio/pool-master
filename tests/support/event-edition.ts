@@ -73,11 +73,18 @@ export async function fixtureSeasonId(
  * the API (a new event goes in the current Season).
  */
 export async function withCurrentSeason(
-  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeague'>,
+  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeagueSeasonPhase'>,
   sportLeagueId: string,
   championshipYear = new Date().getUTCFullYear(),
 ): Promise<string> {
   const seasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
+  // A Season a migration adds has every phase of its league; one a fixture made is given them, so
+  // a test slot of any of the league's definitions can be added to it.
+  const phases = await prisma.sportLeaguePhase.findMany({ where: { sportLeagueId }, select: { id: true } });
+  await prisma.sportLeagueSeasonPhase.createMany({
+    data: phases.map((phase) => ({ sportLeagueId, sportLeagueSeasonId: seasonId, sportLeaguePhaseId: phase.id })),
+    skipDuplicates: true,
+  });
   await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { currentSeasonId: seasonId } });
   return seasonId;
 }

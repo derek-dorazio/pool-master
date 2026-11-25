@@ -11,8 +11,9 @@ import type {
   SportLeagueSeasonRepository,
   SyncableSportLeagueSeason,
   TestSeasonSlotCreate,
+  TestSlotCreateResult,
 } from '@poolmaster/shared/db';
-import type { SportLeagueSeason, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
+import type { SportLeagueSeason } from '@poolmaster/shared/domain';
 import { SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
 
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
@@ -76,17 +77,18 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     return { slot: toSeasonSlot(slot), sportLeagueId, sportLeagueSeasonId, sportEventId: eventSlot?.sportEventId ?? null };
   }
 
-  async createTestSlot(input: TestSeasonSlotCreate): Promise<SportLeagueSeasonSlot | null> {
+  async createTestSlot(input: TestSeasonSlotCreate): Promise<TestSlotCreateResult> {
     const definition = await this.prisma.sportLeaguePhaseSlot.findFirst({
       where: { id: input.slotDefinitionId, sportLeagueId: input.sportLeagueId },
       select: { sportLeaguePhaseId: true, seriesFormat: true, seriesGames: true, pairing: true },
     });
-    if (definition === null) return null;
-    const phase = await this.prisma.sportLeagueSeasonPhase.findUniqueOrThrow({
+    if (definition === null) return { outcome: 'DEFINITION_NOT_FOUND' };
+    const phase = await this.prisma.sportLeagueSeasonPhase.findUnique({
       where: { sportLeagueSeasonId_sportLeaguePhaseId: { sportLeagueSeasonId: input.sportLeagueSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId } },
       select: { id: true },
     });
-    return toSeasonSlot(await this.prisma.sportLeagueSeasonPhaseSlot.create({
+    if (phase === null) return { outcome: 'PHASE_NOT_IN_SEASON' };
+    const slot = toSeasonSlot(await this.prisma.sportLeagueSeasonPhaseSlot.create({
       data: {
         sportLeagueId: input.sportLeagueId,
         sportLeagueSeasonId: input.sportLeagueSeasonId,
@@ -102,5 +104,6 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       },
       select: SEASON_SLOT_SELECT,
     }));
+    return { outcome: 'CREATED', slot };
   }
 }

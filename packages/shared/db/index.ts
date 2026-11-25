@@ -158,6 +158,7 @@ export type {
   SportLeagueSeasonRepository,
   SeasonSlotWithEvent,
   TestSeasonSlotCreate,
+  TestSlotCreateResult,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
   SportLeagueOverviewLeague,

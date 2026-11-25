@@ -69,6 +69,8 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     championshipYear: 2026,
     sportLeagueId: 'league-1',
     ...sportPlay(overrides.sport ?? 'GOLF'),
+    // The API answers it from the sport's definition; a test of a shoot-out sets it.
+    shootout: false,
     // A test event: one made on a test slot (#2004).
     isTestData: true,
     slots: [seasonSlotFixture()],

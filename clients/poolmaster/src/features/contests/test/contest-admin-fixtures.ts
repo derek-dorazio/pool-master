@@ -102,6 +102,8 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     championshipYear: 2099,
     sportLeagueId: '00000000-0000-4000-8000-000000000002',
     ...sportPlay(overrides.sport ?? 'GOLF'),
+    // The API answers it from the sport's definition; a test of a shoot-out sets it.
+    shootout: false,
     isTestData: true,
     slots: [],
     autoLifecycleEnabled: true,

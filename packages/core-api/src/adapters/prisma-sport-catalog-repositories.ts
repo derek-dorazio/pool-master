@@ -545,6 +545,15 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async findSlots(sportEventIds: readonly string[]): Promise<Map<string, SportLeagueSeasonSlot[]>> {
+    if (sportEventIds.length === 1) {
+      const [onlyId] = sportEventIds;
+      // One event's slots need no link back to it: two reads, the slots and their definitions.
+      const slots = await this.prisma.sportLeagueSeasonPhaseSlot.findMany({
+        where: { eventSlot: { sportEventId: onlyId } },
+        select: SEASON_SLOT_SELECT,
+      });
+      return new Map([[onlyId, slots.map(toSeasonSlot).sort(compareSeasonSlots)]]);
+    }
     const rows = await this.prisma.sportEventSlot.findMany({
       where: { sportEventId: { in: [...sportEventIds] } },
       select: { sportEventId: true, seasonSlot: { select: SEASON_SLOT_SELECT } },

@@ -32,6 +32,8 @@ import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-go
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { withCurrentSeason } from '../support/event-edition';
+import { removeTestDefinition, TEST_DEFINITION_KEY, withTestDefinition } from '../support/test-slots';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { enterSeedRound, EVERY_GAME_PLAYED, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
@@ -134,18 +136,36 @@ beforeAll(async () => {
   await promoteToRootAdmin(admin);
 });
 
+/** Each league's current Season before this suite moved it, put back afterwards. */
+const originalSeasons = new Map<string, string | null>();
+/** The migration leagues this suite gave a test definition. */
+const testDefinitionLeagueIds = new Set<string>();
+
 afterAll(async () => {
   await cleanupFunctionalData();
   await cleanup();
+  const db = getFunctionalPrisma();
+  for (const sportLeagueId of testDefinitionLeagueIds) await removeTestDefinition(db, sportLeagueId);
+  for (const [id, currentSeasonId] of originalSeasons) await db.sportLeague.update({ where: { id }, data: { currentSeasonId } });
   await disconnectFunctionalPrisma();
 });
 
 /** Loads one copy of the row's event, tagged `tag`, and answers its id and its field by participant name. */
 async function loadCopy(row: PlayoffLeague, tag: string, season: number, withoutResults: boolean) {
   const file = oneEventOf(row.file, row.league, row.event, { withoutResults })(tag, season);
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: row.sport } })).data).sportLeagues
     .find((each) => each.name === row.league), row.league);
+  // A test event goes in its league's current Season (#2004), so each copy's year is made current
+  // first; a file event the league has no definition for yet is played on a test definition.
+  const db = getFunctionalPrisma();
+  if (!originalSeasons.has(sportLeague.id)) originalSeasons.set(sportLeague.id, sportLeague.currentSeasonId);
+  await withCurrentSeason(db, sportLeague.id, season);
+  for (const event of file.sportLeagues[0].events.filter((each) => each.slotKey === undefined)) {
+    await withTestDefinition(db, sportLeague.id);
+    testDefinitionLeagueIds.add(sportLeague.id);
+    event.slotKey = TEST_DEFINITION_KEY;
+  }
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const eventId = expectDefined(expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId: sportLeague.id } })).data).events
     .find((each) => each.name === file.sportLeagues[0].events[0].name), file.sportLeagues[0].events[0].name).id;
   const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId } })).data).participants;

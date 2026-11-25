@@ -300,8 +300,10 @@ export async function addRunSportLeague(client: Client, sport: Sport, name: stri
   if (!created.data) {
     throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
   }
-  // A migration adds a league with its Seasons; this year's stands in for them, made current.
-  await withCurrentSeason(getFunctionalPrisma(), created.data.sportLeague.id);
+  // A migration adds a league with its Seasons and slot definitions; this year's Season stands in
+  // for them, made current, with one definition (TEST_EVENT) a test slot can play.
+  const seasonId = await withCurrentSeason(getFunctionalPrisma(), created.data.sportLeague.id);
+  await testSlotDefinitionId(getFunctionalPrisma(), created.data.sportLeague.id, seasonId);
   return created.data.sportLeague.id;
 }
 
@@ -312,7 +314,8 @@ export async function addRunSportLeague(client: Client, sport: Sport, name: stri
  * league's current Season reaches no other test. Returns the league id.
  */
 export async function inCurrentSeason(sportLeagueId: string, championshipYear: number): Promise<string> {
-  await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  const seasonId = await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  await testSlotDefinitionId(getFunctionalPrisma(), sportLeagueId, seasonId);
   return sportLeagueId;
 }
 

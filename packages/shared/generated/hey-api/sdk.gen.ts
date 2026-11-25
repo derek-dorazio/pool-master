@@ -2049,7 +2049,7 @@ export const updateSportLeague = <ThrowOnError extends boolean = false>(options:
 /**
  * Add a test slot to the current Season
  *
- * A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
+ * A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
  */
 export const createTestSlot = <ThrowOnError extends boolean = false>(options: Options<CreateTestSlotData, ThrowOnError>): RequestResult<CreateTestSlotResponses, CreateTestSlotErrors, ThrowOnError> => (options.client ?? client).post<CreateTestSlotResponses, CreateTestSlotErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

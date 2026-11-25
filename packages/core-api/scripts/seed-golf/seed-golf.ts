@@ -424,7 +424,7 @@ class Loader {
   }
 
   /**
-   * The free test slot a file event is made on (#2004): the current Season's test slot of the
+   * The free test slot a file event is made on (#2004): the current Season's free test slot of the
    * named slot definition labelled with the event's key, made with the event's shifted dates when
    * the Season has none (so a load that stopped part way picks its slot up again). Null when the
    * league has no definition of that key.
@@ -433,13 +433,15 @@ class Loader {
     const { phases } = await must(getSportLeagueStructure({ client, path: { sportLeagueId } }), 'Read the league\'s slot definitions');
     const definition = phases.flatMap((phase) => phase.slots).find((slot) => slot.key === slotKey);
     if (definition === undefined) return null;
-    // A file event's key is unique in its file and short enough for a label.
-    const label = event.key;
+    // A file event's key is unique in its file and short enough for a label. Another event of the
+    // same key (a copy under another name) has its own slot, labelled with the next number.
     const { seasons } = await must(listSportLeagueSeasons({ client, path: { sportLeagueId } }), 'Read the league\'s Seasons');
-    const kept = seasons.find((season) => season.isCurrent)?.phases
+    const labelled = (seasons.find((season) => season.isCurrent)?.phases ?? [])
       .flatMap((phase) => phase.slots)
-      .find((slot) => slot.isTestData && slot.slotDefinitionId === definition.id && slot.label === label);
-    if (kept) return kept.id;
+      .filter((slot) => slot.isTestData && slot.slotDefinitionId === definition.id && (slot.label === event.key || slot.label?.startsWith(`${event.key} `) === true));
+    const free = labelled.find((slot) => slot.sportEventId === null);
+    if (free) return free.id;
+    const label = labelled.length === 0 ? event.key : `${event.key} ${String(labelled.length + 1)}`;
     const dates = shiftedEventDates(event, this.offsetDays);
     const { slot } = await must(createTestSlot({
       client,

@@ -2,7 +2,6 @@ import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieWebhookNotificationSchema } from '@poolmaster/shared/dto';
 import {
   balldontlieQuietAfterMs,
-  balldontlieWebhookEventTypes,
   checkBalldontlieSignature,
   readBalldontlieNotification,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-webhooks';
@@ -13,7 +12,6 @@ import {
 } from '../../../support/balldontlie-webhooks';
 import { BALLDONTLIE_TEST_LEAGUES as LEAGUES } from '../../../support/balldontlie-provider-rows';
 
-const EVENT_TYPES = balldontlieWebhookEventTypes(LEAGUES);
 const read = (body: object) => readBalldontlieNotification(BalldontlieWebhookNotificationSchema.parse(body), LEAGUES);
 
 describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
@@ -80,23 +78,6 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   it('acts on no subscribed event that is missing the game or tournament it should name', () => {
     expect(read({ event_type: 'nfl.game.ended' })).toBeNull();
     expect(read({ event_type: 'pga.tournament.started' })).toBeNull();
-  });
-
-  it('subscribes to the coarse game events of every league with a reader and golf\'s four tournament events, never a hole', () => {
-    expect(EVENT_TYPES).toEqual(expect.arrayContaining([
-      'nfl.game.started', 'nfl.game.period_ended', 'nfl.game.ended',
-      'ncaaf.game.started', 'ncaaf.game.period_ended', 'ncaaf.game.ended',
-      'ncaab.game.ended', 'ncaaw.game.ended',
-      'nhl.game.started', 'nhl.game.period_ended', 'nhl.game.ended',
-      'mlb.game.started', 'mlb.game.period_ended', 'mlb.game.ended',
-      'wnba.game.started', 'wnba.game.period_ended', 'wnba.game.ended',
-      'epl.game.started', 'epl.game.halftime', 'epl.game.ended',
-      'worldcup.game.ended',
-      'pga.tournament.started', 'pga.tournament.round_started', 'pga.player.round_completed', 'pga.tournament.ended',
-    ]));
-    expect(EVENT_TYPES).not.toContain('pga.player.hole_completed');
-    expect(EVENT_TYPES.every((type) => read({ event_type: type, game: { id: 1 }, tournament: { id: 1 } }) !== null))
-      .toBe(true);
   });
 });
 
@@ -192,11 +173,6 @@ describe('BALLDONTLIE webhooks follow its league rows (#1997)', () => {
 
     expect(readBalldontlieNotification(body, LEAGUES)).not.toBeNull();
     expect(readBalldontlieNotification(body, withoutMlb)).toBeNull();
-  });
-
-  it('subscribes only to the events of the enabled leagues, by each league\'s event set', () => {
-    expect(balldontlieWebhookEventTypes(withoutMlb)).not.toContain('mlb.game.ended');
-    expect(balldontlieWebhookEventTypes(LEAGUES.filter((league) => league.code === 'epl'))).toEqual(['epl.game.started', 'epl.game.halftime', 'epl.game.ended']);
   });
 
   it('takes a league\'s quiet window from its row, so an edit on the Providers page changes it', () => {

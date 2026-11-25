@@ -9,7 +9,8 @@ import type { PrismaClient } from '@prisma/client';
 
 type Db = Pick<PrismaClient, 'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'sportLeagueSeasonPhase'>;
 
-const TEST_DEFINITION_KEY = 'TEST_EVENT';
+/** The key of the slot definition a test makes for a league that has none; a test data file names it. */
+export const TEST_DEFINITION_KEY = 'TEST_EVENT';
 
 /** The league's first slot definition (by key), or its TEST_EVENT definition made now when it has none. */
 async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<{ id: string; sportLeaguePhaseId: string }> {
@@ -18,7 +19,27 @@ async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<{ id
     select: { id: true, sportLeaguePhaseId: true },
     orderBy: { key: 'asc' },
   });
-  if (existing) return existing;
+  return existing ?? createTestDefinition(prisma, sportLeagueId);
+}
+
+/**
+ * The league's TEST_EVENT definition, made now when it has none: for a test data file whose events
+ * the league has no definition for yet (a migration's league with no group-stage slots). A test
+ * that makes one on a migration's league removes it afterwards (`removeTestDefinition`).
+ */
+export async function withTestDefinition(prisma: Db, sportLeagueId: string): Promise<string> {
+  const existing = await prisma.sportLeaguePhaseSlot.findFirst({ where: { sportLeagueId, key: TEST_DEFINITION_KEY }, select: { id: true } });
+  return (existing ?? await createTestDefinition(prisma, sportLeagueId)).id;
+}
+
+/** Removes the league's TEST_EVENT definition and the test slots of it, once their events are gone. */
+export async function removeTestDefinition(prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonPhaseSlot'>, sportLeagueId: string): Promise<void> {
+  const where = { sportLeagueId, key: TEST_DEFINITION_KEY };
+  await prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { definition: where } });
+  await prisma.sportLeaguePhaseSlot.deleteMany({ where });
+}
+
+async function createTestDefinition(prisma: Db, sportLeagueId: string): Promise<{ id: string; sportLeaguePhaseId: string }> {
   const phase = await prisma.sportLeaguePhase.upsert({
     where: { sportLeagueId_phase: { sportLeagueId, phase: 'REGULAR' } },
     create: { sportLeagueId, phase: 'REGULAR', isSynced: true },

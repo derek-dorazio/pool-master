@@ -133,7 +133,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       summary: 'Add a test slot to the current Season',
       description: 'A labelled test slot of one of the league\'s slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). '
         + 'It copies the definition\'s series format and pairing, and its dates are the test event\'s. '
-        + '404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.',
+        + '404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.',
       operationId: 'createTestSlot',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('CreateTestSlotRequest'),

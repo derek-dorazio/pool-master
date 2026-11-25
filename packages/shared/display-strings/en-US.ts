@@ -1049,6 +1049,7 @@ export const enUS = {
     SETTINGS_INVALID: 'These settings are not valid.',
     SETTINGS_KEY_MISMATCH: 'These settings do not belong together.',
     SLOT_DEFINITION_NOT_FOUND: 'That slot is not one of this league\'s.',
+    SLOT_PHASE_NOT_IN_SEASON: 'This league\'s current Season has no place for that slot yet.',
     SPORT_EVENT_ALREADY_STARTED: 'This event has already started, so it can no longer be released.',
     SPORT_EVENT_BRACKET_LOCKED: 'This event has been released, so its bracket is locked.',
     SPORT_EVENT_FIELD_NOT_LOADED: 'This event\'s field has not loaded yet.',

@@ -1,4 +1,4 @@
-import { deleteTestSportLeagues } from '../support/test-slots';
+import { deleteTestSportLeagues, TEST_DEFINITION_KEY } from '../support/test-slots';
 import {
   getEventBracket,
   listEventParticipants,
@@ -138,7 +138,7 @@ describe('Loading a golf test seed through the admin API', () => {
       players: players(prefix, 12),
       events: [
         {
-          key: 'first',
+          key: 'first', slotKey: TEST_DEFINITION_KEY,
           name: `${prefix} Opener`,
           startDate: '2026-01-15',
           endDate: '2026-01-18',
@@ -155,7 +155,7 @@ describe('Loading a golf test seed through the admin API', () => {
           ],
         },
         {
-          key: 'second',
+          key: 'second', slotKey: TEST_DEFINITION_KEY,
           name: `${prefix} Classic`,
           startDate: '2026-01-22',
           endDate: '2026-01-25',
@@ -290,7 +290,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
       name: `${tour} ${key}`,
       players: players(`${prefix}-${key}`, 2).map((player, index) => ({ ...player, ...(feedIds[index] && { feedIds: feedIds[index] }) })),
       events: [{
-        key: 'feed', name: `${prefix} ${key} Open`, startDate: '2026-03-05', endDate: '2026-03-08', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
+        key: 'feed', slotKey: TEST_DEFINITION_KEY, name: `${prefix} ${key} Open`, startDate: '2026-03-05', endDate: '2026-03-08', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
         field: [1, 2].map((index) => ({ player: `${prefix}-${key}-p${index}`, ranking: index, oddsToWin: 5 + index, rounds: [68 + index, 70, 70, 70] })),
       }],
     }],
@@ -357,6 +357,8 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     for (const player of nfl.players) player.key = expectDefined(tagged(player.key));
     for (const event of nfl.events) {
       event.name = playoffs;
+      // A league a test adds plays one test definition (TEST_EVENT), not the file's slot keys.
+      event.slotKey = TEST_DEFINITION_KEY;
       for (const entry of event.field) entry.player = expectDefined(tagged(entry.player));
       for (const match of event.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
     }
@@ -426,7 +428,7 @@ describe('Filling an event from a test slate through the admin API', () => {
         name: tour,
         players: roster.slice(0, 3),
         events: [{
-          key: 'invitational', name: eventName, startDate: '2027-05-06', endDate: '2027-05-09', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
+          key: 'invitational', slotKey: TEST_DEFINITION_KEY, name: eventName, startDate: '2027-05-06', endDate: '2027-05-09', venue: null, location: null, rounds: 4, roundsPar: 72, winner: 'public',
           field: [1, 2, 3].map((index) => ({ player: `${prefix}-p${index}`, ranking: index, oddsToWin: 5 + index, rounds: [68 + index, 70, 70, 70] })),
         }],
       }],

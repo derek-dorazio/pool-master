@@ -10947,6 +10947,10 @@ export type SportEventDto = {
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
+     * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
+     */
+    shootout: boolean;
+    /**
      * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
      */
     isTestData: boolean;
@@ -11356,6 +11360,10 @@ export type SportEventListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
+         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
+         */
+        shootout: boolean;
+        /**
          * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
         isTestData: boolean;
@@ -11739,6 +11747,10 @@ export type SportEventResponse = {
          * How the event is scored. Read through the series' sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+        /**
+         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
+         */
+        shootout: boolean;
         /**
          * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */

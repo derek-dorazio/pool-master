@@ -474,10 +474,12 @@ export class SportEventService {
         422,
       );
     }
-    await this.release(sportEventId);
+    const released = await this.release(sportEventId);
     // The admin's judgement replaces the automatic one: no stored hold outlives the release.
     await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, null);
-    return this.requireAdminSummary(sportEventId);
+    // A release moves only the status (its follow-ups are jobs), so the counts and slots read for
+    // its checks still hold: the answer is the released event with them, not a second read.
+    return { ...summary, event: { ...released, autoReleaseCheck: undefined } };
   }
 
   /**
@@ -529,14 +531,16 @@ export class SportEventService {
   }
 
   /** DRAFT → SCHEDULED through the one status path, whether a root admin or the sweep released it. */
-  private async release(sportEventId: string): Promise<void> {
-    await this.deps.lifecycle.applySportEventStatusTransition({
+  /** Releases the draft; answers the event as the release left it. */
+  private async release(sportEventId: string): Promise<SportEvent> {
+    const { sportEvent } = await this.deps.lifecycle.applySportEventStatusTransition({
       sportEventId,
       toStatus: SportEventStatus.SCHEDULED,
       actor: { type: 'ROOT_ADMIN' },
       release: true,
     });
     this.deps.logger?.info({ sportEventId }, 'Released sport event for contests');
+    return sportEvent;
   }
 
   /**

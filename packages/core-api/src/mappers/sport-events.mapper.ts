@@ -5,6 +5,7 @@
  */
 
 import {
+  getSportDefinition,
   isTestEvent,
   ReleaseCheckKey,
   type ReleaseCheck,
@@ -83,6 +84,7 @@ export function mapSportEventToDto({
     sportLeagueId: event.sportLeagueId,
     participantType: event.participantType,
     scoringFamily: event.scoringFamily,
+    shootout: getSportDefinition(event.sport).shootout,
     isTestData: isTestEvent(slots),
     slots: slots.map(mapSportLeagueSeasonSlotToDto),
     autoLifecycleEnabled: event.autoLifecycleEnabled,
