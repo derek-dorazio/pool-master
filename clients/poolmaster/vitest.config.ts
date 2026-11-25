@@ -70,7 +70,8 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json-summary', 'lcov'],
+      // `json` is the per-file report scripts/check-coverage-floors.mjs reads (#2103).
+      reporter: ['text', 'json-summary', 'json', 'lcov'],
       // Every app source file counts, loaded by a test or not: without `include`, Vitest reports
       // only files some test imports, so an untested file or folder would pass every floor.
       include: ['src/**/*.{ts,tsx}'],

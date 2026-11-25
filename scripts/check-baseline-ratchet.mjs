@@ -41,6 +41,31 @@ function listedFiles(text) {
   return new Map([...text.matchAll(/^\s*(['"])([^'"]+)\1,?\s*$/gm)].map((match) => [match[2], 1]));
 }
 
+/**
+ * A coverage floor config (#2103), read so that going down in coverage is a raise: each floor is
+ * `<name>:lines` and `<name>:branches`, each exception `<name>:<file>:lines` and
+ * `<name>:<file>:branches`, valued 100 minus the percentage held. A lowered floor, a lowered
+ * exception and a new exception all count up and are refused; a raised or deleted exception
+ * counts down.
+ */
+function coverageFloors(text) {
+  const { floors = [] } = JSON.parse(text);
+  const entries = new Map();
+  // Lines and branches are separate keys, so lowering one and raising the other is still a raise.
+  const put = (key, held) => {
+    for (const metric of ['lines', 'branches']) entries.set(`${key}:${metric}`, 100 - held[metric]);
+  };
+  for (const floor of floors) {
+    put(floor.name, floor);
+    for (const [file, exception] of Object.entries(floor.exceptions ?? {})) {
+      put(`${floor.name}:${file}`, { lines: exception.lines ?? floor.lines, branches: exception.branches ?? floor.branches });
+    }
+  }
+  return entries;
+}
+
+export { coverageFloors };
+
 /** Every ratcheted baseline and how its entries are read. A new baseline is added here. */
 export const BASELINES = [
   { file: 'scripts/text-style-baseline.json', read: countsPerFile },
@@ -53,6 +78,9 @@ export const BASELINES = [
   { file: 'scripts/page-sections-baseline.json', read: countsPerFile },
   { file: 'scripts/retired-names.json', read: countsPerFile },
   { file: 'scripts/sport-registry-frozen.json', read: listedFiles },
+  { file: 'scripts/coverage-floors.json', read: coverageFloors },
+  { file: 'scripts/coverage-floors-merged.json', read: coverageFloors },
+  { file: 'scripts/coverage-floors-web.json', read: coverageFloors },
 ];
 
 /**
