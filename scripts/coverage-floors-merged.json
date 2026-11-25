@@ -53,18 +53,10 @@
           "lines": 97,
           "branches": 90
         },
-        "packages/core-api/src/modules/events/league-events-sync.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "branches": 95
-        },
         "packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
           "lines": 96,
           "branches": 89
-        },
-        "packages/core-api/src/modules/ingestion/ingestion-service.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "lines": 98
         }
       }
     }
