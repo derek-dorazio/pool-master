@@ -70,7 +70,6 @@
   "eventSportDefinition": 8,
   "fieldOrderDecision": 1,
   "findBudgetPricingProblem": 2,
-  "findFallingPlanLimit": 1,
   "findTierLayoutProblem": 1,
   "getDefaultCountedScores": 1,
   "getSportDefinition": 10,

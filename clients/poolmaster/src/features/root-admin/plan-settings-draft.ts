@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
-  PlanCap,
-  findFallingPlanLimit,
+  type PlanCap,
   type LeaguePlan,
   type PlanFeature,
 } from '@poolmaster/shared/domain';
@@ -60,8 +59,9 @@ export function toPlanConfig(draft: PlanSettingsDraft): PlanConfig {
 }
 
 /**
- * The server's own checks on the draft, each placed on the cell it is about: the stored schema's
- * limits, then that no cap falls as the plan rises.
+ * The stored schema's limits on the draft, each placed on the cell it is about. That no cap falls
+ * as the plan rises is the server's call: its SETTINGS_INVALID refusal names the cell, and the
+ * cap's dialog shows PLAN_CAP_FALLING_MESSAGE there.
  */
 export const PlanSettingsDraftSchema = z.custom<PlanSettingsDraft>().superRefine((draft, context) => {
   const config = toPlanConfig(draft);
@@ -69,13 +69,6 @@ export const PlanSettingsDraftSchema = z.custom<PlanSettingsDraft>().superRefine
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
       context.addIssue({ code: 'custom', path: [...issue.path, 'limit'], message: PLAN_CAP_LIMIT_MESSAGE });
-    }
-    return;
-  }
-  for (const cap of Object.values(PlanCap)) {
-    const falling = findFallingPlanLimit(config.caps[cap]);
-    if (falling) {
-      context.addIssue({ code: 'custom', path: ['caps', cap, falling, 'limit'], message: PLAN_CAP_FALLING_MESSAGE });
     }
   }
 });

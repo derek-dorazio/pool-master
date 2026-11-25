@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { DefaultValues, FieldValues, Resolver, UseFormReturn } from 'react-hook-form';
+import type { DefaultValues, FieldValues, Path, Resolver, UseFormReturn } from 'react-hook-form';
 import type { SettingsGroup } from '@/lib/api';
 import { DetailEditModal, type Fact } from '@/features/shared/ui';
 import { SettingsSaveError } from './settings-save-error';
@@ -20,6 +20,7 @@ export function PlanRowDialog<V extends FieldValues>({
   group,
   name,
   onClose,
+  placeRefusal,
   resolver,
   testId,
   toForm,
@@ -31,6 +32,8 @@ export function PlanRowDialog<V extends FieldValues>({
   /** The cap or feature, as the dialog's title. */
   name: string;
   onClose: () => void;
+  /** Where a refusal of a rule only the server checks shows on this row's form. */
+  placeRefusal?: (path: (string | number)[]) => { name: Path<V>; message: string } | null;
   resolver: Resolver<V>;
   testId: string;
   /** This row's form values, from a PLAN_CONFIG record. */
@@ -40,12 +43,13 @@ export function PlanRowDialog<V extends FieldValues>({
 }) {
   const settings = useSettingsGroupForm<PlanSettingsGroup, V>({
     group,
+    placeRefusal,
     resolver,
     subject: 'Plans settings',
     toForm,
     toValue,
   });
-  const { conflicted, form, loadLatest, saveMutation } = settings;
+  const { conflicted, form, formError, loadLatest } = settings;
   const { mode, modalProps } = useSettingsGroupDialog({ group, onClose, settings, testId, toForm });
 
   return (
@@ -58,7 +62,7 @@ export function PlanRowDialog<V extends FieldValues>({
         {children(form)}
         <SettingsSaveError
           conflicted={conflicted}
-          error={saveMutation.error}
+          error={formError}
           fallback="We could not save the plans."
           loadLabel="Load the latest plans"
           onLoadLatest={loadLatest}
