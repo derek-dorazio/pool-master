@@ -77,6 +77,7 @@ function fakes() {
       requireSummary: fn(summary),
       requireAdminSummary: fn(summary),
       requireEvent: fn(sportEvent()),
+      requireTestEvent: fn(sportEvent()),
       createEvent: fn(summary),
       updateEvent: fn(summary),
       deleteEvent: fn(undefined),
@@ -492,5 +493,53 @@ describe('bracket', () => {
 
     expect(services.bracket.fillPlayInSlot).toHaveBeenCalledWith(EVENT_ID, 'sep-1', 'p9');
     expect(services.field.getEventParticipant.mock.calls).toEqual([[EVENT_ID, 'sep-1']]);
+  });
+});
+
+describe('admin result writes on a test event only (#2074)', () => {
+  const matchParams = { eventId: EVENT_ID, matchNumber: 4 };
+  const roundParams = { eventId: EVENT_ID, roundNumber: 2 };
+
+  it('refuses every kept result write on an event covering no test slot before it writes anything, and checks the event before each', async () => {
+    const { services, handlers } = fakes();
+    const notTest = new SportEventError('covers no test slot', 'SPORT_EVENT_NOT_TEST_DATA', 409);
+    services.sportEvents.requireTestEvent.mockRejectedValue(notTest);
+
+    const writes = [
+      [handlers.loadEventBracket, stubRequest({ params, body: { matches: [] } })],
+      [handlers.updateEventBracketMatch, stubRequest({ params: matchParams, body: { isNeutralSite: true } })],
+      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { homeScore: 70, awayScore: 65 } })],
+      [handlers.recordEventMatchPeriodScore, stubRequest({ params: { ...matchParams, periodNumber: 2 }, body: { homeScore: 7, awayScore: 3 } })],
+      [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
+      [handlers.setEventRoundMatchups, stubRequest({ params: roundParams, body: { matches: [] } })],
+      [handlers.setEventPlayInWinner, stubRequest({ params: { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' }, body: { participantId: 'p9' } })],
+      [handlers.applyGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } })],
+      [handlers.updateGolfRoundScore, stubRequest({ params: { ...roundParams, sportEventParticipantId: 'sep-1' }, body: { strokes: 70 } })],
+      [handlers.applyRaceResults, stubRequest({ params, body: { rows: [] } })],
+    ] as const;
+    for (const [handler, request] of writes) {
+      await expect(callHandler(handler as never, request)).rejects.toBe(notTest);
+    }
+
+    expect(services.sportEvents.requireTestEvent).toHaveBeenCalledTimes(writes.length);
+    expect(services.sportEvents.requireTestEvent.mock.calls.every(([eventId]) => eventId === EVENT_ID)).toBe(true);
+    for (const write of [
+      services.bracket.loadBracket, services.bracket.updateMatch, services.bracket.setRoundMatchups, services.bracket.fillPlayInSlot,
+      services.matchResults.recordResult, services.matchResults.recordPeriodScore, services.matchResults.cancelMatch,
+      services.golfScores.applyRoundScores, services.golfScores.updateRoundScore, services.raceResults.applyResults,
+    ]) {
+      expect(write).not.toHaveBeenCalled();
+    }
+  });
+
+  it('leaves the previews and the reseed proposal, which write nothing, open on any event', async () => {
+    const { services, handlers } = fakes();
+    services.sportEvents.requireTestEvent.mockRejectedValue(new SportEventError('covers no test slot', 'SPORT_EVENT_NOT_TEST_DATA', 409));
+
+    await callHandler(handlers.previewGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } }));
+    await callHandler(handlers.previewRaceResults, stubRequest({ params, body: { rows: [] } }));
+    await callHandler(handlers.proposeEventRoundMatchups, stubRequest({ params: roundParams }));
+
+    expect(services.sportEvents.requireTestEvent).not.toHaveBeenCalled();
   });
 });

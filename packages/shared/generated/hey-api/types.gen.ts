@@ -35458,6 +35458,10 @@ export type ApplyEventGolfRoundScoresErrors = {
     /**
      * Standard API error envelope.
      */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
     422: ErrorEnvelope;
 };
 
@@ -35500,6 +35504,10 @@ export type UpdateEventParticipantGolfRoundScoreErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -35586,6 +35594,10 @@ export type ApplyEventRaceResultsErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */

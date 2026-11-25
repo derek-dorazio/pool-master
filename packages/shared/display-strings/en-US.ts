@@ -1055,6 +1055,7 @@ export const enUS = {
     SPORT_EVENT_NOT_FOUND: 'Event not found.',
     SPORT_EVENT_NOT_READY: 'This event is not ready yet: one of its ready checks no longer passes. Reload it to see which.',
     SPORT_EVENT_NOT_RELEASED: 'This event is not released for contests yet.',
+    SPORT_EVENT_NOT_TEST_DATA: 'Results for this event come only from its data feed. Only a test event takes them by hand.',
     SPORT_EVENT_RELEASE_REQUIRED: 'This event is a draft: release it instead.',
     SPORT_EVENT_SEEDS_LOCKED: 'This event has been released, so its seeds are locked.',
     SPORT_EVENT_START_NOT_PLACEHOLDER: 'This event already has a real start time.',

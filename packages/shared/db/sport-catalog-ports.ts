@@ -295,6 +295,11 @@ export interface SportEventRepository {
    */
   findSlots(sportEventIds: readonly string[]): Promise<Map<string, SportLeagueSeasonSlot[]>>;
   /**
+   * Whether the event is a test event, one covering a test slot (#2074): null when there is no such
+   * event. One read, for the admin result writes' guard.
+   */
+  isTestEvent(sportEventId: string): Promise<boolean | null>;
+  /**
    * The labels of the tiers no active participant is in, per event, in tier order, for each id
    * asked about (empty where none). An event can't be released while any remain: no entry could
    * pick from them.

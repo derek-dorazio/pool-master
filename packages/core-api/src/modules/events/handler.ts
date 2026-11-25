@@ -340,7 +340,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     applyGolfRoundScores: async (
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await requireEvent(request.params.eventId);
+      await sportEvents.requireTestEvent(request.params.eventId);
       await golfScores.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return fieldResponse(request.params.eventId);
     },
@@ -355,7 +355,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     applyRaceResults: async (
       request: FastifyRequest<EventParams & { Body: RaceResultUploadRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await requireEvent(request.params.eventId);
+      await sportEvents.requireTestEvent(request.params.eventId);
       await raceResults.applyResults(request.params.eventId, request.body);
       return fieldResponse(request.params.eventId);
     },
@@ -364,7 +364,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number; sportEventParticipantId: string }; Body: UpdateGolfRoundScoreRequest }>,
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, roundNumber, sportEventParticipantId } = request.params;
-      await requireEvent(eventId);
+      await sportEvents.requireTestEvent(eventId);
       await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
       return fieldRowResponse(eventId, sportEventParticipantId);
     },
@@ -378,6 +378,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     loadEventBracket: async (
       request: FastifyRequest<EventParams & { Body: LoadSportEventBracketRequest }>,
     ): Promise<SportEventBracketResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const matches = await bracket.loadBracket(request.params.eventId, request.body.matches.map((match) => ({
         ...match,
         scheduledDate: match.scheduledDate === null ? null : new Date(match.scheduledDate),
@@ -388,6 +389,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     updateEventBracketMatch: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: UpdateSportEventRoundMatchRequest }>,
     ): Promise<SportEventRoundMatchResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const { scheduledDate, ...edit } = request.body;
       const match = await bracket.updateMatch(request.params.eventId, request.params.matchNumber, {
         ...edit,
@@ -399,6 +401,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     recordEventMatchResult: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: RecordSportEventRoundMatchResultRequest }>,
     ): Promise<SportEventBracketResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
@@ -407,6 +410,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number; periodNumber: number }; Body: RecordSportEventMatchPeriodScoreRequest }>,
     ): Promise<SportEventBracketResponse> => {
       const { eventId, matchNumber, periodNumber } = request.params;
+      await sportEvents.requireTestEvent(eventId);
       const matches = await matchResults.recordPeriodScore(eventId, matchNumber, periodNumber, request.body);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
@@ -414,6 +418,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     cancelEventMatch: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
     ): Promise<SportEventBracketResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const matches = await matchResults.cancelMatch(request.params.eventId, request.params.matchNumber);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
@@ -427,6 +432,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     setEventRoundMatchups: async (
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number }; Body: SetSportEventRoundMatchupsRequest }>,
     ): Promise<SportEventBracketResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const matches = await bracket.setRoundMatchups(request.params.eventId, request.params.roundNumber, request.body.matches);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
@@ -435,6 +441,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<{ Params: { eventId: string; sportEventParticipantId: string }; Body: FillPlayInSlotRequest }>,
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, sportEventParticipantId } = request.params;
+      await sportEvents.requireTestEvent(eventId);
       await bracket.fillPlayInSlot(eventId, sportEventParticipantId, request.body.participantId);
       return fieldRowResponse(eventId, sportEventParticipantId);
     },

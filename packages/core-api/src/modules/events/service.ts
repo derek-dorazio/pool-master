@@ -647,6 +647,26 @@ export class SportEventService {
     return event;
   }
 
+  /**
+   * The event, when it is a test event (#2074, ADR 0013): one that covers a test slot. Results,
+   * pairings and scores come only from the feed, so the admin result routes write them only on a
+   * test event, which the test-data loader and the journeys score through them. One read: 404
+   * EVENT_NOT_FOUND for no event, 409 SPORT_EVENT_NOT_TEST_DATA on any other event.
+   */
+  async requireTestEvent(sportEventId: string): Promise<void> {
+    const isTest = await this.deps.sportEvents.isTestEvent(sportEventId);
+    if (isTest === null) {
+      throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
+    }
+    if (!isTest) {
+      throw new SportEventError(
+        `Sport event ${sportEventId} covers no test slot: its results come only from the feed.`,
+        'SPORT_EVENT_NOT_TEST_DATA',
+        409,
+      );
+    }
+  }
+
   /** The sport league's series of these names, each created on first use, by name. */
   private async resolveSeries(sportLeague: SportLeague, names: readonly string[]): Promise<Map<string, string>> {
     const series = await this.deps.eventSeries.findOrCreateMany(sportLeague.id, [...new Set(names)]);

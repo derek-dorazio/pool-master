@@ -477,6 +477,7 @@ export class InMemorySportEvents {
         .map((tier) => tier.label)])),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
       findSlots: async (ids) => new Map(ids.map((id) => [id, [...(this.slotsByEvent.get(id) ?? [])]])),
+      isTestEvent: async (id) => (this.events.some((event) => event.id === id) ? (this.slotsByEvent.get(id) ?? []).some((slot) => slot.isTestData) : null),
       countBySportLeagues: async (ids) => count(ids, (id) => this.events.filter((row) => row.sportLeagueId === id).length),
       sportLeagueHasLoadedBracket: async (sportLeagueId) => this.matchRows.some((match) => (
         this.events.some((event) => event.id === match.sportEventId && event.sportLeagueId === sportLeagueId)

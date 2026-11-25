@@ -548,6 +548,18 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
   }
 
+  async isTestEvent(sportEventId: string): Promise<boolean | null> {
+    // One read answers both: the event row, remembered for the request's later point reads of it
+    // (the write behind the guard reads the event again), and whether it covers a test slot.
+    const row = await this.prisma.sportEvent.findUnique({
+      where: { id: sportEventId },
+      include: { ...SPORT_EVENT_INCLUDE, _count: { select: { slots: { where: COVERS_TEST_SLOT } } } },
+    });
+    if (row === null) return null;
+    await memoizedReadMany(this.prisma, ReadMemoKey.sportEvent, [sportEventId], () => Promise.resolve([toSportEvent(row)]));
+    return row._count.slots > 0;
+  }
+
   async findSlots(sportEventIds: readonly string[]): Promise<Map<string, SportLeagueSeasonSlot[]>> {
     if (sportEventIds.length === 1) {
       const [onlyId] = sportEventIds;
