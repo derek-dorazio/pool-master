@@ -56,6 +56,7 @@ import {
 } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
+import { putEventInSlot, testSlotDefinitionId } from '../support/event-edition';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 
@@ -82,14 +83,12 @@ const RUNNERS = ['Kiplimo', 'Lemma', 'Kipruto', 'Tola', 'Abdi'];
 const COMMISSIONER_LINEUP = ['Kiplimo', 'Lemma', 'Kipruto', 'Tola'];
 const MEMBER_LINEUP = ['Kiplimo', 'Lemma', 'Kipruto', 'Abdi'];
 
-const created = { sportEventIds: new Set<string>(), participantIds: new Set<string>() };
+const created = { sportEventIds: new Set<string>(), participantIds: new Set<string>(), slotDefinitionIds: new Set<string>() };
 
 async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -97,7 +96,10 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
+    await db.sportLeagueSeasonPhaseSlot.deleteMany({ where: { label: { in: eventIds.map((id) => `event ${id}`) } } });
+  }
+  if (created.slotDefinitionIds.size) {
+    await db.sportLeaguePhaseSlot.deleteMany({ where: { id: { in: [...created.slotDefinitionIds] } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
@@ -130,16 +132,21 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
     const tieredTemplate = expectDefined(expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.RUNNING, sportLeagueId: majorsMen.id, active: true },
+      query: { sportLeagueId: majorsMen.id, active: true },
     })).data).templates.find((template) => template.templateKey === 'wmm-men-tiered-top-10'));
 
     /** A released race with the five runners, tiered one to a tier by ranking. */
-    const releaseRace = async (name: string, startDate: string, eventYear = SEASON) => {
+    // Each race is run in a slot of its own definition (#2010), which a perpetual trophy is kept
+    // by; until the sync gives events their slots (slice 8), the test puts each race in its slot.
+    const releaseRace = async (name: string, slotKey: string, startDate: string, eventYear = SEASON) => {
       const eventId = expectDefined((await createEvent({
         client: a,
         body: { sportLeagueId: await inCurrentSeason(majorsMen.id, eventYear), name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
+      const definitionId = await testSlotDefinitionId(getFunctionalPrisma(), majorsMen.id, `${slotKey}_${RUN}`, { name: `${name} ${RUN}` });
+      created.slotDefinitionIds.add(definitionId);
+      await putEventInSlot(getFunctionalPrisma(), eventId, definitionId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });
       await applyEventParticipantUpload({
         client: a,
@@ -193,8 +200,8 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     };
 
     // --- The first race: the member's Abdi 3rd beats the commissioner's Tola 4th ---------------
-    const harbour = await releaseRace('Harbour Marathon', `${SEASON}-04-19T13:30:00.000Z`);
-    const valley = await releaseRace('Valley Marathon', `${SEASON}-10-11T13:30:00.000Z`);
+    const harbour = await releaseRace('Harbour Marathon', 'HARBOUR', `${SEASON}-04-19T13:30:00.000Z`);
+    const valley = await releaseRace('Valley Marathon', 'VALLEY', `${SEASON}-10-11T13:30:00.000Z`);
     const harbourContest = await runContest(harbour, `Harbour Picks ${RUN}`, { Kiplimo: 1, Kipruto: 2, Abdi: 3, Tola: 4, Lemma: 5 });
 
     const afterOne = CupListResponseSchema.parse(expectDefined((await listCups({
@@ -295,7 +302,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     expect(strangerSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
 
     // --- Cup weight: an open contest takes one; a final contest refuses it -------------------
-    const coast = await releaseRace('Coast Marathon', `${SEASON}-11-01T13:30:00.000Z`);
+    const coast = await releaseRace('Coast Marathon', 'COAST', `${SEASON}-11-01T13:30:00.000Z`);
     const coastContest = expectDefined((await createContest({
       client: commissioner.client,
       path: { id: league.id },
@@ -468,12 +475,12 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     // --- Perpetual trophies (#874): the Harbour Marathon picks, run again the next year, make one ---
     const perpetual = async () => PerpetualTrophyListResponseSchema.parse(expectDefined((await listPerpetualTrophies({ client: member.client, path: { id: league.id } })).data)).trophies;
     expect(await perpetual()).toEqual([]);
-    const harbourAgain = await releaseRace('Harbour Marathon', `${SEASON + 1}-04-18T13:30:00.000Z`, SEASON + 1);
+    const harbourAgain = await releaseRace('Harbour Marathon', 'HARBOUR', `${SEASON + 1}-04-18T13:30:00.000Z`, SEASON + 1);
     const harbourAgainContest = await runContest(harbourAgain, `Harbour Picks again ${RUN}`, { Kiplimo: 1, Kipruto: 2, Tola: 3, Abdi: 4, Lemma: 5 });
     const trophies = await perpetual();
     expect(trophies).toHaveLength(1);
     const trophy = expectDefined(trophies[0]);
-    expect([trophy.seriesName, trophy.selectionType]).toEqual([`Harbour Marathon ${RUN}`, SelectionType.TIERED]);
+    expect([trophy.name, trophy.selectionType]).toEqual([`Harbour Marathon ${RUN}`, SelectionType.TIERED]);
     // The commissioner's Tola 3rd wins the second year; the member won the first.
     expect(trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.squadId === memberSquadId)])).toEqual([
       [SEASON + 1, harbourAgainContest, [false]],

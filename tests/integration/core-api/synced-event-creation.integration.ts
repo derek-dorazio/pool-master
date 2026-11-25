@@ -93,12 +93,12 @@ describe('Synced event creation (ADR 0011)', () => {
     await scheduler.runSweep();
 
     const events = await getPrisma().sportEvent.findMany({
-      where: { eventSeries: { sportLeagueId: { in: [synced.id, unsynced.id, inactive.id] } } },
-      include: { eventSeries: true, sportLeagueSeason: true, providerMappings: { select: { externalId: true, provider: { select: { code: true } }, sportLeagueProviderMapping: { select: { selectedBy: { select: { id: true } } } } } } },
+      where: { sportLeagueId: { in: [synced.id, unsynced.id, inactive.id] } },
+      include: { sportLeagueSeason: true, providerMappings: { select: { externalId: true, provider: { select: { code: true } }, sportLeagueProviderMapping: { select: { selectedBy: { select: { id: true } } } } } } },
       orderBy: { startDate: 'asc' },
     });
     // Each created event is kept under the provider's id for it, through the league's selected mapping (#2004).
-    expect(events.map((event) => [event.eventSeries.sportLeagueId, event.sportLeagueSeason.championshipYear, event.providerMappings, event.status])).toEqual([
+    expect(events.map((event) => [event.sportLeagueId, event.sportLeagueSeason.championshipYear, event.providerMappings, event.status])).toEqual([
       [synced.id, 2027, [{ externalId: `${synced.name}-2027`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
       [synced.id, 2028, [{ externalId: `${synced.name}-2028`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
     ]);
@@ -112,7 +112,7 @@ describe('Synced event creation (ADR 0011)', () => {
     await scheduler.runSweep();
     await scheduler.runSweep();
 
-    expect(await getPrisma().sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id } } })).toBe(2);
+    expect(await getPrisma().sportEvent.count({ where: { sportLeagueId: synced.id } })).toBe(2);
   });
 
   it('moves a released event and its rounds when the provider moves it, renames it, and leaves a completed one as it was (#1727)', async () => {
@@ -121,7 +121,7 @@ describe('Synced event creation (ADR 0011)', () => {
     const { scheduler } = buildScheduler(feed);
     await scheduler.runSweep();
     const prisma = getPrisma();
-    const [released, completed] = await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: synced.id } }, orderBy: { startDate: 'asc' } });
+    const [released, completed] = await prisma.sportEvent.findMany({ where: { sportLeagueId: synced.id }, orderBy: { startDate: 'asc' } });
     await prisma.sportEvent.update({ where: { id: released.id }, data: { status: 'SCHEDULED' } });
     await prisma.sportEvent.update({ where: { id: completed.id }, data: { status: 'COMPLETED' } });
 
@@ -151,7 +151,7 @@ describe('Synced event creation (ADR 0011)', () => {
       startDate: new Date('2027-08-01T12:00:00Z'),
     });
 
-    const events = await getPrisma().sportEvent.findMany({ where: { eventSeries: { sportLeagueId: synced.id } }, select: { id: true } });
+    const events = await getPrisma().sportEvent.findMany({ where: { sportLeagueId: synced.id }, select: { id: true } });
     const flags = await Promise.all(events.map(async ({ id }) => {
       const read = mapSportEventToDto(await sportEvents.requireAdminSummary(id));
       return [read.name, read.providerSynced] as const;

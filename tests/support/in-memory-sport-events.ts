@@ -11,7 +11,6 @@
 import type {
   GolfRoundWrite,
   GolfStandingWrite,
-  EventSeriesRepository,
   ParticipantProviderMappingRepository,
   ProviderMappingScope,
   ParticipantRepository,
@@ -107,7 +106,6 @@ export class InMemorySportEvents {
   platformPricingProfiles: PlatformPricingProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
-  eventSeriesRows: Array<{ id: string; sportLeagueId: string; name: string; isActive: boolean }> = [];
   events: SportEvent[] = [];
   /** Each event's latest automatic release check (#1847); absent when none is stored. */
   autoReleaseChecks = new Map<string, AutoReleaseCheck>();
@@ -188,14 +186,14 @@ export class InMemorySportEvents {
   }
 
   /**
-   * An event, by default an edition of a series of its own on a placeholder sport league.
-   * Pass `sportLeagueId` (and `eventSeriesId`, `sportLeagueSeasonId`) to place it on a real one;
+   * An event, by default on a placeholder sport league and in no slot.
+   * Pass `sportLeagueId` (and `sportLeagueSeasonId`, `slotDefinitions`) to place it on a real one;
    * its championship year is its Season's.
    */
   addEvent({ providerRef, ...overrides }: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
     const event: SportEvent = stamp({
       id: this.id('event'), providerMappings: providerRef === undefined ? [] : [providerMappingOf(providerRef)], sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
-      eventSeriesId: this.id('event-series'), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
+      slotDefinitions: [], sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
       autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
       championshipYear: 0,
@@ -325,19 +323,6 @@ export class InMemorySportEvents {
     };
   }
 
-  eventSeriesRepo(): EventSeriesRepository {
-    return {
-      findOrCreateMany: async (sportLeagueId, names) => names.map((name) => {
-        let row = this.eventSeriesRows.find((candidate) => candidate.sportLeagueId === sportLeagueId && candidate.name === name);
-        if (!row) {
-          row = { id: this.id('event-series'), sportLeagueId, name, isActive: true };
-          this.eventSeriesRows.push(row);
-        }
-        return stamp(row);
-      }),
-    };
-  }
-
   sportEventRepo(): SportEventRepository {
     const count = (ids: readonly string[], of: (id: string) => number) => new Map(ids.map((id) => [id, of(id)]));
     return {
@@ -357,7 +342,7 @@ export class InMemorySportEvents {
         (filters.statuses === undefined || filters.statuses.includes(row.status))
         && (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
         && (filters.sportLeagueSeasonId === undefined || row.sportLeagueSeasonId === filters.sportLeagueSeasonId)
-        && (filters.eventSeriesId === undefined || row.eventSeriesId === filters.eventSeriesId)
+        && (filters.slotDefinitionIds === undefined || row.slotDefinitions.some((definition) => filters.slotDefinitionIds?.includes(definition.id) === true))
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))
         && (!filters.releasedOnly || row.status !== 'DRAFT')
         // An event's league the store never made (addEvent's default) counts as on.
@@ -365,25 +350,7 @@ export class InMemorySportEvents {
         && (filters.startsFrom === undefined || row.startDate >= filters.startsFrom)
         && (filters.startsBefore === undefined || row.startDate < filters.startsBefore)
       )),
-      createMany: async (inputs: readonly SportEventCreate[]) => {
-        // The database's one-edition-per-Season constraint, raised the way Prisma raises it, and
-        // before any row is written: the insert is all or none.
-        const editions = new Set(this.events.map((row) => `${row.eventSeriesId}|${row.sportLeagueSeasonId}`));
-        for (const input of inputs) {
-          const edition = `${input.eventSeriesId}|${input.sportLeagueSeasonId}`;
-          if (editions.has(edition)) {
-            throw Object.assign(new Error('Unique constraint failed'), {
-              code: 'P2002',
-              meta: { target: ['event_series_id', 'sport_league_season_id'] },
-            });
-          }
-          editions.add(edition);
-        }
-        return inputs.map((input) => {
-          const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
-          return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced' });
-        });
-      },
+      createMany: async (inputs: readonly SportEventCreate[]) => inputs.map((input) => this.addEvent(input)),
       update: async (id, updates: SportEventUpdate, options) => {
         const row = this.events.find((candidate) => candidate.id === id) as SportEvent;
         for (const [key, value] of Object.entries(updates)) {

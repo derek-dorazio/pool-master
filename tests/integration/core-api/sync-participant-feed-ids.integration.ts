@@ -35,7 +35,6 @@ afterAll(async () => {
   await prisma.sportEvent.deleteMany({ where: ownEvents });
   await prisma.participantProviderMapping.deleteMany({ where: { participant: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
-  await prisma.eventSeries.deleteMany({ where: { sportLeague: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.sportLeague.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
   await teardownIntegrationTests();
 });

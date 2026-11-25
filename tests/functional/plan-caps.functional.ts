@@ -41,14 +41,11 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
@@ -113,7 +110,7 @@ describe('SDK Functional: plan caps (#947)', () => {
     try {
       const templateFor = async (sportLeagueId: string, templateKey: string) => expectDefined(expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
-        query: { sport: Sport.RUNNING, sportLeagueId, active: true },
+        query: { sportLeagueId, active: true },
       })).data).templates.find((template) => template.templateKey === templateKey)).id;
       const menTemplate = await templateFor(majorsMen.id, 'wmm-men-tiered-top-10');
       const womenTemplate = await templateFor(majorsWomen.id, 'wmm-women-tiered-top-10');

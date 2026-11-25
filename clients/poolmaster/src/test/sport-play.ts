@@ -1,4 +1,4 @@
-import { ParticipantType, ScoringFamily, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType, ScoringFamily, Sport, getSportDefinition, type SelectionType } from '@poolmaster/shared/domain';
 
 /**
  * Who competes in a sport's leagues and how they are scored, as the leagues are seeded (#2001).
@@ -22,4 +22,10 @@ const SPORT_PLAY: Readonly<Record<Sport, { participantType: ParticipantType; sco
 /** A sport's leagues' participant type and scoring family, for a test fixture. */
 export function sportPlay(sport: Sport): { participantType: ParticipantType; scoringFamily: ScoringFamily } {
   return SPORT_PLAY[sport];
+}
+
+/** A sport league's sport name and formats as the API sends them (#2107), for a test fixture. */
+export function sportFacts(sport: Sport): { sportName: string; selectionTypes: SelectionType[] } {
+  const definition = getSportDefinition(sport);
+  return { sportName: definition.name, selectionTypes: [...definition.selectionTypes] };
 }

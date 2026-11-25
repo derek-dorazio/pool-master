@@ -16,7 +16,7 @@ import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, tear
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { participantLeagueId } from '../../support/participant-league';
-import { seriesSeasonId } from '../../support/event-edition';
+import { fixtureSeasonId, putEventInSlot, testSlotDefinitionId } from '../../support/event-edition';
 
 // No mocks.
 
@@ -74,13 +74,12 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
   for (let sortOrder = 1; sortOrder <= offers; sortOrder += 1) {
     const { sportLeagueId, templateId, bracketStartRound } = kinds[(first + sortOrder - 1) % kinds.length];
     const roundNumber = bracketStartRound ?? 1;
-    const eventSeriesName = `Scaling Weekend ${suffix} ${String(sortOrder)}`;
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: eventSeriesName } });
+    const name = `Scaling Weekend ${suffix} ${String(sortOrder)}`;
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id,
-        sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()),
-        name: eventSeriesName,
+        sportLeagueId: sportLeagueId,
+        sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeagueId, startDate.getUTCFullYear()),
+        name,
         startDate,
         status: SportEventStatus.SCHEDULED,
         rounds: roundNumber,
@@ -105,8 +104,11 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
         scheduledDate: startDate,
       },
     });
+    // Each offer shows the next slot of a definition of its own, the event's (#2010).
+    const sportLeaguePhaseSlotId = await testSlotDefinitionId(prisma, sportLeagueId, `SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
+    await putEventInSlot(prisma, event.id, sportLeaguePhaseSlotId);
     await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId, eventSeriesName, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },
+      data: { eventPageId: page.id, sportLeagueId, sportLeaguePhaseSlotId, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },
     });
   }
   return page;

@@ -384,7 +384,6 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     findSportLeagueIdsBySeason: many(),
     findBySportEvent: many(),
     findBySportEvents: many(),
-    findJoinableByReleasedEdition: many(),
     findByStatuses: many(),
     findDraftsStartingBy: many(),
     findReminderChecksDue: many(),
@@ -496,6 +495,7 @@ export function fakeContestConfigTemplateRepo(
     findById: one(),
     list: many(),
     update: echoUpdate(),
+    findSlotDefinitions: many(),
     ...overrides,
   };
 }

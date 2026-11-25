@@ -36,10 +36,9 @@ async function seasonedLeague() {
 /** One event in `seasonId`, kept under the provider's id for it as the sync makes one when `synced`, else a test event with none. */
 async function eventIn(sportLeagueId: string, seasonId: string, synced: boolean) {
   const prisma = getPrisma();
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID().slice(0, 8)}` } });
   const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: seasonId, name: series.name,
+      sportLeagueId: sportLeagueId, sportLeagueSeasonId: seasonId, name: `Season event ${randomUUID()}`,
       startDate: new Date('2026-03-01T00:00:00.000Z'),
     },
   });

@@ -180,9 +180,9 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto>): Spo
 function template(overrides: Partial<ContestConfigTemplateDto> = {}): ContestConfigTemplateDto {
   return {
     id: '00000000-0000-4000-8000-00000000c001',
-    sport: 'BASKETBALL',
     sportLeagueId: 'nba',
-    eventType: 'KNOCKOUT',
+    coverageMode: 'ALL_LISTED',
+    slots: [],
     contestFormat: 'PREDICTION',
     selectionType: 'BRACKET',
     templateKey: 'nba-bracket',

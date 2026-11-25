@@ -4,7 +4,7 @@
  * event's or Season's slots, as the mode allows. Every rule here reads slot facts (phase kind,
  * slot kind, match format), never a name.
  */
-import { LeaguePhase, LeaguePhaseOrder, MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
+import { LeaguePhaseOrder, MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
 import type { ContestTemplateSlot } from './contest-management-types';
 import { compareByEnumOrder } from './enum-order';
 import { compareSlotDefinitions } from './sport-league-structure';
@@ -52,18 +52,18 @@ export function coveredSeasonSlots(
 export const TemplateCoverageProblem = {
   /** ALL_LISTED covers one event: its definitions must all be one event's (one phase, and one TOURNAMENT slot at most). */
   ALL_LISTED_SPANS_EVENTS: 'ALL_LISTED_SPANS_EVENTS',
-  /** A bracket lists a slot where a side need not advance: outside a POSTSEASON phase, and not a head-to-head tournament. */
+  /** A bracket lists a slot where a side need not advance: a field, or a week of a season's games. */
   BRACKET_OUTSIDE_KNOCKOUT: 'BRACKET_OUTSIDE_KNOCKOUT',
 } as const;
 export type TemplateCoverageProblem = (typeof TemplateCoverageProblem)[keyof typeof TemplateCoverageProblem];
 
 /**
- * Whether a bracket may list this slot: a POSTSEASON slot, or a TOURNAMENT slot played head to
- * head (a knockout draw). In both one side always advances, so a bracket never meets a tie.
+ * Whether a bracket may list this slot: a knockout, played head to head and not a week of a
+ * season's games (Derek 2026-11-25). A playoff round and a tennis Slam alike, whatever the phase:
+ * one side always advances, so a bracket never meets a tie.
  */
-export function isBracketSlot(slot: Pick<ContestTemplateSlot, 'phase' | 'slotKind' | 'matchFormat'>): boolean {
-  return slot.phase === LeaguePhase.POSTSEASON
-    || (slot.slotKind === SlotKind.TOURNAMENT && slot.matchFormat === MatchFormat.HEAD_TO_HEAD);
+export function isBracketSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>): boolean {
+  return slot.matchFormat === MatchFormat.HEAD_TO_HEAD && slot.slotKind !== SlotKind.WEEK;
 }
 
 /**

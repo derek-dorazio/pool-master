@@ -9839,6 +9839,10 @@ export interface components {
             sportUrlSegment: string;
             /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
             sportDisplayOrder: number;
+            /** @description Its sport's name, such as "American football", as screens title the sport (#2107). */
+            sportName: string;
+            /** @description The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats. */
+            selectionTypes: ("TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES")[];
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
             /** @description The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever. */
@@ -9971,6 +9975,10 @@ export interface components {
                 sportUrlSegment: string;
                 /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
                 sportDisplayOrder: number;
+                /** @description Its sport's name, such as "American football", as screens title the sport (#2107). */
+                sportName: string;
+                /** @description The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats. */
+                selectionTypes: ("TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES")[];
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
                 /** @description The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever. */
@@ -10094,6 +10102,10 @@ export interface components {
                 sportUrlSegment: string;
                 /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
                 sportDisplayOrder: number;
+                /** @description Its sport's name, such as "American football", as screens title the sport (#2107). */
+                sportName: string;
+                /** @description The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats. */
+                selectionTypes: ("TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES")[];
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
                 /** @description The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever. */
@@ -21887,6 +21899,8 @@ export interface components {
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+            sportName: string;
             /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
             sportUrlSegment: string;
             /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
@@ -21904,6 +21918,8 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                sportName: string;
                 /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
                 sportUrlSegment: string;
                 /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
@@ -22358,6 +22374,8 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                sportName: string;
                 /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
                 sportUrlSegment: string;
                 /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
@@ -22375,6 +22393,8 @@ export interface components {
                      * @enum {string}
                      */
                     sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                    sportName: string;
                     /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
                     sportUrlSegment: string;
                     /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
@@ -22840,6 +22860,8 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                sportName: string;
                 /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
                 sportUrlSegment: string;
                 /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
@@ -22857,6 +22879,8 @@ export interface components {
                      * @enum {string}
                      */
                     sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                    sportName: string;
                     /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
                     sportUrlSegment: string;
                     /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */

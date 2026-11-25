@@ -18531,6 +18531,26 @@
             "maximum": 9007199254740991,
             "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
           },
+          "sportName": {
+            "type": "string",
+            "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+          },
+          "selectionTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TIERED",
+                "BUDGET_PICK",
+                "RANDOM_DRAW",
+                "PICK_EM",
+                "BRACKET",
+                "SURVIVOR",
+                "SQUARES"
+              ]
+            },
+            "description": "The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats."
+          },
           "name": {
             "type": "string",
             "description": "Sport league name, e.g. \"PGA Tour\"."
@@ -18737,6 +18757,8 @@
           "sport",
           "sportUrlSegment",
           "sportDisplayOrder",
+          "sportName",
+          "selectionTypes",
           "name",
           "urlSegment",
           "currentSeasonId",
@@ -18836,6 +18858,26 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
                   "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
+                },
+                "sportName": {
+                  "type": "string",
+                  "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+                },
+                "selectionTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "TIERED",
+                      "BUDGET_PICK",
+                      "RANDOM_DRAW",
+                      "PICK_EM",
+                      "BRACKET",
+                      "SURVIVOR",
+                      "SQUARES"
+                    ]
+                  },
+                  "description": "The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats."
                 },
                 "name": {
                   "type": "string",
@@ -19043,6 +19085,8 @@
                 "sport",
                 "sportUrlSegment",
                 "sportDisplayOrder",
+                "sportName",
+                "selectionTypes",
                 "name",
                 "urlSegment",
                 "currentSeasonId",
@@ -19121,6 +19165,26 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
                 "description": "Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first."
+              },
+              "sportName": {
+                "type": "string",
+                "description": "Its sport's name, such as \"American football\", as screens title the sport (#2107)."
+              },
+              "selectionTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "TIERED",
+                    "BUDGET_PICK",
+                    "RANDOM_DRAW",
+                    "PICK_EM",
+                    "BRACKET",
+                    "SURVIVOR",
+                    "SQUARES"
+                  ]
+                },
+                "description": "The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats."
               },
               "name": {
                 "type": "string",
@@ -19328,6 +19392,8 @@
               "sport",
               "sportUrlSegment",
               "sportDisplayOrder",
+              "sportName",
+              "selectionTypes",
               "name",
               "urlSegment",
               "currentSeasonId",
@@ -56289,6 +56355,10 @@
             ],
             "description": "The sport the page belongs to."
           },
+          "sportName": {
+            "type": "string",
+            "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+          },
           "sportUrlSegment": {
             "type": "string",
             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -56337,6 +56407,10 @@
                 ],
                 "description": "The sport the page belongs to."
               },
+              "sportName": {
+                "type": "string",
+                "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+              },
               "sportUrlSegment": {
                 "type": "string",
                 "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -56354,6 +56428,7 @@
             },
             "required": [
               "sport",
+              "sportName",
               "sportUrlSegment",
               "urlSegment",
               "path"
@@ -57976,6 +58051,7 @@
         "required": [
           "id",
           "sport",
+          "sportName",
           "sportUrlSegment",
           "urlSegment",
           "path",
@@ -58013,6 +58089,10 @@
                   "TENNIS"
                 ],
                 "description": "The sport the page belongs to."
+              },
+              "sportName": {
+                "type": "string",
+                "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
               },
               "sportUrlSegment": {
                 "type": "string",
@@ -58062,6 +58142,10 @@
                     ],
                     "description": "The sport the page belongs to."
                   },
+                  "sportName": {
+                    "type": "string",
+                    "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                  },
                   "sportUrlSegment": {
                     "type": "string",
                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -58079,6 +58163,7 @@
                 },
                 "required": [
                   "sport",
+                  "sportName",
                   "sportUrlSegment",
                   "urlSegment",
                   "path"
@@ -59701,6 +59786,7 @@
             "required": [
               "id",
               "sport",
+              "sportName",
               "sportUrlSegment",
               "urlSegment",
               "path",
@@ -59776,6 +59862,10 @@
                   ],
                   "description": "The sport the page belongs to."
                 },
+                "sportName": {
+                  "type": "string",
+                  "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                },
                 "sportUrlSegment": {
                   "type": "string",
                   "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -59824,6 +59914,10 @@
                       ],
                       "description": "The sport the page belongs to."
                     },
+                    "sportName": {
+                      "type": "string",
+                      "description": "The sport's name, such as \"American football\", as the page titles it (#2107)."
+                    },
                     "sportUrlSegment": {
                       "type": "string",
                       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -59841,6 +59935,7 @@
                   },
                   "required": [
                     "sport",
+                    "sportName",
                     "sportUrlSegment",
                     "urlSegment",
                     "path"
@@ -61463,6 +61558,7 @@
               "required": [
                 "id",
                 "sport",
+                "sportName",
                 "sportUrlSegment",
                 "urlSegment",
                 "path",

@@ -16,7 +16,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { randomUUID } from 'node:crypto';
-import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
 import { sportRowKeys } from '../support/sport-rows';
@@ -34,7 +34,6 @@ async function cleanupDrawArtifacts(): Promise<void> {
     await prisma.sportEventParticipant.deleteMany({ where: { sportEventId: { in: createdSportEventIds } } });
     await unlinkContestsFromSportEvents(prisma, createdSportEventIds);
     await prisma.sportEvent.deleteMany({ where: { id: { in: createdSportEventIds } } });
-    await cleanupFreshEventEditions(prisma);
     createdSportEventIds.length = 0;
   }
   if (createdParticipantIds.length > 0) {

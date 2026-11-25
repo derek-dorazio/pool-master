@@ -5,7 +5,7 @@
  */
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { EventPageRepository } from '@poolmaster/shared/db';
-import { ContestFormat, ContestOpening, SelectionType, Sport, type EventPage, type EventPageOffer } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestOpening, SelectionType, Sport, type EventPage, type EventPageOffer, TemplateCoverageMode } from '@poolmaster/shared/domain';
 import type { ContestOpeningWindow } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
 import { createEventPageHandlers } from '../../../packages/core-api/src/modules/event-pages/handler';
 import { EventPageService, type EventPageView } from '../../../packages/core-api/src/modules/event-pages/service';
@@ -20,10 +20,11 @@ const OFFER: EventPageOffer = {
   eventPageId: PAGE.id,
   sportLeagueId: 'cw',
   sportLeagueName: 'Championship Weekend',
-  eventSeriesName: 'Conference Championships',
+  sportLeaguePhaseSlotId: 'conference-championships',
   template: {
     id: 'cw-tiered',
-    sport: Sport.AMERICAN_FOOTBALL,
+    coverageMode: TemplateCoverageMode.ONE_SLOT,
+    slots: [],
     sportLeagueId: 'cw',
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
@@ -35,7 +36,6 @@ const OFFER: EventPageOffer = {
     active: true,
     configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
     schemaVersion: 1,
-    eventSeriesNames: [],
     createdAt: STAMP,
     updatedAt: STAMP,
   },
@@ -48,7 +48,7 @@ const pages: EventPageRepository = {
   findByUrlSegments: () => Promise.resolve(PAGE),
   findActive: () => Promise.resolve([PAGE]),
   findOffers: () => Promise.resolve([OFFER]),
-  findEditionsNotOver: (series) => Promise.resolve(series.map(() => [{ sportEventId: 'cw-2027', name: 'Conference Championships', championshipYear: 2027, startDate: STAMP, endDate: null }])),
+  findSlotsNotOver: (definitionIds) => Promise.resolve(definitionIds.map(() => [{ seasonSlotId: 'cw-slot-2027', sportEventId: 'cw-2027', name: 'Conference Championships', championshipYear: 2027, startDate: STAMP, endDate: null }])),
 };
 
 /** An app whose offer closes at each of `cutoffs` in turn, one per time the page is computed. */

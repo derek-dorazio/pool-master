@@ -55,8 +55,8 @@ async function seedLiveCup(contests: number, seedContest: LiveContestSeed) {
 }
 
 /** The season and sports league an event counts in. */
-async function cupOf(event: { eventSeriesId: string; startDate: Date }): Promise<Omit<LiveContest, 'contestId'>> {
-  const { sportLeagueId } = await getPrisma().eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+async function cupOf(event: { sportLeagueId: string; startDate: Date }): Promise<Omit<LiveContest, 'contestId'>> {
+  const { sportLeagueId } = event;
   return { sportLeagueId, seasonYear: event.startDate.getUTCFullYear() };
 }
 

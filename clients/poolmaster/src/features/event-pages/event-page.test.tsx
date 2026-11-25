@@ -115,7 +115,7 @@ describe('Event page', () => {
       id: 'page-sb',
       urlSegment: 'super-bowl',
       path: '/play/american-football/super-bowl',
-      offers: [championshipWeekendFixture().offers[0]].map((offer) => ({ ...offer, edition: { ...offer.edition, startDate: '2027-02-07T23:30:00.000Z' } })),
+      offers: [championshipWeekendFixture().offers[0]].map((offer) => ({ ...offer, nextSlot: { ...offer.nextSlot, startDate: '2027-02-07T23:30:00.000Z' } })),
     });
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture(), superBowl] } });
@@ -128,7 +128,7 @@ describe('Event page', () => {
     expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL', upcoming: 'true' } }));
   });
 
-  it('says when the next edition is not on the schedule yet for a page between seasons', async () => {
+  it('says when the next slot is not on the schedule yet for a page between seasons', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture({ offers: [] }) } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
     listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
@@ -139,7 +139,7 @@ describe('Event page', () => {
   });
 
   it('sends a retired page with a successor to the successor\'s address', async () => {
-    const retired = championshipWeekendFixture({ id: 'page-old', urlSegment: 'conference-weekend', path: '/play/american-football/conference-weekend', isActive: false, offers: [], redirectTo: { sport: 'AMERICAN_FOOTBALL', sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', path: '/play/american-football/championship-weekend' } });
+    const retired = championshipWeekendFixture({ id: 'page-old', urlSegment: 'conference-weekend', path: '/play/american-football/conference-weekend', isActive: false, offers: [], redirectTo: { sport: 'AMERICAN_FOOTBALL', sportName: 'American football', sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', path: '/play/american-football/championship-weekend' } });
     getEventPageMock.mockImplementation((options: { path?: { urlSegment?: string } }) => ({
       data: { eventPage: options.path?.urlSegment === 'conference-weekend' ? retired : championshipWeekendFixture() },
     }));

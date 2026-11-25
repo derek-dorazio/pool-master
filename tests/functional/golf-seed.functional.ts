@@ -82,7 +82,6 @@ async function cleanup(): Promise<void> {
   const participantWhere = { OR: [{ name: { startsWith: RUN } }, { sportLeagueId: { in: leagueIds } }] };
   await db.participantProviderMapping.deleteMany({ where: { participant: participantWhere } });
   await db.participant.deleteMany({ where: participantWhere });
-  await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
 }
 

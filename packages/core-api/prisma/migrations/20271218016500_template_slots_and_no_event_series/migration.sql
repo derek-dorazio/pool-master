@@ -43,9 +43,9 @@ CREATE TABLE "contest_config_template_slots" (
 );
 
 -- Each template's slots, from the facts its event type stood for, never from a name:
---   a KNOCKOUT template covers its league's knockout slots: every POSTSEASON slot but the play-in
---   and TOURNAMENT slots (whole-tournament templates leave the play-in out), or, for a league
---   whose events are TOURNAMENT slots played head to head, each such tournament;
+--   a KNOCKOUT template covers its league's knockout slots, played head to head in any phase:
+--   every knockout round but the play-in (whole-tournament templates leave it out), or, for a
+--   league whose events are TOURNAMENT slots played head to head, each such tournament;
 --   a WEEK template covers the league's WEEK slots;
 --   a template for every event covers the league's TOURNAMENT slots, or for squares every slot.
 -- A squares template keeps only the squares-eligible slots.
@@ -53,7 +53,6 @@ INSERT INTO "contest_config_template_slots" ("sport_league_id", "template_id", "
 SELECT t."sport_league_id", t."id", d."id"
 FROM "contest_config_templates" t
 JOIN "sport_league_phase_slots" d ON d."sport_league_id" = t."sport_league_id"
-JOIN "sport_league_phases" p ON p."id" = d."sport_league_phase_id"
 WHERE (t."selection_type" <> 'SQUARES' OR d."squares_eligible")
   AND CASE
     WHEN t."event_type" = 'KNOCKOUT' THEN
@@ -62,7 +61,7 @@ WHERE (t."selection_type" <> 'SQUARES' OR d."squares_eligible")
         WHERE k."sport_league_id" = t."sport_league_id" AND k."slot_kind" = 'TOURNAMENT' AND k."match_format" = 'HEAD_TO_HEAD'
       )
       THEN d."slot_kind" = 'TOURNAMENT' AND d."match_format" = 'HEAD_TO_HEAD'
-      ELSE p."phase" = 'POSTSEASON' AND d."slot_kind" NOT IN ('PLAY_IN', 'TOURNAMENT')
+      ELSE d."match_format" = 'HEAD_TO_HEAD' AND d."slot_kind" NOT IN ('WEEK', 'PLAY_IN', 'TOURNAMENT')
       END
     WHEN t."event_type" = 'WEEK' THEN d."slot_kind" = 'WEEK'
     WHEN t."selection_type" = 'SQUARES' THEN TRUE

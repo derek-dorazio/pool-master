@@ -1,4 +1,4 @@
-import { buildEventPagePath, type EventPageAddress } from '@poolmaster/shared/domain';
+import { buildEventPagePath, getSportDefinition, type EventPageAddress } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@poolmaster/shared/dto';
 import type { EventPageOfferView, EventPageView } from '../modules/event-pages/service';
 import { mapContestConfigTemplateDto } from './contest-management.mapper';
@@ -28,6 +28,7 @@ export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto
 function toAddressDto(address: EventPageAddress) {
   return {
     sport: address.sport,
+    sportName: getSportDefinition(address.sport).name,
     sportUrlSegment: address.sportUrlSegment,
     urlSegment: address.urlSegment,
     path: buildEventPagePath(address),

@@ -33,7 +33,7 @@ import {
   getSdkClient,
 } from './setup';
 import { randomUUID } from 'node:crypto';
-import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { freshEventEdition } from '../support/event-edition';
 import { seededSportLeagueId } from '../support/contest-setups';
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
@@ -113,7 +113,6 @@ async function cleanupContestArtifacts(): Promise<void> {
         },
       },
     });
-    await cleanupFreshEventEditions(prisma);
     createdSportEventIds.length = 0;
   }
 
@@ -246,7 +245,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
       query: {
-        sport: Sport.GOLF,
         sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
@@ -357,7 +355,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
       query: {
-        sport: Sport.GOLF,
         sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
@@ -461,7 +458,9 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(response.response?.status).toBe(200);
     const templates = expectDefined(response.data).templates;
-    expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(Object.values(Sport)));
+    const sportLeagues = expectDefined((await listSportLeagues({ client: getSdkClient() })).data).sportLeagues;
+    const sportOf = new Map(sportLeagues.map((sportLeague) => [sportLeague.id, sportLeague.sport]));
+    expect(new Set(templates.map((template) => sportOf.get(template.sportLeagueId)))).toEqual(new Set(Object.values(Sport)));
     expect(templates.every((template) => template.active && template.name.length > 0 && template.description.length > 0)).toBe(true);
   });
 
@@ -495,7 +494,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
       query: {
-        sport: Sport.GOLF,
         sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },

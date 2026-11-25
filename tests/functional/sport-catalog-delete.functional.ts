@@ -44,7 +44,6 @@ afterAll(async () => {
   await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   await db.participantProviderMapping.deleteMany({ where: { participantId: { in: participantIds } } });
-  await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
   await db.participant.deleteMany({ where: { id: { in: participantIds } } });
   await db.sportLeague.deleteMany({ where: { id: { in: sportLeagueIds } } });
   await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
@@ -108,10 +107,10 @@ async function newTournament(client: Client, sportLeagueId: string, name: string
 beforeAll(() => ensureGolfSportRow());
 
 describe('SDK Functional: a root admin deletes a sport league or a participant nothing uses (#1400)', () => {
-  it('deletes a sport league with no events and no participants, taking its emptied event series with it', async () => {
+  it('deletes a sport league whose last event was deleted and that has no participants', async () => {
     const { client } = await rootAdmin();
     const sportLeagueId = await newTour(client, 'Delete Tour');
-    // A tournament made and deleted again leaves its series behind with no edition.
+    // A tournament made and deleted again leaves the league with no event.
     const eventId = await newTournament(client, sportLeagueId, 'Delete Tour Open');
     expect((await deleteEvent({ client, path: { eventId } })).response?.status).toBe(204);
 
@@ -119,8 +118,6 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
 
     expect(deleted.response?.status).toBe(204);
     expectFunctionalError(await getSportLeague({ client, path: { sportLeagueId } }), { status: 404, code: 'SPORT_LEAGUE_NOT_FOUND' });
-    const db = getFunctionalPrisma();
-    expect(await db.eventSeries.count({ where: { sportLeagueId } })).toBe(0);
   });
 
   it('refuses to delete a sport league that still has a participant with 409 SPORT_LEAGUE_IN_USE, and keeps both (#1853)', async () => {

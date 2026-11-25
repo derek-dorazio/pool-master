@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { PrismaClient } from '@prisma/client';
 import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
-import { cleanupFreshEventEditions, FIXTURE_EDITION_EVENTS } from '../support/event-edition';
+import { FIXTURE_EDITION_EVENTS } from '../support/event-edition';
 const FUNCTIONAL_TEST_EMAIL_DOMAIN = '@functional.test';
 
 export interface FunctionalServerState {
@@ -148,13 +148,12 @@ async function awaitJobs(what: string, where: JobWhere): Promise<void> {
 
 /**
  * Waits until the jobs an event's write queued for its contests have run: taking them live when it
- * starts, following a postponed event's start (#1952), settling them when it finishes, or a decided game's squares contests, and adding a released edition to its template
- * contests. The server runs these after the write answers, and the scenarios read the contests
+ * starts, following a postponed event's start (#1952), settling them when it finishes, or a decided game's squares contests. The server runs these after the write answers, and the scenarios read the contests
  * next, as a member would once the jobs are done.
  */
 async function awaitEventContestJobs(sportEventId: string, since: Date): Promise<void> {
   await awaitJobs(`Event ${sportEventId}'s contest jobs`, {
-    type: { in: ['ACTIVATE_EVENT_CONTESTS', 'FOLLOW_POSTPONED_EVENT_CONTESTS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'ADD_RELEASED_EDITION_TO_CONTEST'] },
+    type: { in: ['ACTIVATE_EVENT_CONTESTS', 'FOLLOW_POSTPONED_EVENT_CONTESTS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS'] },
     payload: { path: ['sportEventId'], equals: sportEventId },
     createdAt: { gte: since },
   });
@@ -537,7 +536,6 @@ export async function cleanupFunctionalData(): Promise<void> {
       },
     });
   }
-  await cleanupFreshEventEditions(database);
   if (providerParticipantIds.length > 0) {
     await database.participantProviderMapping.deleteMany({
       where: {

@@ -39,7 +39,7 @@ import { expectConstantQueries } from '../query-scaling';
 import { get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestRow } from '../../support/contest-rows';
-import { fixtureSeasonId, freshEventEdition, seriesSeasonId } from '../../support/event-edition';
+import { fixtureSeasonId, freshEventEdition, putEventInSlot, testSlotDefinitionId } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
@@ -117,20 +117,18 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
 }) {
   const prisma = getPrisma();
   const seeded = await seedLeagueWithTeams(teams);
-  const seriesByIndex = new Map<number, string>();
+  // A recurring contest is run each year on the same slot definition (#2010), which keeps its trophy.
+  const slotByIndex = new Map<number, { sportLeagueId: string; definitionId: string }>();
   for (let offset = 0; offset < years; offset += 1) {
     const year = LAST_SEEDED_YEAR - offset;
     const endsAt = new Date(`${String(year)}-06-15T12:00:00.000Z`);
     for (let index = 0; index < contestsPerYear; index += 1) {
-      const recurringSeriesId = recurring ? seriesByIndex.get(index) : undefined;
-      // A cup per contest puts each new series on a sport league of its own.
-      const ownTour = cupPerContest && recurringSeriesId === undefined
+      const recurringSlot = recurring ? slotByIndex.get(index) : undefined;
+      // A cup per contest puts each new contest on a sport league of its own.
+      const ownTour = cupPerContest && recurringSlot === undefined
         ? await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } })
         : undefined;
-      const edition = recurringSeriesId === undefined
-        ? await freshEventEdition(prisma, { championshipYear: year, sportLeagueId: ownTour?.id })
-        : { eventSeriesId: recurringSeriesId, sportLeagueSeasonId: await seriesSeasonId(prisma, recurringSeriesId, year) };
-      seriesByIndex.set(index, edition.eventSeriesId);
+      const edition = await freshEventEdition(prisma, { championshipYear: year, sportLeagueId: recurringSlot?.sportLeagueId ?? ownTour?.id });
       const event = await prisma.sportEvent.create({
         data: {
           ...edition,
@@ -138,6 +136,11 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
           startDate: new Date(`${String(year)}-06-11T12:00:00.000Z`),
         },
       });
+      if (recurring) {
+        const slot = recurringSlot ?? { sportLeagueId: edition.sportLeagueId, definitionId: await testSlotDefinitionId(prisma, edition.sportLeagueId, `SCALING_${seeded.suffix}_${String(index)}`.toUpperCase()) };
+        slotByIndex.set(index, slot);
+        await putEventInSlot(prisma, event.id, slot.definitionId);
+      }
       const contest = await prisma.contest.create({
         data: {
           leagueId: seeded.league.id,
@@ -162,7 +165,7 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
         });
       }
       if (cupPerContest || index === 0) {
-        const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
+        const { sportLeagueId } = edition;
         await prisma.cup.create({ data: { leagueId: seeded.league.id, seasonYear: year, sportLeagueId } });
       }
     }
@@ -180,12 +183,11 @@ async function seedSportLeagueWithSeasons(years: number) {
     update: {},
   });
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Seasons Tour ${suffix}` } });
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Seasons Open ${suffix}` } });
   for (let offset = 0; offset < years; offset += 1) {
     const year = LAST_SEEDED_YEAR - offset;
     await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id,
+        sportLeagueId: sportLeague.id,
         sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, year),
         name: `Scaling Seasons Open ${suffix} ${String(year)}`,
         startDate: new Date(`${String(year)}-06-11T12:00:00.000Z`),

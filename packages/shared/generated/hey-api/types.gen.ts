@@ -7992,6 +7992,14 @@ export type SportLeagueDto = {
      */
     sportDisplayOrder: number;
     /**
+     * Its sport's name, such as "American football", as screens title the sport (#2107).
+     */
+    sportName: string;
+    /**
+     * The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats.
+     */
+    selectionTypes: Array<'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES'>;
+    /**
      * Sport league name, e.g. "PGA Tour".
      */
     name: string;
@@ -8153,6 +8161,14 @@ export type SportLeagueListResponse = {
          */
         sportDisplayOrder: number;
         /**
+         * Its sport's name, such as "American football", as screens title the sport (#2107).
+         */
+        sportName: string;
+        /**
+         * The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats.
+         */
+        selectionTypes: Array<'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES'>;
+        /**
          * Sport league name, e.g. "PGA Tour".
          */
         name: string;
@@ -8300,6 +8316,14 @@ export type SportLeagueResponse = {
          * Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.
          */
         sportDisplayOrder: number;
+        /**
+         * Its sport's name, such as "American football", as screens title the sport (#2107).
+         */
+        sportName: string;
+        /**
+         * The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats.
+         */
+        selectionTypes: Array<'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES'>;
         /**
          * Sport league name, e.g. "PGA Tour".
          */
@@ -24102,6 +24126,10 @@ export type EventPageDto = {
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
+     * The sport's name, such as "American football", as the page titles it (#2107).
+     */
+    sportName: string;
+    /**
      * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
      */
     sportUrlSegment: string;
@@ -24129,6 +24157,10 @@ export type EventPageDto = {
          * The sport the page belongs to.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The sport's name, such as "American football", as the page titles it (#2107).
+         */
+        sportName: string;
         /**
          * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
          */
@@ -24738,6 +24770,10 @@ export type EventPageResponse = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
+         * The sport's name, such as "American football", as the page titles it (#2107).
+         */
+        sportName: string;
+        /**
          * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
          */
         sportUrlSegment: string;
@@ -24765,6 +24801,10 @@ export type EventPageResponse = {
              * The sport the page belongs to.
              */
             sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * The sport's name, such as "American football", as the page titles it (#2107).
+             */
+            sportName: string;
             /**
              * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
              */
@@ -25389,6 +25429,10 @@ export type EventPageListResponse = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
+         * The sport's name, such as "American football", as the page titles it (#2107).
+         */
+        sportName: string;
+        /**
          * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
          */
         sportUrlSegment: string;
@@ -25416,6 +25460,10 @@ export type EventPageListResponse = {
              * The sport the page belongs to.
              */
             sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * The sport's name, such as "American football", as the page titles it (#2107).
+             */
+            sportName: string;
             /**
              * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
              */

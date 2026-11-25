@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Navigate, useParams } from 'react-router';
-import { EventPageOfferState, getSportDefinition, isUrlSegment } from '@poolmaster/shared/domain';
+import { EventPageOfferState, isUrlSegment } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -58,7 +58,7 @@ function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: 
 function EventPageContent({ page }: { page: EventPageDto }) {
   const displayPreferences = useDisplayPreferences();
   const copy = eventPageCopy(page);
-  const sportName = getSportDefinition(page.sport).name;
+  const sportName = page.sportName;
   const primary = page.offers.find((offer) => offer.isPrimary);
   const plansQuery = useLeaguePlansQuery();
   const gift = plansQuery.data ? previewOffer(plansQuery.data, displayPreferences.locale) : null;

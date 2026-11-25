@@ -64,7 +64,6 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
   );
   const service = new SportEventService({
     sportEvents,
-    eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
@@ -126,7 +125,7 @@ describe('SportEventService.createEvent', () => {
     expect(created.tierCount).toBe(6);
   });
 
-  it('resolves the event to its sport league\'s series by name, creating the series once', async () => {
+  it('puts each event in its sport league\'s current Season, the league\'s own, so a year later the same event goes in the new Season', async () => {
     const { store, service, sportLeague } = setup();
 
     const first = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
@@ -134,9 +133,8 @@ describe('SportEventService.createEvent', () => {
     sportLeague.currentSeasonId = 'season-2027';
     const second = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 2 });
 
-    expect(second.event.eventSeriesId).toBe(first.event.eventSeriesId);
-    expect(second.event.sportLeagueSeasonId).toBe('season-2027');
-    expect(store.eventSeriesRows).toHaveLength(1);
+    expect([first.event.sportLeagueId, second.event.sportLeagueId]).toEqual([sportLeague.id, sportLeague.id]);
+    expect([first.event.sportLeagueSeasonId, second.event.sportLeagueSeasonId]).toEqual([IN_MEMORY_SEASON_ID, 'season-2027']);
   });
 
   it('refuses an event for a sport league with no current Season with 422 SPORT_LEAGUE_HAS_NO_SEASON, creating nothing', async () => {
@@ -150,15 +148,6 @@ describe('SportEventService.createEvent', () => {
 
   // plans/147 decision 5 — one edition of a series per year. The store raises the database's
   // unique violation; the service turns it into a 409 rather than a 500.
-  it('refuses a second edition of a series in one Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
-    const { store, service, sportLeague } = setup();
-    await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
-
-    await expect(service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409, message: `"${MANUAL_INPUT.name}" already has an edition in this Season.` });
-    expect(store.events).toHaveLength(1);
-  });
-
   it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
     const { service } = setup();
 

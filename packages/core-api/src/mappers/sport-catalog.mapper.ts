@@ -6,6 +6,7 @@
 import {
   SportLeagueIssueType,
   assertNever,
+  getSportDefinition,
   type SportConfig,
   type SportEventOverview,
   type SportLeagueEventOverview,
@@ -53,6 +54,8 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     sport: sportLeague.sport,
     sportUrlSegment: sportLeague.sportUrlSegment,
     sportDisplayOrder: sportLeague.sportDisplayOrder,
+    sportName: getSportDefinition(sportLeague.sport).name,
+    selectionTypes: [...getSportDefinition(sportLeague.sport).selectionTypes],
     name: sportLeague.name,
     urlSegment: sportLeague.urlSegment,
     currentSeasonId: sportLeague.currentSeasonId,

@@ -51,10 +51,9 @@ async function sportLeague(name: string, { synced = false }: { synced?: boolean 
 
 async function event(sportLeagueId: string, { championshipYear, ...input }: { championshipYear: number; startDate: Date; endDate?: Date; status?: 'DRAFT' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' }) {
   const prisma = getPrisma();
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
   return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, sportLeagueSeasonId, name: `Event ${randomUUID().slice(0, 8)}`, ...input },
+    data: { sportLeagueId: sportLeagueId, sportLeagueSeasonId, name: `Event ${randomUUID().slice(0, 8)}`, ...input },
   });
 }
 

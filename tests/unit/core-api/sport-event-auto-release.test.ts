@@ -46,7 +46,6 @@ function setup() {
   );
   const service = new SportEventService({ domainEvents: testDomainEvents(),
     sportEvents,
-    eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),

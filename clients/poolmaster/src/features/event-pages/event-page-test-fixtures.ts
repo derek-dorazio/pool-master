@@ -37,6 +37,7 @@ export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}
   return {
     id: 'page-cw',
     sport: 'AMERICAN_FOOTBALL',
+    sportName: 'American football',
     sportUrlSegment: 'american-football',
     urlSegment: 'championship-weekend',
     path: '/play/american-football/championship-weekend',

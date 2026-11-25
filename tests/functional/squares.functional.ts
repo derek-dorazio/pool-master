@@ -50,8 +50,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestSquaresGame.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -60,7 +58,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -115,7 +112,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     }
     const [preset] = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: nfl.id, active: true },
+      query: { sportLeagueId: nfl.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.SQUARES);
     expect([preset.templateKey, preset.isDefault]).toEqual(['nfl-squares', true]);
@@ -266,7 +263,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
       await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
       const preset = expectDefined(expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
-        query: { sport: row.sport, sportLeagueId: sportLeague.id, active: true },
+        query: { sportLeagueId: sportLeague.id, active: true },
       })).data).templates.find((template) => template.contestFormat === ContestFormat.SQUARES && template.sportLeagueId === sportLeague.id), `${row.league}'s squares preset`);
       expect([preset.templateKey, preset.isDefault]).toEqual([row.templateKey, true]);
       const contest = await createContest({
