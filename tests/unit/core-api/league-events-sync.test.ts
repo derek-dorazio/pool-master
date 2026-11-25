@@ -82,6 +82,7 @@ function build(options: {
         created: [created(`Open ${sportLeagueSeasonId}`)],
         skipped: [{ externalId: 'old', name: 'Old Open', reason: 'ALREADY_LINKED' }],
         unmatched: [],
+        unplacedNames: [],
       })),
     keepProviderEventsCurrent: options.keepProviderEventsCurrent ?? jest.fn(async (): Promise<ProviderEventDetailsChange[]> => []),
   };
@@ -339,6 +340,7 @@ describe('LeagueEventsSync', () => {
         created: [],
         skipped: [{ externalId: 'pre-1', name: 'Preseason Week 1', reason: 'NO_SLOT' }],
         unmatched: [{ code: 'PRE:1', eventName: 'Preseason Week 1' }],
+        unplacedNames: [],
       }));
       const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
 
@@ -353,6 +355,29 @@ describe('LeagueEventsSync', () => {
         providerValue: 'PRE:1',
         providerValueName: 'Preseason Week 1',
       }]);
+    });
+
+    it('raises one INFO SLOT_NAME_UNMATCHED finding for a tournament name no pattern matched and one ERROR SLOT_NAME_AMBIGUOUS for a name that matched more than one slot, each by its normalized name', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const own = seasonsOf();
+      const pga = syncedLeague(seasons, {}, own);
+      const importProviderSeason = jest.fn(async (): Promise<ProviderSeasonImport> => ({
+        created: [],
+        skipped: [],
+        unmatched: [],
+        unplacedNames: [
+          { normalizedName: 'the new open', name: 'The 2027 New Open', ambiguous: false },
+          { normalizedName: 'twin championship', name: 'Twin Championship', ambiguous: true },
+        ],
+      }));
+      const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
+
+      await sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
+
+      expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [
+        { kind: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, severity: ProviderSyncFindingSeverity.INFO, sportLeagueId: pga.id, sportEventId: null, providerValue: 'the new open', providerValueName: 'The 2027 New Open' },
+        { kind: ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS, severity: ProviderSyncFindingSeverity.ERROR, sportLeagueId: pga.id, sportEventId: null, providerValue: 'twin championship', providerValueName: 'Twin Championship' },
+      ]);
     });
 
     it('raises no SEASON_MISSING finding while a Season the provider has an id for has not ended', async () => {
@@ -420,6 +445,7 @@ describe('LeagueEventsSync', () => {
           { externalId: 'w2', name: 'Week 2', reason: 'ALREADY_LINKED' },
         ],
         unmatched: [],
+        unplacedNames: [],
       }));
       const { sync, syncRuns } = build({ leagues: [pga], seasons, importProviderSeason });
 

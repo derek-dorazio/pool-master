@@ -297,6 +297,8 @@ export const QueryKeys = {
     // The sync findings (#1999); one finding sits under the list's prefix, so a change refreshes both.
     syncFindings: ['poolmaster', 'root-admin', 'sync-findings'] as const,
     syncFinding: (findingId: QueryKeyId) => ['poolmaster', 'root-admin', 'sync-findings', findingId] as const,
+    // The slots a tournament name finding can be linked to (#2011), under its finding.
+    syncFindingSlotChoices: (findingId: QueryKeyId) => ['poolmaster', 'root-admin', 'sync-findings', findingId, 'slot-choices'] as const,
     // Customers › Users (#1883): every user, which any user's edit or account action refreshes.
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },

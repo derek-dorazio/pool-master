@@ -10,7 +10,7 @@ import { fixtureSeasonId, withCurrentSeason } from '../../support/event-edition'
 import { sportPlay } from '../../support/sport-play';
 import { testSlotId } from '../../support/test-slots';
 import { syncLeagueTo } from '../../support/league-sync';
-import { syncSlotsFor } from '../../support/sync-slots';
+import { nameSlotDefinitionFor, syncSlotsFor } from '../../support/sync-slots';
 
 // Creating and importing events against real Postgres (#1253): each writes its events,
 // their series, rounds and default tiers in a fixed number of queries however many events, and
@@ -92,6 +92,32 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     // only those the provider reschedules.
     const slotUpdates = (count: ReadonlyArray<readonly [string, number]>) => count.find(([statement]) => statement === 'UPDATE sport_league_season_phase_slots')?.[1];
     expect([slotUpdates(counts[0]), slotUpdates(counts[1])]).toEqual([2, 6]);
+    const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_phase_slots');
+    expect(others(counts[1])).toEqual(others(counts[0]));
+  });
+
+  it('places any number of tournaments by name in the same number of queries: one read of the league\'s name patterns, one write of the new slots and links, one re-read of the slots (#2011)', async () => {
+    const tour = await golfTour();
+    const counts = [];
+    for (const [year, size] of [[2087, 2], [2088, 6]] as const) {
+      const { sportEvents } = integrationSportEventServices();
+      const sportLeagueSeasonId = await fixtureSeasonId(getPrisma(), tour.id, year);
+      // Each tournament's id names no slot: its name is the only key the feed gives.
+      const slate = providerSlate(size, year).map((event) => ({ ...event, name: `${event.name} ${randomUUID().slice(0, 8)} presented by Sponsor` }));
+      for (const event of slate) {
+        await nameSlotDefinitionFor(getPrisma(), {
+          sportLeagueId: tour.id, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, pattern: event.name.replace(/ presented by Sponsor$/u, '').toLowerCase(), seasonIds: [sportLeagueSeasonId],
+        });
+      }
+      const { result: { created, unplacedNames }, statements } = await recordStatements(() => sportEvents.importProviderSeason({
+        sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: slate,
+      }));
+      expect([created.length, unplacedNames.length]).toEqual([size, 0]);
+      expect(created.every((summary) => summary.slots.length === 1)).toBe(true);
+      counts.push(statementCounts(statements));
+    }
+
+    // Every new slot takes its tournament's dates, one update each; nothing else grows with the slate.
     const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_phase_slots');
     expect(others(counts[1])).toEqual(others(counts[0]));
   });

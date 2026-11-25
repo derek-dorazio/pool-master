@@ -136,6 +136,12 @@ export class InMemorySportEvents {
   slotProviderCodes = new Map<string, string>();
   /** The synced slots an active contest template lists (#2005). */
   templateCoveredSlotIds = new Set<string>();
+  /** The league's NAME_PATTERN mappings, as `findSlotNamePatterns` reads them (#2011). */
+  slotNamePatterns: Array<{ slotDefinitionId: string; pattern: string }> = [];
+  /** The tournament code each Season slot was linked to by name (#2011). */
+  slotLinks = new Map<string, string>();
+  /** The slot definitions a template lists, so a Season slot created by name is covered (#2011). */
+  templateCoveredDefinitionIds = new Set<string>();
 
   /**
    * A synced Season slot of the league's current Season (#2005), with no dates yet, mapped by
@@ -149,19 +155,37 @@ export class InMemorySportEvents {
   }
 
   /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
-  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'recordSyncedSlots'> {
+  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
     const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
     return {
       findSyncSlots: async (sportLeagueSeasonId) => this.seasonSlots
         .filter((slot) => slot.sportLeagueSeasonId === sportLeagueSeasonId && !slot.isTestData)
         .map((slot) => ({
           seasonSlotId: slot.id,
+          slotDefinitionId: slot.slotDefinitionId,
           providerCode: this.slotProviderCodes.get(slot.id) ?? null,
-          coveredByTemplate: this.templateCoveredSlotIds.has(slot.id),
+          linkedCode: this.slotLinks.get(slot.id) ?? null,
+          coveredByTemplate: this.templateCoveredSlotIds.has(slot.id) || this.templateCoveredDefinitionIds.has(slot.slotDefinitionId),
           sportEventId: ownerOf(slot.id),
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
         })),
+      findSlotNamePatterns: async () => [...this.slotNamePatterns],
+      linkNameMatchedSlots: async ({ sportLeagueId, sportLeagueSeasonId, links, creates }) => {
+        const taken = new Set(this.slotLinks.values());
+        const link = (seasonSlotId: string, code: string) => {
+          if (this.slotLinks.has(seasonSlotId) || taken.has(code)) return;
+          this.slotLinks.set(seasonSlotId, code);
+          taken.add(code);
+        };
+        for (const each of links) link(each.seasonSlotId, each.code);
+        for (const create of creates) {
+          const id = this.addTestSlot({ id: sportLeagueId, currentSeasonId: sportLeagueSeasonId }, new Date(0), {
+            isTestData: false, label: null, startsAt: null, slotDefinitionId: create.slotDefinitionId, key: create.slotDefinitionId, sportLeagueSeasonId,
+          });
+          link(id, create.code);
+        }
+      },
       recordSyncedSlots: async ({ eventSlots, slotDates }) => {
         for (const change of slotDates) {
           const slot = this.seasonSlots.find((candidate) => candidate.id === change.seasonSlotId);

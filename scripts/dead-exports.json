@@ -217,7 +217,7 @@
   "own:packages/shared/dto/sport-catalog.dto.ts": 40,
   "own:packages/shared/dto/squads.dto.ts": 8,
   "own:packages/shared/dto/squares.dto.ts": 6,
-  "own:packages/shared/dto/sync-findings.dto.ts": 9,
+  "own:packages/shared/dto/sync-findings.dto.ts": 10,
   "own:packages/shared/dto/system-emails.dto.ts": 5,
   "own:packages/shared/dto/team-owner-invitations.dto.ts": 8,
   "own:packages/shared/dto/users.dto.ts": 5,
