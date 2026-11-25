@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { displayString } from '@poolmaster/shared/display-strings';
-import { ApiError, errorCodeMessage, extractErrorMessage, hasErrorCode, isErrorEnvelope, throwApiError } from './errors';
+import { ApiError, errorCodeMessage, errorIssuePaths, extractErrorMessage, hasErrorCode, isErrorEnvelope, throwApiError } from './errors';
 
 function caught(run: () => never): Error {
   try {
@@ -149,5 +149,19 @@ describe('throwApiError', () => {
     const err = caught(() => throwApiError(null, 'Contest list response is missing data.'));
     expect(err).not.toBeInstanceOf(ApiError);
     expect(extractErrorMessage(err)).toBe('Contest list response is missing data.');
+  });
+});
+
+describe('errorIssuePaths', () => {
+  it('reads the path of each validation issue a refusal carries, from an ApiError or a raw envelope', () => {
+    const envelope = { error: { code: 'SETTINGS_INVALID', message: 'invalid', details: [{ code: 'custom', path: ['caps', 'ENTRIES_PER_CONTEST', 'PRO'], message: 'falls' }] } };
+
+    expect(errorIssuePaths(new ApiError(envelope))).toEqual([['caps', 'ENTRIES_PER_CONTEST', 'PRO']]);
+    expect(errorIssuePaths(envelope)).toEqual([['caps', 'ENTRIES_PER_CONTEST', 'PRO']]);
+  });
+
+  it('finds no paths on an error without validation issues, so nothing is placed on a field', () => {
+    expect(errorIssuePaths(new ApiError({ error: { code: 'SETTINGS_CONFLICT', message: 'conflict' } }))).toEqual([]);
+    expect(errorIssuePaths(new Error('network'))).toEqual([]);
   });
 });
