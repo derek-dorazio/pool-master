@@ -93,22 +93,6 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     expect(screen.queryByTestId('root-admin-sport-event-create-event-year')).not.toBeInTheDocument();
   });
 
-  it('shows a second edition of a series in one Season as its own refusal, not a generic failure', async () => {
-    createEventMock.mockResolvedValue({
-      error: { error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'exists' } },
-      response: { status: 409 },
-    });
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-sport-event-create-name'), { target: { value: 'The Masters' } });
-    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-start'), { target: { value: '2026-04-09T13:00' } });
-    fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
-
-    expect(
-      await screen.findByText('This tour already has this tournament in its current Season.'),
-    ).toBeInTheDocument();
-  });
-
   it('submits a manual tournament with the tour prefilled from the URL and no year, and navigates Home', async () => {
     createEventMock.mockResolvedValue({
       data: { event: sportEventFixture({ id: 'new-tour' }) },

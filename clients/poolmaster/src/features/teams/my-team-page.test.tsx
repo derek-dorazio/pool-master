@@ -616,8 +616,8 @@ describe('My team › Trophies and past years', () => {
     const mine = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     const rival = { squadId: 'team-2', squadName: 'Rival Squad', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
-      eventSeriesId: '11111111-1111-4111-8111-111111111111',
-      seriesName: 'Super Bowl',
+      trophyId: '11111111-1111-4111-8111-111111111111',
+      name: 'Super Bowl',
       sportLeagueName: 'NFL',
       selectionType: 'SQUARES',
       plates: [

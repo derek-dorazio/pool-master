@@ -1,6 +1,7 @@
 import { ContestOpening, SelectionType, eventSportDefinition } from '@poolmaster/shared/domain';
 import { sportPlay } from '@/test/sport-play';
 import type {
+  ContestConfigTemplateDto,
   ContestDto,
   ContestEntryDto,
   ContestManagementDetailDto,
@@ -49,11 +50,28 @@ export function openingsUnderWay(
   });
 }
 
-type LooseEvent = { sport: SportEventDto['sport']; participantType?: SportEventDto['participantType']; scoringFamily?: SportEventDto['scoringFamily']; contestEligible?: boolean; contestOpenings?: unknown };
+type LooseEvent = { sport: SportEventDto['sport']; participantType?: SportEventDto['participantType']; scoringFamily?: SportEventDto['scoringFamily']; contestEligible?: boolean; contestOpenings?: unknown; slotDefinitionIds?: string[] };
+
+/** The slot definition a test event of the sport plays unless it names its own (#2010): one per sport. */
+export function sportSlotId(sport: SportEventDto['sport']): string {
+  return `slot-${sport}`;
+}
+
+/** The slot definition of a test week of games, which a week's templates cover. */
+export const WEEK_SLOT_ID = 'slot-week';
+
+/** A slot definition a test template covers, as the API sends it (#2010). */
+export function templateSlotFixture(id: string): ContestConfigTemplateDto['slots'][number] {
+  return {
+    id, key: id.toUpperCase().replace(/-/g, '_'), name: null, slotKind: id === WEEK_SLOT_ID ? 'WEEK' : 'TOURNAMENT', weekNumber: null,
+    sportLeaguePhaseId: 'phase-regular', phase: 'REGULAR', matchFormat: 'FIELD',
+  };
+}
 
 /**
  * A list-events answer with each event that names no openings given the ones an event before its
- * start has: OPEN when contest-ready, else NOT_YET. Lets a page test's partial events stand in for
+ * start has: OPEN when contest-ready, else NOT_YET, and each that names no slot definitions its
+ * sport's test slot (`sportSlotId`). Lets a page test's partial events stand in for
  * the API's; a test of a knockout under way names its own with `openingsUnderWay`.
  */
 export function withEventOpenings<T>(response: T): T {
@@ -63,7 +81,7 @@ export function withEventOpenings<T>(response: T): T {
     ...(response as object),
     data: {
       ...(response as { data: object }).data,
-      events: events.map((event) => (event.contestOpenings !== undefined ? event : {
+      events: events.map((loose) => ({ slotDefinitionIds: [sportSlotId(loose.sport)], ...loose })).map((event) => (event.contestOpenings !== undefined ? event : {
         ...event,
         contestOpenings: openingsBeforeStart(
           { ...sportPlay(event.sport), sport: event.sport, ...(event.participantType && { participantType: event.participantType }), ...(event.scoringFamily && { scoringFamily: event.scoringFamily }) },

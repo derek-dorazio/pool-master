@@ -56,11 +56,11 @@ describe('extractErrorMessage', () => {
   });
 
   it('shows the screen\'s context wording for a code it words, with the screen\'s words in its placeholders', () => {
-    const err = new ApiError({ error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'Series has an edition.' } });
+    const err = new ApiError({ error: { code: 'BRACKET_MATCH_NOT_FOUND', message: 'Match m-1 is not in event e-1.' } });
     expect(extractErrorMessage(err, {
-      context: 'createEvent',
-      values: { sportLeague: 'tour', event: 'tournament' },
-    })).toBe('This tour already has this tournament in its current Season.');
+      context: 'bracketAdmin',
+      values: { match: 'game' },
+    })).toBe('That game is no longer in the bracket. Refresh the page.');
   });
 
   it('shows the code\'s own display string when the screen\'s context has no wording for that code', () => {

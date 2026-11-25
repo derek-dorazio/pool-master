@@ -176,7 +176,9 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const presetsKey = JSON.stringify([sport, sportLeagueId ?? null, slotDefinitionIds ?? null]);
 
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.contestConfigTemplates.list({ sportLeagueId, slotDefinitionIds, active: true }),
+    // An empty list, never undefined, while no event is chosen: undefined filters would share the
+    // every-active-template key (`useActiveContestTemplatesQuery`) and offer those as presets.
+    queryKey: QueryKeys.contestConfigTemplates.list({ sportLeagueId, slotDefinitionIds: slotDefinitionIds ?? [], active: true }),
     queryFn: async (): Promise<ContestConfigTemplateDto[]> => {
       if (!slotDefinitionIds?.length) return [];
       const response = await listContestConfigTemplates({
@@ -295,13 +297,14 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     }
   }, [firstSquaresGameId, isSquaresGameMissing, setFormValues]);
 
-  // A requested template starts the page on its sport and format, so its events are listed.
+  // A requested template starts the page on its sport and format, so its events are listed. Its
+  // sport is its league's, so the start waits for the sport leagues too.
   useEffect(() => {
-    if (!requestedTemplate || requestedTemplateProgress.current !== 'sport' || !isCreatableSelectionType(requestedTemplate.selectionType)) {
+    if (!requestedTemplate || requestedTemplateSport === null || requestedTemplateProgress.current !== 'sport' || !isCreatableSelectionType(requestedTemplate.selectionType)) {
       return;
     }
     requestedTemplateProgress.current = 'event';
-    if (requestedTemplateSport !== null && form.getValues('sport') !== requestedTemplateSport) {
+    if (form.getValues('sport') !== requestedTemplateSport) {
       selectSport(requestedTemplateSport);
     }
     setFormValues({ selectionType: requestedTemplate.selectionType });
