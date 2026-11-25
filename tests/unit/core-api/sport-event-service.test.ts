@@ -443,6 +443,23 @@ describe('SportEventService.importProviderSeason', () => {
     ]);
   });
 
+  it('judges a start by the first game its slots hold, creating an event for a slate begun long before its slots\' games (#2012)', async () => {
+    const { store, service, sportLeague } = setup();
+    store.addSyncSlot(sportLeague, 'POST:1');
+    const seasonLong = {
+      ...providerEvent('ncaaf-2026-cfp', 'College Football Playoff', null, new Date('2026-01-03T18:00:00.000Z'), slate[0].endDate),
+      providerSlots: [
+        playOf('REG:1', new Date('2026-01-03T18:00:00.000Z'), new Date('2026-01-03T18:00:00.000Z')),
+        playOf('POST:1', slate[0].startDate, slate[0].endDate),
+      ],
+    };
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [seasonLong]));
+
+    expect(result.skipped).toEqual([]);
+    expect(result.created[0].event).toEqual(expect.objectContaining({ startDate: slate[0].startDate }));
+  });
+
   it('reports a started provider event that is already linked as already linked, so the linked event keeps updating', async () => {
     const { store, service, sportLeague } = setup();
     store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-past' } });

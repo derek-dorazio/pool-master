@@ -3,13 +3,10 @@ import { BalldontlieContractError } from '../../../../packages/core-api/src/modu
 import { CompetitionStatusState } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/competition-status';
 import { ncaafGameListSchema, type NcaafGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-contract';
 import {
-  CFP_LEAGUE,
-  cfpGamesOf,
-  cfpGameWindow,
   cfpScopeId,
   parseCfpScope,
+  teamsOfGames,
   toCfpEvent,
-  toCfpFieldParticipants,
   toCfpGameScoreUpdates,
   toNcaafTeamParticipant,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-mapping';
@@ -20,7 +17,6 @@ const season2025 = gamesIn('games-2025-season.json');
 const season2026 = gamesIn('games-2026-season-partial.json');
 const CFP_2025 = { season: 2025 };
 const CFP_2026 = { season: 2026 };
-const BIG_TEN_TITLE_2025 = 5002;
 
 describe('College Football Playoff scopes', () => {
   it('names a season\'s playoff and reads the name back', () => {
@@ -36,83 +32,42 @@ describe('College Football Playoff scopes', () => {
   });
 });
 
-describe('the College Football Playoff\'s date window', () => {
-  it.each([
-    // [season, first Saturday of December]: a December starting on each kind of day.
-    [2018, '2018-12-01'], // December 1 is a Saturday
-    [2024, '2024-12-07'], // a Sunday
-    [2025, '2025-12-06'], // a Monday
-    [2026, '2026-12-05'], // a Tuesday
-  ])('opens for the %i season at noon UTC on the day after conference championship Saturday, %s, and closes after January 31', (season, saturday) => {
-    const sunday = new Date(`${saturday}T12:00:00.000Z`);
-    sunday.setUTCDate(sunday.getUTCDate() + 1);
-    expect(cfpGameWindow(season)).toEqual({ from: sunday, to: new Date(`${String(season + 1)}-02-01T12:00:00.000Z`) });
-  });
-
-  it('is the rule the league config reads', () => {
-    expect(CFP_LEAGUE.window).toBe(cfpGameWindow);
-  });
-
-  it('leaves out the 2025 Big Ten title game between two playoff teams, though its Saturday night kickoff falls on the Sunday in UTC', () => {
-    const titleGame = season2025.find((game) => game.id === BIG_TEN_TITLE_2025);
-    expect(titleGame?.date).toBe('2025-12-07T01:00:00.000Z');
-
-    expect(cfpGamesOf(CFP_2025, season2025).map((game) => game.id)).not.toContain(BIG_TEN_TITLE_2025);
-  });
-
-  it('keeps every game from the Army-Navy game through the national championship, and none from the regular season', () => {
-    expect(cfpGamesOf(CFP_2025, season2025).map((game) => game.id)).toEqual(
-      [5003, 5011, 5012, 5013, 5014, 5021, 5022, 5023, 5024, 5031, 5032, 5041],
-    );
-  });
-
-  it('keeps no game of another season\'s window', () => {
-    expect(cfpGamesOf(CFP_2026, season2025)).toEqual([]);
-  });
-
-  it('refuses a game with no date, since it cannot be placed in or out of the window', () => {
-    const [undated] = gamesIn('games-2025-season.json');
-    delete undated.date;
-    expect(() => cfpGamesOf(CFP_2025, [undated])).toThrow(BalldontlieContractError);
-  });
-});
-
 describe('a College Football Playoff as an event', () => {
-  const window2025 = cfpGamesOf(CFP_2025, season2025);
-  const window2026 = cfpGamesOf(CFP_2026, season2026);
-
-  it('is complete once its window has closed and every game in it is final, spanning its first game to its last', () => {
-    expect(toCfpEvent(CFP_2025, window2025, true, 14)).toEqual({
+  it('carries every game of its season as a play with no code, for the sync to place by date window, spanning its first game to its last', () => {
+    const event = toCfpEvent(CFP_2025, season2025);
+    expect(event).toEqual({
       externalId: 'ncaaf-2025-cfp',
       providerId: 'balldontlie',
       sport: Sport.AMERICAN_FOOTBALL,
       name: 'College Football Playoff',
-      startDate: new Date('2025-12-13T20:00:00.000Z'),
+      startDate: new Date('2025-11-29T17:00:00.000Z'),
       endDate: new Date('2026-01-20T00:30:00.000Z'),
       status: 'COMPLETED',
-      participantCount: 14,
+      participantCount: undefined,
       fieldLocked: true,
-      providerSlots: [],
+      providerSlots: season2025.map((game) => ({ code: null, startsAt: new Date(game.date as string), endsAt: new Date(game.date as string) })),
     });
   });
 
-  it('is still under way while its window is open, even with every listed game final: the title game may not be listed yet', () => {
-    expect(toCfpEvent(CFP_2025, window2025, false).status).toBe('IN_PROGRESS');
-  });
-
   it('is under way with its field locked once a game is live', () => {
-    expect(toCfpEvent(CFP_2026, window2026, false)).toMatchObject({ status: 'IN_PROGRESS', fieldLocked: true });
+    expect(toCfpEvent(CFP_2026, season2026)).toMatchObject({ status: 'IN_PROGRESS', fieldLocked: true });
   });
 
   it('is scheduled with its field open before any kickoff', () => {
-    const notStarted = window2026.filter((game) => game.status_state === CompetitionStatusState.SCHEDULED);
-    expect(toCfpEvent(CFP_2026, notStarted, false)).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
+    const notStarted = season2026.filter((game) => game.status_state === CompetitionStatusState.SCHEDULED);
+    expect(toCfpEvent(CFP_2026, notStarted)).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
   });
 
-  it('names each team playing in the window once, by the feed\'s raw id', () => {
-    const field = toCfpFieldParticipants(window2025);
-    expect(field).toHaveLength(14);
-    expect(field[0]).toEqual({
+  it('refuses a game with no date, since it cannot be placed in any window', () => {
+    const [undated] = gamesIn('games-2025-season.json');
+    delete undated.date;
+    expect(() => toCfpEvent(CFP_2025, [undated])).toThrow(BalldontlieContractError);
+  });
+
+  it('names each team its games have once, by the feed\'s raw id', () => {
+    const teams = teamsOfGames(season2025);
+    expect(new Set(teams.map((team) => team.externalId)).size).toBe(teams.length);
+    expect(teams.find((team) => team.externalId === '93')).toEqual({
       externalId: '93',
       providerId: 'balldontlie',
       sport: Sport.AMERICAN_FOOTBALL,
@@ -134,7 +89,7 @@ describe('a College Football Playoff as an event', () => {
 
 describe('College Football Playoff game scores', () => {
   it('passes on each game\'s teams, state and score, the national championship among them', () => {
-    const updates = toCfpGameScoreUpdates(cfpGamesOf(CFP_2025, season2025));
+    const updates = toCfpGameScoreUpdates(season2025);
     expect(updates.at(-1)).toEqual({
       externalGameId: '5041',
       homeTeamExternalId: '64',
@@ -146,7 +101,8 @@ describe('College Football Playoff game scores', () => {
   });
 
   it('passes on a live score, a scheduled game with no score, and leaves out a game whose state is unknown', () => {
-    expect(toCfpGameScoreUpdates(cfpGamesOf(CFP_2026, season2026))).toEqual([
+    expect(toCfpGameScoreUpdates(season2026)).toEqual([
+      expect.objectContaining({ externalGameId: '6002', state: ProviderGameState.FINAL }),
       expect.objectContaining({ externalGameId: '6011', state: ProviderGameState.IN_PROGRESS, homeScore: 14, awayScore: 10 }),
       expect.objectContaining({ externalGameId: '6012', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null }),
     ]);

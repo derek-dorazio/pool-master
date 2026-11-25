@@ -340,7 +340,7 @@ export class SportEventService {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;
       }
-      const reason = unplayableReason(providerEvent, matched.map(({ slot }) => slot), free.map(({ slot }) => slot), now);
+      const reason = unplayableReason(providerEvent, matched, free.map(({ slot }) => slot), now);
       if (reason !== null) {
         skipped.push({ externalId, name, reason });
         continue;
@@ -892,17 +892,22 @@ function providerEdition(
 /**
  * Why a provider event not yet linked makes no event (#1821, #2005), or null when it makes one:
  * its start has passed; its games matched no slot; no template lists a slot they matched; or every
- * listed slot they matched already has an event.
+ * listed slot they matched already has an event. An event starts at its slots' first game, so
+ * once its games match a slot its start is theirs, not the provider event's: a slate whose games
+ * are placed by date window starts long before its first windowed game (#2012).
  */
 function unplayableReason(
   providerEvent: Pick<ProviderEventDetail, 'startDate'>,
-  matched: readonly SyncSeasonSlot[],
+  matched: ReadonlyArray<{ slot: SyncSeasonSlot; play: Pick<ProviderSlotPlay, 'startsAt'> }>,
   free: readonly SyncSeasonSlot[],
   now: Date,
 ): ProviderSeasonImport['skipped'][number]['reason'] | null {
-  if (providerEventStarted(providerEvent, now)) return 'ALREADY_STARTED';
+  const startDate = matched.length === 0
+    ? providerEvent.startDate
+    : new Date(Math.min(...matched.map(({ play }) => play.startsAt.getTime())));
+  if (providerEventStarted({ startDate }, now)) return 'ALREADY_STARTED';
   if (matched.length === 0) return 'NO_SLOT';
-  if (!matched.some((slot) => slot.coveredByTemplate)) return 'NO_TEMPLATE';
+  if (!matched.some(({ slot }) => slot.coveredByTemplate)) return 'NO_TEMPLATE';
   if (!free.some((slot) => slot.coveredByTemplate)) return 'SLOT_TAKEN';
   return null;
 }
