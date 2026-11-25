@@ -55,6 +55,7 @@ import {
   fakeUserRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { fakeLogger } from '../../support/fake-logger';
 import { InMemoryLeaderboardSnapshots } from '../../support/in-memory-leaderboard-snapshots';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { expectDefined } from '../../support/expect-defined';
@@ -2124,6 +2125,155 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
     ]);
   });
 
+  describe('a contest of several events', () => {
+    const event = (id: string, status: SportEventStatus, startDate: string) => ({ ...STARTED_EVENT, id, status, startDate: new Date(startDate) });
+    const SETTLED = event('event-1', SportEventStatus.COMPLETED, '2026-01-01T12:00:00.000Z');
+    const CANCELLED = event('event-2', SportEventStatus.CANCELLED, '2026-01-15T12:00:00.000Z');
+    const LIVE = event('event-3', SportEventStatus.IN_PROGRESS, '2026-02-01T12:00:00.000Z');
+    const NEXT = event('event-4', SportEventStatus.SCHEDULED, '2099-06-01T12:00:00.000Z');
+    const LATER = event('event-5', SportEventStatus.SCHEDULED, '2099-07-01T12:00:00.000Z');
+    const entry = (id: string, entryNumber: number, submittedIn: string[]) => ({
+      ...DEFAULT_ENTRY_WITH_SQUAD,
+      id,
+      entryNumber,
+      name: `Entry ${entryNumber}`,
+      squadId: `squad-${entryNumber}`,
+      squadName: `Team ${entryNumber}`,
+      events: submittedIn.map((sportEventId) => ({ sportEventId, status: 'SUBMITTED' as const })),
+    });
+    const settledRow = (contestEntryId: string, sportEventId: string, position: number, score: number) => ({
+      id: `standing-${contestEntryId}-${sportEventId}`,
+      contestId: 'contest-1',
+      contestEntryId,
+      sportEventId,
+      position,
+      displayPosition: String(position),
+      countingPickLimit: 2,
+      scoredPickCount: 2,
+      asOf: new Date('2026-01-04T22:00:00.000Z'),
+      settledAt: new Date('2026-01-04T22:00:00.000Z'),
+      totalScore: score,
+    });
+    const golfer = (id: string, eventScoreToPar: number, asOf: Date | undefined) => {
+      const view = buildGolfFieldView({ id, participantName: `Golfer ${id}`, eventScoreToPar, eventStrokes: 140, status: 'ACTIVE' });
+      return { ...view, entry: { ...view.entry, sportEventId: 'event-3' }, standing: { ...view.standing, standing: { ...view.standing.standing, asOf } } };
+    };
+    const pick = (id: string, entryId: string, sportEventParticipantId: string) => ({ ...buildGolfLeaderboardPick(id, entryId, sportEventParticipantId), sportEventId: 'event-3' });
+
+    function multiEventService(options: {
+      events: SportEvent[];
+      entries: ReturnType<typeof entry>[];
+      eventStandings: ReturnType<typeof settledRow>[];
+      status?: ContestStatus;
+      snapshots?: InMemoryLeaderboardSnapshots<StoredLeaderboard>;
+    }) {
+      return buildService({
+        contests: contestRepoFor({ sportEventIds: options.events.map(({ id }) => id), status: options.status ?? ContestStatus.ACTIVE }),
+        memberships: member(),
+        configurations: configuration(),
+        scoringRules: rules(golfRule),
+        sportEvents: fakeSportEventRepo({
+          findByIds: jest.fn().mockImplementation(async (ids: readonly string[]) => options.events.filter(({ id }) => ids.includes(id))),
+        }),
+        entries: createMockEntryRepo({ findByContestWithSquad: jest.fn().mockResolvedValue(options.entries) }),
+        eventStandings: fakeContestEntryEventStandingRepo({ findByContest: jest.fn().mockResolvedValue(options.eventStandings) }),
+        standings: fakeContestEntryStandingRepo({ findByContest: jest.fn().mockResolvedValue([]) }),
+        picks: fakeContestEntryPickRepo({
+          findByEntriesAndEvents: jest.fn().mockResolvedValue([pick('pick-1', 'entry-1', 'sep-1'), pick('pick-2', 'entry-1', 'sep-2')]),
+        }),
+        eventParticipants: fieldReads(jest.fn().mockResolvedValue([
+          golfer('sep-1', -4, new Date('2026-02-02T18:00:00.000Z')),
+          // A golfer with no standing time yet leaves the board's time to the others.
+          golfer('sep-2', -2, undefined),
+        ])),
+        leaderboardSnapshots: options.snapshots ?? new InMemoryLeaderboardSnapshots<StoredLeaderboard>(),
+      });
+    }
+
+    it('shows the latest live event: a settled event from its frozen standings, nothing from a cancelled one, an entry that skipped the live event ranked at its missed lineup, until the next event starts', async () => {
+      const snapshots = new InMemoryLeaderboardSnapshots<StoredLeaderboard>();
+      const service = multiEventService({
+        events: [SETTLED, CANCELLED, LIVE, NEXT, LATER],
+        entries: [entry('entry-1', 1, ['event-1', 'event-3']), entry('entry-2', 2, ['event-1'])],
+        eventStandings: [settledRow('entry-1', 'event-1', 1, -5), settledRow('entry-2', 'event-1', 2, -3)],
+        snapshots,
+      });
+
+      const { board } = await service.getLeaderboard('contest-1', 'user-1');
+
+      expect(board.sportEventId).toBe('event-3');
+      expect(board.asOf).toBe('2026-02-02T18:00:00.000Z');
+      const first = expectDefined(board.entries.find((row) => row.entryId === 'entry-1'));
+      expect(first).toMatchObject({ squadId: 'squad-1', squadName: 'Team 1', totalScore: -11 });
+      expect(first.events.map((result) => result.sportEventId)).toEqual(['event-1', 'event-3']);
+      const skipped = expectDefined(board.entries.find((row) => row.entryId === 'entry-2'));
+      expect(skipped.events.map((result) => result.sportEventId)).toEqual(['event-1', 'event-3']);
+      expect([...snapshots.rows.values()].map((row) => row.validUntil)).toEqual([NEXT.startDate]);
+    });
+
+    it('shows a settled event asked for by its frozen standings, and the live event still counts toward the totals', async () => {
+      const service = multiEventService({
+        events: [SETTLED, CANCELLED, LIVE],
+        entries: [entry('entry-1', 1, ['event-1', 'event-3']), entry('entry-2', 2, ['event-1']), entry('entry-3', 3, ['event-3'])],
+        eventStandings: [settledRow('entry-1', 'event-1', 1, -5), settledRow('entry-2', 'event-1', 2, -3)],
+      });
+
+      const { board } = await service.getLeaderboard('contest-1', 'user-1', 'event-1');
+
+      expect(board.sportEventId).toBe('event-1');
+      // Entry 3 played only the live event: it has no row on the settled one, so no picks or score there.
+      const late = expectDefined(board.entries.find((row) => row.entryId === 'entry-3'));
+      expect(late).toMatchObject({ scoredPickCount: 0, picks: [], countingPickLimit: 2 });
+      expect(late.events.map((result) => result.sportEventId)).toEqual(['event-3']);
+    });
+
+    it('lists an entry that played only a cancelled event with no results, and one that missed every event it has a standing for by that standing alone', async () => {
+      const service = multiEventService({
+        events: [SETTLED, CANCELLED],
+        entries: [entry('entry-1', 1, ['event-1']), entry('entry-4', 4, []), entry('entry-5', 5, ['event-2'])],
+        eventStandings: [settledRow('entry-1', 'event-1', 1, -5), settledRow('entry-4', 'event-1', 2, 3)],
+      });
+
+      const { board } = await service.getLeaderboard('contest-1', 'user-1');
+
+      expect(board.sportEventId).toBe('event-2');
+      expect(expectDefined(board.entries.find((row) => row.entryId === 'entry-4')).events.map((result) => result.sportEventId)).toEqual(['event-1']);
+      expect(expectDefined(board.entries.find((row) => row.entryId === 'entry-5')).events).toEqual([]);
+    });
+
+    it('refuses an event the contest does not cover with CONTEST_EVENT_NOT_IN_CONTEST', async () => {
+      const service = multiEventService({ events: [SETTLED, LIVE], entries: [], eventStandings: [] });
+
+      await expect(service.getLeaderboard('contest-1', 'user-1', 'event-elsewhere')).rejects.toMatchObject({ code: 'CONTEST_EVENT_NOT_IN_CONTEST' });
+    });
+
+    it('refuses an event of the contest that has not started with CONTEST_LEADERBOARD_PICKS_HIDDEN', async () => {
+      const service = multiEventService({ events: [SETTLED, NEXT], entries: [], eventStandings: [] });
+
+      await expect(service.getLeaderboard('contest-1', 'user-1', 'event-4')).rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN' });
+    });
+
+    it('lists a COMPLETED contest whose every event was cancelled with its entries unscored', async () => {
+      const service = multiEventService({
+        events: [CANCELLED, { ...LIVE, status: SportEventStatus.CANCELLED }],
+        entries: [entry('entry-1', 1, ['event-3'])],
+        eventStandings: [],
+        status: ContestStatus.COMPLETED,
+      });
+
+      const { board } = await service.getLeaderboard('contest-1', 'user-1');
+
+      expect(board.entries.map((row) => [row.entryId, row.totalScore, row.position])).toEqual([['entry-1', null, null]]);
+    });
+  });
+
+  it('refuses a squares contest\'s leaderboard with CONTEST_FORMAT_MISMATCH, since its grid is its board', async () => {
+    const service = buildService({ contests: contestRepoFor({ contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES }), memberships: member() });
+
+    await expect(service.leaderboardOf(buildContest({ id: 'contest-1', leagueId: 'league-1', sportEventIds: ['event-1'], status: ContestStatus.ACTIVE, contestFormat: ContestFormat.SQUARES })))
+      .rejects.toThrow('A squares contest\'s entries claim boxes, not a lineup: its grid is its leaderboard.');
+  });
+
   it('computes a COMPLETED contest live when it has no frozen standings, such as one force-closed by its commissioner', async () => {
     const service = buildService({
       contests: contestRepoFor({ status: ContestStatus.COMPLETED }),
@@ -2176,6 +2326,174 @@ describe('ContestService entry reads after a write, and readers with no team', (
 
     expect(entry.id).toBe('entry-1');
     expect(picksRevealed).toBe(true);
+  });
+});
+
+describe('ContestService.sendEntrySubmittedEmails — what it skips', () => {
+  const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', sportEventIds: ['event-1'], name: 'Masters Pick 2', status: ContestStatus.OPEN });
+  const mailDelivery = () => ({
+    providerName: 'smtp' as const,
+    send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+  });
+  const receiptService = (deps: Partial<ContestServiceDeps> = {}) => {
+    const logger = fakeLogger();
+    const delivery = mailDelivery();
+    const email = emailServiceOver(delivery);
+    const service = buildService({
+      leagues: fakeLeagueRepo({
+        findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
+      }),
+      users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
+      entries: createMockEntryRepo({
+        findByContestWithSquad: jest.fn().mockResolvedValue([submittedEntry(271)]),
+        findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
+      }),
+      email,
+      logger,
+      appBaseUrl: 'https://app.primetimecommissioner.com',
+      ...deps,
+    });
+    return { service, logger, delivery, email };
+  };
+
+  it('reads and sends nothing when the app runs with no email service', async () => {
+    const entries = createMockEntryRepo();
+    const { service } = receiptService({ email: undefined, entries });
+
+    await service.sendEntrySubmittedEmails(receiptInput(contest));
+
+    expect(entries.findByIdWithSquad).not.toHaveBeenCalled();
+  });
+
+  it('reads and sends nothing for no entries', async () => {
+    const entries = createMockEntryRepo();
+    const { service, delivery } = receiptService({ entries });
+
+    await service.sendEntrySubmittedEmails(receiptInput(contest, { entryIds: [] }));
+    await deliverQueuedEmail();
+
+    expect(entries.findByIdWithSquad).not.toHaveBeenCalled();
+    expect(delivery.send).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing, and warns, when the contest\'s league is gone', async () => {
+    const { service, logger, delivery } = receiptService({ leagues: fakeLeagueRepo({ findById: jest.fn().mockResolvedValue(null) }) });
+
+    await service.sendEntrySubmittedEmails(receiptInput(contest));
+    await deliverQueuedEmail();
+
+    expect(delivery.send).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'contestEntry.emailDelivery.entryMissing' }), expect.any(String));
+  });
+
+  it('reads a draw\'s entries in one read of the contest and sends a receipt for each one found, skipping one it cannot find', async () => {
+    const entries = createMockEntryRepo({ findByContestWithSquad: jest.fn().mockResolvedValue([submittedEntry(271)]) });
+    const { service, logger, delivery } = receiptService({ entries });
+
+    await service.sendEntrySubmittedEmails(receiptInput(contest, { entryIds: ['entry-1', 'entry-gone'] }));
+    await deliverQueuedEmail();
+
+    expect(entries.findByContestWithSquad).toHaveBeenCalledWith('contest-1');
+    expect(entries.findByIdWithSquad).not.toHaveBeenCalled();
+    expect(delivery.send).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'contestEntry.emailDelivery.entryMissing', data: { contestId: 'contest-1', entryId: 'entry-gone' } },
+      'Skipped contest entry confirmation email because entry data was unavailable',
+    );
+  });
+
+  it('logs and throws a batch of receipts that cannot be queued, for the caller to decide', async () => {
+    const { service, logger, email } = receiptService();
+    jest.spyOn(expectDefined(email), 'sendMany').mockRejectedValue(new Error('outbox unavailable'));
+
+    await expect(service.sendEntrySubmittedEmails(receiptInput(contest))).rejects.toThrow('outbox unavailable');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contestEntry.emailDelivery.failure' }),
+      'Failed to queue contest entry confirmation emails',
+    );
+  });
+});
+
+describe('ContestService boards read for emails and my entries', () => {
+  const activeContest = (overrides: Parameters<typeof buildContest>[0] = {}) =>
+    buildContest({ id: 'contest-1', leagueId: 'league-1', sportEventIds: ['event-1'], status: ContestStatus.ACTIVE, ...overrides });
+
+  it('reads a lineup contest\'s board for its standings emails from the field as it stands', async () => {
+    const listEventParticipants = jest.fn().mockResolvedValue([]);
+    const service = buildService({
+      configurations: createMockContestConfigurationRepo({
+        findByContest: jest.fn().mockResolvedValue({ id: 'config-1', contestId: 'contest-1', configJson: { countedScores: 2 } }),
+      }),
+      scoringRules: fakeParticipantContestScoringRuleRepo({
+        findByContestConfiguration: jest.fn().mockResolvedValue([
+          storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }),
+        ]),
+      }),
+      eventParticipants: fieldReads(listEventParticipants),
+    });
+
+    const leaderboard = await service.leaderboardOf(activeContest());
+
+    expect(leaderboard.sportEventId).toBe('event-1');
+    expect(listEventParticipants).toHaveBeenCalledWith('event-1');
+  });
+
+  it.each([
+    { name: 'pick\'em', read: (service: ContestService, contest: Contest) => service.pickEmLeaderboardOf(contest) },
+    { name: 'survivor', read: (service: ContestService, contest: Contest) => service.survivorLeaderboardOf(contest) },
+  ])('refuses a $name board for its emails on a contest of another selection type with CONTEST_FORMAT_MISMATCH', async ({ read }) => {
+    await expect(read(buildService(), activeContest({ selectionType: SelectionType.TIERED }))).rejects.toMatchObject({ code: 'CONTEST_FORMAT_MISMATCH' });
+  });
+
+  describe('my entries\' places', () => {
+    const myEntriesService = (deps: Partial<ContestServiceDeps>) => buildService({
+      squadMemberships: createMockSquadMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP) }),
+      entries: createMockEntryRepo({ findBySquadAndContests: jest.fn().mockResolvedValue([DEFAULT_ENTRY_WITH_SQUAD]) }),
+      ...deps,
+    });
+
+    it('gives no place in a live contest whose picks are not revealed yet', async () => {
+      const notStarted = { ...STARTED_EVENT, status: SportEventStatus.SCHEDULED, startDate: new Date('2099-06-01T12:00:00.000Z') } as SportEvent;
+      const service = myEntriesService({
+        contests: createMockContestRepo({ findByLeague: jest.fn().mockResolvedValue([activeContest()]) }),
+        sportEvents: fakeSportEventRepo({ findByIds: jest.fn().mockResolvedValue([notStarted]) }),
+      });
+
+      const { entries, places } = await service.listMyLeagueEntries('league-1', 'user-1');
+
+      expect(entries.map((entry) => entry.id)).toEqual(['entry-1']);
+      expect(places).toEqual([]);
+    });
+
+    it('fails the read when a live contest\'s board fails for a reason that is not the contest\'s', async () => {
+      const service = myEntriesService({
+        contests: createMockContestRepo({ findByLeague: jest.fn().mockResolvedValue([activeContest()]) }),
+        sportEvents: fakeSportEventRepo({ findByIds: jest.fn().mockRejectedValue(new Error('connection reset')) }),
+      });
+
+      await expect(service.listMyLeagueEntries('league-1', 'user-1')).rejects.toThrow('connection reset');
+    });
+  });
+
+  it('lists an entry\'s events in its contest\'s order, with an event the contest no longer covers last', async () => {
+    const service = buildService({
+      contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(activeContest({ sportEventIds: ['event-1', 'event-2'] })) }),
+      memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({ leagueId: 'league-1', userId: 'user-1' })) }),
+      entries: createMockEntryRepo({
+        findByIdWithSquad: jest.fn().mockResolvedValue({
+          ...DEFAULT_ENTRY_WITH_SQUAD,
+          events: [
+            { sportEventId: 'event-removed', status: 'SUBMITTED' as const },
+            { sportEventId: 'event-2', status: 'SUBMITTED' as const },
+            { sportEventId: 'event-1', status: 'SUBMITTED' as const },
+          ],
+        }),
+      }),
+    });
+
+    const { entry } = await service.getEntryDetail('contest-1', 'entry-1', 'user-1');
+
+    expect(entry.events.map((event) => event.sportEventId)).toEqual(['event-1', 'event-2', 'event-removed']);
   });
 });
 

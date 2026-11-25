@@ -56,11 +56,6 @@
           "lines": 95,
           "branches": 95
         },
-        "packages/core-api/src/modules/contests/service.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "lines": 97,
-          "branches": 90
-        },
         "packages/core-api/src/modules/domain-events/domain-events.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
           "branches": 91

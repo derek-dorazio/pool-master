@@ -327,11 +327,11 @@ export interface ContestEntryTotal {
  * by the contest's scoring direction. An entry with no score in any event is unscored. In a
  * one-event contest the total is that event's score, ranked as the event ranks it.
  */
-export function rankContestTotals(
-  entries: readonly Pick<ContestLeaderboardEntryInput, 'id' | 'entryNumber' | 'name'>[],
+export function rankContestTotals<Entry extends Pick<ContestLeaderboardEntryInput, 'id' | 'entryNumber' | 'name'>>(
+  entries: readonly Entry[],
   eventScores: readonly ContestEntryEventScore[],
   direction: ScoreDirection,
-): ContestEntryTotal[] {
+): Array<ContestEntryTotal & { entry: Entry }> {
   const scoresByEntry = new Map<string, ContestEntryEventScore[]>();
   for (const eventScore of eventScores) {
     scoresByEntry.set(eventScore.entryId, [...(scoresByEntry.get(eventScore.entryId) ?? []), eventScore]);
@@ -340,6 +340,7 @@ export function rankContestTotals(
     const scores = scoresByEntry.get(entry.id) ?? [];
     const scored = scores.flatMap((eventScore) => (eventScore.score === null ? [] : [eventScore.score]));
     return {
+      entry,
       entryId: entry.id,
       entryName: entry.name,
       entryNumber: entry.entryNumber,
@@ -411,12 +412,12 @@ export function applySettledContestStandings(
  * standings do (`applySettledContestStandings`): each entry's total and rank are the frozen
  * ones, in the frozen order, unranked last; an entry with no standing sorts after them all.
  */
-export function applySettledContestTotals(
-  totals: readonly ContestEntryTotal[],
+export function applySettledContestTotals<Total extends ContestEntryTotal>(
+  totals: readonly Total[],
   standings: readonly SettledContestEntryStanding[],
-): ContestEntryTotal[] {
+): Total[] {
   const byEntryId = new Map(standings.map((standing) => [standing.contestEntryId, standing]));
-  const rank = (total: ContestEntryTotal) => {
+  const rank = (total: Total) => {
     const standing = byEntryId.get(total.entryId);
     if (!standing) return Number.MAX_SAFE_INTEGER;
     return standing.position ?? Number.MAX_SAFE_INTEGER - 1;

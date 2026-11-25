@@ -940,7 +940,8 @@ export class ContestService {
     const eventScores: ContestEntryEventScore[] = [];
     const resultsByEntry = new Map<string, ContestEntryEventResultRow[]>();
     const entriesById = new Map<string, ContestLeaderboardEntryInput>();
-    let shown: { field: SportEventParticipantView[]; rows: ContestEntryStandingRow[]; asOf: Date | null } | null = null;
+    // The shown event is one of the revealed events, and is always computed, so the loop sets it.
+    let shown!: { field: SportEventParticipantView[]; rows: ContestEntryStandingRow[]; asOf: Date | null };
     for (const event of revealed) {
       const entries = submittedLeaderboardEntries(contestEntries, event.id, picks);
       for (const entry of entries) entriesById.set(entry.id, entry);
@@ -987,9 +988,6 @@ export class ContestService {
         resultsByEntry.set(result.entryId, entryResults);
       }
     }
-    if (!shown) {
-      throw new Error(`Contest ${contestId} leaderboard lost its shown event ${shownEvent.id}`);
-    }
     // An entry that missed every revealed event it has a standing for (#714) is on the board by
     // that standing alone, with no picks.
     for (const entry of contestEntries) {
@@ -1022,14 +1020,13 @@ export class ContestService {
     }
 
     const leaderboardEntries: ContestLeaderboardEntryRow[] = totals.map((total) => {
-      const entry = entriesById.get(total.entryId);
       const shownRow = shownRows.get(total.entryId);
       return {
         entryId: total.entryId,
         entryName: total.entryName,
         entryNumber: total.entryNumber,
-        squadId: entry?.squadId ?? '',
-        squadName: entry?.squad.name ?? '',
+        squadId: total.entry.squadId,
+        squadName: total.entry.squad.name,
         score: total.score,
         position: total.position,
         displayPosition: total.displayPosition,
