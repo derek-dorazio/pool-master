@@ -99,7 +99,6 @@ export type GetMockContestFeedScenarioResponses = {
                 metadata?: {
                     officialName?: string;
                     eventType?: string;
-                    tour?: string;
                     externalEventId?: string;
                     notes?: Array<string>;
                 };
@@ -268,7 +267,6 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
             metadata?: {
                 officialName?: string;
                 eventType?: string;
-                tour?: string;
                 externalEventId?: string;
                 notes?: Array<string>;
             };

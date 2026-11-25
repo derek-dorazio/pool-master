@@ -92,7 +92,6 @@ export interface EventVenueRecord {
 export interface EventMetadataRecord {
   readonly officialName?: string;
   readonly eventType?: string;
-  readonly tour?: string;
   readonly externalEventId?: string;
   readonly notes?: readonly string[];
 }
@@ -315,7 +314,6 @@ export const metadataRecordSchema = {
   properties: {
     officialName: { type: 'string' },
     eventType: { type: 'string' },
-    tour: { type: 'string' },
     externalEventId: { type: 'string' },
     notes: { type: 'array', items: { type: 'string' } },
   },

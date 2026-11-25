@@ -29,7 +29,7 @@ const florida = rowAt(nhlTeamListSchema.parse(readBalldontlieFixture('nhl', 'tea
 
 describe('NHL playoffs league', () => {
   it('is hockey\'s best-of-seven playoffs, played the year after the season it is numbered by', () => {
-    expect(NHL_PLAYOFFS).toMatchObject({ key: 'nhl', tour: 'NHL', sport: Sport.HOCKEY, playoffYearOffset: 1 });
+    expect(NHL_PLAYOFFS).toMatchObject({ key: 'nhl', sport: Sport.HOCKEY, playoffYearOffset: 1 });
     expect(NHL_PLAYOFFS.rounds.every((round) => round.seriesLength === 7)).toBe(true);
   });
 

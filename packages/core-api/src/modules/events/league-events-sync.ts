@@ -34,6 +34,7 @@ import {
   type ProviderSyncRun,
   type ProviderSyncRunOutcome,
   type SportLeague,
+  type SportLeagueProviderMapping,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 import { SCHEDULE_START } from '../../core/job-start';
@@ -50,14 +51,14 @@ import type { ProviderSeasonImport, SportEventService } from './service';
  * left out of the provider's plan. Anything else, such as the provider being unreachable, is
  * tried again.
  */
-const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT_FOUND', 'SPORT_LEAGUE_NOT_SYNCED', 'PROVIDER_LEAGUE_REFUSED']);
+const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT_FOUND', 'SPORT_LEAGUE_NOT_SYNCED', 'PROVIDER_LEAGUE_REFUSED', 'PROVIDER_LEAGUE_UNKNOWN']);
 
 export interface LeagueEventsSyncOptions {
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findEventSynced'>;
   seasons: Pick<SportLeagueSeasonRepository, 'findForSync'>;
   seasonSchedule: Pick<ProviderSeasonScheduleReader, 'listSeasonEvents'>;
   sportEvents: Pick<SportEventService, 'importProviderSeason' | 'keepProviderEventsCurrent'>;
-  findings: Pick<ProviderSyncFindingService, 'raiseOfSource'>;
+  findings: Pick<ProviderSyncFindingService, 'raiseOfSource' | 'resolveOfSource'>;
   syncRuns: Pick<ProviderSyncRunRepository, 'create' | 'update' | 'findByBackgroundJobIds'>;
   jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll' | 'enqueueRequestReturning'>;
   logger?: FastifyBaseLogger;
@@ -169,12 +170,17 @@ export class LeagueEventsSync {
         action: 'events.leagueSync.failed',
         data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, error: errorMessage(error) },
       }, 'A sport league\'s events sync failed');
+      if (error instanceof ProviderSeasonScheduleError && error.code === 'PROVIDER_LEAGUE_UNKNOWN') {
+        await this.raiseProviderLeagueUnknown(sportLeague, providerId, selected);
+      }
       if (error instanceof ProviderSeasonScheduleError && PERMANENT_SOURCE_ERRORS.has(error.code)) {
         throw new PermanentBackgroundJobError(`${error.code}: ${error.message}`, { cause: error });
       }
       throw error;
     }
 
+    // The league's provider league code is read again: an earlier unknown-code finding resolves.
+    await this.options.findings.resolveOfSource(providerId, { kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, sportLeagueId: sportLeague.id });
     const counts = countsOf(synced);
     const read = seasons.length === 0 ? 'no Season, since none is mapped to its provider from the current one on' : seasons.map((season) => season.name).join(' and ');
     await this.options.syncRuns.update(run.id, {
@@ -210,6 +216,22 @@ export class LeagueEventsSync {
       ? seasonsToSync(seasons, sportLeague.currentSeasonId)
       : seasons.filter((season) => season.id === sportLeagueSeasonId);
     return chosen.filter((season): season is SyncableSportLeagueSeason & { providerSeasonId: string } => season.providerSeasonId !== null);
+  }
+
+  /**
+   * One PROVIDER_LEAGUE_UNKNOWN ERROR per league and Provider when the league's selected mapping
+   * names a provider league code the Provider does not read (#2005): nothing was read, and the
+   * job fails for good until the mapping or the league row is fixed.
+   */
+  private async raiseProviderLeagueUnknown(sportLeague: SportLeague, providerId: string, mapping: SportLeagueProviderMapping): Promise<void> {
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN,
+      severity: ProviderSyncFindingSeverity.ERROR,
+      sportLeagueId: sportLeague.id,
+      sportEventId: null,
+      providerValue: mapping.providerLeagueCode,
+      providerValueName: mapping.providerLeagueName,
+    }]);
   }
 
   /**

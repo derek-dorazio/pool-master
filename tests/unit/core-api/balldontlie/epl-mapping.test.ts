@@ -104,9 +104,9 @@ describe('Premier League teams', () => {
       sport: Sport.SOCCER,
       name: 'Arsenal',
       active: true,
-      metadata: { tour: 'EPL', abbreviation: 'ARS' },
+      metadata: { abbreviation: 'ARS' },
     });
-    expect(toEplTeamParticipant({ id: 99, name: 'Newcomers FC', abbreviation: null }).metadata).toEqual({ tour: 'EPL' });
+    expect(toEplTeamParticipant({ id: 99, name: 'Newcomers FC', abbreviation: null }).metadata).toEqual({});
   });
 
   it('refuses a team with no id or no name', () => {

@@ -92,7 +92,10 @@ function build(options: {
   const seasons = {
     findForSync: jest.fn(async (sportLeagueId: string) => options.seasons?.get(sportLeagueId) ?? []),
   };
-  const findings = { raiseOfSource: jest.fn(async (_providerSourceId: string, _found: unknown) => undefined) };
+  const findings = {
+    raiseOfSource: jest.fn(async (_providerSourceId: string, _found: unknown) => undefined),
+    resolveOfSource: jest.fn(async (_providerSourceId: string, _filter: unknown) => 0),
+  };
   const logger = fakeLogger();
   const sync = new LeagueEventsSync({
     sportLeagues,
@@ -454,6 +457,54 @@ describe('LeagueEventsSync', () => {
         failurePayload: { error: { code: 'PROVIDER_LEAGUE_REFUSED', message: 'Your plan does not include the PGA TOUR.' } },
       });
       expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'events.leagueSync.failed' }), expect.any(String));
+    });
+
+    it('raises one PROVIDER_LEAGUE_UNKNOWN ERROR finding and fails the job at once, with no retry, when the provider does not read the league the mapping names', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const pga = syncedLeague(seasons);
+      const listSeasonEvents = jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>()
+        .mockRejectedValue(new ProviderSeasonScheduleError('BALLDONTLIE reads no enabled league with the code "xfl" for this sport.', 'PROVIDER_LEAGUE_UNKNOWN', 422));
+      const { sync, runner, jobs, syncRuns, findings } = build({ leagues: [pga], seasons, listSeasonEvents });
+
+      await sync.queueScheduled();
+      await runner.drain();
+
+      expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [{
+        kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN,
+        severity: ProviderSyncFindingSeverity.ERROR,
+        sportLeagueId: pga.id,
+        sportEventId: null,
+        providerValue: 'pga',
+        providerValueName: 'PGA TOUR',
+      }]);
+      expect(findings.resolveOfSource).not.toHaveBeenCalled();
+      expect(jobs.rows[0]).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 1, lastError: expect.stringContaining('PROVIDER_LEAGUE_UNKNOWN') });
+      expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED });
+    });
+
+    it('resolves the league\'s open PROVIDER_LEAGUE_UNKNOWN finding once a later events sync of it completes', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const pga = syncedLeague(seasons);
+      const { sync, runner, syncRuns, findings } = build({ leagues: [pga], seasons });
+
+      await sync.queueScheduled();
+      await runner.drain();
+
+      expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.COMPLETED });
+      expect(findings.resolveOfSource).toHaveBeenCalledWith('balldontlie', { kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, sportLeagueId: pga.id });
+    });
+
+    it('raises no PROVIDER_LEAGUE_UNKNOWN finding when the provider refuses the league it does read', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const pga = syncedLeague(seasons);
+      const listSeasonEvents = jest.fn<ReturnType<ListSeasonEvents>, Parameters<ListSeasonEvents>>()
+        .mockRejectedValue(new ProviderSeasonScheduleError('Your plan does not include the PGA TOUR.', 'PROVIDER_LEAGUE_REFUSED', 422));
+      const { sync, runner, findings } = build({ leagues: [pga], seasons, listSeasonEvents });
+
+      await sync.queueScheduled();
+      await runner.drain();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalledWith(expect.anything(), [expect.objectContaining({ kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN })]);
     });
 
     it('leaves a failure a retry may fix, such as the provider being unreachable, for the runner to try again, keeping the Seasons it finished on the run', async () => {

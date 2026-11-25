@@ -31,7 +31,6 @@
       "metadata": {
         "officialName": "THE PLAYERS Championship 2026",
         "eventType": "stroke_play_flagship",
-        "tour": "PGA TOUR",
         "externalEventId": "golf-players-2026",
         "notes": [
           "Real schedule backbone sourced from THE PLAYERS official 2026 field announcement.",
@@ -124,7 +123,6 @@
       "metadata": {
         "officialName": "Masters Tournament 2026",
         "eventType": "stroke_play_major",
-        "tour": "PGA",
         "externalEventId": "golf-masters-2026",
         "notes": [
           "Real tournament week sourced from Augusta National's 2026 Masters staffing page.",
@@ -259,7 +257,6 @@
       "metadata": {
         "officialName": "PGA Championship 2026",
         "eventType": "stroke_play_major",
-        "tour": "PGA",
         "externalEventId": "golf-pga-championship-2026",
         "notes": [
           "Real tournament week sourced from the official PGA Championship 2026 site.",
@@ -352,7 +349,6 @@
       "metadata": {
         "officialName": "the Memorial Tournament presented by Workday 2026",
         "eventType": "stroke_play_signature",
-        "tour": "PGA TOUR",
         "externalEventId": "golf-memorial-2026",
         "notes": [
           "Real dates sourced from PGA TOUR and Open Qualifying Series references.",
@@ -456,7 +452,6 @@
       "metadata": {
         "officialName": "RBC Canadian Open 2026",
         "eventType": "stroke_play_open",
-        "tour": "PGA TOUR",
         "externalEventId": "golf-rbc-canadian-open-2026",
         "notes": [
           "Real dates sourced from the PGA TOUR 2026 event overview.",
@@ -570,7 +565,6 @@
       "metadata": {
         "officialName": "U.S. Open Championship 2026",
         "eventType": "stroke_play_major",
-        "tour": "USGA",
         "externalEventId": "golf-us-open-2026",
         "notes": [
           "Real dates sourced from the official U.S. Open 2026 site.",
@@ -672,7 +666,6 @@
       "metadata": {
         "officialName": "Genesis Scottish Open 2026",
         "eventType": "stroke_play_links",
-        "tour": "DP World Tour",
         "externalEventId": "golf-genesis-scottish-open-2026",
         "notes": [
           "Real dates sourced from The Open Qualifying Series page.",
@@ -775,7 +768,6 @@
       "metadata": {
         "officialName": "The 154th Open",
         "eventType": "stroke_play_major",
-        "tour": "R&A",
         "externalEventId": "golf-open-championship-2026",
         "notes": [
           "Real dates sourced from The Open at Royal Birkdale official pages.",
