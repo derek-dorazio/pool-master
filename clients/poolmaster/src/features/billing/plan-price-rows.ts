@@ -1,4 +1,4 @@
-import { LEAGUE_PLANS, type LeaguePlan } from '@poolmaster/shared/domain';
+import { explicitOrderValues, type LeaguePlan, LeaguePlanOrder } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { z } from 'zod';
 import type { BillingConfig, ExpansionPrice, PlanConfig } from '@/lib/api';
@@ -34,7 +34,7 @@ export function describeEntriesIncluded(entries: number | null, locale: string):
 
 /** One row per plan, lowest first, from the payments settings and the plan caps. */
 export function planPriceRows(billing: BillingConfig, plans: PlanConfig, locale: string): PlanPriceRow[] {
-  return LEAGUE_PLANS.map((plan) => ({
+  return explicitOrderValues(LeaguePlanOrder).map((plan) => ({
     plan,
     label: enumLabel('LeaguePlan', plan),
     yearlyCents: billing.planPrices[plan].yearlyCents,

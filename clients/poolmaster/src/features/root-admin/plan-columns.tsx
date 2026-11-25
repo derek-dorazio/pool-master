@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { LEAGUE_PLANS, LeaguePlanOrder, PlanFeatureGroupOrder, type LeaguePlan, type PlanFeatureGroup } from '@poolmaster/shared/domain';
+import { explicitOrderValues, type LeaguePlan, LeaguePlanOrder, type PlanFeatureGroup, PlanFeatureGroupOrder } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { formatPlanLimit } from '@/features/plans/plan-labels';
 import type { PlanCapGridRow, PlanFeatureGridRow } from './plan-rows';
@@ -15,7 +15,7 @@ export function planCapColumns(locale: string) {
       meta: { info: 'What the plan limits.', type: { kind: 'text' } },
     }),
     // Unlimited sorts and filters as the largest limit: above every number, in both directions.
-    ...LEAGUE_PLANS.map((plan) => capColumn.accessor((row) => row.limits[plan] ?? Number.POSITIVE_INFINITY, {
+    ...explicitOrderValues(LeaguePlanOrder).map((plan) => capColumn.accessor((row) => row.limits[plan] ?? Number.POSITIVE_INFINITY, {
       id: plan,
       header: enumLabel('LeaguePlan', plan),
       meta: { info: `The most a league on ${enumLabel('LeaguePlan', plan)} may have. Unlimited: no cap.`, type: { kind: 'number' } },

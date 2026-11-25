@@ -1,5 +1,6 @@
-import { PLAN_FEATURE_GROUP, PlanCap, PlanFeature, PlanFeatureGroup, type LeaguePlan } from '@poolmaster/shared/domain';
+import { PLAN_FEATURE_GROUP, PlanCap, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
+import type { PlanEntitlementsDto } from '@/lib/api';
 import {
   EVERY_PLAN_INCLUDES,
   PLAN_CAP_DESCRIPTION,
@@ -8,11 +9,7 @@ import {
 } from './plan-labels';
 
 /** What the comparison table needs of one plan: its caps and the features it has. */
-export interface ComparedPlan {
-  plan: LeaguePlan;
-  caps: Readonly<Record<PlanCap, number | null>>;
-  features: readonly PlanFeature[];
-}
+export type ComparedPlan = Pick<PlanEntitlementsDto, 'plan' | 'caps' | 'features'>;
 
 export interface PlanComparisonRow {
   key: string;
