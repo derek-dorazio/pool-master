@@ -146,8 +146,6 @@ describe('SportEventService.createEvent', () => {
     expect(store.events).toHaveLength(0);
   });
 
-  // plans/147 decision 5 — one edition of a series per year. The store raises the database's
-  // unique violation; the service turns it into a 409 rather than a 500.
   it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
     const { service } = setup();
 
@@ -174,18 +172,15 @@ describe('SportEventService.importProviderSeason', () => {
       .toEqual(slate.map(({ externalId }) => ({ externalId, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, rounds: 4 })));
   });
 
-  it('skips an event already linked to the provider event and a series that already has an edition that Season, creating only the rest', async () => {
+  it('skips an event already linked to the provider event, and creates one whose name a hand-made event of the Season shares, telling events apart by feed id, never by name', async () => {
     const { store, service, sportLeague } = setup();
     store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-a' } });
     await service.createEvent({ ...MANUAL_INPUT, sportLeagueId: sportLeague.id });
 
     const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: FEED, providerEvents: slate });
 
-    expect(result.created.map(({ event }) => feedIdOf(event))).toEqual(['pga-2026-b']);
-    expect(result.skipped).toEqual([
-      { externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'ALREADY_LINKED' },
-      { externalId: 'pga-2026-c', name: 'Harbour Open', reason: 'EDITION_EXISTS' },
-    ]);
+    expect(result.created.map(({ event }) => feedIdOf(event))).toEqual(['pga-2026-b', 'pga-2026-c']);
+    expect(result.skipped).toEqual([{ externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'ALREADY_LINKED' }]);
   });
 
   it('creates the provider\'s event beside a "Test- " event the test data loaded with its name and dates, and leaves the test event as it was (#1850)', async () => {

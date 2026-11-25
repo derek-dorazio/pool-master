@@ -33,7 +33,7 @@ import { TABLE_SCAN_ALLOWANCES, type TableScanAllowance } from './table-scan-all
  * unique key and its index serve.
  */
 export const REFERENCE_TABLES = new Set([
-  '_prisma_migrations', 'sports', 'sport_leagues', 'event_series', 'contest_config_templates',
+  '_prisma_migrations', 'sports', 'sport_leagues', 'contest_config_templates',
   'event_pages', 'event_page_offers', 'platform_runtime_configs', 'platform_runtime_config_history',
   'platform_tier_profiles', 'platform_pricing_profiles', 'providers', 'provider_leagues', 'sport_league_provider_mappings',
 ]);

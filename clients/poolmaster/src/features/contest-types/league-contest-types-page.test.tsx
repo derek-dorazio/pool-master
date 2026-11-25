@@ -148,7 +148,7 @@ describe('League › Contest types', () => {
       ...golf('golf-tiered-pick-12', { id: 'tpl-golf-tiered-12', isDefault: false, sortOrder: 2 }),
       ...golf('golf-budget-pick-6-best-4', { id: 'tpl-golf-budget', selectionType: 'BUDGET_PICK', configuration: { selectionType: 'BUDGET_PICK', picks: 6, countedScores: 4, maxEntriesPerSquad: 1 } }),
       ...golf('golf-quick-pick-6', { id: 'tpl-golf-quick', selectionType: 'RANDOM_DRAW', configuration: { selectionType: 'RANDOM_DRAW', picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 } }),
-      golfOn(PGA, 'pga-tour-majors-tiered', { id: 'tpl-pga-majors', isDefault: false, sortOrder: 10 }),
+      golfOn(PGA, 'pga-tour-tiered-top-four-tiers', { id: 'tpl-pga-top-four', isDefault: false, sortOrder: 10 }),
       template('horse-racing-tiered', { id: 'tpl-horse-tiered', slots: [templateSlotFixture(sportSlotId('HORSE_RACING'))], sportLeagueId: THOROUGHBRED }),
     ];
     const GOLF_LEAGUES = [
@@ -175,7 +175,7 @@ describe('League › Contest types', () => {
       const golfSection = await screen.findByTestId('contest-types-sport-GOLF');
       expect(golfSection).not.toHaveTextContent('Every tournament');
       expect(golfSection).not.toHaveTextContent('LPGA Tour');
-      expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-tiered-pick-6-variations')).toHaveTextContent('pga-tour-majors-tiered name');
+      expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-tiered-pick-6-variations')).toHaveTextContent('pga-tour-tiered-top-four-tiers name');
       expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-budget-pick-6-best-4')).toBeInTheDocument();
       expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-quick-pick-6')).toBeInTheDocument();
     });

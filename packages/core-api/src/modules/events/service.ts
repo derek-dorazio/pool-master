@@ -115,7 +115,7 @@ export interface ProviderEventDetail {
 /** What a provider Season import (#385, #2003) created, and what it left alone and why. */
 export interface ProviderSeasonImport {
   created: SportEventAdminSummary[];
-  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' }>;
+  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -226,9 +226,9 @@ export class SportEventService {
   /**
    * #385, #2003 — one Season's provider slate, created in that Season in one action, in a fixed number of
    * queries however long the slate (#1253), each with the provider's id for it (#2004). Events PoolMaster already has are skipped rather than refused,
-   * so the import can be run again: one already linked to the provider event, or one whose name
-   * the Season already has (an admin-authored one, say, or an earlier event of the same name in
-   * this slate). A provider event whose start has passed is skipped too (#1821):
+   * so the import can be run again: one already linked to the provider event. Events are told apart
+   * by the provider's id, never by name (#2010): a Season slot is played by at most one event, a
+   * unique key on its event slot. A provider event whose start has passed is skipped too (#1821):
    * created now it would be a draft nobody can release or play. One already linked is still
    * reported as linked, and keeps updating through `keepProviderEventsCurrent`.
    */
@@ -244,10 +244,6 @@ export class SportEventService {
       input.providerId,
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
     )).flatMap((event) => externalIdsAt(event, input.providerId)));
-    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !providerEventStarted(providerEvent, now));
-    const namesInSeason = new Set(unlinked.length === 0
-      ? []
-      : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: input.sportLeagueSeasonId })).map((event) => event.name));
 
     const editions: NewEdition[] = [];
     const skipped: ProviderSeasonImport['skipped'] = [];
@@ -261,11 +257,6 @@ export class SportEventService {
         skipped.push({ externalId, name, reason: 'ALREADY_STARTED' });
         continue;
       }
-      if (namesInSeason.has(name)) {
-        skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
-        continue;
-      }
-      namesInSeason.add(name);
       editions.push(providerEdition({ ...providerEvent, sportLeagueId: sportLeague.id, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
     }
     const created = await this.createEditions(sportLeague, editions);

@@ -168,7 +168,7 @@ not read; when the last of them lacks one, the job raises one `SEASON_MISSING` E
 league and provider (*Sync findings* below), since only a migration can add it. For each provider event:
 
 - **New, start in the future**: created as a `DRAFT` `sport_events` row in the Season it was
-  read for, in a find-or-create `event_series`, kept under the provider's id for it: a
+  read for, on the league (`sport_league_id`), kept under the provider's id for it: a
   `sport_event_provider_mappings` row under the league's selected provider mapping, written in the
   same transaction.
 - **New, start already passed**: never created (`ALREADY_STARTED`).
