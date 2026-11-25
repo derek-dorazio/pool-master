@@ -4,6 +4,8 @@ import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
 import {
   ContestService,
   ContestNotFoundError,
+  ContestOperationError,
+  ContestEntryOperationError,
 
   type ContestServiceDeps,
   type StoredLeaderboard,
@@ -58,6 +60,7 @@ import type { MailDeliveryProvider } from '../../../packages/core-api/src/module
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { platinumEntitlements } from '../../support/plan-entitlements';
+import { contestEntriesCap } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { fieldReads } from '../../support/field-reads';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
@@ -914,7 +917,10 @@ describe('ContestService', () => {
       expect(entryRepo.create).not.toHaveBeenCalled();
     });
 
-    it('pool-master-284 rejects contest entry creation when the event field has not synced', async () => {
+    it.each([
+      { name: 'counts none of its field', counts: new Map([['sport-event-1', 0]]) },
+      { name: 'has no count for it', counts: new Map<string, number>() },
+    ])('refuses a contest entry with CONTEST_ENTRY_FIELD_NOT_LOADED while the event field has not synced (the event $name)', async ({ counts }) => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -944,7 +950,7 @@ describe('ContestService', () => {
         findByContestAndSquad: jest.fn().mockResolvedValue([]),
       });
       const sportEventRepo = fakeSportEventRepo({
-        countParticipants: jest.fn().mockResolvedValue(new Map([['sport-event-1', 0]])),
+        countParticipants: jest.fn().mockResolvedValue(counts),
       });
       const service = buildService({
         contests: contestRepo,
@@ -2132,6 +2138,133 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
     expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2, pickCount: null });
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0]).toMatchObject({ totalScore: null, position: null });
+  });
+});
+
+describe('ContestService entry reads after a write, and readers with no team', () => {
+  const OPEN_CONTEST = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN, sportEventIds: ['event-1'] });
+  const memberOf = () => createMockMembershipRepo({
+    findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' })),
+  });
+
+  it('answers CONTEST_ENTRY_NOT_FOUND when a renamed entry is gone by the time it is read back', async () => {
+    const entryRepo = createMockEntryRepo({
+      findByContestAndSquad: jest.fn().mockResolvedValue([DEFAULT_ENTRY_WITH_SQUAD]),
+      findByIdWithSquad: jest.fn().mockResolvedValue(null),
+    });
+    const service = buildService({
+      // Its event has not been read as started, so its entries can still be renamed.
+      contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN })) }),
+      memberships: memberOf(),
+      squadMemberships: createMockSquadMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP) }),
+      entries: entryRepo,
+    });
+
+    await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', { name: 'Renamed' }))
+      .rejects.toMatchObject({ code: 'CONTEST_ENTRY_NOT_FOUND' });
+    expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { name: 'Renamed' });
+  });
+
+  it('shows a league member with no team an entry of a live contest, picks revealed', async () => {
+    const service = buildService({
+      contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue({ ...OPEN_CONTEST, status: ContestStatus.ACTIVE }) }),
+      memberships: memberOf(),
+      squadMemberships: createMockSquadMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(null) }),
+    });
+
+    const { entry, picksRevealed } = await service.getEntryDetail('contest-1', 'entry-1', 'user-1');
+
+    expect(entry.id).toBe('entry-1');
+    expect(picksRevealed).toBe(true);
+  });
+});
+
+describe('Contest operation errors', () => {
+  it('read as the general invalid-operation codes when no code is named', () => {
+    expect(new ContestOperationError('Not now').code).toBe('CONTEST_OPERATION_INVALID');
+    expect(new ContestEntryOperationError('Not now').code).toBe('CONTEST_ENTRY_OPERATION_INVALID');
+  });
+});
+
+describe('ContestService list reads', () => {
+  const FUTURE_EVENT = { ...STARTED_EVENT, id: 'event-later', status: SportEventStatus.SCHEDULED, startDate: new Date('2099-06-01T12:00:00.000Z') } as SportEvent;
+  const eventsRepo = (events: readonly SportEvent[]) => fakeSportEventRepo({
+    findByIds: jest.fn().mockImplementation(async (ids: readonly string[]) => events.filter((event) => ids.includes(event.id))),
+  });
+
+  it('lists the championship years the league\'s contests went final in, as the repository answers them', async () => {
+    const service = buildService({ contests: createMockContestRepo({ findFinishedYearsByLeague: jest.fn().mockResolvedValue([2026, 2025]) }) });
+
+    await expect(service.listFinishedYears('league-1')).resolves.toEqual([2026, 2025]);
+  });
+
+  it('lists an open contest no one has entered with an entry count of 0', async () => {
+    const entered = buildContest({ id: 'contest-entered', name: 'Entered', status: ContestStatus.OPEN, sportEventIds: [FUTURE_EVENT.id] });
+    const empty = buildContest({ id: 'contest-empty', name: 'Empty', status: ContestStatus.OPEN, sportEventIds: [FUTURE_EVENT.id] });
+    const service = buildService({
+      contests: createMockContestRepo({ findByLeague: jest.fn().mockResolvedValue([entered, empty]) }),
+      entries: createMockEntryRepo({ countByContests: jest.fn().mockResolvedValue(new Map([['contest-entered', 3]])) }),
+      sportEvents: eventsRepo([FUTURE_EVENT]),
+    });
+
+    await expect(service.listOpenContestUsage('league-1')).resolves.toEqual([
+      { contestId: 'contest-entered', name: 'Entered', entryCount: 3 },
+      { contestId: 'contest-empty', name: 'Empty', entryCount: 0 },
+    ]);
+  });
+
+  it('reads each league\'s plan once for its contests\' entry caps, raising a contest\'s cap to its expansion', async () => {
+    const entitlements = platinumEntitlements();
+    const forLeague = jest.spyOn(entitlements, 'forLeague');
+    const service = buildService({
+      planEntitlements: entitlements,
+      expansions: { findHighestBands: async () => new Map([['contest-b', 100_000]]) },
+    });
+    const contests = [
+      buildContest({ id: 'contest-a', leagueId: 'league-1' }),
+      buildContest({ id: 'contest-b', leagueId: 'league-1' }),
+      buildContest({ id: 'contest-c', leagueId: 'league-2' }),
+    ];
+    const platinum = await entitlements.forLeague('league-1');
+    forLeague.mockClear();
+
+    const caps = await service.findEntryCaps(contests);
+
+    expect(forLeague.mock.calls.map(([leagueId]) => leagueId).sort()).toEqual(['league-1', 'league-2']);
+    expect(caps).toEqual(new Map([
+      ['contest-a', contestEntriesCap(platinum, null)],
+      ['contest-b', 100_000],
+      ['contest-c', contestEntriesCap(platinum, null)],
+    ]));
+  });
+
+  it('gives a live one-event prediction contest whose event has no games yet no progress', async () => {
+    const matches = { findBySportEvent: jest.fn().mockResolvedValue([]), findBySportEvents: jest.fn().mockResolvedValue([]) };
+    const service = buildService({ matches });
+    const contest = buildContest({ id: 'contest-1', status: ContestStatus.ACTIVE, contestFormat: ContestFormat.PREDICTION, sportEventIds: ['event-1'] });
+
+    const progress = await service.findLiveProgress([contest], new Map([['event-1', STARTED_EVENT]]));
+
+    expect(progress).toEqual(new Map());
+    expect(matches.findBySportEvents).toHaveBeenCalledWith(['event-1']);
+  });
+
+  it('lists my entries only in the contests it was asked about, leaving out a row of any other contest', async () => {
+    const listed = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN, sportEventIds: ['event-1'] });
+    const service = buildService({
+      contests: createMockContestRepo({ findByLeague: jest.fn().mockResolvedValue([listed]) }),
+      squadMemberships: createMockSquadMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP) }),
+      entries: createMockEntryRepo({
+        findBySquadAndContests: jest.fn().mockResolvedValue([
+          DEFAULT_ENTRY_WITH_SQUAD,
+          { ...DEFAULT_ENTRY_WITH_SQUAD, id: 'entry-elsewhere', contestId: 'contest-elsewhere' },
+        ]),
+      }),
+    });
+
+    const { entries } = await service.listMyLeagueEntries('league-1', 'user-1');
+
+    expect(entries.map((entry) => entry.id)).toEqual(['entry-1']);
   });
 });
 

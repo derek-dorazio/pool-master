@@ -144,7 +144,7 @@ import {
 import type { EventFieldReads, SportEventParticipantView } from '../events/sport-event-participant-service';
 import { batchedLeaderboardDeps } from './batched-leaderboard-reads';
 import type { ParticipantValuationView, SportEventTierService } from '../events/sport-event-tier-service';
-import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
+import { contestEntriesCap, type PlanEntitlements, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import {
   emailRecipientOf,
   EntryReceiptKind,
@@ -385,7 +385,9 @@ export class ContestService {
    * (#711). Only those two read their rules for it.
    */
   private async findContestWindows<Event extends SportEvent>(contest: Contest, events: readonly Event[]): Promise<Array<{ event: Event; window: EventTiming }>> {
-    return (await this.findWindowsOfContests([contest], () => events)).get(contest.id) ?? [];
+    const cutoff = (await this.findCutoffs([contest])).get(contest.id);
+    const games = cutoff === undefined || events.length === 0 ? [] : await this.deps.matches.findBySportEvents(events.map((event) => event.id));
+    return eventWindows(events, cutoff, games);
   }
 
   /**
@@ -400,13 +402,7 @@ export class ContestService {
     const cutoffs = await this.findCutoffs(contests);
     const gameEventIds = contests.filter((contest) => cutoffs.has(contest.id)).flatMap((contest) => eventsOf(contest).map((event) => event.id));
     const games = gameEventIds.length === 0 ? [] : await this.deps.matches.findBySportEvents([...new Set(gameEventIds)]);
-    return new Map(contests.map((contest) => {
-      const cutoff = cutoffs.get(contest.id);
-      return [contest.id, eventsOf(contest).map((event) => ({
-        event,
-        window: cutoff === undefined ? event : cutoffTiming(cutoff, event, games.filter((game) => game.sportEventId === event.id)),
-      }))];
-    }));
+    return new Map(contests.map((contest) => [contest.id, eventWindows(eventsOf(contest), cutoffs.get(contest.id), games)]));
   }
 
   /**
@@ -438,16 +434,18 @@ export class ContestService {
    * an entry is checked against the cap under the contest's lock (`createEntry`).
    */
   async findEntryCaps(contests: readonly Contest[]): Promise<Map<string, number | null>> {
-    const leagueIds = [...new Set(contests.map((contest) => contest.leagueId))];
-    const [bands, entitlements] = await Promise.all([
+    // Each league's entitlements read once, however many of its contests are named.
+    const ofLeague = new Map<string, Promise<PlanEntitlements>>();
+    const entitlementsOf = (leagueId: string): Promise<PlanEntitlements> => {
+      const read = ofLeague.get(leagueId) ?? this.deps.planEntitlements.forLeague(leagueId);
+      ofLeague.set(leagueId, read);
+      return read;
+    };
+    const [bands, caps] = await Promise.all([
       this.deps.expansions.findHighestBands(contests.map((contest) => contest.id)),
-      Promise.all(leagueIds.map(async (leagueId) => [leagueId, await this.deps.planEntitlements.forLeague(leagueId)] as const)),
+      Promise.all(contests.map(async (contest) => [contest.id, await entitlementsOf(contest.leagueId)] as const)),
     ]);
-    const byLeague = new Map(entitlements);
-    return new Map(contests.flatMap((contest) => {
-      const leagueEntitlements = byLeague.get(contest.leagueId);
-      return leagueEntitlements ? [[contest.id, contestEntriesCap(leagueEntitlements, bands.get(contest.id) ?? null)] as const] : [];
-    }));
+    return new Map(caps.map(([contestId, entitlements]) => [contestId, contestEntriesCap(entitlements, bands.get(contestId) ?? null)]));
   }
 
   /**
@@ -774,8 +772,9 @@ export class ContestService {
         ?? { ...write, version: 1 };
     })();
     this.snapshotsInFlight.set(key, rebuild);
+    // Nothing replaces an in-flight rebuild (a second asker shares it), so it is still this one.
     const settle = () => {
-      if (this.snapshotsInFlight.get(key) === rebuild) this.snapshotsInFlight.delete(key);
+      this.snapshotsInFlight.delete(key);
     };
     rebuild.then(settle, settle);
     return rebuild;
@@ -1567,7 +1566,7 @@ export class ContestService {
       this.logger.warn({ contestId, userId }, 'contest entry create locked by draw');
       throw entriesLockedError();
     }
-    const dto = await this.loadEntryDtoById(result.entry.id);
+    const dto = await this.loadEntryDtoById(result.entry.id, context.contest);
     this.logger.info({
       contestId,
       userId,
@@ -1696,7 +1695,7 @@ export class ContestService {
     }
 
     await this.deps.entries.update(entryId, pendingUpdates);
-    const dto = await this.loadEntryDtoById(entryId);
+    const dto = await this.loadEntryDtoById(entryId, context.contest);
     this.logger.info({ contestId, entryId, userId }, 'contest entry update completed');
     return dto;
   }
@@ -1991,7 +1990,8 @@ export class ContestService {
     ));
   }
 
-  private async loadEntryDtoById(entryId: string): Promise<ContestEntryDto> {
+  /** The entry as just written, in its contest's event order. */
+  private async loadEntryDtoById(entryId: string, contest: Pick<Contest, 'sportEventIds'>): Promise<ContestEntryDto> {
     const row = await this.deps.entries.findByIdWithSquad(entryId);
     if (!row) {
       throw new ContestEntryOperationError(
@@ -2000,12 +2000,9 @@ export class ContestService {
       );
     }
 
-    const [pickCounts, contest] = await Promise.all([
-      this.deps.picks.countByEntries([row.id]),
-      this.deps.contests.findById(row.contestId),
-    ]);
+    const pickCounts = await this.deps.picks.countByEntries([row.id]);
     return toContestEntryDto({
-      ...(contest ? withContestEventOrder(row, contest) : row),
+      ...withContestEventOrder(row, contest),
       picksCount: pickCounts.get(row.id) ?? 0,
     }, {
       name: row.squadName,
@@ -2103,6 +2100,18 @@ const LEADERBOARD_SCORING_REFUSALS: Readonly<Record<ContestScoringResolutionFail
     code: 'CONTEST_LEADERBOARD_SCORING_SETTINGS_INVALID',
   },
 };
+
+/** Each event's timing as a contest's window runs on it: the event's own, or its cutoff's over the event's games. */
+function eventWindows<Event extends SportEvent>(
+  events: readonly Event[],
+  cutoff: ContestCutoff | undefined,
+  games: readonly SportEventRoundMatch[],
+): Array<{ event: Event; window: EventTiming }> {
+  return events.map((event) => ({
+    event,
+    window: cutoff === undefined ? event : cutoffTiming(cutoff, event, games.filter((game) => game.sportEventId === event.id)),
+  }));
+}
 
 export class ContestOperationError extends Error {
   code: ApiErrorCode;
