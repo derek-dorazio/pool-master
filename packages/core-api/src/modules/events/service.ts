@@ -186,7 +186,6 @@ export interface SportEventServiceDeps {
   now?: () => Date;
 }
 
-/** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
 /** The error each test-slot refusal answers with (#2004). */
 const TEST_EVENT_SLOT_REFUSALS: Readonly<Record<TestEventSlotRefusal, (seasonSlotId: string, sportLeagueName: string) => SportEventError>> = {
   SEASON_SLOT_NOT_TEST: () => new SportEventError('Only a test slot takes an event made by hand; the sync makes every other.', 'SEASON_SLOT_NOT_TEST', 422),
@@ -195,6 +194,7 @@ const TEST_EVENT_SLOT_REFUSALS: Readonly<Record<TestEventSlotRefusal, (seasonSlo
   SEASON_SLOT_TAKEN: (seasonSlotId) => new SportEventError(`Season slot ${seasonSlotId} already has an event.`, 'SEASON_SLOT_TAKEN', 409),
 };
 
+/** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
 function isDateOnlyPlaceholder(start: Date): boolean {
   return start.getUTCHours() === 12 && start.getUTCMinutes() === 0 && start.getUTCSeconds() === 0 && start.getUTCMilliseconds() === 0;
 }
