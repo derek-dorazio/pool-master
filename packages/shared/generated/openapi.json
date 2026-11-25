@@ -687,6 +687,30 @@
         "additionalProperties": false,
         "description": "Asks for a password reset link. The answer is the same whether or not an account matches."
       },
+      "PasswordResetRequestedResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "The request was taken. It reads the same whether or not an account matched."
+          },
+          "linkValidMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "How many minutes an emailed reset link works, for the confirmation screen to quote."
+          }
+        },
+        "required": [
+          "success",
+          "linkValidMinutes"
+        ],
+        "additionalProperties": false,
+        "description": "The answer to a password reset request, the same whether or not an account matched."
+      },
       "PasswordResetConfirmRequest": {
         "type": "object",
         "properties": {
@@ -74635,7 +74659,7 @@
         "tags": [
           "Auth"
         ],
-        "description": "Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after 10 minutes, and a newer request cancels it. The answer is 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.",
+        "description": "Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after `linkValidMinutes`, and a newer request cancels it. The answer is the same 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.",
         "requestBody": {
           "required": true,
           "content": {
@@ -74648,11 +74672,11 @@
         },
         "responses": {
           "202": {
-            "description": "Minimal success response envelope.",
+            "description": "The answer to a password reset request, the same whether or not an account matched.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "$ref": "#/components/schemas/PasswordResetRequestedResponse"
                 }
               }
             }

@@ -8,7 +8,7 @@ import type { AuthService } from './auth-service';
 import { AuthError } from './auth-service';
 import { PasswordResetError, type PasswordResetService } from './password-reset-service';
 import { EmailChangeUndoError, type EmailChangeUndoService } from './email-change-undo-service';
-import type { EmailChangeUndoRequest, PasswordResetConfirmRequest, PasswordResetRequest } from '@poolmaster/shared/dto';
+import { PASSWORD_RESET_LINK_MINUTES, type EmailChangeUndoRequest, type PasswordResetConfirmRequest, type PasswordResetRequest } from '@poolmaster/shared/dto';
 import {
   createClearedSessionCookieHeaders,
   createSessionCookieHeaders,
@@ -20,6 +20,7 @@ import {
 // through the mappers makes the contract type-checked.
 import {
   toAuthResponse,
+  toPasswordResetRequestedResponse,
   toTokenRefreshResponse,
 } from '../../mappers';
 
@@ -262,7 +263,7 @@ export function createAuthHandlers(
       action: 'auth.passwordReset.request',
       data: { identifierType: inferIdentifierType(request.body.identifier) },
     }, 'Handling password reset request');
-    void reply.status(202).send({ success: true });
+    void reply.status(202).send(toPasswordResetRequestedResponse(PASSWORD_RESET_LINK_MINUTES));
     await passwordResetService.requestReset(request.body.identifier);
     return reply;
   }

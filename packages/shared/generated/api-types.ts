@@ -148,7 +148,7 @@ export interface paths {
         put?: never;
         /**
          * Email a password reset link
-         * @description Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after 10 minutes, and a newer request cancels it. The answer is 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.
+         * @description Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after `linkValidMinutes`, and a newer request cancels it. The answer is the same 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.
          */
         post: operations["requestPasswordReset"];
         delete?: never;
@@ -4261,6 +4261,16 @@ export interface components {
         PasswordResetRequest: {
             /** @description Email or username of the account to reset, matched the same way as sign in. */
             identifier: string;
+        };
+        /** @description The answer to a password reset request, the same whether or not an account matched. */
+        PasswordResetRequestedResponse: {
+            /**
+             * @description The request was taken. It reads the same whether or not an account matched.
+             * @enum {boolean}
+             */
+            success: true;
+            /** @description How many minutes an emailed reset link works, for the confirmation screen to quote. */
+            linkValidMinutes: number;
         };
         /** @description Sets a new password with a reset link. Every session of the account is signed out. */
         PasswordResetConfirmRequest: {
@@ -26906,13 +26916,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Minimal success response envelope. */
+            /** @description The answer to a password reset request, the same whether or not an account matched. */
             202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessResponse"];
+                    "application/json": components["schemas"]["PasswordResetRequestedResponse"];
                 };
             };
             /** @description Standard API error envelope. */

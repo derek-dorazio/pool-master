@@ -398,6 +398,20 @@ export type PasswordResetRequest = {
 };
 
 /**
+ * The answer to a password reset request, the same whether or not an account matched.
+ */
+export type PasswordResetRequestedResponse = {
+    /**
+     * The request was taken. It reads the same whether or not an account matched.
+     */
+    success: true;
+    /**
+     * How many minutes an emailed reset link works, for the confirmation screen to quote.
+     */
+    linkValidMinutes: number;
+};
+
+/**
  * Sets a new password with a reset link. Every session of the account is signed out.
  */
 export type PasswordResetConfirmRequest = {
@@ -30802,9 +30816,9 @@ export type RequestPasswordResetError = RequestPasswordResetErrors[keyof Request
 
 export type RequestPasswordResetResponses = {
     /**
-     * Minimal success response envelope.
+     * The answer to a password reset request, the same whether or not an account matched.
      */
-    202: SuccessResponse;
+    202: PasswordResetRequestedResponse;
 };
 
 export type RequestPasswordResetResponse = RequestPasswordResetResponses[keyof RequestPasswordResetResponses];
