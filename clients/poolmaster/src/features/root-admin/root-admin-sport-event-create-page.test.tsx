@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CreateSportEventRequest } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventCreatePage } from './root-admin-sport-event-create-page';
-import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { sportEventFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // plans/124 §6.3 / §4.4a — /manage/sports/golf/events/new (pool-master-3dg). plans/147: a
 // tournament is created on a tour, in an event year, where it used to be created in a season.
@@ -52,13 +52,13 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 function renderPage(
-  entry = '/manage/sports/golf/events/new?sportLeagueId=league-1&eventYear=2026',
+  entry = '/manage/sports/golf/events/new?sportLeagueId=league-1',
   tours = [sportLeagueFixture({ id: 'league-1' }), sportLeagueFixture({ id: 'league-2', name: 'LPGA Tour' })],
 ) {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: tours } });
-  const queryClient = new QueryClient({
+  const queryClient = sportsQueryClient(new QueryClient({
     defaultOptions: { queries: { retry: false } },
-  });
+  }));
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[entry]}>
@@ -94,14 +94,14 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     expect(screen.queryByTestId('root-admin-sport-event-create-tours-link')).not.toBeInTheDocument();
   });
 
-  it('plans/147: defaults the only active tour and its current year when the URL names neither', async () => {
-    renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1', currentEventYear: 2027 })]);
+  it('defaults the only active tour when the URL names none, and asks for no year: the event goes in the tour\'s current Season', async () => {
+    renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1' })]);
 
     await waitFor(() => expect(screen.getByTestId('root-admin-sport-event-create-tour')).toHaveValue('league-1'));
-    expect(screen.getByTestId('root-admin-sport-event-create-event-year')).toHaveValue('2027');
+    expect(screen.queryByTestId('root-admin-sport-event-create-event-year')).not.toBeInTheDocument();
   });
 
-  it('plans/147: shows a second edition of a series in one year as its own refusal, not a generic failure', async () => {
+  it('shows a second edition of a series in one Season as its own refusal, not a generic failure', async () => {
     createEventMock.mockResolvedValue({
       error: { error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'exists' } },
       response: { status: 409 },
@@ -113,11 +113,11 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
 
     expect(
-      await screen.findByText('This tour already has a 2026 edition of this tournament.'),
+      await screen.findByText('This tour already has this tournament in its current Season.'),
     ).toBeInTheDocument();
   });
 
-  it('pool-master-3dg submits a manual tournament with the tour and year prefilled from the URL and navigates Home', async () => {
+  it('submits a manual tournament with the tour prefilled from the URL and no year, and navigates Home', async () => {
     createEventMock.mockResolvedValue({
       data: { event: sportEventFixture({ id: 'new-tour' }) },
     });
@@ -137,7 +137,8 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     );
     const body = (createEventMock.mock.calls[0][0] as { body: CreateSportEventRequest }).body;
     expect(body.name).toBe('Spring Classic');
-    expect(body).toMatchObject({ sportLeagueId: 'league-1', eventYear: 2026 });
+    expect(body).toMatchObject({ sportLeagueId: 'league-1' });
+    expect(body).not.toHaveProperty('eventYear');
     expect(body.startDate).toContain('2026-03-12T');
     expect(body.rounds).toBe(4);
     expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
@@ -184,7 +185,6 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     const body = (createEventFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
     expect(body).toMatchObject({
       sportLeagueId: 'league-1',
-      eventYear: 2026,
       providerId: 'mock-contest-feed',
       externalId: 'pga-2026-masters',
     });

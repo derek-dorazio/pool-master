@@ -5,7 +5,7 @@
 import { syncRunOutcome } from '../../support/sync-run-payload';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { Prisma } from '@prisma/client';
-import { ProviderCode, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository } from '../../../packages/core-api/src/adapters';
 import {
   SyncRunDetailsRetention,
@@ -33,7 +33,6 @@ async function seedRun(label: string, createdAt: Date, details: object | null = 
   const run = await repo.create({
     ...SCHEDULED_SCORES_RUN,
     providerCode: ProviderCode.BALLDONTLIE,
-    sport: Sport.GOLF,
     status: ProviderSyncRunStatus.COMPLETED,
     startedAt: null,
     completedAt: null,
@@ -120,7 +119,7 @@ describe('PrismaProviderSyncRunRepository.countFinishedByProvider (#1999)', () =
   it('counts each Provider\'s runs submitted since the time that finished, and how many failed, leaving out older and unfinished runs', async () => {
     const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
     const write = (status: ProviderSyncRunStatus, createdAt: Date) => repo.create({
-      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status,
+      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, status,
       startedAt: null, completedAt: null, ...syncRunOutcome(), createdAt,
     });
     const since = new Date(NOW.getTime() - 60 * 60_000);

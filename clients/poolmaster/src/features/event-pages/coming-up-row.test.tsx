@@ -30,8 +30,9 @@ describe('Coming up row', () => {
   it('asks only for the pages with an edition coming and shows a card for each in the order the server sends, soonest first, naming its contest types and linking to the page', async () => {
     const superBowl = championshipWeekendFixture({
       id: 'page-sb',
-      slug: 'super-bowl',
-      offers: [{ ...championshipWeekendFixture().offers[0], edition: { sportEventId: 'sb', name: 'Super Bowl', eventYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
+      urlSegment: 'super-bowl',
+      path: '/play/american-football/super-bowl',
+      offers: [{ ...championshipWeekendFixture().offers[0], edition: { sportEventId: 'sb', name: 'Super Bowl', championshipYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
     });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture(), superBowl] } });
     renderRow('AMERICAN_FOOTBALL');
@@ -45,7 +46,7 @@ describe('Coming up row', () => {
   });
 
   it('shows every sport\'s next three pages, asking for the upcoming pages of every sport', async () => {
-    const pages = ['one', 'two', 'three', 'four'].map((slug) => championshipWeekendFixture({ id: `page-${slug}`, slug }));
+    const pages = ['one', 'two', 'three', 'four'].map((slug) => championshipWeekendFixture({ id: `page-${slug}`, urlSegment: slug, path: `/play/american-football/${slug}` }));
     listEventPagesMock.mockResolvedValue({ data: { eventPages: pages } });
     renderRow();
 

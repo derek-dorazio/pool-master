@@ -3,19 +3,24 @@
  * name, each with its ways to play. Public reads: nothing here is about a league or a user.
  */
 import { z } from 'zod';
-import { EVENT_PAGE_SLUG_PATTERN, EventPageOfferState, Sport } from '@poolmaster/shared/domain';
+import { EventPageOfferState, Sport, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 import { ContestConfigTemplateDtoSchema } from './contest-management.dto';
 import { registerSchema } from './schema-registry';
 
-const EventPageSlugSchema = z.string().regex(EVENT_PAGE_SLUG_PATTERN).describe(
-  'The page\'s URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.',
-);
+const EventPageAddressShape = {
+  sport: z.enum(Sport).describe('The sport the page belongs to.'),
+  sportUrlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport\'s stored URL segment, such as american-football: the first segment of the page\'s web address.'),
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe(
+    'The page\'s URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).',
+  ),
+  path: z.string().describe('The page\'s web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.'),
+};
 
 export const EventPageEditionDtoSchema = z.object({
   sportEventId: z.uuid().describe('The edition\'s sport event: the one Create contest starts on.'),
   name: z.string().describe('The edition\'s name, such as "Conference Championships".'),
-  eventYear: z.number().int().describe('The year the edition is branded with.'),
+  championshipYear: z.number().int().describe('The year the edition\'s Season is named for (SportEventDto.championshipYear).'),
   startDate: DateTimeSchema.describe('When the edition starts. For a NOT_YET offer, when it is expected.'),
   endDate: DateTimeSchema.nullable().describe('When the edition ends, when known.'),
 }).describe('The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.');
@@ -37,14 +42,10 @@ export type EventPageOfferDto = z.infer<typeof EventPageOfferDtoSchema>;
 
 export const EventPageDtoSchema = z.object({
   id: z.uuid(),
-  sport: z.enum(Sport).describe('The sport the page belongs to; its URL\'s first segment is this sport\'s path segment.'),
-  slug: EventPageSlugSchema,
+  ...EventPageAddressShape,
   displayOrder: z.number().int().describe('Where the page sits among its sport\'s pages, lower first.'),
   isActive: z.boolean().describe('False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved.'),
-  redirectTo: z.object({
-    sport: z.enum(Sport),
-    slug: EventPageSlugSchema,
-  }).nullable().describe('For a retired page with a successor, the page its URL now goes to; null otherwise.'),
+  redirectTo: z.object(EventPageAddressShape).nullable().describe('For a retired page with a successor, the page its URL now goes to; null otherwise.'),
   offers: z.array(EventPageOfferDtoSchema).describe('The page\'s ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.'),
 }).describe('A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event.');
 export type EventPageDto = z.infer<typeof EventPageDtoSchema>;

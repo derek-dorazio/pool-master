@@ -25,7 +25,6 @@ const LEAGUE: PlayoffsLeague = {
     { name: 'Test Final', seriesLength: 3, seriesCount: 1 },
   ],
   playoffYearOffset: 1,
-  seasonRolloverMonth: 8,
 };
 
 const team = (id: number): PlayoffTeam => ({ id, name: `Team ${String(id)}`, metadata: { abbreviation: `T${String(id)}` } });

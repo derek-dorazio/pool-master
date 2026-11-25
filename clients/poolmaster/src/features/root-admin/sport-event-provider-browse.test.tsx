@@ -1,10 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { SportEventProviderBrowse } from './sport-event-provider-browse';
-import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { sportEventFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 import type { SportEventEdition } from './sport-event-edition';
 
 // plans/124 §4.4 — "Browse provider events" on the create page: the golf provider's catalog,
@@ -41,7 +41,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 const SPORT_LEAGUES = [sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' })];
-const COMPLETE_EDITION: SportEventEdition = { sportLeagueId: 'league-1', eventYear: '2026' };
+const COMPLETE_EDITION: SportEventEdition = { sportLeagueId: 'league-1' };
 const MASTERS = {
   externalId: 'pga-2026-masters',
   name: 'The Masters 2026',
@@ -58,7 +58,7 @@ function withSportProvider() {
 
 function renderBrowse(edition: SportEventEdition = COMPLETE_EDITION) {
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={sportsQueryClient()}>
       <MemoryRouter initialEntries={['/manage/sports/golf/events/new']}>
         <Routes>
           <Route
@@ -116,7 +116,7 @@ describe('SportEventProviderBrowse', () => {
   it('browses every tour, with no tour filter, when the edition names no tour yet', async () => {
     withSportProvider();
     listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [] } });
-    renderBrowse({ sportLeagueId: '', eventYear: '' });
+    renderBrowse({ sportLeagueId: '' });
 
     await waitFor(() => expect(listProviderCatalogEventsMock).toHaveBeenCalled());
     expect(await screen.findByText('No provider events fall in this window.')).toBeInTheDocument();
@@ -155,7 +155,6 @@ describe('SportEventProviderBrowse', () => {
     await waitFor(() => expect(createEventFromProviderEventMock).toHaveBeenCalledTimes(1));
     expect((createEventFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body).toEqual({
       sportLeagueId: 'league-1',
-      eventYear: 2026,
       providerId: 'mock-contest-feed',
       externalId: 'pga-2026-masters',
     });
@@ -202,7 +201,7 @@ describe('SportEventProviderBrowse', () => {
       .toMatchObject({ providerId: 'balldontlie', externalId: 'pga-2026-masters' });
   });
 
-  it('says the tour already has this year\'s edition when the provider tournament is a duplicate', async () => {
+  it('says the tour already has this tournament in its current Season when the provider tournament is a duplicate', async () => {
     withSportProvider();
     listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [MASTERS] } });
     createEventFromProviderEventMock.mockResolvedValue({
@@ -215,7 +214,7 @@ describe('SportEventProviderBrowse', () => {
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-create-provider-submit'));
 
     expect(
-      await screen.findByText('This tour already has a 2026 edition of this tournament.'),
+      await screen.findByText('This tour already has this tournament in its current Season.'),
     ).toBeInTheDocument();
     expect(screen.queryByTestId('tournament-home')).not.toBeInTheDocument();
   });
@@ -255,10 +254,10 @@ describe('SportEventProviderBrowse', () => {
     ).toBeInTheDocument();
   });
 
-  it('keeps Create disabled until the edition names a tour and a four-digit year', async () => {
+  it('keeps Create disabled until the edition names a tour', async () => {
     withSportProvider();
     listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [MASTERS] } });
-    renderBrowse({ sportLeagueId: 'league-1', eventYear: '26' });
+    renderBrowse({ sportLeagueId: '' });
 
     await selectMasters();
 

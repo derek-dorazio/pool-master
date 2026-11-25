@@ -28,7 +28,6 @@ import type { SportLeagueDto } from '@/lib/api';
 import { SportEventEditionFields } from './sport-event-edition-fields';
 import {
   isCompleteEdition,
-  parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
 import {
@@ -62,7 +61,7 @@ export function SportEventProviderBrowse({
     feature: 'root-admin-sport-event-create-page',
   });
   const navigate = useNavigate();
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { event: eventNoun, round } = sportVocabulary(definition);
 
   const [browseFrom, setBrowseFrom] = useState(() => defaultWindowValue(0, displayPreferences.timeZone));
@@ -91,7 +90,6 @@ export function SportEventProviderBrowse({
       const response = await createEventFromProviderEvent({
         body: {
           sportLeagueId: edition.sportLeagueId,
-          eventYear: parseEventYear(edition.eventYear) as number,
           providerId,
           externalId: selectedEvent.externalId,
           ...(Number.isNaN(roundsValue) ? {} : { rounds: roundsValue }),
@@ -108,7 +106,7 @@ export function SportEventProviderBrowse({
         { action: 'event.create.provider', data: { id: tournament.id } },
         'Created event from provider event',
       );
-      void navigate(buildSportEventPath(sport, tournament.id));
+      void navigate(buildSportEventPath(sportUrlSegment, tournament.id));
     },
     onError: (error) => {
       logger.warn(
@@ -256,7 +254,6 @@ export function SportEventProviderBrowse({
                   context: 'createEvent',
                   values: {
                     sportLeague: sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one,
-                    year: edition.eventYear,
                     event: eventNoun.one,
                   },
                   fallback: `We could not create this ${eventNoun.one}.`,

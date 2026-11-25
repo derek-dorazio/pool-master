@@ -120,7 +120,7 @@ describe('PrismaSportLeaguePageReader.readEventFacts', () => {
   it('gives each event its stored release check, field size and latest run of each kind', async () => {
     const prisma = prismaDouble();
     const event = {
-      id: 'e1', name: 'Opener', eventYear: 2027, startDate: NOW, endDate: null, status: SportEventStatus.DRAFT, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', releasedAt: null,
+      id: 'e1', name: 'Opener', startDate: NOW, endDate: null, status: SportEventStatus.DRAFT, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', releasedAt: null,
       autoReleaseCheckedAt: NOW, autoReleaseOutcome: AutoReleaseCheckOutcome.HELD, autoReleaseFailedChecks: [ReleaseCheckKey.TIERS_ASSIGNED],
     };
     prisma.sportEvent.findMany.mockImplementation(async (args: { where: { status?: unknown } }) => (args.where.status === undefined
@@ -248,7 +248,7 @@ describe('readOverdueCandidates', () => {
     const round = (roundNumber: number) => ({ id: `r${String(roundNumber)}`, sportEventId: 'parent', roundNumber, scheduledDate: at(`2027-04-1${String(roundNumber)}T00:00:00.000Z`), scheduledEndAt: null });
     prisma.sportEventRound.findMany.mockResolvedValue([round(1), round(2)]);
     prisma.sportEventRoundMatch.groupBy.mockResolvedValue([{ sportEventRoundId: 'r2', _max: { scheduledDate: at('2027-04-12T18:00:00.000Z') } }]);
-    prisma.eventSeries.findMany.mockResolvedValue([{ id: 'series-1', sportLeagueId: 'tour' }]);
+    prisma.eventSeries.findMany.mockResolvedValue([{ id: 'series-1', sportLeagueId: 'tour', sportLeague: { sport: { sport: Sport.GOLF } } }]);
     prisma.providerLeague.findMany.mockResolvedValue([{ typicalGameMinutes: 300, sportLeagues: [{ sportLeagueId: 'tour' }] }]);
 
     const candidates = await readOverdueCandidates(asPrismaClient(prisma), NOW, ['series-1']);

@@ -56,16 +56,16 @@ describe('extractErrorMessage', () => {
   });
 
   it('shows the screen\'s context wording for a code it words, with the screen\'s words in its placeholders', () => {
-    const err = new ApiError({ error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'Year has events.' } });
+    const err = new ApiError({ error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'Series has an edition.' } });
     expect(extractErrorMessage(err, {
-      context: 'leagueYear',
-      values: { sportLeagueName: 'PGA Tour', events: 'tournaments', year: 2027 },
-    })).toBe('PGA Tour already has tournaments in 2027.');
+      context: 'createEvent',
+      values: { sportLeague: 'tour', event: 'tournament' },
+    })).toBe('This tour already has this tournament in its current Season.');
   });
 
   it('shows the code\'s own display string when the screen\'s context has no wording for that code', () => {
     const err = new ApiError({ error: { code: 'CONTEST_FULL', message: 'Full.' } });
-    expect(extractErrorMessage(err, { context: 'leagueYear' })).toBe('This contest is full.');
+    expect(extractErrorMessage(err, { context: 'createEvent' })).toBe('This contest is full.');
   });
 
   it('tries a screen\'s contexts in order, so the first with wording for the code wins', () => {

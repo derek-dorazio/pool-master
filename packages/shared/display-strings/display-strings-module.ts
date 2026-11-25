@@ -30,6 +30,7 @@ export type SharedEnums = {
   SlotKind: Enums.SlotKind;
   SeriesFormat: Enums.SeriesFormat;
   SlotPairing: Enums.SlotPairing;
+  SeasonSlotStatus: Enums.SeasonSlotStatus;
   SlotProviderMatchType: Enums.SlotProviderMatchType;
   MatchFormat: Enums.MatchFormat;
   PeriodUnit: Enums.PeriodUnit;
@@ -83,7 +84,6 @@ export type SharedEnums = {
   ParticipantStandingStatus: Enums.ParticipantStandingStatus;
   ContestStatus: Enums.ContestStatus;
   ContestEntryStatus: Enums.ContestEntryStatus;
-  PrizePayoutType: Enums.PrizePayoutType;
   LeagueRole: Enums.LeagueRole;
   LeagueMembershipStatus: Enums.LeagueMembershipStatus;
   LeagueIconKey: Enums.LeagueIconKey;

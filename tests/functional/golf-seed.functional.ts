@@ -2,7 +2,6 @@ import {
   createEvent,
   getEventBracket,
   listEventParticipants,
-  listEvents,
   listParticipants,
   listSportLeagues,
 } from '@poolmaster/shared/generated/hey-api';
@@ -19,11 +18,12 @@ import {
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
+import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { leagueProfiles } from '../support/league-profiles';
+import { sportLeagueRowDefaults } from '../support/league-profiles';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 
 // Loading a test data file through the real admin API: a test seed a commissioner can build
@@ -91,10 +91,10 @@ let admin: RegisteredUserContext;
 beforeAll(async () => {
   // The migrations' reference rows, restored in case an earlier suite cleared the sports table.
   const db = getFunctionalPrisma();
-  await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
-  await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, tournamentFormat: 'RACE' }, update: {} });
-  await db.sport.upsert({ where: { sport: Sport.BASKETBALL }, create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' }, update: {} });
-  await db.sport.upsert({ where: { sport: Sport.AMERICAN_FOOTBALL }, create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING), tournamentFormat: 'RACE' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.BASKETBALL }, create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.AMERICAN_FOOTBALL }, create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' }, update: {} });
   admin = await buildRegisteredUser({ displayName: 'Load Admin' });
   await promoteToRootAdmin(admin);
 });
@@ -113,8 +113,8 @@ async function addSportLeague(name: string, sport: Sport = Sport.GOLF): Promise<
   await addRunSportLeague(admin.client, sport, name);
 }
 
-async function eventsOf(sportLeagueId: string, eventYear: number) {
-  return expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId, eventYear } })).data).events;
+async function eventsOf(sportLeagueId: string, championshipYear: number) {
+  return seasonEvents(admin.client, sportLeagueId, championshipYear);
 }
 
 async function fieldOf(eventId: string) {
@@ -233,7 +233,7 @@ describe('Loading a golf test seed through the admin API', () => {
     // What a run that stopped straight after creating the event leaves behind.
     expectDefined((await createEvent({
       client: admin.client,
-      body: { sportLeagueId: league.id, eventYear: 2026, name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(league.id, 2026), name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
     })).data);
 
     const rows = await loadSportData(parsed(withFinale), { getClient, now: NOW, mode: LoadMode.APPLY });
@@ -322,7 +322,9 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     const golfSportId = (await db.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id;
     const league = `${tour} known`;
     // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
-    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), ...sportPlay(Sport.GOLF), sportId: golfSportId, name: league } });
+    const sportLeague = await db.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(db)), ...sportPlay(Sport.GOLF), sportId: golfSportId, name: league } });
+    // A migration adds a league with its Seasons; the file's 2026 one stands in, made current.
+    await inCurrentSeason(sportLeague.id, 2026);
     const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL' } });
     await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: await providerRowId(), participantType: 'INDIVIDUAL', externalId: feedId('golfer-2') } });
 
@@ -412,7 +414,8 @@ describe('Filling an event from a test slate through the admin API', () => {
   let eventId = '';
 
   beforeAll(async () => {
-    await addSportLeague(tour);
+    // The loader writes into the league's current Season, so the schedule's 2027 one is made current.
+    await inCurrentSeason(await addRunSportLeague(admin.client, Sport.GOLF, tour), 2027);
     // A test seed held back as a draft puts the event on the site with a field of golfers 1 to 3.
     const schedule: SportDataFile = {
       schemaVersion: 1,
@@ -469,7 +472,7 @@ describe('Filling an event from a test slate through the admin API', () => {
     const squad = await db.squad.create({ data: { leagueId: league.id, createdBy: commissioner.userId, name: `Slate Squad ${prefix}` } });
     const entry = await db.contestEntry.create({ data: { contestId, squadId: squad.id, entryNumber: 1, name: `Slate Entry ${prefix}` } });
     const picked = expectDefined((await fieldOf(eventId)).get(`${prefix} Golfer 2`));
-    await db.contestEntryPick.create({ data: { entryId: entry.id, sportEventParticipantId: picked.id, contestFormat: 'ROSTER', slot: 1 } });
+    await db.contestEntryPick.create({ data: { entryId: entry.id, sportEventParticipantId: picked.id } });
 
     try {
       const file = parsed(slate([6, 4]));

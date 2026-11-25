@@ -240,7 +240,7 @@ export const ProviderSyncRunDtoSchema = z.object({
   id: z.string(),
   providerId: z.uuid().describe('The Provider the run read.'),
   providerName: z.string().describe('That Provider\'s name.'),
-  sport: SportDtoSchema,
+  sport: SportDtoSchema.nullable().describe('The run\'s sport, its sport league\'s; null for a run with no sport league.'),
   eventId: z.string().nullable().describe('The provider\'s id for the run\'s event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.'),
   kind: ProviderSyncKindSchema,
   trigger: JobTriggerSchema,
@@ -264,13 +264,13 @@ export const ProviderSyncRunDetailDtoSchema = ProviderSyncRunDtoSchema.extend({
 export type ProviderSyncRunDetailDto = z.infer<typeof ProviderSyncRunDetailDtoSchema>;
 
 export const LeagueEventsSyncRequestSchema = z.object({
-  eventYear: z.number().int().min(1900).max(9999).optional().describe('The one event year to sync; omitted, this calendar year and the next, as the schedule syncs.'),
+  sportLeagueSeasonId: z.uuid().optional().describe('The one Season to sync (SportLeagueSeasonDto); omitted, the league\'s current Season and every later one, as the schedule syncs. 404 SPORT_LEAGUE_SEASON_NOT_FOUND for one that is not the league\'s.'),
 }).describe('A root admin\'s Sync now on a sport league\'s events.');
 export type LeagueEventsSyncRequest = z.infer<typeof LeagueEventsSyncRequestSchema>;
 
 export const ProviderSyncRunListQuerySchema = z.object({
   providerId: z.uuid().optional().describe('Only the runs of this Provider.'),
-  sport: SportDtoSchema.optional(),
+  sport: SportDtoSchema.optional().describe('Only the runs of this sport\'s sport leagues. A run with no sport league is in no sport.'),
   status: ProviderSyncRunStatusSchema.optional(),
   from: DateTimeSchema.optional().describe('Earliest submission time to include. Defaults to 6 hours before `to`.'),
   to: DateTimeSchema.optional().describe('Latest submission time to include. Defaults to now.'),

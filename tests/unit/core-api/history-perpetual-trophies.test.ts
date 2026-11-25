@@ -6,7 +6,7 @@ import type { SeriesContest } from '@poolmaster/shared/db';
 import { CupWeight, SelectionType, type LeagueYearFinish } from '@poolmaster/shared/domain';
 import { buildPerpetualTrophies, isWeekOfGames } from '../../../packages/core-api/src/modules/history/perpetual-trophies';
 
-function contest(id: string, eventYear: number, overrides: Partial<SeriesContest> = {}): SeriesContest {
+function contest(id: string, championshipYear: number, overrides: Partial<SeriesContest> = {}): SeriesContest {
   return {
     id,
     selectionType: SelectionType.TIERED,
@@ -14,8 +14,8 @@ function contest(id: string, eventYear: number, overrides: Partial<SeriesContest
     eventSeriesId: 'masters',
     seriesName: 'Masters Tournament',
     sportLeagueName: 'PGA Tour',
-    eventYear,
-    completedAt: new Date(`${eventYear}-04-14T00:00:00.000Z`),
+    championshipYear,
+    completedAt: new Date(`${championshipYear}-04-14T00:00:00.000Z`),
     games: { count: 0, roundCount: 0, sendingWinnerOn: 0 },
     ...overrides,
   };

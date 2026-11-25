@@ -91,26 +91,26 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       expect([...requestLine(harness.api)].sort()).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100', '/ncaaw/v1/bracket?season=2025&per_page=100']);
     });
 
-    it('reads the last tournament and the next when the range is open-ended, not every season ever played', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
 
-      expect(events.map((event) => event.externalId)).toEqual(['ncaab-2025-tournament', 'ncaab-2026-tournament', 'ncaaw-2025-tournament']);
-      expect(seasonsRead(harness.api, 'ncaab')).toEqual(['2025', '2026']);
-      expect(seasonsRead(harness.api, 'ncaaw')).toEqual(['2025', '2026']);
+      expect(events).toEqual([]);
+      expect(seasonsRead(harness.api, 'ncaab')).toEqual([]);
+      expect(seasonsRead(harness.api, 'ncaaw')).toEqual([]);
     });
 
-    it('takes the season that started last November as the one under way before the next November, and lists nothing for a season with no bracket', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says', async () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 9, 31));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL);
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerSeasonId: '2025' });
 
       expect(events.map((event) => event.externalId)).toEqual(['ncaab-2025-tournament', 'ncaaw-2025-tournament']);
-      expect(seasonsRead(harness.api, 'ncaab')).toEqual(['2024', '2025']);
-      expect(seasonsRead(harness.api, 'ncaaw')).toEqual(['2024', '2025']);
+      expect(seasonsRead(harness.api, 'ncaab')).toEqual(['2025']);
+      expect(seasonsRead(harness.api, 'ncaaw')).toEqual(['2025']);
     });
   });
 

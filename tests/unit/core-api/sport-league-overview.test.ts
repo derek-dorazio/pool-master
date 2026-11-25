@@ -21,7 +21,6 @@ import { mapSportLeagueOverviewToDto } from '../../../packages/core-api/src/mapp
 import {
   buildSportLeagueOverviews,
   findingsIssuesOf,
-  seasonOf,
   SportLeagueOverviewService,
   syncHealthOf,
 } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-overview';
@@ -31,7 +30,7 @@ const at = (iso: string) => new Date(iso);
 
 function league(overrides: Partial<SportLeagueOverviewLeague> = {}): SportLeagueOverviewLeague {
   return {
-    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true,
+    id: 'mlb', sport: Sport.BASEBALL, sportUrlSegment: 'baseball', sportDisplayOrder: 3, name: 'MLB', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true,
     ...overrides,
   };
 }
@@ -42,7 +41,7 @@ function facts(overrides: Partial<SportLeagueOverviewFacts> = {}): SportLeagueOv
     latestSyncRuns: [],
     heldEvents: [],
     eventCounts: new Map(),
-    eventYearSpans: [],
+    currentSeasonSpans: new Map(),
     nextEventStarts: new Map(),
     overdueCandidates: [],
     openFindings: [],
@@ -181,22 +180,7 @@ describe('sport league findings issue', () => {
 });
 
 describe('sport league season', () => {
-  const span = (eventYear: number, start: string, end: string) => ({ eventYear, start: at(start), end: at(end) });
-  const seasons = [span(2026, '2026-03-26T00:00:00.000Z', '2026-11-01T00:00:00.000Z'), span(2027, '2027-03-25T00:00:00.000Z', '2027-10-31T00:00:00.000Z')];
-
-  it('is the event year under way now', () => {
-    expect(seasonOf(seasons, NOW)).toEqual({ start: at('2027-03-25T00:00:00.000Z'), end: at('2027-10-31T00:00:00.000Z') });
-  });
-
-  it('is the next event year to start between seasons', () => {
-    expect(seasonOf(seasons, at('2026-12-15T00:00:00.000Z'))).toEqual({ start: at('2027-03-25T00:00:00.000Z'), end: at('2027-10-31T00:00:00.000Z') });
-  });
-
-  it('is the latest event year once every one has ended and no next one is known', () => {
-    expect(seasonOf(seasons, at('2028-01-15T00:00:00.000Z'))).toEqual({ start: at('2027-03-25T00:00:00.000Z'), end: at('2027-10-31T00:00:00.000Z') });
-  });
-
-  it('is null while the league has no events, with no next event and no events counted', () => {
+  it('is null for a league with no current Season, with no next event and no events counted', () => {
     const row = only(facts());
 
     expect(row.season).toBeNull();
@@ -204,12 +188,9 @@ describe('sport league season', () => {
     expect(row.eventCount).toBe(0);
   });
 
-  it('runs from a year\'s first start to its last end, or its last start when that is later or no event has an end', () => {
+  it('is the current Season\'s own span, not one worked out from its events\' dates', () => {
     const row = only(facts({
-      eventYearSpans: [
-        { sportLeagueId: 'mlb', eventYear: 2027, firstStart: at('2027-03-25T00:00:00.000Z'), lastStart: at('2027-10-20T00:00:00.000Z'), lastEnd: at('2027-10-31T00:00:00.000Z') },
-        { sportLeagueId: 'mlb', eventYear: 2028, firstStart: at('2028-03-30T00:00:00.000Z'), lastStart: at('2028-10-01T00:00:00.000Z'), lastEnd: null },
-      ],
+      currentSeasonSpans: new Map([['mlb', { start: at('2027-03-25T00:00:00.000Z'), end: at('2027-10-31T00:00:00.000Z') }]]),
       nextEventStarts: new Map([['mlb', at('2027-04-16T00:00:00.000Z')]]),
       eventCounts: new Map([['mlb', 7]]),
     }));
@@ -217,18 +198,17 @@ describe('sport league season', () => {
     expect(row.season).toEqual({ start: at('2027-03-25T00:00:00.000Z'), end: at('2027-10-31T00:00:00.000Z') });
     expect(row.nextEventStartsAt).toEqual(at('2027-04-16T00:00:00.000Z'));
     expect(row.eventCount).toBe(7);
-    expect(seasonOf([{ eventYear: 2028, start: at('2028-03-30T00:00:00.000Z'), end: at('2028-10-01T00:00:00.000Z') }], NOW)?.end).toEqual(at('2028-10-01T00:00:00.000Z'));
   });
 });
 
 describe('sport league overview order', () => {
-  it('lists by sport, most popular first, then by name', () => {
+  it('lists by the sport row\'s display order, then by league name', () => {
     const rows = buildSportLeagueOverviews(facts({
       leagues: [
-        league({ id: 'pga', sport: Sport.GOLF, name: 'PGA Tour' }),
+        league({ id: 'pga', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour' }),
         league({ id: 'ncaa', name: 'NCAA Baseball' }),
         league(),
-        league({ id: 'nfl', sport: Sport.AMERICAN_FOOTBALL, name: 'NFL' }),
+        league({ id: 'nfl', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', sportDisplayOrder: 0, name: 'NFL' }),
       ],
     }), NOW);
 
@@ -259,7 +239,7 @@ describe('mapSportLeagueOverviewToDto', () => {
     const row = only(facts({
       latestSyncRuns: [run(ProviderSyncKind.SCORES, ProviderSyncRunStatus.FAILED, { summary: 'Failed live scores sync.' })],
       heldEvents: [{ id: '5f0c8a8e-5a0e-4c1e-9d43-2f6f8e3e4b10', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }],
-      eventYearSpans: [{ sportLeagueId: 'mlb', eventYear: 2027, firstStart: at('2027-03-25T00:00:00.000Z'), lastStart: at('2027-10-20T00:00:00.000Z'), lastEnd: null }],
+      currentSeasonSpans: new Map([['mlb', { start: at('2027-03-25T00:00:00.000Z'), end: at('2027-10-20T00:00:00.000Z') }]]),
       nextEventStarts: new Map([['mlb', at('2027-04-16T00:00:00.000Z')]]),
       openFindings: [{ sportLeagueId: 'mlb', severity: ProviderSyncFindingSeverity.ERROR, count: 2 }],
     }));

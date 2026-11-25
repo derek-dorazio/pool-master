@@ -22,7 +22,7 @@ import {
   SportEventRoundMatchResponseSchema,
   SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -32,6 +32,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
@@ -89,7 +90,7 @@ describe('SDK Functional: Basketball bracket', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -97,14 +98,14 @@ describe('SDK Functional: Basketball bracket', () => {
     const a = admin.client;
 
     // --- A league, a tournament in it, and its field --------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
     expect(conference.response?.status).toBe(201);
     const sportLeagueId = expectDefined(conference.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
     const tournament = await createEvent({
       client: a,
-      body: { sportLeagueId, eventYear: 2099, name: `Harbour Classic ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Harbour Classic ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;

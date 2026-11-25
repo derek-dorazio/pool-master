@@ -32,11 +32,15 @@ export interface SportLeagueProviderMapping {
 export interface SportLeague extends DomainEntity {
   sportId: string;
   name: string;
+  /** Its name in addresses within its sport (#2042): `?league=wnba`. Stored, never built from the name. */
+  urlSegment: string;
   /**
-   * The event year the sport league is currently on. Not a foreign key: setting it
-   * refuses a year the sport league has no events in (plans/147 decision 6).
+   * Its current Season (#2003): recomputed once a day by `currentSeasonOf`, never set by hand.
+   * Null only for a league no migration has given a Season.
    */
-  currentEventYear: number | null;
+  currentSeasonId: string | null;
+  /** The IANA time zone its calendar weeks break in (#2003). Set by migration. */
+  timeZone: string;
   isActive: boolean;
   /**
    * The provider league whose sync creates and keeps its events (ADR 0011, #1997): one of its own

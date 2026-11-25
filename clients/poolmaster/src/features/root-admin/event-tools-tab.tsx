@@ -13,7 +13,7 @@ export function EventToolsTab() {
 
   return (
     <div className="space-y-6" data-testid="root-admin-event-tools-tab">
-      <EventFieldUploadCard entries={fieldQuery.data ?? []} eventId={event.id} sport={event.sport} />
+      <EventFieldUploadCard entries={fieldQuery.data ?? []} eventId={event.id} sport={event.sport} sportUrlSegment={event.sportUrlSegment} />
       <SportEventScoreSourceCard eventId={event.id} tournament={event} />
     </div>
   );

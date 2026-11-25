@@ -31,7 +31,6 @@ export const MLB_POSTSEASON: PlayoffsLeague = {
   // The 2026 season's postseason is played in October 2026.
   playoffYearOffset: 0,
   // March, when spring training gives way to the new season.
-  seasonRolloverMonth: 2,
   // Six seeds a league, the top two waiting out the Wild Card Series; the American League's half
   // is listed first, as an admin loads it. The names are the vendor's `league` on a club.
   bracket: {

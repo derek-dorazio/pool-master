@@ -40,7 +40,7 @@ import {
   PickEmLeaderboardResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -51,6 +51,7 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 
 // A pick'em week scored against the spread end to end over HTTP (#720). An admin releases a week of
@@ -120,7 +121,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Spread Director' });
@@ -128,7 +129,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const a = admin.client;
 
     // --- A released week of four games ------------------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
@@ -140,7 +141,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     }
     const event = await createEvent({
       client: a,
-      body: { sportLeagueId, eventYear: 2099, name: `Spread Week ${RUN}`, startDate: START, rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Spread Week ${RUN}`, startDate: START, rounds: 1, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
     created.sportEventIds.add(eventId);

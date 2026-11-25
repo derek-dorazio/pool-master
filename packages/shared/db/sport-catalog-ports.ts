@@ -25,6 +25,7 @@ import type {
   SportConfig,
   SportEvent,
   SportEventContest,
+  SportLeagueSeasonSpan,
   SportEventRoundMatch,
   SportEventParticipant,
   SportEventParticipantGolfRound,
@@ -43,6 +44,10 @@ import type {
   PlatformTierProfile,
   ValuationSource,
   SportLeaguePhaseDefinition,
+  SeasonSpan,
+  SportLeagueSeason,
+  SportLeagueSeasonDetail,
+  CurrentSeasonCandidate,
 } from '../domain';
 
 export interface SportRepository {
@@ -56,7 +61,7 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>> & {
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'bracketAdvancement' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>> & {
   /**
    * The provider league whose sync the sport league takes (#1997): its mapping to it is made when
    * missing and selected, in the same write. Null stops the sync and keeps the mapping.
@@ -88,9 +93,18 @@ export interface SportLeagueRepository {
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
+  /** The sport's league at this URL segment (#2042), or null when none has it. */
+  findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague>;
+  /**
+   * The league and its first Season, made its current one, in one transaction (#2003). The Season
+   * is a stopgap for the browser journeys' own leagues until they move to test slots (#2004).
+   */
+  create(
+    input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
+    firstSeason: SportLeagueSeasonSpan,
+  ): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -113,7 +127,10 @@ export interface SportEventFilters {
   statuses?: readonly SportEventStatus[];
   /** Only events whose series belongs to this sport league. */
   sportLeagueId?: string;
-  eventYear?: number;
+  /** Only events of this Season (#2003). */
+  sportLeagueSeasonId?: string;
+  /** Only editions of this event series. */
+  eventSeriesId?: string;
   /** Case-insensitive substring of the event name. */
   q?: string;
   /** Leave out DRAFT events: what a non-admin may see (#431). */
@@ -130,7 +147,7 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig'>;
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -233,14 +250,9 @@ export interface SportEventRepository {
   /** Ordered by start date, then name. */
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
   /**
-   * The event years the sport league has events in, through their series, earliest first.
-   * `releasedOnly` leaves out years whose only events are DRAFT (#431).
-   */
-  findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]>;
-  /**
    * Creates the events in one insert, all or none, answering them in the order given (#1253).
-   * Rejects a second edition of a series in one year: the database's unique constraint on
-   * (eventSeriesId, eventYear) raises, and the caller maps it (plans/147 decision 5).
+   * Rejects a second edition of a series in one Season: the database's unique constraint on
+   * (eventSeriesId, sportLeagueSeasonId) raises, and the caller maps it (plans/147 decision 5).
    */
   createMany(inputs: readonly SportEventCreate[]): Promise<SportEvent[]>;
   /**
@@ -298,7 +310,7 @@ export interface SportEventRepository {
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Events per sport league, through their series, for each id asked about (0 where none). */
-  countBySportLeagues(sportLeagueIds: readonly string[], filters?: { eventYear?: number }): Promise<Map<string, number>>;
+  countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
   /**
    * Whether any event of the sport league, through its series and in any year, has a bracket
    * loaded: at least one match. While one has, the league's bracket rule cannot change (#730).
@@ -545,6 +557,10 @@ export interface ParticipantMatchQuery {
 export interface SportLeagueOverviewLeague {
   id: string;
   sport: Sport;
+  /** Its sport's URL segment (#2042). */
+  sportUrlSegment: string;
+  /** Its sport's display order (#2042). */
+  sportDisplayOrder: number;
   name: string;
   syncProviderId: string | null;
   /** That provider's name (#1999). */
@@ -572,15 +588,6 @@ export interface SportLeagueHeldEvent {
   failedChecks: ReleaseCheckKey[];
 }
 
-/** One sport league's events of one event year, not cancelled: how many and their dates. */
-export interface SportLeagueEventYearSpan {
-  sportLeagueId: string;
-  eventYear: number;
-  firstStart: Date;
-  lastStart: Date;
-  /** The latest end date among them; null when none has one. */
-  lastEnd: Date | null;
-}
 
 /** Everything the overview is computed from, read in a fixed number of grouped queries. */
 export interface SportLeagueOverviewFacts {
@@ -589,7 +596,8 @@ export interface SportLeagueOverviewFacts {
   heldEvents: SportLeagueHeldEvent[];
   /** Every event, cancelled ones too, per sport league. */
   eventCounts: Map<string, number>;
-  eventYearSpans: SportLeagueEventYearSpan[];
+  /** Each sport league's current Season's span (#2003); a league with no current Season has no entry. */
+  currentSeasonSpans: Map<string, SeasonSpan>;
   /** The earliest start after `now` among each sport league's events not cancelled; absent when none. */
   nextEventStarts: Map<string, Date>;
   /** Every event that may be overdue (#1865): released, neither completed nor cancelled, started long enough ago. */
@@ -639,7 +647,7 @@ export interface SportLeagueSyncFacts {
 export interface SportLeaguePageEvent {
   id: string;
   name: string;
-  eventYear: number;
+  sportLeagueSeasonId: string;
   startDate: Date;
   endDate: Date | null;
   status: SportEventStatus;
@@ -699,10 +707,10 @@ export interface SportEventPageFacts {
   overdueCandidates: OverdueEventFacts[];
   field: SportEventPageFieldRow[];
   /**
-   * The slug of the active event page that offers the event's series, in its sport; the first by
+   * The address of the active event page that offers the event's series; the first by
    * the pages' display order when more than one does. Null when none does.
    */
-  eventPageSlug: string | null;
+  eventPagePath: string | null;
 }
 
 export interface SportLeaguePageReader {
@@ -717,6 +725,11 @@ export interface SportLeaguePageReader {
    * Null when the league does not exist.
    */
   readStructure(sportLeagueId: string): Promise<SportLeaguePhaseDefinition[] | null>;
+  /**
+   * The league's Seasons with their provider ids, phases and slots (#2003), in no order. Null when
+   * the league does not exist.
+   */
+  readSeasons(sportLeagueId: string): Promise<SportLeagueSeasonDetail[] | null>;
   /** One event's facts (#1889). Null when the event does not exist. */
   readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
   /** The league's positions with their provider codes, by display order (#2001). Null when the league does not exist. */
@@ -766,4 +779,31 @@ export type PlatformPricingProfileRepository = ProfileRepository<PlatformPricing
 export interface SportEventContestReader {
   /** Every contest on the event, across every league, newest first; one read however many contests and entries. */
   findContests(sportEventId: string): Promise<SportEventContest[]>;
+}
+
+// --- Seasons (#2003) -----------------------------------------------------------------
+
+/** A Season as the events sync reads it: with the provider's id for it, or null when it has none. */
+export interface SyncableSportLeagueSeason extends SportLeagueSeason {
+  providerSeasonId: string | null;
+}
+
+/** One league's current Season and the Seasons the current-Season rule chooses from. */
+export interface SportLeagueCurrentSeasonFacts {
+  sportLeagueId: string;
+  currentSeasonId: string | null;
+  seasons: CurrentSeasonCandidate[];
+}
+
+export interface SportLeagueSeasonRepository {
+  findById(id: string): Promise<SportLeagueSeason | null>;
+  /**
+   * The league's Seasons, each with its id at the given provider mapping (null where the Season
+   * has none), in date order. One read.
+   */
+  findForSync(sportLeagueId: string, sportLeagueProviderMappingId: string): Promise<SyncableSportLeagueSeason[]>;
+  /** Every league's current Season and its Seasons, in a fixed number of reads however many leagues. */
+  findCurrentSeasonFacts(): Promise<SportLeagueCurrentSeasonFacts[]>;
+  /** Points each league named at its new current Season, in one transaction. */
+  setCurrentSeasons(changes: ReadonlyArray<{ sportLeagueId: string; currentSeasonId: string | null }>): Promise<void>;
 }

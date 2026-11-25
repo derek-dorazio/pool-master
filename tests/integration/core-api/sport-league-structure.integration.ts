@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 import { LeaguePhase, MatchFormat, PeriodUnit, SeriesFormat, SlotKind, SlotPairing, SlotProviderMatchType, Sport } from '@poolmaster/shared/domain';
 import { SportLeagueStructureResponseSchema } from '@poolmaster/shared/dto';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { fixtureTourId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
@@ -33,7 +33,7 @@ async function get(url: string) {
 async function testLeague() {
   const prisma = getPrisma();
   const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL }, select: { id: true } });
-  return prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `Structure League ${randomUUID().slice(0, 8)}` } });
+  return prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `Structure League ${randomUUID().slice(0, 8)}` } });
 }
 
 const SLOT_DEFAULTS = {

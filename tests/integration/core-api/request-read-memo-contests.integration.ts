@@ -5,7 +5,6 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SelectionType,
-  Sport,
   SquadMembershipStatus,
 } from '@poolmaster/shared/domain';
 import {
@@ -68,7 +67,6 @@ async function seed() {
       ...(await freshEventEdition(prisma)),
       externalId: `memo-${suffix}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
       name: `Memo Open ${suffix}`,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       status: 'SCHEDULED',

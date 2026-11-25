@@ -216,6 +216,10 @@ export interface EmailSuppression extends DomainEntity {
  */
 export interface SportConfig extends DomainEntity {
   sport: Sport;
+  /** Its name in addresses (#2042): `american-football`. Stored, never built from the code. */
+  urlSegment: string;
+  /** Where it sits wherever sports are listed together, the most popular first; lower first. */
+  displayOrder: number;
   tournamentFormat: TournamentFormat;
 }
 
@@ -286,6 +290,8 @@ export interface Contest extends DomainEntity {
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   sport?: Sport;
+  /** The URL segment of that sport, read with it (#2042). */
+  sportUrlSegment?: string;
 
   // Timing
   /**
@@ -434,9 +440,6 @@ export interface ContestEntryEventStatus {
 export interface ContestEntryPick extends DomainEntity {
   entryId: string;
   sportEventParticipantId: string;
-  contestFormat: ContestFormat;
-  period?: number;
-  slot?: number;
   tier?: string;
   cost?: number;
   isAutoPicked: boolean;
@@ -506,7 +509,8 @@ export interface ProviderSyncRun {
   providerId: string;
   /** That Provider's name, read with the run. */
   providerName: string;
-  sport: Sport;
+  /** Its sport league's sport, read through the league (#2042); null for a run with no sport league. */
+  sport: Sport | null;
   /**
    * The provider's id for the run's event, read through `sportEventId` (#2040): null for a
    * whole-sport run, and for a run of a provider event linked to no event of ours.

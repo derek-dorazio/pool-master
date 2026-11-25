@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 
@@ -22,14 +23,18 @@ export const SPORT_PLATFORM_TIER_PROFILE_CODE: Record<Sport, string> = {
 /** The pricing profile every seeded sport league names, by its code. */
 export const STANDARD_PLATFORM_PRICING_PROFILE_CODE = 'STANDARD';
 
-/** The profile ids a test sport league names: a tier profile by code (golf's by default) and Standard pricing. */
-export async function leagueProfiles(
+/**
+ * What a test sport league row needs beside its sport and name: the profile ids it names, a tier
+ * profile by code (golf's by default) and Standard pricing, and a URL segment no other test's
+ * league has (#2042).
+ */
+export async function sportLeagueRowDefaults(
   prisma: Pick<PrismaClient, 'platformTierProfile' | 'platformPricingProfile'>,
   platformTierProfileCode: string = SPORT_PLATFORM_TIER_PROFILE_CODE[Sport.GOLF],
-): Promise<{ platformTierProfileId: string; platformPricingProfileId: string }> {
+): Promise<{ platformTierProfileId: string; platformPricingProfileId: string; urlSegment: string }> {
   const [platformTierProfile, platformPricingProfile] = await Promise.all([
     prisma.platformTierProfile.findUniqueOrThrow({ where: { code: platformTierProfileCode }, select: { id: true } }),
     prisma.platformPricingProfile.findUniqueOrThrow({ where: { code: STANDARD_PLATFORM_PRICING_PROFILE_CODE }, select: { id: true } }),
   ]);
-  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id };
+  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id, urlSegment: `test-${randomUUID()}` };
 }

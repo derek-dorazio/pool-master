@@ -94,22 +94,22 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       ]);
     });
 
-    it('reads this season and the next when the range is open-ended, from May on', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
       await harness.adapter.getUpcomingEvents(Sport.BASKETBALL);
 
-      expect(seasonsRead(harness.api)).toEqual(['2026', '2027']);
+      expect(seasonsRead(harness.api)).toEqual([]);
     });
 
-    it('takes last year\'s season as the one under way before May', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says', async () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 3, 1));
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.BASKETBALL);
+      await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerSeasonId: '2025' });
 
-      expect(seasonsRead(harness.api)).toEqual(['2025', '2026']);
+      expect(seasonsRead(harness.api)).toEqual(['2025']);
     });
   });
 

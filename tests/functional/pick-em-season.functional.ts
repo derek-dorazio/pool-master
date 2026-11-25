@@ -42,7 +42,7 @@ import {
   SportEventBracketResponseSchema,
   type PickEmLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -53,6 +53,7 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 
 // A two-week confidence pick'em season end to end over HTTP (#717). An admin releases two weeks,
@@ -124,7 +125,7 @@ type Side = 'home' | 'away';
 async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly string[], name: string, kickoffs: readonly [string, string, string, string]) {
   const event = await createEvent({
     client: a,
-    body: { sportLeagueId, eventYear: 2099, name: `${name} ${RUN}`, startDate: kickoffs[0], rounds: 3, autoLifecycleEnabled: false },
+    body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${name} ${RUN}`, startDate: kickoffs[0], rounds: 3, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);
@@ -193,7 +194,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Season Director' });
@@ -201,7 +202,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     const a = admin.client;
 
     // --- Two released weeks of four games -----------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), sport: Sport.BASKETBALL, name: `Season Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Season Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];

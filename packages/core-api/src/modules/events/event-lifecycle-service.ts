@@ -190,7 +190,7 @@ export class EventLifecycleService {
     // loses a race queues nothing and one that lands always has its jobs.
     const followUps = await this.domainEvents.collect({
       type: DomainEventType.SPORT_EVENT_STATUS_CHANGED,
-      sportEvent: { id: before.id, startDate: before.startDate, eventSeriesId: before.eventSeriesId, eventYear: before.eventYear },
+      sportEvent: { id: before.id, startDate: before.startDate, eventSeriesId: before.eventSeriesId, sportLeagueSeasonId: before.sportLeagueSeasonId },
       from: fromStatus,
       to: input.toStatus,
       // A cancelled event has no end date of its own, and its start may still be ahead, so its

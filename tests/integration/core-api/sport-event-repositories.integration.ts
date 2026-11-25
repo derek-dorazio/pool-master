@@ -30,12 +30,13 @@ import {
 import { findUnindexedScans } from '../index-check';
 import { recordStatements, statementShape } from '../statement-log';
 import { createRoundRows, createSportEventRow, createTierRows, seriesNamed } from '../../support/sport-event-rows';
-import { freshEventEdition } from '../../support/event-edition';
+import { freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
-import { leagueProfiles } from '../../support/league-profiles';
-import { syncLeagueTo } from '../../support/league-sync';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { syncLeagueTo, FIRST_SEASON_2026 } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
@@ -72,18 +73,17 @@ function repos() {
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
 }
 
-async function createEvent(name = 'Repository Open', eventYear?: number) {
+async function createEvent(name = 'Repository Open', championshipYear?: number) {
   return createSportEventRow(repos().events, {
-    ...(await freshEventEdition(getPrisma(), { eventYear })),
+    ...(await freshEventEdition(getPrisma(), { championshipYear })),
     externalId: `repo-${randomUUID()}`,
     providerId: 'integration-test',
-    sport: Sport.GOLF,
     name,
     venue: 'Harbour Links',
     startDate: new Date('2026-06-04T12:00:00.000Z'),
@@ -149,17 +149,17 @@ describe('SportEventRepository — writes', () => {
     expect((await events.findAll({ q: 'harbour' })).map((row) => row.name)).toEqual(['Harbour Classic']);
   });
 
-  it("lists one year's events across every sport through an index that leads on the event year, not by reading every event", async () => {
+  it("lists one Season's events through an index that leads on the Season, not by reading every event", async () => {
     const { events } = repos();
-    const thisYear = await createEvent('Year Open', 2031);
-    await createEvent('Last Year Open', 2030);
+    const thisSeason = await createEvent('Season Open', 2031);
+    await createEvent('Last Season Open', 2030);
 
-    const { result, statements } = await recordStatements(() => events.findAll({ eventYear: 2031 }));
+    const { result, statements } = await recordStatements(() => events.findAll({ sportLeagueSeasonId: thisSeason.sportLeagueSeasonId }));
 
-    expect(result.map((row) => row.id)).toEqual([thisYear.id]);
+    expect(result.map((row) => row.id)).toEqual([thisSeason.id]);
     expect(statements.map((statement) => statementShape(statement.sql)).join('\n'))
-      .toContain('WHERE "public"."sport_events"."event_year" = $?');
-    await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAll by year' })))).resolves.toEqual([]);
+      .toContain('"public"."sport_events"."sport_league_season_id" = $?');
+    await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAll by Season' })))).resolves.toEqual([]);
   });
 
   it('deletes an event that has rounds, tiers and a scored, valued field — which a bare event delete could not', async () => {
@@ -233,7 +233,7 @@ describe('SportEventRepository — writes', () => {
 describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED }, FIRST_SEASON_2026);
     const { eventSeries } = repos();
 
     const first = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
@@ -246,7 +246,7 @@ describe('EventSeriesRepository', () => {
   // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
   it('creates a series active', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED }, FIRST_SEASON_2026);
 
     const series = await seriesNamed(repos().eventSeries, sportLeague.id, 'The Masters');
 
@@ -447,7 +447,7 @@ describe('SportEventParticipantRepository — the field', () => {
     const [entry] = await field.findBySportEvent(event.id);
     const fixture = await createContestFixture(event.id);
     await getPrisma().contestEntryPick.create({
-      data: { entryId: fixture.entryId, sportEventParticipantId: entry.id, contestFormat: 'ROSTER', isAutoPicked: false },
+      data: { entryId: fixture.entryId, sportEventParticipantId: entry.id, isAutoPicked: false },
     });
 
     await expect(field.countPicks(entry.id)).resolves.toBe(1);
@@ -640,11 +640,11 @@ describe('The sport league\'s first squares round on the event read', () => {
   it('reads the league\'s squaresFromRound onto its event, and leaves it unset for a league without one', async () => {
     const prisma = getPrisma();
     const { events } = repos();
-    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
+    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `Squares round series ${randomUUID()}` } });
     try {
       const withRound = await createSportEventRow(events, {
-        eventSeriesId: series.id, eventYear: 2026, externalId: `repo-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF,
+        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), externalId: `repo-${randomUUID()}`, providerId: 'integration-test',
         name: 'Squares Round Open', startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED', syncScope: 'NONE', autoLifecycleEnabled: true,
       });
       const withoutRound = await createEvent();
@@ -871,7 +871,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
   /** A golf sport league of its own, synced from BALLDONTLIE's PGA TOUR unless `synced` is false, with this release window. */
   async function syncedLeague(synced: boolean, autoReleaseDaysBeforeStart: number | null = 7) {
     const league = await getPrisma().sportLeague.create({
-      data: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, autoReleaseDaysBeforeStart },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, autoReleaseDaysBeforeStart },
     });
     if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
     return league;
@@ -881,10 +881,9 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     const series = await seriesNamed(repos().eventSeries, sportLeagueId, `Series ${randomUUID()}`);
     return createSportEventRow(repos().events, {
       eventSeriesId: series.id,
-      eventYear: 2026,
+      sportLeagueSeasonId: await seriesSeasonId(getPrisma(), series.id, 2026),
       externalId: `auto-${randomUUID()}`,
       providerId,
-      sport: Sport.GOLF,
       name: 'Auto Release Open',
       startDate: new Date(NOW.getTime() + daysAhead * DAY_MS),
       status,
@@ -922,7 +921,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     const event = await draftIn(league.id, 3);
     const { rounds } = repos();
     await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: event.startDate }, { roundNumber: 2, scheduledDate: event.startDate }]);
-    const template = { sport: Sport.GOLF, contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
+    const template = { contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
     await getPrisma().contestConfigTemplate.createMany({
       data: [
         { ...template, sportLeagueId: league.id, templateKey: `own-${randomUUID()}` },

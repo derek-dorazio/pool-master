@@ -10,7 +10,8 @@ import { loadAppModule } from './load-app-module.mjs';
  * `public/email/`, and records what each was drawn from in `public/email/drawn.json`. Run it by
  * hand when an illustration or its colours change, and commit the files:
  * `node scripts/render-email-images.mjs` from `clients/poolmaster`.
- * A sport with a photo (a `<sport>.source.md` note beside its JPG) keeps the photo.
+ * Sport header photos are committed by hand with a source note and never drawn here; a drawing
+ * whose path already has a photo is skipped.
  */
 const appRoot = path.resolve(import.meta.dirname, '..');
 const publicDir = path.join(appRoot, 'public');

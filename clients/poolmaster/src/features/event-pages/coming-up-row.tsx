@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router';
-import { buildEventPagePath, type Sport } from '@poolmaster/shared/domain';
+import type { Sport } from '@poolmaster/shared/domain';
 import { Eyebrow, Heading, SectionCard, Text, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy, formatStartsIn } from './event-page-copy';
 import { withPrimaryOffer } from './event-page-offers';
@@ -29,9 +29,9 @@ export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; te
           return (
             <Link
               className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              data-testid={`${testId}-${page.slug}`}
+              data-testid={`${testId}-${page.urlSegment}`}
               key={page.id}
-              to={buildEventPagePath(page.sport, page.slug)}
+              to={page.path}
             >
               <Tile className={index === 0 ? 'h-full space-y-2 border-primary' : 'h-full space-y-2'} padding="md" variant="interactive">
                 <Eyebrow tone="muted">{formatStartsIn(primary.edition.startDate, now)}</Eyebrow>

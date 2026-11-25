@@ -18,10 +18,11 @@ import type {
   ReleasedEdition,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport, FINISHED_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
+import { SPORT_EVENT_SPORT_SELECT, sportOfEvent, sportUrlSegmentOfEvent, type SportEventSportRow } from './sport-of';
 
 /**
  * What every contest read joins: its events in sequence order with their sport (#713), its draw
@@ -29,7 +30,7 @@ import { insertBackgroundJobs } from './prisma-background-job-repository';
  */
 const CONTEST_INCLUDE = {
   sportEvents: {
-    select: { sportEventId: true, sportEvent: { select: { sport: true } } },
+    select: { sportEventId: true, sportEvent: { select: SPORT_EVENT_SPORT_SELECT } },
     orderBy: { sequence: 'asc' },
   },
   draw: { select: { drawnAt: true } },
@@ -210,7 +211,7 @@ export class PrismaContestRepository implements ContestRepository {
         squaresDraw: null,
         sportEvents: {
           none: { sportEventId: edition.id },
-          every: { sportEvent: { eventYear: edition.eventYear } },
+          every: { sportEvent: { sportLeagueSeasonId: edition.sportLeagueSeasonId } },
         },
       },
       orderBy: [{ configuration: { createdAt: 'asc' } }, { id: 'asc' }],
@@ -395,7 +396,6 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } });
       await tx.contestEntry.deleteMany({ where: { contestId: id } });
       await tx.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: id } } });
-      await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } });
       await tx.contestConfiguration.deleteMany({ where: { contestId: id } });
       await tx.contest.delete({ where: { id } });
     }));
@@ -420,7 +420,6 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contestEntryPick.deleteMany({ where: { entry: { contestId } } });
       await tx.contestEntry.deleteMany({ where: { contestId } });
       await tx.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId } } });
-      await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId } } });
       await tx.contestConfiguration.deleteMany({ where: { contestId } });
       await tx.contest.deleteMany({ where: { id: contestId } });
       return drafts;
@@ -439,7 +438,7 @@ function abandonedDraftWhere(lastEventStartedBefore: Date): Prisma.ContestWhereI
 function mapToContest(row: {
   id: string;
   leagueId: string;
-  sportEvents: { sportEventId: string; sportEvent: { sport: Sport } }[];
+  sportEvents: { sportEventId: string; sportEvent: SportEventSportRow }[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
@@ -455,6 +454,7 @@ function mapToContest(row: {
   createdAt: Date;
   updatedAt: Date;
 }): Contest {
+  const firstEvent = row.sportEvents.at(0);
   return {
     id: row.id,
     leagueId: row.leagueId,
@@ -464,7 +464,8 @@ function mapToContest(row: {
     contestFormat: row.contestFormat,
     selectionType: row.selectionType,
     // Every event of a contest shares its sport (#713), so the first one answers for all.
-    sport: row.sportEvents.at(0)?.sportEvent.sport,
+    sport: firstEvent === undefined ? undefined : sportOfEvent(firstEvent.sportEvent),
+    sportUrlSegment: firstEvent === undefined ? undefined : sportUrlSegmentOfEvent(firstEvent.sportEvent),
     openedAt: row.openedAt ?? undefined,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,

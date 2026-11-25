@@ -24,25 +24,17 @@ import {
   type WorldCupScope,
 } from './fifa-world-cup-mapping';
 
-/** A range holding more editions than this reads the current edition instead. */
-const MAX_EDITIONS_READ = 3;
-
-/** The first edition the vendor serves; editions come every four years from it. */
-const FIRST_EDITION = 2018;
-const YEARS_BETWEEN_EDITIONS = 4;
-
 export class WorldCupReader {
   constructor(private readonly client: BalldontlieClient) {}
 
   /**
-   * The knockout brackets that start inside `dateRange`, read for each edition held in a year
-   * it covers. Without a range, or with one too wide to walk, it reads the vendor's current
-   * edition, which the endpoint gives when no edition is named.
+   * One edition's knockout bracket, when `season` names it by the provider's own id for a Season
+   * (#2003: the events sync and a league's browse ask by its Seasons, never by a year worked out
+   * here); otherwise the vendor's current edition, which the endpoint gives when no edition is
+   * named. Either way only the brackets starting inside `dateRange`, when one is given.
    */
-  async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
-    const editions = editionsIn(dateRange);
-    if (editions !== null && editions.length === 0) return [];
-    const matches = await this.matchesOf(editions === null ? {} : { 'seasons[]': editions });
+  async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
+    const matches = await this.matchesOf(season === undefined ? {} : { 'seasons[]': [season] });
     return toWorldCupEvents(matches)
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
@@ -82,18 +74,4 @@ export class WorldCupReader {
   private matchesOf(query: BalldontlieQuery): Promise<FifaMatch[]> {
     return this.client.getAllPages(FIFA_WC_MATCHES_PATH, query, fifaMatchListSchema);
   }
-}
-
-/**
- * The editions held in the years a range covers; null for no range, or a range holding too many
- * to name one by one.
- */
-function editionsIn(dateRange?: DateRange): number[] | null {
-  if (!dateRange) return null;
-  const editions: number[] = [];
-  for (let year = dateRange.from.getUTCFullYear(); year <= dateRange.to.getUTCFullYear(); year += 1) {
-    if (year >= FIRST_EDITION && (year - FIRST_EDITION) % YEARS_BETWEEN_EDITIONS === 0) editions.push(year);
-    if (editions.length > MAX_EDITIONS_READ) return null;
-  }
-  return editions;
 }

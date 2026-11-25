@@ -23,6 +23,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
+import { sportRowKeys } from '../support/sport-rows';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -277,7 +278,7 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
   const prisma = getFunctionalPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 
@@ -308,7 +309,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
       ...(await freshEventEdition(prisma)),
       externalId: `budget-functional-event-${randomUUID().slice(0, 8)}`,
       providerId: 'integration-test',
-      sport: 'GOLF',
       name: 'Budget Functional Event',
       startDate: new Date('2099-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -396,7 +396,7 @@ async function seedTieredDraftFixture(options: {
   const prisma = getFunctionalPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 
@@ -405,7 +405,6 @@ async function seedTieredDraftFixture(options: {
       ...(await freshEventEdition(prisma)),
       externalId: `tiered-functional-event-${randomUUID().slice(0, 8)}`,
       providerId: 'integration-test',
-      sport: 'GOLF',
       name: 'Tiered Functional Event',
       startDate: new Date('2099-04-20T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -477,7 +476,7 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
   const prisma = getFunctionalPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 
@@ -486,7 +485,6 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
       ...(await freshEventEdition(prisma)),
       externalId: `multi-tier-functional-event-${randomUUID().slice(0, 8)}`,
       providerId: 'functional-test',
-      sport: 'GOLF',
       name: 'Multi Tier Functional Event',
       startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       status: 'SCHEDULED',

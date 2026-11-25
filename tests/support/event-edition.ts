@@ -1,22 +1,24 @@
 /**
- * plans/147 — every SportEvent is one edition of an EventSeries, in one event year, and a
- * series has at most one edition per year. A test that writes an event row directly needs
- * both, and usually does not care about either.
+ * plans/147, #2003 — every SportEvent is one edition of an EventSeries, in one Season of its
+ * league, and a series has at most one edition per Season. A test that writes an event row
+ * directly needs both, and usually does not care about either.
  *
  * `freshEventEdition` gives each such event a series of its own on a shared fixture tour, so
- * two fixtures never collide on the one-edition-per-year constraint by accident. A test about
- * series, years or that constraint builds its own series instead.
+ * two fixtures never collide on the one-edition-per-Season constraint by accident. A test about
+ * series, Seasons or that constraint builds its own series instead.
  *
  * The fixture tour hangs off a real sport row (GOLF unless the test names another) because the
  * sport list validates names against the Sport enum; a made-up sport row would break any contract
  * test that lists sports. Each sport has its own fixture tour, playing as that sport's leagues are
- * seeded, since an event is scored by its league's family (#2001).
+ * seeded, since an event is scored by its league's family (#2001), and an event reads its sport
+ * through its series' league (#2042): a test about another sport's event names that sport.
  */
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { getDefaultTournamentFormatForSport, Sport } from '@poolmaster/shared/domain';
-import { leagueProfiles } from './league-profiles';
+import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
+import { sportRowKeys } from './sport-rows';
 
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
 /** Starts every fixture series' name, so its cleanup finds the ones on the PGA TOUR too. */
@@ -25,16 +27,74 @@ const FIXTURE_SERIES_PREFIX = 'Fixture edition: ';
 const LINKED_EVENT_ROUNDS = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'eventSeries' | 'platformTierProfile' | 'platformPricingProfile'>;
+type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'sportLeagueSeason' | 'eventSeries' | 'platformTierProfile' | 'platformPricingProfile'>;
 
 export interface EventEdition {
   eventSeriesId: string;
-  eventYear: number;
+  sportLeagueSeasonId: string;
+}
+
+/** The time zone a test league's calendar weeks break in: test leagues keep UTC. */
+export const TEST_LEAGUE_TIME_ZONE = 'UTC';
+
+/**
+ * The Season of `sportLeagueId` named for `championshipYear` (#2003). Seasons are added by
+ * migration: a migration's league already has its recent ones, and a test's own league is given
+ * the calendar-year Season it asks for, made on first use. Two first uses racing find the winner's.
+ */
+export async function fixtureSeasonId(
+  prisma: Pick<PrismaClient, 'sportLeagueSeason'>,
+  sportLeagueId: string,
+  championshipYear: number,
+): Promise<string> {
+  const where = { sportLeagueId_championshipYear: { sportLeagueId, championshipYear } };
+  try {
+    return (await prisma.sportLeagueSeason.upsert({
+      where,
+      create: {
+        sportLeagueId,
+        championshipYear,
+        name: String(championshipYear),
+        startsAt: new Date(Date.UTC(championshipYear, 0, 1)),
+        endsAt: new Date(Date.UTC(championshipYear + 1, 0, 1) - 1),
+      },
+      update: {},
+      select: { id: true },
+    })).id;
+  } catch (error) {
+    if ((error as { code?: string }).code !== 'P2002') throw error;
+    return (await prisma.sportLeagueSeason.findUniqueOrThrow({ where, select: { id: true } })).id;
+  }
+}
+
+/**
+ * Makes `championshipYear`'s Season `sportLeagueId`'s current one, made on first use: what the
+ * daily recompute does for a migration's league, for a test league that creates events through
+ * the API (a new event goes in the current Season).
+ */
+export async function withCurrentSeason(
+  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeague'>,
+  sportLeagueId: string,
+  championshipYear = new Date().getUTCFullYear(),
+): Promise<string> {
+  const seasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
+  await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { currentSeasonId: seasonId } });
+  return seasonId;
+}
+
+/** The Season named for `championshipYear` of the league `eventSeriesId` belongs to. */
+export async function seriesSeasonId(
+  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'eventSeries'>,
+  eventSeriesId: string,
+  championshipYear: number,
+): Promise<string> {
+  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: eventSeriesId }, select: { sportLeagueId: true } });
+  return fixtureSeasonId(prisma, sportLeagueId, championshipYear);
 }
 
 export async function freshEventEdition(
   prisma: Db,
-  options: { name?: string; eventYear?: number; onPgaTour?: boolean; sport?: Sport } = {},
+  options: { name?: string; championshipYear?: number; onPgaTour?: boolean; sport?: Sport } = {},
 ): Promise<EventEdition> {
   const sport = await sportRow(prisma, options.sport ?? Sport.GOLF);
   // Every contest setup is one sport league's (#1825), and the fixture tour has none: an event a
@@ -45,7 +105,8 @@ export async function freshEventEdition(
   const series = await prisma.eventSeries.create({
     data: { sportLeagueId: tour.id, name: `${FIXTURE_SERIES_PREFIX}${options.name ?? 'Fixture series'} ${randomUUID()}` },
   });
-  return { eventSeriesId: series.id, eventYear: options.eventYear ?? new Date().getUTCFullYear() };
+  const sportLeagueSeasonId = await fixtureSeasonId(prisma, tour.id, options.championshipYear ?? new Date().getUTCFullYear());
+  return { eventSeriesId: series.id, sportLeagueSeasonId };
 }
 
 /**
@@ -61,7 +122,7 @@ export async function fixtureTourId(prisma: Db, sportCode: Sport = Sport.GOLF): 
   try {
     sportLeagueId = (await prisma.sportLeague.upsert({
       where,
-      create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME },
+      create: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME, timeZone: TEST_LEAGUE_TIME_ZONE },
       update: {},
       select: { id: true },
     })).id;
@@ -99,7 +160,7 @@ async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<
 /** Removes the fixture series, on the fixture tour or the PGA TOUR, that no event uses any more. */
 /** A sport's row, made on first use (cleanupTestData clears the sports table). */
 function sportRow(prisma: Db, sport: Sport) {
-  return prisma.sport.upsert({ where: { sport }, create: { sport, tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
+  return prisma.sport.upsert({ where: { sport }, create: { sport, ...sportRowKeys(sport), tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
 }
 
 export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'eventSeries'>): Promise<void> {
@@ -130,10 +191,9 @@ export async function linkedProviderEvent(
 ) {
   return prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { name: input.name, eventYear: input.startDate.getUTCFullYear() })),
+      ...(await freshEventEdition(prisma, { name: input.name, championshipYear: input.startDate.getUTCFullYear() })),
       providerId: input.providerId,
       externalId: input.externalId,
-      sport: 'GOLF',
       name: input.name,
       startDate: input.startDate,
       syncScope: 'SCORES_ONLY',

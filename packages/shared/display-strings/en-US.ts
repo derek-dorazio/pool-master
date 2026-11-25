@@ -73,6 +73,12 @@ export const enUS = {
       FIXED: 'Fixed bracket',
       RESEEDED: 'Reseeded',
     },
+    SeasonSlotStatus: {
+      SCHEDULED: 'Scheduled',
+      IN_PROGRESS: 'In progress',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled',
+    },
     SlotProviderMatchType: {
       PROVIDER_CODE: 'Provider code',
       NAME_PATTERN: 'Name pattern',
@@ -267,6 +273,7 @@ export const enUS = {
       PROVIDER_RATE_LIMITED: 'Provider rate limiting',
       UNMAPPED_PARTICIPANT: 'Unmapped participant',
       WEBHOOK_SECRET_MISSING: 'Webhook secret not set',
+      SEASON_MISSING: 'No Season to sync',
       NO_PROVIDER_PARTICIPANTS: 'No field from the provider',
       NO_PROVIDER_LIVE_SCORES: 'No live scores from the provider',
       GAMES_NOT_SYNCED: 'Games not synced',
@@ -361,10 +368,6 @@ export const enUS = {
     ContestEntryStatus: {
       DRAFT: 'Not submitted',
       SUBMITTED: 'Submitted',
-    },
-    PrizePayoutType: {
-      FIXED_AMOUNT: 'Fixed amount',
-      PERCENTAGE: 'Percentage',
     },
     LeagueRole: {
       COMMISSIONER: 'Commissioner',
@@ -934,8 +937,6 @@ export const enUS = {
     EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: 'This is not a play-in place, so it cannot take a play-in winner.',
     EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED: 'Some rows do not name exactly one participant on the field.',
     EVENT_SCORING_FAMILY_MISMATCH: 'This event is not scored this way.',
-    EVENT_YEAR_HAS_NO_EVENTS: 'This league has no events in that year.',
-    EVENT_YEAR_NOT_EMPTY: 'This league already has events in that year.',
     EXTERNAL_EVENT_ALREADY_LINKED: 'Another event is already linked to that provider event.',
     FIELD_HAS_NO_ORDER: 'No one in the field has odds, a seed or a rank, so it cannot be put in tiers or priced.',
     FST_ERR_VALIDATION: 'The request is not valid. Check the details and try again.',
@@ -1065,12 +1066,16 @@ export const enUS = {
     SPORT_EVENT_SYNC_SCOPE_RESTRICTED: 'This event\'s sync cannot be changed that way.',
     SPORT_EVENT_TIERS_LOCKED: 'This event has been released, so its tiers and prices are locked.',
     SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED: 'An event already has its bracket, so how winners advance cannot change.',
+    SPORT_LEAGUE_HAS_NO_SEASON: 'This league has no Season yet.',
     SPORT_LEAGUE_IN_USE: 'This league is in use, so it cannot be deleted.',
     SPORT_LEAGUE_NAME_ALREADY_EXISTS: 'A sport league already uses that name.',
+    SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS: 'A sport league of this sport already uses that URL segment.',
     SPORT_LEAGUE_NOT_BRACKET: 'This league plays no bracket.',
     SPORT_LEAGUE_NOT_FOUND: 'Sport league not found.',
     SPORT_LEAGUE_NOT_SYNCED: 'No provider syncs this league\'s events.',
     SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS: 'Some rows do not name one participant.',
+    SPORT_LEAGUE_SEASON_NOT_FOUND: 'That Season is not one of this league\'s.',
+    SPORT_LEAGUE_SEASON_NOT_MAPPED: 'The provider has no id for that Season.',
     SPORT_NOT_FOUND: 'Sport not found.',
     SPORT_PROVIDER_NOT_FOUND: 'Provider not found.',
     SQUAD_DELETE_HAS_RESULTS: 'This team has finished contests, so it stays in the results. It can stay inactive instead.',
@@ -1203,7 +1208,7 @@ export const enUS = {
       contestSetup: 'A squares contest is played on one game, so it can’t take another event.',
     },
     EVENT_EDITION_ALREADY_EXISTS: {
-      createEvent: 'This {{sportLeague}} already has a {{year}} edition of this {{event}}.',
+      createEvent: 'This {{sportLeague}} already has this {{event}} in its current Season.',
     },
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: {
       bracketAdmin: 'That {{participant}} is already in the {{event}}.',
@@ -1216,12 +1221,6 @@ export const enUS = {
     },
     EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: {
       bracketAdmin: 'That place is not a {{playIn}} place, so its {{participant}} can\'t be replaced.',
-    },
-    EVENT_YEAR_HAS_NO_EVENTS: {
-      leagueYear: '{{sportLeagueName}} has no {{events}} in {{year}}, so it cannot be the current year.',
-    },
-    EVENT_YEAR_NOT_EMPTY: {
-      leagueYear: '{{sportLeagueName}} already has {{events}} in {{year}}.',
     },
     INTERNAL_ERROR: {
       eventTiers: 'The tiers may have saved, but placing the field in them failed. Save again to finish.',
@@ -1287,9 +1286,6 @@ export const enUS = {
     PREDICTION_WEEK_INCOMPLETE: {
       bracketEntry: 'Every {{match}} needs a pick before your bracket can be submitted.',
       pickEm: 'Every {{match}} needs a pick before this week can be submitted.',
-    },
-    PROVIDER_LEAGUE_REFUSED: {
-      leagueYear: 'The provider refused {{sportLeagueName}}’s {{events}}: its current plan doesn’t include them.',
     },
     RACE_RESULT_FIELD_INCOMPLETE: {
       raceResult: 'An official result needs every {{participant}} still in the field: a place for each finisher, or how its {{round}} ended.',

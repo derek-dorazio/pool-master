@@ -18,8 +18,9 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { recordStatements } from '../statement-log';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 const SMALL = 2;
@@ -46,14 +47,14 @@ afterAll(async () => {
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
 }
 
 async function tour(sportId: string): Promise<string> {
-  const row = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
+  const row = await getPrisma().sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
   made.sportLeagueIds.add(row.id);
   return row.id;
 }
@@ -150,7 +151,6 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     const sportLeagueId = await tour(await golfSportId());
     const template = await getPrisma().contestConfigTemplate.create({
       data: {
-        sport: Sport.GOLF,
         sportLeagueId,
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',

@@ -23,7 +23,6 @@ import type { SportLeagueDto } from '@/lib/api';
 import { SportEventEditionFields } from './sport-event-edition-fields';
 import {
   isCompleteEdition,
-  parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
 import { buildSportEventPath } from './manage-navigation';
@@ -57,7 +56,7 @@ export function SportEventManualCreateForm({
     feature: 'root-admin-sport-event-create-page',
   });
   const navigate = useNavigate();
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { timeZone } = useDisplayPreferences();
   const { event, participant, round } = sportVocabulary(definition);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId)?.noun ?? null);
@@ -87,7 +86,6 @@ export function SportEventManualCreateForm({
           ...(endDate ? { endDate } : {}),
           rounds: values.rounds,
           sportLeagueId: edition.sportLeagueId,
-          eventYear: parseEventYear(edition.eventYear) as number,
           autoLifecycleEnabled: values.autoLifecycleEnabled,
         },
       });
@@ -102,7 +100,7 @@ export function SportEventManualCreateForm({
         { action: 'event.create.manual', data: { id: tournament.id } },
         'Created event manually',
       );
-      void navigate(buildSportEventPath(sport, tournament.id));
+      void navigate(buildSportEventPath(sportUrlSegment, tournament.id));
     },
     onError: (error) => {
       logger.warn(
@@ -192,7 +190,7 @@ export function SportEventManualCreateForm({
           <InlineError>
             {extractErrorMessage(createMutation.error, {
               context: 'createEvent',
-              values: { sportLeague: sportLeagueNoun.one, year: edition.eventYear, event: event.one },
+              values: { sportLeague: sportLeagueNoun.one, event: event.one },
               fallback: `We could not create this ${event.one}.`,
             })}
           </InlineError>

@@ -200,7 +200,6 @@ export async function loadEventPicks(
       id: pick.id,
       sportEventParticipantId: pick.sportEventParticipantId,
       pickedAt: pick.pickedAt,
-      slot: pick.slot ?? null,
     });
     byEntry.set(pick.entryId, list);
   }

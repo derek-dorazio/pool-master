@@ -114,7 +114,6 @@ import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
   PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../packages/core-api/src/modules/events/league-events-sync';
@@ -125,6 +124,7 @@ import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestio
 import { ProviderSyncFindingService } from '../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
 import { resolveMappedParticipantFindingsJobHandler } from '../../packages/core-api/src/modules/ingestion/findings/mapped-participant-findings-job';
 import { PrismaProviderSyncFindingRepository } from '../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
+import { PrismaSportLeagueSeasonRepository } from '../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { ParticipantService } from '../../packages/core-api/src/modules/participants/service';
 import { ActivityService } from '../../packages/core-api/src/modules/activity/activity-service';
 import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
@@ -386,9 +386,10 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
     sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providers).sportEvents,
+    findings: integrationSyncFindings(prisma, providerSettings),
     syncRuns: providerSyncRuns,
     jobs: backgroundJobs.queue,
   });
@@ -821,15 +822,6 @@ async function cleanupContestArtifacts(
     },
   });
   await database.participantContestScoringRule.deleteMany({
-    where: {
-      contestConfiguration: {
-        contestId: {
-          in: contestIds,
-        },
-      },
-    },
-  });
-  await database.contestPrizeDefinition.deleteMany({
     where: {
       contestConfiguration: {
         contestId: {

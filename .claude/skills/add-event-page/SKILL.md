@@ -1,6 +1,6 @@
 ---
 name: add-event-page
-description: Adding an event page (/play/<sport>/<slug>) and its link preview tile — choose the page and its offers, seed them by migration, write the page's copy, draw its preview image, test, and check it on QA. Use when someone wants a landing page for an event such as the Super Bowl or the Final Four.
+description: Adding an event page (/play/<sport URL segment>/<page URL segment>) and its link preview tile — choose the page and its offers, seed them by migration, write the page's copy, draw its preview image, test, and check it on QA. Use when someone wants a landing page for an event such as the Super Bowl or the Final Four.
 user-invocable: true
 allowed-tools: [Read, Grep, Glob, Edit, Write, Bash]
 ---
@@ -44,7 +44,8 @@ applies: idempotent on the natural key, never an edit to an applied migration.
 
 1. Name it after main's latest migration (`ls packages/core-api/prisma/migrations | tail -3`
    on a fresh `origin/main`), with a timestamp no other open branch is using.
-2. Insert the page `ON CONFLICT ("sport", "slug") DO NOTHING`.
+2. Insert the page with its `url_segment` (lower-case words joined by single hyphens; a check
+   constraint refuses anything else) `ON CONFLICT ("sport", "url_segment") DO NOTHING`.
 3. Insert the offers from a `VALUES` list joined to `sports`, `sport_leagues` (by name) and
    `contest_config_templates` (by key and league), as the Championship Weekend migration
    (`*_event_pages`) does, `ON CONFLICT ("event_page_id", "sort_order") DO NOTHING`. Exactly one
@@ -53,7 +54,7 @@ applies: idempotent on the natural key, never an edit to an applied migration.
 
 ## Step 3 — tests for the seed
 
-`tests/integration/core-api/event-pages.integration.ts` already checks every page's slug, its
+`tests/integration/core-api/event-pages.integration.ts` already checks every page's URL segment, its
 one primary offer, and that each offer's template is active, the page's sport and its league's.
 Add one test for the new page that names its offers in order, by template key and starting
 round, so a league or template the joins did not find (and so silently seeded no offer) fails.
@@ -61,7 +62,7 @@ round, so a league or template the joins did not find (and so silently seeded no
 ## Step 4 — the copy
 
 Add the page to `EVENT_PAGE_COPY` in `clients/poolmaster/src/features/event-pages/event-page-copy.ts`,
-under its sport and slug, with every offer's card keyed by its template key. Write the cards in
+under its sport's URL segment and its own (`'american-football'`, then `'championship-weekend'`), with every offer's card keyed by its template key. Write the cards in
 the offers' `sort_order`: the preview image's chips follow the copy's order, so the image and
 the page then agree. Follow
 `rules/ux-rules.md` §13 *Event Pages* items 3 and 4 for what the words may say. Read the
@@ -88,7 +89,7 @@ Run the `release-check` skill. A merge does not deploy QA: after it, run CI by h
 That deploy writes the page's shell on its own; no Terraform apply is needed. Then check:
 
 ```bash
-curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport>/<slug> | grep og:title
+curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport-url-segment>/<url-segment> | grep og:title
 ```
 
 and paste the link into Slack or iMessage. An offer shows only while its series has an edition
@@ -103,7 +104,7 @@ on the user's say-so (`docs/SPORT-DATA-LOADING.md`), then read the page.
 - **A stale preview image.** The unit test checks that each page has an image, not that it
   matches the copy. Re-run the render script whenever a page's name, eyebrow, hook or offers
   change, and commit the new image.
-- **Changing a slug.** Never. Make the old page inactive and point its `redirect_to_page_id` at
+- **Changing a URL segment.** Never. Make the old page inactive and point its `redirect_to_page_id` at
   the new one, in a later migration.
 - **A migration timestamp another branch also took, or one main has passed.** Two migrations on
   the same timestamp break main once both merge, and one dated before main's latest runs in a

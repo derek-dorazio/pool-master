@@ -57,14 +57,14 @@ describe('display string lookups', () => {
   });
 
   it('give a screen\'s own wording of an error code under error.<CODE>.<context>, with its placeholders filled', () => {
-    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear', { sportLeagueName: 'PGA Tour', events: 'tournaments', year: 2027 }))
-      .toBe('PGA Tour already has tournaments in 2027.');
-    expect(flattenDisplayStrings(enUS)['error.EVENT_YEAR_NOT_EMPTY.leagueYear']).toBe(enUS.errorContext.EVENT_YEAR_NOT_EMPTY.leagueYear);
+    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'tour', event: 'tournament' }))
+      .toBe('This tour already has this tournament in its current Season.');
+    expect(flattenDisplayStrings(enUS)['error.EVENT_EDITION_ALREADY_EXISTS.createEvent']).toBe(enUS.errorContext.EVENT_EDITION_ALREADY_EXISTS.createEvent);
   });
 
   it('say whether a key built at run time has words, so a screen\'s context is tried before the code\'s own message', () => {
-    expect(hasDisplayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear')).toBe(true);
-    expect(hasDisplayString('error.CONTEST_FULL.leagueYear')).toBe(false);
+    expect(hasDisplayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toBe(true);
+    expect(hasDisplayString('error.CONTEST_FULL.createEvent')).toBe(false);
     expect(hasDisplayString('error.CONTEST_FULL')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL', 'fr-CA')).toBe(true);
   });
@@ -129,13 +129,13 @@ describe('display string lookups', () => {
   });
 
   it('refuse at compile time a screen\'s error wording without its placeholder values, and fill them when given', () => {
-    // @ts-expect-error The league year wording needs its sportLeagueName, events and year.
-    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear')).toContain('{{sportLeagueName}}');
-    // @ts-expect-error The placeholder is year, not season.
-    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear', { sportLeagueName: 'NFL', events: 'games', season: 2026 }))
-      .toContain('{{year}}');
-    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear', { sportLeagueName: 'NFL', events: 'games', year: 2026 }))
-      .toBe('NFL already has games in 2026.');
+    // @ts-expect-error The create-event wording needs its sportLeague and event.
+    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toContain('{{sportLeague}}');
+    // @ts-expect-error The placeholder is event, not game.
+    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', game: 'game' }))
+      .toContain('{{event}}');
+    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', event: 'game' }))
+      .toBe('This league already has this game in its current Season.');
   });
 
   it('refuse at compile time a key the modules do not hold', () => {

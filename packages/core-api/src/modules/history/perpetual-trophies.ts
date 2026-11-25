@@ -54,7 +54,7 @@ export function buildPerpetualTrophies(contests: readonly SeriesContest[], finis
     byTrophy.set(key, [...(byTrophy.get(key) ?? []), contest]);
   }
   return [...byTrophy.values()]
-    .filter((runs) => new Set(runs.map((contest) => contest.eventYear)).size >= PERPETUAL_TROPHY_MIN_YEARS)
+    .filter((runs) => new Set(runs.map((contest) => contest.championshipYear)).size >= PERPETUAL_TROPHY_MIN_YEARS)
     .map((runs): PerpetualTrophy => {
       const [first] = runs as [SeriesContest, ...SeriesContest[]];
       return {
@@ -63,8 +63,8 @@ export function buildPerpetualTrophies(contests: readonly SeriesContest[], finis
         sportLeagueName: first.sportLeagueName,
         selectionType: first.selectionType,
         plates: [...runs]
-          .sort((left, right) => right.eventYear - left.eventYear || (right.completedAt?.getTime() ?? 0) - (left.completedAt?.getTime() ?? 0))
-          .map((contest) => ({ year: contest.eventYear, contestId: contest.id, winnerSquadIds: winners.get(contest.id) ?? [] })),
+          .sort((left, right) => right.championshipYear - left.championshipYear || (right.completedAt?.getTime() ?? 0) - (left.completedAt?.getTime() ?? 0))
+          .map((contest) => ({ year: contest.championshipYear, contestId: contest.id, winnerSquadIds: winners.get(contest.id) ?? [] })),
       };
     })
     .sort((left, right) => left.sportLeagueName.localeCompare(right.sportLeagueName)

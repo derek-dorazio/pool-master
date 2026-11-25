@@ -1,30 +1,26 @@
 /**
  * Event pages (#1007, `plans/event-landing-pages.md`): public pages for one event a fan would
- * name, at `/play/<sport>/<slug>`. Each lists offers, a contest setup on one sport league's
+ * name, at `/play/<sport URL segment>/<page URL segment>`. Each lists offers, a contest setup on one sport league's
  * series, shown with that series' next edition.
  */
 import type { ContestConfigTemplate } from './contest-management-types';
 import type { Sport } from './enums';
-import { sportPathSegment } from './sports/registry';
 
-/**
- * An event page's URL name: lower case letters and digits, in words joined by single dashes.
- * Stored on the page, never derived from a name, so web and API cannot disagree. The
- * `event_pages` table checks the same pattern.
- */
-export const EVENT_PAGE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
-export function isEventPageSlug(value: string): boolean {
-  return EVENT_PAGE_SLUG_PATTERN.test(value);
+/** Where an event page lives: its sport and both stored URL segments (#2042). */
+export interface EventPageAddress {
+  sport: Sport;
+  /** The sport's stored URL segment: `american-football`. */
+  sportUrlSegment: string;
+  /** The page's stored URL segment within its sport: `championship-weekend`. */
+  urlSegment: string;
 }
 
 /**
- * An event page's address: `/play/american-football/championship-weekend`. The slug is the page's
- * stored one, never derived; the sport segment is the sport's path segment. The web app routes
- * it, and emails link to it.
+ * An event page's address: `/play/american-football/championship-weekend`, from the two stored
+ * segments, never from names or codes. The API returns it on each page, and emails link to it.
  */
-export function buildEventPagePath(sport: Sport, slug: string): string {
-  return `/play/${sportPathSegment(sport)}/${slug}`;
+export function buildEventPagePath(address: Pick<EventPageAddress, 'sportUrlSegment' | 'urlSegment'>): string {
+  return `/play/${address.sportUrlSegment}/${address.urlSegment}`;
 }
 
 /**
@@ -39,15 +35,13 @@ export const EventPageOfferState = {
 export type EventPageOfferState = (typeof EventPageOfferState)[keyof typeof EventPageOfferState];
 
 /** An event page's row: its address, its place among its sport's pages, and its lifecycle. */
-export interface EventPage {
+export interface EventPage extends EventPageAddress {
   id: string;
-  sport: Sport;
-  slug: string;
   displayOrder: number;
   /** False: retired; its URL goes to `redirectTo`, or says it has moved. */
   isActive: boolean;
   /** Where a retired page's URL goes now; null without a successor. */
-  redirectTo: { sport: Sport; slug: string } | null;
+  redirectTo: EventPageAddress | null;
 }
 
 /** One offer of an event page, with the setup it starts as and its sport league's name. */
@@ -69,7 +63,8 @@ export interface EventPageOffer {
 export interface EventPageEdition {
   sportEventId: string;
   name: string;
-  eventYear: number;
+  /** The year its Season is named for. */
+  championshipYear: number;
   startDate: Date;
   endDate: Date | null;
 }

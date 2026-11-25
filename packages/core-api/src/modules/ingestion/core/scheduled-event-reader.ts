@@ -12,6 +12,7 @@ import {
 import type { ProviderRegistry } from './provider-registry';
 import type { IngestionScheduledEventReader, LiveScoreEventRef } from './ingestion-scheduler';
 import type { EventSyncFeed } from './sync-orchestrator';
+import { sportEventSportWhere } from '../../../adapters/sport-of';
 
 /** How many upcoming events per provider a field sync pass loads. */
 const FIELD_EVENTS_PER_PROVIDER = 2;
@@ -51,7 +52,6 @@ export function createScheduledEventReader({
         // poolmaster-allow-query-in-loop: once per provider serving the sport, one or two
         return prisma.sportEvent.findMany({
           where: {
-            sport,
             providerId: { in: [providerId] },
             externalId: { not: '' },
             // A field loads while the event is a draft or released and not yet started (#431).
@@ -61,8 +61,15 @@ export function createScheduledEventReader({
               ...(to ? { lte: to } : {}),
             },
             syncScope: SportEventSyncScope.SCORES_ONLY,
-            // Only a synced league's events: its sync names this provider (ADR 0011, #1726, #2086).
-            eventSeries: { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: syncCode } } } } } },
+            // The sport's events (#2042), of a synced league only: its sync names this provider
+            // (ADR 0011, #1726, #2086). One clause, so neither filter replaces the other.
+            eventSeries: {
+              sportLeague: {
+                ...sportEventSportWhere(sport).eventSeries.sportLeague,
+                isActive: true,
+                selectedProviderMapping: { is: { providerLeague: { provider: { code: syncCode } } } },
+              },
+            },
           },
           orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }],
           take: FIELD_EVENTS_PER_PROVIDER,
@@ -85,7 +92,7 @@ export function createScheduledEventReader({
       if (providerIds.length === 0) return [];
       // Scores poll every in-progress event at once.
       const where = {
-        sport,
+        ...sportEventSportWhere(sport),
         providerId: { in: providerIds },
         externalId: { not: '' },
         status: SportEventStatus.IN_PROGRESS,

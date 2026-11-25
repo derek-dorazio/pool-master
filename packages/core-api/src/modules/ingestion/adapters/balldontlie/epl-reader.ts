@@ -29,11 +29,15 @@ import {
 } from './epl-mapping';
 import { soccerMatchListSchema, soccerTeamListSchema, type SoccerMatch } from './soccer-contract';
 
-/** A range spanning more seasons than this reads the season under way and the next instead. */
+/** A range spanning more seasons than this reads none. */
 const MAX_SEASONS_READ = 3;
 
-/** The month (0-based) the next season's fixtures are out and its matchweeks are listed: July. */
-const SEASON_ROLLOVER_MONTH = 6;
+/**
+ * The month (0-based) the next season's teams are listed: July. Only the roster read uses it, which
+ * has no Season to ask for until rosters are read per Season (slice 21); the events sync asks for
+ * a Season by its id.
+ */
+const ROSTER_ROLLOVER_MONTH = 6;
 
 export class EplReader {
   constructor(
@@ -42,16 +46,17 @@ export class EplReader {
   ) {}
 
   /**
-   * The matchweeks that start inside `dateRange`. A season runs from August into the next May,
-   * so a range reads the seasons starting the year before it to the year it ends. Without a
-   * range, or with one too wide to walk, it reads the season under way and the next.
+   * One season's matchweeks, when `season` names it (the events sync asks for a Season by its id,
+   * #2003); otherwise the matchweeks that start inside `dateRange`. A season runs from August into
+   * the next May, so a range reads the seasons starting the year before it to the year it ends.
+   * With neither, or a range too wide to walk, it reads none.
    */
-  async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
+  async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
     const events: SportEvent[] = [];
-    for (const season of this.seasonsFor(dateRange)) {
-      events.push(...toEplMatchweekEvents(season, await this.matchesOf(season)));
+    for (const each of season === undefined ? this.seasonsFor(dateRange) : [season]) {
+      events.push(...toEplMatchweekEvents(each, await this.matchesOf(each)));
     }
-    return events.filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
+    return events.filter((event) => season !== undefined || !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
   /** The matchweek with its teams; null when the vendor has no match in it. */
@@ -65,7 +70,8 @@ export class EplReader {
 
   /** The teams of the season under way. */
   async teams(): Promise<ProviderParticipant[]> {
-    const [current] = this.seasonsFor();
+    const today = new Date(this.now());
+    const current = today.getUTCMonth() >= ROSTER_ROLLOVER_MONTH ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
     const page = await this.client.get(EPL_TEAMS_PATH, { season: current }, soccerTeamListSchema);
     return page.data.map(toEplTeamParticipant);
   }
@@ -84,13 +90,9 @@ export class EplReader {
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {
-    if (dateRange) {
-      const first = dateRange.from.getUTCFullYear() - 1;
-      const count = dateRange.to.getUTCFullYear() - first + 1;
-      if (count <= MAX_SEASONS_READ) return Array.from({ length: count }, (_, index) => first + index);
-    }
-    const today = new Date(this.now());
-    const current = today.getUTCMonth() >= SEASON_ROLLOVER_MONTH ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
-    return [current, current + 1];
+    if (!dateRange) return [];
+    const first = dateRange.from.getUTCFullYear() - 1;
+    const count = dateRange.to.getUTCFullYear() - first + 1;
+    return count <= MAX_SEASONS_READ ? Array.from({ length: count }, (_, index) => first + index) : [];
   }
 }

@@ -1,7 +1,8 @@
-import { createLeague, createSportLeague, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createLeague, createSportLeague, listEvents, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { SPORT_PLATFORM_TIER_PROFILE_CODE, STANDARD_PLATFORM_PRICING_PROFILE_CODE } from '../support/league-profiles';
+import { fixtureSeasonId, withCurrentSeason } from '../support/event-edition';
 import { sportPlay } from '../support/sport-play';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
@@ -273,17 +274,19 @@ export async function attachContestEvent(contestId: string, sportEventId: string
 }
 
 /**
- * The profile ids a functional test's new sport league names (#1844), read through the API as an
- * admin would: its sport's tier layout (`SPORT_PLATFORM_TIER_PROFILE_CODE`) and Standard pricing.
+ * What a functional test's new sport league needs beside its sport and name: the profile ids it
+ * names (#1844), read through the API as an admin would (its sport's tier layout,
+ * `SPORT_PLATFORM_TIER_PROFILE_CODE`, and Standard pricing), and a URL segment no other test's
+ * league of the sport has (#2042).
  */
-export async function sportLeagueProfiles(client: Client, sport: Sport): Promise<{ platformTierProfileId: string; platformPricingProfileId: string }> {
+export async function sportLeagueCreateBody(client: Client, sport: Sport): Promise<{ platformTierProfileId: string; platformPricingProfileId: string; urlSegment: string }> {
   const [tiers, prices] = await Promise.all([listPlatformTierProfiles({ client }), listPlatformPricingProfiles({ client })]);
   const platformTierProfile = tiers.data?.platformTierProfiles.find((profile) => profile.code === SPORT_PLATFORM_TIER_PROFILE_CODE[sport]);
   const platformPricingProfile = prices.data?.platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE);
   if (!platformTierProfile || !platformPricingProfile) {
     throw new Error(`The ${SPORT_PLATFORM_TIER_PROFILE_CODE[sport]} tier profile or the Standard pricing profile is missing.`);
   }
-  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id };
+  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id, urlSegment: `test-${randomUUID()}` };
 }
 
 /**
@@ -292,9 +295,30 @@ export async function sportLeagueProfiles(client: Client, sport: Sport): Promise
  * name adds that league first, playing as its sport's leagues do. Returns its id.
  */
 export async function addRunSportLeague(client: Client, sport: Sport, name: string): Promise<string> {
-  const created = await createSportLeague({ client, body: { ...(await sportLeagueProfiles(client, sport)), ...sportPlay(sport), sport, name } });
+  const created = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, sport)), ...sportPlay(sport), timeZone: 'UTC', sport, name } });
   if (!created.data) {
     throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
   }
+  // A migration adds a league with its Seasons; this year's stands in for them, made current.
+  await withCurrentSeason(getFunctionalPrisma(), created.data.sportLeague.id);
   return created.data.sportLeague.id;
+}
+
+/**
+ * Makes `championshipYear`'s Season the league's current one, for a test that creates events
+ * through the API in that year: a new event goes in its league's current Season (#2003), which
+ * the daily recompute sets on a real site. Functional suites run one at a time, so moving a shared
+ * league's current Season reaches no other test. Returns the league id.
+ */
+export async function inCurrentSeason(sportLeagueId: string, championshipYear: number): Promise<string> {
+  await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  return sportLeagueId;
+}
+
+/** The events of the league's Season named for `championshipYear`, as an admin lists one Season (#2003). */
+export async function seasonEvents(client: Client, sportLeagueId: string, championshipYear: number) {
+  const sportLeagueSeasonId = await fixtureSeasonId(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  const listed = await listEvents({ client, query: { sportLeagueSeasonId } });
+  if (!listed.data) throw new Error(`Could not list the Season's events: ${JSON.stringify(listed.error)}`);
+  return listed.data.events;
 }

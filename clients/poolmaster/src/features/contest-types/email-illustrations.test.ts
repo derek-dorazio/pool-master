@@ -13,17 +13,15 @@ async function fingerprint(source: string): Promise<string> {
 }
 
 describe('Email pictures', () => {
-  it('has a committed file for every sport header and every way to play, so no email links to a missing picture', () => {
+  it('has a committed file for every way to play, so no email links to a missing picture', () => {
     const missing = emailIllustrations().map((illustration) => illustration.path).filter((path) => !committed.has(path));
     expect(missing).toEqual([]);
   });
 
-  it('keeps a source note beside every sport photo, and a drawing of the How to Play scene for every sport without one', () => {
-    const sportHeaders = emailIllustrations().filter((illustration) => illustration.path.startsWith('/email/sports/'));
-    const unaccounted = sportHeaders
-      .filter((illustration) => !committed.has(photoNote(illustration.path)) && !(illustration.path in drawn))
-      .map((illustration) => illustration.path);
-    expect(unaccounted).toEqual([]);
+  it('keeps a source note beside every sport photo, so each header photo says where it came from', () => {
+    const photos = [...committed].filter((path) => path.startsWith('/email/sports/') && path.endsWith('.jpg'));
+    expect(photos.length).toBeGreaterThan(0);
+    expect(photos.filter((path) => !committed.has(photoNote(path)))).toEqual([]);
   });
 
   it('fails when a How to Play picture or its colours changed and its email file was not drawn again with scripts/render-email-images.mjs', async () => {

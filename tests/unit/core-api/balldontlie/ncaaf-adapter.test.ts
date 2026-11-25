@@ -92,22 +92,22 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       ]);
     });
 
-    it('reads the season under way and the next when the range is open-ended', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
       await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
 
-      expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual(['2026', '2027']);
+      expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual([]);
     });
 
-    it('takes the season just played as the one under way before March', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says, its playoff still under way in mid-January', async () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 0, 15));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL);
+      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerSeasonId: '2025' });
 
-      expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual(['2025', '2026']);
+      expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual(['2025']);
       // Its window is still open in mid-January, so it is not over yet.
       expect(events.find((event) => event.externalId === 'ncaaf-2025-cfp')?.status).toBe('IN_PROGRESS');
     });

@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { createParticipant, updateParticipant } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
-import { leagueProfiles } from '../support/league-profiles';
+import { sportLeagueRowDefaults } from '../support/league-profiles';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
 } from './setup';
+import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 
 // #235 — participant writes are root-admin only (A10: authority from the token claim). Before
@@ -21,10 +22,10 @@ async function golfTourId(): Promise<string> {
   const database = getFunctionalPrisma();
   const sport = await database.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await database.sportLeague.create({ data: { ...(await leagueProfiles(database)), ...sportPlay(sport.sport), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
+  const tour = await database.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(database)), ...sportPlay(sport.sport), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
   createdSportLeagueIds.push(tour.id);
   return tour.id;
 }

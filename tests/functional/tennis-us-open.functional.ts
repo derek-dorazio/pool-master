@@ -25,6 +25,7 @@ import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, t
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // The 2026 US Open men's and women's singles end to end over HTTP (#704): the test seed loads each
 // 128-player draw into the ATP and the WTA, its qualifier places taking their qualifiers after
@@ -106,7 +107,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.TENNIS },
-      create: { sport: Sport.TENNIS, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.TENNIS, ...sportRowKeys(Sport.TENNIS), tournamentFormat: 'MATCHES' },
       update: {},
     });
   });

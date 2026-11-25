@@ -29,6 +29,7 @@ export * from './cup-points';
 export * from './championship';
 export * from './league-plans';
 export * from './event-pages';
+export * from './url-segment';
 export * from './time-zones';
 export * from './brand';
 export * from './event-overdue';
@@ -37,6 +38,7 @@ export * from './customers';
 export * from './sport-league-overview';
 export * from './sport-league-page';
 export * from './sport-league-structure';
+export * from './sport-league-seasons';
 export { assertNever, type AssertTrue } from './assert-never';
 export {
   compareScores,

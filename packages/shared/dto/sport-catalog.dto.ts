@@ -15,6 +15,7 @@ import {
   LeaguePhase,
   MatchFormat,
   PeriodUnit,
+  SeasonSlotStatus,
   SeriesFormat,
   SlotKind,
   SlotPairing,
@@ -42,12 +43,15 @@ import { ScoringFamily } from '../domain/sports/scoring-family';
 import { AUTO_RELEASE_DAYS_MAX, ReleaseCheckKey } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
 import { FieldOrderBasis } from '../domain/field-ordering';
+import { URL_SEGMENT_PATTERN } from '../domain/url-segment';
 
 // --- Sport ---------------------------------------------------------------------
 
 export const SportDtoSchema = z.object({
   id: z.uuid().describe('Sport identifier — what Participant.sportId and SportLeague.sportId point at.'),
   sport: z.enum(Sport).describe('The sport.'),
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport\'s name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given.'),
+  displayOrder: z.number().int().describe('Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.'),
   tournamentFormat: z.enum(TournamentFormat).describe('Structural format of the sport\'s events; decides which contest formats are valid.'),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
@@ -55,7 +59,7 @@ export const SportDtoSchema = z.object({
 export type SportDto = z.infer<typeof SportDtoSchema>;
 
 export const SportListResponseSchema = z.object({
-  sports: z.array(SportDtoSchema).describe('Every sport, ordered by sport.'),
+  sports: z.array(SportDtoSchema).describe('Every sport, in display order.'),
 }).describe('The sports.');
 export type SportListResponse = z.infer<typeof SportListResponseSchema>;
 
@@ -79,10 +83,14 @@ export const SportLeagueDtoSchema = z.object({
   id: z.uuid().describe('Sport league identifier.'),
   sportId: z.uuid().describe('The sport this sport league belongs to.'),
   sport: z.enum(Sport).describe('The sport this sport league belongs to, as the sport enum.'),
+  sportUrlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('Its sport\'s URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.'),
+  sportDisplayOrder: z.number().int().describe('Its sport\'s display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.'),
   name: z.string().describe('Sport league name, e.g. "PGA Tour".'),
-  currentEventYear: z.number().int().nullable().describe('The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.'),
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport league\'s name in web addresses within its sport, such as wnba (How to Play\'s ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.'),
+  currentSeasonId: z.uuid().nullable().describe('The sport league\'s current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.'),
+  timeZone: z.string().describe('The IANA time zone the sport league\'s calendar weeks break in, Monday to Sunday there, such as America/New_York. Set with the league\'s reference data.'),
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
-  selectedProviderMapping: SportLeagueProviderMappingDtoSchema.nullable().describe('The provider league whose sync creates and keeps the sport league\'s events (ADR 0011): a scheduled pass imports that provider league\'s events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year\'s edition. null when the league is not synced.'),
+  selectedProviderMapping: SportLeagueProviderMappingDtoSchema.nullable().describe('The provider league whose sync creates and keeps the sport league\'s events (ADR 0011): a scheduled pass imports that provider league\'s events for its current Season and every later one, each born DRAFT and linked for scores, skipping events already linked and series that already have that Season\'s edition. null when the league is not synced.'),
   autoReleaseDaysBeforeStart: AutoReleaseDaysSchema.nullable().describe('How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.'),
   platformTierProfileId: z.uuid().describe('The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.'),
   platformPricingProfileId: z.uuid().describe('The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.'),
@@ -122,12 +130,14 @@ export type SportLeagueResponse = z.infer<typeof SportLeagueResponseSchema>;
 export const CreateSportLeagueRequestSchema = z.object({
   sport: z.enum(Sport).describe('The sport the new sport league belongs to.'),
   name: z.string().min(1).describe('Unique within the sport.'),
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).max(100).describe('The sport league\'s name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are.'),
   participantType: z.enum(ParticipantType).describe('Who competes in its events: teams or individuals. Fixed once set.'),
   scoringFamily: z.enum(ScoringFamily).describe('How its events are scored. Fixed once set.'),
   bracketAdvancement: z.enum(BracketAdvancement).optional().describe('FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.'),
   platformTierProfileId: z.uuid().describe('The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.'),
   platformPricingProfileId: z.uuid().describe('The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.'),
-}).describe('A new sport league.');
+  timeZone: z.string().min(1).max(64).describe('The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know.'),
+}).describe('A new sport league. It has no Season until a migration adds one.');
 export type CreateSportLeagueRequest = z.infer<typeof CreateSportLeagueRequestSchema>;
 
 export const UpdateSportLeagueRequestSchema = z.object({
@@ -135,7 +145,6 @@ export const UpdateSportLeagueRequestSchema = z.object({
   isActive: z.boolean().optional(),
   autoReleaseDaysBeforeStart: AutoReleaseDaysSchema.nullable().optional().describe('Days before an event\'s start that its automatic release begins, 1 to 30; null turns automatic release off for the sport league.'),
   syncProviderLeagueId: z.uuid().nullable().optional().describe('Turns the sport league\'s event sync on with that provider league (a ProviderLeagueDto id), mapping the sport league to it when it is not yet, or off with null, which keeps the mapping. 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist; 422 PROVIDER_SPORT_MISMATCH for one of another sport; 422 PROVIDER_NOT_FOUND when its provider or the league is switched off or not running.'),
-  currentEventYear: z.number().int().optional().describe('Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.'),
   platformTierProfileId: z.uuid().optional().describe('Names another tier profile. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.'),
   platformPricingProfileId: z.uuid().optional().describe('Names another pricing profile. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.'),
   bracketAdvancement: z.enum(BracketAdvancement).optional().describe('RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.'),
@@ -241,6 +250,8 @@ export type SportLeagueIssueDto = z.infer<typeof SportLeagueIssueDtoSchema>;
 export const SportLeagueOverviewDtoSchema = z.object({
   id: z.uuid(),
   sport: z.enum(Sport),
+  sportUrlSegment: z.string().describe('Its sport\'s URL segment (SportDto.urlSegment): what a link to the league\'s Manage page names the sport by.'),
+  sportDisplayOrder: z.number().int().describe('Its sport\'s place wherever sports are listed together, lower first (the sport row\'s displayOrder): sort the sport column by it.'),
   name: z.string(),
   providerId: z.string().nullable().describe('The provider that syncs its events. Null when none does.'),
   providerName: z.string().nullable().describe('That provider\'s name, so no reader looks it up by id (#1999). Null when none syncs it.'),
@@ -286,7 +297,7 @@ export type SportLeagueSyncListResponse = z.infer<typeof SportLeagueSyncListResp
 export const SportLeagueEventOverviewDtoSchema = z.object({
   id: z.uuid(),
   name: z.string(),
-  eventYear: z.number().int(),
+  sportLeagueSeasonId: z.uuid().describe('The Season it is played in (SportLeagueSeasonDto).'),
   startDate: DateTimeSchema,
   endDate: DateTimeSchema.nullable(),
   status: z.enum(SportEventStatus),
@@ -394,6 +405,60 @@ export const SportLeagueStructureResponseSchema = z.object({
 }).describe('A sport league\'s phase and slot definitions, set by migration.');
 export type SportLeagueStructureResponse = z.infer<typeof SportLeagueStructureResponseSchema>;
 
+// --- A sport league's Seasons (#2003) --------------------------------------------
+
+export const SportLeagueSeasonProviderMappingDtoSchema = z.object({
+  id: z.uuid(),
+  providerId: z.uuid(),
+  providerName: z.string(),
+  providerLeagueCode: z.string().describe('The provider\'s own code for the league, such as nfl.'),
+  providerSeasonId: z.string().describe('The provider\'s own id for the Season, as the sync asks the feed for it.'),
+}).describe('A provider\'s id for one Season.');
+export type SportLeagueSeasonProviderMappingDto = z.infer<typeof SportLeagueSeasonProviderMappingDtoSchema>;
+
+export const SportLeagueSeasonSlotDtoSchema = z.object({
+  id: z.uuid(),
+  slotDefinitionId: z.uuid().describe('The slot definition it plays (SportLeagueSlotDefinitionDto).'),
+  key: z.string().describe('Its definition\'s key.'),
+  slotKind: z.enum(SlotKind),
+  weekNumber: z.number().int().min(1).nullable(),
+  name: z.string().nullable().describe('Its definition\'s proper name; null when screens show the word for its kind.'),
+  startsAt: DateTimeSchema.nullable().describe('The earliest start of its Games; null until the sync has matched one.'),
+  endsAt: DateTimeSchema.nullable().describe('The latest end of its Games; null until the sync has matched one.'),
+  status: z.enum(SeasonSlotStatus),
+  seriesFormat: z.enum(SeriesFormat).describe('Copied from the definition when the Season was added, so a later format change never rewrites a past Season.'),
+  seriesGames: z.number().int().min(1),
+  pairing: z.enum(SlotPairing),
+  isTestData: z.boolean().describe('A test slot: QA only, never read or written by the sync.'),
+  label: z.string().nullable().describe('A test slot\'s label, unique per Season and definition; null on a synced slot.'),
+}).describe('One slot of one Season.');
+export type SportLeagueSeasonSlotDto = z.infer<typeof SportLeagueSeasonSlotDtoSchema>;
+
+export const SportLeagueSeasonPhaseDtoSchema = z.object({
+  id: z.uuid(),
+  phase: z.enum(LeaguePhase),
+  isSynced: z.boolean().describe('Whether the league\'s sync reads the phase. An unsynced phase has no slots.'),
+  slots: z.array(SportLeagueSeasonSlotDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition\'s synced slot.'),
+}).describe('One phase of one Season.');
+export type SportLeagueSeasonPhaseDto = z.infer<typeof SportLeagueSeasonPhaseDtoSchema>;
+
+export const SportLeagueSeasonDtoSchema = z.object({
+  id: z.uuid(),
+  name: z.string().describe('What screens call the Season, such as 2025-26 or 2026.'),
+  championshipYear: z.number().int().describe('The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league\'s is its year. Set by migration.'),
+  startsAt: DateTimeSchema.describe('Its span\'s first moment, in the league\'s time zone.'),
+  endsAt: DateTimeSchema.describe('Its span\'s last moment.'),
+  isCurrent: z.boolean().describe('Whether it is the sport league\'s current Season (SportLeagueDto.currentSeasonId).'),
+  providerMappings: z.array(SportLeagueSeasonProviderMappingDtoSchema).describe('Each provider\'s id for it, by provider name.'),
+  phases: z.array(SportLeagueSeasonPhaseDtoSchema).describe('In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.'),
+}).describe('One Season of a sport league, added by migration.');
+export type SportLeagueSeasonDto = z.infer<typeof SportLeagueSeasonDtoSchema>;
+
+export const SportLeagueSeasonListResponseSchema = z.object({
+  seasons: z.array(SportLeagueSeasonDtoSchema).describe('Every Season of the sport league, latest first, never paged.'),
+}).describe('A sport league\'s Seasons.');
+export type SportLeagueSeasonListResponse = z.infer<typeof SportLeagueSeasonListResponseSchema>;
+
 // --- Event page: one event's syncs, health, issues and release (#1889) ------------
 
 export const SportEventFieldFeedRowDtoSchema = z.object({
@@ -413,7 +478,7 @@ export const SportEventOverviewDtoSchema = z.object({
   tierOrderBasis: z.enum(FieldOrderBasis).nullable().describe('The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.'),
   tierOrderCoversField: z.boolean().describe('False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.'),
   fieldFeed: z.array(SportEventFieldFeedRowDtoSchema).describe('One per field row, active or withdrawn, never paged.'),
-  eventPageSlug: z.string().nullable().describe('The slug of the active event page offering the event\'s series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.'),
+  eventPagePath: z.string().nullable().describe('The web address of the active event page offering the event\'s series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.'),
 }).describe('The root admin\'s Event page header and sync rows.');
 export type SportEventOverviewDto = z.infer<typeof SportEventOverviewDtoSchema>;
 
@@ -450,6 +515,11 @@ registerSchema('SlotProviderMappingDto', SlotProviderMappingDtoSchema);
 registerSchema('SportLeagueSlotDefinitionDto', SportLeagueSlotDefinitionDtoSchema);
 registerSchema('SportLeaguePhaseDefinitionDto', SportLeaguePhaseDefinitionDtoSchema);
 registerSchema('SportLeagueStructureResponse', SportLeagueStructureResponseSchema);
+registerSchema('SportLeagueSeasonProviderMappingDto', SportLeagueSeasonProviderMappingDtoSchema);
+registerSchema('SportLeagueSeasonSlotDto', SportLeagueSeasonSlotDtoSchema);
+registerSchema('SportLeagueSeasonPhaseDto', SportLeagueSeasonPhaseDtoSchema);
+registerSchema('SportLeagueSeasonDto', SportLeagueSeasonDtoSchema);
+registerSchema('SportLeagueSeasonListResponse', SportLeagueSeasonListResponseSchema);
 registerSchema('SportLeagueParticipantRankingsRequest', SportLeagueParticipantRankingsRequestSchema);
 registerSchema('SportLeagueRankingUploadRequest', SportLeagueRankingUploadRequestSchema);
 registerSchema('UploadRowResolutionDto', UploadRowResolutionDtoSchema);

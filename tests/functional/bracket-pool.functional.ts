@@ -48,7 +48,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventRoundMatchupsResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -62,6 +62,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
 import { PrismaSportEventRepository } from '../../packages/core-api/src/adapters';
 import { NO_SETTLE_JOBS } from '../support/event-settlement';
+import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
@@ -142,7 +143,7 @@ async function releasedKnockout(options: {
   // The migration's reference row, restored in case an earlier suite cleared the sports table.
   await getFunctionalPrisma().sport.upsert({
     where: { sport: Sport.BASKETBALL },
-    create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const admin = await buildRegisteredUser({ displayName: `${options.label} Director` });
@@ -151,13 +152,13 @@ async function releasedKnockout(options: {
 
   const sportLeague = await createSportLeague({
     client: a,
-    body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
+    body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
   });
   const sportLeagueId = expectDefined(sportLeague.data, JSON.stringify(sportLeague.error)).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);
   const event = await createEvent({
     client: a,
-    body: { sportLeagueId, eventYear: 2099, name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, autoLifecycleEnabled: false },
+    body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);

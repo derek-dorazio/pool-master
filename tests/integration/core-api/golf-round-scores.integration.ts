@@ -23,6 +23,7 @@ import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/sc
 import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -40,7 +41,7 @@ async function createField(suffix: string) {
   const prisma = getPrisma();
   await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -48,7 +49,6 @@ async function createField(suffix: string) {
       ...(await freshEventEdition(prisma)),
       externalId: `golf-round-scores-${suffix}`,
       providerId: 'balldontlie',
-      sport: 'GOLF',
       name: `Round Scores Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: 'IN_PROGRESS',

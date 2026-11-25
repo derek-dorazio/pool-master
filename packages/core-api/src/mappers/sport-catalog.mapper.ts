@@ -13,6 +13,7 @@ import {
   type SportLeagueIssueTarget,
   type SportLeagueOverview,
   type SportLeagueParticipantOverview,
+  type SportLeagueSeasonDetail,
   type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
@@ -26,6 +27,7 @@ import type {
   SportEventOverviewDto,
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
+  SportLeagueSeasonDto,
   SportLeaguePositionDto,
   SportLeagueStructureResponse,
   SportLeagueSyncDto,
@@ -36,6 +38,8 @@ export function mapSportToDto(sport: SportConfig): SportDto {
   return {
     id: sport.id,
     sport: sport.sport,
+    urlSegment: sport.urlSegment,
+    displayOrder: sport.displayOrder,
     tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
     updatedAt: sport.updatedAt.toISOString(),
@@ -47,8 +51,12 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     id: sportLeague.id,
     sportId: sportLeague.sportId,
     sport: sportLeague.sport,
+    sportUrlSegment: sportLeague.sportUrlSegment,
+    sportDisplayOrder: sportLeague.sportDisplayOrder,
     name: sportLeague.name,
-    currentEventYear: sportLeague.currentEventYear,
+    urlSegment: sportLeague.urlSegment,
+    currentSeasonId: sportLeague.currentSeasonId,
+    timeZone: sportLeague.timeZone,
     isActive: sportLeague.isActive,
     selectedProviderMapping: sportLeague.selectedProviderMapping === null ? null : { ...sportLeague.selectedProviderMapping },
     autoReleaseDaysBeforeStart: sportLeague.autoReleaseDaysBeforeStart,
@@ -79,6 +87,8 @@ export function mapSportLeagueOverviewToDto(overview: SportLeagueOverview): Spor
   return {
     id: overview.id,
     sport: overview.sport,
+    sportUrlSegment: overview.sportUrlSegment,
+    sportDisplayOrder: overview.sportDisplayOrder,
     name: overview.name,
     providerId: overview.providerId,
     providerName: overview.providerName,
@@ -144,7 +154,7 @@ export function mapSportEventOverviewToDto(overview: SportEventOverview): SportE
       feedId: row.feedId,
       lastInFeedAt: row.lastInFeedAt?.toISOString() ?? null,
     })),
-    eventPageSlug: overview.eventPageSlug,
+    eventPagePath: overview.eventPagePath,
   };
 }
 
@@ -152,7 +162,7 @@ export function mapSportLeagueEventOverviewToDto(event: SportLeagueEventOverview
   return {
     id: event.id,
     name: event.name,
-    eventYear: event.eventYear,
+    sportLeagueSeasonId: event.sportLeagueSeasonId,
     startDate: event.startDate.toISOString(),
     endDate: event.endDate?.toISOString() ?? null,
     status: event.status,
@@ -231,6 +241,46 @@ export function mapSportLeagueStructureToDto(structure: SportLeagueStructure): S
           matchType: mapping.matchType,
           providerValue: mapping.providerValue,
         })),
+      })),
+    })),
+  };
+}
+
+/** One Season with its provider ids, phases and slots (#2003), in the order the domain gave them. */
+export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): SportLeagueSeasonDto {
+  return {
+    id: season.id,
+    name: season.name,
+    championshipYear: season.championshipYear,
+    startsAt: season.startsAt.toISOString(),
+    endsAt: season.endsAt.toISOString(),
+    isCurrent: season.isCurrent,
+    providerMappings: season.providerMappings.map((mapping) => ({
+      id: mapping.id,
+      providerId: mapping.providerId,
+      providerName: mapping.providerName,
+      providerLeagueCode: mapping.providerLeagueCode,
+      providerSeasonId: mapping.providerSeasonId,
+    })),
+    phases: season.phases.map((phase) => ({
+      id: phase.id,
+      phase: phase.phase,
+      isSynced: phase.isSynced,
+      slots: phase.slots.map((slot) => ({
+        id: slot.id,
+        slotDefinitionId: slot.slotDefinitionId,
+        key: slot.key,
+        slotKind: slot.slotKind,
+        weekNumber: slot.weekNumber,
+        name: slot.name,
+        startsAt: slot.startsAt?.toISOString() ?? null,
+        endsAt: slot.endsAt?.toISOString() ?? null,
+        status: slot.status,
+        seriesFormat: slot.seriesFormat,
+        seriesGames: slot.seriesGames,
+        pairing: slot.pairing,
+        isTestData: slot.isTestData,
+        label: slot.label,
       })),
     })),
   };

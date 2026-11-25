@@ -118,7 +118,7 @@ export const router = createBrowserRouter([
         element: <MovedPage />,
       },
       {
-        path: 'play/:sport/:pageSlug',
+        path: 'play/:sportUrlSegment/:urlSegment',
         element: <EventPage />,
       },
       {

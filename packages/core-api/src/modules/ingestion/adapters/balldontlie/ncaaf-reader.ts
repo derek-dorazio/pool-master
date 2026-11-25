@@ -22,11 +22,8 @@ import {
   type CfpScope,
 } from './ncaaf-mapping';
 
-/** A range spanning more seasons than this reads the current and next season instead of every one. */
+/** A range spanning more seasons than this reads none. */
 const MAX_SEASONS_READ = 3;
-
-/** The month (0-based) a new season's playoff starts being listed: March, after the title game. */
-const SEASON_ROLLOVER_MONTH = 2;
 
 /** A `format: date` query value: the UTC calendar date. */
 const calendarDate = (moment: Date) => moment.toISOString().slice(0, 10);
@@ -38,20 +35,20 @@ export class NcaafReader {
   ) {}
 
   /**
-   * The playoffs whose first game starts inside `dateRange`. A playoff runs from December into
-   * the next January, so a range reads the seasons from the year before it starts to the year it
-   * ends. Without a range, or with one too wide to walk, it reads the season under way and the
-   * next.
+   * One season's playoff, when `season` names it (the events sync asks for a Season by its id,
+   * #2003); otherwise the playoffs whose first game starts inside `dateRange`. A playoff runs from
+   * December into the next January, so a range reads the seasons from the year before it starts to
+   * the year it ends. With neither, or a range too wide to walk, it reads none.
    */
-  async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
+  async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
     const events: SportEvent[] = [];
-    for (const season of this.seasonsFor(dateRange)) {
-      const scope = { season };
+    for (const each of season === undefined ? this.seasonsFor(dateRange) : [season]) {
+      const scope = { season: each };
       const games = await this.gamesOf(scope);
       if (games.length > 0) events.push(toCfpEvent(scope, games, this.windowClosed(scope)));
     }
     return events
-      .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
+      .filter((event) => season !== undefined || !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
   /** The season's playoff with the teams playing in its window; null when the vendor has no game in it yet. */
@@ -92,13 +89,9 @@ export class NcaafReader {
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {
-    if (dateRange) {
-      const first = dateRange.from.getUTCFullYear() - 1;
-      const count = dateRange.to.getUTCFullYear() - first + 1;
-      if (count <= MAX_SEASONS_READ) return Array.from({ length: count }, (_, index) => first + index);
-    }
-    const today = new Date(this.now());
-    const current = today.getUTCMonth() >= SEASON_ROLLOVER_MONTH ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
-    return [current, current + 1];
+    if (!dateRange) return [];
+    const first = dateRange.from.getUTCFullYear() - 1;
+    const count = dateRange.to.getUTCFullYear() - first + 1;
+    return count <= MAX_SEASONS_READ ? Array.from({ length: count }, (_, index) => first + index) : [];
   }
 }

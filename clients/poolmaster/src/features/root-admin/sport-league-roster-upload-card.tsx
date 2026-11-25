@@ -8,7 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportLeagueRankingUploadPreviewResponse } from '@/lib/api';
-import { sportPathSegment, sportVocabulary } from '@poolmaster/shared/domain';
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import {
   ROSTER_UPLOAD_HEADERS,
   parseRosterUpload,
@@ -42,7 +42,7 @@ function describeRow(row: RosterPreviewRow['row']): string {
  * Each row names one of the league's own participants; the upload never adds one.
  */
 export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { participant } = sportVocabulary(definition);
   const sportLeague = useSportLeagueNoun(sport, leagueId);
   const logger = getLogger().child({
@@ -126,7 +126,7 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
             testId="root-admin-sport-league-roster-upload-preview-table"
           />
         )}
-        templateFilename={`${sportPathSegment(sport)}-${sportLeague.one}-roster-template.csv`}
+        templateFilename={`${sportUrlSegment}-${sportLeague.one}-roster-template.csv`}
         templateHeaders={ROSTER_UPLOAD_HEADERS}
         testId="root-admin-sport-league-roster-upload"
         unresolvedCount={(rows) =>

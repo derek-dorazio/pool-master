@@ -125,13 +125,13 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   // The plan's sports leagues a year (#947): once a year's contests use them all, an event in
   // another sports league that year is locked. A contest's year is its first event's.
   const sportLeagueCap = league?.planEntitlements.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR] ?? null;
-  const eventYears = useMemo(
-    () => [...new Set(contestEvents.map((event) => event.eventYear))].sort((left, right) => left - right),
+  const championshipYears = useMemo(
+    () => [...new Set(contestEvents.map((event) => event.championshipYear))].sort((left, right) => left - right),
     [contestEvents],
   );
-  const sportLeaguesUsed = useSportLeaguesUsed(league?.id, eventYears, sportLeagueCap !== null);
+  const sportLeaguesUsed = useSportLeaguesUsed(league?.id, championshipYears, sportLeagueCap !== null);
   const lockedEventIds = useMemo(() => contestEvents.flatMap((event) => {
-    const used = sportLeaguesUsed.get(event.eventYear);
+    const used = sportLeaguesUsed.get(event.championshipYear);
     return sportLeagueCap !== null && used !== undefined
       && used.length >= sportLeagueCap && !used.includes(event.sportLeagueId)
       ? [event.id]

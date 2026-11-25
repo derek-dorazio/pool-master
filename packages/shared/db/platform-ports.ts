@@ -20,7 +20,7 @@ import type {
  * A run to write. Its provider is named by its Provider code, which the write keys to the Provider
  * row (#2040); its event is `sportEventId`, whose provider id the run reads back as `eventId`.
  */
-export type ProviderSyncRunCreate = Omit<ProviderSyncRun, 'id' | 'createdAt' | 'providerId' | 'providerName' | 'eventId'> & {
+export type ProviderSyncRunCreate = Omit<ProviderSyncRun, 'id' | 'createdAt' | 'providerId' | 'providerName' | 'eventId' | 'sport'> & {
   providerCode: ProviderCode;
   createdAt?: Date;
 };

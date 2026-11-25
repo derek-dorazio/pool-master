@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { DisplayPreferences } from '@/features/shared/ui';
 import type { SportLeagueParticipantOverviewDto, SportLeagueSyncDto } from '@/lib/api';
 import { contestTemplateUpdateBody, contestTemplateValuesOf } from './league-contest-template-form';
-import { defaultEventYear } from './league-event-columns';
+import { defaultSeasonId } from './league-event-columns';
 import { isSyncedLeague, leaguePageTabs } from './league-page-context';
 import { failedJobCount } from './use-activity';
 import { leagueParticipantColumnIds } from './league-participant-columns';
@@ -56,17 +56,14 @@ describe('isSyncedLeague', () => {
   });
 });
 
-describe('defaultEventYear', () => {
-  const now = new Date('2027-06-01T00:00:00.000Z');
-
-  it('opens on the league\'s current event year, else this calendar year, when an event is in it', () => {
-    expect(defaultEventYear([{ eventYear: 2026 }, { eventYear: 2027 }], 2026, now)).toBe(2026);
-    expect(defaultEventYear([{ eventYear: 2026 }, { eventYear: 2027 }], null, now)).toBe(2027);
+describe('defaultSeasonId', () => {
+  it('opens on the league\'s current Season when an event is in it', () => {
+    expect(defaultSeasonId([{ sportLeagueSeasonId: 's2026' }, { sportLeagueSeasonId: 's2027' }], 's2026')).toBe('s2026');
   });
 
-  it('opens on no year when no event is in that year, so the grid never opens empty', () => {
-    expect(defaultEventYear([{ eventYear: 2025 }], null, now)).toBeNull();
-    expect(defaultEventYear([], 2027, now)).toBeNull();
+  it('opens on no Season when the league has no current Season or no event is in it, so the grid never opens empty', () => {
+    expect(defaultSeasonId([{ sportLeagueSeasonId: 's2026' }], null)).toBeNull();
+    expect(defaultSeasonId([{ sportLeagueSeasonId: 's2025' }], 's2026')).toBeNull();
   });
 });
 

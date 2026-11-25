@@ -237,11 +237,11 @@ describe('sport league handlers', () => {
   const overviews = new SportLeagueOverviewService({
     reader: {
       readFacts: async () => ({
-        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true }],
+        leagues: [{ id: 'sl1', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true }],
         latestSyncRuns: [],
         heldEvents: [],
         eventCounts: new Map([['sl1', 2]]),
-        eventYearSpans: [],
+        currentSeasonSpans: new Map(),
         nextEventStarts: new Map(),
         openFindings: [],
         overdueCandidates: [],
@@ -262,10 +262,14 @@ describe('sport league handlers', () => {
         providerCodes: [{ providerCode: 'QB', provider: ProviderCode.BALLDONTLIE, providerLeagueCode: 'nfl', providerLeagueName: 'NFL' }],
       }]),
       readStructure: (sportLeagueId) => known(sportLeagueId, []),
+      readSeasons: (sportLeagueId) => known(sportLeagueId, [{
+        id: 'season-2026', sportLeagueId: 'sl1', name: '2026', championshipYear: 2026, startsAt: AT, endsAt: new Date('2026-12-31T23:59:59.999Z'),
+        isCurrent: true, providerMappings: [], phases: [],
+      }]),
       readEventFacts: (sportLeagueId) => known(sportLeagueId, {
         league: pageLeague,
         events: [{
-          id: 'e1', name: 'The Open', eventYear: 2026, startDate: AT, endDate: null, status: 'SCHEDULED' as const, providerId: 'balldontlie', syncScope: 'SCORES_ONLY' as const, releasedAt: null, lastReleaseCheck: null,
+          id: 'e1', name: 'The Open', sportLeagueSeasonId: 'season-2026', startDate: AT, endDate: null, status: 'SCHEDULED' as const, providerId: 'balldontlie', syncScope: 'SCORES_ONLY' as const, releasedAt: null, lastReleaseCheck: null,
         }],
         fieldSizes: new Map(),
         latestRunsByEvent: new Map(),
@@ -287,7 +291,7 @@ describe('sport league handlers', () => {
 
     expect(listed.body).toEqual({
       sportLeagues: [{
-        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', providerId: 'balldontlie', providerName: 'BALLDONTLIE', isActive: true,
+        id: 'sl1', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour', providerId: 'balldontlie', providerName: 'BALLDONTLIE', isActive: true,
         syncHealth: 'NOT_RUN_YET', issues: [], season: null, nextEventStartsAt: null, eventCount: 2,
       }],
     });
@@ -338,7 +342,26 @@ describe('sport league handlers', () => {
     expect(applied.body).toMatchObject({ participants: [{ id: 'p1' }] });
   });
 
-  it('answers the League page\'s syncs, events, participants, structure and positions of a sport league, and each read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
+  it('answers a sport league\'s structure and its Seasons with their current flag, and either read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
+    const structure = await callHandler(handlers.getStructure, stubRequest({ params }));
+    const seasons = await callHandler(handlers.listSeasons, stubRequest({ params }));
+    const missingStructure = await callHandler(handlers.getStructure, stubRequest({ params: { sportLeagueId: 'nope' } }));
+    const missingSeasons = await callHandler(handlers.listSeasons, stubRequest({ params: { sportLeagueId: 'nope' } }));
+
+    expect(structure.body).toEqual({ phases: [] });
+    expect(seasons.body).toEqual({
+      seasons: [{
+        id: 'season-2026', name: '2026', championshipYear: 2026, startsAt: AT.toISOString(), endsAt: '2026-12-31T23:59:59.999Z',
+        isCurrent: true, providerMappings: [], phases: [],
+      }],
+    });
+    for (const missing of [missingStructure, missingSeasons]) {
+      expect(missing.statusCode).toBe(404);
+      expect(missing.body).toMatchObject({ error: { code: 'SPORT_LEAGUE_NOT_FOUND' } });
+    }
+  });
+
+  it('answers the League page\'s syncs, events and participants of a sport league, and each read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
     const syncs = await callHandler(handlers.listSyncs, stubRequest({ params }));
     const structure = await callHandler(handlers.getStructure, stubRequest({ params }));
     const positions = await callHandler(handlers.listPositions, stubRequest({ params }));

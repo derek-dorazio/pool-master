@@ -24,11 +24,12 @@ import { SquaresBoardResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // Super Bowl squares end to end over HTTP (#711): the NFL playoffs test seed loads with its Super
 // Bowl still to play. A commissioner runs a squares contest on it from the NFL's squares preset,
@@ -76,7 +77,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Squares Director' });
@@ -98,7 +99,7 @@ describe('SDK Functional: Super Bowl squares', () => {
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
-    const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id, eventYear: 2026 } })).data).events
+    const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));
     created.sportEventIds.add(event.id);
     const superBowl = expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches

@@ -63,7 +63,7 @@ function run(kind: ProviderSyncKind, overrides: Partial<SportLeaguePageRun> = {}
 
 function pageEvent(overrides: Partial<SportLeaguePageEvent> = {}): SportLeaguePageEvent {
   return {
-    id: 'e1', name: 'Opening Day', eventYear: 2027, startDate: at('2027-04-20T17:00:00.000Z'), endDate: null,
+    id: 'e1', name: 'Opening Day', sportLeagueSeasonId: '6e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f', startDate: at('2027-04-20T17:00:00.000Z'), endDate: null,
     status: SportEventStatus.DRAFT, providerId: 'balldontlie', syncScope: SportEventSyncScope.SCORES_ONLY, releasedAt: null, lastReleaseCheck: null,
     ...overrides,
   };
@@ -78,7 +78,7 @@ function fieldRow(overrides: Partial<SportEventPageFieldRow> = {}): SportEventPa
 }
 
 function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEventPageFacts {
-  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPageSlug: null, ...overrides };
+  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPagePath: null, ...overrides };
 }
 
 const context = { webhookProviderIds: [] as string[], now: NOW };
@@ -268,9 +268,9 @@ describe('buildSportEventOverview', () => {
     ]);
   });
 
-  it('carries the slug of the event page offering its series, and null when no page offers it', () => {
-    expect(buildSportEventOverview(eventPageFacts({ eventPageSlug: 'world-series' }), context).eventPageSlug).toBe('world-series');
-    expect(buildSportEventOverview(eventPageFacts(), context).eventPageSlug).toBeNull();
+  it('carries the path of the event page offering its series, and null when no page offers it', () => {
+    expect(buildSportEventOverview(eventPageFacts({ eventPagePath: '/play/baseball/world-series' }), context).eventPagePath).toBe('/play/baseball/world-series');
+    expect(buildSportEventOverview(eventPageFacts(), context).eventPagePath).toBeNull();
   });
 
   it('sends the overview in the shape the contract declares', () => {
@@ -308,6 +308,18 @@ describe('SportLeaguePageService', () => {
     expect(rows?.[0] && SportLeagueParticipantOverviewDtoSchema.parse(mapSportLeagueParticipantOverviewToDto(rows[0]))).toBeTruthy();
   });
 
+  it('lists a sport league\'s Seasons latest first, whatever order the reader gives them in', async () => {
+    const season = (id: string, year: number) => ({
+      id, sportLeagueId: 'mlb', name: String(year), championshipYear: year,
+      startsAt: new Date(Date.UTC(year, 2, 1)), endsAt: new Date(Date.UTC(year, 10, 1)),
+      isCurrent: false, providerMappings: [], phases: [],
+    });
+    const reader = { ...makeReader([]), readSeasons: () => Promise.resolve([season('s2025', 2025), season('s2026', 2026)]) };
+    const seasons = await new SportLeaguePageService({ reader, webhookProviderIds: () => [], now: () => NOW }).listSeasons('mlb');
+
+    expect(seasons?.map((each) => each.id)).toEqual(['s2026', 's2025']);
+  });
+
   it('answers null for every read of a sport league that does not exist', async () => {
     const missing = service(null);
 
@@ -315,6 +327,7 @@ describe('SportLeaguePageService', () => {
     await expect(missing.listEvents('nope')).resolves.toBeNull();
     await expect(missing.listParticipants('nope')).resolves.toBeNull();
     await expect(missing.getStructure('nope')).resolves.toBeNull();
+    await expect(missing.listSeasons('nope')).resolves.toBeNull();
     await expect(missing.getEventOverview('nope')).resolves.toBeNull();
   });
 
@@ -324,6 +337,7 @@ describe('SportLeaguePageService', () => {
     await expect(found.listSyncs('mlb')).resolves.toHaveLength(3);
     await expect(found.listEvents('mlb')).resolves.toHaveLength(1);
     await expect(found.getStructure('mlb')).resolves.toEqual({ phases: [] });
+    await expect(found.listSeasons('mlb')).resolves.toEqual([]);
     await expect(found.getEventOverview('e1')).resolves.toMatchObject({ syncs: [{ kind: ProviderSyncKind.FIELD }, { kind: ProviderSyncKind.SCORES }] });
   });
 });
@@ -336,7 +350,8 @@ function makeReader(participants: SportLeaguePageParticipant[] | null): SportLea
     readEventFacts: () => Promise.resolve(exists ? eventFacts() : null),
     readParticipants: () => Promise.resolve(participants),
     readStructure: () => Promise.resolve(exists ? [] : null),
-    readEventPageFacts: () => Promise.resolve(exists ? eventPageFacts() : null),
     readPositions: () => Promise.resolve(exists ? [] : null),
+    readEventPageFacts: () => Promise.resolve(exists ? eventPageFacts() : null),
+    readSeasons: () => Promise.resolve(exists ? [] : null),
   };
 }

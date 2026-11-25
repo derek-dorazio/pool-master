@@ -4,18 +4,21 @@ import { getEventPage, listEventPages, type EventPageDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
-/** One event page by its address (#1007), public: active or retired, with its offers' editions. */
-export function useEventPageQuery(sport: Sport | null, pageSlug: string | undefined) {
+/**
+ * One event page by its address (#1007), its sport's URL segment and its own as the web address
+ * spells them; public: active or retired, with its offers' editions.
+ */
+export function useEventPageQuery(sportUrlSegment: string | undefined, urlSegment: string | undefined) {
   return useQuery({
-    queryKey: QueryKeys.eventPages.detail(sport ?? '', pageSlug ?? ''),
+    queryKey: QueryKeys.eventPages.detail(sportUrlSegment ?? '', urlSegment ?? ''),
     queryFn: async (): Promise<EventPageDto> => {
-      const response = await getEventPage({ path: { sport: sport as Sport, pageSlug: pageSlug ?? '' } });
+      const response = await getEventPage({ path: { sportUrlSegment: sportUrlSegment ?? '', urlSegment: urlSegment ?? '' } });
       if (!response.data?.eventPage) {
         throwApiError(response.error, 'Event page response is missing data.');
       }
       return response.data.eventPage;
     },
-    enabled: sport !== null && pageSlug !== undefined,
+    enabled: sportUrlSegment !== undefined && urlSegment !== undefined,
     retry: false,
   });
 }

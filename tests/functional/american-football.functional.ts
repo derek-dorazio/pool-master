@@ -11,7 +11,6 @@ import {
   getEventBracket,
   listContestConfigTemplates,
   listEventParticipants,
-  listEvents,
   listSportLeagues,
   openContest,
   recordEventMatchPeriodScore,
@@ -23,10 +22,11 @@ import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // American football end to end over HTTP (#702): the NFL playoffs test seed loads into the seeded
 // NFL sport league, played out, with its Divisional round placed by the reseed. A commissioner
@@ -73,7 +73,7 @@ describe('SDK Functional: American football', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });
@@ -93,7 +93,7 @@ describe('SDK Functional: American football', () => {
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
-    const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id, eventYear: 2026 } })).data).events
+    const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));
     created.sportEventIds.add(event.id);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);

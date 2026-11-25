@@ -12,9 +12,10 @@ import { createScheduledEventReader } from '../../../packages/core-api/src/modul
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 // The events' provider: BALLDONTLIE's id, since a synced league names a provider by its row (#1997).
@@ -42,10 +43,10 @@ async function seriesInLeague(name: string, synced: boolean, isActive = true) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
   if (synced) await syncLeagueTo(prisma, league.id, 'pga');
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `${name} series ${randomUUID()}` } });
   return { eventSeriesId: series.id };
@@ -53,18 +54,17 @@ async function seriesInLeague(name: string, synced: boolean, isActive = true) {
 
 async function createEvent(
   externalId: string,
-  overrides: Partial<Prisma.SportEventUncheckedCreateInput> & { withField?: boolean; synced?: boolean } = {},
+  overrides: Partial<Prisma.SportEventUncheckedCreateInput> & { withField?: boolean; sport?: Sport; synced?: boolean } = {},
 ) {
   const prisma = getPrisma();
   // `synced`: in a league of its own synced from the provider, as a field sync reads (#2086).
-  const { withField = false, synced = false, ...data } = overrides;
+  const { withField = false, sport: eventSport = Sport.GOLF, synced = false, ...data } = overrides;
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { sport: eventSport })),
       ...(synced && await seriesInLeague(`Synced ${externalId}`, true)),
       externalId,
       providerId: PROVIDER,
-      sport: Sport.GOLF,
       name: `Reader ${externalId}`,
       startDate: new Date('2026-04-30T12:00:00.000Z'),
       status: 'SCHEDULED',

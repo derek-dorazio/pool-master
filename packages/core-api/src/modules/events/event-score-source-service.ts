@@ -22,10 +22,12 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { MANUAL_ADMIN_PROVIDER_ID, providerSourceIdOf, SportEventSyncScope, type Sport } from '@poolmaster/shared/domain';
 import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '../../adapters/prisma-sport-catalog-repositories';
+import { SPORT_EVENT_SPORT_SELECT, sportOfEvent } from '../../adapters/sport-of';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
   ProviderLeagueRefusedError,
   type DateRange,
+  type ProviderEventListOptions,
   type SportEvent as ProviderCatalogSportEvent,
 } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
@@ -54,26 +56,57 @@ const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
 /**
- * The provider league codes a sport league is mapped to on this provider (#1997), selected for its
- * sync or not, so a mapped league that is not synced yet still browses its own provider league and
- * not the whole sport's feed. Empty for a league with no mapping to this provider.
+ * The provider leagues a sport league is mapped to on this provider (#1997), so a browse for one
+ * league reads that league alone rather than the whole sport's feed; each with its Seasons' spans
+ * and the provider’s own id for each (#2003), earliest first. Empty for a league with no
+ * mapping to this provider.
  */
-async function mappedProviderLeagueCodes(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<string[]> {
+async function mappedProviderLeagues(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<MappedProviderLeague[]> {
   const mappings = await prisma.sportLeagueProviderMapping.findMany({
     where: { sportLeagueId },
-    select: { providerLeague: { select: { code: true, provider: { select: { code: true } } } } },
+    select: {
+      providerLeague: { select: { code: true, provider: { select: { code: true } } } },
+      seasonMappings: {
+        select: { providerSeasonId: true, season: { select: { startsAt: true, endsAt: true, currentOf: { select: { id: true } } } } },
+        orderBy: [{ season: { startsAt: 'asc' } }, { id: 'asc' }],
+      },
+    },
     orderBy: { providerLeague: { code: 'asc' } },
   });
   return mappings
     .filter((mapping) => providerSourceIdOf(mapping.providerLeague.provider.code) === providerId)
-    .map((mapping) => mapping.providerLeague.code);
+    .map((mapping) => ({
+      code: mapping.providerLeague.code,
+      seasons: mapping.seasonMappings.map(({ providerSeasonId, season }) => ({
+        providerSeasonId,
+        startsAt: season.startsAt,
+        endsAt: season.endsAt,
+        isCurrent: season.currentOf !== null,
+      })),
+    }));
 }
 
-/** The browse's ask of its provider: the one provider league, when the league maps exactly one. */
-function askedForAlone(codes: ReadonlySet<string>): { providerLeagueCode: string } | undefined {
-  if (codes.size !== 1) return undefined;
-  const [code] = codes;
-  return { providerLeagueCode: code };
+interface MappedProviderLeague {
+  code: string;
+  seasons: Array<{ providerSeasonId: string; startsAt: Date; endsAt: Date; isCurrent: boolean }>;
+}
+
+/**
+ * The browse's asks of its provider. A league that maps exactly one provider league is asked for
+ * alone, by the provider's own ids for its Seasons (#2003): with no date range its current Season,
+ * so the browse lists the Season being played, and with one every Season whose span meets the
+ * range, so no reader turns a date into a season number. A league whose Seasons carry none of
+ * the provider's ids yet (one made through the API) is asked for alone, and the provider reads its
+ * own default. Several mapped leagues, or none, are one ask of the whole sport.
+ */
+function browseAsks(leagues: readonly MappedProviderLeague[], dateRange: DateRange | undefined): Array<ProviderEventListOptions | undefined> {
+  if (leagues.length !== 1) return [undefined];
+  const [league] = leagues;
+  if (league.seasons.length === 0) return [{ providerLeagueCode: league.code }];
+  const seasons = dateRange === undefined
+    ? league.seasons.filter((season) => season.isCurrent)
+    : league.seasons.filter((season) => season.startsAt <= dateRange.to && season.endsAt >= dateRange.from);
+  return seasons.map((season) => ({ providerLeagueCode: league.code, providerSeasonId: season.providerSeasonId }));
 }
 
 export class EventScoreSourceService {
@@ -107,30 +140,30 @@ export class EventScoreSourceService {
 
     // A league with no mapping to this provider names no provider league to keep. One mapped
     // league is asked for alone; several are read together and kept by their codes.
-    const providerLeagueCodes = options.sportLeagueId
-      ? new Set(await mappedProviderLeagueCodes(this.prisma, options.sportLeagueId, providerId))
-      : new Set<string>();
-    const events = await provider.getUpcomingEvents(sport, dateRange, askedForAlone(providerLeagueCodes));
+    const mapped = options.sportLeagueId ? await mappedProviderLeagues(this.prisma, options.sportLeagueId, providerId) : [];
+    const providerLeagueCodes = new Set(mapped.map((league) => league.code));
+    const events = (await Promise.all(browseAsks(mapped, dateRange).map((ask) => provider.getUpcomingEvents(sport, dateRange, ask)))).flat();
     const search = options.search?.trim().toLowerCase() || null;
 
     return events
+      // A Season read whole may run past the range at either end.
+      .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to))
       .filter((event) => providerLeagueCodes.size === 0
         || (event.providerLeagueCode !== undefined && providerLeagueCodes.has(event.providerLeagueCode)))
       .filter((event) => !search || event.name.toLowerCase().includes(search));
   }
 
   /**
-   * #385 — a sport league's slate for one year, for the bulk import and the league's events sync:
-   * the events of the provider league its selected provider mapping names (#1997), by the code
-   * the provider stamps on each, never by a name. The year is the event's UTC start date. The
-   * provider is asked for that league alone, and a refusal of it by the provider's plan is a
-   * `PROVIDER_LEAGUE_REFUSED` error (#1797). 422 SPORT_LEAGUE_NOT_SYNCED when the league has no
-   * selected mapping to this provider.
+   * One Season's slate, for the league's events sync (#2003): the events of the provider league its
+   * selected provider mapping names (#1997), by the code the provider stamps on each, never by a
+   * name, asked for by the provider's own id for the Season. The provider is asked for that league
+   * alone, and a refusal of it by the provider's plan is a `PROVIDER_LEAGUE_REFUSED` error (#1797).
+   * 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to this provider.
    */
-  async listTourEventsForYear(
+  async listSeasonEvents(
     providerId: string,
     sportLeagueId: string,
-    eventYear: number,
+    providerSeasonId: string,
   ): Promise<Array<ProviderEventDetailSummary & { externalId: string }>> {
     const provider = this.providerRegistry.getProviderById(providerId);
     if (!provider) {
@@ -153,10 +186,7 @@ export class EventScoreSourceService {
     }
     const providerLeagueCode = mapping.providerLeagueCode;
 
-    const events = await provider.getUpcomingEvents(sportLeague.sport.sport, {
-      from: new Date(Date.UTC(eventYear, 0, 1)),
-      to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
-    }, { providerLeagueCode }).catch((error: unknown) => {
+    const events = await provider.getUpcomingEvents(sportLeague.sport.sport, undefined, { providerLeagueCode, providerSeasonId }).catch((error: unknown) => {
       // #1797 — the provider's plan leaves this league out: say so, not "something went wrong".
       if (error instanceof ProviderLeagueRefusedError) {
         throw new EventScoreSourceError(error.message, 'PROVIDER_LEAGUE_REFUSED', 422);
@@ -223,9 +253,10 @@ export class EventScoreSourceService {
     if (!provider) {
       throw new EventScoreSourceError(`Provider ${input.providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
     }
-    if (!provider.sportsCovered.includes(existing.sport)) {
+    const sport = sportOfEvent(existing);
+    if (!provider.sportsCovered.includes(sport)) {
       throw new EventScoreSourceError(
-        `Provider ${input.providerId} does not cover ${existing.sport}, the sport of sport event ${sportEventId}.`,
+        `Provider ${input.providerId} does not cover ${sport}, the sport of sport event ${sportEventId}.`,
         'PROVIDER_SPORT_MISMATCH',
         422,
       );
@@ -282,7 +313,7 @@ export class EventScoreSourceService {
   }
 
   private async requireSportEvent(sportEventId: string) {
-    const existing = await this.prisma.sportEvent.findUnique({ where: { id: sportEventId } });
+    const existing = await this.prisma.sportEvent.findUnique({ where: { id: sportEventId }, include: SPORT_EVENT_SPORT_SELECT });
     if (!existing) {
       throw new EventScoreSourceError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }

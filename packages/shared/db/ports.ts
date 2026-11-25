@@ -620,7 +620,8 @@ export interface ContestRepository {
 export interface ReleasedEdition {
   id: string;
   eventSeriesId: string;
-  eventYear: number;
+  /** The Season it is played in: a contest made from a template joins only its own Season's editions. */
+  sportLeagueSeasonId: string;
 }
 
 export interface ContestStatusFilter {

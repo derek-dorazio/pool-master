@@ -207,7 +207,6 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     start.setHours(19, 0, 0, 0);
     await page.goto('/manage/sports/basketball/events/new');
     await page.getByTestId('root-admin-sport-event-create-tour').selectOption(leagueId);
-    await page.getByTestId('root-admin-sport-event-create-event-year').fill(String(start.getFullYear()));
     await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
     await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
     // The form starts from March Madness's six rounds; three series make the WNBA playoffs.

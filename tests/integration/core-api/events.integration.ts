@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Sport } from '@poolmaster/shared/domain';
-import { SportEventParticipantListResponseSchema } from '@poolmaster/shared/dto';
+import { SportEventParticipantListResponseSchema, type SportEventListResponse } from '@poolmaster/shared/dto';
 import {
   cleanupTestData,
   createTestUser,
@@ -10,10 +10,11 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
 } from '../helpers';
-import { freshEventEdition } from '../../support/event-edition';
+import { fixtureSeasonId, freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -36,6 +37,7 @@ describe('events routes', () => {
       create: {
         id: randomUUID(),
         sport: Sport.GOLF,
+        ...sportRowKeys(Sport.GOLF),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
@@ -47,7 +49,6 @@ describe('events routes', () => {
           id: eligibleEventId,
           providerId: 'integration-test',
           externalId: `events-eligible-${eligibleEventId}`,
-          sport: Sport.GOLF,
           name: 'Eligible Golf Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: new Date('2099-04-23T23:00:00.000Z'),
@@ -60,7 +61,6 @@ describe('events routes', () => {
           id: filteredOutEventId,
           providerId: 'integration-test',
           externalId: `events-filtered-${filteredOutEventId}`,
-          sport: Sport.GOLF,
           name: 'Filtered Out Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: new Date('2099-04-23T23:00:00.000Z'),
@@ -144,6 +144,7 @@ describe('events routes', () => {
       create: {
         id: randomUUID(),
         sport: Sport.GOLF,
+        ...sportRowKeys(Sport.GOLF),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
@@ -155,7 +156,6 @@ describe('events routes', () => {
           id: notReleasedEventId,
           providerId: 'integration-test',
           externalId: `events-not-released-${notReleasedEventId}`,
-          sport: Sport.GOLF,
           name: 'Not Released Event',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: null,
@@ -168,7 +168,6 @@ describe('events routes', () => {
           id: lockedEventId,
           providerId: 'integration-test',
           externalId: `events-locked-${lockedEventId}`,
-          sport: Sport.GOLF,
           name: 'Started Event',
           // Released, but its start time has passed: the contest cutoff.
           startDate: new Date('2000-04-20T15:00:00.000Z'),
@@ -258,7 +257,6 @@ describe('events routes', () => {
           id: eventId,
           providerId: 'integration-test',
           externalId: `events-release-${eventId}`,
-          sport: Sport.GOLF,
           name: 'Release Route Open',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: null,
@@ -459,35 +457,35 @@ describe('events routes', () => {
       expect(adminRes.json()).toMatchObject({ event: { id: eventId, status: 'DRAFT' } });
     });
 
-    it('lists a sport league\'s DRAFT-only year to a root admin but not to a signed-in user who is not one', async () => {
+    it('lists a Season\'s DRAFT event to a root admin but leaves it out for a signed-in user who is not one', async () => {
       const prisma = getPrisma();
-      const admin = await createTestUser({ displayName: 'Years Read Admin', isRootAdmin: true });
-      const viewer = await createTestUser({ displayName: 'Years Read Member' });
+      const admin = await createTestUser({ displayName: 'Season List Admin', isRootAdmin: true });
+      const viewer = await createTestUser({ displayName: 'Season List Member' });
       const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-      const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Years Route Tour ${randomUUID()}` } });
-      const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Years Route Classic' } });
+      const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Season List Tour ${randomUUID()}` } });
+      const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeague.id, 2098);
+      const released = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Season List Classic' } });
+      const draft = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Season List Open' } });
       await prisma.sportEvent.createMany({
         data: [
-          { eventYear: 2098, status: 'SCHEDULED' as const, startDate: new Date('2098-04-20T15:00:00.000Z') },
-          { eventYear: 2099, status: 'DRAFT' as const, startDate: new Date('2099-04-20T15:00:00.000Z') },
+          { eventSeriesId: released.id, status: 'SCHEDULED' as const, startDate: new Date('2098-04-20T15:00:00.000Z'), name: 'Season List Classic' },
+          { eventSeriesId: draft.id, status: 'DRAFT' as const, startDate: new Date('2098-05-20T15:00:00.000Z'), name: 'Season List Open' },
         ].map((edition) => ({
           ...edition,
-          eventSeriesId: series.id,
+          sportLeagueSeasonId,
           providerId: 'integration-test',
-          externalId: `events-years-${randomUUID()}`,
-          sport: Sport.GOLF,
-          name: 'Years Route Classic',
+          externalId: `events-season-${randomUUID()}`,
         })),
       });
-      const url = `/api/v1/events/years?sportLeagueId=${sportLeague.id}`;
+      const url = `/api/v1/events?sportLeagueSeasonId=${sportLeagueSeasonId}`;
 
       const viewerRes = await getApp().inject({ method: 'GET', url, headers: viewer.headers });
       expect(viewerRes.statusCode).toBe(200);
-      expect(viewerRes.json()).toEqual({ years: [2098] });
+      expect(viewerRes.json<SportEventListResponse>().events.map((event) => event.name)).toEqual(['Season List Classic']);
 
       const adminRes = await getApp().inject({ method: 'GET', url, headers: admin.headers });
       expect(adminRes.statusCode).toBe(200);
-      expect(adminRes.json()).toEqual({ years: [2098, 2099] });
+      expect(adminRes.json<SportEventListResponse>().events.map((event) => event.name).sort()).toEqual(['Season List Classic', 'Season List Open']);
     });
   });
 });
@@ -503,7 +501,6 @@ describe('editing an event moves its round schedule with it', () => {
         id: eventId,
         providerId: 'integration-test',
         externalId: `events-round-shift-${eventId}`,
-        sport: Sport.GOLF,
         name: 'Round Shift Open',
         startDate: new Date('2099-06-04T12:00:00.000Z'),
         status: 'DRAFT',

@@ -4,7 +4,7 @@
  * schema makes it optional), and nested extensions appear only when the row has them.
  */
 import type { LeagueInvitation, Participant } from '@poolmaster/shared/domain';
-import { ContestFormat, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
+import { InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { buildInvitation, buildMembership, buildUser } from '../../factories';
 import { mapContestEntryPickRowToDomain, type ContestEntryPickRow } from '../../../packages/core-api/src/mappers/contest-entry-picks.mapper';
 import { mapLeagueInvitationToDto, mapLeagueMembershipToDto } from '../../../packages/core-api/src/mappers/leagues-extra.mapper';
@@ -253,9 +253,6 @@ describe('stored pick mapper', () => {
     id: 'pick-1',
     entryId: 'entry-1',
     sportEventParticipantId: 'sep-1',
-    contestFormat: ContestFormat.ROSTER,
-    period: null,
-    slot: null,
     tier: null,
     cost: null,
     isAutoPicked: false,
@@ -271,9 +268,6 @@ describe('stored pick mapper', () => {
       id: 'pick-1',
       entryId: 'entry-1',
       sportEventParticipantId: 'sep-1',
-      contestFormat: ContestFormat.ROSTER,
-      period: undefined,
-      slot: undefined,
       tier: undefined,
       cost: undefined,
       isAutoPicked: false,
@@ -286,9 +280,7 @@ describe('stored pick mapper', () => {
   });
 
   it('carries every optional column a pick has, reading a Decimal cost as a number', () => {
-    expect(mapContestEntryPickRowToDomain({ ...row, period: 2, slot: 3, tier: 'A', cost: { toNumber: () => 12.5 }, lineupSlot: 1, pickSequence: 7 })).toMatchObject({
-      period: 2,
-      slot: 3,
+    expect(mapContestEntryPickRowToDomain({ ...row, tier: 'A', cost: { toNumber: () => 12.5 }, lineupSlot: 1, pickSequence: 7 })).toMatchObject({
       tier: 'A',
       cost: 12.5,
       lineupSlot: 1,

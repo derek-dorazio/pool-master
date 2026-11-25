@@ -6,7 +6,6 @@
  * the two components defined in it could never be hot-updated -- an edit to either
  * reloaded the whole app. Here they are ordinary component modules.
  */
-import { Sport } from '@poolmaster/shared/domain';
 import { Navigate, useLocation, useParams } from 'react-router';
 import { HOW_TO_PLAY_PATH } from '@/features/event-pages/event-page-paths';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
@@ -109,10 +108,12 @@ const LEGACY_GOLF_LISTS: Readonly<Record<string, string>> = {
 
 export function LegacyGolfManageRedirect() {
   const { pathname, search } = useLocation();
-  const segments = pathname.replace(/^\/manage\/golf\/?/, '').split('/').filter(Boolean);
-  const list = segments.at(0);
-  const rest = segments.slice(1);
-  const golfPath = buildSportPath(Sport.GOLF);
+  // The old address names its sport by the segment the sport's Manage pages still use.
+  const [, , sportUrlSegment = '', ...segments] = pathname.split('/');
+  const listed = segments.filter(Boolean);
+  const list = listed.at(0);
+  const rest = listed.slice(1);
+  const golfPath = buildSportPath(sportUrlSegment);
   const movedList = list === undefined ? undefined : LEGACY_GOLF_LISTS[list];
   if (!movedList) {
     return <Navigate replace to={`${golfPath}/events`} />;

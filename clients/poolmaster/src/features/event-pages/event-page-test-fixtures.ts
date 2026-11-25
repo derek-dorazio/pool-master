@@ -27,7 +27,7 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
     sortOrder: 1,
     isPrimary: false,
     state: 'OPEN',
-    edition: { sportEventId: `event-${templateKey}`, name: 'NFL Playoffs', eventYear: 2027, startDate: '2027-01-09T18:00:00.000Z', endDate: null },
+    edition: { sportEventId: `event-${templateKey}`, name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-09T18:00:00.000Z', endDate: null },
     ...overrides,
   };
 }
@@ -37,7 +37,9 @@ export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}
   return {
     id: 'page-cw',
     sport: 'AMERICAN_FOOTBALL',
-    slug: 'championship-weekend',
+    sportUrlSegment: 'american-football',
+    urlSegment: 'championship-weekend',
+    path: '/play/american-football/championship-weekend',
     displayOrder: 20,
     isActive: true,
     redirectTo: null,
@@ -49,7 +51,7 @@ export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}
         state: 'NOT_YET',
         startsAtRound: 3,
         sortOrder: 2,
-        edition: { sportEventId: 'event-cw', name: 'NFL Playoffs', eventYear: 2027, startDate: '2027-01-24T20:00:00.000Z', endDate: null },
+        edition: { sportEventId: 'event-cw', name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-24T20:00:00.000Z', endDate: null },
       }),
       offerFixture('nfl-squares', { sortOrder: 3 }),
     ],

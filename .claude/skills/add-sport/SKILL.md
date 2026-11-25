@@ -87,8 +87,11 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 In order:
 
 1. **Enum and reference row.** Add the sport to the `Sport` domain enum and the Prisma enum in
-   one migration, and its `sports` reference row (and any contest templates) in the next one:
-   Postgres refuses a new enum value inside the transaction that adds it
+   one migration, and its `sports` reference row (and any contest templates) in the next one,
+   with its stored `url_segment` (`american-football`: what every address names the sport by,
+   never built from the code) and its `display_order` (its place wherever sports are listed
+   together, most popular first). Every sport league row gets a `url_segment` too, unique within
+   its sport. Postgres refuses a new enum value inside the transaction that adds it
    (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Use the
    `model-change` skill. A sport whose presets differ by sport league seeds those leagues in
    the same reference-data migration, and each template finds its league by sport and name
@@ -113,8 +116,14 @@ In order:
    `SportLeagueProviderMapping`: `PROVIDER_CODE` with the code its adapter reduces a game to
    (`REG:<week>`, `POST:<the round's place in the postseason, first round 1>`),
    `NAME_PATTERN` with the normalized tournament name, or `CALENDAR_WEEK` for a daily
-   league's weeks. Mappings are inclusion only: a slot with none is never synced. Open the
-   league's Structure tab on the League page and read it back.
+   league's weeks. Mappings are inclusion only: a slot with none is never synced. The same
+   migration sets the league's `timeZone` (the IANA zone its calendar weeks break in) and adds
+   its Seasons: one `SportLeagueSeason` per championship year, named as the league names it
+   (`2026`, `2026-27`), with its span, unique on league and year, and for a synced league each
+   Season's `SportLeagueSeasonProviderMapping` with the provider's own id for it. The sync never
+   adds a Season (it raises `SEASON_MISSING` instead) and `currentSeasonId` is never set by hand:
+   the nightly recompute sets it. Open the league's Structure tab on the League page and read
+   it back.
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: tournament format,
    default rounds, selection types, scoring definitions and round labels. Who competes and how
    it is scored go on each of its sport league rows, never on the sport
@@ -152,8 +161,9 @@ In order:
    with 422 `EVENT_SCORING_FAMILY_MISMATCH`, as golf's score routes do. On the web, the family
    adds its entry to `SCORING_FAMILY_ADMIN_UI` (exhaustive, so the build asks for it): the
    results page's name and body. The Manage event, field, tier, participant and sport league
-   pages are shared by every sport under `/manage/sports/:sport/`, so a new sport needs no new
-   admin pages; its menu entry and URL segment come from the registry
+   pages are shared by every sport under `/manage/sports/<sport URL segment>/`, so a new sport
+   needs no new admin pages; its menu entry comes from the registry and its URL segment from its
+   row
    (`rules/architecture-rules.md` §4 *Sport extension*).
 7. **Contract.** Any new DTO, route or error code goes through the `add-endpoint` skill and
    regenerates the SDK in the same slice.
@@ -169,10 +179,10 @@ In order:
    formats appear there once their templates exist. A league whose name is shared with another
    sport's ("NCAA Division I Men") gets a `display_name` in its migration, so its How to Play
    chip says the sport, and every league gets a `display_order` there, its place among its
-   sport's leagues (major professional first, then NCAA); a new sport also gets its place in
-   the registry's popularity order. The hand-written parts are the sport's line in
-   `SPORT_BLURBS` and, for a new sport, its picture in the How to Play illustrations (the
-   typecheck asks for it); a new way to play also needs its picture and its guide. Write the
+   sport's leagues (major professional first, then NCAA); a new sport's own place comes from
+   its row's `display_order` (step 1), which the web app reads from the API. The hand-written
+   parts are the sport's line in `SPORT_BLURBS` and, for a new sport, its photo named by its URL
+   segment (the `update-pictures` skill); a new way to play also needs its picture and its guide. Write the
    line for a new sport, and rewrite it when a slice adds a sport league or a format to a
    sport already there. Then open both pages and read the sport's section
    (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*, item 12).

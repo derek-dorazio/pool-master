@@ -2,7 +2,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { expect } from '@jest/globals';
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportPlay } from '../../support/sport-play';
 import { Sport } from '@poolmaster/shared/domain';
@@ -178,9 +178,9 @@ async function linkProviderGolfEvents(from: Date, to: Date): Promise<number> {
 /** Puts the linked provider events' series in a new golf league synced from BALLDONTLIE's PGA league. */
 async function moveLinkedEventsToSyncedLeague(prisma: ReturnType<typeof getPrisma>): Promise<void> {
   const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-  const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced golf ${randomUUID()}` } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced golf ${randomUUID()}` } });
   await syncLeagueTo(prisma, league.id, 'pga');
-  const events = await prisma.sportEvent.findMany({ where: { providerId: 'balldontlie', sport: Sport.GOLF }, select: { eventSeriesId: true } });
+  const events = await prisma.sportEvent.findMany({ where: { providerId: 'balldontlie', eventSeries: { sportLeague: { sport: { sport: Sport.GOLF } } } }, select: { eventSeriesId: true } });
   await prisma.eventSeries.updateMany({ where: { id: { in: events.map((event) => event.eventSeriesId) } }, data: { sportLeagueId: league.id } });
 }
 
@@ -421,25 +421,16 @@ async function createGolfLiveEntries(input: {
     }),
   ]);
   await Promise.all([
-    ...input.leaderPicks.map((sportEventParticipantId, index) =>
-      createGolfLivePick(leader.id, sportEventParticipantId, index + 1),
-    ),
-    ...input.chaserPicks.map((sportEventParticipantId, index) =>
-      createGolfLivePick(chaser.id, sportEventParticipantId, index + 1),
-    ),
+    ...input.leaderPicks.map((sportEventParticipantId) => createGolfLivePick(leader.id, sportEventParticipantId)),
+    ...input.chaserPicks.map((sportEventParticipantId) => createGolfLivePick(chaser.id, sportEventParticipantId)),
   ]);
 
   return { leader, chaser };
 }
 
-async function createGolfLivePick(entryId: string, sportEventParticipantId: string, slot: number) {
+async function createGolfLivePick(entryId: string, sportEventParticipantId: string) {
   return getPrisma().contestEntryPick.create({
-    data: {
-      entryId,
-      sportEventParticipantId,
-      contestFormat: 'ROSTER',
-      slot,
-    },
+    data: { entryId, sportEventParticipantId },
   });
 }
 
@@ -849,12 +840,11 @@ describe('mock contest feed provider event-first verification', () => {
       '/v1/scenarios/golf-major-2026/events/golf-genesis-scottish-open-2026/detail',
     ]));
 
-    const persistedProviderSports = await prisma.sportEvent.findMany({
+    const persistedProviderEvents = await prisma.sportEvent.findMany({
       where: { providerId },
-      distinct: ['sport'],
-      select: { sport: true },
+      select: { eventSeries: { select: { sportLeague: { select: { sport: { select: { sport: true } } } } } } },
     });
-    expect(persistedProviderSports.map((row) => row.sport)).toEqual(['GOLF']);
+    expect([...new Set(persistedProviderEvents.map((row) => row.eventSeries.sportLeague.sport.sport))]).toEqual(['GOLF']);
     // #205 — each run carries the job it executed (`jobPayload`); the separate job table is gone.
     expect(scheduledRuns.map((run) => readStoredSyncRunDetails(run.detailsJson)?.jobPayload)).toEqual([
       expect.objectContaining({ jobType: 'EVENT_PARTICIPANTS_SYNC' }),

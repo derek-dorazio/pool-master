@@ -32,8 +32,9 @@ import { SYNC_FINDINGS_REQUESTS_PER_MINUTE } from '../../../packages/core-api/sr
 import { SyncFindingRetention } from '../../../packages/core-api/src/modules/ingestion/findings/sync-finding-retention';
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import { cleanupTestData, createTestUser, drainBackgroundJobs, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 import { freshEventEdition } from '../../support/event-edition';
 
@@ -51,11 +52,11 @@ async function golfLeague(): Promise<{ id: string; name: string }> {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return prisma.sportLeague.create({
-    data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
     select: { id: true, name: true },
   });
 }
@@ -132,7 +133,7 @@ describe('the sync findings table', () => {
     const provider = await balldontlie();
     // One edition per event: a series has one event a year.
     const event = async (name: string) => prisma.sportEvent.create({
-      data: { ...(await freshEventEdition(prisma)), externalId: `findings-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF, name, startDate: NOW },
+      data: { ...(await freshEventEdition(prisma)), externalId: `findings-${randomUUID()}`, providerId: 'integration-test', name, startDate: NOW },
       select: { id: true, eventSeries: { select: { sportLeagueId: true } } },
     });
     const [week1, week2] = [await event('Week 1'), await event('Week 2')];

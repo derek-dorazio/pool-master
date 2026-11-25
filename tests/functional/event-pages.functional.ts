@@ -2,7 +2,7 @@ import { createEvent, getEventPage, listEventPages, listSportLeagues } from '@po
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { EventPageOfferState, Sport } from '@poolmaster/shared/domain';
 import { EventPageListResponseSchema, EventPageResponseSchema } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
@@ -32,7 +32,7 @@ afterAll(async () => {
 });
 
 async function readPage(client: Client) {
-  const response = await getEventPage({ client, path: { sport: Sport.AMERICAN_FOOTBALL, pageSlug: 'championship-weekend' } });
+  const response = await getEventPage({ client, path: { sportUrlSegment: 'american-football', urlSegment: 'championship-weekend' } });
   expect(response.response?.status).toBe(200);
   return EventPageResponseSchema.parse(response.data).eventPage;
 }
@@ -46,7 +46,7 @@ describe('SDK Functional: event pages (#1007)', () => {
       .find((league) => league.name === 'NFL')).id;
     const created = await createEvent({
       client: a,
-      body: { sportLeagueId: nflId, eventYear: YEAR, name: 'NFL Playoffs', startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(nflId, YEAR), name: 'NFL Playoffs', startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4, autoLifecycleEnabled: false },
     });
     expect(created.response?.status).toBe(201);
     createdEventIds.push(expectDefined(created.data).event.id);
@@ -61,18 +61,18 @@ describe('SDK Functional: event pages (#1007)', () => {
 
     // --- The list carries the same page --------------------------------------------------------
     const list = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL } })).data);
-    expect(list.eventPages.find((listed) => listed.slug === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.template.templateKey)
+    expect(list.eventPages.find((listed) => listed.urlSegment === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.template.templateKey)
       .toBe('nfl-bracket-second-chance-doubling');
 
     // --- The upcoming list: only pages with a primary edition coming, soonest first (#1202) ------
     const upcoming = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL, upcoming: true } })).data);
-    expect(upcoming.eventPages.map((listed) => listed.slug)).toContain('championship-weekend');
+    expect(upcoming.eventPages.map((listed) => listed.urlSegment)).toContain('championship-weekend');
     const starts = upcoming.eventPages.map((listed) => expectDefined(listed.offers.find((offer) => offer.isPrimary)).edition.startDate);
     expect(starts).toEqual([...starts].sort());
   });
 
   it('answers 404 EVENT_PAGE_NOT_FOUND for an address no page has', async () => {
-    const response = await getEventPage({ client: getSdkClient(), path: { sport: Sport.BASKETBALL, pageSlug: 'championship-weekend' } });
+    const response = await getEventPage({ client: getSdkClient(), path: { sportUrlSegment: 'basketball', urlSegment: 'championship-weekend' } });
 
     expect(response.response?.status).toBe(404);
     expect(response.error?.error.code).toBe('EVENT_PAGE_NOT_FOUND');

@@ -35,7 +35,7 @@ export async function readOverdueCandidates(
       ...(eventIds !== undefined && { id: { in: [...eventIds] } }),
     },
     select: {
-      id: true, name: true, sport: true, status: true, startDate: true, endDate: true, eventSeriesId: true,
+      id: true, name: true, status: true, startDate: true, endDate: true, eventSeriesId: true,
     },
   });
   if (events.length === 0) return [];
@@ -52,13 +52,15 @@ export async function readOverdueCandidates(
       where: { sportEventId: { in: roundEventIds }, scheduledDate: { not: null } },
       _max: { scheduledDate: true },
     }),
-    prisma.eventSeries.findMany({ where: { id: { in: seriesIds } }, select: { id: true, sportLeagueId: true } }),
+    // The event's sport is its series' league's (#2042).
+    prisma.eventSeries.findMany({ where: { id: { in: seriesIds } }, select: { id: true, sportLeagueId: true, sportLeague: { select: { sport: { select: { sport: true } } } } } }),
     prisma.providerLeague.findMany({
       where: { sportLeagues: { some: { selectedBy: { is: { eventSeries: { some: { id: { in: seriesIds } } } } } } } },
       select: { typicalGameMinutes: true, sportLeagues: { where: { selectedBy: { isNot: null } }, select: { sportLeagueId: true } } },
     }),
   ]);
   const leagueOfSeries = new Map(series.map((each) => [each.id, each.sportLeagueId]));
+  const sportOfSeries = new Map(series.map((each) => [each.id, each.sportLeague.sport.sport]));
   const minutesByLeague = new Map(mappings.flatMap((league) => league.sportLeagues.map((mapping) => [mapping.sportLeagueId, league.typicalGameMinutes] as const)));
   const latestMatchStartByRound = new Map(matchStarts.map((group) => [group.sportEventRoundId, group._max.scheduledDate]));
   const roundsByEvent = new Map<string, OverdueRoundFacts[]>();
@@ -75,10 +77,13 @@ export async function readOverdueCandidates(
 
   return events.map((event) => {
     const scheduled = roundsByEvent.get(event.id) ?? [];
+    const sport = sportOfSeries.get(event.eventSeriesId);
+    // The series was read by the event's own foreign key, so it is always there.
+    if (sport === undefined) throw new Error(`Event series ${event.eventSeriesId} of event ${event.id} was not read.`);
     return {
       id: event.id,
       name: event.name,
-      sport: event.sport,
+      sport,
       status: event.status,
       startDate: event.startDate,
       endDate: event.endDate,

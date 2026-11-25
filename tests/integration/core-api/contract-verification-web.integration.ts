@@ -24,7 +24,7 @@ import {
   GamePicksResponseSchema,
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
-  SportEventYearListResponseSchema,
+  SportLeagueSeasonListResponseSchema,
   GenerateInviteLinkResponseSchema,
   ListLeagueInvitationsResponseSchema,
   ResendLeagueInvitationResponseSchema,
@@ -52,8 +52,9 @@ import {
   Sport,
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-import { freshEventEdition } from '../../support/event-edition';
+import { freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -301,7 +302,7 @@ describe('Contract verification (web)', () => {
     await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       update: {},
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     });
     await prisma.sportEvent.create({
       data: {
@@ -309,7 +310,6 @@ describe('Contract verification (web)', () => {
         id: eventId,
         providerId: 'contract-events-provider',
         externalId: `contract-event-${eventId}`,
-        sport: Sport.GOLF,
         name: 'Contract Events Major',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -376,15 +376,16 @@ describe('Contract verification (web)', () => {
         where: { id: eventId },
         select: { eventSeries: { select: { sportLeagueId: true } } },
       });
-      const yearsRes = await getApp().inject({
+      // Any signed-in user reads a sport league's Seasons, the pickers' options (#2003).
+      const seasonsRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/events/years?sportLeagueId=${eventSeries.sportLeagueId}`,
+        url: `/api/v1/sport-leagues/${eventSeries.sportLeagueId}/seasons`,
         headers: viewer.headers,
       });
-      expect(yearsRes.statusCode).toBe(200);
-      const years = SportEventYearListResponseSchema.safeParse(yearsRes.json());
-      expect(years.success).toBe(true);
-      expect(years.data?.years).toContain(event?.eventYear);
+      expect(seasonsRes.statusCode).toBe(200);
+      const seasons = SportLeagueSeasonListResponseSchema.safeParse(seasonsRes.json());
+      expect(seasons.success).toBe(true);
+      expect(seasons.data?.seasons.map((season) => season.id)).toContain(event?.sportLeagueSeasonId);
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
         where: {
@@ -416,7 +417,6 @@ describe('Contract verification (web)', () => {
         id: eventId,
         providerId: 'contract-events-provider',
         externalId: `contract-shallow-event-${eventId}`,
-        sport: Sport.GOLF,
         name: 'Contract Shallow Event',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -574,6 +574,7 @@ describe('Contract verification (web)', () => {
       update: {},
       create: {
         sport: Sport.GOLF,
+        ...sportRowKeys(Sport.GOLF),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
@@ -593,10 +594,9 @@ describe('Contract verification (web)', () => {
     const sportEvent = await getPrisma().sportEvent.create({
       data: {
         eventSeriesId: series.id,
-        eventYear: eventTiming.startDate.getUTCFullYear(),
+        sportLeagueSeasonId: await seriesSeasonId(getPrisma(), series.id, eventTiming.startDate.getUTCFullYear()),
         externalId: `contract-event-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: 'Contract Event',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -870,7 +870,6 @@ describe('Contract verification (web)', () => {
         ...(await freshEventEdition(getPrisma())),
         externalId: `contract-room-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: 'Contract Room Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -930,7 +929,7 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const event = await prisma.sportEvent.create({
@@ -938,7 +937,6 @@ describe('Contract verification (web)', () => {
         ...(await freshEventEdition(prisma)),
         externalId: `contract-draw-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: 'Contract Draw Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -1006,7 +1004,7 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const event = await prisma.sportEvent.create({
@@ -1014,7 +1012,6 @@ describe('Contract verification (web)', () => {
         ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })),
         externalId: `contract-pickem-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
-        sport: Sport.BASKETBALL,
         name: 'Contract Pickem Event',
         startDate: new Date('2099-03-19T16:00:00.000Z'),
         status: 'SCHEDULED',

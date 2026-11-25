@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { adminApiHeaders, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
+import { adminApiHeaders, e2eLeagueUrlSegment, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
 import { readAdminCredentials } from './helpers/admin-session';
 import { sweepE2eResidue } from './helpers/residue-sweep';
 import { e2eEmail, e2eLeagueCode, e2eName, e2eUsername, newRunId } from './helpers/test-marker';
@@ -35,14 +35,15 @@ test('the residue sweep removes a run left behind, league first and users last, 
     // --- The run a cancelled journey leaves behind ---------------------------------------
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, admin, '/api/v1/sport-leagues/', {
       sport: 'GOLF',
+      timeZone: 'UTC',
       name: tourName,
+      urlSegment: e2eLeagueUrlSegment(),
       ...(await sportLeagueProfileIds(api, admin, 'TIERS_6_OF_10')),
       participantType: 'INDIVIDUAL',
       scoringFamily: 'STROKE_PLAY',
     });
     const { event } = await postJson<{ event: { id: string } }>(api, admin, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,
-      eventYear: 2099,
       name: tournamentName,
       startDate: '2099-07-16T08:00:00.000Z',
       rounds: 1,

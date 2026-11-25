@@ -104,7 +104,7 @@ describe('jobs a write carries (#1466)', () => {
     const onNothing = { sportEventId: undefined, sportLeagueId: undefined };
 
     expect(scopeOf(queue.request(BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS, { sportEventId, completedAt: '2026-11-07T12:00:00.000Z' }))).toEqual(onEvent);
-    expect(scopeOf(queue.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId, eventYears: [2026] })))
+    expect(scopeOf(queue.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId })))
       .toEqual({ sportEventId: undefined, sportLeagueId });
     expect(scopeOf(queue.request(BackgroundJobType.REBUILD_LEADERBOARDS, { subject: 'EVENT', id: sportEventId }))).toEqual(onEvent);
     // A contest's rebuild or results email may span several events, so it names none.

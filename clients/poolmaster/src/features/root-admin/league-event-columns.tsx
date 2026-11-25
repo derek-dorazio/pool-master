@@ -6,10 +6,9 @@ import {
   SportEventStatusOrder,
   SportLeagueIssueTypeOrder,
   type SportLeagueIssueType,
-  type Sport,
 } from '@poolmaster/shared/domain';
 import { StatusBadge, Text } from '@/features/shared/ui';
-import type { SportLeagueEventOverviewDto } from '@/lib/api';
+import type { SportLeagueEventOverviewDto, SportLeagueSeasonDto } from '@/lib/api';
 import { formatSportEventStatus, sportEventStatusTone } from './sport-admin-utils';
 import { SportLeagueIssueChips } from './sport-league-issue-chips';
 import { LeagueEventReleaseDate } from './league-event-release-date';
@@ -17,45 +16,52 @@ import { LeagueEventReleaseDate } from './league-event-release-date';
 const columnHelper = createColumnHelper<SportLeagueEventOverviewDto>();
 
 /**
- * The year the Events grid opens on: the league's current event year, else this calendar year,
- * when some event is in it; otherwise no year, so the grid never opens empty.
+ * The Season the Events grid opens on (#2003): the league's current Season when some event is in
+ * it; otherwise none, so the grid never opens empty.
  */
-export function defaultEventYear(
-  events: readonly Pick<SportLeagueEventOverviewDto, 'eventYear'>[],
-  currentEventYear: number | null,
-  now: Date,
-): number | null {
-  const year = currentEventYear ?? now.getFullYear();
-  return events.some((event) => event.eventYear === year) ? year : null;
+export function defaultSeasonId(
+  events: readonly Pick<SportLeagueEventOverviewDto, 'sportLeagueSeasonId'>[],
+  currentSeasonId: string | null,
+): string | null {
+  return currentSeasonId !== null && events.some((event) => event.sportLeagueSeasonId === currentSeasonId) ? currentSeasonId : null;
 }
 
 /**
  * The League page's Events grid columns (the League page spec): every one typed, so each sorts and
- * filters from its header, and every one explained behind its (i), in domain words. Year opens on
- * `initialYear` when given.
+ * filters from its header, and every one explained behind its (i), in domain words. Season lists
+ * the league's Seasons by name, latest first, and opens on `initialSeasonId` when given.
  */
 export function leagueEventColumns({
-  initialYear,
+  initialSeasonId,
   onOpenSyncRun,
-  sport,
+  seasons,
+  sportUrlSegment,
 }: {
-  initialYear: number | null;
+  initialSeasonId: string | null;
   onOpenSyncRun: (syncRunId: string) => void;
-  sport: Sport;
+  seasons: readonly Pick<SportLeagueSeasonDto, 'id' | 'name'>[];
+  /** The league's sport's URL segment, which an issue's link to an event names. */
+  sportUrlSegment: string;
 }) {
+  const seasonName = new Map(seasons.map((season) => [season.id, season.name]));
   return [
     columnHelper.accessor('name', {
       header: 'Event',
       meta: { info: 'The event. › opens its page.', type: { kind: 'text' } },
       cell: ({ getValue }) => <Text variant="strong">{getValue()}</Text>,
     }),
-    columnHelper.accessor((event) => String(event.eventYear), {
-      id: 'year',
-      header: 'Year',
+    columnHelper.accessor('sportLeagueSeasonId', {
+      id: 'season',
+      header: 'Season',
       meta: {
-        info: 'The season the event belongs to. Starts filtered to the current season.',
-        type: { kind: 'enum', initial: initialYear === null ? undefined : [String(initialYear)] },
+        info: 'The Season the event belongs to. Starts filtered to the current Season.',
+        type: {
+          kind: 'enum',
+          values: seasons.map((season) => ({ value: season.id, label: season.name })),
+          initial: initialSeasonId === null ? undefined : [initialSeasonId],
+        },
       },
+      cell: ({ getValue }) => seasonName.get(getValue()) ?? '',
     }),
     columnHelper.accessor('startDate', {
       header: 'Starts',
@@ -102,7 +108,7 @@ export function leagueEventColumns({
         },
       },
       enableSorting: false,
-      cell: ({ row }) => <SportLeagueIssueChips onOpenSyncRun={onOpenSyncRun} overview={{ ...row.original, sport }} />,
+      cell: ({ row }) => <SportLeagueIssueChips onOpenSyncRun={onOpenSyncRun} overview={{ ...row.original, sportUrlSegment }} />,
     }),
     columnHelper.accessor('lastSyncedAt', {
       header: 'Last synced',

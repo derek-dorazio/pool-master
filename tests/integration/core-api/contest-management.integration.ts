@@ -23,11 +23,13 @@ import type {
   ErrorEnvelope,
   LeagueContextResponse,
 } from '@poolmaster/shared/dto';
-import { ContestStatus, Sport, SelectionType} from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { expectDefined } from '../../support/expect-defined';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
+import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
@@ -102,7 +104,7 @@ describe('Contest management integration', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     sportId = sport.id;
@@ -135,10 +137,9 @@ describe('Contest management integration', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id,
-        eventYear: eventTiming.startDate.getUTCFullYear(),
+        sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventTiming.startDate.getUTCFullYear()),
         externalId: `masters-2026-${randomUUID().slice(0, 8)}`,
         providerId: 'PGA',
-        sport: Sport.GOLF,
         name: 'Masters Tournament 2026',
         startDate: eventTiming.startDate,
         status: 'SCHEDULED',
@@ -484,11 +485,10 @@ describe('Contest management integration', () => {
   it("refuses a contest from another sport league's own template with 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH, and lists that template only for its league", async () => {
     const prisma = getPrisma();
     const otherLeague = await prisma.sportLeague.create({
-      data: { ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId, name: `LPGA-style ${randomUUID().slice(0, 8)}` },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId, name: `LPGA-style ${randomUUID().slice(0, 8)}` },
     });
     const leagueTemplate = await prisma.contestConfigTemplate.create({
       data: {
-        sport: Sport.GOLF,
         sportLeagueId: otherLeague.id,
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',

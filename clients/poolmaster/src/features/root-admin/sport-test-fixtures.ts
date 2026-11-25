@@ -15,6 +15,8 @@ import type {
   ProviderSettingsDto,
   ProviderSummaryDto,
 } from '@/lib/api';
+import { QueryClient } from '@tanstack/react-query';
+import { QueryKeys } from '@/lib/query-keys';
 
 /** The Standard pricing profile's id, which `sportLeagueFixture` names. */
 export const STANDARD_PLATFORM_PRICING_PROFILE_ID = '00000000-0000-4000-8000-0000000000b2';
@@ -31,6 +33,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     providerId: 'manual-admin',
     providerName: null,
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
     name: 'Rolling Weekend Invitational',
     venue: 'Mock Golf Club',
     location: 'Augusta, GA',
@@ -53,7 +56,8 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     ],
     tiersLocked: false,
     eventSeriesId: 'event-series-1',
-    eventYear: 2026,
+    sportLeagueSeasonId: 'season-2026',
+    championshipYear: 2026,
     sportLeagueId: 'league-1',
     ...sportPlay(overrides.sport ?? 'GOLF'),
     syncScope: 'NONE',
@@ -245,38 +249,13 @@ export function providerMappingFixture(overrides: Partial<SportLeagueProviderMap
   };
 }
 
-export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): SportLeagueDto {
-  return {
-    id: 'league-1',
-    sportId: 'sport-golf',
-    sport: 'GOLF',
-    name: 'PGA Tour',
-    selectedProviderMapping: null,
-    autoReleaseDaysBeforeStart: 7,
-    platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
-    platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
-    bracketAdvancement: 'FIXED',
-    roundNames: [],
-    matchPeriodLayout: null,
-    squaresFromRound: null,
-    noun: null,
-    displayName: null,
-    ...sportPlay(overrides.sport ?? 'GOLF'),
-    displayOrder: null,
-    currentEventYear: null,
-    isActive: true,
-    participantCount: 0,
-    sportEventCount: 0,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  };
-}
 
 /** The golf sport row `listSports` answers with, for pages that resolve the golf sport id. */
 export const GOLF_SPORT_FIXTURE: SportDto = {
   id: 'sport-golf',
   sport: 'GOLF',
+  urlSegment: 'golf',
+  displayOrder: 5,
   tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -315,5 +294,75 @@ export function planGroupFixture(): Extract<SettingsGroup, { key: 'PLAN_CONFIG' 
     updatedBy: null,
     value,
     defaults: value,
+  };
+}
+
+/** Every sport as `listSports` answers, in display order, each with its stored URL segment. */
+export const SPORTS_FIXTURE: SportDto[] = ([
+  ['AMERICAN_FOOTBALL', 'american-football', 'TEAM', 'MATCHES'],
+  ['BASKETBALL', 'basketball', 'TEAM', 'MATCHES'],
+  ['BASEBALL', 'baseball', 'TEAM', 'MATCHES'],
+  ['HOCKEY', 'hockey', 'TEAM', 'MATCHES'],
+  ['SOCCER', 'soccer', 'TEAM', 'MATCHES'],
+  ['GOLF', 'golf', 'INDIVIDUAL', 'STROKE_PLAY_TOURNAMENT'],
+  ['AUTO_RACING', 'auto-racing', 'INDIVIDUAL', 'RACE'],
+  ['TENNIS', 'tennis', 'INDIVIDUAL', 'MATCHES'],
+  ['HORSE_RACING', 'horse-racing', 'INDIVIDUAL', 'RACE'],
+  ['CYCLING', 'cycling', 'INDIVIDUAL', 'RACE'],
+  ['RUNNING', 'running', 'INDIVIDUAL', 'RACE'],
+] as const).map(([sport, urlSegment, participantType, tournamentFormat], displayOrder) => ({
+  ...GOLF_SPORT_FIXTURE,
+  id: `sport-${urlSegment}`,
+  sport,
+  urlSegment,
+  displayOrder,
+  participantType,
+  tournamentFormat,
+}));
+
+/**
+ * A test query client that already holds the platform's sports, as the Manage sport route has
+ * read them before any page under it renders.
+ */
+export function sportsQueryClient(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })): QueryClient {
+  client.setQueryData(QueryKeys.sports.list, SPORTS_FIXTURE);
+  return client;
+}
+
+/**
+ * A sport league as the API sends it. Its sport's URL segment and display order follow its sport
+ * (`SPORTS_FIXTURE`) and its own URL segment its name, unless the test gives them.
+ */
+export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): SportLeagueDto {
+  const sportRow = SPORTS_FIXTURE.find((row) => row.sport === (overrides.sport ?? 'GOLF'));
+  const name = overrides.name ?? 'PGA Tour';
+  return {
+    id: 'league-1',
+    sportId: 'sport-golf',
+    sport: 'GOLF',
+    sportUrlSegment: sportRow?.urlSegment ?? 'golf',
+    sportDisplayOrder: sportRow?.displayOrder ?? 5,
+    urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    name: 'PGA Tour',
+    selectedProviderMapping: null,
+    autoReleaseDaysBeforeStart: 7,
+    platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
+    platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
+    bracketAdvancement: 'FIXED',
+    roundNames: [],
+    matchPeriodLayout: null,
+    squaresFromRound: null,
+    noun: null,
+    displayName: null,
+    ...sportPlay(overrides.sport ?? 'GOLF'),
+    displayOrder: null,
+    currentSeasonId: 'season-2026',
+    timeZone: 'America/New_York',
+    isActive: true,
+    participantCount: 0,
+    sportEventCount: 0,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
   };
 }

@@ -237,7 +237,7 @@ minutes. Because its envelope says `testData`, each tournament also gets made-up
 - **Released** (Scheduled) with automatic lifecycle off, on tours named `PGA TOUR` and
   `LPGA Tour`, created if missing.
 - **Dates rolled from the run** (*A few "Test-" events at a time* above), each tournament
-  keeping its weekdays. The event year stays 2026.
+  keeping its weekdays. Each goes in its league's current Season (#2003).
 - **A field** of 72 to 144 of the tour's ranked golfers, with rankings, made-up odds, seeds,
   six tiers filled by odds (10 per tier, the last takes the rest) and prices from 1,000 to
   10,000.

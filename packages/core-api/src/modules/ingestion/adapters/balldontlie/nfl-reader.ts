@@ -30,35 +30,35 @@ const GAMES_PATH = '/nfl/v1/games';
 const TEAMS_PATH = '/nfl/v1/teams';
 const STANDINGS_PATH = '/nfl/v1/standings';
 
-/** A range spanning more seasons than this reads the current and next season instead of every one. */
+/** A range spanning more seasons than this reads none: every NFL game ever played is no catalog. */
 const MAX_SEASONS_READ = 3;
 
-/** The month (0-based) a new NFL season's events start being listed: March, after the Super Bowl. */
-const SEASON_ROLLOVER_MONTH = 2;
-
 export class NflReader {
-  constructor(
-    private readonly client: BalldontlieClient,
-    private readonly now: () => number,
-  ) {}
+  constructor(private readonly client: BalldontlieClient) {}
 
   /**
-   * The events whose games start inside `dateRange`. An NFL season runs from September into the
-   * next February, so a range reads the seasons from the year before it starts to the year it
-   * ends. Without a range, or with one too wide to walk, it reads the season under way and the
-   * next: every NFL game ever played is no catalog.
+   * One season's events, when `season` names it (the events sync asks for a Season by its id here,
+   * #2003); otherwise the events whose games start inside `dateRange`. An NFL season runs from
+   * September into the next February, so a range reads the seasons from the year before it starts
+   * to the year it ends. With neither, or a range too wide to walk, it reads none: nothing here
+   * works out a season from today's date.
    */
-  async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
+  async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
+    if (season !== undefined) return toNflSportEvents(await this.seasonGames(season));
     const games: NflGame[] = [];
-    for (const season of this.seasonsFor(dateRange)) {
-      games.push(...await this.client.getAllPages(
-        GAMES_PATH,
-        { 'seasons[]': [season], 'season_types[]': [NflSeasonType.REGULAR_SEASON, NflSeasonType.POSTSEASON] },
-        nflGameListSchema,
-      ));
+    for (const each of this.seasonsFor(dateRange)) {
+      games.push(...await this.seasonGames(each));
     }
     return toNflSportEvents(games)
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
+  }
+
+  private seasonGames(season: number): Promise<NflGame[]> {
+    return this.client.getAllPages(
+      GAMES_PATH,
+      { 'seasons[]': [season], 'season_types[]': [NflSeasonType.REGULAR_SEASON, NflSeasonType.POSTSEASON] },
+      nflGameListSchema,
+    );
   }
 
   /**
@@ -124,13 +124,9 @@ export class NflReader {
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {
-    if (dateRange) {
-      const first = dateRange.from.getUTCFullYear() - 1;
-      const count = dateRange.to.getUTCFullYear() - first + 1;
-      if (count <= MAX_SEASONS_READ) return Array.from({ length: count }, (_, index) => first + index);
-    }
-    const today = new Date(this.now());
-    const current = today.getUTCMonth() >= SEASON_ROLLOVER_MONTH ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
-    return [current, current + 1];
+    if (!dateRange) return [];
+    const first = dateRange.from.getUTCFullYear() - 1;
+    const count = dateRange.to.getUTCFullYear() - first + 1;
+    return count <= MAX_SEASONS_READ ? Array.from({ length: count }, (_, index) => first + index) : [];
   }
 }

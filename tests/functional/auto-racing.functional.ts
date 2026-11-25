@@ -23,7 +23,7 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -93,7 +93,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
 
     const race = await createEvent({
       client: a,
-      body: { sportLeagueId: nascar.id, eventYear: 2099, name: `Harbour 400 ${RUN}`, startDate: '2099-02-15T19:30:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(nascar.id, 2099), name: `Harbour 400 ${RUN}`, startDate: '2099-02-15T19:30:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
@@ -235,7 +235,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     // --- A grand prix, its field, four tiers and prices -------------------------------------------
     const race = await createEvent({
       client: a,
-      body: { sportLeagueId: formula1.id, eventYear: 2099, name: `Harbour Grand Prix ${RUN}`, startDate: '2099-05-24T13:00:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(formula1.id, 2099), name: `Harbour Grand Prix ${RUN}`, startDate: '2099-05-24T13:00:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;

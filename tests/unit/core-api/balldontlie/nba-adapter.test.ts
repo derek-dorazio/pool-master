@@ -80,24 +80,32 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       expect(seasonsRead(harness.api)).toEqual(['2025']);
     });
 
-    it('reads the season under way and the next when the range is open-ended, not every season ever played', async () => {
+    it('reads no season when the range is too wide to walk and no Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
 
       expect(events).toEqual([]);
-      expect(seasonsRead(harness.api)).toEqual(['2026', '2027']);
+      expect(seasonsRead(harness.api)).toEqual([]);
     });
 
-    it('takes the season that opened last autumn as the one under way before September, so its playoffs are read in spring', async () => {
+    it('refuses a provider season id that is not a four-digit season, asking the vendor nothing', async () => {
+      const harness = setup();
+      restore = harness.restore;
+
+      await expect(harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerSeasonId: '2025-26' })).rejects.toThrow('2025-26');
+      expect(seasonsRead(harness.api)).toEqual([]);
+    });
+
+    it('reads only the provider season it is asked for, whatever the clock says, so a Season that opened last autumn is read in spring', async () => {
       const harness = setup(nbaRoutes, Date.UTC(2026, 3, 20));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL);
+      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, undefined, { providerSeasonId: '2025' });
 
       expect(events.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
-      expect(seasonsRead(harness.api)).toEqual(['2025', '2026']);
+      expect(seasonsRead(harness.api)).toEqual(['2025']);
     });
   });
 
@@ -244,7 +252,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     await expect(harness.adapter.getLiveScores('nba-2024-postseason')).rejects.toThrow('game 18444001 has no home_team');
   });
 
-  it('imports into a sport league synced to the BALLDONTLIE nba league only the season\'s playoffs of the year', async () => {
+  it('imports into a sport league synced to the BALLDONTLIE nba league only the playoffs of the provider season it is asked for', async () => {
     const harness = setup();
     restore = harness.restore;
     const league = {
@@ -254,7 +262,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(league) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(harness.adapter));
 
-    const events = await service.listTourEventsForYear('balldontlie', 'league', 2024);
+    const events = await service.listSeasonEvents('balldontlie', 'league', '2023');
 
     expect(events.map((event) => event.externalId)).toEqual(['nba-2023-postseason']);
   });

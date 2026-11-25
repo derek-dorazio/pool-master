@@ -15,6 +15,7 @@ import {
   AutoReleaseCheckOutcome,
   compareByEnumOrder,
   fieldOrderDecision,
+  orderSportLeagueSeasons,
   orderSportLeagueStructure,
   isProviderSyncedEvent,
   ParticipantAddedBy,
@@ -28,6 +29,7 @@ import {
   type SportEventOverview,
   type SportLeagueEventOverview,
   type SportLeagueParticipantOverview,
+  type SportLeagueSeasonDetail,
   type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
@@ -87,6 +89,15 @@ export class SportLeaguePageService {
   async getStructure(sportLeagueId: string): Promise<SportLeagueStructure | null> {
     const phases = await this.deps.reader.readStructure(sportLeagueId);
     return phases === null ? null : orderSportLeagueStructure(phases);
+  }
+
+  /**
+   * The league's Seasons with their provider ids, phases and slots (#2003), latest first, each in
+   * play order. Null when the league does not exist.
+   */
+  async listSeasons(sportLeagueId: string): Promise<SportLeagueSeasonDetail[] | null> {
+    const seasons = await this.deps.reader.readSeasons(sportLeagueId);
+    return seasons === null ? null : orderSportLeagueSeasons(seasons);
   }
 
   /** The Event page's header and sync rows (#1889). Null when the event does not exist. */
@@ -154,7 +165,7 @@ export function buildSportLeagueEvents(facts: SportLeagueEventFacts, now: Date):
     return {
       id: event.id,
       name: event.name,
-      eventYear: event.eventYear,
+      sportLeagueSeasonId: event.sportLeagueSeasonId,
       startDate: event.startDate,
       endDate: event.endDate,
       status: event.status,
@@ -231,6 +242,6 @@ export function buildSportEventOverview(
       feedId: row.mapping?.externalId ?? null,
       lastInFeedAt: row.mapping?.lastSeenAt ?? null,
     })),
-    eventPageSlug: facts.eventPageSlug,
+    eventPagePath: facts.eventPagePath,
   };
 }

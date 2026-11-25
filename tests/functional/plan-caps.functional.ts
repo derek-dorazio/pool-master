@@ -21,7 +21,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, LeaguePlan, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { LeaguePlanUsageResponseSchema, SportLeaguesUsedResponseSchema } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
@@ -80,7 +80,7 @@ describe('SDK Functional: plan caps (#947)', () => {
     const releaseRace = async (sportLeagueId: string, name: string, startDate: string) => {
       const eventId = expectDefined((await createEvent({
         client: a,
-        body: { sportLeagueId, eventYear: SEASON, name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
+        body: { sportLeagueId: await inCurrentSeason(sportLeagueId, SEASON), name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });

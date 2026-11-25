@@ -1,8 +1,10 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { ManageLandingRedirect, RootAdminManageLayout } from './root-admin-manage-layout';
+import { sportsQueryClient } from './sport-test-fixtures';
 
 function LocationProbe() {
   return <div data-testid="location">{useLocation().pathname}</div>;
@@ -15,6 +17,7 @@ function EntityHomeProbe() {
 
 function renderManage(path: string) {
   render(
+    <QueryClientProvider client={sportsQueryClient()}>
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route element={<RootAdminManageLayout />} path="/manage">
@@ -31,7 +34,8 @@ function renderManage(path: string) {
           <Route element={<div>New participant body</div>} path="sports/golf/participants/new" />
         </Route>
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

@@ -24,12 +24,9 @@ export const QueryKeys = {
     field: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'field'] as const,
     /** One event's pick tiers: the Tier a lineup's pick shows on the contest page (#1740). */
     tiers: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'tiers'] as const,
-    /** One sport league's events in one event year: what a contest's event picker offers. */
-    bySportLeagueYear: (sportLeagueId: QueryKeyId, eventYear: number) =>
-      ['poolmaster', 'sport-events', 'sport-league', sportLeagueId, eventYear] as const,
-    /** The event years one sport league has events in: the event picker's seasons. */
-    yearsBySportLeague: (sportLeagueId: QueryKeyId) =>
-      ['poolmaster', 'sport-events', 'sport-league', sportLeagueId, 'years'] as const,
+    /** One Season's events (#2003): what a contest's event picker offers. */
+    bySportLeagueSeason: (sportLeagueSeasonId: QueryKeyId) =>
+      ['poolmaster', 'sport-events', 'season', sportLeagueSeasonId] as const,
   },
   contests: {
     all: ['poolmaster', 'league-contests'] as const,
@@ -118,14 +115,15 @@ export const QueryKeys = {
     games: (leagueId: QueryKeyId, request: GamePickPreviewRequest) =>
       ['poolmaster', 'pick-preview', leagueId, 'games', request] as const,
   },
-  /** One sport league: a bracket's own round names (#706). */
+  /** One sport league: a bracket's own round names (#706), and its Seasons (#2003). */
   sportLeagues: {
     detail: (sportLeagueId: QueryKeyId) => ['poolmaster', 'sport-league', sportLeagueId] as const,
+    seasons: (sportLeagueId: QueryKeyId) => ['poolmaster', 'sport-league', sportLeagueId, 'seasons'] as const,
     list: () => ['poolmaster', 'sport-leagues'] as const,
   },
   /** The public event pages (#1007): one by its address, and the active ones of a sport or all. */
   eventPages: {
-    detail: (sport: string, pageSlug: string) => ['poolmaster', 'event-pages', sport, pageSlug] as const,
+    detail: (sportUrlSegment: string, urlSegment: string) => ['poolmaster', 'event-pages', sportUrlSegment, urlSegment] as const,
     list: (sport: string | null, upcoming: boolean) => ['poolmaster', 'event-pages', 'list', sport, upcoming] as const,
   },
   leagues: {
@@ -216,9 +214,8 @@ export const QueryKeys = {
   },
   rootAdmin: {
     all: ['poolmaster', 'root-admin'] as const,
-    eventSyncEvents: (sport: QueryKeyId, eventYear: number) =>
-      ['poolmaster', 'root-admin', 'event-sync-events', sport, eventYear] as const,
-    eventsByYear: (eventYear: number) => ['poolmaster', 'root-admin', 'events', 'year', eventYear] as const,
+    eventSyncEvents: (sportLeagueSeasonId: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'event-sync-events', sportLeagueSeasonId] as const,
     // The Manage sport screens (golf's first, every sport's since #623). Lists of one sport take
     // the sport; invalidating the bare prefix (`leagues`, `events`, `participants`) refreshes every
     // sport's.
@@ -245,14 +242,10 @@ export const QueryKeys = {
       // The Structure tab's positions (#2001), under `leagues`.
       leaguePositions: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'positions', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
-      sportEvents: (sport: QueryKeyId, eventYear: number) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport, eventYear] as const,
       // Under the `events` prefix, so invalidating the list refreshes each league's too: one
-      // year's events, and the years a league has events in (#1251).
-      leagueEvents: (sportLeagueId: QueryKeyId, eventYear: number | null) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, eventYear] as const,
-      leagueEventYears: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'years'] as const,
+      // Season's events (#1251, #2003).
+      leagueEvents: (sportLeagueId: QueryKeyId, sportLeagueSeasonId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, sportLeagueSeasonId] as const,
       // The League page's Events grid (#1866), every year, under `events` like each year's list.
       leagueEventOverviews: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'overview'] as const,

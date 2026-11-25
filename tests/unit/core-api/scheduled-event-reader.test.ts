@@ -51,8 +51,8 @@ describe('createScheduledEventReader', () => {
     const statuses = { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] };
     expect(findMany.mock.calls.map(([query]) => query.where)).toEqual([
       {
-        sport: Sport.GOLF, providerId: { in: ['balldontlie'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY,
-        eventSeries: { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
+        providerId: { in: ['balldontlie'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY,
+        eventSeries: { sportLeague: { sport: { sport: Sport.GOLF }, isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
       },
     ]);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }] }));
@@ -67,7 +67,7 @@ describe('createScheduledEventReader', () => {
 
     expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany.mock.calls.map(([query]) => (query.where as { eventSeries?: unknown }).eventSeries)).toEqual([
-      { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
+      { sportLeague: { sport: { sport: Sport.GOLF }, isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
     ]);
   });
 
@@ -92,7 +92,7 @@ describe('createScheduledEventReader', () => {
 
     expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { sport: Sport.AMERICAN_FOOTBALL, providerId: { in: ['mock', 'bdl'] }, externalId: { not: '' }, status: SportEventStatus.IN_PROGRESS, sportEventParticipants: { some: {} }, syncScope: SportEventSyncScope.SCORES_ONLY },
+      where: { eventSeries: { sportLeague: { sport: { sport: Sport.AMERICAN_FOOTBALL } } }, providerId: { in: ['mock', 'bdl'] }, externalId: { not: '' }, status: SportEventStatus.IN_PROGRESS, sportEventParticipants: { some: {} }, syncScope: SportEventSyncScope.SCORES_ONLY },
     }));
   });
 

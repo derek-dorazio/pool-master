@@ -28,20 +28,10 @@ export const Sport = {
   TENNIS: 'TENNIS',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
-/** The most popular first, the ancillary sports (cycling, running) last, wherever sports are listed, grids included. */
-export const SportOrder = explicitOrder<Sport>({
-  [Sport.AMERICAN_FOOTBALL]: 0,
-  [Sport.BASKETBALL]: 1,
-  [Sport.BASEBALL]: 2,
-  [Sport.HOCKEY]: 3,
-  [Sport.SOCCER]: 4,
-  [Sport.GOLF]: 5,
-  [Sport.AUTO_RACING]: 6,
-  [Sport.TENNIS]: 7,
-  [Sport.HORSE_RACING]: 8,
-  [Sport.CYCLING]: 9,
-  [Sport.RUNNING]: 10,
-});
+/**
+ * No order here: each sport's row carries its display order (`Sport.displayOrder`, #2042), and
+ * every list of sports sorts by it as the API returns it.
+ */
 
 export const ParticipantType = {
   INDIVIDUAL: 'INDIVIDUAL',
@@ -197,6 +187,25 @@ export type SlotPairing = (typeof SlotPairing)[keyof typeof SlotPairing];
 export const SlotPairingOrder = explicitOrder<SlotPairing>({
   [SlotPairing.FIXED]: 0,
   [SlotPairing.RESEEDED]: 1,
+});
+
+/** Where a Season's slot is in play (#2003, plan §2), in the order it moves through them. */
+export const SeasonSlotStatus = {
+  /** Not started. */
+  SCHEDULED: 'SCHEDULED',
+  /** A game of it has started. */
+  IN_PROGRESS: 'IN_PROGRESS',
+  /** Every game of it is decided; final, and never reopened on its own. */
+  COMPLETED: 'COMPLETED',
+  /** Not played: set from the feed or by a root admin (slice 14). */
+  CANCELLED: 'CANCELLED',
+} as const;
+export type SeasonSlotStatus = (typeof SeasonSlotStatus)[keyof typeof SeasonSlotStatus];
+export const SeasonSlotStatusOrder = explicitOrder<SeasonSlotStatus>({
+  [SeasonSlotStatus.SCHEDULED]: 0,
+  [SeasonSlotStatus.IN_PROGRESS]: 1,
+  [SeasonSlotStatus.COMPLETED]: 2,
+  [SeasonSlotStatus.CANCELLED]: 3,
 });
 
 /** How a provider's games are matched to a slot definition (#2002, plan §1 and §6), in matching order. */
@@ -894,6 +903,12 @@ export const ProviderSyncFindingKind = {
    */
   WEBHOOK_SECRET_MISSING: 'WEBHOOK_SECRET_MISSING',
   /**
+   * The league's events sync has no Season to read from its selected Provider (#2003): its last
+   * Season mapped to the Provider has ended and no later one is mapped. Seasons are added by
+   * migration, so nothing of the next Season syncs until one lands. Subject: league and Provider.
+   */
+  SEASON_MISSING: 'SEASON_MISSING',
+  /**
    * A field sync's provider sent the event with no participants. Subject: league, event, Provider
    * and the FIELD sync; the next field sync with participants resolves it.
    */
@@ -1284,15 +1299,6 @@ export const ContestEntryStatusOrder = explicitOrder<ContestEntryStatus>({
   [ContestEntryStatus.DRAFT]: 0,
   [ContestEntryStatus.SUBMITTED]: 1,
 });
-
-/** How a prize definition's payout is expressed. */
-export const PrizePayoutType = {
-  FIXED_AMOUNT: 'FIXED_AMOUNT',
-  PERCENTAGE: 'PERCENTAGE',
-} as const;
-export type PrizePayoutType = (typeof PrizePayoutType)[keyof typeof PrizePayoutType];
-/** No natural order: A to Z by its display strings. */
-export const PrizePayoutTypeOrder = alphabeticalOrder('PrizePayoutType');
 
 // --- League ---
 

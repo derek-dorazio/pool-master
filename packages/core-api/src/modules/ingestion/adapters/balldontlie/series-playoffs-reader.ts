@@ -45,29 +45,29 @@ export interface PlayoffsSource {
   seedRanks?(season: number): Promise<PlayoffSeedRanks>;
 }
 
-/** A range spanning more seasons than this reads the current and next season instead of every one. */
+/** A range spanning more seasons than this reads none. */
 const MAX_SEASONS_READ = 3;
 
 /** A league's playoffs as one event a season. */
 export class PlayoffsReader {
   constructor(
     private readonly source: PlayoffsSource,
-    private readonly now: () => number,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
   /**
-   * The playoffs whose first game starts inside `dateRange`: the seasons whose playoffs fall in
-   * one of its years. Without a range, or with one too wide to walk, it reads the season under way
-   * and the next. A season whose postseason has no game scheduled yet lists nothing.
+   * One season's playoffs, when `season` names it (the events sync asks for a Season by its id,
+   * #2003); otherwise the playoffs whose first game starts inside `dateRange`: the seasons whose
+   * playoffs fall in one of its years. With neither, or a range too wide to walk, it reads none. A
+   * season whose postseason has no game scheduled yet lists nothing.
    */
-  async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
+  async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
     const games: PlayoffGame[] = [];
-    for (const season of this.seasonsFor(dateRange)) {
-      games.push(...await this.postseasonGames(season));
+    for (const each of season === undefined ? this.seasonsFor(dateRange) : [season]) {
+      games.push(...await this.postseasonGames(each));
     }
     return toPlayoffsEvents(this.source.league, games)
-      .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
+      .filter((event) => season !== undefined || !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
   /**
@@ -152,15 +152,11 @@ export class PlayoffsReader {
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {
-    const { playoffYearOffset, seasonRolloverMonth } = this.source.league;
-    if (dateRange) {
-      const first = dateRange.from.getUTCFullYear() - playoffYearOffset;
-      const count = dateRange.to.getUTCFullYear() - playoffYearOffset - first + 1;
-      if (count <= MAX_SEASONS_READ) return Array.from({ length: count }, (_, index) => first + index);
-    }
-    const today = new Date(this.now());
-    const current = today.getUTCMonth() >= seasonRolloverMonth ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
-    return [current, current + 1];
+    if (!dateRange) return [];
+    const { playoffYearOffset } = this.source.league;
+    const first = dateRange.from.getUTCFullYear() - playoffYearOffset;
+    const count = dateRange.to.getUTCFullYear() - playoffYearOffset - first + 1;
+    return count <= MAX_SEASONS_READ ? Array.from({ length: count }, (_, index) => first + index) : [];
   }
 }
 
