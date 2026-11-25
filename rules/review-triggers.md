@@ -447,6 +447,10 @@ Read every added or changed line for these, and report each one found:
     shared constant, rather than read from the API. Blocking whenever the diff adds one; the
     web app owns only display strings and pure layout constants
     (`domain-model-conventions-rules.md` §17 *The web app holds no domain values*).
+    The web contract gates (§1) catch an imported rule, an enum value compared as a string,
+    a copied DTO and a local enum; they do not see a status set written as a literal array
+    (`['OPEN', 'DRAFT'].includes(status)`) or a value passed as a bare string, so the reviewer
+    still reads for those.
 
 For each finding, state **the model home it belongs in** (a column on a definition, a
 reference row, a mapping table, a field the API returns, one shared predicate) — "hard-coded"

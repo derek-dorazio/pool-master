@@ -6,10 +6,11 @@ import { compareWithBaseline, isAllowed, isWebProduction, ratchetBaseline, share
 const allowed = [{ pattern: '^format', reason: 'r' }, { pattern: 'Order$', reason: 'r' }];
 
 describe('check-web-shared-imports (#2107)', () => {
-  it('finds a shared const object whose values equal its keys as an enum, and one with other values as not', () => {
+  it('finds a shared const object whose values equal its keys as an enum with its values, and one with other values as not', () => {
     const text = "export const ContestStatus = { OPEN: 'OPEN', FINAL: 'FINAL' } as const;\nexport const LIMITS = { MAX: 'max' };\nexport type Thing = { a: string };\nexport interface Other { b: number }\n";
-    const { enums, types } = sharedDeclarations('x.ts', text);
+    const { enums, enumValues, types } = sharedDeclarations('x.ts', text);
     assert.deepEqual([...enums], ['ContestStatus']);
+    assert.deepEqual(enumValues.get('ContestStatus'), ['OPEN', 'FINAL']);
     assert.deepEqual([...types].sort(), ['Other', 'Thing']);
   });
 
@@ -23,6 +24,17 @@ describe('check-web-shared-imports (#2107)', () => {
       "import { sdk } from '@poolmaster/shared/generated/hey-api';",
     ].join('\n');
     assert.deepEqual(sharedValueImports('a.tsx', text), ['getSportDefinition', 'LEAGUE_PLANS', 'findTierLayoutProblem']);
+  });
+
+  it('counts a namespace import or export star as the name *, and reads named re-exports and DTO-module imports, so none slips past', () => {
+    const text = [
+      "import * as domain from '@poolmaster/shared/domain';",
+      "export { getSportDefinition } from '@poolmaster/shared/domain';",
+      "export * from '@poolmaster/shared';",
+      "export type { LeagueDto } from '@poolmaster/shared';",
+      "import { ROUNDS_PAR_MAX } from '@poolmaster/shared/dto';",
+    ].join('\n');
+    assert.deepEqual(sharedValueImports('a.ts', text), ['*', 'getSportDefinition', '*', 'ROUNDS_PAR_MAX']);
   });
 
   it('allows types, enums and names an allow pattern matches, and counts everything else', () => {

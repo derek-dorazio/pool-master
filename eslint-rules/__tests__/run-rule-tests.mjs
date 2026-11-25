@@ -1498,6 +1498,8 @@ ruleTester.run('no-enum-string-literals', noEnumStringLiterals, {
   ],
   invalid: [
     { code: "if (contest.status === 'OPEN') {}", errors: [{ messageId: 'enumLiteral' }] },
+    // SelectionType's members carry doc comments; its values are found all the same.
+    { code: "type Mode = 'PICK_EM' | 'SURVIVOR';", errors: [{ messageId: 'enumLiteral' }, { messageId: 'enumLiteral' }] },
     // Optional chains and plain variables, which no-bare-enum-literals does not see.
     { code: "if (a?.status !== 'COMPLETED') {}", errors: [{ messageId: 'enumLiteral' }] },
     { code: "if ('COMMISSIONER' == role) {}", errors: [{ messageId: 'enumLiteral' }] },
@@ -1555,6 +1557,10 @@ ruleTester.run('no-local-enums', noLocalEnums, {
     // One entry is a constant, not a set of codes.
     "const only = { A: 'A' };",
     "let mutable = { A: 'A', B: 'B' };",
+    // A map keyed by a shared enum's members is a lookup, not new codes.
+    "const labels = { [SportEventStatus.DRAFT]: 'DRAFT_LABEL', [SportEventStatus.OPEN]: 'OPEN_LABEL' };",
+    // Codes that are not domain take a marker with their reason.
+    "// poolmaster-allow-local-enum: the chart library's mode names\nconst ChartMode = { LINE: 'LINE', BAR: 'BAR' };",
     { code: 'enum Legacy { A = "A" }', filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
   ],
   invalid: [
@@ -1562,6 +1568,8 @@ ruleTester.run('no-local-enums', noLocalEnums, {
     { code: 'const enum Mode { A, B }', errors: [{ messageId: 'localEnum' }] },
     { code: "export const Mark = { INCLUDED: 'INCLUDED', LOCKED: 'LOCKED' } as const;", errors: [{ messageId: 'localEnum' }] },
     { code: "const Mode = { PICK_EM: 'PICK_EM', SURVIVOR: 'SURVIVOR' } satisfies Record<string, string>;", errors: [{ messageId: 'localEnum' }] },
+    { code: "// poolmaster-allow-local-enum\nenum A { X = 'X' }", errors: [{ messageId: 'missingReason' }] },
+    { code: "// poolmaster-allow-local-enum: nothing here\nconst x = 1;", errors: [{ messageId: 'unusedAllow' }] },
     {
       code: "enum A { X = 'X' }\nenum B { Y = 'Y' }",
       filename: 'legacy.ts',

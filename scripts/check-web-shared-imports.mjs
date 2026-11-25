@@ -5,7 +5,7 @@
  * The web app holds no domain values and re-derives nothing the API decides. Shared code is fine
  * for the contract's vocabulary: enums and their order lists, types, zod schemas, display
  * formatters, the brand and image paths. A web import of anything else from
- * `@poolmaster/shared` or `@poolmaster/shared/domain` reaches for a rule (a sport definition, a
+ * `@poolmaster/shared`, `@poolmaster/shared/domain` or `@poolmaster/shared/dto` reaches for a rule (a sport definition, a
  * limit, a derivation) that belongs in a DTO field the API fills.
  *
  * Every production file in `clients/poolmaster/src` is read with the TypeScript parser. Each
@@ -24,8 +24,8 @@
  * new or raised entry unless `scripts/baseline-raises.json` declares it.
  */
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import ts from 'typescript';
@@ -34,9 +34,10 @@ export const BASELINE_FILE = 'scripts/web-shared-imports-baseline.json';
 const WEB_SOURCE = 'clients/poolmaster/src';
 const SHARED_SOURCE = 'packages/shared';
 
-/** The shared modules whose imports are judged: the package root and the domain folder. */
+/** The shared modules whose imports are judged: the package root, the domain folder and the DTOs. */
 export function isJudgedModule(specifier) {
-  return specifier === '@poolmaster/shared' || specifier === '@poolmaster/shared/domain' || specifier.startsWith('@poolmaster/shared/domain/');
+  return ['@poolmaster/shared', '@poolmaster/shared/domain', '@poolmaster/shared/dto'].includes(specifier)
+    || specifier.startsWith('@poolmaster/shared/domain/') || specifier.startsWith('@poolmaster/shared/dto/');
 }
 
 /** Production web source: not a test, a story or the test folder. */
@@ -48,9 +49,14 @@ function parse(path, text) {
   return ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
 }
 
-/** The names a shared source file declares as enums (const objects whose values equal their keys) and as types. */
+/**
+ * The enums (const objects whose values equal their keys, with their values) and the types a
+ * shared source file declares. The one definition of a shared enum: `no-enum-string-literals`
+ * reads the same.
+ */
 export function sharedDeclarations(path, text) {
   const enums = new Set();
+  const enumValues = new Map();
   const types = new Set();
   for (const statement of parse(path, text).statements) {
     if (ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) types.add(statement.name.text);
@@ -64,22 +70,64 @@ export function sharedDeclarations(path, text) {
         const key = ts.isIdentifier(property.name) || ts.isStringLiteral(property.name) ? property.name.text : null;
         return key === property.initializer.text;
       });
-      if (isEnum) enums.add(declaration.name.text);
+      if (!isEnum) continue;
+      enums.add(declaration.name.text);
+      enumValues.set(declaration.name.text, init.properties.map((property) => property.initializer.text));
     }
   }
-  return { enums, types };
+  return { enums, enumValues, types };
 }
 
-/** Every named value import a web file takes from a judged shared module. Type-only imports are left out. */
+function listSharedSource(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return entry.name === 'generated' || entry.name === 'dist' ? [] : listSharedSource(path);
+    return entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts') ? [path] : [];
+  });
+}
+
+/** Every shared enum value, mapped to the names of the enums that hold it, read from the shared domain on disk. */
+export function sharedEnumValuesOnDisk(repoRoot) {
+  const values = new Map();
+  for (const path of listSharedSource(resolve(repoRoot, SHARED_SOURCE, 'domain'))) {
+    for (const [name, members] of sharedDeclarations(path, readFileSync(path, 'utf8')).enumValues) {
+      for (const value of members) {
+        if (!values.has(value)) values.set(value, []);
+        values.get(value).push(name);
+      }
+    }
+  }
+  return values;
+}
+
+/**
+ * Every named value a web file takes from a judged shared module: imports and re-exports.
+ * Type-only ones are left out. A namespace import or `export *` reaches every name at once, so it
+ * counts as the name `*`, which no pattern allows.
+ */
 export function sharedValueImports(path, text) {
   const names = [];
   for (const statement of parse(path, text).statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
-    if (!isJudgedModule(statement.moduleSpecifier.text)) continue;
-    const clause = statement.importClause;
-    if (!clause || clause.isTypeOnly || !clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
-    for (const element of clause.namedBindings.elements) {
-      if (!element.isTypeOnly) names.push((element.propertyName ?? element.name).text);
+    if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier) && isJudgedModule(statement.moduleSpecifier.text)) {
+      const clause = statement.importClause;
+      if (!clause || clause.isTypeOnly || !clause.namedBindings) continue;
+      if (ts.isNamespaceImport(clause.namedBindings)) {
+        names.push('*');
+        continue;
+      }
+      for (const element of clause.namedBindings.elements) {
+        if (!element.isTypeOnly) names.push((element.propertyName ?? element.name).text);
+      }
+    }
+    if (ts.isExportDeclaration(statement) && statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier) && isJudgedModule(statement.moduleSpecifier.text)) {
+      if (statement.isTypeOnly) continue;
+      if (!statement.exportClause || ts.isNamespaceExport(statement.exportClause)) {
+        names.push('*');
+        continue;
+      }
+      for (const element of statement.exportClause.elements) {
+        if (!element.isTypeOnly) names.push((element.propertyName ?? element.name).text);
+      }
     }
   }
   return names;
