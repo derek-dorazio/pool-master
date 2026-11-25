@@ -1,6 +1,7 @@
 import type { APIRequestContext } from '@playwright/test';
 import { adminApiHeaders, attempt, expectOk, type AuthHeaders, type Log } from './admin-api';
 import type { AdminCredentials } from './admin-session';
+import { findSeededSportLeagueThroughApi } from './test-event';
 
 /**
  * #84, #280 — the golden journey's teardown (plans/130 §"Teardown", deleted:
@@ -8,13 +9,13 @@ import type { AdminCredentials } from './admin-session';
  * graph, removed through the API with the admin token, in dependency order:
  *
  *   league (its contest, entry, squads, memberships and invite link go with it)
- *   → tournament (its field, rounds and tiers go with it; refused while a contest references it,
+ *   → each tournament's test slot (its event, field, rounds and tiers go with it, and so does
+ *     every test participant no other field holds; refused while a contest references the event,
  *     which is why the league goes first)
- *   → players → commissioner → member.
+ *   → any player left → commissioner → member.
  *
- * Each player goes once no event field holds them (#1400). The tour is a seeded sport league
- * (#2004), so it stays, with the run's freed test slots; one the run switched on goes back off.
- * (plans/147 removed the season the journey used to create, and with it a step here.)
+ * The tour is a seeded sport league (#2004), so it stays; only the run's own labelled test slots
+ * go (#2075). The players are test participants (#2096), so the last slot takes them.
  *
  * Every lookup is by the attempt's run-unique names rather than ids captured during the test, so
  * an attempt that failed between a write and reading its response is still found and removed.
@@ -31,23 +32,22 @@ export type JourneyUser = {
 
 /**
  * The sports a journey builds its catalog in: the golden journey's golf, the racing journey's
- * horse racing, the basketball of the knockout and bracket journeys, and the pick'em journey's
- * American football.
+ * auto racing (Formula 1), the basketball of the knockout and bracket journeys, and the pick'em
+ * journey's American football.
  */
-export type JourneySport = 'GOLF' | 'HORSE_RACING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL';
+export type JourneySport = 'GOLF' | 'AUTO_RACING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL';
 
 /**
  * Every name one attempt of a journey can create, all derived from its run id. The tour, players
  * and tournament are the sport's own words for a sport league, participants and an event: a
- * racing run's are a circuit, horses and a race.
+ * racing run's are a series, drivers and a race. Each tournament is on a test slot labelled with
+ * its name.
  */
 export type JourneyRun = {
   runId: string;
   sport: JourneySport;
-  /** The seeded sport league the run plays in (#2004): found by name, and never removed. */
-  tourName: string;
-  /** Set once the run switched its seeded sport league on, so teardown switches it off again. */
-  switchedTourOn?: boolean;
+  /** The seeded sport league the run plays in (#2004), by its URL segment; never removed. */
+  tourUrlSegment: string;
   playerNamePrefix: string;
   tournamentName: string;
   /** Further tournaments on the same tour, such as the golden journey's multi-event contest's. */
@@ -69,7 +69,7 @@ export async function removeJourneyRun(
   const headers = await adminApiHeaders(api, credentials);
   if (!headers) {
     log(
-      `admin login failed; nothing removed: league ${run.leagueCode}, the tournament on tour "${run.tourName}" `
+      `admin login failed; nothing removed: league ${run.leagueCode}, the tournament's test slot on tour ${run.tourUrlSegment} `
       + `and its players, users ${run.commissioner.username} and ${run.member.username}`,
     );
     return;
@@ -78,14 +78,10 @@ export async function removeJourneyRun(
   // The commissioner owns the league and the member's squad lives in it, and the contest in it
   // references the tournament: the league goes first.
   await attempt(log, `league ${run.leagueCode}`, () => removeLeague(api, headers, run.leagueCode, log));
-  for (const tournamentName of [run.tournamentName, ...(run.moreTournamentNames ?? [])]) {
-    await attempt(log, `tournament "${tournamentName}"`, () => removeTournament(api, headers, run.sport, tournamentName, log));
-  }
-  // A participant belongs to its tour (#1853); each goes once no event field holds it.
+  await attempt(log, `test slots on tour ${run.tourUrlSegment}`, () => removeRunTestSlots(api, headers, run, log));
+  // A test participant goes with the last test slot whose field held it; any left (made before a
+  // slot was) go here.
   await attempt(log, `players "${run.playerNamePrefix} *"`, () => removePlayers(api, headers, run.playerNamePrefix, log));
-  if (run.switchedTourOn) {
-    await attempt(log, `the switched-on tour "${run.tourName}"`, () => switchTourOff(api, headers, run, log));
-  }
   await attempt(log, `user ${run.commissioner.username}`, () => removeUser(api, headers, run.commissioner, log));
   await attempt(log, `user ${run.member.username}`, () => removeUser(api, headers, run.member, log));
 }
@@ -119,43 +115,36 @@ export async function removeLeague(api: APIRequestContext, headers: AuthHeaders,
   log(`league ${leagueCode} removed with its contest, entries, squads and invite link (re-read 404)`);
 }
 
-async function removeTournament(api: APIRequestContext, headers: AuthHeaders, sport: JourneySport, tournamentName: string, log: Log) {
-  const list = await expectOk(
-    // The event list needs a sport, a sport league or a year (#1180).
-    api.get('/api/v1/events', { headers, params: { sport, q: tournamentName } }),
-    'list tournaments',
-  );
-  const { events } = (await list.json()) as { events: { id: string; name: string }[] };
-  const event = events.find((candidate) => candidate.name === tournamentName);
-  if (!event) {
-    log(`tournament "${tournamentName}" was never created; nothing to remove`);
+/** The run's own test slots, one per tournament, each labelled with its tournament's name. */
+async function removeRunTestSlots(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun, log: Log) {
+  const { id: sportLeagueId } = await findSeededSportLeagueThroughApi(api, headers, run.sport, run.tourUrlSegment);
+  const labels = new Set([run.tournamentName, ...(run.moreTournamentNames ?? [])]);
+  const slots = (await listTestSlots(api, headers, sportLeagueId)).filter((slot) => slot.label !== null && labels.has(slot.label));
+  if (slots.length === 0) {
+    log(`no test slot on tour ${run.tourUrlSegment} is labelled with the run's tournaments; nothing to remove`);
     return;
   }
-  await expectOk(api.delete(`/api/v1/events/${event.id}`, { headers }), 'delete tournament');
-  const reread = await api.get(`/api/v1/events/${event.id}`, { headers });
-  if (reread.status() !== 404) throw new Error(`tournament "${tournamentName}" STILL PRESENT after delete (re-read ${reread.status()})`);
-  log(`tournament "${tournamentName}" removed with its field, rounds, scores and tiers (re-read 404)`);
+  for (const slot of slots) {
+    const label = slot.label ?? slot.id;
+    await attempt(log, `test slot "${label}"`, () => removeTestSlot(api, headers, sportLeagueId, slot.id, label, log));
+  }
 }
 
-/** A seeded tour the run switched on goes back off; the tour itself, and its test slots, stay. */
-async function switchTourOff(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun, log: Log) {
-  const list = await expectOk(
-    api.get('/api/v1/sport-leagues', { headers, params: { sport: run.sport } }),
-    'list tours',
-  );
-  const { sportLeagues } = (await list.json()) as { sportLeagues: { id: string; name: string }[] };
-  const tour = sportLeagues.find((candidate) => candidate.name === run.tourName);
-  if (!tour) throw new Error(`tour "${run.tourName}" not found`);
-  await expectOk(api.patch(`/api/v1/sport-leagues/${tour.id}`, { headers, data: { isActive: false } }), 'switch tour off');
-  log(`tour "${run.tourName}" switched off again`);
+/** Every test slot of every Season of a sport league, as its Season list reads them. */
+export async function listTestSlots(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string): Promise<Array<{ id: string; label: string | null }>> {
+  const response = await expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/seasons`, { headers }), 'list Seasons');
+  const { seasons } = (await response.json()) as {
+    seasons: Array<{ phases: Array<{ slots: Array<{ id: string; isTestData: boolean; label: string | null }> }> }>;
+  };
+  return seasons.flatMap((season) => season.phases.flatMap((phase) => phase.slots)).filter((slot) => slot.isTestData);
 }
 
-/** Refused while it still has an event, a contest setup or a participant; its empty series go with it. */
-export async function removeTour(api: APIRequestContext, headers: AuthHeaders, tourId: string, tourName: string, log: Log) {
-  await expectOk(api.delete(`/api/v1/sport-leagues/${tourId}`, { headers }), 'delete tour');
-  const reread = await api.get(`/api/v1/sport-leagues/${tourId}`, { headers });
-  if (reread.status() !== 404) throw new Error(`tour "${tourName}" STILL PRESENT after delete (re-read ${reread.status()})`);
-  log(`tour "${tourName}" removed with its series (re-read 404)`);
+/** Removes a test slot with its event and the test participants no other field holds (#2075). */
+export async function removeTestSlot(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string, slotId: string, label: string, log: Log) {
+  await expectOk(api.delete(`/api/v1/sport-leagues/${sportLeagueId}/test-slots/${slotId}`, { headers }), `delete test slot ${label}`);
+  const remaining = await listTestSlots(api, headers, sportLeagueId);
+  if (remaining.some((slot) => slot.id === slotId)) throw new Error(`test slot "${label}" STILL PRESENT after delete`);
+  log(`test slot "${label}" removed with its event, field and unfielded test participants`);
 }
 
 /**
