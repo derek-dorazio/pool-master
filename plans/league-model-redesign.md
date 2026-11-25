@@ -21,15 +21,17 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SPORT_DATA_PROVIDER_BINDINGS_JSON`, webhook provider list, adapter constants | `Provider` (table) | One row per data provider, with its settings (Derek 2026-11-22). |
 | `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` and other per-league adapter constants | `ProviderLeague` | The provider's own list of leagues: provider, its code, sport, webhook timing. |
 | `SportLeague.eventSyncProviderId`, `matchKeyword` | `SportLeagueProviderMapping` | Links a league to a ProviderLeague; `SportLeague.selectedProviderMapping` picks the one synced. |
-| none | `SportLeaguePhase` | Timeless phase definition: PRESEASON, REGULAR, POSTSEASON. |
-| none | `SportLeaguePhaseSlot` | Timeless slot definition in a phase: WEEK 14, WILD_CARD, FINAL, MASTERS. |
-| none | `SportLeaguePhaseSlotProviderMapping` | How a provider's games match a slot. |
+| none | `SportLeaguePhase` | Timeless phase definition: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON. |
+| none | `SportLeagueCompetition` | A competition within a phase (2026-11-25, slice 6b): REGULAR, CFP, BOWLS, SEC_TOURNAMENT. |
+| `SportLeaguePhaseSlot` (slices 5-13) | `SportLeagueCompetitionSlot` | Timeless slot definition in a competition: WEEK 14, WILD_CARD, FINAL, MASTERS. |
+| `SportLeaguePhaseSlotProviderMapping` | `SportLeagueCompetitionSlotProviderMapping` | How a provider's games match a slot. |
 | none | `SportLeaguePosition` | QB, RB, WR, TE, with field eligibility and a baseline rating. |
 | none | `SportLeaguePositionProviderMapping` | A provider's position codes. |
 | `SportLeague.currentEventYear` | `SportLeagueSeason` | One real Season, with its date span. |
 | none | `SportLeagueSeasonProviderMapping` | A provider's season id. |
-| none | `SportLeagueSeasonPhase` | A phase in one Season. |
-| none | `SportLeagueSeasonPhaseSlot` | A slot in one Season: dates, status, series format. |
+| none | `SportLeagueSeasonPhase` | A phase in one Season, with its status. |
+| none | `SportLeagueSeasonCompetition` | A competition in one Season: status and champion (slice 6b). |
+| `SportLeagueSeasonPhaseSlot` (slices 6-13) | `SportLeagueSeasonCompetitionSlot` | A slot in one Season: dates, status, series format. |
 | team conference/division in `metadata` JSON | `SportLeagueConference`, `SportLeagueConferenceDivision` (+ `…ProviderMapping` each) | A league's conferences (AFC, American League, Big Ten) and their divisions (AFC East); set by migration. |
 | none | `SportLeagueSeasonTeamConference` | One row per Season and team: conference required, division optional, composite FK keeps the division inside the conference. |
 | `Participant.teamAffiliation` | `SportLeagueSeasonParticipantTeam` | Roster row: one per Season and player, with team, position and rating. |
@@ -100,11 +102,26 @@ The current model was built one sport at a time and leans on code to look right:
 ## 1. Definitions (timeless, one set per league, set by migration)
 
 - **SportLeaguePhase**
-  - `phase`: PRESEASON / REGULAR / POSTSEASON. The enum's explicit order is the phase's
-    only order.
+  - `phase`: PRESEASON / REGULAR / POSTSEASON_CONFERENCE / POSTSEASON. The enum's explicit
+    order is the phase's only order. POSTSEASON_CONFERENCE (2026-11-25) holds college
+    conference tournaments and conference title games, so screens and emails can tell them
+    from the national postseason.
   - `isSynced`, non-null. An unsynced phase (NFL PRESEASON) gets no slots, events or
     findings.
-- **SportLeaguePhaseSlot**: a position within a phase, and the strong key everything links on.
+- **SportLeagueCompetition** (Derek 2026-11-25, slice 6b): a phase holds one or more
+  competitions whose dates may overlap. NCAA Men's Football's POSTSEASON holds BOWLS and
+  CFP; its POSTSEASON_CONFERENCE holds CONFERENCE_CHAMPIONSHIPS; men's basketball's holds
+  one `<CONF>_TOURNAMENT` per conference.
+  - `code`: a readable key, unique per league, typed into migrations; nothing builds or
+    parses it. `orderIndex`, unique per phase.
+  - `conferenceId` (slice 21b): optional, allowed only in POSTSEASON_CONFERENCE. When set
+    it labels the competition and only that conference's teams are placed in it.
+  - **No contest crosses competitions**: every slot a template lists sits in one
+    competition. A competition is the unit for brackets, pick'em slates and the bowl slate.
+  - Every phase that existed before 6b got one competition coded like the phase.
+- **SportLeagueCompetitionSlot** (named SportLeaguePhaseSlot until 6b; the only change is
+  its parent, now the competition): a position within a competition, and the strong key
+  everything links on.
   - `key`: a unique code that nothing parses.
   - `slotKind`: an ordered enum (WEEK, PLAY_IN, ROUND_OF_64, ROUND_OF_32, ROUND_OF_16,
     QUARTERFINAL, SEMIFINAL, THIRD_PLACE, FINAL, TOURNAMENT), plus a checked `weekNumber`
@@ -127,7 +144,7 @@ The current model was built one sport at a time and leans on code to look right:
     time zone, which is a column on the league. Games match them by that date rule
     (matchType CALENDAR_WEEK), never by admin-entered dates.
   - Switched-off leagues get their definitions too, so reactivating one needs no new rows.
-- **SportLeaguePhaseSlotProviderMapping**: one row per slot per provider. `matchType` is
+- **SportLeagueCompetitionSlotProviderMapping** (renamed in 6b): one row per slot per provider. `matchType` is
   one of:
   - PROVIDER_CODE: structured phases, set by migration;
   - NAME_PATTERN: open phases;
@@ -156,8 +173,15 @@ The current model was built one sport at a time and leans on code to look right:
     otherwise the last one.
   - This replaces `currentEventYear` and every year fallback. A league's first Season comes
     from the migration that adds the league.
-- **SportLeagueSeasonPhase**: FK to its phase definition.
-- **SportLeagueSeasonPhaseSlot**: FK to its slot definition, plus:
+- **SportLeagueSeasonPhase**: FK to its phase definition, and `status` (SCHEDULED /
+  IN_PROGRESS / COMPLETED) refreshed from its competitions.
+- **SportLeagueSeasonCompetition** (6b): FK to its competition, `status` refreshed from its
+  Season slots, and `championParticipantId`, set from the FINAL Match's winner when it
+  completes (null until then, and always null without a FINAL slot, as for BOWLS and
+  REGULAR). Season rows hold only values derived from the feed, never feed values. The
+  handlers are slice 14's.
+- **SportLeagueSeasonCompetitionSlot** (named SportLeagueSeasonPhaseSlot until 6b): FK to
+  its slot definition and its Season competition, plus:
   - `startsAt`, `endsAt` and `status` (SCHEDULED / IN_PROGRESS / COMPLETED);
   - `seriesFormat`, `seriesGames` and `pairing`, copied from the definition when the
     Season is created, so a later format change never rewrites a past Season.
@@ -1154,6 +1178,9 @@ blockers beyond the slice before it; see §9d for what each slice also carries.
    arrays and `roundNames` removed here.
 12. Sync matching by golf name, with the finding actions. (after 8)
 13. Sync matching by date window and calendar week, all of #1924. (after 8)
+6b. Competitions between phase and slots; slot tables renamed; CFP as a competition (#2153). (after 13)
+13b. NCAA football BOWLS and CONFERENCE_CHAMPIONSHIPS competitions; rest-of-phase placement; bowl templates (#2154). (after 6b)
+13c. College conference tournaments as competitions (#2155). (after 6b, 21b, 14)
 10. Games, GameProviderMapping, webhook routing, moved and re-issued games. (after 8, 9, 13)
 10e. Match sides, Game side results and period scores; pick'em, bracket and squares readers.
 10f. Field row metadata columns and the period count.
@@ -1165,7 +1192,7 @@ blockers beyond the slice before it; see §9d for what each slice also carries.
 10d. F1 adapter: races on FIELD Matches from BALLDONTLIE's F1 API. (after 10b)
 11. EventSeries removed; event page offers and templates point at slots
     (`ContestConfigTemplateSlot`, `coverageMode`); Create contest interim.
-14. Status bubbling (Game, Match, Slot, Event) on the handler map, completion per scoring
+14. Status bubbling (Game, Match, Slot, Event, and Season competition and phase with the champion) on the handler map, completion per scoring
     family, Game overdue, postponement wait, set and cancel slot. (after #1953)
 14b. Release by the next unstarted slot; seeds readiness check.
 15. ContestSeasonSlot replaces ContestSportEvent; Season FK on Contest and Cup;
@@ -1186,7 +1213,7 @@ blockers beyond the slice before it; see §9d for what each slice also carries.
 20f. Cups: definitions, crowning, `CUP_CROWNING` removed.
 21. Rosters and player field rows (closes #1859); trainer column; Teams and Players tabs.
     (after 10c)
-21b. Conferences and divisions.
+21b. Conferences and divisions; a competition's optional conference and its placement filter (after 6b).
 21c. Seeds from the feed; `toMlbSeeds` removed.
 22. Player stats.
 23. Composites and scores; scoring profile section.
