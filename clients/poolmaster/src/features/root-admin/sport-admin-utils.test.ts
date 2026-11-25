@@ -7,6 +7,7 @@ import {
   parseRosterUpload,
   parseGolfRoundScoreUpload,
   golfRoundScoreRows,
+  participantStatusTone,
 } from './sport-admin-utils';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 
@@ -92,6 +93,11 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
     expect(deriveSportEventReadiness({ ...base, status: 'IN_PROGRESS' }).label).toBe('Live');
     expect(deriveSportEventReadiness({ ...base, status: 'COMPLETED' }).label).toBe('Completed');
   });
+
+  it('shows a cancelled or postponed event under its status, as a warning with no setup reasons', () => {
+    expect(deriveSportEventReadiness({ ...base, status: 'CANCELLED', loadedParticipantCount: 0 })).toEqual({ label: 'Cancelled', tone: 'warning', reasons: [] });
+    expect(deriveSportEventReadiness({ ...base, status: 'POSTPONED' })).toEqual({ label: 'Postponed', tone: 'warning', reasons: [] });
+  });
 });
 
 // plans/124 §6.3 Tour Home / §6.4 — league-roster bulk-upload parser.
@@ -132,6 +138,10 @@ describe('pool-master-qqs sport-admin-utils: parseRosterUpload', () => {
 
   it('pool-master-qqs surfaces the format-level empty-input error', () => {
     expect(() => parseRosterUpload('', 'CSV')).toThrow('Paste or upload some rows first.');
+  });
+
+  it('refuses an empty JSON array as having no rows', () => {
+    expect(() => parseRosterUpload('[]', 'JSON')).toThrow('No rows found.');
   });
 });
 
@@ -250,5 +260,19 @@ describe('sport-admin-utils: golfRoundScoreRows (issue 236)', () => {
       fieldEntryFixture({ rounds: [{ ...result(1, 70), golf: null }] }),
     ];
     expect(golfRoundScoreRows(field, 1)).toEqual([]);
+  });
+});
+
+describe('sport-admin-utils: participantStatusTone', () => {
+  it('tones an active participant active, a suspended one as a warning, and any other inactive', () => {
+    expect(participantStatusTone('ACTIVE')).toBe('active');
+    expect(participantStatusTone('SUSPENDED')).toBe('warning');
+    expect(participantStatusTone('INACTIVE')).toBe('inactive');
+  });
+});
+
+describe('sport-admin-utils: parseGolfRoundScoreUpload with no rows', () => {
+  it('refuses an empty JSON array as having no rows', () => {
+    expect(() => parseGolfRoundScoreUpload('[]', 'JSON')).toThrow('No rows found.');
   });
 });
