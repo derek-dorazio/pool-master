@@ -464,15 +464,16 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(templates.every((template) => template.active && template.name.length > 0 && template.description.length > 0)).toBe(true);
   });
 
-  it('lets a signed-out visitor list the sport leagues, each with its sport and the name screens show beside other sports\' leagues', async () => {
+  it('lets a signed-out visitor list the sport leagues, each named with its sport and carrying no second display name', async () => {
     const response = await listSportLeagues({ client: getSdkClient() });
 
     expect(response.response?.status).toBe(200);
     const sportLeagues = expectDefined(response.data).sportLeagues;
     const named = (sport: Sport, name: string) => sportLeagues.find((sportLeague) => sportLeague.sport === sport && sportLeague.name === name);
-    expect(named(Sport.FOOTBALL, 'NFL')?.displayName).toBeNull();
-    expect(named(Sport.BASKETBALL, 'NCAA Women\'s Basketball')?.displayName).toBeNull();
-    expect(named(Sport.HOCKEY, 'NCAA Men\'s Hockey')?.displayName).toBeNull();
+    for (const sportLeague of [named(Sport.FOOTBALL, 'NFL'), named(Sport.BASKETBALL, 'NCAA Women\'s Basketball'), named(Sport.HOCKEY, 'NCAA Men\'s Hockey')]) {
+      expect(sportLeague).toBeDefined();
+      expect(sportLeague).not.toHaveProperty('displayName');
+    }
   });
 
   it('still refuses a signed-out visitor one sport league\'s own read with 401', async () => {

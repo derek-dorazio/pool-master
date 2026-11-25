@@ -362,7 +362,6 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     matchPeriodLayout: null,
     squaresFromRound: null,
     noun: null,
-    displayName: null,
     ...sportPlay(overrides.sport ?? 'GOLF'),
     ...sportFacts(overrides.sport ?? 'GOLF'),
     displayOrder: null,

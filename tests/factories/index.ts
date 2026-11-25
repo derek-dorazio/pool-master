@@ -81,7 +81,6 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     sportId: 'sport-golf',
     name: `Sport League ${id}`,
     urlSegment: `sport-league-${id}`,
-    displayName: null,
     displayOrder: null,
     currentSeasonId: null,
     timeZone: 'UTC',

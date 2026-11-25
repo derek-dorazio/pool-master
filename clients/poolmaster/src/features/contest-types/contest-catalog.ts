@@ -101,7 +101,7 @@ export function buildLeagueContestCatalog(
     const groups = activeSportLeaguesOf(sport, sportLeagues)
       .map((sportLeague) => ({
         sportLeagueId: sportLeague.id,
-        name: sportLeague.displayName ?? sportLeague.name,
+        name: sportLeague.name,
         urlSegment: sportLeague.urlSegment,
         tiles: toTiles(sportLeague.id, offeredIn(sportLeague, templates), sportLeague.selectionTypes),
       }))
@@ -141,7 +141,7 @@ function toFormatTiles(
 /** Sport leagues in their display order, the NFL before NCAA Men's Football; unordered ones after, by name. */
 function bySportLeagueDisplayOrder(left: SportLeagueDto, right: SportLeagueDto) {
   return (left.displayOrder ?? Number.MAX_SAFE_INTEGER) - (right.displayOrder ?? Number.MAX_SAFE_INTEGER)
-    || (left.displayName ?? left.name).localeCompare(right.displayName ?? right.name);
+    || left.name.localeCompare(right.name);
 }
 
 /** A sport's active sport leagues, in display order. */
@@ -178,7 +178,7 @@ export function buildPublicContestCatalog(
     const leagues = activeLeagues
       .map((sportLeague) => ({
         sportLeagueId: sportLeague.id,
-        name: sportLeague.displayName ?? sportLeague.name,
+        name: sportLeague.name,
         urlSegment: sportLeague.urlSegment,
         groups: toFormatTiles(`${sport}/${sportLeague.id}`, offeredIn(sportLeague, sportTemplates), sportLeague.selectionTypes),
       }))
