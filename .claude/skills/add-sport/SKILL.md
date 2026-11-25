@@ -89,10 +89,11 @@ In order:
 
 1. **Enum and reference row.** Add the sport to the `Sport` domain enum and the Prisma enum in
    one migration, and its `sports` reference row (and any contest templates) in the next one,
-   with its stored `url_segment` (`american-football`: what every address names the sport by,
+   with its stored `url_segment` (`football`: what every address names the sport by,
    never built from the code) and its `display_order` (its place wherever sports are listed
-   together, most popular first). Every sport league row gets a `url_segment` too, unique within
-   its sport. Postgres refuses a new enum value inside the transaction that adds it
+   together, most popular first). Every sport league row gets a `url_segment` too: a short
+   code such as `nfl`, `ncaamb` or `f1` that names the league on its own, never a slug of its
+   full name, and unique across every sport. Postgres refuses a new enum value inside the transaction that adds it
    (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Use the
    `model-change` skill. A sport whose presets differ by sport league seeds those leagues in
    the same reference-data migration, and each template finds its league by sport and name
@@ -180,9 +181,9 @@ In order:
    records. Use the `add-frontend-feature` skill.
    The public How to Play page and each league's Contest types page (the commissioner's menu
    of contest types) read the contest templates and sport leagues, so the sport's leagues and
-   formats appear there once their templates exist. A league whose name is shared with another
-   sport's ("NCAA Division I Men") gets a `display_name` in its migration, so its How to Play
-   chip says the sport, and every league gets a `display_order` there, its place among its
+   formats appear there once their templates exist. A league is named for what it is, the
+   sport included ("NCAA Men's Basketball"), never for its postseason; one whose name cannot
+   say the sport gets a `display_name` in its migration, so its How to Play chip says the sport, and every league gets a `display_order` there, its place among its
    sport's leagues (major professional first, then NCAA); a new sport's own place comes from
    its row's `display_order` (step 1), which the web app reads from the API. The hand-written
    parts are the sport's line in `SPORT_BLURBS` and, for a new sport, its photo named by its URL
@@ -321,9 +322,9 @@ down: a lesson that was true mid-series may not be by the end.
   an empty `round_names` array, never null (the column is not null). A new period layout
   (hockey's three periods) is a Postgres enum value too: add it in the enum migration beside the
   sport, and its squares moment labels where the compiler points.
-- **Scenario rows keyed by league name.** Two sports can share a league name ("NCAA Division I
-  Men" plays basketball and hockey), so a functional suite whose test names or tags come from
-  the league name runs two rows under one name. Key them by event name, or name the sport too.
+- **Scenario rows keyed by league name.** A league name is unique only within its sport, so a
+  functional suite whose test names or tags come from the league name can run two rows under
+  one name. Key them by event name, or name the sport too.
 - **ESPN date ranges.** The ESPN scoreboard refuses `dates=<from>-<to>` with a 400 for most
   leagues; fetch one day per URL, at most 20 URLs a run. Each "Fetch sport sources" run
   replaces the folder the last one wrote, so copy what you need before the next run.

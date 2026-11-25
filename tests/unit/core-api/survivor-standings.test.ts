@@ -19,7 +19,7 @@ import {
 const NOW = new Date('2026-09-20T00:00:00.000Z');
 
 function week(id: string, startDate: Date, overrides: Partial<SportEvent> = {}): SportEvent {
-  return { id, name: id, startDate, status: SportEventStatus.SCHEDULED, rounds: null, sport: 'AMERICAN_FOOTBALL', ...overrides } as SportEvent;
+  return { id, name: id, startDate, status: SportEventStatus.SCHEDULED, rounds: null, sport: 'FOOTBALL', ...overrides } as SportEvent;
 }
 
 function game(id: string, sportEventId: string, roundNumber = 1): SportEventRoundMatch {

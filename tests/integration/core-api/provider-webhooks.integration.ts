@@ -77,15 +77,15 @@ async function queuedSyncs() {
 
 describe('BALLDONTLIE webhook receiver', () => {
   it('queues one live-score sync, a minute out, of the in-progress event whose match is linked to the ended game, and a reconciling one ten minutes out, both recorded as started by the webhook', async () => {
-    const week = await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-postseason' });
+    const week = await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-postseason' });
 
     const response = await post(signedBalldontlieDelivery(PAYLOADS.nflGameEnded));
 
     expect(response.statusCode).toBe(200);
     expectMatchesSchema(SuccessResponseSchema, response.json());
     const syncs = await queuedSyncs();
-    const payload = { sport: Sport.AMERICAN_FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11', sportEventId: week.id };
+    const payload = { sport: Sport.FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11', sportEventId: week.id };
     expect(syncs).toEqual([
       expect.objectContaining({ payload, dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
       expect.objectContaining({ payload, dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
@@ -98,12 +98,12 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('syncs every in-progress event of the league while no match is linked to the game yet', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11' });
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-postseason' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-postseason' });
     // Another league's live event, and the league's own event not yet started, are not the game's.
     await linkedEvent({ sport: Sport.SOCCER, providerLeagueCode: 'epl', externalId: 'epl-2026-matchweek-11' });
     await linkedEvent({
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       providerLeagueCode: 'nfl',
       externalId: 'nfl-2026-week-12',
       status: SportEventStatus.SCHEDULED,
@@ -146,7 +146,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('shares one waiting sync among a burst of notifications and a duplicate delivery of the same one, the game\'s end adding its one reconciling sync', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
     const delivery = signedBalldontlieDelivery(PAYLOADS.nflGamePeriodEnded);
 
     const answers = [
@@ -165,7 +165,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   it('syncs an event still SCHEDULED past its start when its game starts, six minutes out once the lifecycle sweep has moved it, and records the notification on it', async () => {
     const started = new Date(Date.now() - 2 * 60_000);
     await linkedEvent({
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       providerLeagueCode: 'nfl',
       externalId: 'nfl-2026-week-11',
       status: SportEventStatus.SCHEDULED,
@@ -174,7 +174,7 @@ describe('BALLDONTLIE webhook receiver', () => {
       gameId: '424095',
     });
     // Its admin holds this one's status by hand, so the lifecycle never moves it.
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11-held', status: SportEventStatus.SCHEDULED, startDate: started });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11-held', status: SportEventStatus.SCHEDULED, startDate: started });
 
     const before = Date.now();
     expect((await post(signedBalldontlieDelivery(PAYLOADS.nflGameStarted))).statusCode).toBe(200);
@@ -205,7 +205,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('acknowledges a notification about nothing linked, or of a kind it does not act on, and queues nothing', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
 
     const answers = [
       await post(signedBalldontlieDelivery(PAYLOADS.pgaTournamentStarted)),
@@ -221,7 +221,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('refuses with 403, queueing nothing, a delivery signed with another secret, one signed too long ago, and one with no signature', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
     const unsigned = signedBalldontlieDelivery(PAYLOADS.nflGameEnded);
     const headersWithoutSignature = Object.fromEntries(Object.entries(unsigned.headers)
       .filter(([name]) => name !== 'x-bdl-webhook-signature'));

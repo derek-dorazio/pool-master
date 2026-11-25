@@ -11,7 +11,7 @@ Three kinds of picture, each made a different way and each committed as a file:
 
 | Picture | Where it lives | How it is made | What checks it |
 |---|---|---|---|
-| Sport photo | `clients/poolmaster/public/email/sports/<sport URL segment>.jpg` (the sport row's stored `urlSegment`, such as `american-football`), 1200 by 480, with `<sport URL segment>.source.md` beside it | A licensed photo, checked and cropped by hand | `email-illustrations.test.ts`: every photo has its source note |
+| Sport photo | `clients/poolmaster/public/email/sports/<sport URL segment>.jpg` (the sport row's stored `urlSegment`, such as `football`), 1200 by 480, with `<sport URL segment>.source.md` beside it | A licensed photo, checked and cropped by hand | `email-illustrations.test.ts`: every photo has its source note |
 | Contest type picture | `clients/poolmaster/public/email/formats/`; sports are never drawn, a new sport arrives with its photo | `scripts/render-email-images.mjs` draws the How to Play illustrations | The same test, against `public/email/drawn.json`: a changed illustration not redrawn fails |
 | Link preview image | `clients/poolmaster/public/og/<sport URL segment>-<page URL segment>.jpg`, 1200 by 630 | `scripts/render-link-preview-images.mjs` draws each event page's tile from its copy | `link-preview.test.ts`: every event page with copy has an image |
 

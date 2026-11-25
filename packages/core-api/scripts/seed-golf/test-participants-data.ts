@@ -28,8 +28,7 @@ export function refuseUnlessTestTarget(environment: string, what: string): void 
 
 /**
  * A league code from the sport and the sport league's name: stable across runs, unique per
- * sport league. The sport is part of it because two sports can each have a league of the same
- * name (college basketball and college hockey both have "NCAA Division I Men").
+ * sport league. The sport is part of it because a league name is unique only within its sport.
  */
 export function testLeagueCode(sport: Sport, sportLeagueName: string): string {
   const letters = sportLeagueName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);

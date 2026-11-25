@@ -353,8 +353,8 @@ Test a contest on either as for the NFL seed above. Running a file again tops it
 ## Seeded March Madness
 
 `basketball-2026-ncaa-tournaments-test.json` is a test seed of the 2026 NCAA Division I men's and
-women's tournaments as they went, one event each in the `NCAA Division I Men` and `NCAA Division I
-Women` sport leagues that the migrations create. Each is six rounds of 63 games over 64 places,
+women's tournaments as they went, one event each in the `NCAA Men's Basketball` and `NCAA Women's
+Basketball` sport leagues that the migrations create. Each is six rounds of 63 games over 64 places,
 seeded 1 to 16 in four regions (East, South, West and Midwest for the men; Fort Worth 1 and 3 and
 Sacramento 2 and 4 for the women). Seeds, pairings, tip-offs and scores are real; the odds are made
 up by seed. Load it with `mode` `apply` like any file. Because its envelope says `testData`:

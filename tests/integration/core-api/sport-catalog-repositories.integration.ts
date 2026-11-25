@@ -84,7 +84,7 @@ describe('Sport and SportLeague repositories', () => {
     // stored display order (most popular first), not the database enum's declaration order.
     const allSports = await sports.findAll();
     expect(allSports.map((row) => [row.sport, row.urlSegment, row.displayOrder])).toEqual([
-      [Sport.AMERICAN_FOOTBALL, 'american-football', 0],
+      [Sport.FOOTBALL, 'football', 0],
       [Sport.BASKETBALL, 'basketball', 1],
       [Sport.BASEBALL, 'baseball', 2],
       [Sport.HOCKEY, 'hockey', 3],
@@ -99,14 +99,44 @@ describe('Sport and SportLeague repositories', () => {
     expect(allSports.find((row) => row.sport === Sport.GOLF)?.id).toBe(golf.id);
   });
 
+  // League model 3d (#2143): a league's address is a short code that names it on its own, never a
+  // slug of its full name, so no two leagues share one, even in different sports.
+  it('seeds every sport league with its short URL segment, none shared by two leagues of any sport', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({ select: { urlSegment: true, sport: { select: { sport: true } } } });
+    const segments = leagues.map((league) => league.urlSegment);
+
+    expect(leagues.map((league) => `${league.sport.sport}/${league.urlSegment}`).sort()).toEqual([
+      'AUTO_RACING/f1', 'AUTO_RACING/indycar', 'AUTO_RACING/nascar',
+      'BASEBALL/mlb',
+      'BASKETBALL/nba', 'BASKETBALL/ncaamb', 'BASKETBALL/ncaawb', 'BASKETBALL/wnba',
+      'CYCLING/uci-men', 'CYCLING/uci-women',
+      'FOOTBALL/ncaamf', 'FOOTBALL/nfl',
+      'GOLF/lpga', 'GOLF/pga',
+      'HOCKEY/ncaamh', 'HOCKEY/ncaawh', 'HOCKEY/nhl', 'HOCKEY/pwhl',
+      'HORSE_RACING/thoroughbred',
+      'RUNNING/marathon-men', 'RUNNING/marathon-women',
+      'SOCCER/copa-america', 'SOCCER/epl', 'SOCCER/euro', 'SOCCER/mls', 'SOCCER/ncaams', 'SOCCER/ncaaws', 'SOCCER/nwsl', 'SOCCER/ucl', 'SOCCER/womens-world-cup', 'SOCCER/world-cup',
+      'TENNIS/atp', 'TENNIS/ncaamt', 'TENNIS/ncaawt', 'TENNIS/wta',
+    ]);
+    expect(new Set(segments).size).toBe(segments.length);
+  });
+
+  it('refuses a sport league whose segment another sport\'s league already has', async () => {
+    const hockey = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.HOCKEY }, select: { id: true } });
+
+    await expect(getPrisma().sportLeague.create({
+      data: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.HOCKEY), sportId: hockey.id, name: 'Segment clash', timeZone: 'UTC', urlSegment: 'nba' },
+    })).rejects.toThrow(/Unique constraint failed on the fields: \(`url_segment`\)/);
+  });
+
   // #715 renamed KNOCKOUT_BRACKET to MATCHES in place, so the sports rows seeded with it carry the new value.
-  it('stores each seeded sport\'s tournament format as its sport definition gives it, basketball, American football, hockey, baseball, soccer and tennis as MATCHES', async () => {
+  it('stores each seeded sport\'s tournament format as its sport definition gives it, basketball, football, hockey, baseball, soccer and tennis as MATCHES', async () => {
     const sports = await new PrismaSportRepository(getAppPrisma()).findAll();
 
     expect(sports.map((row) => [row.sport, row.tournamentFormat]))
       .toEqual(sports.map((row) => [row.sport, getSportDefinition(row.sport).tournamentFormat]));
     expect(sports.filter((row) => row.tournamentFormat === TournamentFormat.MATCHES).map((row) => row.sport).sort())
-      .toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASEBALL, Sport.BASKETBALL, Sport.HOCKEY, Sport.SOCCER, Sport.TENNIS]);
+      .toEqual([Sport.BASEBALL, Sport.BASKETBALL, Sport.FOOTBALL, Sport.HOCKEY, Sport.SOCCER, Sport.TENNIS]);
   });
 
   // #2083: no API adds a sport league, so the migrations that seed them are checked against the
@@ -137,10 +167,10 @@ describe('Sport and SportLeague repositories', () => {
 
   it.each([
     [Sport.GOLF, 'PGA TOUR', 'pga'],
-    [Sport.AMERICAN_FOOTBALL, 'NFL', 'nfl'],
-    [Sport.AMERICAN_FOOTBALL, 'College Football Playoff', 'ncaaf'],
-    [Sport.BASKETBALL, 'NCAA Division I Men', 'ncaab'],
-    [Sport.BASKETBALL, 'NCAA Division I Women', 'ncaaw'],
+    [Sport.FOOTBALL, 'NFL', 'nfl'],
+    [Sport.FOOTBALL, 'NCAA Men\'s Football', 'ncaaf'],
+    [Sport.BASKETBALL, 'NCAA Men\'s Basketball', 'ncaab'],
+    [Sport.BASKETBALL, 'NCAA Women\'s Basketball', 'ncaaw'],
     [Sport.BASKETBALL, 'NBA', 'nba'],
     [Sport.BASKETBALL, 'WNBA', 'wnba'],
     [Sport.HOCKEY, 'NHL', 'nhl'],
@@ -152,9 +182,9 @@ describe('Sport and SportLeague repositories', () => {
   });
 
   it('maps no league of another sport that shares a mapped league\'s name, nor a Clutch Card league', async () => {
-    await expect(mappedCodeOf(Sport.HOCKEY, 'NCAA Division I Men')).resolves.toEqual([]);
-    await expect(mappedCodeOf(Sport.SOCCER, 'NCAA Division I Women')).resolves.toEqual([]);
-    await expect(mappedCodeOf(Sport.AMERICAN_FOOTBALL, 'CFP Semifinals')).resolves.toEqual([]);
+    await expect(mappedCodeOf(Sport.HOCKEY, 'NCAA Men\'s Hockey')).resolves.toEqual([]);
+    await expect(mappedCodeOf(Sport.SOCCER, 'NCAA Women\'s Soccer')).resolves.toEqual([]);
+    await expect(mappedCodeOf(Sport.FOOTBALL, 'CFP Semifinals')).resolves.toEqual([]);
     await expect(mappedCodeOf(Sport.BASKETBALL, 'NBA Finals')).resolves.toEqual([]);
   });
 
@@ -311,7 +341,7 @@ describe('SportEventRepository — sport league and Season', () => {
   });
 
   it('says a sport league has a loaded bracket when any of its events, in any year, has a match, and not when none has', async () => {
-    const [nfl, cfp, empty] = [await tour('NFL'), await tour('College Football Playoff'), await tour('Empty League')];
+    const [nfl, cfp, empty] = [await tour('NFL'), await tour('NCAA Men\'s Football'), await tour('Empty League')];
     await edition(nfl.id, 2026, 'nfl-2026');
     const played = await edition(nfl.id, 2025, 'nfl-2025');
     await edition(cfp.id, 2026, 'cfp-2026');

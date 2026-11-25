@@ -310,7 +310,7 @@ export function planGroupFixture(): Extract<SettingsGroup, { key: 'PLAN_CONFIG' 
 
 /** Every sport as `listSports` answers, in display order, each with its stored URL segment. */
 export const SPORTS_FIXTURE: SportDto[] = ([
-  ['AMERICAN_FOOTBALL', 'american-football', 'TEAM', 'MATCHES'],
+  ['FOOTBALL', 'football', 'TEAM', 'MATCHES'],
   ['BASKETBALL', 'basketball', 'TEAM', 'MATCHES'],
   ['BASEBALL', 'baseball', 'TEAM', 'MATCHES'],
   ['HOCKEY', 'hockey', 'TEAM', 'MATCHES'],

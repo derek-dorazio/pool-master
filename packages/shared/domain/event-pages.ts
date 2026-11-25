@@ -9,14 +9,14 @@ import type { Sport } from './enums';
 /** Where an event page lives: its sport and both stored URL segments (#2042). */
 export interface EventPageAddress {
   sport: Sport;
-  /** The sport's stored URL segment: `american-football`. */
+  /** The sport's stored URL segment: `football`. */
   sportUrlSegment: string;
   /** The page's stored URL segment within its sport: `championship-weekend`. */
   urlSegment: string;
 }
 
 /**
- * An event page's address: `/play/american-football/championship-weekend`, from the two stored
+ * An event page's address: `/play/football/championship-weekend`, from the two stored
  * segments, never from names or codes. The API returns it on each page, and emails link to it.
  */
 export function buildEventPagePath(address: Pick<EventPageAddress, 'sportUrlSegment' | 'urlSegment'>): string {

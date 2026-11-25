@@ -7925,9 +7925,9 @@ export type SportDto = {
     /**
      * The sport.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given.
+     * The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given.
      */
     urlSegment: string;
     /**
@@ -7963,9 +7963,9 @@ export type SportListResponse = {
         /**
          * The sport.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given.
+         * The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given.
          */
         urlSegment: string;
         /**
@@ -8036,7 +8036,7 @@ export type SportLeagueDto = {
     /**
      * The sport this sport league belongs to, as the sport enum.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
      */
@@ -8046,7 +8046,7 @@ export type SportLeagueDto = {
      */
     sportDisplayOrder: number;
     /**
-     * Its sport's name, such as "American football", as screens title the sport (#2107).
+     * Its sport's name, such as "Football", as screens title the sport (#2107).
      */
     sportName: string;
     /**
@@ -8139,7 +8139,7 @@ export type SportLeagueDto = {
      */
     noun: 'LEAGUE' | null;
     /**
-     * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+     * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
      */
     displayName: string | null;
     /**
@@ -8179,7 +8179,7 @@ export type SportLeagueListQuery = {
     /**
      * Only sport leagues of this sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Only active, or only inactive, sport leagues.
      */
@@ -8215,7 +8215,7 @@ export type SportLeagueListResponse = {
         /**
          * The sport this sport league belongs to, as the sport enum.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
          */
@@ -8225,7 +8225,7 @@ export type SportLeagueListResponse = {
          */
         sportDisplayOrder: number;
         /**
-         * Its sport's name, such as "American football", as screens title the sport (#2107).
+         * Its sport's name, such as "Football", as screens title the sport (#2107).
          */
         sportName: string;
         /**
@@ -8318,7 +8318,7 @@ export type SportLeagueListResponse = {
          */
         noun: 'LEAGUE' | null;
         /**
-         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
          */
         displayName: string | null;
         /**
@@ -8371,7 +8371,7 @@ export type SportLeagueResponse = {
         /**
          * The sport this sport league belongs to, as the sport enum.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
          */
@@ -8381,7 +8381,7 @@ export type SportLeagueResponse = {
          */
         sportDisplayOrder: number;
         /**
-         * Its sport's name, such as "American football", as screens title the sport (#2107).
+         * Its sport's name, such as "Football", as screens title the sport (#2107).
          */
         sportName: string;
         /**
@@ -8474,7 +8474,7 @@ export type SportLeagueResponse = {
          */
         noun: 'LEAGUE' | null;
         /**
-         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
          */
         displayName: string | null;
         /**
@@ -8541,7 +8541,7 @@ export type UpdateSportLeagueRequest = {
  */
 export type SportLeagueOverviewDto = {
     id: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by.
      */
@@ -8726,7 +8726,7 @@ export type SportLeagueOverviewListResponse = {
      */
     sportLeagues: Array<{
         id: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by.
          */
@@ -11165,7 +11165,7 @@ export type SportEventDto = {
     /**
      * Sport the event belongs to.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
      */
@@ -11548,7 +11548,7 @@ export type SportEventListQuery = {
     /**
      * Only events of this sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
      */
@@ -11603,7 +11603,7 @@ export type SportEventListResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
          */
@@ -12016,7 +12016,7 @@ export type SportEventResponse = {
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
          */
@@ -14432,7 +14432,7 @@ export type ContestDto = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     }>;
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
      */
@@ -14852,7 +14852,7 @@ export type ContestLeaderboardResponse = {
     /**
      * Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Who competes in the shown event, from its sport league. A client reads the event's definition from the sport and these two.
      */
@@ -15329,7 +15329,7 @@ export type ContestResponse = {
              */
             scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         }>;
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
          */
@@ -15430,7 +15430,7 @@ export type ContestListResponse = {
              */
             scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         }>;
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
          */
@@ -24682,13 +24682,13 @@ export type EventPageDto = {
     /**
      * The sport the page belongs to.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * The sport's name, such as "American football", as the page titles it (#2107).
+     * The sport's name, such as "Football", as the page titles it (#2107).
      */
     sportName: string;
     /**
-     * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
+     * The sport's stored URL segment, such as football: the first segment of the page's web address.
      */
     sportUrlSegment: string;
     /**
@@ -24714,13 +24714,13 @@ export type EventPageDto = {
         /**
          * The sport the page belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The sport's name, such as "American football", as the page titles it (#2107).
+         * The sport's name, such as "Football", as the page titles it (#2107).
          */
         sportName: string;
         /**
-         * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
+         * The sport's stored URL segment, such as football: the first segment of the page's web address.
          */
         sportUrlSegment: string;
         /**
@@ -25326,13 +25326,13 @@ export type EventPageResponse = {
         /**
          * The sport the page belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The sport's name, such as "American football", as the page titles it (#2107).
+         * The sport's name, such as "Football", as the page titles it (#2107).
          */
         sportName: string;
         /**
-         * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
+         * The sport's stored URL segment, such as football: the first segment of the page's web address.
          */
         sportUrlSegment: string;
         /**
@@ -25358,13 +25358,13 @@ export type EventPageResponse = {
             /**
              * The sport the page belongs to.
              */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
-             * The sport's name, such as "American football", as the page titles it (#2107).
+             * The sport's name, such as "Football", as the page titles it (#2107).
              */
             sportName: string;
             /**
-             * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
+             * The sport's stored URL segment, such as football: the first segment of the page's web address.
              */
             sportUrlSegment: string;
             /**
@@ -25966,7 +25966,7 @@ export type EventPageListQuery = {
     /**
      * Only this sport's pages. Omitted: every sport's.
      */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
      */
@@ -25985,13 +25985,13 @@ export type EventPageListResponse = {
         /**
          * The sport the page belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The sport's name, such as "American football", as the page titles it (#2107).
+         * The sport's name, such as "Football", as the page titles it (#2107).
          */
         sportName: string;
         /**
-         * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
+         * The sport's stored URL segment, such as football: the first segment of the page's web address.
          */
         sportUrlSegment: string;
         /**
@@ -26017,13 +26017,13 @@ export type EventPageListResponse = {
             /**
              * The sport the page belongs to.
              */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
-             * The sport's name, such as "American football", as the page titles it (#2107).
+             * The sport's name, such as "Football", as the page titles it (#2107).
              */
             sportName: string;
             /**
-             * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
+             * The sport's stored URL segment, such as football: the first segment of the page's web address.
              */
             sportUrlSegment: string;
             /**
@@ -28557,7 +28557,7 @@ export type ProviderLeagueDto = {
     /**
      * The sport the league plays.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Which of the provider's webhook events the league sends for its games.
      */
@@ -28643,7 +28643,7 @@ export type ProviderSettingsDto = {
         /**
          * The sport the league plays.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Which of the provider's webhook events the league sends for its games.
          */
@@ -28774,7 +28774,7 @@ export type ProviderSummaryDto = {
             /**
              * The sport the league plays.
              */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
              * Which of the provider's webhook events the league sends for its games.
              */
@@ -28885,7 +28885,7 @@ export type ProviderSettingsResponse = {
             /**
              * The sport the league plays.
              */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
              * Which of the provider's webhook events the league sends for its games.
              */
@@ -28938,7 +28938,7 @@ export type ProviderLeagueResponse = {
         /**
          * The sport the league plays.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Which of the provider's webhook events the league sends for its games.
          */
@@ -29115,7 +29115,7 @@ export type ProviderListResponse = {
                 /**
                  * The sport the league plays.
                  */
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
                 /**
                  * Which of the provider's webhook events the league sends for its games.
                  */
@@ -29197,7 +29197,7 @@ export type ProviderSyncRunDto = {
     /**
      * The run's sport, its sport league's; null for a run with no sport league.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
@@ -29271,7 +29271,7 @@ export type ProviderSyncRunDetailDto = {
     /**
      * The run's sport, its sport league's; null for a run with no sport league.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
@@ -29365,7 +29365,7 @@ export type ProviderSyncRunDetailDto = {
              * Provider that executed the ingestion job.
              */
             providerId: string;
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
              * External event id for event-scoped jobs, when applicable.
              */
@@ -29495,7 +29495,7 @@ export type ProviderSyncRunListQuery = {
     /**
      * Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
      * Earliest submission time to include. Defaults to 6 hours before `to`.
@@ -29524,7 +29524,7 @@ export type ProviderSyncRunListResponse = {
         /**
          * The run's sport, its sport league's; null for a run with no sport league.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
@@ -29587,7 +29587,7 @@ export type ProviderSyncRunListResponse = {
  * A manual sync submission. The runs execute asynchronously after the request is accepted.
  */
 export type ProviderManualSyncSubmissionResponse = {
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Provider event identifier the submitted runs sync.
      */
@@ -29610,7 +29610,7 @@ export type ProviderManualSyncSubmissionResponse = {
         /**
          * The run's sport, its sport league's; null for a run with no sport league.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
@@ -30039,7 +30039,7 @@ export type ProviderSyncFindingDto = {
     sportLeague: {
         id: string;
         name: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     };
     /**
      * The event it is about; null when its kind names none.
@@ -30192,7 +30192,7 @@ export type ProviderSyncFindingListResponse = {
         sportLeague: {
             id: string;
             name: string;
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         };
         /**
          * The event it is about; null when its kind names none.
@@ -30280,7 +30280,7 @@ export type ProviderSyncFindingResponse = {
         sportLeague: {
             id: string;
             name: string;
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         };
         /**
          * The event it is about; null when its kind names none.
@@ -35069,7 +35069,7 @@ export type ListEventsData = {
         /**
          * Only events of this sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
          */
@@ -36677,7 +36677,7 @@ export type ListSportLeaguesData = {
         /**
          * Only sport leagues of this sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Only active, or only inactive, sport leagues.
          */
@@ -37689,7 +37689,7 @@ export type ListEventPagesData = {
         /**
          * Only this sport's pages. Omitted: every sport's.
          */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
          */
@@ -37711,7 +37711,7 @@ export type GetEventPageData = {
     body?: never;
     path: {
         /**
-         * The page's sport, by the sport's stored URL segment, such as american-football: the first segment of the page's web address.
+         * The page's sport, by the sport's stored URL segment, such as football: the first segment of the page's web address.
          */
         sportUrlSegment: string;
         /**
@@ -38581,7 +38581,7 @@ export type ListProviderSyncRunsData = {
         /**
          * Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**
          * Earliest submission time to include. Defaults to 6 hours before `to`.

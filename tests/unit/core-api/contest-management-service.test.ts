@@ -2390,7 +2390,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const reader = createSportEventReader({
-      sport: options.sport ?? Sport.AMERICAN_FOOTBALL,
+      sport: options.sport ?? Sport.FOOTBALL,
       tournamentFormat: options.tournamentFormat ?? TournamentFormat.MATCHES,
       rounds: options.rounds ?? 4,
       gameCount: options.gameCount,
@@ -2874,7 +2874,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   ) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const reader = createSportEventReader({ sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
+    const reader = createSportEventReader({ sport: Sport.FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
     reader.findGame.mockImplementation(async (sportEventId: string, sportEventRoundMatchId: string) =>
       sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
     const service = new ContestManagementService({

@@ -24,7 +24,7 @@ export const SPORT_DEFINITIONS: Readonly<Record<Sport, SportDefinition>> = {
   [Sport.CYCLING]: cyclingSportDefinition,
   [Sport.RUNNING]: runningSportDefinition,
   [Sport.BASKETBALL]: basketballSportDefinition,
-  [Sport.AMERICAN_FOOTBALL]: americanFootballSportDefinition,
+  [Sport.FOOTBALL]: americanFootballSportDefinition,
   [Sport.HOCKEY]: hockeySportDefinition,
   [Sport.BASEBALL]: baseballSportDefinition,
   [Sport.SOCCER]: soccerSportDefinition,

@@ -46,7 +46,7 @@ function removeScalingPages() {
  */
 async function championshipWeekendOffers() {
   const offers = await getPrisma().eventPageOffer.findMany({
-    where: { eventPage: { sport: Sport.AMERICAN_FOOTBALL, urlSegment: 'championship-weekend' } },
+    where: { eventPage: { sport: Sport.FOOTBALL, urlSegment: 'championship-weekend' } },
     include: { template: { select: { selectionType: true } } },
   });
   return [SelectionType.SQUARES, SelectionType.BRACKET].map((selectionType) => {
@@ -65,10 +65,10 @@ async function championshipWeekendOffers() {
 async function seedPage(offers: number, displayOrder: number, first = 0) {
   const prisma = getPrisma();
   const kinds = await championshipWeekendOffers();
-  const football = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.AMERICAN_FOOTBALL } });
+  const football = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.FOOTBALL } });
   const suffix = randomUUID().slice(0, 8);
   const page = await prisma.eventPage.create({
-    data: { sport: Sport.AMERICAN_FOOTBALL, urlSegment: `${URL_SEGMENT_PREFIX}-${suffix}`, displayOrder },
+    data: { sport: Sport.FOOTBALL, urlSegment: `${URL_SEGMENT_PREFIX}-${suffix}`, displayOrder },
   });
   const startDate = new Date(Date.now() + 30 * DAY);
   for (let sortOrder = 1; sortOrder <= offers; sortOrder += 1) {
@@ -122,7 +122,7 @@ describe('event pages cost the same statements for 2 offers as for 20', () => {
         for (let index = 0; index < pages; index += 1) await seedPage(1, 1000 + index, index);
         return createTestUser();
       },
-      call: (viewer) => get(`/api/v1/event-pages/?sport=${Sport.AMERICAN_FOOTBALL}`, viewer),
+      call: (viewer) => get(`/api/v1/event-pages/?sport=${Sport.FOOTBALL}`, viewer),
       rowsShown: (response) => okBody(response, EventPageListResponseSchema).eventPages
         .filter((page) => page.urlSegment.startsWith(URL_SEGMENT_PREFIX) && page.offers.length === 1).length,
     });
@@ -132,7 +132,7 @@ describe('event pages cost the same statements for 2 offers as for 20', () => {
     await expectConstantQueries({
       route: 'GET /api/v1/event-pages/{sportUrlSegment}/{urlSegment}',
       seed: async (offers) => ({ page: await seedPage(offers, 1000), viewer: await createTestUser() }),
-      call: ({ page, viewer }) => get(`/api/v1/event-pages/american-football/${page.urlSegment}`, viewer),
+      call: ({ page, viewer }) => get(`/api/v1/event-pages/football/${page.urlSegment}`, viewer),
       rowsShown: (response) => okBody(response, EventPageResponseSchema).eventPage.offers.length,
     });
   });

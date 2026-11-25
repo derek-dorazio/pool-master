@@ -1359,7 +1359,7 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const registry = registryWith(polled, notified);
     const config = options.config ?? adminConfig;
     const logger = fakeLogger();
-    const eventReader = { ...readerOf({ sports: [Sport.GOLF, Sport.AMERICAN_FOOTBALL] }), listLiveScoreEvents: jest.fn(async () => live) };
+    const eventReader = { ...readerOf({ sports: [Sport.GOLF, Sport.FOOTBALL] }), listLiveScoreEvents: jest.fn(async () => live) };
     const scheduler = new IngestionScheduler(registry, createMockCallbacks(), logger, {
       configReader: { getConfig: jest.fn().mockResolvedValue(config) },
       eventReader,
@@ -1400,7 +1400,7 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const events = [event('balldontlie', 'nfl-week-11', { playUnderwaySince: T0, lastProviderNotificationAt: T0 }), event('mock-contest-feed', 'mock-week-11')];
 
     for (let minute = 0; minute <= 30; minute += 1) {
-      await sweepAt(Sport.AMERICAN_FOOTBALL, minute, events);
+      await sweepAt(Sport.FOOTBALL, minute, events);
     }
 
     expect(pollsOf(notified, 'nfl-week-11')).toBe(3); // 0, 15, 30
@@ -1427,8 +1427,8 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const { sweepAt, pollsOf, notified } = paced();
     const events = [event('balldontlie', 'nfl-week-11')];
 
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, events);
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 15 - 4 / 60, events);
+    await sweepAt(Sport.FOOTBALL, 0, events);
+    await sweepAt(Sport.FOOTBALL, 15 - 4 / 60, events);
 
     expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
   });
@@ -1437,9 +1437,9 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const { sweepAt, pollsOf, notified } = paced();
     const events = [event('balldontlie', 'nfl-week-11')];
 
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, events);
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, []);
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 2, events);
+    await sweepAt(Sport.FOOTBALL, 0, events);
+    await sweepAt(Sport.FOOTBALL, 1, []);
+    await sweepAt(Sport.FOOTBALL, 2, events);
 
     expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
   });
@@ -1451,14 +1451,14 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
       lastProviderNotificationAt: new Date(T0.getTime() - 25 * MINUTE),
     });
 
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, [quiet]);
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, [quiet]);
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 19, [quiet]);
+    await sweepAt(Sport.FOOTBALL, 0, [quiet]);
+    await sweepAt(Sport.FOOTBALL, 1, [quiet]);
+    await sweepAt(Sport.FOOTBALL, 19, [quiet]);
     expect(quietWarnings()).toHaveLength(1);
     expect(quietWarnings()[0]?.[0]).toEqual({
       action: 'ingestion.providerNotifications.quiet',
       data: {
-        sport: Sport.AMERICAN_FOOTBALL,
+        sport: Sport.FOOTBALL,
         providerId: 'balldontlie',
         eventId: 'nfl-week-11',
         playUnderwaySince: new Date(T0.getTime() - 60 * MINUTE).toISOString(),
@@ -1467,7 +1467,7 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
       },
     });
 
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 20, [quiet]);
+    await sweepAt(Sport.FOOTBALL, 20, [quiet]);
     expect(quietWarnings()).toHaveLength(2);
   });
 
@@ -1496,7 +1496,7 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const { sweepAt, quietWarnings } = paced();
     const longAgo = new Date(T0.getTime() - 120 * MINUTE);
 
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, [
+    await sweepAt(Sport.FOOTBALL, 0, [
       event('balldontlie', 'between-games', { lastProviderNotificationAt: longAgo }),
       event('balldontlie', 'recently-heard', { playUnderwaySince: longAgo, lastProviderNotificationAt: new Date(T0.getTime() - 5 * MINUTE) }),
       event('mock-contest-feed', 'polled-only', { playUnderwaySince: longAgo }),
@@ -1509,8 +1509,8 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const { sweepAt, pollsOf, quietWarnings, notified } = paced({ cadence: undefined });
     const quiet = event('balldontlie', 'nfl-week-11', { playUnderwaySince: new Date(T0.getTime() - 60 * MINUTE) });
 
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, [quiet]);
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, [quiet]);
+    await sweepAt(Sport.FOOTBALL, 0, [quiet]);
+    await sweepAt(Sport.FOOTBALL, 1, [quiet]);
 
     expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
     expect(quietWarnings()).toHaveLength(0);
@@ -1520,9 +1520,9 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     const { scheduler, sweepAt, pollsOf, notified } = paced();
     const events = [event('balldontlie', 'nfl-week-11')];
 
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 0, events);
+    await sweepAt(Sport.FOOTBALL, 0, events);
     scheduler.stop();
-    await sweepAt(Sport.AMERICAN_FOOTBALL, 1, events);
+    await sweepAt(Sport.FOOTBALL, 1, events);
 
     expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
   });

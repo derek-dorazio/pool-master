@@ -16,14 +16,14 @@ const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisi
  * a bye; a bye scores nothing. Its tier profile is seven tiers of two (#1844), assigned like any
  * sport's from odds or ranking.
  *
- * The College Football Playoff is a second sport league (#707): a fixed bracket of 12 teams in
- * four rounds, the top four seeds on byes into the quarterfinals. It names its own rounds and
+ * NCAA Men's Football is a second sport league (#707). Its College Football Playoff is a fixed
+ * bracket of 12 teams in four rounds, the top four seeds on byes into the quarterfinals. It names its own rounds and
  * names a tier profile of six tiers of two (`SportLeague.roundNames`, `SportLeague.platformTierProfileId`),
  * so the names below are the NFL's.
  */
 export const americanFootballSportDefinition: SportDefinition = {
-  sport: Sport.AMERICAN_FOOTBALL,
-  name: 'American football',
+  sport: Sport.FOOTBALL,
+  name: 'Football',
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],

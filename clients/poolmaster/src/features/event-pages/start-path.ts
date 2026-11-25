@@ -23,7 +23,7 @@ function startQuery({ sportUrlSegment, urlSegment, templateId }: StartRequest): 
   return query.toString();
 }
 
-/** `/start?sport=american-football&page=championship-weekend&template=<id>`. */
+/** `/start?sport=football&page=championship-weekend&template=<id>`. */
 export function buildStartPath(request: StartRequest): string {
   return `/start?${startQuery(request)}`;
 }

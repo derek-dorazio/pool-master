@@ -26,11 +26,11 @@ const TEAMS = ['Bears', 'Lions', 'Packers', 'Vikings'] as const;
 
 function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: { status?: Status; synced?: boolean; rounds?: number } = {}) {
   const store = new InMemorySportEvents();
-  const sport = store.addSport(Sport.AMERICAN_FOOTBALL);
+  const sport = store.addSport(Sport.FOOTBALL);
   const league = store.addSportLeague(sport.id, 'NFL');
   const event = store.addEvent({
     sportLeagueId: league.id,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     status,
     rounds,
     providerRef: { providerId: PROVIDER, externalId: WEEK_EVENT },
@@ -266,12 +266,12 @@ describe('ProviderGameSlateService', () => {
 
     function playoffSetup({ status = SportEventStatus.DRAFT }: { status?: Status } = {}) {
       const store = new InMemorySportEvents();
-      const sport = store.addSport(Sport.AMERICAN_FOOTBALL);
+      const sport = store.addSport(Sport.FOOTBALL);
       const league = store.addSportLeague(sport.id, 'NFL');
       store.sportLeagues = store.sportLeagues.map((row) => (row.id === league.id ? { ...row, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } : row));
       const event = store.addEvent({
         sportLeagueId: league.id,
-        sport: Sport.AMERICAN_FOOTBALL,
+        sport: Sport.FOOTBALL,
         status,
         rounds: 3,
         providerRef: { providerId: PROVIDER, externalId: POSTSEASON_EVENT },

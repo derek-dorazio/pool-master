@@ -10,7 +10,7 @@ export const SPORT_PLATFORM_TIER_PROFILE_CODE: Record<Sport, string> = {
   [Sport.GOLF]: 'TIERS_6_OF_10',
   [Sport.TENNIS]: 'TIERS_6_OF_8',
   [Sport.BASKETBALL]: 'TIERS_4_OF_16',
-  [Sport.AMERICAN_FOOTBALL]: 'TIERS_7_OF_2',
+  [Sport.FOOTBALL]: 'TIERS_7_OF_2',
   [Sport.BASEBALL]: 'TIERS_4_OF_3',
   [Sport.HOCKEY]: 'TIERS_4_OF_4',
   [Sport.SOCCER]: 'TIERS_4_OF_4',

@@ -115,8 +115,8 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   const suffix = randomUUID().slice(0, 8);
   // The integration cleanup empties sport leagues no template names, so the football rows are set up here.
   const sport = await prisma.sport.upsert({
-    where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+    where: { sport: Sport.FOOTBALL },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({

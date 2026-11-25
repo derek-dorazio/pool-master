@@ -24,9 +24,9 @@ function wrapperAt(path: string, queryClient = sportsQueryClient()) {
 
 describe('useManagedSportParam', () => {
   it('finds the sport by its stored URL segment', () => {
-    const { result } = renderHook(() => useManagedSportParam(), { wrapper: wrapperAt('/manage/sports/american-football/leagues') });
+    const { result } = renderHook(() => useManagedSportParam(), { wrapper: wrapperAt('/manage/sports/football/leagues') });
 
-    expect(result.current.managed).toEqual({ sport: 'AMERICAN_FOOTBALL', sportUrlSegment: 'american-football' });
+    expect(result.current.managed).toEqual({ sport: 'FOOTBALL', sportUrlSegment: 'football' });
   });
 
   it('finds no sport for a segment no sport has', () => {

@@ -151,7 +151,7 @@ describe('AuthHomePage', () => {
   it('opens on Create account with a banner naming the pool when an event page\'s start waits behind sign-up', () => {
     renderAuthHomePage({
       pathname: '/',
-      state: { authMode: 'register', from: '/start?sport=american-football&page=championship-weekend&template=t-1' },
+      state: { authMode: 'register', from: '/start?sport=football&page=championship-weekend&template=t-1' },
     });
 
     expect(screen.getByTestId('auth-start-banner')).toHaveTextContent('You\'re starting a Championship Weekend pool');

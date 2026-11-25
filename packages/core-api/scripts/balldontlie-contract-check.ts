@@ -82,8 +82,8 @@ async function checkSpec(league: League): Promise<boolean> {
  */
 const BALLDONTLIE_CONTRACT_CHECK_LEAGUES = [
   { code: 'pga', sport: Sport.GOLF, name: 'PGA TOUR' },
-  { code: 'nfl', sport: Sport.AMERICAN_FOOTBALL, name: 'NFL' },
-  { code: 'ncaaf', sport: Sport.AMERICAN_FOOTBALL, name: 'College Football' },
+  { code: 'nfl', sport: Sport.FOOTBALL, name: 'NFL' },
+  { code: 'ncaaf', sport: Sport.FOOTBALL, name: 'College Football' },
   { code: 'nba', sport: Sport.BASKETBALL, name: 'NBA' },
   { code: 'ncaab', sport: Sport.BASKETBALL, name: 'NCAA Men\'s Basketball' },
   { code: 'ncaaw', sport: Sport.BASKETBALL, name: 'NCAA Women\'s Basketball' },

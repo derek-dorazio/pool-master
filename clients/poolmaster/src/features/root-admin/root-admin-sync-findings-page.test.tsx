@@ -51,11 +51,11 @@ function finding(overrides: Partial<ProviderSyncFindingDto> = {}): ProviderSyncF
 }
 
 const WEBHOOK = finding({
-  id: 'finding-2', kind: 'WEBHOOK_SECRET_MISSING', severity: 'ERROR', sportLeague: { id: 'nfl', name: 'NFL', sport: 'AMERICAN_FOOTBALL' },
+  id: 'finding-2', kind: 'WEBHOOK_SECRET_MISSING', severity: 'ERROR', sportLeague: { id: 'nfl', name: 'NFL', sport: 'FOOTBALL' },
   providerValue: null, providerValueName: null, actions: ['RESOLVE', 'WAIVE'],
 });
 const NAMESAKE = finding({
-  id: 'finding-4', kind: 'WEBHOOK_SECRET_MISSING', severity: 'ERROR', sportLeague: { id: 'nfl-2', name: 'NFL', sport: 'AMERICAN_FOOTBALL' },
+  id: 'finding-4', kind: 'WEBHOOK_SECRET_MISSING', severity: 'ERROR', sportLeague: { id: 'nfl-2', name: 'NFL', sport: 'FOOTBALL' },
   providerValue: null, providerValueName: null, actions: ['RESOLVE', 'WAIVE'],
 });
 const UNMATCHED_NAME = finding({

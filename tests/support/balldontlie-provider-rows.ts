@@ -26,8 +26,8 @@ function league(code: string, name: string, sport: Sport, webhookEventSet: Provi
 /** Every BALLDONTLIE league, enabled. */
 export const BALLDONTLIE_TEST_LEAGUES: readonly ProviderLeagueSettings[] = [
   league('pga', 'PGA TOUR', Sport.GOLF, ProviderWebhookEventSet.GOLF_ROUNDS, 360, 360),
-  league('nfl', 'NFL', Sport.AMERICAN_FOOTBALL, ProviderWebhookEventSet.GAME_PERIODS, 90, 210),
-  league('ncaaf', 'College Football', Sport.AMERICAN_FOOTBALL, ProviderWebhookEventSet.GAME_PERIODS, 110, 210),
+  league('nfl', 'NFL', Sport.FOOTBALL, ProviderWebhookEventSet.GAME_PERIODS, 90, 210),
+  league('ncaaf', 'College Football', Sport.FOOTBALL, ProviderWebhookEventSet.GAME_PERIODS, 110, 210),
   league('nba', 'NBA', Sport.BASKETBALL, ProviderWebhookEventSet.GAME_PERIODS, 75, 150),
   league('ncaab', 'NCAA Men\'s Basketball', Sport.BASKETBALL, ProviderWebhookEventSet.GAME_PERIODS, 90, 150),
   league('ncaaw', 'NCAA Women\'s Basketball', Sport.BASKETBALL, ProviderWebhookEventSet.GAME_PERIODS, 75, 150),

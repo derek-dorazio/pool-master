@@ -128,7 +128,7 @@ export function pickEmContestFixture(overrides: Partial<ContestDto> = {}): Conte
     id: 'contest-1',
     leagueId: 'league-1',
     entriesPerContest: null,
-    sport: 'AMERICAN_FOOTBALL',
+    sport: 'FOOTBALL',
     name: 'Big Dawgs Pick’em',
     status: 'OPEN',
     contestFormat: 'PREDICTION',

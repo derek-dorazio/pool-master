@@ -9794,8 +9794,8 @@ export interface components {
              * @description The sport.
              * @enum {string}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given. */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given. */
             urlSegment: string;
             /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
             displayOrder: number;
@@ -9828,8 +9828,8 @@ export interface components {
                  * @description The sport.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given. */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given. */
                 urlSegment: string;
                 /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
                 displayOrder: number;
@@ -9892,12 +9892,12 @@ export interface components {
              * @description The sport this sport league belongs to, as the sport enum.
              * @enum {string}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league. */
             sportUrlSegment: string;
             /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
             sportDisplayOrder: number;
-            /** @description Its sport's name, such as "American football", as screens title the sport (#2107). */
+            /** @description Its sport's name, such as "Football", as screens title the sport (#2107). */
             sportName: string;
             /** @description The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats. */
             selectionTypes: ("TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES")[];
@@ -9971,7 +9971,7 @@ export interface components {
              * @enum {string|null}
              */
             noun: "LEAGUE" | null;
-            /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+            /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request. */
             displayName: string | null;
             /**
              * @description Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
@@ -10006,7 +10006,7 @@ export interface components {
              * @description Only sport leagues of this sport.
              * @enum {string}
              */
-            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Only active, or only inactive, sport leagues. */
             isActive?: boolean;
         };
@@ -10033,12 +10033,12 @@ export interface components {
                  * @description The sport this sport league belongs to, as the sport enum.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league. */
                 sportUrlSegment: string;
                 /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
                 sportDisplayOrder: number;
-                /** @description Its sport's name, such as "American football", as screens title the sport (#2107). */
+                /** @description Its sport's name, such as "Football", as screens title the sport (#2107). */
                 sportName: string;
                 /** @description The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats. */
                 selectionTypes: ("TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES")[];
@@ -10112,7 +10112,7 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
-                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request. */
                 displayName: string | null;
                 /**
                  * @description Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
@@ -10160,12 +10160,12 @@ export interface components {
                  * @description The sport this sport league belongs to, as the sport enum.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league. */
                 sportUrlSegment: string;
                 /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
                 sportDisplayOrder: number;
-                /** @description Its sport's name, such as "American football", as screens title the sport (#2107). */
+                /** @description Its sport's name, such as "Football", as screens title the sport (#2107). */
                 sportName: string;
                 /** @description The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats. */
                 selectionTypes: ("TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES")[];
@@ -10239,7 +10239,7 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
-                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request. */
                 displayName: string | null;
                 /**
                  * @description Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
@@ -10301,7 +10301,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by. */
             sportUrlSegment: string;
             /** @description Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it. */
@@ -10454,7 +10454,7 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /** @enum {string} */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by. */
                 sportUrlSegment: string;
                 /** @description Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it. */
@@ -12521,7 +12521,7 @@ export interface components {
              * @description Sport the event belongs to.
              * @enum {string}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description The URL segment of the event's sport, read through its sport league: what a web address names the sport by. */
             sportUrlSegment: string;
             /** @description Event name shown in contest and event selectors. */
@@ -12811,7 +12811,7 @@ export interface components {
              * @description Only events of this sport.
              * @enum {string}
              */
-            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in. */
             status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
             /**
@@ -12854,7 +12854,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description The URL segment of the event's sport, read through its sport league: what a web address names the sport by. */
                 sportUrlSegment: string;
                 /** @description Event name shown in contest and event selectors. */
@@ -13166,7 +13166,7 @@ export interface components {
                  * @description Sport the event belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description The URL segment of the event's sport, read through its sport league: what a web address names the sport by. */
                 sportUrlSegment: string;
                 /** @description Event name shown in contest and event selectors. */
@@ -15028,7 +15028,7 @@ export interface components {
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
             }[];
             /** @enum {string|null} */
-            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
             /** @description The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is. */
             sportUrlSegment?: string | null;
             /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
@@ -15299,7 +15299,7 @@ export interface components {
              * @description Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
              * @enum {string}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /**
              * @description Who competes in the shown event, from its sport league. A client reads the event's definition from the sport and these two.
              * @enum {string}
@@ -15661,7 +15661,7 @@ export interface components {
                     scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
                 }[];
                 /** @enum {string|null} */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
                 /** @description The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is. */
                 sportUrlSegment?: string | null;
                 /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
@@ -15748,7 +15748,7 @@ export interface components {
                     scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
                 }[];
                 /** @enum {string|null} */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
                 /** @description The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is. */
                 sportUrlSegment?: string | null;
                 /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
@@ -22391,10 +22391,10 @@ export interface components {
              * @description The sport the page belongs to.
              * @enum {string}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description The sport's name, such as "Football", as the page titles it (#2107). */
             sportName: string;
-            /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+            /** @description The sport's stored URL segment, such as football: the first segment of the page's web address. */
             sportUrlSegment: string;
             /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
             urlSegment: string;
@@ -22410,10 +22410,10 @@ export interface components {
                  * @description The sport the page belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name, such as "Football", as the page titles it (#2107). */
                 sportName: string;
-                /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                /** @description The sport's stored URL segment, such as football: the first segment of the page's web address. */
                 sportUrlSegment: string;
                 /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
                 urlSegment: string;
@@ -22866,10 +22866,10 @@ export interface components {
                  * @description The sport the page belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name, such as "Football", as the page titles it (#2107). */
                 sportName: string;
-                /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                /** @description The sport's stored URL segment, such as football: the first segment of the page's web address. */
                 sportUrlSegment: string;
                 /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
                 urlSegment: string;
@@ -22885,10 +22885,10 @@ export interface components {
                      * @description The sport the page belongs to.
                      * @enum {string}
                      */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                    /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description The sport's name, such as "Football", as the page titles it (#2107). */
                     sportName: string;
-                    /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                    /** @description The sport's stored URL segment, such as football: the first segment of the page's web address. */
                     sportUrlSegment: string;
                     /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
                     urlSegment: string;
@@ -23338,7 +23338,7 @@ export interface components {
              * @description Only this sport's pages. Omitted: every sport's.
              * @enum {string}
              */
-            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order. */
             upcoming?: boolean;
         };
@@ -23352,10 +23352,10 @@ export interface components {
                  * @description The sport the page belongs to.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name, such as "Football", as the page titles it (#2107). */
                 sportName: string;
-                /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                /** @description The sport's stored URL segment, such as football: the first segment of the page's web address. */
                 sportUrlSegment: string;
                 /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
                 urlSegment: string;
@@ -23371,10 +23371,10 @@ export interface components {
                      * @description The sport the page belongs to.
                      * @enum {string}
                      */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                    /** @description The sport's name, such as "American football", as the page titles it (#2107). */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description The sport's name, such as "Football", as the page titles it (#2107). */
                     sportName: string;
-                    /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                    /** @description The sport's stored URL segment, such as football: the first segment of the page's web address. */
                     sportUrlSegment: string;
                     /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
                     urlSegment: string;
@@ -25137,7 +25137,7 @@ export interface components {
              * @description The sport the league plays.
              * @enum {string}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /**
              * @description Which of the provider's webhook events the league sends for its games.
              * @enum {string}
@@ -25198,7 +25198,7 @@ export interface components {
                  * @description The sport the league plays.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /**
                  * @description Which of the provider's webhook events the league sends for its games.
                  * @enum {string}
@@ -25288,7 +25288,7 @@ export interface components {
                      * @description The sport the league plays.
                      * @enum {string}
                      */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                     /**
                      * @description Which of the provider's webhook events the league sends for its games.
                      * @enum {string}
@@ -25368,7 +25368,7 @@ export interface components {
                      * @description The sport the league plays.
                      * @enum {string}
                      */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                     /**
                      * @description Which of the provider's webhook events the league sends for its games.
                      * @enum {string}
@@ -25406,7 +25406,7 @@ export interface components {
                  * @description The sport the league plays.
                  * @enum {string}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /**
                  * @description Which of the provider's webhook events the league sends for its games.
                  * @enum {string}
@@ -25521,7 +25521,7 @@ export interface components {
                          * @description The sport the league plays.
                          * @enum {string}
                          */
-                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                         /**
                          * @description Which of the provider's webhook events the league sends for its games.
                          * @enum {string}
@@ -25575,7 +25575,7 @@ export interface components {
              * @description The run's sport, its sport league's; null for a run with no sport league.
              * @enum {string|null}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
             /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
             eventId: string | null;
             /**
@@ -25645,7 +25645,7 @@ export interface components {
              * @description The run's sport, its sport league's; null for a run with no sport league.
              * @enum {string|null}
              */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
             /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
             eventId: string | null;
             /**
@@ -25725,7 +25725,7 @@ export interface components {
                     /** @description Provider that executed the ingestion job. */
                     providerId: string;
                     /** @enum {string} */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                     /** @description External event id for event-scoped jobs, when applicable. */
                     eventExternalId?: string;
                     /**
@@ -25822,7 +25822,7 @@ export interface components {
              * @description Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
              * @enum {string}
              */
-            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @enum {string} */
             status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
             /**
@@ -25851,7 +25851,7 @@ export interface components {
                  * @description The run's sport, its sport league's; null for a run with no sport league.
                  * @enum {string|null}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
                 /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
                 eventId: string | null;
                 /**
@@ -25911,7 +25911,7 @@ export interface components {
         /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
         ProviderManualSyncSubmissionResponse: {
             /** @enum {string} */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Provider event identifier the submitted runs sync. */
             eventId: string;
             requestedFeeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -25933,7 +25933,7 @@ export interface components {
                  * @description The run's sport, its sport league's; null for a run with no sport league.
                  * @enum {string|null}
                  */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
                 /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
                 eventId: string | null;
                 /**
@@ -26337,7 +26337,7 @@ export interface components {
                 id: string;
                 name: string;
                 /** @enum {string} */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             };
             /** @description The event it is about; null when its kind names none. */
             sportEvent: {
@@ -26457,7 +26457,7 @@ export interface components {
                     id: string;
                     name: string;
                     /** @enum {string} */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 };
                 /** @description The event it is about; null when its kind names none. */
                 sportEvent: {
@@ -26532,7 +26532,7 @@ export interface components {
                     id: string;
                     name: string;
                     /** @enum {string} */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 };
                 /** @description The event it is about; null when its kind names none. */
                 sportEvent: {
@@ -32925,7 +32925,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only events of this sport. */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in. */
                 status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /** @description Only events of this sport league. */
@@ -35435,7 +35435,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only sport leagues of this sport. */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Only active, or only inactive, sport leagues. */
                 isActive?: boolean;
             };
@@ -36927,7 +36927,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only this sport's pages. Omitted: every sport's. */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order. */
                 upcoming?: boolean;
             };
@@ -36953,7 +36953,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The page's sport, by the sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                /** @description The page's sport, by the sport's stored URL segment, such as football: the first segment of the page's web address. */
                 sportUrlSegment: string;
                 /** @description The page's stored URL segment within its sport, such as championship-weekend. */
                 urlSegment: string;
@@ -38145,7 +38145,7 @@ export interface operations {
                 /** @description Only the runs of this Provider. */
                 providerId?: string;
                 /** @description Only the runs of this sport's sport leagues. A run with no sport league is in no sport. */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
                 /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
                 from?: string;

@@ -24,7 +24,7 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
     id: 'event-1',
     status: SportEventStatus.SCHEDULED,
     startDate: LATER,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     sportLeagueId: 'league-1',
     championshipYear: 2027,
     tournamentFormat: TournamentFormat.MATCHES,
@@ -33,7 +33,7 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
     rounds: 4,
     salaryCap: null,
     squaresFromRound: null,
-    ...sportPlay(overrides.sport ?? Sport.AMERICAN_FOOTBALL),
+    ...sportPlay(overrides.sport ?? Sport.FOOTBALL),
     ...overrides,
   };
 }

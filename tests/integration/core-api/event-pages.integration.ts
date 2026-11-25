@@ -35,7 +35,7 @@ describe('Seeded event pages', () => {
   it('seeds Championship Weekend with the NFL bracket from the conference round first and primary, then NFL Squares, both shown with the conference championships slot', async () => {
     const pages = new PrismaEventPageRepository(getAppPrisma());
 
-    const page = await pages.findByUrlSegments('american-football', 'championship-weekend');
+    const page = await pages.findByUrlSegments('football', 'championship-weekend');
     const offers = await pages.findOffers([page?.id ?? '']);
     const definitions = await getPrisma().sportLeaguePhaseSlot.findMany({ where: { id: { in: offers.map((offer) => offer.sportLeaguePhaseSlotId) } } });
     const keyOf = (id: string) => definitions.find((definition) => definition.id === id)?.key;
@@ -214,7 +214,7 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     const prisma = getPrisma();
     const sportEvent = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
+        ...(await freshEventEdition(prisma, { sport: Sport.FOOTBALL })),
         name: 'Event page squares', startDate: new Date('2030-01-09T18:00:00.000Z'), status: SportEventStatus.IN_PROGRESS,
       },
     });

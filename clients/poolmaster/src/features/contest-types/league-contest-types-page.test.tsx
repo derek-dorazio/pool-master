@@ -44,7 +44,7 @@ function template(templateKey: string, overrides: Record<string, unknown>) {
   return {
     id: `80300000-0000-4000-8000-0000000001${String(templateKey.length).padStart(2, '0')}`,
     coverageMode: 'ONE_SLOT',
-    slots: [templateSlotFixture(sportSlotId('AMERICAN_FOOTBALL'))],
+    slots: [templateSlotFixture(sportSlotId('FOOTBALL'))],
     sportLeagueId: NFL,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
@@ -70,7 +70,7 @@ const TEMPLATES = [
 /** An NFL week coming up, which takes the NFL's week templates; no NFL playoffs and no NBA events yet. */
 const NFL_WEEK = {
   id: 'nfl-week-1',
-  sport: 'AMERICAN_FOOTBALL',
+  sport: 'FOOTBALL',
   slotDefinitionIds: [WEEK_SLOT_ID],
   name: 'NFL Week 1',
   status: 'SCHEDULED',
@@ -93,9 +93,9 @@ function primeMocks(role: 'COMMISSIONER' | 'MEMBER', { isActive = true }: { isAc
     },
   });
   listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: TEMPLATES } });
-  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: NFL, name: 'NFL', sport: 'AMERICAN_FOOTBALL' }), sportLeagueFixture({ id: NBA, name: 'NBA', sport: 'BASKETBALL' })] } });
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: NFL, name: 'NFL', sport: 'FOOTBALL' }), sportLeagueFixture({ id: NBA, name: 'NBA', sport: 'BASKETBALL' })] } });
   listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
-    data: { events: options.query?.sport === 'AMERICAN_FOOTBALL' ? [NFL_WEEK] : [] },
+    data: { events: options.query?.sport === 'FOOTBALL' ? [NFL_WEEK] : [] },
   }));
 }
 
@@ -123,8 +123,8 @@ describe('League › Contest types', () => {
     primeMocks('MEMBER');
     renderPage();
 
-    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
-    expect(within(football).getByText('American football')).toBeInTheDocument();
+    const football = await screen.findByTestId('contest-types-sport-FOOTBALL');
+    expect(within(football).getByText('Football')).toBeInTheDocument();
     expect(within(football).getByText('NFL')).toBeInTheDocument();
     const tiered = within(football).getByTestId('contest-type-nfl-nfl-tiered-doubling');
     expect(tiered).toHaveTextContent('nfl-tiered-doubling name');
@@ -218,33 +218,33 @@ describe('League › Contest types', () => {
     renderPage('/league/BIGDAWGS/admin/contest-types?sport=basketball');
 
     expect(await screen.findByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
-    expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-types-sport-FOOTBALL')).not.toBeInTheDocument();
     const column = screen.getByRole('navigation', { name: 'Sports and leagues' });
-    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'American football 2', 'Basketball 1', 'NBA']);
+    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Football 2', 'Basketball 1', 'NBA']);
     expect(within(column).getByRole('link', { current: 'page' })).toHaveTextContent('Basketball');
 
-    fireEvent.click(screen.getByTestId('contest-types-leagues-column-american-football'));
+    fireEvent.click(screen.getByTestId('contest-types-leagues-column-football'));
     fireEvent.click(within(column).getByRole('link', { name: 'NFL' }));
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
+    expect(screen.getByTestId('contest-types-sport-FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
     expect(screen.queryByTestId('contest-types-sport-BASKETBALL')).not.toBeInTheDocument();
 
     fireEvent.click(within(column).getByRole('link', { name: 'All sports' }));
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-types-sport-FOOTBALL')).toBeInTheDocument();
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
   });
 
   it('switches sport on a phone with the same chip row and "Every league you can run" card as How to Play', async () => {
     primeMocks('MEMBER');
-    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football&league=nfl');
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=football&league=nfl');
 
-    expect(await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
+    expect(await screen.findByTestId('contest-types-sport-FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
     const chips = screen.getByRole('navigation', { name: 'Sport' });
     fireEvent.click(within(chips).getByRole('link', { name: 'Clear NFL' }));
-    expect(within(screen.getByRole('navigation', { name: 'Sport' })).getByRole('link', { current: 'page' })).toHaveTextContent('American football');
+    expect(within(screen.getByRole('navigation', { name: 'Sport' })).getByRole('link', { current: 'page' })).toHaveTextContent('Football');
 
     fireEvent.click(within(screen.getByTestId('contest-types-every-league')).getByRole('link', { name: 'NBA' }));
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-types-sport-FOOTBALL')).not.toBeInTheDocument();
   });
 
   it('shows one Survivor tile on a league that offers Survivor on weeks and in the playoffs, the playoff setup among its variations, with no kind of event named', async () => {
@@ -255,7 +255,7 @@ describe('League › Contest types', () => {
       template('nfl-survivor', { id: 'tpl-nfl-survivor', slots: [templateSlotFixture(WEEK_SLOT_ID)], ...survivor }),
       template('nfl-playoff-survivor', { id: 'tpl-nfl-playoff-survivor', isDefault: false, sortOrder: 2, ...survivor }),
     ] } });
-    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football');
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=football');
 
     const tile = await screen.findByTestId('contest-type-nfl-nfl-survivor');
     expect(tile).toHaveTextContent('nfl-playoff-survivor name');
@@ -267,10 +267,10 @@ describe('League › Contest types', () => {
     primeMocks('COMMISSIONER');
     renderPage();
 
-    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
-    expect(football).not.toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    const football = await screen.findByTestId('contest-types-sport-FOOTBALL');
+    expect(football).not.toHaveTextContent(SPORT_BLURBS.FOOTBALL);
     fireEvent.click(within(football).getByRole('button', { name: 'How this section works' }));
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL-help-callout')).toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    expect(screen.getByTestId('contest-types-sport-FOOTBALL-help-callout')).toHaveTextContent(SPORT_BLURBS.FOOTBALL);
     expect(screen.queryByTestId('contest-types-inactive')).not.toBeInTheDocument();
   });
 

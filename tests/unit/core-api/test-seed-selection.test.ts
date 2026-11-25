@@ -13,7 +13,7 @@ function event(name: string, startDate: string, endDate = startDate): SportDataE
 function seed(leagues: Record<string, SportDataEvent[]>): SportDataFile {
   return {
     schemaVersion: 1,
-    scope: { sport: 'AMERICAN_FOOTBALL', season: 2026, sportLeagues: Object.keys(leagues), participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', contents: [SportDataContent.SCHEDULE] },
+    scope: { sport: 'FOOTBALL', season: 2026, sportLeagues: Object.keys(leagues), participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', contents: [SportDataContent.SCHEDULE] },
     testData: true,
     provenance: { gatheredAt: '2026-11-10', gatheredBy: 'unit test', sources: [] },
     sportLeagues: Object.entries(leagues).map(([name, events]) => ({ name, players: [], events })),

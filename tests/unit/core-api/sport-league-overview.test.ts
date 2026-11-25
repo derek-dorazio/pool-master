@@ -208,7 +208,7 @@ describe('sport league overview order', () => {
         league({ id: 'pga', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour' }),
         league({ id: 'ncaa', name: 'NCAA Baseball' }),
         league(),
-        league({ id: 'nfl', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', sportDisplayOrder: 0, name: 'NFL' }),
+        league({ id: 'nfl', sport: Sport.FOOTBALL, sportUrlSegment: 'football', sportDisplayOrder: 0, name: 'NFL' }),
       ],
     }), NOW);
 

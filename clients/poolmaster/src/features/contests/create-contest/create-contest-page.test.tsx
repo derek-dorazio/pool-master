@@ -84,7 +84,7 @@ const ACTIVE_LEAGUE_IN_EVERY_SPORT = [
   // The leagues the tests' own templates are in: a template's sport is its league's (#2010).
   sportLeagueFixture({ id: 'ncaa-men', sport: 'BASKETBALL', name: 'NCAA Men' }),
   sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA' }),
-  sportLeagueFixture({ id: 'nfl', sport: 'AMERICAN_FOOTBALL', name: 'NFL' }),
+  sportLeagueFixture({ id: 'nfl', sport: 'FOOTBALL', name: 'NFL' }),
   sportLeagueFixture({ id: 'pga-tour', sport: 'GOLF', name: 'PGA TOUR' }),
   sportLeagueFixture({ id: 'lpga-tour', sport: 'GOLF', name: 'LPGA Tour' }),
 ];
@@ -1661,7 +1661,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
   /** The NFL playoffs under way: the Super Bowl to come, a conference game to come, a divisional game played. */
   const PLAYOFFS_UNDER_WAY = {
     id: 'nfl-playoffs',
-    sport: 'AMERICAN_FOOTBALL',
+    sport: 'FOOTBALL',
     name: 'NFL Playoffs',
     venue: null,
     status: 'IN_PROGRESS',
@@ -1670,7 +1670,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     readinessStatus: 'EVENT_STARTED',
     readinessReasons: ['EVENT_STARTED'],
     contestEligible: false,
-    contestOpenings: openingsUnderWay({ sport: 'AMERICAN_FOOTBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3]),
+    contestOpenings: openingsUnderWay({ sport: 'FOOTBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3]),
     tierCount: 0,
     rounds: 4,
     sportLeagueId: 'nfl',
@@ -1696,11 +1696,11 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     primeCommonMocks();
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL', roundNames: ['Wild Card', 'Divisional', 'Conference Championship', 'Super Bowl'] } } });
     const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
-    listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'AMERICAN_FOOTBALL'
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'FOOTBALL'
       ? Promise.resolve({ data: { events: [PLAYOFFS_UNDER_WAY] } })
       : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
     const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
-    listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => (queriesSlot(options, sportSlotId('AMERICAN_FOOTBALL'))
+    listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => (queriesSlot(options, sportSlotId('FOOTBALL'))
       ? Promise.resolve({ data: { templates: [] } })
       : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
     getEventBracketMock.mockResolvedValue({
@@ -1737,7 +1737,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     renderCreateContestPage();
     await waitForStartingChoices();
 
-    fireEvent.click(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL'));
+    fireEvent.click(screen.getByTestId('contest-sport-FOOTBALL'));
     fireEvent.click(await screen.findByTestId('contest-format-SQUARES'));
     await waitFor(() => expect(screen.getByTestId('contest-event-nfl-playoffs')).toBeChecked());
 
@@ -1772,7 +1772,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     renderCreateContestPage();
     await waitForStartingChoices();
 
-    fireEvent.click(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL'));
+    fireEvent.click(screen.getByTestId('contest-sport-FOOTBALL'));
     fireEvent.click(await screen.findByTestId('contest-format-SQUARES'));
 
     const error = await screen.findByTestId('contest-squares-games-error');
@@ -1787,7 +1787,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
 describe('Commissioner tools › Contests › Create contest › templates by name and kind of event', () => {
   const NFL_WEEK = {
     id: 'nfl-week-1',
-    sport: 'AMERICAN_FOOTBALL',
+    sport: 'FOOTBALL',
     slotDefinitionIds: [WEEK_SLOT_ID],
     name: 'NFL Week 1',
     venue: null,
@@ -1837,8 +1837,8 @@ describe('Commissioner tools › Contests › Create contest › templates by na
   const KNOCKOUT_TEMPLATES = [
     nflTemplate({
       id: '80200000-0000-4000-8000-000000000003',
-      slots: [templateSlotFixture(sportSlotId('AMERICAN_FOOTBALL'))],
-      sportLeagueId: 'AMERICAN_FOOTBALL-league',
+      slots: [templateSlotFixture(sportSlotId('FOOTBALL'))],
+      sportLeagueId: 'FOOTBALL-league',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateKey: 'nfl-tiered-doubling',
@@ -1861,12 +1861,12 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     primeCommonMocks();
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL', roundNames: [] } } });
     const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
-    listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'AMERICAN_FOOTBALL'
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'FOOTBALL'
       ? Promise.resolve({ data: { events: [NFL_WEEK] } })
       : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
     const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
     listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => {
-      if (!queriesSlot(options, WEEK_SLOT_ID) && !queriesSlot(options, sportSlotId('AMERICAN_FOOTBALL'))) {
+      if (!queriesSlot(options, WEEK_SLOT_ID) && !queriesSlot(options, sportSlotId('FOOTBALL'))) {
         return golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } });
       }
       return Promise.resolve({ data: { templates: queriesSlot(options, WEEK_SLOT_ID) ? WEEK_TEMPLATES : KNOCKOUT_TEMPLATES } });
@@ -1901,7 +1901,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=80200000-0000-4000-8000-000000000002');
 
     await waitFor(() => expect(screen.getByTestId('contest-template-nfl-survivor')).toBeChecked());
-    expect(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL')).toBeChecked();
+    expect(screen.getByTestId('contest-sport-FOOTBALL')).toBeChecked();
     expect(screen.getByTestId('contest-event-nfl-week-1')).toBeChecked();
     expect(screen.getByTestId('contest-format-SURVIVOR')).toBeChecked();
   });
@@ -1911,7 +1911,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     renderCreateContestPage();
     await waitForStartingChoices();
 
-    fireEvent.click(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL'));
+    fireEvent.click(screen.getByTestId('contest-sport-FOOTBALL'));
 
     await waitFor(() => expect(screen.getByTestId('contest-template-nfl-pick-em-straight-up')).toBeChecked());
     expect(screen.getByTestId('contest-format-PICK_EM')).toBeChecked();

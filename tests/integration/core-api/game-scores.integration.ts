@@ -48,7 +48,7 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
     create: { sport: sportOf, ...sportRowKeys(sportOf), tournamentFormat: 'MATCHES' },
     update: {},
   });
-  const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Division I Men');
+  const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Men\'s Basketball');
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: leagueName } },
     create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: leagueName },

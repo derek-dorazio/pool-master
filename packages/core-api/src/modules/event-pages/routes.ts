@@ -23,7 +23,7 @@ const PAGE_PARAMS = {
   type: 'object',
   required: ['sportUrlSegment', 'urlSegment'],
   properties: {
-    sportUrlSegment: { type: 'string', pattern: URL_SEGMENT_PATTERN.source, description: 'The page\'s sport, by the sport\'s stored URL segment, such as american-football: the first segment of the page\'s web address.' },
+    sportUrlSegment: { type: 'string', pattern: URL_SEGMENT_PATTERN.source, description: 'The page\'s sport, by the sport\'s stored URL segment, such as football: the first segment of the page\'s web address.' },
     urlSegment: { type: 'string', pattern: URL_SEGMENT_PATTERN.source, description: 'The page\'s stored URL segment within its sport, such as championship-weekend.' },
   },
 } as const;

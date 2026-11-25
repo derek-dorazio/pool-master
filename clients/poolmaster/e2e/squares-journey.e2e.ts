@@ -103,7 +103,7 @@ test('act 1: the root admin releases an American football event of one game betw
   const runId = newRunId();
   const run: JourneyRun = {
     runId,
-    sport: 'AMERICAN_FOOTBALL',
+    sport: 'FOOTBALL',
     tourUrlSegment: 'nfl',
     playerNamePrefix: e2eName('Squares Club', runId),
     tournamentName: e2eName('Squares Bowl', runId),
@@ -136,7 +136,7 @@ test('act 1: the root admin releases an American football event of one game betw
     }
 
     // A league is added by migration, so a journey plays in a seeded one, on its own test slots (#2004).
-    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'AMERICAN_FOOTBALL', run.tourUrlSegment);
+    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'FOOTBALL', run.tourUrlSegment);
     const event = await createTestEventThroughApi(api, headers, {
       sportLeagueId: sportLeague.id,
       slotKind: 'WEEK',
@@ -211,7 +211,7 @@ test('act 2: a new commissioner creates a Squares contest on the game, opens it,
   await test.step('choose American football, the event, the Squares format and its game', async () => {
     await page.goto(`/league/${run.leagueCode}/admin/contests/new`);
     await expect(page.getByTestId('create-contest-page')).toBeVisible();
-    await page.getByTestId('contest-sport-AMERICAN_FOOTBALL').click();
+    await page.getByTestId('contest-sport-FOOTBALL').click();
     await page.getByTestId('contest-format-SQUARES').click();
     const event = page.getByTestId(`contest-event-${state.eventId}`);
     await event.click();

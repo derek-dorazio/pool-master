@@ -6,7 +6,7 @@ export const LINK_PREVIEW_IMAGE_DIR = 'og';
 
 /** What a chat app or social site draws when an event page's link is pasted (#1010). */
 export interface LinkPreview {
-  /** The page's path, `/play/american-football/championship-weekend`. */
+  /** The page's path, `/play/football/championship-weekend`. */
   path: string;
   title: string;
   description: string;
@@ -19,7 +19,7 @@ export interface LinkPreview {
 }
 
 /**
- * `american-football-championship-weekend.jpg`: one 1200 by 630 JPEG per event page, kept small
+ * `football-championship-weekend.jpg`: one 1200 by 630 JPEG per event page, kept small
  * because WhatsApp drops a preview image over about 300 KB.
  */
 export function linkPreviewImageFile(path: string): string {

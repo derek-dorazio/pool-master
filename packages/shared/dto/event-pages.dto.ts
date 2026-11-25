@@ -10,8 +10,8 @@ import { registerSchema } from './schema-registry';
 
 const EventPageAddressShape = {
   sport: z.enum(Sport).describe('The sport the page belongs to.'),
-  sportName: z.string().describe('The sport\'s name, such as "American football", as the page titles it (#2107).'),
-  sportUrlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport\'s stored URL segment, such as american-football: the first segment of the page\'s web address.'),
+  sportName: z.string().describe('The sport\'s name, such as "Football", as the page titles it (#2107).'),
+  sportUrlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport\'s stored URL segment, such as football: the first segment of the page\'s web address.'),
   urlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe(
     'The page\'s URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).',
   ),

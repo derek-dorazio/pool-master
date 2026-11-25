@@ -1,7 +1,7 @@
 import { Sport, alphabeticalOrder, explicitOrder } from "@poolmaster/shared/domain";
 
 /** The sports' display order as the API gives it (SportDto.displayOrder). */
-const SPORT_DISPLAY_ORDER = explicitOrder<string>({ AMERICAN_FOOTBALL: 0, BASKETBALL: 1, BASEBALL: 2, HOCKEY: 3, SOCCER: 4, GOLF: 5, AUTO_RACING: 6, TENNIS: 7, HORSE_RACING: 8, CYCLING: 9, RUNNING: 10 });
+const SPORT_DISPLAY_ORDER = explicitOrder<string>({ FOOTBALL: 0, BASKETBALL: 1, BASEBALL: 2, HOCKEY: 3, SOCCER: 4, GOLF: 5, AUTO_RACING: 6, TENNIS: 7, HORSE_RACING: 8, CYCLING: 9, RUNNING: 10 });
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,7 +20,7 @@ type Row = {
 const ROWS: Row[] = [
   { id: "a", name: "Alpha", members: 9, active: true, sport: Sport.GOLF, starts: "2026-11-02T15:00:00.000Z", season: { start: "2026-10-21", end: "2027-06-18" } },
   { id: "b", name: "Bravo", members: 120, active: false, sport: Sport.BASKETBALL, starts: "2026-11-18T14:00:00.000Z", season: { start: "2027-03-25", end: "2027-11-01" } },
-  { id: "c", name: "Charlie", members: 10, active: null, sport: Sport.AMERICAN_FOOTBALL, starts: null, season: { start: "2026-09-01", end: null } },
+  { id: "c", name: "Charlie", members: 10, active: null, sport: Sport.FOOTBALL, starts: null, season: { start: "2026-09-01", end: null } },
   { id: "d", name: "Delta", members: null, active: true, sport: Sport.HOCKEY, starts: "2026-12-05T00:30:00.000Z", season: null },
 ];
 
@@ -196,11 +196,11 @@ describe("enum columns", () => {
     expect(shownRows()).toEqual(["c", "b", "d", "a"]);
     openFilter("sport");
     const listed = screen.getAllByTestId(/^data-grid-filter-sport-option-/).map((box) => box.getAttribute("data-testid")?.slice(30));
-    expect(listed.slice(0, 4)).toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.BASEBALL, Sport.HOCKEY]);
+    expect(listed.slice(0, 4)).toEqual([Sport.FOOTBALL, Sport.BASKETBALL, Sport.BASEBALL, Sport.HOCKEY]);
   });
 
   it("sort an alphabetical enum A to Z by its words", () => {
-    const words: Record<string, string> = { GOLF: "Zebra", BASKETBALL: "Apple", AMERICAN_FOOTBALL: "Mango", HOCKEY: "Kiwi" };
+    const words: Record<string, string> = { GOLF: "Zebra", BASKETBALL: "Apple", FOOTBALL: "Mango", HOCKEY: "Kiwi" };
     renderGrid([
       helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: alphabeticalOrder("Sport"), label: (value) => words[value] } } }),
     ]);

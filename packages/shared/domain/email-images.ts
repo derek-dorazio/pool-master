@@ -11,7 +11,7 @@ import type { SelectionType } from './enums';
  * by 480: a generic licensed photo where the sport has one (its source note sits beside it),
  * otherwise its How to Play scene rendered to JPG, so no email or event page goes without one.
  * The path stays under `/email/` because emails already sent link to it. The file is named by the
- * sport's stored URL segment (`american-football.jpg`).
+ * sport's stored URL segment (`football.jpg`).
  */
 export function sportHeaderImagePath(sportUrlSegment: string): string {
   return `/email/sports/${sportUrlSegment}.jpg`;

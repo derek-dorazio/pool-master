@@ -13,7 +13,7 @@ const SPORT_PLAY: Readonly<Record<Sport, { participantType: ParticipantType; sco
   [Sport.RUNNING]: { participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.FINISH_POSITION },
   [Sport.TENNIS]: { participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.HEAD_TO_HEAD },
   [Sport.BASKETBALL]: { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD },
-  [Sport.AMERICAN_FOOTBALL]: { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD },
+  [Sport.FOOTBALL]: { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD },
   [Sport.HOCKEY]: { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD },
   [Sport.BASEBALL]: { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD },
   [Sport.SOCCER]: { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD },

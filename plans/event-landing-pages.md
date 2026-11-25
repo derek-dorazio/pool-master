@@ -20,7 +20,7 @@ one in later.
 
 So Poolmaster builds three things and nothing more:
 
-1. **Event pages**, public, one per event a fan would name: `/play/american-football/championship-weekend`.
+1. **Event pages**, public, one per event a fan would name: `/play/football/championship-weekend`.
 2. **The hooks** that make a click count: links that carry the chosen contest setup and event
    into sign-up, league creation and contest setup, plus tracking tags that survive the trip.
 3. **A tile template**: one fixed layout per event page for emails, How to Play and ads.
@@ -89,7 +89,7 @@ Since #2042 the page's slug is its stored `url_segment`, and the sport segment i
 own stored `urlSegment` (no `sportPathSegment` any more): the route is
 `/play/:sportUrlSegment/:urlSegment`, and the API returns each page's `path`.
 
-- Path: **`/play/:sport/:pageSlug`**, for example `/play/american-football/championship-weekend`. The
+- Path: **`/play/:sport/:pageSlug`**, for example `/play/football/championship-weekend`. The
   sport segment is the existing sport path segment (`sportPathSegment`), so `ncaa-...` slugs can
   repeat across sports without clashing.
 - **Slugs are stored, never derived.** The web app reads them from the API and never computes

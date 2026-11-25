@@ -18,7 +18,7 @@ export const enUS = {
       CYCLING: 'Cycling',
       RUNNING: 'Running',
       BASKETBALL: 'Basketball',
-      AMERICAN_FOOTBALL: 'American football',
+      FOOTBALL: 'Football',
       HOCKEY: 'Hockey',
       BASEBALL: 'Baseball',
       SOCCER: 'Soccer',
@@ -1419,7 +1419,7 @@ export const enUS = {
       eventStart: 'opening tip-off',
       tie: 'Tie',
     },
-    AMERICAN_FOOTBALL: {
+    FOOTBALL: {
       participant_one: 'team',
       participant_other: 'teams',
       event_one: 'playoffs',

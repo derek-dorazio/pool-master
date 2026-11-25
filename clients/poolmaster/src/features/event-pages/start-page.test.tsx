@@ -37,8 +37,8 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-const SQUARES = '/start?sport=american-football&page=championship-weekend&template=template-nfl-squares';
-const BRACKET = '/start?sport=american-football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
+const SQUARES = '/start?sport=football&page=championship-weekend&template=template-nfl-squares';
+const BRACKET = '/start?sport=football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
 
 function LocationProbe() {
   const location = useLocation();
@@ -108,7 +108,7 @@ describe('Start from an event page', () => {
     renderStart(BRACKET);
 
     expect(await screen.findByText(/^\/league\/OFFICE\?/)).toHaveTextContent(
-      '/league/OFFICE?sport=american-football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling',
+      '/league/OFFICE?sport=football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling',
     );
   });
 
@@ -193,7 +193,7 @@ describe('Start from an event page', () => {
   it('says a setup no edition can take any more has started, and links back to the page', async () => {
     primeLeagues([leagueRun('OFFICE')]);
 
-    renderStart('/start?sport=american-football&page=championship-weekend&template=template-gone');
+    renderStart('/start?sport=football&page=championship-weekend&template=template-gone');
 
     expect(await screen.findByTestId('start-offer-gone')).toHaveTextContent('This one has started');
   });

@@ -11,7 +11,7 @@ import {
 
 /** The platform's sports as `listSports` gives them: each one's stored URL segment. */
 const SPORTS: SportAddress[] = [
-  { sport: Sport.AMERICAN_FOOTBALL, urlSegment: 'american-football' },
+  { sport: Sport.FOOTBALL, urlSegment: 'football' },
   { sport: Sport.BASKETBALL, urlSegment: 'basketball' },
   { sport: Sport.GOLF, urlSegment: 'golf' },
   { sport: Sport.AUTO_RACING, urlSegment: 'auto-racing' },

@@ -247,7 +247,7 @@ describe('CommissionerNotices', () => {
       const casey = person(league.id, 'Casey');
       const week = (name: string, days: number) => event({
         name,
-        sport: Sport.AMERICAN_FOOTBALL,
+        sport: Sport.FOOTBALL,
         rounds: 1,
         slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK }],
         sportLeagueId: 'nfl',
@@ -525,7 +525,7 @@ describe('CommissionerNotices', () => {
 
       const week = (name: string, days: number) => event({
         name,
-        sport: Sport.AMERICAN_FOOTBALL,
+        sport: Sport.FOOTBALL,
         rounds: 1,
         slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK }],
         sportLeagueId: 'nfl',

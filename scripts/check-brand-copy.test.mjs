@@ -23,7 +23,7 @@ describe('check-brand-copy (#1119)', () => {
     assert.equal(isCheckedSource('clients/poolmaster/src/index.css'), true);
     assert.equal(isCheckedSource('scripts/dev-start.sh'), true);
     assert.equal(isCheckedSource('infrastructure/terraform/ses.tf'), true);
-    assert.equal(isCheckedSource('clients/poolmaster/public/og/american-football-championship-weekend.jpg'), false);
+    assert.equal(isCheckedSource('clients/poolmaster/public/og/football-championship-weekend.jpg'), false);
     assert.equal(isCheckedSource('clients/poolmaster/public/apple-touch-icon.png'), false);
     assert.equal(isCheckedSource('clients/poolmaster/src/features/app-shell/app-shell.tsx'), true);
     assert.equal(isCheckedSource('packages/core-api/src/modules/email/system-email-templates.ts'), true);
