@@ -6,8 +6,9 @@ import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
@@ -32,10 +33,10 @@ async function syncedWeek() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}` } });
   await syncLeagueTo(prisma, sportLeague.id, 'nfl');
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Week 11 ${randomUUID()}` } });
   const externalId = `nfl-2026-week-11-${randomUUID().slice(0, 6)}`;
@@ -43,7 +44,6 @@ async function syncedWeek() {
     eventSeriesId: eventSeries.id,
     sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
     providerRef: { providerId: PROVIDER, externalId },
-    sport: Sport.AMERICAN_FOOTBALL,
     name: 'NFL Week 11',
     startDate: KICKOFF,
     status: SportEventStatus.DRAFT,
@@ -112,11 +112,11 @@ describe('Provider game slate (#1728)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const sportLeague = await prisma.sportLeague.create({
-      data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}`, bracketAdvancement: 'RESEED_BY_SEED' },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}`, bracketAdvancement: 'RESEED_BY_SEED' },
     });
     await syncLeagueTo(prisma, sportLeague.id, 'nfl');
     const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `NFL Playoffs ${randomUUID()}` } });
@@ -125,7 +125,6 @@ describe('Provider game slate (#1728)', () => {
       eventSeriesId: eventSeries.id,
       sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
       providerRef: { providerId: PROVIDER, externalId },
-      sport: Sport.AMERICAN_FOOTBALL,
       name: 'NFL Playoffs',
       startDate: KICKOFF,
       status: SportEventStatus.DRAFT,

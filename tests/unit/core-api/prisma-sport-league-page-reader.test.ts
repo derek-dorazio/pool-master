@@ -239,7 +239,7 @@ describe('readOverdueCandidates', () => {
 
   it('gives each event its own rounds with each round\'s latest match start, and an event with no rounds none, each with its league\'s typical game length', async () => {
     const prisma = prismaDouble();
-    const base = { name: 'Event', sport: Sport.GOLF, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-10T00:00:00.000Z'), endDate: null, sportLeagueSeason: { sportLeagueId: 'tour' } };
+    const base = { name: 'Event', status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-10T00:00:00.000Z'), endDate: null, sportLeagueSeason: { sportLeagueId: 'tour', sportLeague: { sport: { sport: Sport.GOLF } } } };
     prisma.sportEvent.findMany.mockResolvedValue([
       { ...base, id: 'parent' },
       { ...base, id: 'bare' },

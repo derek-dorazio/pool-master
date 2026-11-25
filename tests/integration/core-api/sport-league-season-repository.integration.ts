@@ -9,7 +9,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import { PrismaSportLeaguePageReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-page-reader';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { mapEventToProvider } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
@@ -26,7 +26,7 @@ async function seasonedLeague() {
   const prisma = getPrisma();
   const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL }, select: { id: true } });
   const league = await prisma.sportLeague.create({
-    data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `Season League ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `Season League ${randomUUID().slice(0, 8)}` },
   });
   const mappingId = await syncLeagueTo(prisma, league.id, 'nba');
   const [s2025, s2026, s2027] = await syncSeasonsTo(prisma, league.id, mappingId, [2025, 2026, 2027]);
@@ -39,7 +39,7 @@ async function eventIn(sportLeagueId: string, seasonId: string, synced: boolean)
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID().slice(0, 8)}` } });
   const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: seasonId, sport: Sport.BASKETBALL, name: series.name,
+      eventSeriesId: series.id, sportLeagueSeasonId: seasonId, name: series.name,
       startDate: new Date('2026-03-01T00:00:00.000Z'),
     },
   });

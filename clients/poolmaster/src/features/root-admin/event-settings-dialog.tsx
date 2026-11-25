@@ -27,7 +27,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { describeBudgetPricing } from './budget-pricing-format';
-import { buildEventPagePath } from '@/features/event-pages/event-page-paths';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { EventTiersDialog } from './event-tiers-dialog';
 import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
@@ -159,12 +158,12 @@ export function EventSettingsDialog({
   ];
 
   const actions: DetailAction[] = [
-    ...(overview?.eventPageSlug == null ? [] : [{
+    ...(overview?.eventPagePath == null ? [] : [{
       id: 'event-page',
       name: 'Event page',
       description: 'The public page that offers this event\'s contests.',
       control: (
-        <LinkButton data-testid={`${testId}-open-event-page`} size="sm" to={buildEventPagePath(event.sport, overview.eventPageSlug)} variant="secondary">
+        <LinkButton data-testid={`${testId}-open-event-page`} size="sm" to={overview.eventPagePath} variant="secondary">
           Open event page ›
         </LinkButton>
       ),

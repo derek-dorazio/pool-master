@@ -76,7 +76,6 @@ describe('IngestionService manual sync submission', () => {
     expect(result.eventId).toBe('golf-open-championship-2026');
     expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
     expect(syncRuns.rows).toEqual([expect.objectContaining({
-      sport: Sport.GOLF,
       providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       providerName: 'BALLDONTLIE',
       status: 'SUBMITTED',

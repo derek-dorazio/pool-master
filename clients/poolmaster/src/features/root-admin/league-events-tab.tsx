@@ -25,9 +25,9 @@ export function LeagueEventsTab() {
       initialSeasonId: defaultSeasonId(events ?? [], sportLeague.currentSeasonId),
       onOpenSyncRun: setOpenSyncRunId,
       seasons: seasonsQuery.data ?? [],
-      sport: sportLeague.sport,
+      sportUrlSegment: sportLeague.sportUrlSegment,
     }),
-    [events, seasonsQuery.data, sportLeague.currentSeasonId, sportLeague.sport],
+    [events, seasonsQuery.data, sportLeague.currentSeasonId, sportLeague.sportUrlSegment],
   );
 
   return (
@@ -53,7 +53,7 @@ export function LeagueEventsTab() {
               emptyMessage="No events yet."
               filterTestIdPrefix="root-admin-league-events-filter"
               getRowId={(event) => event.id}
-              getRowLink={(event) => buildSportEventPath(sportLeague.sport, event.id)}
+              getRowLink={(event) => buildSportEventPath(sportLeague.sportUrlSegment, event.id)}
               rowTestId={(event) => `root-admin-league-event-${event.id}`}
               tableTestId="root-admin-league-events-table"
               urlKey="events"

@@ -92,7 +92,7 @@ describe('IngestionService.listProviders', () => {
       const provider = fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: [Sport.GOLF] });
       const runs = syncRuns();
       const run = (status: 'COMPLETED' | 'FAILED' | 'IN_PROGRESS', createdAt: string) => runs.create({
-        ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status,
+        ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, status,
         startedAt: null, completedAt: null, ...syncRunOutcome(), createdAt: new Date(createdAt),
       });
       await run('COMPLETED', '2026-05-30T11:30:00.000Z');
@@ -398,12 +398,12 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const waiting = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
       startedAt: null, completedAt: null, kind: 'FIELD', ...syncRunOutcome(),
     });
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'IN_PROGRESS',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, ...syncRunOutcome(),
     });
 
@@ -426,7 +426,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'IN_PROGRESS',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, ...syncRunOutcome(),
     });
 
@@ -462,12 +462,12 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const failing = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
       startedAt: null, completedAt: null, kind: 'FIELD', ...syncRunOutcome(),
     });
     const healthy = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
       startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
     const payload = { syncRunIds: [failing.id, healthy.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' };

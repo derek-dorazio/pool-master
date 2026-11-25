@@ -52,7 +52,7 @@ describe('createScheduledEventReader', () => {
     await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', from, now: NOW, to });
 
     expect(findMany.mock.calls.map(([query]) => query.where)).toEqual([{
-      sport: Sport.GOLF,
+      sportLeagueSeason: { sportLeague: { sport: { sport: Sport.GOLF } } },
       providerMappings: { some: { provider: { code: 'BALLDONTLIE' } } },
       status: { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] },
       startDate: { gte: from, lte: to },
@@ -101,7 +101,7 @@ describe('createScheduledEventReader', () => {
     expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: {
-        sport: Sport.AMERICAN_FOOTBALL,
+        sportLeagueSeason: { sportLeague: { sport: { sport: Sport.AMERICAN_FOOTBALL } } },
         providerMappings: { some: { provider: { code: { in: ['BALLDONTLIE'] } } } },
         status: SportEventStatus.IN_PROGRESS,
         sportEventParticipants: { some: {} },

@@ -14,7 +14,7 @@ import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import { etagPlugin } from '../../../packages/core-api/src/plugins/etag-support';
 
 const STAMP = new Date('2026-10-01T00:00:00.000Z');
-const PAGE: EventPage = { id: 'page-cw', sport: Sport.AMERICAN_FOOTBALL, slug: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
+const PAGE: EventPage = { id: 'page-cw', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
 const OFFER: EventPageOffer = {
   id: 'tiered',
   eventPageId: PAGE.id,
@@ -45,7 +45,7 @@ const OFFER: EventPageOffer = {
 };
 
 const pages: EventPageRepository = {
-  findBySportSlug: () => Promise.resolve(PAGE),
+  findByUrlSegments: () => Promise.resolve(PAGE),
   findActive: () => Promise.resolve([PAGE]),
   findOffers: () => Promise.resolve([OFFER]),
   findEditionsNotOver: (series) => Promise.resolve(series.map(() => [{ sportEventId: 'cw-2027', name: 'Conference Championships', championshipYear: 2027, startDate: STAMP, endDate: null }])),
@@ -70,7 +70,7 @@ async function appClosingAt(cutoffs: Array<() => Date>): Promise<{ app: FastifyI
   await app.register(etagPlugin);
   await app.register((scope) => {
     scope.get('/', handlers.listEventPages);
-    scope.get('/:sport/:pageSlug', handlers.getEventPage);
+    scope.get('/:sportUrlSegment/:urlSegment', handlers.getEventPage);
   }, { prefix: '/api/v1/event-pages' });
   await app.ready();
   return { app, computed: () => computed };
@@ -82,7 +82,7 @@ describe('event page routes (#1181)', () => {
   it('lets a page whose offer closes in 10 minutes be kept 5 minutes in the browser and 10 at CloudFront, no longer', async () => {
     const { app } = await appClosingAt([inSeconds(600)]);
 
-    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/AMERICAN_FOOTBALL/championship-weekend' });
+    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
     const list = await app.inject({ method: 'GET', url: '/api/v1/event-pages' });
 
     expect(page.headers['cache-control']).toBe('public, max-age=300, s-maxage=600');
@@ -93,7 +93,7 @@ describe('event page routes (#1181)', () => {
   it('keeps a page whose offers close more than an hour away for the full hour', async () => {
     const { app } = await appClosingAt([inSeconds(7200)]);
 
-    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/AMERICAN_FOOTBALL/championship-weekend' });
+    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
 
     expect(page.headers['cache-control']).toBe(PUBLIC_CACHE_CONTROL);
     await app.close();
@@ -102,8 +102,8 @@ describe('event page routes (#1181)', () => {
   it('reads a page afresh, rather than answering from this task\'s copy, once an offer in the copy has closed', async () => {
     const { app, computed } = await appClosingAt([inSeconds(-5), inSeconds(7200)]);
 
-    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/AMERICAN_FOOTBALL/championship-weekend' });
-    const again = await app.inject({ method: 'GET', url: '/api/v1/event-pages/AMERICAN_FOOTBALL/championship-weekend' });
+    const page = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
+    const again = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/championship-weekend' });
 
     expect(computed()).toBe(2);
     expect(page.headers['cache-control']).toBe(PUBLIC_CACHE_CONTROL);

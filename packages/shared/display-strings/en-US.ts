@@ -365,10 +365,6 @@ export const enUS = {
       DRAFT: 'Not submitted',
       SUBMITTED: 'Submitted',
     },
-    PrizePayoutType: {
-      FIXED_AMOUNT: 'Fixed amount',
-      PERCENTAGE: 'Percentage',
-    },
     LeagueRole: {
       COMMISSIONER: 'Commissioner',
       MEMBER: 'Member',
@@ -1065,6 +1061,7 @@ export const enUS = {
     SPORT_LEAGUE_HAS_NO_SEASON: 'This league has no Season yet.',
     SPORT_LEAGUE_IN_USE: 'This league is in use, so it cannot be deleted.',
     SPORT_LEAGUE_NAME_ALREADY_EXISTS: 'A sport league already uses that name.',
+    SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS: 'A sport league of this sport already uses that URL segment.',
     SPORT_LEAGUE_NOT_BRACKET: 'This league plays no bracket.',
     SPORT_LEAGUE_NOT_FOUND: 'Sport league not found.',
     SPORT_LEAGUE_NOT_SYNCED: 'No provider syncs this league\'s events.',

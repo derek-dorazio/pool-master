@@ -17,6 +17,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/final-standings';
 import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -48,6 +49,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       where: { sport: Sport.GOLF },
       create: {
         sport: Sport.GOLF,
+        ...sportRowKeys(Sport.GOLF),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -86,7 +88,6 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        sport: Sport.GOLF,
         name: `Golf Settlement Invitational ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
@@ -273,7 +274,7 @@ describe('golf contest settlement — which contests settle', () => {
     const suffix = randomUUID().slice(0, 8);
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const league = await prisma.league.create({
@@ -282,7 +283,6 @@ describe('golf contest settlement — which contests settle', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        sport: Sport.GOLF,
         name: `Golf Settlement Draft Open ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
@@ -405,7 +405,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const owner = await createTestUser({ displayName: `Golf Unplayed ${suffix}` });
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const league = await prisma.league.create({
@@ -417,7 +417,6 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        sport: Sport.GOLF,
         name: `Golf Unplayed Classic ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
@@ -482,12 +481,12 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     });
     await prisma.contestEntryPick.createMany({
       data: [
-        { entryId: entry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
-        { entryId: entry.id, sportEventParticipantId: cut.id, contestFormat: 'ROSTER', slot: 2 },
-        { entryId: unflaggedEntry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
-        { entryId: unflaggedEntry.id, sportEventParticipantId: unflagged.id, contestFormat: 'ROSTER', slot: 2 },
-        { entryId: draftEntry.id, sportEventParticipantId: leader.id, contestFormat: 'ROSTER', slot: 1 },
-        { entryId: draftEntry.id, sportEventParticipantId: cut.id, contestFormat: 'ROSTER', slot: 2 },
+        { entryId: entry.id, sportEventParticipantId: leader.id },
+        { entryId: entry.id, sportEventParticipantId: cut.id },
+        { entryId: unflaggedEntry.id, sportEventParticipantId: leader.id },
+        { entryId: unflaggedEntry.id, sportEventParticipantId: unflagged.id },
+        { entryId: draftEntry.id, sportEventParticipantId: leader.id },
+        { entryId: draftEntry.id, sportEventParticipantId: cut.id },
       ],
     });
 
@@ -621,32 +620,22 @@ async function createSettlementEntries(input: {
       {
         entryId: winner.id,
         sportEventParticipantId: input.participants[0],
-        contestFormat: 'ROSTER',
-        slot: 1,
       },
       {
         entryId: winner.id,
         sportEventParticipantId: input.participants[1],
-        contestFormat: 'ROSTER',
-        slot: 2,
       },
       {
         entryId: winner.id,
         sportEventParticipantId: input.participants[2],
-        contestFormat: 'ROSTER',
-        slot: 3,
       },
       {
         entryId: runnerUp.id,
         sportEventParticipantId: input.participants[1],
-        contestFormat: 'ROSTER',
-        slot: 1,
       },
       {
         entryId: runnerUp.id,
         sportEventParticipantId: input.participants[2],
-        contestFormat: 'ROSTER',
-        slot: 2,
       },
     ],
   });

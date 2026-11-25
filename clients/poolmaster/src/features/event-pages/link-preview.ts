@@ -1,4 +1,4 @@
-import { buildEventPagePath, PRODUCT_NAME, Sport } from '@poolmaster/shared/domain';
+import { buildEventPagePath, PRODUCT_NAME } from '@poolmaster/shared/domain';
 import { EVENT_PAGE_COPY, type EventPageCopy } from './event-page-copy';
 
 /** Where the preview images sit in `public/`, and so in each release. */
@@ -26,8 +26,8 @@ export function linkPreviewImageFile(path: string): string {
   return `${path.replace(/^\/play\//, '').replaceAll('/', '-')}.jpg`;
 }
 
-function linkPreview(sport: Sport, slug: string, copy: EventPageCopy): LinkPreview {
-  const path = buildEventPagePath(sport, slug);
+function linkPreview(sportUrlSegment: string, urlSegment: string, copy: EventPageCopy): LinkPreview {
+  const path = buildEventPagePath({ sportUrlSegment, urlSegment });
   return {
     path,
     title: copy.name,
@@ -43,8 +43,8 @@ function linkPreview(sport: Sport, slug: string, copy: EventPageCopy): LinkPrevi
  * its link still opens, with no card.
  */
 export function eventPageLinkPreviews(): LinkPreview[] {
-  return Object.values(Sport).flatMap((sport) =>
-    Object.entries(EVENT_PAGE_COPY[sport] ?? {}).map(([slug, copy]) => linkPreview(sport, slug, copy)));
+  return Object.entries(EVENT_PAGE_COPY).flatMap(([sportUrlSegment, pages]) =>
+    Object.entries(pages).map(([urlSegment, copy]) => linkPreview(sportUrlSegment, urlSegment, copy)));
 }
 
 function escapeHtml(text: string): string {

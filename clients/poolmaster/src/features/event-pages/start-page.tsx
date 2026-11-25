@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
-import { buildEventPagePath, PlanCap } from '@poolmaster/shared/domain';
+import { PlanCap } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, LeagueDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -97,7 +97,7 @@ function ShareWithCommissionerButton({ page }: { page: EventPageDto }) {
       failedMessage="Couldn't copy the link. Copy this page's address from your browser instead."
       label="Share with your commissioner"
       testId="start-share-with-commissioner"
-      text={`${window.location.origin}${buildEventPagePath(page.sport, page.slug)}`}
+      text={`${window.location.origin}${page.path}`}
     />
   );
 }
@@ -105,7 +105,7 @@ function ShareWithCommissionerButton({ page }: { page: EventPageDto }) {
 function StartForUser({ request }: { request: StartRequest }) {
   const navigate = useNavigate();
   const logger = useMemo(() => getLogger().child({ feature: 'start-page' }), []);
-  const pageQuery = useEventPageQuery(request.sport, request.slug);
+  const pageQuery = useEventPageQuery(request.sportUrlSegment, request.urlSegment);
   const { query: leaguesQuery, leagues, commissionerLeagueIds } = useLeaguesQuery();
   const [isCreating, setIsCreating] = useState<boolean | null>(null);
 
@@ -133,7 +133,7 @@ function StartForUser({ request }: { request: StartRequest }) {
   if (request.templateId && !offer) {
     return (
       <EmptyState
-        action={<LinkButton to={buildEventPagePath(page.sport, page.slug)}>{`See ways to play ${copy.name}`}</LinkButton>}
+        action={<LinkButton to={page.path}>{`See ways to play ${copy.name}`}</LinkButton>}
         body="That way to play has already started. The event page shows what you can still start."
         testId="start-offer-gone"
         title="This one has started"

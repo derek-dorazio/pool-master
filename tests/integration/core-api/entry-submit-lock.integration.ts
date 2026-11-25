@@ -67,7 +67,7 @@ async function seedFullEntry(status: ContestEntryStatus) {
   });
   await prisma.contestEntryPick.createMany({
     data: field.map((row, index) => ({
-      entryId: entry.id, sportEventParticipantId: row.id, contestFormat: 'ROSTER' as const, lineupSlot: index + 1,
+      entryId: entry.id, sportEventParticipantId: row.id, lineupSlot: index + 1,
     })),
   });
   return { contest, entry, event, field, headers: authHeaders(owner.id, owner.email) };

@@ -96,13 +96,13 @@ export async function publishLiveScoreUpdate(
 
   // 2/3. Resolve external → internal SportEvent so persistence is scoped
   // to one event, then dispatch to the per-category persistence path.
-  // The event the provider knows by this id (#2004), and its league through its Season.
+  // The event the provider knows by this id (#2004), and its league, and sport, through its Season.
   const providerCode = providerCodeOfSourceId(deps.providerId);
   const sportEvent = providerCode === undefined ? null : (await deps.prisma.sportEventProviderMapping.findFirst({
     where: { provider: { code: providerCode }, externalId: validated.externalEventId },
     select: {
       sportEvent: {
-        select: { id: true, sport: true, rounds: true, status: true, sportLeagueSeason: { select: { sportLeague: { select: { id: true, scoringFamily: true, roundSeriesLengths: true } } } } },
+        select: { id: true, rounds: true, status: true, sportLeagueSeason: { select: { sportLeague: { select: { id: true, scoringFamily: true, roundSeriesLengths: true, sport: { select: { sport: true } } } } } } },
       },
     },
   }))?.sportEvent ?? null;
@@ -144,7 +144,7 @@ export async function publishLiveScoreUpdate(
   // The event's scoring family writes the batch into its own result rows (#606), and only a
   // batch of the one category it accepts: a family entered by an admin accepts none.
   const writer = deps.scoringFamilyForEvent({
-    sport: sportEvent.sport,
+    sport: sportEvent.sportLeagueSeason.sportLeague.sport.sport,
     scoringFamily: sportEvent.sportLeagueSeason.sportLeague.scoringFamily,
   }).liveScores;
   const acceptedCategory = writer?.category ?? null;
@@ -162,7 +162,7 @@ export async function publishLiveScoreUpdate(
           providerId: deps.providerId,
           externalEventId: validated.externalEventId,
           sportEventId: sportEvent.id,
-          sport: sportEvent.sport,
+          sport: sportEvent.sportLeagueSeason.sportLeague.sport.sport,
           category: validated.category,
           acceptedCategory,
         },

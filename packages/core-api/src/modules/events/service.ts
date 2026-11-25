@@ -218,7 +218,6 @@ export class SportEventService {
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
       event: {
-        sport,
         name: input.name,
         venue: input.venue,
         location: input.location,
@@ -257,7 +256,7 @@ export class SportEventService {
     providerId: string;
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderSeasonImport> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
     const now = this.now();
     const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
       input.providerId,
@@ -287,7 +286,7 @@ export class SportEventService {
         continue;
       }
       seriesWithEdition.add(eventSeriesId);
-      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
+      editions.push(providerEdition(seriesIdByName, { ...providerEvent, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
     }
     const created = await this.createEditions(sportLeague, editions);
 
@@ -750,7 +749,6 @@ function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminS
  * `rounds` always matches the rounds created.
  */
 function providerEdition(
-  sport: Sport,
   seriesIdByName: ReadonlyMap<string, string>,
   input: ProviderEventDetail & { externalId: string; sportLeagueSeasonId: string; providerId: string; rounds?: number },
 ): NewEdition {
@@ -760,7 +758,6 @@ function providerEdition(
   return {
     event: {
       providerRef: { providerId: input.providerId, externalId: input.externalId },
-      sport,
       name: input.name,
       venue: input.venue ?? undefined,
       startDate: input.startDate,

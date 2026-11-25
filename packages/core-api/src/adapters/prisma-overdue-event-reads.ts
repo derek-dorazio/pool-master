@@ -35,7 +35,9 @@ export async function readOverdueCandidates(
       ...(eventIds !== undefined && { id: { in: [...eventIds] } }),
     },
     select: {
-      id: true, name: true, sport: true, status: true, startDate: true, endDate: true, sportLeagueSeason: { select: { sportLeagueId: true } },
+      id: true, name: true, status: true, startDate: true, endDate: true,
+      // The event's league, and its sport, are its Season's (#2004, #2042).
+      sportLeagueSeason: { select: { sportLeagueId: true, sportLeague: { select: { sport: { select: { sport: true } } } } } },
     },
   });
   if (events.length === 0) return [];
@@ -76,7 +78,7 @@ export async function readOverdueCandidates(
     return {
       id: event.id,
       name: event.name,
-      sport: event.sport,
+      sport: event.sportLeagueSeason.sportLeague.sport.sport,
       status: event.status,
       startDate: event.startDate,
       endDate: event.endDate,

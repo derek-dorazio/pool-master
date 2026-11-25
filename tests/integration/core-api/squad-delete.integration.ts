@@ -9,7 +9,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
   createTestUser,
@@ -21,6 +21,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -63,13 +64,12 @@ async function seedLeagueWithContestHistory() {
 
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      sport: Sport.GOLF,
       name: `Delete Team Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -104,7 +104,6 @@ async function seedLeagueWithContestHistory() {
       data: {
         entryId: entry.id,
         sportEventParticipantId: eventParticipant.id,
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });

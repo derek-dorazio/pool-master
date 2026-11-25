@@ -1,12 +1,8 @@
 /**
- * Integration coverage for the per-contest-format partial unique index on
- * `contest_entry_picks` (plans/117 §7.1): a roster entry cannot pick the same
- * participant twice. Only Postgres can guarantee that under load. ROSTER is the
- * only built format (#605); a new format adds its own index here.
- *
- * pool-master-rop.78.6 — service-layer enforcement of the contestFormat
- * denormalization invariant is the second half of the guarantee; that layer
- * is asserted in `contest-entry-pick-contest-format-invariant.integration.ts`.
+ * Integration coverage for the unique index on `contest_entry_picks` (entry, sport-event
+ * participant): an entry cannot pick the same participant twice. Only Postgres can guarantee
+ * that under load. Only roster contests write picks (#605), so the index needs no format
+ * column to predicate on (#2042 dropped the copy).
  */
 import { randomUUID } from 'node:crypto';
 import {
@@ -15,9 +11,10 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -32,7 +29,7 @@ interface FixtureContext {
   participantBId: string;
 }
 
-async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureContext> {
+async function seedContestFixture(): Promise<FixtureContext> {
   const prisma = getPrisma();
   const suffix = randomUUID().slice(0, 8);
 
@@ -81,13 +78,12 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
 
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      sport: Sport.GOLF,
       name: `Partial Uniques Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -128,7 +124,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
       sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
       name: `Partial Uniques Contest ${suffix}`,
       status: 'OPEN',
-      contestFormat,
+      contestFormat: 'ROSTER',
       selectionType: 'TIERED',
     },
   });
@@ -150,16 +146,15 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
   };
 }
 
-describe('pool-master-rop.78.6 / plans/117 §7.1 — ContestEntryPick partial unique indexes', () => {
-  it('uq_pick_roster_participant — rejects duplicate ROSTER picks for the same sport-event participant on one entry', async () => {
+describe('ContestEntryPick unique index', () => {
+  it('uq_pick_entry_participant rejects a second pick of the same sport-event participant on one entry, and takes another participant', async () => {
     const prisma = getPrisma();
-    const fixture = await seedContestFixture('ROSTER');
+    const fixture = await seedContestFixture();
 
     await prisma.contestEntryPick.create({
       data: {
         entryId: fixture.entryId,
         sportEventParticipantId: fixture.participantAId,
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });
@@ -169,19 +164,17 @@ describe('pool-master-rop.78.6 / plans/117 §7.1 — ContestEntryPick partial un
         data: {
           entryId: fixture.entryId,
           sportEventParticipantId: fixture.participantAId,
-          contestFormat: 'ROSTER',
           isAutoPicked: false,
         },
       }),
     ).rejects.toMatchObject({ code: 'P2002' });
 
-    // Different sport-event participant succeeds — the partial index is
-    // scoped to (entry, sportEventParticipantId).
+    // Different sport-event participant succeeds: the index is scoped to
+    // (entry, sportEventParticipantId).
     await prisma.contestEntryPick.create({
       data: {
         entryId: fixture.entryId,
         sportEventParticipantId: fixture.participantBId,
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });

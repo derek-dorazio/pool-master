@@ -57,6 +57,7 @@ export function mapSportEventToDto({
     providerMappings: event.providerMappings.map((mapping) => ({ providerCode: mapping.providerCode, providerName: mapping.providerName, externalId: mapping.externalId })),
     providerName: eventProviderNameOf(event),
     sport: event.sport,
+    sportUrlSegment: event.sportUrlSegment,
     name: event.name,
     venue: event.venue ?? null,
     location: event.location ?? null,

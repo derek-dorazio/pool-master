@@ -241,6 +241,13 @@ a Postgres enum's values is a migration with a type swap), no read orders by the
 column in SQL: the read sorts in code with `compareByEnumOrder`, and the enum is
 listed with its reason in the test's `SORTED_IN_CODE`.
 
+An enum whose every value has a reference row may keep its order on that row instead, as a
+`display_order` column, when the order is a fact an admin or a migration sets rather than one
+the code decides. `Sport` is the one such enum: each `sports` row carries its `displayOrder`
+(and its stored `urlSegment`), the API returns them, and every list of sports, web lists
+included, sorts by them. No `SportOrder` sits beside the enum, and the test's
+`ORDERED_BY_ROW` names it with its reason.
+
 ### Every enum value has its words in the display-string module
 
 The words shown for an enum value are not kept beside the enum or on any screen: every value of

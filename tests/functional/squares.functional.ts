@@ -29,6 +29,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalErro
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // Super Bowl squares end to end over HTTP (#711): the NFL playoffs test seed loads with its Super
 // Bowl still to play. A commissioner runs a squares contest on it from the NFL's squares preset,
@@ -76,7 +77,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Squares Director' });

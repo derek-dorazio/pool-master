@@ -40,7 +40,7 @@ function renderPage(entry = '/play/american-football/championship-weekend') {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[entry]}>
         <Routes>
-          <Route element={<EventPage />} path="/play/:sport/:pageSlug" />
+          <Route element={<EventPage />} path="/play/:sportUrlSegment/:urlSegment" />
         </Routes>
         <LocationProbe />
       </MemoryRouter>
@@ -65,7 +65,7 @@ describe('Event page', () => {
     expect(await screen.findByTestId('event-page-name')).toHaveTextContent('Championship Weekend');
     expect(screen.getByTestId('event-page-hook')).toHaveTextContent('Four teams, two games, one Sunday.');
     expect(screen.getByTestId('event-page-when')).toHaveTextContent('Picks close at the first kickoff');
-    expect(getEventPageMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sport: 'AMERICAN_FOOTBALL', pageSlug: 'championship-weekend' } }));
+    expect(getEventPageMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportUrlSegment: 'american-football', urlSegment: 'championship-weekend' } }));
 
     expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling')).toHaveTextContent('Bracket');
     expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling-opens')).toHaveTextContent('Opens when the four teams are set');
@@ -113,7 +113,8 @@ describe('Event page', () => {
   it('links the sport\'s next event page after this one under Next up', async () => {
     const superBowl = championshipWeekendFixture({
       id: 'page-sb',
-      slug: 'super-bowl',
+      urlSegment: 'super-bowl',
+      path: '/play/american-football/super-bowl',
       offers: [championshipWeekendFixture().offers[0]].map((offer) => ({ ...offer, edition: { ...offer.edition, startDate: '2027-02-07T23:30:00.000Z' } })),
     });
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
@@ -138,9 +139,9 @@ describe('Event page', () => {
   });
 
   it('sends a retired page with a successor to the successor\'s address', async () => {
-    const retired = championshipWeekendFixture({ id: 'page-old', slug: 'conference-weekend', isActive: false, offers: [], redirectTo: { sport: 'AMERICAN_FOOTBALL', slug: 'championship-weekend' } });
-    getEventPageMock.mockImplementation((options: { path?: { pageSlug?: string } }) => ({
-      data: { eventPage: options.path?.pageSlug === 'conference-weekend' ? retired : championshipWeekendFixture() },
+    const retired = championshipWeekendFixture({ id: 'page-old', urlSegment: 'conference-weekend', path: '/play/american-football/conference-weekend', isActive: false, offers: [], redirectTo: { sport: 'AMERICAN_FOOTBALL', sportUrlSegment: 'american-football', urlSegment: 'championship-weekend', path: '/play/american-football/championship-weekend' } });
+    getEventPageMock.mockImplementation((options: { path?: { urlSegment?: string } }) => ({
+      data: { eventPage: options.path?.urlSegment === 'conference-weekend' ? retired : championshipWeekendFixture() },
     }));
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
     listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
@@ -158,14 +159,16 @@ describe('Event page', () => {
     expect(screen.getByRole('link', { name: 'See every way to play' })).toHaveAttribute('href', '/how-to-play');
   });
 
-  it('says an address with no page has moved, whether the API has no page there or the sport is unknown', async () => {
+  it('says an address with no page has moved, whether the API has no page there or the address could name none, without asking for that one', async () => {
     getEventPageMock.mockResolvedValue({ error: { error: { code: 'EVENT_PAGE_NOT_FOUND', message: 'There is no event page at that address.' } }, status: 404 });
     const { unmount } = renderPage('/play/american-football/no-such-page');
     expect(await screen.findByTestId('event-page-moved')).toBeInTheDocument();
     unmount();
 
-    renderPage('/play/curling/championship-weekend');
+    getEventPageMock.mockClear();
+    renderPage('/play/American_Football/championship-weekend');
     expect(screen.getByTestId('event-page-moved')).toBeInTheDocument();
+    expect(getEventPageMock).not.toHaveBeenCalled();
   });
 
   it('keeps the Clutch Card\'s old address as an inactive page that links to How to Play, reading no event page', () => {

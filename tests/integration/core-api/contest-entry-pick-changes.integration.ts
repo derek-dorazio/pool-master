@@ -1,10 +1,7 @@
 /**
- * ContestEntryPick.contestFormat is denormalized from the parent contest
- * (plans/117 §7.1) so partial unique indexes can predicate on a local column.
- * ROSTER is the only format since #605, so this checks the copy is made; the
- * per-format cross-checks went with the formats. It also covers the rest of the one pick-change
- * path, `changeEntryPick` (#1259): numbering, swaps, removals and the entry row lock, and how it
- * and `settleEntryEvent` settle the entry's status under that lock (#1300).
+ * The one pick-change path, `changeEntryPick` (#1259): what an added pick stores, numbering,
+ * swaps, removals and the entry row lock, and how it and `settleEntryEvent` settle the entry's
+ * status under that lock (#1300). A pick no longer copies its contest's format (#2042).
  */
 import { randomUUID } from 'node:crypto';
 import {
@@ -14,7 +11,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { ContestEntryStatus, ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ParticipantType } from '@poolmaster/shared/domain';
 import {
   ContestEntryPickService,
 } from '../../../packages/core-api/src/modules/contest-entry-picks';
@@ -22,6 +19,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 import { holdEntryLock, waitUntilBlockedBy } from '../contest-lock';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -40,7 +38,7 @@ interface FormatFixture {
   fieldIds: [string, string];
 }
 
-async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixture> {
+async function seedFixture(): Promise<FormatFixture> {
   const prisma = getPrisma();
   const suffix = randomUUID().slice(0, 8);
 
@@ -79,13 +77,12 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
 
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      sport: Sport.GOLF,
       name: `Invariant Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -113,7 +110,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
       sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
       name: `Invariant Contest ${suffix}`,
       status: 'OPEN',
-      contestFormat: contestFormat as 'ROSTER',
+      contestFormat: 'ROSTER',
       selectionType: 'TIERED',
     },
   });
@@ -142,11 +139,11 @@ const add = (sportEventParticipantId: string, lineupSlot = 1) => ({
   add: { sportEventParticipantId, participantId: expectDefined(participantBySportEventParticipant.get(sportEventParticipantId)), lineupSlot },
 });
 
-describe('ContestEntryPick.contestFormat denormalization', () => {
-  it('copies the parent contest\'s format onto the pick row a pick change adds', async () => {
+describe('ContestEntryPick rows a pick change adds', () => {
+  it('stores the added pick on its participant in the first lineup slot, not auto-picked', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(getAppPrisma());
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
 
     const result = await service.changeEntryPick({
       entryId: fixture.entryId,
@@ -158,7 +155,6 @@ describe('ContestEntryPick.contestFormat denormalization', () => {
     const row = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId } });
     expect(result).toMatchObject({ picksChanged: true, statusChanged: false });
     expect(row).toEqual(expect.objectContaining({
-      contestFormat: 'ROSTER',
       sportEventParticipantId: fixture.fieldIds[0],
       lineupSlot: 1,
       isAutoPicked: false,
@@ -170,7 +166,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
   it('numbers an added pick after every pick the whole contest holds, not just the entry\'s', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(getAppPrisma());
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
     const squad = await prisma.contestEntry.findUniqueOrThrow({ where: { id: fixture.entryId }, select: { squadId: true } });
     const rival = await prisma.contestEntry.create({
       data: { contestId: fixture.contestId, squadId: squad.squadId, entryNumber: 2, name: 'Rival entry' },
@@ -186,7 +182,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
   it('hands decide the entry\'s picks in the event, and swaps one out for another in one change', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(getAppPrisma());
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
     await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, ...unsettled, decide: () => add(fixture.fieldIds[0]) });
     const first = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId } });
     const seen: unknown[] = [];
@@ -211,7 +207,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
   it('removes only the pick named, leaving the entry and its other picks in place', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(getAppPrisma());
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
     await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, ...unsettled, decide: () => add(fixture.fieldIds[0], 1) });
     await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, ...unsettled, decide: () => add(fixture.fieldIds[1], 2) });
     const removed = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId, sportEventParticipantId: fixture.fieldIds[1] } });
@@ -231,7 +227,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
   it('writes nothing and answers unchanged when decide declines the change', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(getAppPrisma());
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
 
     const result = await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, ...unsettled, decide: () => null });
 
@@ -242,11 +238,11 @@ describe('ContestEntryPickService.changeEntryPick', () => {
   it('waits on the entry\'s row lock and decides on the pick the holder committed, so two changes never decide on the same picks', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(getAppPrisma());
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
     // The holder adds the first golfer under the entry's lock, as a concurrent pick change would.
     const holder = holdEntryLock(prisma, fixture.entryId, async (tx) => {
       await tx.contestEntryPick.create({
-        data: { entryId: fixture.entryId, sportEventParticipantId: fixture.fieldIds[0], contestFormat: 'ROSTER', lineupSlot: 1 },
+        data: { entryId: fixture.entryId, sportEventParticipantId: fixture.fieldIds[0], lineupSlot: 1 },
       });
     });
     const holderPid = await holder.ready;
@@ -280,7 +276,7 @@ describe('ContestEntryPickService settling an entry\'s status under its lock (#1
   it('hands settle the lineup a change left and the status read under the lock, and returns the entry to DRAFT with its submit time cleared', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
     const seen: unknown[] = [];
 
     const result = await service.changeEntryPick({
@@ -302,7 +298,7 @@ describe('ContestEntryPickService settling an entry\'s status under its lock (#1
   it('hands settle a swap\'s lineup with the removed pick gone and the added pick as it was stored, without reading the picks again', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
     await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, ...unsettled, decide: () => add(fixture.fieldIds[0]) });
     const first = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId } });
     const seen: unknown[] = [];
@@ -330,7 +326,7 @@ describe('ContestEntryPickService settling an entry\'s status under its lock (#1
   it('writes neither the pick nor the status when settle refuses the change', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
 
     await expect(service.changeEntryPick({
       entryId: fixture.entryId,
@@ -347,7 +343,7 @@ describe('ContestEntryPickService settling an entry\'s status under its lock (#1
   it('submits an event with no pick write, stamping its submit time, and answers unchanged for one already submitted', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
-    const fixture = await seedFixtureForFormat('ROSTER');
+    const fixture = await seedFixture();
     await prisma.contestEntryEvent.update({
       where: { contestEntryId_sportEventId: { contestEntryId: fixture.entryId, sportEventId: fixture.sportEventId } },
       data: { status: ContestEntryStatus.DRAFT, submittedAt: null },

@@ -77,7 +77,7 @@ function fieldRow(overrides: Partial<SportEventPageFieldRow> = {}): SportEventPa
 }
 
 function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEventPageFacts {
-  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPageSlug: null, ...overrides };
+  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPagePath: null, ...overrides };
 }
 
 const context = { webhookProviderIds: [] as string[], now: NOW };
@@ -267,9 +267,9 @@ describe('buildSportEventOverview', () => {
     ]);
   });
 
-  it('carries the slug of the event page offering its series, and null when no page offers it', () => {
-    expect(buildSportEventOverview(eventPageFacts({ eventPageSlug: 'world-series' }), context).eventPageSlug).toBe('world-series');
-    expect(buildSportEventOverview(eventPageFacts(), context).eventPageSlug).toBeNull();
+  it('carries the path of the event page offering its series, and null when no page offers it', () => {
+    expect(buildSportEventOverview(eventPageFacts({ eventPagePath: '/play/baseball/world-series' }), context).eventPagePath).toBe('/play/baseball/world-series');
+    expect(buildSportEventOverview(eventPageFacts(), context).eventPagePath).toBeNull();
   });
 
   it('sends the overview in the shape the contract declares', () => {

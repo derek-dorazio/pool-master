@@ -296,7 +296,7 @@ export class IngestionPersistence {
       where: { provider: { code: providerCode }, externalId: detail.externalId },
       select: {
         sportEvent: {
-          include: { sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true } } } } },
+          include: { sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } } } },
         },
       },
     }))?.sportEvent ?? null;
@@ -462,12 +462,11 @@ type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participa
 
 /** Whether an event's seeds are locked: a released bracket's are (#698), since the upset bonus reads them as they stood at release. */
 function seedsLockedOn(event: {
-  sport: Sport;
   status: SportEventStatus;
-  sportLeagueSeason: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily'] } };
+  sportLeagueSeason: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily']; sport: { sport: Sport } } };
 }): boolean {
   const { sportLeague } = event.sportLeagueSeason;
-  return eventPlaysMatches({ sport: event.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
+  return eventPlaysMatches({ sport: sportLeague.sport.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
 }
 
 /** The sport league an event's participants belong to (#1853), and the kind of participant it holds. */
@@ -534,7 +533,6 @@ function resolveDisposition(
 function normalizeSportEventRow(row: {
   externalId: string;
   providerId: string;
-  sport: Sport;
   name: string;
   venue: string | null;
   location: string | null;
@@ -547,7 +545,6 @@ function normalizeSportEventRow(row: {
   return {
     externalId: row.externalId,
     providerId: row.providerId,
-    sport: row.sport,
     name: row.name,
     venue: row.venue,
     location: row.location,

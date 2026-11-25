@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import { sportEventFixture } from './sport-test-fixtures';
+import { sportEventFixture, sportsQueryClient } from './sport-test-fixtures';
 import { ManageSportEventRoute } from './manage-sport-event-route';
 import { ManageSportRoute } from './manage-sport-route';
 
@@ -19,7 +19,7 @@ function CurrentPath() {
 }
 
 function renderAt(path: string) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryClient = sportsQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>

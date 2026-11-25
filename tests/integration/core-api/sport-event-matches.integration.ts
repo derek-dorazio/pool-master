@@ -19,7 +19,8 @@ import {
 } from '../helpers';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
@@ -52,12 +53,12 @@ async function createBracketEvent() {
   // The integration cleanup empties sport leagues no template names, so the basketball rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.BASKETBALL },
-    create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NCAA Division I Men' } },
-    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NCAA Division I Men' },
+    create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NCAA Division I Men' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });
@@ -65,7 +66,6 @@ async function createBracketEvent() {
   const event = await createSportEventRow(events, {
     eventSeriesId: eventSeries.id,
     sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2027),
-    sport: Sport.BASKETBALL,
     name: 'NCAA Tournament',
     startDate: new Date('2027-03-18T16:00:00.000Z'),
     status: 'DRAFT',

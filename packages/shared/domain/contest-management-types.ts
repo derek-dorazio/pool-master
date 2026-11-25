@@ -35,7 +35,10 @@ export interface SportEvent extends DomainEntity {
    * Read its league's provider's with `eventFeedRef`.
    */
   providerMappings: SportEventProviderMapping[];
+  /** Its sport league's sport, read through its Season (#2004, #2042); the event keeps no copy. */
   sport: Sport;
+  /** That sport's stored URL segment, for the links and pictures that name the sport (#2042). */
+  sportUrlSegment: string;
   name: string;
   venue?: string;
   location?: string;

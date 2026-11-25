@@ -21,6 +21,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { recordStatements } from '../statement-log';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -54,13 +55,12 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   })));
   const sport = await prisma.sport.upsert({
     where: { sport: 'AMERICAN_FOOTBALL' },
-    create: { sport: 'AMERICAN_FOOTBALL', tournamentFormat: 'MATCHES' },
+    create: { sport: 'AMERICAN_FOOTBALL', ...sportRowKeys('AMERICAN_FOOTBALL'), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      sport: Sport.AMERICAN_FOOTBALL,
       name: `Squares Event ${suffix}`,
       startDate: new Date('2030-02-03T23:30:00.000Z'),
       status: 'SCHEDULED',

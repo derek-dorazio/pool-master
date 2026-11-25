@@ -14,6 +14,7 @@ import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/i
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
 // schedule an admin-created event starts with.
@@ -41,6 +42,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       where: { sport: Sport.GOLF },
       create: {
         sport: Sport.GOLF,
+        ...sportRowKeys(Sport.GOLF),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -64,7 +66,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        sport: 'GOLF',
         name: 'Golf Standing Invitational',
         startDate: new Date('2026-05-07T12:00:00.000Z'),
         endDate: new Date('2026-05-10T22:00:00.000Z'),
@@ -172,13 +173,12 @@ describe('Golf live-score persistence', () => {
     const prisma = getPrisma();
     await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const createEvent = async (tag: string) => prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        sport: 'GOLF',
         name: `Live ${suffix} ${tag}`,
         startDate: new Date('2026-05-07T12:00:00.000Z'),
         status: 'IN_PROGRESS',

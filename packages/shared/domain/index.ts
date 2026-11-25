@@ -29,6 +29,7 @@ export * from './cup-points';
 export * from './championship';
 export * from './league-plans';
 export * from './event-pages';
+export * from './url-segment';
 export * from './time-zones';
 export * from './brand';
 export * from './event-overdue';

@@ -14,6 +14,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     id: '11111111-1111-4111-8111-111111111111',
     providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'mock-major-2026' }],
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
     name: 'Mock Major',
     status: 'SCHEDULED',
     // Far ahead, so the mapper's own clock always reads it as not yet started.

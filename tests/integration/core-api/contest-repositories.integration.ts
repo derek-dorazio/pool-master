@@ -42,10 +42,11 @@ import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { contestStartedEmailsJob, createContestEmailJobs, createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
 import { createContestRow } from '../../support/contest-rows';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
@@ -86,7 +87,8 @@ const PINNED_RELEASE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_provider_mappings', 2],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 2],
-  ['SELECT sport_leagues', 2],
+  ['SELECT sport_leagues', 3], // each event's sport is read through its series' league since #2042 (#2089)
+  ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
 ];
 
@@ -107,13 +109,12 @@ async function createLeagueAndEvent() {
   ]);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      sport: Sport.GOLF,
       name: `Contest Repo Open ${suffix}`,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
@@ -139,7 +140,6 @@ async function createLaterEvent(suffix: string, startDate = new Date('2026-07-16
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      sport: Sport.GOLF,
       name: `Contest Repo Later Open ${suffix}`,
       startDate,
       status: 'SCHEDULED',
@@ -610,16 +610,13 @@ describe('ContestRepository', () => {
         participantScoringRules: {
           create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
         },
-        prizeDefinitions: {
-          create: { prizeDefinitionId: 'WINNER', displayName: 'Winner', sortOrder: 1 },
-        },
       },
     });
     const entry = await prisma.contestEntry.create({
       data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Entry' },
     });
     await prisma.contestEntryPick.create({
-      data: { entryId: entry.id, sportEventParticipantId: field[0].id, contestFormat: 'ROSTER', slot: 1 },
+      data: { entryId: entry.id, sportEventParticipantId: field[0].id },
     });
     await repos().standings.upsertMany(contest.id, [{
       contestId: contest.id,
@@ -639,12 +636,11 @@ describe('ContestRepository', () => {
     const remaining = await Promise.all([
       prisma.contestConfiguration.count({ where: { id: configuration.id } }),
       prisma.participantContestScoringRule.count({ where: { contestConfigurationId: configuration.id } }),
-      prisma.contestPrizeDefinition.count({ where: { contestConfigurationId: configuration.id } }),
       prisma.contestEntry.count({ where: { contestId: contest.id } }),
       prisma.contestEntryPick.count({ where: { entryId: entry.id } }),
       prisma.contestEntryStanding.count({ where: { contestId: contest.id } }),
     ]);
-    expect(remaining).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(remaining).toEqual([0, 0, 0, 0, 0]);
   });
 
   it('updates only the contest fields given and returns the contest with its event\'s sport, as every read does', async () => {
@@ -705,8 +701,8 @@ describe('ContestRepository', () => {
     const entry = await createEntry(contest.id, squads[0].id, 1, 'Shrinker');
     await prisma.contestEntryPick.createMany({
       data: [
-        { entryId: entry.id, sportEventParticipantId: field[0].id, contestFormat: 'ROSTER', slot: 1 },
-        { entryId: entry.id, sportEventParticipantId: later.field[0].id, contestFormat: 'ROSTER', slot: 1 },
+        { entryId: entry.id, sportEventParticipantId: field[0].id },
+        { entryId: entry.id, sportEventParticipantId: later.field[0].id },
       ],
     });
 
@@ -733,7 +729,6 @@ async function createSecondTourEvent(fixtureEventSeriesId: string, suffix: strin
     data: {
       eventSeriesId: series.id,
       sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026),
-      sport: Sport.GOLF,
       name: `Plan Cap Classic ${suffix}`,
       startDate: new Date('2026-08-04T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -974,13 +969,13 @@ describe('ContestConfigTemplateRepository', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const suffix = randomUUID().slice(0, 8);
     const [pga, lpga] = await Promise.all([
-      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `PGA-style ${suffix}` } }),
-      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `LPGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `PGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `LPGA-style ${suffix}` } }),
     ]);
     return { pga, lpga };
   }
@@ -989,7 +984,6 @@ describe('ContestConfigTemplateRepository', () => {
   async function createTemplate(key: string, eventType: ContestTemplateEventType | null, sortOrder: number, sportLeagueId?: string) {
     return getPrisma().contestConfigTemplate.create({
       data: {
-        sport: Sport.GOLF,
         sportLeagueId: sportLeagueId ?? (await createGolfLeagues()).pga.id,
         eventType,
         contestFormat: 'ROSTER',
@@ -1088,7 +1082,6 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
   async function createSeriesTemplate(key: string, sportLeagueId: string, eventSeriesNames: string[]) {
     return getPrisma().contestConfigTemplate.create({
       data: {
-        sport: Sport.GOLF,
         sportLeagueId,
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
@@ -1135,7 +1128,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const prisma = getPrisma();
     const { league, event, series, covering, edition } = await seriesWithTemplate();
     const otherTour = await prisma.sportLeague.create({
-      data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
     });
     const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
     const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
@@ -1600,7 +1593,6 @@ describe('SportEventRepository.findAll start bounds (#893)', () => {
     const create = async (day: string) => prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        sport: Sport.GOLF,
         name: `Start Bounds ${day} ${suffix}`,
         startDate: new Date(`2026-06-${day}T12:00:00.000Z`),
         status: 'SCHEDULED',
@@ -1636,13 +1628,13 @@ describe('ContestEntryPickRepository — read-only', () => {
     });
     const later = await prisma.contestEntryPick.create({
       data: {
-        entryId: picked.id, sportEventParticipantId: field[1].id, contestFormat: 'ROSTER', slot: 2,
+        entryId: picked.id, sportEventParticipantId: field[1].id,
         pickedAt: new Date('2026-06-01T12:05:00.000Z'),
       },
     });
     const earlier = await prisma.contestEntryPick.create({
       data: {
-        entryId: picked.id, sportEventParticipantId: field[0].id, contestFormat: 'ROSTER', slot: 1,
+        entryId: picked.id, sportEventParticipantId: field[0].id,
         pickedAt: new Date('2026-06-01T12:00:00.000Z'),
       },
     });
@@ -1651,9 +1643,9 @@ describe('ContestEntryPickRepository — read-only', () => {
     const withParticipant = await repos().picks.findByEntriesWithParticipant([picked.id]);
     const counts = await repos().picks.countByEntries([picked.id, empty.id]);
 
-    expect(picks.map((pick) => [pick.id, pick.slot, pick.contestFormat, pick.sportEventId])).toEqual([
-      [earlier.id, 1, 'ROSTER', event.id],
-      [later.id, 2, 'ROSTER', event.id],
+    expect(picks.map((pick) => [pick.id, pick.sportEventId])).toEqual([
+      [earlier.id, event.id],
+      [later.id, event.id],
     ]);
     // Only the events asked for (#1162): the entry's picks are all in `event`, so another reads none.
     await expect(repos().picks.findByEntriesAndEvents([picked.id], [randomUUID()])).resolves.toEqual([]);
@@ -1690,10 +1682,10 @@ describe('ContestEntryPickRepository — read-only', () => {
     const contest = await createContest(league.id, [event.id, later.event.id], 'Season Picks');
     const entry = await prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Season' } });
     const first = await prisma.contestEntryPick.create({
-      data: { entryId: entry.id, sportEventParticipantId: field[0].id, contestFormat: 'ROSTER', pickedAt: new Date('2026-06-01T12:00:00.000Z') },
+      data: { entryId: entry.id, sportEventParticipantId: field[0].id, pickedAt: new Date('2026-06-01T12:00:00.000Z') },
     });
     const second = await prisma.contestEntryPick.create({
-      data: { entryId: entry.id, sportEventParticipantId: later.field[0].id, contestFormat: 'ROSTER', pickedAt: new Date('2026-07-01T12:00:00.000Z') },
+      data: { entryId: entry.id, sportEventParticipantId: later.field[0].id, pickedAt: new Date('2026-07-01T12:00:00.000Z') },
     });
 
     const inFirst = await repos().picks.findByEntriesWithParticipant([entry.id], { sportEventId: event.id });

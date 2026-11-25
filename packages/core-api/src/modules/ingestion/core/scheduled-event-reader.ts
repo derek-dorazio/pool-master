@@ -13,6 +13,7 @@ import {
 import type { ProviderRegistry } from './provider-registry';
 import type { IngestionScheduledEventReader, LiveScoreEventRef } from './ingestion-scheduler';
 import type { EventSyncFeed } from './sync-orchestrator';
+import { sportEventSportWhere } from '../../../adapters/sport-of';
 
 /** How many upcoming events per provider a field sync pass loads. */
 const FIELD_EVENTS_PER_PROVIDER = 2;
@@ -52,7 +53,7 @@ export function createScheduledEventReader({
         // poolmaster-allow-query-in-loop: once per provider serving the sport, one or two
         const events = await prisma.sportEvent.findMany({
           where: {
-            sport,
+            ...sportEventSportWhere(sport),
             providerMappings: { some: { provider: { code } } },
             // A field loads while the event is a draft or released and not yet started (#431).
             status: { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] },
@@ -92,7 +93,7 @@ export function createScheduledEventReader({
       if (codes.length === 0) return [];
       // Scores poll every in-progress event at once, by each serving provider's id for it.
       const where = {
-        sport,
+        ...sportEventSportWhere(sport),
         providerMappings: { some: { provider: { code: { in: codes } } } },
         status: SportEventStatus.IN_PROGRESS,
         sportEventParticipants: { some: {} },

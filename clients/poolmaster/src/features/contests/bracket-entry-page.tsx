@@ -147,7 +147,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           <SectionCard
             headingLevel={3}
             help={canPick ? `Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it. Picks lock at ${closesAt}.` : undefined}
-            helpLink={canPick ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) } : undefined}
+            helpLink={canPick ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sportUrlSegment ?? null, contest.selectionType) } : undefined}
             padded
             testId="bracket-picks"
             title={canPick ? 'Fill in your bracket' : 'Bracket'}

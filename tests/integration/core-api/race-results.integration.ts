@@ -19,6 +19,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The finish-position extension (#622) against real Postgres: what the admin's finishing order
 // leaves in the tables, that it is all or none, the constraints the table holds on its own, and a
@@ -40,13 +41,12 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
   // cleanupTestData clears the sports table, the migration's reference row with it.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.HORSE_RACING },
-    create: { sport: Sport.HORSE_RACING, tournamentFormat: 'RACE' },
+    create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING), tournamentFormat: 'RACE' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.HORSE_RACING })),
-      sport: Sport.HORSE_RACING,
       name: `Harbour Stakes ${suffix}`,
       startDate: new Date('2026-05-02T22:00:00.000Z'),
       endDate: new Date('2026-05-02T22:05:00.000Z'),
@@ -225,10 +225,10 @@ describe('horse racing contest — read and settled from the finishing order', (
     ]);
     await prisma.contestEntryPick.createMany({
       data: [
-        { entryId: winners.id, sportEventParticipantId: arrow.id, contestFormat: 'ROSTER', slot: 1 },
-        { entryId: winners.id, sportEventParticipantId: comet.id, contestFormat: 'ROSTER', slot: 2 },
-        { entryId: scratch.id, sportEventParticipantId: bolt.id, contestFormat: 'ROSTER', slot: 1 },
-        { entryId: scratch.id, sportEventParticipantId: drift.id, contestFormat: 'ROSTER', slot: 2 },
+        { entryId: winners.id, sportEventParticipantId: arrow.id },
+        { entryId: winners.id, sportEventParticipantId: comet.id },
+        { entryId: scratch.id, sportEventParticipantId: bolt.id },
+        { entryId: scratch.id, sportEventParticipantId: drift.id },
       ],
     });
     return { ...race, owner, contest, winners, scratch };

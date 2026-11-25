@@ -113,8 +113,8 @@ async function seedRosterContest({ entries, events, golfers = 2, tiers = 2 }: { 
       },
     });
     await prisma.contestEntryPick.createMany({
-      data: majors.flatMap(({ field }) => field.map((row, slot) => ({
-        entryId: entry.id, sportEventParticipantId: row.id, contestFormat: 'ROSTER' as const, slot: slot + 1, pickedAt: settledAt,
+      data: majors.flatMap(({ field }) => field.map((row) => ({
+        entryId: entry.id, sportEventParticipantId: row.id, pickedAt: settledAt,
       }))),
     });
     await prisma.contestEntryEventStanding.createMany({
@@ -206,8 +206,8 @@ async function seedMyLiveEntries({ contests, boards }: { contests: number; board
         },
       });
       await prisma.contestEntryPick.createMany({
-        data: majors.flatMap(({ field }) => field.map((row, slot) => ({
-          entryId: entry.id, sportEventParticipantId: row.id, contestFormat: 'ROSTER' as const, slot: slot + 1, pickedAt: settledAt,
+        data: majors.flatMap(({ field }) => field.map((row) => ({
+          entryId: entry.id, sportEventParticipantId: row.id, pickedAt: settledAt,
         }))),
       });
       await prisma.contestEntryEventStanding.create({
@@ -295,7 +295,6 @@ async function seedTemplates(templates: number) {
   const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
   await prisma.contestConfigTemplate.createMany({
     data: Array.from({ length: templates }, (_, index) => ({
-      sport: Sport.GOLF,
       sportLeagueId,
       contestFormat: 'ROSTER' as const,
       selectionType: SelectionType.TIERED,
@@ -768,9 +767,9 @@ describe('A poll of a stored prediction leaderboard (#1435)', () => {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
-    // The contest (6), the reader's squad membership (1; the task keeps the league membership,
-    // #1438) and the snapshot (1): the same 8 for every prediction board, as for a lineup board.
-    expect(statements).toHaveLength(8);
+    // The contest (9: its sport is read through its events' series and league since #2042), the reader's squad membership (1; the task keeps the league membership,
+    // #1438) and the snapshot (1): the same 11 for every prediction board, as for a lineup board.
+    expect(statements).toHaveLength(11);
   });
 
   it.each([

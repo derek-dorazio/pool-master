@@ -24,7 +24,7 @@ import {
   updateEventParticipants,
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -32,6 +32,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
+import { sportRowKeys } from '../support/sport-rows';
 import { Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../support/sport-play';
 
@@ -52,6 +53,7 @@ async function ensureGolfSportRow(): Promise<void> {
     where: { sport: 'GOLF' },
     create: {
       sport: 'GOLF',
+      ...sportRowKeys('GOLF'),
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
@@ -145,7 +147,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     // --- Sport league (tour) ------------------------------------------------------
     const league = await createSportLeague({
       client: c,
-      body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `PGA Tour ${RUN}` },
+      body: { ...(await sportLeagueCreateBody(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `PGA Tour ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
@@ -236,7 +238,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(wd.response?.status).toBe(200);
 
     // --- 21st participant, of another tour, added straight to the field -------
-    const guestTour = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `LIV ${RUN}` } });
+    const guestTour = await createSportLeague({ client: c, body: { ...(await sportLeagueCreateBody(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `LIV ${RUN}` } });
     const guestTourId = expectDefined(guestTour.data).sportLeague.id;
     created.sportLeagueIds.add(guestTourId);
     const guest = await createParticipant({
@@ -445,7 +447,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Editions Tour ${RUN}` } });
+    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueCreateBody(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Editions Tour ${RUN}` } });
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     // A new event goes in the league's current Season, so each edition first makes its year's current.
@@ -480,7 +482,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const deny = { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' };
 
     // Deliberately malformed ids and bodies: the refusal must not depend on — or reveal — the input's shape.
-    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', timeZone: 'UTC', name: `denied-${RUN}`, participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
+    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', timeZone: 'UTC', name: `denied-${RUN}`, urlSegment: 'denied', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
     expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { name: 'x' } }), deny);
     expectFunctionalError(await rebuildEventLeaderboards({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);

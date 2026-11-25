@@ -112,6 +112,7 @@ export const SportEventDtoSchema = z.object({
   providerMappings: z.array(SportEventProviderMappingDtoSchema).describe(`The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. ${ADMIN_ONLY}`),
   providerName: z.string().nullable().describe(`The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. ${ADMIN_ONLY}`),
   sport: z.enum(Sport).describe('Sport the event belongs to.'),
+  sportUrlSegment: z.string().describe('The URL segment of the event\'s sport, read through its sport league: what a web address names the sport by.'),
   name: z.string().describe('Event name shown in contest and event selectors.'),
   venue: z.string().nullable().describe('Venue name when known; null otherwise.'),
   location: z.string().nullable().describe('Human-readable location when known; null otherwise.'),

@@ -17,7 +17,7 @@ import { upperFirst } from '@/lib/upper-first';
  * the card only picks which Season to show; only that Season's events load (#1251).
  */
 export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLeagueDto }) {
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { event: eventNoun } = sportVocabulary(definition);
   const seasonsQuery = useSportLeagueSeasonsQuery(sportLeague.id);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
           <LinkButton
             data-testid="root-admin-sport-league-calendar-new-tournament"
             size="sm"
-            to={`${buildSportEventListPath(sport)}/new?sportLeagueId=${sportLeague.id}`}
+            to={`${buildSportEventListPath(sportUrlSegment)}/new?sportLeagueId=${sportLeague.id}`}
           >
             {`New ${eventNoun.one}`}
           </LinkButton>

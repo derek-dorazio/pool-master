@@ -11,11 +11,10 @@ import {
 
 describe('contest entry standing — best N of the entry\'s picks', () => {
   const pickedAt = new Date('2026-04-01T12:00:00.000Z');
-  const pick = (id: string, sportEventParticipantId: string, slot: number | null = null, at = pickedAt) => ({
+  const pick = (id: string, sportEventParticipantId: string, at = pickedAt) => ({
     id,
     sportEventParticipantId,
     pickedAt: at,
-    slot,
   });
   const entry = (picks: ContestLeaderboardEntryInput['picks'], overrides: Partial<ContestLeaderboardEntryInput> = {}): ContestLeaderboardEntryInput => ({
     id: 'entry-1',
@@ -63,7 +62,7 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
 
   it('never counts or drops an unscored pick, and totals only the scored picks when fewer than N are scored', () => {
     const standing = buildContestEntryStanding(
-      entry([pick('p1', 'sep-a', 2), pick('p2', 'sep-b', 1), pick('p3', 'sep-c', 3)]),
+      entry([pick('p1', 'sep-a'), pick('p2', 'sep-b'), pick('p3', 'sep-c')]),
       scores([['sep-a', 'Ana', -2], ['sep-b', 'Ben', null], ['sep-c', 'Cal', null]]),
       { type: 'BEST_N', count: 2 },
       'LOWER_IS_BETTER',
@@ -131,33 +130,22 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     ]);
   });
 
-  it('lists unscored picks after scored ones by roster slot, an unslotted pick last, then by pick time', () => {
+  it('lists unscored picks after scored ones, earliest picked first, then by pick id', () => {
     const early = new Date('2026-04-01T10:00:00.000Z');
     const late = new Date('2026-04-01T11:00:00.000Z');
     const standing = buildContestEntryStanding(
       entry([
-        pick('p-unslotted', 'sep-u'),
-        pick('p-slot2-late', 'sep-c', 2, late),
-        pick('p-slot2-early', 'sep-b', 2, early),
-        pick('p-slot1', 'sep-a', 1),
-        pick('p-unslotted-2', 'sep-v'),
-        pick('p-scored', 'sep-s', 9),
+        pick('p-late', 'sep-c', late),
+        pick('p-early-b', 'sep-b', early),
+        pick('p-early-a', 'sep-a', early),
+        pick('p-scored', 'sep-s', late),
       ]),
-      scores([
-        ['sep-u', 'U', null], ['sep-c', 'C', null], ['sep-b', 'B', null], ['sep-a', 'A', null], ['sep-v', 'V', null], ['sep-s', 'S', 4],
-      ]),
+      scores([['sep-c', 'C', null], ['sep-b', 'B', null], ['sep-a', 'A', null], ['sep-s', 'S', 4]]),
       { type: 'BEST_N', count: 4 },
       'LOWER_IS_BETTER',
     );
 
-    expect(standing.picks.map((row) => row.pickId)).toEqual([
-      'p-scored',
-      'p-slot1',
-      'p-slot2-early',
-      'p-slot2-late',
-      'p-unslotted',
-      'p-unslotted-2',
-    ]);
+    expect(standing.picks.map((row) => row.pickId)).toEqual(['p-scored', 'p-early-a', 'p-early-b', 'p-late']);
   });
 
   it('leaves out a pick whose golfer is no longer on the event\'s field', () => {

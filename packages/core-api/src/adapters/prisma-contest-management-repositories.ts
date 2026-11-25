@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
+import { SPORT_LEAGUE_SPORT_SELECT, type SportLeagueSportRow } from './sport-of';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
@@ -13,7 +14,6 @@ import type {
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
   SelectionType,
-  Sport,
 } from '@poolmaster/shared/domain';
 import {
   ContestRulesWithEntryLimitSchema,
@@ -103,6 +103,7 @@ export class PrismaContestConfigTemplateRepository
   async findById(id: string): Promise<ContestConfigTemplate | null> {
     const row = await this.prisma.contestConfigTemplate.findUnique({
       where: { id },
+      include: TEMPLATE_INCLUDE,
     });
     return row ? mapContestConfigTemplate(row) : null;
   }
@@ -115,14 +116,16 @@ export class PrismaContestConfigTemplateRepository
   } = {}): Promise<ContestConfigTemplate[]> {
     const rows = await this.prisma.contestConfigTemplate.findMany({
       where: {
-        ...(input.sport !== undefined && { sport: input.sport }),
+        // The template's sport is its sport league's (#2042).
+        ...(input.sport !== undefined && { sportLeague: { sport: { sport: input.sport } } }),
         // An event type narrows to that type's templates plus the ones for any event type.
         ...(input.eventType !== undefined && { OR: [{ eventType: input.eventType }, { eventType: null }] }),
         ...(input.sportLeagueId !== undefined && { sportLeagueId: input.sportLeagueId }),
         ...(input.active !== undefined && { active: input.active }),
       },
+      include: TEMPLATE_INCLUDE,
       orderBy: [
-        { sport: 'asc' },
+        { sportLeague: { sport: { displayOrder: 'asc' } } },
         { contestFormat: 'asc' },
         { sortOrder: 'asc' },
         { name: 'asc' },
@@ -147,6 +150,7 @@ export class PrismaContestConfigTemplateRepository
         ...(updates.configJson !== undefined && { configJson: updates.configJson }),
         ...(updates.schemaVersion !== undefined && { schemaVersion: updates.schemaVersion }),
       },
+      include: TEMPLATE_INCLUDE,
     });
 
     return mapContestConfigTemplate(row);
@@ -226,9 +230,12 @@ function mapContestConfiguration(row: {
 }
 
 /** A template row as the domain reads it; the event page adapter maps its offers' templates with it too. */
+/** What every template read joins: its sport league's sport (#2042), the template's own. */
+export const TEMPLATE_INCLUDE = { sportLeague: { select: SPORT_LEAGUE_SPORT_SELECT } } as const;
+
 export function mapContestConfigTemplate(row: {
   id: string;
-  sport: Sport;
+  sportLeague: SportLeagueSportRow;
   sportLeagueId: string;
   eventType: ContestTemplateEventType | null;
   contestFormat: ContestFormat;
@@ -247,7 +254,7 @@ export function mapContestConfigTemplate(row: {
 }): ContestConfigTemplate {
   return {
     id: row.id,
-    sport: row.sport,
+    sport: row.sportLeague.sport.sport,
     sportLeagueId: row.sportLeagueId,
     eventType: row.eventType ?? undefined,
     contestFormat: row.contestFormat,

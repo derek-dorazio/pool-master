@@ -274,17 +274,19 @@ export async function attachContestEvent(contestId: string, sportEventId: string
 }
 
 /**
- * The profile ids a functional test's new sport league names (#1844), read through the API as an
- * admin would: its sport's tier layout (`SPORT_PLATFORM_TIER_PROFILE_CODE`) and Standard pricing.
+ * What a functional test's new sport league needs beside its sport and name: the profile ids it
+ * names (#1844), read through the API as an admin would (its sport's tier layout,
+ * `SPORT_PLATFORM_TIER_PROFILE_CODE`, and Standard pricing), and a URL segment no other test's
+ * league of the sport has (#2042).
  */
-export async function sportLeagueProfiles(client: Client, sport: Sport): Promise<{ platformTierProfileId: string; platformPricingProfileId: string }> {
+export async function sportLeagueCreateBody(client: Client, sport: Sport): Promise<{ platformTierProfileId: string; platformPricingProfileId: string; urlSegment: string }> {
   const [tiers, prices] = await Promise.all([listPlatformTierProfiles({ client }), listPlatformPricingProfiles({ client })]);
   const platformTierProfile = tiers.data?.platformTierProfiles.find((profile) => profile.code === SPORT_PLATFORM_TIER_PROFILE_CODE[sport]);
   const platformPricingProfile = prices.data?.platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE);
   if (!platformTierProfile || !platformPricingProfile) {
     throw new Error(`The ${SPORT_PLATFORM_TIER_PROFILE_CODE[sport]} tier profile or the Standard pricing profile is missing.`);
   }
-  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id };
+  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id, urlSegment: `test-${randomUUID()}` };
 }
 
 /**
@@ -293,7 +295,7 @@ export async function sportLeagueProfiles(client: Client, sport: Sport): Promise
  * name adds that league first, playing as its sport's leagues do. Returns its id.
  */
 export async function addRunSportLeague(client: Client, sport: Sport, name: string): Promise<string> {
-  const created = await createSportLeague({ client, body: { ...(await sportLeagueProfiles(client, sport)), ...sportPlay(sport), timeZone: 'UTC', sport, name } });
+  const created = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, sport)), ...sportPlay(sport), timeZone: 'UTC', sport, name } });
   if (!created.data) {
     throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
   }

@@ -93,6 +93,8 @@ export interface SportLeagueRepository {
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
+  /** The sport's league at this URL segment (#2042), or null when none has it. */
+  findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
   /**
@@ -100,7 +102,7 @@ export interface SportLeagueRepository {
    * is a stopgap for the browser journeys' own leagues until they move to test slots (#2004).
    */
   create(
-    input: Pick<SportLeague, 'sportId' | 'name' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
+    input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
     firstSeason: SportLeagueSeasonSpan,
   ): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
@@ -149,7 +151,7 @@ export interface SportEventFilters {
  * for an event the sync creates (#2004): it is kept under the series' league's selected provider
  * mapping, which must be that provider's. A test event has none.
  */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
   providerRef?: ProviderEventRef;
 };
 
@@ -561,6 +563,10 @@ export interface ParticipantMatchQuery {
 export interface SportLeagueOverviewLeague {
   id: string;
   sport: Sport;
+  /** Its sport's URL segment (#2042). */
+  sportUrlSegment: string;
+  /** Its sport's display order (#2042). */
+  sportDisplayOrder: number;
   name: string;
   syncProviderId: string | null;
   /** That provider's name (#1999). */
@@ -707,10 +713,10 @@ export interface SportEventPageFacts {
   overdueCandidates: OverdueEventFacts[];
   field: SportEventPageFieldRow[];
   /**
-   * The slug of the active event page that offers the event's series, in its sport; the first by
+   * The address of the active event page that offers the event's series; the first by
    * the pages' display order when more than one does. Null when none does.
    */
-  eventPageSlug: string | null;
+  eventPagePath: string | null;
 }
 
 export interface SportLeaguePageReader {

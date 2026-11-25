@@ -1,9 +1,9 @@
 import { useSearchParams } from 'react-router';
 import type { Sport } from '@poolmaster/shared/domain';
 
-/** A sport league as the switch offers it: its name, and its name in the page's link. */
+/** A sport league as the switch offers it: its name, and its URL segment, its name in the page's link. */
 export interface FilterableLeague {
-  slug: string;
+  urlSegment: string;
   name: string;
 }
 
@@ -13,31 +13,28 @@ export interface FilterableLeague {
  */
 export interface FilterableSport {
   sport: Sport;
+  /** Its URL segment, as the API gives it: its name in the page's link, `?sport=horse-racing`. */
+  urlSegment: string;
   name: string;
   leagues: readonly FilterableLeague[];
   count: number;
-}
-
-/** A sport as a page's link names it: `?sport=horse-racing`. */
-export function sportSlug(sport: Sport) {
-  return sport.toLowerCase().replaceAll('_', '-');
 }
 
 /** What a page's link has chosen: a whole sport, or one of its leagues. */
 export interface SportLeagueChoice<S extends FilterableSport> {
   sport: S | null;
   league: S['leagues'][number] | null;
-  choose: (sport: Sport | null, league?: string) => void;
+  choose: (sportUrlSegment: string | null, leagueUrlSegment?: string) => void;
 }
 
-/** A choice as a page's link spells it: `?sport=hockey&league=nhl`. */
-export function sportLeagueChoiceSearch(sport: Sport | null, league?: string) {
-  if (!sport) {
+/** A choice as a page's link spells it, by URL segments: `?sport=hockey&league=nhl`. */
+export function sportLeagueChoiceSearch(sportUrlSegment: string | null, leagueUrlSegment?: string) {
+  if (!sportUrlSegment) {
     return '';
   }
-  const params = new URLSearchParams({ sport: sportSlug(sport) });
-  if (league) {
-    params.set('league', league);
+  const params = new URLSearchParams({ sport: sportUrlSegment });
+  if (leagueUrlSegment) {
+    params.set('league', leagueUrlSegment);
   }
   return `?${params.toString()}`;
 }
@@ -49,9 +46,9 @@ export function sportLeagueChoiceSearch(sport: Sport | null, league?: string) {
  */
 export function useSportLeagueChoice<S extends FilterableSport>(sports: readonly S[]): SportLeagueChoice<S> {
   const [searchParams, setSearchParams] = useSearchParams();
-  const sport = sports.find((candidate) => sportSlug(candidate.sport) === searchParams.get('sport')) ?? null;
-  const league = sport?.leagues.find((candidate) => candidate.slug === searchParams.get('league')) ?? null;
-  const choose = (chosen: Sport | null, chosenLeague?: string) => {
+  const sport = sports.find((candidate) => candidate.urlSegment === searchParams.get('sport')) ?? null;
+  const league = sport?.leagues.find((candidate) => candidate.urlSegment === searchParams.get('league')) ?? null;
+  const choose = (chosen: string | null, chosenLeague?: string) => {
     setSearchParams(new URLSearchParams(sportLeagueChoiceSearch(chosen, chosenLeague)), { replace: true });
   };
   return { choose, league, sport };

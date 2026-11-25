@@ -1,7 +1,7 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { ProviderCode, Sport } from '@poolmaster/shared/domain';
-import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository, PrismaSportRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
@@ -9,8 +9,9 @@ import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/mod
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { heldHere } from '../../support/job-locks';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
@@ -32,10 +33,10 @@ async function golfLeague({ synced = true, isActive = true }: { synced?: boolean
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
   // A migration's league has its Seasons mapped to the provider's; this year's is current (#2003).
   if (synced) await syncSeasonsTo(prisma, league.id, await syncLeagueTo(prisma, league.id, 'pga'), [2027, 2028]);
   return league;
@@ -58,7 +59,6 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
   const backgroundJobs = integrationBackgroundJobs(prisma);
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
     seasonSchedule: { listSeasonEvents },
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
     findings: integrationSyncFindings(prisma),

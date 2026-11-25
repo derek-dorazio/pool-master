@@ -31,7 +31,6 @@ async function seededSeasonSlot() {
 async function eventIn(sportLeagueId: string | undefined, championshipYear: number, sport: Sport, name: string) {
   return createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     ...(await freshEventEdition(getPrisma(), { ...(sportLeagueId !== undefined && { sportLeagueId }), championshipYear, sport })),
-    sport,
     name,
     startDate: new Date(Date.UTC(championshipYear, 5, 1)),
     status: SportEventStatus.SCHEDULED,

@@ -112,7 +112,7 @@ const PUBLIC_ROUTE_PATTERNS = [
   // exempted, so an invited stranger could not read it. Found while making the register route
   // public; the league invitation preview one line above was already handled this way.
   /^GET \/api\/v1\/team-invitations\/[^/?#]+$/,
-  // #1007 — one event page, by its sport and slug: public for the same reason as the list.
+  // #1007 — one event page, by its sport and page URL segments: public for the same reason as the list.
   /^GET \/api\/v1\/event-pages\/[^/?#]+\/[^/?#]+$/,
 ];
 

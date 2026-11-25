@@ -26,6 +26,7 @@ import { recordStatements, statementCounts, type RecordedStatement } from '../st
 import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The root-admin event tools' batch writes against real Postgres (#1252): each writes a whole
 // field in a fixed number of queries, however big the field, and leaves the rows as the
@@ -47,7 +48,7 @@ async function golfEvent() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const edition = await freshEventEdition(prisma);
@@ -55,7 +56,6 @@ async function golfEvent() {
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
-      sport: Sport.GOLF,
       name: `Batch Writes Open ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,

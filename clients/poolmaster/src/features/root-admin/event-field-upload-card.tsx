@@ -1,4 +1,4 @@
-import { type Sport, sportPathSegment, sportVocabulary } from '@poolmaster/shared/domain';
+import { type Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import { applyEventParticipantUpload, previewEventParticipantUpload } from '@/lib/api';
 import { BulkUploadPanel, Button, SectionCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -44,12 +44,15 @@ export function EventFieldUploadCard({
   entries,
   onClose,
   sport,
+  sportUrlSegment,
 }: {
   eventId: string;
   entries: readonly SportEventParticipantDto[];
   /** Given, a Close button in its header puts it away; on the Tools tab it stays. */
   onClose?: () => void;
   sport: Sport;
+  /** The sport's URL segment, which names the template file. */
+  sportUrlSegment: string;
 }) {
   const { participant } = sportVocabulary(sport);
   const logger = getLogger().child({ feature: 'root-admin-sport-event-field-page' });
@@ -156,7 +159,7 @@ export function EventFieldUploadCard({
             />
           </div>
         )}
-        templateFilename={`${sportPathSegment(sport)}-field-upload-template.csv`}
+        templateFilename={`${sportUrlSegment}-field-upload-template.csv`}
         templateHeaders={EVENT_FIELD_UPLOAD_HEADERS}
         templateRows={entries.length > 0 ? eventFieldUploadTemplateRows(entries) : undefined}
         testId="root-admin-event-field-upload"

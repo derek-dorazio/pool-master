@@ -6,7 +6,7 @@ import {
   type SportLeagueIssueType,
   SportLeagueSyncHealthOrder,
   type SportLeagueSyncHealth,
-  SportOrder,
+  type ExplicitEnumOrder,
   type Sport,
 } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
@@ -63,7 +63,10 @@ const byTotalIssues: SortingFn<SportLeagueOverviewDto> = (left, right) => totalI
 export function sportLeagueOverviewColumns({
   onOpenSettings,
   onOpenSyncRun,
+  sportOrder,
 }: {
+  /** The sports' display order, from the rows' `sportDisplayOrder`. */
+  sportOrder: ExplicitEnumOrder<string>;
   onOpenSettings: (sportLeagueId: string) => void;
   onOpenSyncRun: (syncRunId: string) => void;
 }) {
@@ -71,8 +74,8 @@ export function sportLeagueOverviewColumns({
     columnHelper.accessor('sport', {
       header: 'Sport',
       meta: {
-        info: "The sport. Shown on each sport's first row; sorts in the sport's fixed order, most popular first.",
-        type: { kind: 'enum', order: SportOrder, label: (sport) => getSportDefinition(sport as Sport).name },
+        info: "The sport. Shown on each sport's first row; sorts in the sports' display order.",
+        type: { kind: 'enum', order: sportOrder, label: (sport) => getSportDefinition(sport as Sport).name },
       },
       cell: ({ row, table }) => (isFirstOfSport(table.getRowModel().rows, row)
         ? <Text variant="strong" weight="semibold">{getSportDefinition(row.original.sport).name}</Text>

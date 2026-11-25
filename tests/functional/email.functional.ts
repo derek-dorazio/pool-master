@@ -72,7 +72,6 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...edition,
-      sport: Sport.GOLF,
       name: eventName,
       startDate: new Date(now + 2 * day),
       status: 'SCHEDULED',

@@ -28,7 +28,8 @@ import {
   BackgroundJobRetention,
   BackgroundJobRunner,
 } from '../../../packages/core-api/src/modules/background-jobs';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
@@ -300,14 +301,14 @@ describe('Activity reads and job results (#1819)', () => {
     const suffix = randomUUID().slice(0, 8);
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
+    const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Jobs Open ${suffix}` } });
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Activity Jobs Open ${suffix}`, sport: Sport.GOLF,
+        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Activity Jobs Open ${suffix}`,
         startDate: new Date(),
       },
     });
@@ -418,10 +419,10 @@ describe('Activity reads and job results (#1819)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const empty = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
+    const empty = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
     const job = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', trigger: JobTrigger.SYSTEM, payload: {}, sportLeagueId: empty.id } });
 
     await expect(repository().findActivity({ sportLeagueId: empty.id, createdFrom: new Date(Date.now() - HOUR), createdTo: new Date(Date.now() + HOUR) }))
@@ -432,10 +433,10 @@ describe('Activity reads and job results (#1819)', () => {
     const job = await getPrisma().backgroundJob.create({ data: { type: 'MANUAL_EVENT_SYNC', trigger: JobTrigger.SYSTEM, payload: {} } });
     const runs = new PrismaProviderSyncRunRepository(getAppPrisma());
     const mine = await runs.create({
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
+      providerCode: ProviderCode.BALLDONTLIE, ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
       status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
-    await runs.create({ providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome() });
+    await runs.create({ providerCode: ProviderCode.BALLDONTLIE, ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome() });
 
     await expect(runs.findByBackgroundJobIds([job.id])).resolves.toEqual([expect.objectContaining({ id: mine.id, backgroundJobId: job.id })]);
     await expect(runs.findByBackgroundJobIds([])).resolves.toEqual([]);

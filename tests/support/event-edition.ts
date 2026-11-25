@@ -10,13 +10,15 @@
  * The fixture tour hangs off a real sport row (GOLF unless the test names another) because the
  * sport list validates names against the Sport enum; a made-up sport row would break any contract
  * test that lists sports. Each sport has its own fixture tour, playing as that sport's leagues are
- * seeded, since an event is scored by its league's family (#2001).
+ * seeded, since an event is scored by its league's family (#2001), and an event reads its sport
+ * through its series' league (#2042): a test about another sport's event names that sport.
  */
 import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport } from '@poolmaster/shared/domain';
-import { leagueProfiles } from './league-profiles';
+import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
+import { sportRowKeys } from './sport-rows';
 
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
 /** Starts every fixture series' name, so its cleanup finds the ones on the PGA TOUR too. */
@@ -123,7 +125,7 @@ export async function fixtureTourId(prisma: Db, sportCode: Sport = Sport.GOLF): 
   try {
     sportLeagueId = (await prisma.sportLeague.upsert({
       where,
-      create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME, timeZone: TEST_LEAGUE_TIME_ZONE },
+      create: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME, timeZone: TEST_LEAGUE_TIME_ZONE },
       update: {},
       select: { id: true },
     })).id;
@@ -161,7 +163,7 @@ async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<
 /** Removes the fixture series, on the fixture tour or the PGA TOUR, that no event uses any more. */
 /** A sport's row, made on first use (cleanupTestData clears the sports table). */
 function sportRow(prisma: Db, sport: Sport) {
-  return prisma.sport.upsert({ where: { sport }, create: { sport, tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
+  return prisma.sport.upsert({ where: { sport }, create: { sport, ...sportRowKeys(sport), tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
 }
 
 /** The events made on a fixture edition, on the fixture tour or the PGA TOUR: a cleanup's own. */
@@ -238,7 +240,6 @@ export async function linkedProviderEvent(
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { name: input.name, championshipYear: input.startDate.getUTCFullYear(), sportLeagueId: input.sportLeagueId })),
-      sport: 'GOLF',
       name: input.name,
       startDate: input.startDate,
       rounds: LINKED_EVENT_ROUNDS,

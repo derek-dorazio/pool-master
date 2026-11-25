@@ -47,7 +47,7 @@ function atProvider<T>(row: T | null) {
 
 function buildSportEventStub(internalId = 'evt-1') {
   return {
-    findFirst: jest.fn().mockResolvedValue(atProvider({ id: internalId, sport: 'GOLF', status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY' } } })),
+    findFirst: jest.fn().mockResolvedValue(atProvider({ id: internalId, status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY', sport: { sport: 'GOLF' } } } })),
   };
 }
 
@@ -204,7 +204,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
     it('warns and writes nothing when the event\'s scoring family accepts no live-score category', async () => {
       const prisma = {
-        sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', sport: 'GOLF', rounds: 4, status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY' } } })) },
+        sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', rounds: 4, status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY', sport: { sport: 'GOLF' } } } })) },
         sportEventRound: { findMany: jest.fn() },
         participantProviderMapping: { findMany: jest.fn() },
         sportEventParticipant: { findMany: jest.fn() },
@@ -244,7 +244,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       games: [{ externalGameId: 'g1', homeTeamExternalId: '1', awayTeamExternalId: '2', state: 'FINAL', homeScore: 27, awayScore: 24 }],
     };
     const persisted = { updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0, writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] } };
-    const inProgressEvent = () => ({ findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', sport: 'NFL', rounds: null, status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'HEAD_TO_HEAD' } } })) });
+    const inProgressEvent = () => ({ findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', rounds: null, status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: 'NFL' } } } })) });
 
     it('hands a GAME batch to the event\'s family writer when it takes game scores, with the event it resolved', async () => {
       const persist = jest.fn().mockResolvedValue(persisted);
@@ -375,7 +375,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
     it('asks for no rebuild when the scores are refused unwritten (#1435)', async () => {
       const domainEvents = new RecordingDomainEvents();
-      const prisma = { sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', sport: 'GOLF', status: 'COMPLETED', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY' } } })) } };
+      const prisma = { sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', status: 'COMPLETED', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY', sport: { sport: 'GOLF' } } } })) } };
 
       await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS, prisma: asPrismaClient(prisma), providerId: 'balldontlie', logger: fakeLogger(), scoringFamilyForEvent, domainEvents });
 
@@ -384,7 +384,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
     it('keeps it when the scores are refused unwritten, since the field has not changed', async () => {
       const fieldCache = await cacheHoldingTheField();
-      const prisma = { sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', sport: 'GOLF', status: 'COMPLETED', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY' } } })) } };
+      const prisma = { sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', status: 'COMPLETED', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'STROKE_PLAY', sport: { sport: 'GOLF' } } } })) } };
 
       await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS, prisma: asPrismaClient(prisma), domainEvents: testDomainEvents(), providerId: 'balldontlie', logger: fakeLogger(), scoringFamilyForEvent, fieldCache });
 

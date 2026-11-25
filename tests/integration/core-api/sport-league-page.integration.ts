@@ -25,8 +25,9 @@ import {
 } from '@poolmaster/shared/dto';
 import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 import { mapEventToProvider, seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
@@ -44,7 +45,7 @@ const fromNow = (ms: number) => new Date(Date.now() + ms);
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
@@ -53,7 +54,7 @@ async function golfSportId(): Promise<string> {
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
 async function sportLeague(name: string, { synced = false, ...extra }: { synced?: boolean; autoReleaseDaysBeforeStart?: number } = {}) {
   const league = await getPrisma().sportLeague.create({
-    data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
   });
   if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
   return league;
@@ -63,7 +64,7 @@ async function event(sportLeagueId: string, input: { startDate: Date; status?: '
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   const created = await prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, ...input },
+    data: { eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Event ${randomUUID().slice(0, 8)}`, ...input },
   });
   // Kept under BALLDONTLIE's id for it, as a sync leaves it (#2004).
   await mapEventToProvider(prisma, created.id, { providerId: 'balldontlie', externalId: `page-${created.id}` });
@@ -80,7 +81,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
     const tour = await sportLeague('Page Tour', { synced: true });
     const other = await sportLeague('Page Other Tour', { synced: true });
     const run = (sportLeagueId: string, kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date) => ({
-      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId, status, createdAt,
+      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, status, createdAt,
       changedCount: 5,
     });
     await getPrisma().providerSyncRun.createMany({
@@ -122,7 +123,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
     await getPrisma().sportEventParticipant.create({ data: { sportEventId: released.id, participantId: golfer.id } });
     const synced = fromNow(-2 * HOUR_MS);
     await getPrisma().providerSyncRun.create({
-      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced },
+      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced },
     });
 
     const response = await get(`/api/v1/sport-leagues/${tour.id}/events/overview`);

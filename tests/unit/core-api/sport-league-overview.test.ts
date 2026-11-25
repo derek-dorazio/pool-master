@@ -30,7 +30,7 @@ const at = (iso: string) => new Date(iso);
 
 function league(overrides: Partial<SportLeagueOverviewLeague> = {}): SportLeagueOverviewLeague {
   return {
-    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true,
+    id: 'mlb', sport: Sport.BASEBALL, sportUrlSegment: 'baseball', sportDisplayOrder: 3, name: 'MLB', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true,
     ...overrides,
   };
 }
@@ -202,13 +202,13 @@ describe('sport league season', () => {
 });
 
 describe('sport league overview order', () => {
-  it('lists by sport, most popular first, then by name', () => {
+  it('lists by the sport row\'s display order, then by league name', () => {
     const rows = buildSportLeagueOverviews(facts({
       leagues: [
-        league({ id: 'pga', sport: Sport.GOLF, name: 'PGA Tour' }),
+        league({ id: 'pga', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour' }),
         league({ id: 'ncaa', name: 'NCAA Baseball' }),
         league(),
-        league({ id: 'nfl', sport: Sport.AMERICAN_FOOTBALL, name: 'NFL' }),
+        league({ id: 'nfl', sport: Sport.AMERICAN_FOOTBALL, sportUrlSegment: 'american-football', sportDisplayOrder: 0, name: 'NFL' }),
       ],
     }), NOW);
 

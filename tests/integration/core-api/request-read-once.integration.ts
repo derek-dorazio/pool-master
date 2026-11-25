@@ -37,6 +37,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -73,6 +74,7 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_events', 1],
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
+  ['SELECT sports', 1], // a sport is read through its event's series and league since #2042 (#2089)
   ['UPDATE sport_event_round_matches', 1],
 ];
 
@@ -91,6 +93,7 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT sport_events', 2],
   ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
+  ['SELECT sports', 2], // a sport is read through its event's series and league since #2042 (#2089)
   ['UPDATE sport_events', 1],
 ];
 
@@ -263,13 +266,12 @@ async function tieredGolfEvent(name: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      sport: Sport.GOLF,
       name,
       startDate: buildContestEligibleEventTiming().startDate,
       status: 'SCHEDULED',
@@ -341,8 +343,8 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_event_tiers', 3],
       ['SELECT sport_events', 3],
       ['SELECT sport_league_seasons', 1],
-      ['SELECT sport_leagues', 2],
-      ['SELECT sports', 1],
+      ['SELECT sport_leagues', 4],
+      ['SELECT sports', 4],
       ['SELECT users', 1],
       ['UPDATE contests', 1],
     ]);
@@ -361,13 +363,12 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      sport: Sport.AMERICAN_FOOTBALL,
       name: `Read Once Bowl ${suffix}`,
       startDate: new Date(Date.now() - 3 * 60 * 60 * 1000),
       status: 'IN_PROGRESS',
@@ -662,7 +663,6 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      sport: Sport.AMERICAN_FOOTBALL,
       name: `Read Once Changed ${suffix}`,
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: 'SCHEDULED',
@@ -723,7 +723,8 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 2],
-  ['SELECT sport_leagues', 2],
+  ['SELECT sport_leagues', 3],
+  ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
 ];
 
@@ -744,7 +745,8 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
   ['SELECT sport_league_seasons', 3],
-  ['SELECT sport_leagues', 3],
+  ['SELECT sport_leagues', 4],
+  ['SELECT sports', 4],
   ['UPDATE contests', 1],
   ['UPDATE sport_events', 1],
 ];

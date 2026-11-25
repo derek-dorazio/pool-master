@@ -14,7 +14,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -44,7 +44,6 @@ async function seedLeague() {
     const event = await prisma.sportEvent.create({
       data: {
         ...edition,
-        sport: 'GOLF',
         name: `${name} ${suffix}`,
         startDate: new Date(options.startDate ?? '2026-04-09T12:00:00.000Z'),
       },
@@ -113,7 +112,7 @@ describe('PrismaCupRepository (#841)', () => {
     const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
     const otherTour = await prisma.sportLeague.upsert({
       where: { sportId_name: { sportId: sport.id, name: 'Fixture Tour B (cups)' } },
-      create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
+      create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
       update: {},
     });
     await contest('Other tour', { sportLeagueId: otherTour.id });
@@ -137,7 +136,7 @@ describe('PrismaCupRepository (#841)', () => {
     const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
     const otherTour = await prisma.sportLeague.upsert({
       where: { sportId_name: { sportId: sport.id, name: 'Fixture Tour B (cups)' } },
-      create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
+      create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
       update: {},
     });
     await contest('Other tour', { sportLeagueId: otherTour.id, startDate: '2026-05-01T12:00:00.000Z' });

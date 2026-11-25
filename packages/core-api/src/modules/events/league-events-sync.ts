@@ -21,7 +21,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncRunRepository, SportLeagueRepository, SportLeagueSeasonRepository, SportRepository, SyncableSportLeagueSeason } from '@poolmaster/shared/db';
+import type { ProviderSyncRunRepository, SportLeagueRepository, SportLeagueSeasonRepository, SyncableSportLeagueSeason } from '@poolmaster/shared/db';
 import {
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
@@ -55,7 +55,6 @@ const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT
 export interface LeagueEventsSyncOptions {
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findEventSynced'>;
   seasons: Pick<SportLeagueSeasonRepository, 'findForSync'>;
-  sports: Pick<SportRepository, 'findById'>;
   seasonSchedule: Pick<ProviderSeasonScheduleReader, 'listSeasonEvents'>;
   sportEvents: Pick<SportEventService, 'importProviderSeason' | 'keepProviderEventsCurrent'>;
   findings: Pick<ProviderSyncFindingService, 'raise'>;
@@ -129,8 +128,6 @@ export class LeagueEventsSync {
     if (!sportLeague) throw new PermanentBackgroundJobError(`Sport league ${payload.sportLeagueId} no longer exists`);
     const selected = sportLeague.selectedProviderMapping;
     if (selected === null) throw new PermanentBackgroundJobError(`No provider syncs ${sportLeague.name}'s events any more`);
-    const sport = (await this.options.sports.findById(sportLeague.sportId))?.sport;
-    if (sport === undefined) throw new PermanentBackgroundJobError(`Sport league ${sportLeague.name} belongs to no known sport`);
     const leagueSeasons = await this.options.seasons.findForSync(sportLeague.id, selected.id);
     const seasons = this.seasonsToRead(sportLeague, leagueSeasons, payload.sportLeagueSeasonId);
     await this.raiseSeasonMissing(sportLeague, selected.providerId, leagueSeasons);
@@ -141,7 +138,6 @@ export class LeagueEventsSync {
     const providerId = selected.providerId;
     const run = await this.options.syncRuns.create({
       providerCode: selected.providerCode,
-      sport,
       kind: ProviderSyncKind.EVENTS,
       trigger: context.trigger,
       sportLeagueId: sportLeague.id,
