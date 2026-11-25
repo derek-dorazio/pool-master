@@ -65,7 +65,7 @@ export function createScheduledEventReader({
             // (ADR 0011, #1726, #2086). One clause, so neither filter replaces the other.
             eventSeries: {
               sportLeague: {
-                ...sportEventSportWhere(sport).eventSeries.sportLeague,
+                sport: { sport },
                 isActive: true,
                 selectedProviderMapping: { is: { providerLeague: { provider: { code: syncCode } } } },
               },
