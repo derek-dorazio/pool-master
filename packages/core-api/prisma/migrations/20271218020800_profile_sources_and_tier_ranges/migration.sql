@@ -4,6 +4,9 @@
 -- ranks. The NFL moves to a seed-ranges tier profile and a pricing profile that orders by seed,
 -- and its tiered and budget templates become one pick-3 pair.
 
+-- The sync finding for a field none of its league's sources orders.
+ALTER TYPE "PrismaProviderSyncFindingKind" ADD VALUE 'FIELD_HAS_NO_ORDER';
+
 -- CreateEnum
 CREATE TYPE "PrismaFieldOrderBasis" AS ENUM ('ODDS', 'SEED', 'RANKING');
 

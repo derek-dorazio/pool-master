@@ -462,11 +462,11 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Fill a sport event\'s tiers from its active field',
-      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.',
+      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league\'s tier profile lists: a field is never ordered by name. 422 TIER_SIZE_NOT_FOR_RANGES when a tier size is sent for a league whose tier profile is RANGES.',
       operationId: 'autoAssignEventTiers',
       params: EVENT_PARAMS,
       body: schemaRef('AutoAssignSportEventTiersRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.autoAssignEventTiers,
   });
@@ -490,7 +490,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Price a sport event\'s seeded field',
-      description: 'Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event\'s pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer\'s price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.',
+      description: 'Prices the active field on the budget curve with the values sent, in the order of the league\'s pricing profile\'s sources, and stores the values as the event\'s pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer\'s price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league\'s pricing profile lists: a field is never ordered by name.',
       operationId: 'autoAssignEventPrices',
       params: EVENT_PARAMS,
       body: schemaRef('AutoAssignSportEventPricesRequest'),

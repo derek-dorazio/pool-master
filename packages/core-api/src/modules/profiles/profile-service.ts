@@ -9,6 +9,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { PlatformPricingProfileWrite, PlatformTierProfileWrite, ProfileRepository, ProfileTaken } from '@poolmaster/shared/db';
 import {
+  type FieldOrderBasis,
   findBudgetPricingProblem,
   findTierLayoutProblem,
   type PlatformPricingProfile,
@@ -60,7 +61,7 @@ export interface ProfileServiceDeps<TProfile, TWrite> {
   logger?: FastifyBaseLogger;
 }
 
-export class ProfileService<TProfile extends { id: string; code: string; name: string }, TWrite extends { code: string; name: string }> {
+export class ProfileService<TProfile extends { id: string; code: string; name: string }, TWrite extends { code: string; name: string; sources: readonly FieldOrderBasis[] }> {
   constructor(private readonly deps: ProfileServiceDeps<TProfile, TWrite>) {}
 
   /** Every profile, by name, each with its sport league count: two reads, however many. */
@@ -87,11 +88,14 @@ export class ProfileService<TProfile extends { id: string; code: string; name: s
 
   /**
    * Replaces the profile's code, name and values. 404 when no such profile exists, 422 when the values
-   * contradict each other, 409 when another profile of the kind has the code or the name.
+   * contradict each other or the new first source differs from the first source of the other
+   * profile a league naming this one has (#2160: a league's two profiles start with the same
+   * source), 409 when another profile of the kind has the code or the name.
    */
   async update(id: string, input: TWrite): Promise<ProfileUse<TProfile>> {
     if (!(await this.deps.profiles.findById(id))) throw this.notFound(id);
     this.assertValid(input);
+    await this.assertFirstSourceAgrees(id, input.sources[0]);
     const profile = await this.deps.profiles.update(id, input);
     if (profile === 'codeTaken' || profile === 'nameTaken') throw this.taken(profile, input);
     this.deps.logger?.info({ profileId: id, code: profile.code, name: profile.name, kind: this.deps.kind.label }, 'Updated profile');
@@ -116,6 +120,18 @@ export class ProfileService<TProfile extends { id: string; code: string; name: s
   private assertValid(input: TWrite): void {
     const problem = this.deps.kind.findProblem(input);
     if (problem) throw new ProfileError(problem, this.deps.kind.codes.invalid, 422);
+  }
+
+  private async assertFirstSourceAgrees(id: string, firstSource: FieldOrderBasis | undefined): Promise<void> {
+    const paired = await this.deps.profiles.findPairedFirstSources(id);
+    const other = paired.find((source) => source !== firstSource);
+    if (other === undefined) return;
+    this.deps.logger?.warn({ profileId: id, firstSource, pairedFirstSource: other, kind: this.deps.kind.label }, 'Refused a profile first source a league\'s other profile does not share');
+    throw new ProfileError(
+      `${this.deps.kind.label} ${id} would start with ${firstSource ?? 'no source'}, but a sport league naming it has another profile that starts with ${other}. A league's tier and pricing profiles start with the same source.`,
+      'PROFILE_FIRST_SOURCES_DIFFER',
+      422,
+    );
   }
 
   /** The code's and the name's unique indexes decide, so two writes racing for one get 409, not a 500. */

@@ -981,6 +981,12 @@ export const ProviderSyncFindingKind = {
    * and the provider's id for the Season.
    */
   SLOT_DATES_NEEDED: 'SLOT_DATES_NEEDED',
+  /**
+   * A field sync wrote an event's field, but no active participant has a value for any source its
+   * sport league's tier and pricing profiles list (#2160), so it was not tiered or priced. WARNING.
+   * Subject: league, event and Provider; the next field follow-up that orders the field resolves it.
+   */
+  FIELD_HAS_NO_ORDER: 'FIELD_HAS_NO_ORDER',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

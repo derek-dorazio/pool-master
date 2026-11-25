@@ -11239,6 +11239,7 @@ export type SportEventDto = {
      * The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.
      */
     tierLayout: {
+        type: 'EQUAL_GROUPS';
         /**
          * How many tiers a new event starts with.
          */
@@ -11255,6 +11256,29 @@ export type SportEventDto = {
          * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
          */
         lastTierMax: number | null;
+        /**
+         * The tier profile the layout came from.
+         */
+        profileName: string;
+    } | null | {
+        type: 'RANGES';
+        /**
+         * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+         */
+        ranges: Array<{
+            /**
+             * The tier, from 1.
+             */
+            tierNumber: number;
+            /**
+             * The lowest seed or rank the tier takes.
+             */
+            fromValue: number;
+            /**
+             * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+             */
+            toValue: number | null;
+        }>;
         /**
          * The tier profile the layout came from.
          */
@@ -11677,6 +11701,7 @@ export type SportEventListResponse = {
          * The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.
          */
         tierLayout: {
+            type: 'EQUAL_GROUPS';
             /**
              * How many tiers a new event starts with.
              */
@@ -11693,6 +11718,29 @@ export type SportEventListResponse = {
              * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
              */
             lastTierMax: number | null;
+            /**
+             * The tier profile the layout came from.
+             */
+            profileName: string;
+        } | null | {
+            type: 'RANGES';
+            /**
+             * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+             */
+            ranges: Array<{
+                /**
+                 * The tier, from 1.
+                 */
+                tierNumber: number;
+                /**
+                 * The lowest seed or rank the tier takes.
+                 */
+                fromValue: number;
+                /**
+                 * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+                 */
+                toValue: number | null;
+            }>;
             /**
              * The tier profile the layout came from.
              */
@@ -12090,6 +12138,7 @@ export type SportEventResponse = {
          * The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.
          */
         tierLayout: {
+            type: 'EQUAL_GROUPS';
             /**
              * How many tiers a new event starts with.
              */
@@ -12106,6 +12155,29 @@ export type SportEventResponse = {
              * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
              */
             lastTierMax: number | null;
+            /**
+             * The tier profile the layout came from.
+             */
+            profileName: string;
+        } | null | {
+            type: 'RANGES';
+            /**
+             * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+             */
+            ranges: Array<{
+                /**
+                 * The tier, from 1.
+                 */
+                tierNumber: number;
+                /**
+                 * The lowest seed or rank the tier takes.
+                 */
+                fromValue: number;
+                /**
+                 * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+                 */
+                toValue: number | null;
+            }>;
             /**
              * The tier profile the layout came from.
              */
@@ -12677,7 +12749,7 @@ export type ReplaceSportEventTiersRequest = {
  */
 export type AutoAssignSportEventTiersRequest = {
     /**
-     * Participants per tier but the last, instead of the sport league's tier profile's; the last tier takes the rest, or up to the profile's cap. Omitted: an event with its profile's tier count gets the profile's tier size (10 for golf's six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).
+     * Participants per tier but the last, instead of the sport league's tier profile's; the last tier takes the rest, or up to the profile's cap. Omitted: an event with its profile's tier count gets the profile's tier size (10 for golf's six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5). 422 TIER_SIZE_NOT_FOR_RANGES when the league's tier profile is RANGES: its ranges place the field, so a tier size has nothing to set.
      */
     tierSize?: number;
 };
@@ -12730,6 +12802,7 @@ export type EventPricingConfig = {
  * The tier layout an event's field was last auto-tiered with.
  */
 export type EventTierConfig = {
+    type: 'EQUAL_GROUPS';
     /**
      * How many tiers a new event starts with.
      */
@@ -12746,6 +12819,29 @@ export type EventTierConfig = {
      * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
      */
     lastTierMax: number | null;
+    /**
+     * The tier profile the layout came from.
+     */
+    profileName: string;
+} | {
+    type: 'RANGES';
+    /**
+     * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+     */
+    ranges: Array<{
+        /**
+         * The tier, from 1.
+         */
+        tierNumber: number;
+        /**
+         * The lowest seed or rank the tier takes.
+         */
+        fromValue: number;
+        /**
+         * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+         */
+        toValue: number | null;
+    }>;
     /**
      * The tier profile the layout came from.
      */
@@ -30020,7 +30116,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -30173,7 +30269,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -30261,7 +30357,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -30548,9 +30644,10 @@ export type CustomerUserListResponse = {
 };
 
 /**
- * A tier profile's code, name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 PLATFORM_TIER_PROFILE_INVALID otherwise.
+ * A tier profile's code, name, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.
  */
 export type PlatformTierProfileWriteRequest = {
+    type: 'EQUAL_GROUPS';
     /**
      * How many tiers a new event starts with.
      */
@@ -30575,12 +30672,48 @@ export type PlatformTierProfileWriteRequest = {
      * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
      */
     name: string;
+    /**
+     * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+     */
+    sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
+} | {
+    type: 'RANGES';
+    /**
+     * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+     */
+    ranges: Array<{
+        /**
+         * The tier, from 1.
+         */
+        tierNumber: number;
+        /**
+         * The lowest seed or rank the tier takes.
+         */
+        fromValue: number;
+        /**
+         * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+         */
+        toValue: number | null;
+    }>;
+    /**
+     * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+     */
+    code: string;
+    /**
+     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     */
+    name: string;
+    /**
+     * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+     */
+    sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
 };
 
 /**
- * A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers.
+ * A tier layout each sport league can name: a new event of the league starts with its tiers, and auto-tiering puts the field in order by the profile's sources, then fills the tiers: EQUAL_GROUPS, tierSize in each tier but the last (a field too small to reach the last tier is split evenly); RANGES, each participant in the tier whose range holds their seed or rank.
  */
 export type PlatformTierProfileDto = {
+    type: 'EQUAL_GROUPS';
     /**
      * How many tiers a new event starts with.
      */
@@ -30605,6 +30738,54 @@ export type PlatformTierProfileDto = {
      * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
      */
     name: string;
+    /**
+     * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+     */
+    sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
+    id: string;
+    /**
+     * How many sport leagues name the profile. One any league names can't be deleted.
+     */
+    sportLeagueCount: number;
+    /**
+     * ISO 8601 datetime string.
+     */
+    createdAt: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    updatedAt: string;
+} | {
+    type: 'RANGES';
+    /**
+     * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+     */
+    ranges: Array<{
+        /**
+         * The tier, from 1.
+         */
+        tierNumber: number;
+        /**
+         * The lowest seed or rank the tier takes.
+         */
+        fromValue: number;
+        /**
+         * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+         */
+        toValue: number | null;
+    }>;
+    /**
+     * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+     */
+    code: string;
+    /**
+     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     */
+    name: string;
+    /**
+     * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+     */
+    sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
     id: string;
     /**
      * How many sport leagues name the profile. One any league names can't be deleted.
@@ -30625,9 +30806,10 @@ export type PlatformTierProfileDto = {
  */
 export type PlatformTierProfileListResponse = {
     /**
-     * Every tier profile, by name.
+     * A tier layout each sport league can name: a new event of the league starts with its tiers, and auto-tiering puts the field in order by the profile's sources, then fills the tiers: EQUAL_GROUPS, tierSize in each tier but the last (a field too small to reach the last tier is split evenly); RANGES, each participant in the tier whose range holds their seed or rank.
      */
     platformTierProfiles: Array<{
+        type: 'EQUAL_GROUPS';
         /**
          * How many tiers a new event starts with.
          */
@@ -30652,6 +30834,54 @@ export type PlatformTierProfileListResponse = {
          * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
          */
         name: string;
+        /**
+         * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+         */
+        sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
+        id: string;
+        /**
+         * How many sport leagues name the profile. One any league names can't be deleted.
+         */
+        sportLeagueCount: number;
+        /**
+         * ISO 8601 datetime string.
+         */
+        createdAt: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        updatedAt: string;
+    } | {
+        type: 'RANGES';
+        /**
+         * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+         */
+        ranges: Array<{
+            /**
+             * The tier, from 1.
+             */
+            tierNumber: number;
+            /**
+             * The lowest seed or rank the tier takes.
+             */
+            fromValue: number;
+            /**
+             * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+             */
+            toValue: number | null;
+        }>;
+        /**
+         * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+         */
+        code: string;
+        /**
+         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         */
+        name: string;
+        /**
+         * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+         */
+        sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
         id: string;
         /**
          * How many sport leagues name the profile. One any league names can't be deleted.
@@ -30673,9 +30903,10 @@ export type PlatformTierProfileListResponse = {
  */
 export type PlatformTierProfileResponse = {
     /**
-     * A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers.
+     * A tier layout each sport league can name: a new event of the league starts with its tiers, and auto-tiering puts the field in order by the profile's sources, then fills the tiers: EQUAL_GROUPS, tierSize in each tier but the last (a field too small to reach the last tier is split evenly); RANGES, each participant in the tier whose range holds their seed or rank.
      */
     platformTierProfile: {
+        type: 'EQUAL_GROUPS';
         /**
          * How many tiers a new event starts with.
          */
@@ -30700,6 +30931,54 @@ export type PlatformTierProfileResponse = {
          * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
          */
         name: string;
+        /**
+         * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+         */
+        sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
+        id: string;
+        /**
+         * How many sport leagues name the profile. One any league names can't be deleted.
+         */
+        sportLeagueCount: number;
+        /**
+         * ISO 8601 datetime string.
+         */
+        createdAt: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        updatedAt: string;
+    } | {
+        type: 'RANGES';
+        /**
+         * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+         */
+        ranges: Array<{
+            /**
+             * The tier, from 1.
+             */
+            tierNumber: number;
+            /**
+             * The lowest seed or rank the tier takes.
+             */
+            fromValue: number;
+            /**
+             * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+             */
+            toValue: number | null;
+        }>;
+        /**
+         * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+         */
+        code: string;
+        /**
+         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         */
+        name: string;
+        /**
+         * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+         */
+        sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
         id: string;
         /**
          * How many sport leagues name the profile. One any league names can't be deleted.
@@ -30717,7 +30996,7 @@ export type PlatformTierProfileResponse = {
 };
 
 /**
- * A pricing profile's code, name and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other.
+ * A pricing profile's code, name, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one.
  */
 export type PlatformPricingProfileWriteRequest = {
     /**
@@ -30748,10 +31027,14 @@ export type PlatformPricingProfileWriteRequest = {
      * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
      */
     code: string;
+    /**
+     * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+     */
+    sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
 };
 
 /**
- * A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them.
+ * A set of budget pricing values each sport league can name: a synced field of the league never priced before is put in order by its sources and priced with its values, and the price dialog offers them.
  */
 export type PlatformPricingProfileDto = {
     /**
@@ -30782,6 +31065,10 @@ export type PlatformPricingProfileDto = {
      * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
      */
     code: string;
+    /**
+     * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+     */
+    sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
     id: string;
     /**
      * How many sport leagues name the profile. One any league names can't be deleted.
@@ -30833,6 +31120,10 @@ export type PlatformPricingProfileListResponse = {
          * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
          */
         code: string;
+        /**
+         * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+         */
+        sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
         id: string;
         /**
          * How many sport leagues name the profile. One any league names can't be deleted.
@@ -30854,7 +31145,7 @@ export type PlatformPricingProfileListResponse = {
  */
 export type PlatformPricingProfileResponse = {
     /**
-     * A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them.
+     * A set of budget pricing values each sport league can name: a synced field of the league never priced before is put in order by its sources and priced with its values, and the price dialog offers them.
      */
     platformPricingProfile: {
         /**
@@ -30885,6 +31176,10 @@ export type PlatformPricingProfileResponse = {
          * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
          */
         code: string;
+        /**
+         * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
+         */
+        sources: Array<'ODDS' | 'SEED' | 'RANKING'>;
         id: string;
         /**
          * How many sport leagues name the profile. One any league names can't be deleted.
@@ -35909,6 +36204,10 @@ export type AutoAssignEventTiersErrors = {
      * Standard API error envelope.
      */
     409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type AutoAssignEventTiersError = AutoAssignEventTiersErrors[keyof AutoAssignEventTiersErrors];

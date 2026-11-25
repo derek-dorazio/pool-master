@@ -597,6 +597,7 @@ enum PrismaProviderSyncFindingKind {
   SLOT_OUTSIDE_SEASON
   GAMES_UNPLACED
   SLOT_DATES_NEEDED
+  FIELD_HAS_NO_ORDER
 }
 
 /// How a sport event's latest automatic release check ended (#1847).

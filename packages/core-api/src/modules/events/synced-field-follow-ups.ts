@@ -31,7 +31,7 @@ function valuedCount(valuation: FieldValuationOutcome): number {
 export interface SyncedFieldFollowUpsDeps {
   providerGames: Pick<ProviderGameSlateService, 'afterFieldLoad'>;
   valuation: Pick<SyncedFieldValuationService, 'afterFieldLoad'>;
-  /** The event's sport league, for its GAMES_NOT_SYNCED finding. */
+  /** The event's sport league, for its GAMES_NOT_SYNCED and FIELD_HAS_NO_ORDER findings. */
   sportEvents: Pick<SportEventRepository, 'findById'>;
   findings: Pick<ProviderSyncFindingService, 'checkEventOfSource'>;
 }
@@ -42,8 +42,9 @@ export interface SyncedFieldFollowUpsDeps {
  * event as it stands when the job runs and writes only what differs, so a retry or a repeat
  * changes nothing more. A step that fails is logged, not thrown: the field is written, and the
  * next field sync tries again. Games the provider listed that were not synced are a
- * GAMES_NOT_SYNCED finding on the event (#1999), resolved once a later run syncs them; the tier
- * and price warnings stay in the job's result. A run that changed nothing and has nothing to
+ * GAMES_NOT_SYNCED finding on the event (#1999), resolved once a later run syncs them; a field no
+ * source of its league's profiles orders is a FIELD_HAS_NO_ORDER finding (#2160), resolved once a
+ * later run orders it; the tier and price warnings stay in the job's result. A run that changed nothing and has nothing to
  * report leaves no Activity row (#1865).
  */
 export class SyncedFieldFollowUps {
@@ -63,6 +64,7 @@ export class SyncedFieldFollowUps {
     const listed = payload.games !== undefined || payload.bracket !== undefined;
     const gamesFailed = listed && slate === null;
     if (listed) await this.checkGames(payload, gamesFailed);
+    await this.checkOrder(payload, valuation);
     const changedCount = gamesChanged(slate) + valuedCount(valuation);
     if (changedCount === 0 && !gamesFailed && valuationWarnings.length === 0) return DISCARD_BACKGROUND_JOB;
     return {
@@ -71,16 +73,30 @@ export class SyncedFieldFollowUps {
     };
   }
 
+  /**
+   * The event's FIELD_HAS_NO_ORDER finding: raised when no listed source orders the field, resolved
+   * once one valuation orders it. A locked, failed or missing event says nothing of its order.
+   */
+  private async checkOrder(payload: SyncEventGamesAndTiersJobPayload, valuation: FieldValuationOutcome): Promise<void> {
+    const found = valuation.outcome === 'SKIPPED' && valuation.reason === 'NO_ORDER';
+    if (!found && valuation.outcome !== 'VALUED') return;
+    await this.checkEventFinding(payload, ProviderSyncFindingKind.FIELD_HAS_NO_ORDER, found);
+  }
+
   /** The event's GAMES_NOT_SYNCED finding: raised when the listed games failed to sync, resolved when they synced. */
   private async checkGames(payload: SyncEventGamesAndTiersJobPayload, gamesFailed: boolean): Promise<void> {
+    await this.checkEventFinding(payload, ProviderSyncFindingKind.GAMES_NOT_SYNCED, gamesFailed);
+  }
+
+  private async checkEventFinding(payload: SyncEventGamesAndTiersJobPayload, kind: ProviderSyncFindingKind, found: boolean): Promise<void> {
     const event = await this.deps.sportEvents.findById(payload.sportEventId);
     if (event === null) return;
     await this.deps.findings.checkEventOfSource({
-      kind: ProviderSyncFindingKind.GAMES_NOT_SYNCED,
+      kind,
       sportLeagueId: event.sportLeagueId,
       sportEventId: event.id,
       providerSourceId: payload.providerId,
-      found: gamesFailed,
+      found,
     });
   }
 }

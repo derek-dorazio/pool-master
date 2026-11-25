@@ -278,6 +278,7 @@ export const enUS = {
       NO_PROVIDER_PARTICIPANTS: 'No field from the provider',
       NO_PROVIDER_LIVE_SCORES: 'No live scores from the provider',
       GAMES_NOT_SYNCED: 'Games not synced',
+      FIELD_HAS_NO_ORDER: 'Field has no order',
       SLOT_VALUE_UNMAPPED: 'Provider code not mapped to a slot',
       PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
       SLOT_NAME_UNMATCHED: 'Tournament name not matched to a slot',

@@ -125,7 +125,7 @@ export async function platformTierProfilesModule(fastify: FastifyInstance, opts:
       tags,
       summary: 'Update a tier profile',
       description: 'Replaces the profile\'s name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. '
-        + '404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create. Root admin only.' + RATE_LIMITED,
+        + '404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create, 422 PROFILE_FIRST_SOURCES_DIFFER when the first source would differ from the first source of the pricing profile a sport league naming it has. Root admin only.' + RATE_LIMITED,
       operationId: 'updatePlatformTierProfile',
       params: PROFILE_PARAMS,
       body: schemaRef('PlatformTierProfileWriteRequest'),
@@ -217,7 +217,7 @@ export async function platformPricingProfilesModule(fastify: FastifyInstance, op
       tags,
       summary: 'Update a pricing profile',
       description: 'Replaces the profile\'s name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. '
-        + '404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create. Root admin only.' + RATE_LIMITED,
+        + '404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create, 422 PROFILE_FIRST_SOURCES_DIFFER when the first source would differ from the first source of the tier profile a sport league naming it has. Root admin only.' + RATE_LIMITED,
       operationId: 'updatePlatformPricingProfile',
       params: PROFILE_PARAMS,
       body: schemaRef('PlatformPricingProfileWriteRequest'),
