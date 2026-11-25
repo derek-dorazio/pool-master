@@ -35,6 +35,7 @@ import noQueryInLoop from './no-query-in-loop.mjs';
 import noPlanBranching from './no-plan-branching.mjs';
 import noSportBranching from './no-sport-branching.mjs';
 import noClockYearOrLeagueTables from './no-clock-year-or-league-tables.mjs';
+import noEnumStringLiterals from './no-enum-string-literals.mjs';
 import noArbitraryTypeSizes from './no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from './no-raw-theme-colors.mjs';
 import noUnawaitedSendError from './no-unawaited-send-error.mjs';
@@ -66,6 +67,7 @@ export default {
     'no-query-in-loop': noQueryInLoop,
     'no-sport-branching': noSportBranching,
     'no-clock-year-or-league-tables': noClockYearOrLeagueTables,
+    'no-enum-string-literals': noEnumStringLiterals,
     'no-raw-theme-colors': noRawThemeColors,
     'no-arbitrary-type-sizes': noArbitraryTypeSizes,
     'no-unawaited-send-error': noUnawaitedSendError,

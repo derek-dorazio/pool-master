@@ -30,6 +30,12 @@ const CLOCK_YEAR_BASELINE = Object.fromEntries(
     .filter(([key]) => !key.startsWith('$')),
 );
 
+// #2107: the enum string literals each grandfathered web file may still have, by repo path.
+const ENUM_STRING_LITERAL_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/enum-string-literal-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
 /**
  * Selector sets are hoisted to module scope on purpose.
  *
@@ -598,6 +604,16 @@ export default tseslint.config(
     ],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-clock-year-or-league-tables': ['error', { baseline: CLOCK_YEAR_BASELINE }] },
+  },
+  {
+    // #2107: the web app names a shared enum member, never its value as a string, in a
+    // comparison, a case label or a literal type (rules/domain-model-conventions-rules.md §17).
+    // Files that still have one sit on a shrink-only baseline; tests and stories write values
+    // freely.
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: ['clients/poolmaster/src/**/test/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/*.stories.tsx'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-enum-string-literals': ['error', { baseline: ENUM_STRING_LITERAL_BASELINE }] },
   },
   {
     // What a league plan allows comes from the plan entitlements service (#944), the one place

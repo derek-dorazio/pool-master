@@ -30,6 +30,7 @@ import noMockedApi from '../no-mocked-api.mjs';
 import noNodeEnvReads from '../no-node-env-reads.mjs';
 import noSportBranching from '../no-sport-branching.mjs';
 import noClockYearOrLeagueTables from '../no-clock-year-or-league-tables.mjs';
+import noEnumStringLiterals from '../no-enum-string-literals.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
@@ -1470,6 +1471,42 @@ ruleTester.run('no-clock-year-or-league-tables', noClockYearOrLeagueTables, {
     // A file over its baseline reports every hit, so it cannot add one.
     {
       code: 'const a = d.getUTCFullYear();\nconst b = e.getUTCFullYear();',
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2107: a shared enum value is named, not written as a string, in comparisons, case labels and
+// literal types. The values come from the real shared domain (ContestStatus, LeagueRole).
+ruleTester.run('no-enum-string-literals', noEnumStringLiterals, {
+  valid: [
+    // The enum member, and the enum's type.
+    'if (contest.status === ContestStatus.OPEN) {}',
+    'let status: ContestStatus;',
+    // A string that is no enum value, and an enum value that is only displayed or passed on.
+    "if (tone === 'success') {}",
+    "const label = 'OPEN';",
+    "send({ status: 'OPEN' });",
+    // A string that only happens to match takes a marker with its reason.
+    "// poolmaster-allow-enum-literal: a CSS keyword, not the contest status\nif (value === 'OPEN') {}",
+    // A file on its baseline may keep the hits it has.
+    { code: "if (a === 'OPEN') {}", filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
+  ],
+  invalid: [
+    { code: "if (contest.status === 'OPEN') {}", errors: [{ messageId: 'enumLiteral' }] },
+    // Optional chains and plain variables, which no-bare-enum-literals does not see.
+    { code: "if (a?.status !== 'COMPLETED') {}", errors: [{ messageId: 'enumLiteral' }] },
+    { code: "if ('COMMISSIONER' == role) {}", errors: [{ messageId: 'enumLiteral' }] },
+    { code: "switch (role) { case 'COMMISSIONER': break; }", errors: [{ messageId: 'enumLiteral' }] },
+    // A literal union is a local copy of the enum.
+    { code: "type Role = 'MEMBER' | 'COMMISSIONER';", errors: [{ messageId: 'enumLiteral' }, { messageId: 'enumLiteral' }] },
+    { code: "// poolmaster-allow-enum-literal\nif (a === 'OPEN') {}", errors: [{ messageId: 'missingReason' }] },
+    { code: "// poolmaster-allow-enum-literal: nothing here\nconst x = 1;", errors: [{ messageId: 'unusedAllow' }] },
+    // A file over its baseline reports every hit, so it cannot add one.
+    {
+      code: "if (a === 'OPEN') {}\nif (b === 'DRAFT') {}",
       filename: 'legacy.ts',
       options: [{ baseline: { 'legacy.ts': 1 } }],
       errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
