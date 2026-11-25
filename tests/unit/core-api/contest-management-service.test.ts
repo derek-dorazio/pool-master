@@ -37,6 +37,7 @@ import {
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
   CONTEST_SCORING_ROUNDS_MISMATCH,
   CONTEST_SCORING_SETTINGS_REQUIRED,
+  CONTEST_SELECTION_TYPE_NOT_ALLOWED,
   CONTEST_SQUARES_GAME_INVALID,
   CONTEST_SQUARES_GAME_REQUIRED,
   CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
@@ -73,6 +74,7 @@ import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
 import { buildLeague } from '../../factories';
+import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import { testDomainEvents } from '../../support/domain-events';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
@@ -1878,7 +1880,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  function basketballService(rounds: number, bracketProblem: string | null = null) {
+  function basketballService(rounds: number | null, bracketProblem: string | null = null) {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService({
@@ -1960,6 +1962,61 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     await service.updateContestConfiguration('contest-1', { ...tieredRules, scoring });
 
     expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring }));
+  });
+
+  it('keeps a draft\'s first active scoring rule by its order when a rules update sends no scoring, passing over an inactive one', async () => {
+    const { scoringRuleRepo, service } = raceService();
+    const rule = (id: string, sortOrder: number, active: boolean, pointsTable: number[]): ParticipantContestScoringRule => ({
+      id,
+      contestConfigurationId: 'config-1',
+      sortOrder,
+      scoring: { success: true, data: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable, didNotFinishPoints: 0 } } },
+      active,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    jest.mocked(scoringRuleRepo.findByContestConfiguration).mockResolvedValue([
+      rule('rule-second', 2, true, [2]),
+      rule('rule-first', 1, true, [1]),
+      rule('rule-retired', 0, false, [9]),
+    ]);
+
+    await service.updateContestConfiguration('contest-1', tieredRules);
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      scoring: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [1], didNotFinishPoints: 0 } },
+    }));
+  });
+
+  it('refuses a rules update sending no scoring on a draft whose stored points table no longer reads as valid with 422 CONTEST_SCORING_SETTINGS_REQUIRED, rather than keeping it', async () => {
+    const { scoringRuleRepo, service } = raceService();
+    jest.mocked(scoringRuleRepo.findByContestConfiguration).mockResolvedValue([{
+      id: 'rule-old',
+      contestConfigurationId: 'config-1',
+      sortOrder: 1,
+      scoring: { success: false, reason: 'SETTINGS_INVALID', participantScoringDefinitionId: 'FINISH_POSITION_POINTS' },
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }]);
+
+    await expect(service.updateContestConfiguration('contest-1', tieredRules))
+      .rejects.toMatchObject({ code: CONTEST_SCORING_SETTINGS_REQUIRED, statusCode: 422 });
+    expect(scoringRuleRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses knockout round values on an event with no rounds with 422 CONTEST_SCORING_ROUNDS_MISMATCH, saying the event has no rounds', async () => {
+    const { contestCoreRepo, service } = basketballService(null);
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
+      name: 'Bracket Pool',
+      configuration: { ...drawRules, scoring: knockoutScoring([1, 2]) },
+    }))).rejects.toMatchObject({
+      code: CONTEST_SCORING_ROUNDS_MISMATCH,
+      statusCode: 422,
+      message: expect.stringContaining('the event has no rounds'),
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });
 
@@ -2253,6 +2310,40 @@ describe('ContestManagementService — a contest of several events', () => {
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
   });
 
+  describe('swapping a budget contest onto an event priced against another salary cap', () => {
+    const CAP_READER_EVENTS = [
+      { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
+      { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+    ];
+    const STORED_BUDGET = { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 } as const;
+
+    it('stores the new event\'s salary cap on a draft, so its entries are built under it', async () => {
+      const { service, contestRepo, configurationRepo } = build({
+        reader: multiEventReader(CAP_READER_EVENTS),
+        contest: { status: ContestStatus.DRAFT, selectionType: SelectionType.BUDGET_PICK },
+        storedConfigJson: STORED_BUDGET,
+      });
+
+      await service.setContestSportEvents('league-1', 'contest-1', [PGA]);
+
+      expect(configurationRepo.update).toHaveBeenCalledWith('config-1', { configJson: expect.objectContaining({ salaryCap: 200 }) });
+      expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [PGA]);
+    });
+
+    it('refuses it on an open contest, whose entries were built under the old cap, with 409 CONTEST_BUDGET_SALARY_CAP_MISMATCH, changing nothing', async () => {
+      const { service, contestRepo, configurationRepo } = build({
+        reader: multiEventReader(CAP_READER_EVENTS),
+        contest: { status: ContestStatus.OPEN, selectionType: SelectionType.BUDGET_PICK },
+        storedConfigJson: STORED_BUDGET,
+      });
+
+      await expect(service.setContestSportEvents('league-1', 'contest-1', [PGA]))
+        .rejects.toMatchObject({ code: 'CONTEST_BUDGET_SALARY_CAP_MISMATCH', statusCode: 409 });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    });
+  });
+
   it('answers 404 CONTEST_NOT_FOUND for another league\'s contest, changing nothing', async () => {
     const { service, contestRepo } = build({ contest: {} });
 
@@ -2337,6 +2428,14 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
       configuration: { ...pickEmRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
     }))).rejects.toMatchObject({ code: 'CONTEST_SCORING_DEFINITION_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a pick\'em contest on a sport that offers no pick\'em (baseball) with 422 CONTEST_SELECTION_TYPE_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3, sport: Sport.BASEBALL });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules })))
+      .rejects.toMatchObject({ code: CONTEST_SELECTION_TYPE_NOT_ALLOWED, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
@@ -2834,6 +2933,39 @@ describe('ContestManagementService squares rules (#711)', () => {
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
   });
 
+  describe('an open squares contest before its draw', () => {
+    async function openSquares() {
+      const built = squaresService();
+      await built.service.createContest({ leagueId: 'league-1' }, squaresRequest());
+      (built.contestCoreRepo.findById as jest.Mock).mockResolvedValue({
+        ...(await built.contestCoreRepo.findById('contest-1')),
+        status: ContestStatus.OPEN,
+        contestFormat: ContestFormat.SQUARES,
+        selectionType: SelectionType.SQUARES,
+        squaresGameMatchId: GAME_ID,
+      });
+      return built;
+    }
+
+    it('refuses settings that leave out its entry limit with 409 CONTEST_CONFIGURATION_LOCKED, since only the box limit still changes', async () => {
+      const { contestConfigurationRepo, service } = await openSquares();
+
+      await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 5 }))
+        .rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
+      expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses a box limit change on one stored with no entry limit with 422 CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, since a squares contest takes one entry per squad', async () => {
+      const { contestConfigurationRepo, service } = await openSquares();
+      const stored = await contestConfigurationRepo.findByContest('contest-1');
+      jest.mocked(contestConfigurationRepo.findByContest).mockResolvedValue({ ...expectDefined(stored), maxEntriesPerSquad: null });
+
+      await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 5 }))
+        .rejects.toMatchObject({ code: CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, statusCode: 422 });
+      expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+    });
+  });
+
   it('refuses a squares contest sent no game with CONTEST_SQUARES_GAME_REQUIRED, writing nothing', async () => {
     const { contestCoreRepo, service } = squaresService();
     const withoutGame = { ...squaresRequest(), sportEventRoundMatchId: undefined };
@@ -2951,6 +3083,37 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
     );
     expect(configurations.create).not.toHaveBeenCalled();
     expect(cupsAsked).toEqual([]);
+  });
+
+  it('names a plan of one sports league a year in the singular when it refuses', async () => {
+    const { service, contests } = serviceForFullFreeLeague();
+    jest.mocked(contests.create).mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 1, sportLeagueCount: 1 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST))
+      .rejects.toMatchObject({ code: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED', message: expect.stringContaining('allows 1 sports league a year') });
+  });
+
+  it('asks the repository for no sports league check when the league\'s plan has no yearly limit', async () => {
+    const contests = createContestRepo();
+    const defaults = PLAN_SETTINGS.defaults({});
+    const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
+      contests,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+      planEntitlements: planEntitlementsOver(
+        { findById: async (id) => buildLeague({ id, plan: LeaguePlan.PLATINUM }) },
+        () => ({ ...defaults, caps: { ...defaults.caps, SPORTS_LEAGUES_PER_YEAR: { ...defaults.caps.SPORTS_LEAGUES_PER_YEAR, PLATINUM: null } } }),
+      ),
+    });
+
+    await service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST);
+
+    expect(contests.create).toHaveBeenCalledWith(expect.objectContaining({ leagueId: 'league-1' }), { sportLeaguesPerYear: null });
   });
 });
 
