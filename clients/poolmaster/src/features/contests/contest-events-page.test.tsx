@@ -60,7 +60,7 @@ const nextSeasonMasters = buildSportEvent({ id: 'event-9', name: 'The Masters 21
 function seasonFixture(id: string, year: number): SportLeagueSeasonDto {
   return {
     id, name: String(year), championshipYear: year, startsAt: `${year}-01-01T00:00:00.000Z`, endsAt: `${year}-12-31T00:00:00.000Z`,
-    isCurrent: year === 2099, providerMappings: [], phases: [],
+    isCurrent: year === 2099, providerMappings: [], phases: [], slotsNeedingDates: 0,
   };
 }
 

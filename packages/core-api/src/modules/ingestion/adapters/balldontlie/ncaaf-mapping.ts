@@ -3,15 +3,14 @@
  * the College Football Playoff (#1496). No I/O.
  *
  * PoolMaster's CFP event is one season's playoff bracket (`ncaaf-2025-cfp`, played December 2025
- * to January 2026). The vendor's games carry no postseason flag, bowl name or venue, so the
- * playoff's games are found by date instead: `CFP_LEAGUE.window` (Derek, 2026-11-13, to be backed
- * out if the real feed turns out to mark playoff games). The window holds every bowl game too;
- * the GAME writer links a game only to the bracket match whose two teams it has, so a bowl
- * between two other schools links to nothing.
- *
- * The window opens after conference championship Saturday on purpose: a title game can pair two
- * playoff teams (2025: Indiana v Ohio State, the Big Ten title), and read with the bracket it
- * would link to the later playoff match between the same two teams.
+ * to January 2026). The vendor's games carry no postseason flag, bowl name, round or venue, so
+ * the adapter names no place for any game: each game is a play with no code and its two teams, and
+ * the events sync places it in the Season slot whose date window holds its kickoff (#2012), taking
+ * the slot's dates only from games between two of the seeds on the event's field. The windows are the
+ * schedule's own dates, held as data on each Season's slots; a game no window holds (a regular
+ * season game, another bowl) is not synced. The GAME writer links a game only to the bracket
+ * match whose two teams it has, and the field is the seeds the admin places, so a bowl between two
+ * other schools in a playoff round's window links to nothing.
  *
  * Team ids are the provider's own (`participantFeedId`, #2040), mapped per sport league.
  */
@@ -28,42 +27,8 @@ import { participantFeedId } from './participant-feed-id';
 export const NCAAF_GAMES_PATH = '/ncaaf/v1/games';
 export const NCAAF_TEAMS_PATH = '/ncaaf/v1/teams';
 
-/** The span of time a season's playoff games are read from: `from` inclusive, `to` exclusive. */
-export interface GameWindow {
-  from: Date;
-  to: Date;
-}
-
-const DECEMBER = 11;
-const SATURDAY = 6;
-/**
- * The hour (UTC) on the Sunday after championship Saturday that the window opens. A Saturday
- * night kickoff anywhere in the US, Hawaii's included, starts before it: the 2025 Big Ten title
- * game kicked off at 8 PM Eastern, which is 01:00 UTC on the Sunday.
- */
-const WINDOW_OPENS_UTC_HOUR = 12;
-
-/**
- * The games of one season's College Football Playoff: from the day after the first Saturday of
- * December (conference championship day) through January 31 of the next year. A rule, not stored
- * data, kept here so it can be backed out in one place once a key shows whether the vendor marks
- * playoff games.
- */
-export function cfpGameWindow(season: number): GameWindow {
-  const firstOfDecember = new Date(Date.UTC(season, DECEMBER, 1));
-  const firstSaturday = 1 + ((SATURDAY - firstOfDecember.getUTCDay() + 7) % 7);
-  return {
-    from: new Date(Date.UTC(season, DECEMBER, firstSaturday + 1, WINDOW_OPENS_UTC_HOUR)),
-    // Through January 31 in every US time zone: noon UTC on February 1 is early morning there.
-    to: new Date(Date.UTC(season + 1, 1, 1, WINDOW_OPENS_UTC_HOUR)),
-  };
-}
-
-/** The College Football Playoff's settings, in one place. */
-export const CFP_LEAGUE = {
-  eventName: 'College Football Playoff',
-  window: cfpGameWindow,
-} as const;
+/** The name the College Football Playoff's event is listed by: the vendor names none. */
+export const CFP_EVENT_NAME = 'College Football Playoff';
 
 /** One season's College Football Playoff, by the year its season starts. */
 export interface CfpScope {
@@ -94,38 +59,35 @@ function required<Value>(value: Value | undefined, path: string, row: string, fi
 const gameName = (game: NcaafGame) => `game ${game.id === undefined ? '(no id)' : String(game.id)}`;
 
 /**
- * The games inside the season's window, whatever the date filter sent let through: the vendor's
- * `start_date` is a calendar date, and its time zone is not documented.
+ * One event for a season's games, which must be at least one: the season's whole slate, since the
+ * vendor marks no playoff game. Each game is a play with no code, which the events sync places by
+ * the Season slots' date windows (#2012). The slate is the season's every game, so the event is
+ * complete once they all are.
  */
-export function cfpGamesOf(scope: CfpScope, games: readonly NcaafGame[]): NcaafGame[] {
-  const { from, to } = CFP_LEAGUE.window(scope.season);
-  return games.filter((game) => {
-    const kickoff = Date.parse(required(game.date, NCAAF_GAMES_PATH, gameName(game), 'date'));
-    return kickoff >= from.getTime() && kickoff < to.getTime();
-  });
-}
-
-/**
- * One event for a season's playoff games, which must be at least one. The window holds bowls the
- * bracket does not play and names no game as the last, so the event is complete only once the
- * window has closed (`windowClosed`) and every game in it is done.
- */
-export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], windowClosed: boolean, participantCount?: number): SportEvent {
+export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], participantCount?: number): SportEvent {
   const times = games.map((game) => Date.parse(required(game.date, NCAAF_GAMES_PATH, gameName(game), 'date')));
-  const status = eventStatusOf(games.map((game) => PROGRESS_BY_STATE[game.status_state]), windowClosed);
+  const status = eventStatusOf(games.map((game) => PROGRESS_BY_STATE[game.status_state]), true);
   return {
     externalId: cfpScopeId(scope),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.AMERICAN_FOOTBALL,
-    name: CFP_LEAGUE.eventName,
+    name: CFP_EVENT_NAME,
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
     status,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    // The vendor's college games carry no season type, week or round: the playoff is matched by date (slice 13, #2012).
-    providerSlots: [],
+    providerSlots: games.map((game, index) => ({ code: null, startsAt: new Date(times[index]), endsAt: new Date(times[index]), teams: teamFeedIdsOf(game) })),
   };
+}
+
+/** A game's two teams by their feed ids: a window takes its dates only from games between seeds (#2012). */
+function teamFeedIdsOf(game: NcaafGame): string[] {
+  const name = gameName(game);
+  return [
+    required(required(game.home_team, NCAAF_GAMES_PATH, name, 'home_team').id, NCAAF_GAMES_PATH, name, 'home_team.id'),
+    required(required(game.visitor_team, NCAAF_GAMES_PATH, name, 'visitor_team').id, NCAAF_GAMES_PATH, name, 'visitor_team.id'),
+  ].map(participantFeedId);
 }
 
 export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderParticipant {
@@ -143,8 +105,12 @@ export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderP
   };
 }
 
-/** The teams playing the window's games, each once, in the order they first appear. */
-export function toCfpFieldParticipants(games: readonly NcaafGame[]): ProviderParticipant[] {
+/**
+ * The teams playing the games, each once, in the order they first appear. The event's field is the
+ * seeds the admin places: an event placed by date window takes no team from its feed onto its field
+ * (#1715), so these only refresh the rows already there.
+ */
+export function teamsOfGames(games: readonly NcaafGame[]): ProviderParticipant[] {
   const field = new Map<string, ProviderParticipant>();
   for (const game of games) {
     for (const team of [required(game.home_team, NCAAF_GAMES_PATH, gameName(game), 'home_team'), required(game.visitor_team, NCAAF_GAMES_PATH, gameName(game), 'visitor_team')]) {

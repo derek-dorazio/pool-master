@@ -311,7 +311,7 @@ describe('SportLeaguePageService', () => {
     const season = (id: string, year: number) => ({
       id, sportLeagueId: 'mlb', name: String(year), championshipYear: year,
       startsAt: new Date(Date.UTC(year, 2, 1)), endsAt: new Date(Date.UTC(year, 10, 1)),
-      isCurrent: false, providerMappings: [], phases: [],
+      isCurrent: false, readBySync: false, providerMappings: [], phases: [],
     });
     const reader = { ...makeReader([]), readSeasons: () => Promise.resolve([season('s2025', 2025), season('s2026', 2026)]) };
     const seasons = await new SportLeaguePageService({ reader, webhookProviderIds: () => [], now: () => NOW }).listSeasons('mlb');

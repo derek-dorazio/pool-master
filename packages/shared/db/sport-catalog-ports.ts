@@ -242,6 +242,11 @@ export interface SportEventRepository {
   findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
   /** The events a provider knows by any of these identities, in one read (#1253). */
   findByProviderRefs(providerId: string, externalIds: readonly string[]): Promise<SportEvent[]>;
+  /**
+   * Each event's active field as the provider's feed ids for its teams in the sport league, by
+   * event id, in one read (#2012): what a date window places by. An event with no field is left out.
+   */
+  findFieldFeedIds(providerId: string, sportLeagueId: string, sportEventIds: readonly string[]): Promise<Map<string, ReadonlySet<string>>>;
   /** Ordered by start date, then name. */
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
   /**
@@ -882,6 +887,8 @@ export interface NameMatchedSlotsRecord {
 export interface SyncedSlotsRecord {
   eventSlots: ReadonlyArray<{ sportEventId: string; sportLeagueSeasonId: string; seasonSlotId: string }>;
   slotDates: ReadonlyArray<{ seasonSlotId: string; startsAt: Date; endsAt: Date }>;
+  /** Season slots whose TENTATIVE window the feed has now placed a game in: they become CONFIRMED (#2012). */
+  confirmedWindows: readonly string[];
 }
 
 /** What adding a test slot did: the slot, or why there is none. */

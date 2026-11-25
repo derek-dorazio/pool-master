@@ -263,7 +263,7 @@ describe('sport league handlers', () => {
       readStructure: (sportLeagueId) => known(sportLeagueId, []),
       readSeasons: (sportLeagueId) => known(sportLeagueId, [{
         id: 'season-2026', sportLeagueId: 'sl1', name: '2026', championshipYear: 2026, startsAt: AT, endsAt: new Date('2026-12-31T23:59:59.999Z'),
-        isCurrent: true, providerMappings: [], phases: [],
+        isCurrent: true, readBySync: true, providerMappings: [], phases: [],
       }]),
       readEventFacts: (sportLeagueId) => known(sportLeagueId, {
         league: pageLeague,
@@ -351,7 +351,7 @@ describe('sport league handlers', () => {
     expect(seasons.body).toEqual({
       seasons: [{
         id: 'season-2026', name: '2026', championshipYear: 2026, startsAt: AT.toISOString(), endsAt: '2026-12-31T23:59:59.999Z',
-        isCurrent: true, providerMappings: [], phases: [],
+        isCurrent: true, providerMappings: [], phases: [], slotsNeedingDates: 0,
       }],
     });
     for (const missing of [missingStructure, missingSeasons]) {

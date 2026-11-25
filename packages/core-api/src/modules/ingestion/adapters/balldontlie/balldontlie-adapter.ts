@@ -12,10 +12,9 @@
  * (`nfl-2026-week-12`) is read as one.
  *
  * College Football Playoff (#1496, `ncaaf-reader.ts`): each season's playoff as an event
- * (`ncaaf-2025-cfp`), the teams playing in its window, and the window's games' scores in the GAME
- * category. The vendor marks no college game as a playoff game, so the playoff's games are the
- * season's from the day after conference championship Saturday through January 31
- * (`CFP_LEAGUE` in `ncaaf-mapping.ts`). Football's events and teams are the NFL's and college
+ * (`ncaaf-2025-cfp`) carrying the season's games, and the scores of the games around now in the
+ * GAME category. The vendor marks no college game as a playoff game, so the events sync places
+ * the games by the Season slots' date windows (#2012), and the field is the seeds placed on it. Football's events and teams are the NFL's and college
  * football's, each league read on its own (#1797).
  *
  * NCAA basketball, men's and women's (#1496, `ncaa-tournament-reader.ts`): each season's

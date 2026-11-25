@@ -4,7 +4,7 @@
  * Seasons are added by migration, so nothing here creates one; a labelled test slot is added here
  * (#2004).
  */
-import { Prisma, PrismaSlotProviderMatchType, type PrismaClient } from '@prisma/client';
+import { Prisma, PrismaSlotProviderMatchType, PrismaSlotWindowStatus, type PrismaClient } from '@prisma/client';
 import type {
   NameMatchedSlotsRecord,
   SeasonSlotWithEvent,
@@ -124,13 +124,17 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         sportLeaguePhaseSlotId: true,
         startsAt: true,
         endsAt: true,
+        windowStartsAt: true,
+        windowEndsAt: true,
+        windowStatus: true,
         eventSlot: { select: { sportEventId: true } },
         providerLinks: { where: { sportLeagueProviderMappingId }, select: { providerValue: true } },
         definition: {
           select: {
+            key: true,
             providerMappings: {
-              where: { sportLeagueProviderMappingId, matchType: PrismaSlotProviderMatchType.PROVIDER_CODE },
-              select: { providerValue: true },
+              where: { sportLeagueProviderMappingId, matchType: { in: [PrismaSlotProviderMatchType.PROVIDER_CODE, PrismaSlotProviderMatchType.DATE_WINDOW] } },
+              select: { matchType: true, providerValue: true },
             },
             _count: { select: { templateSlots: { where: { template: { active: true } } } } },
           },
@@ -138,18 +142,28 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       },
       orderBy: { id: 'asc' },
     });
-    return rows.map((row) => ({
-      seasonSlotId: row.id,
-      slotDefinitionId: row.sportLeaguePhaseSlotId,
-      // A slot has one PROVIDER_CODE row per provider mapping (the mappings' partial unique key).
-      providerCode: row.definition.providerMappings.at(0)?.providerValue ?? null,
-      // A Season slot has one link per provider mapping (the links' unique key).
-      linkedCode: row.providerLinks.at(0)?.providerValue ?? null,
-      coveredByTemplate: row.definition._count.templateSlots > 0,
-      sportEventId: row.eventSlot?.sportEventId ?? null,
-      startsAt: row.startsAt,
-      endsAt: row.endsAt,
-    }));
+    return rows.map((row) => {
+      const mappings = row.definition.providerMappings;
+      const byWindow = mappings.some((mapping) => mapping.matchType === PrismaSlotProviderMatchType.DATE_WINDOW);
+      return {
+        seasonSlotId: row.id,
+        slotDefinitionId: row.sportLeaguePhaseSlotId,
+        key: row.definition.key,
+        // A slot has one PROVIDER_CODE row per provider mapping (the mappings' partial unique key).
+        providerCode: mappings.find((mapping) => mapping.matchType === PrismaSlotProviderMatchType.PROVIDER_CODE)?.providerValue ?? null,
+        // A Season slot has one link per provider mapping (the links' unique key).
+        linkedCode: row.providerLinks.at(0)?.providerValue ?? null,
+        coveredByTemplate: row.definition._count.templateSlots > 0,
+        sportEventId: row.eventSlot?.sportEventId ?? null,
+        startsAt: row.startsAt,
+        endsAt: row.endsAt,
+        placedByWindow: byWindow,
+        // The database check sets the three window columns together.
+        window: byWindow && row.windowStartsAt !== null && row.windowEndsAt !== null && row.windowStatus !== null
+          ? { startsAt: row.windowStartsAt, endsAt: row.windowEndsAt, status: row.windowStatus }
+          : null,
+      };
+    });
   }
 
   async findSlotNamePatterns(sportLeagueProviderMappingId: string): Promise<SlotNamePattern[]> {
@@ -211,7 +225,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
   }
 
   async recordSyncedSlots(input: SyncedSlotsRecord): Promise<void> {
-    if (input.eventSlots.length === 0 && input.slotDates.length === 0) return;
+    if (input.eventSlots.length === 0 && input.slotDates.length === 0 && input.confirmedWindows.length === 0) return;
     await this.prisma.$transaction([
       // A slot that already has an event keeps it: the unique key on the Season slot skips it.
       ...(input.eventSlots.length === 0 ? [] : [this.prisma.sportEventSlot.createMany({
@@ -228,6 +242,10 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         data: { startsAt: change.startsAt, endsAt: change.endsAt },
         select: { id: true },
       })),
+      ...(input.confirmedWindows.length === 0 ? [] : [this.prisma.sportLeagueSeasonPhaseSlot.updateMany({
+        where: { id: { in: [...input.confirmedWindows] }, windowStatus: PrismaSlotWindowStatus.TENTATIVE },
+        data: { windowStatus: PrismaSlotWindowStatus.CONFIRMED },
+      })]),
     ]);
   }
 }

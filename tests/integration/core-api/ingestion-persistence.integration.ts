@@ -12,7 +12,7 @@ import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
-import { linkedProviderEvent, providerEventWhere } from '../../support/event-edition';
+import { keyedSlotDefinitionId, linkedProviderEvent, providerEventWhere, putEventInSlot } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 
 const rankedEventIds = [
@@ -33,6 +33,7 @@ const rankedEventIds = [
   'integration-follow-up-sync',
   'integration-follow-up-fail',
   'integration-follow-up-finished',
+  'integration-window-placed-field',
 ];
 
 /** The feed id a participant is mapped to, as the sync maps one participant to one feed id. */
@@ -308,6 +309,31 @@ describe('IngestionPersistence', () => {
       participants,
     };
   }
+
+  // #1715: a slot placed by date window holds every game in its dates, the bowls between other
+  // schools too, so the feed's teams are not the event's field: the seeds placed on it are.
+  it('adds no team from the feed to the field of an event playing a date-window slot, and still refreshes the teams already on it', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
+    const externalId = 'integration-window-placed-field';
+    const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: 'Windowed playoff', startDate: new Date('2026-12-30T12:00:00.000Z') });
+    await persistence.persistEventDetailWithDiagnostics(rankedFieldDetail(externalId, [rankedGolfer('ingestion-window-seed', 4)]));
+    const { sportLeagueProviderMappingId } = await prisma.sportEventProviderMapping.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueProviderMappingId: true } });
+    const definitionId = await keyedSlotDefinitionId(prisma, event.sportLeagueId, 'WINDOWED_ROUND', { phase: 'POSTSEASON', slotKind: 'SEMIFINAL' });
+    await prisma.sportLeaguePhaseSlotProviderMapping.createMany({
+      data: [{ sportLeagueId: event.sportLeagueId, sportLeaguePhaseSlotId: definitionId, sportLeagueProviderMappingId, matchType: 'DATE_WINDOW', providerValue: null }],
+      skipDuplicates: true,
+    });
+    await putEventInSlot(prisma, event.id, definitionId);
+
+    await persistence.persistEventDetailWithDiagnostics(rankedFieldDetail(externalId, [
+      rankedGolfer('ingestion-window-seed', 2),
+      rankedGolfer('ingestion-window-bowl-team', 9),
+    ]));
+
+    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } });
+    expect(rows.map((row) => [feedIdOf(row.participant), row.ranking])).toEqual([['ingestion-window-seed', 2]]);
+  });
 
   it('keeps a golfer\'s existing ranking when a later field refresh gives no ranking', async () => {
     const prisma = getPrisma();

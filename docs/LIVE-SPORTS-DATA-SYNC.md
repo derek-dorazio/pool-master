@@ -216,6 +216,29 @@ A name that matches more than one definition, or a slot another tournament alrea
 the Season has no phase for gets no slot and raises one `SLOT_SEASON_PHASE_MISSING` ERROR finding,
 so a Season added without its open phase is never skipped in silence.
 
+**Matching by date window (#2012).** A feed that names no place for its games (BALLDONTLIE's
+college football has no round, bowl name or postseason flag) sends each game as a play with a null
+code. Such a game goes to the Season slot whose definition has a `DATE_WINDOW` mapping row and
+whose window (`window_starts_at` inclusive to `window_ends_at` exclusive on the Season slot, kept
+apart from the dates its games give) holds its start; a Season's windows do not overlap. The
+windows are data, loaded by migration each Season. A window is `TENTATIVE` (a best guess while the
+shape is known and the games are not) or `CONFIRMED`. The adapter sends each game's two teams'
+feed ids with it, and only a game between two teams on the event's field (the seeds the admin
+places) is the slot's own: those games give the slot its dates, and the first one in a tentative
+window confirms it. Any game in a window still places the event on its slot, so the event exists
+for its seeds to be placed, but a window holding only other games (a bowl between two unseeded
+schools on the first round's days, or anything before the seeds are placed) takes no dates and
+confirms nothing. Games no window holds are not synced and raise one `GAMES_UNPLACED` INFO finding
+per league and Season, counting only games inside the Season's span, so a waiver covers one
+Season's known bowls and never a later Season's gap (inclusion only: the other bowls share the
+playoff's days). A Season the sync reads with a date-window slot that has no window, or a tentative one,
+raises one `SLOT_DATES_NEEDED` WARNING naming the slots, which resolves once every window is
+confirmed; the Structure tab flags those slots (`needsDates`). An event's field is the seeds placed
+on it: an event playing a date-window slot takes no new team from its feed, and the feed only
+refreshes the rows already there (#1715). Any game placed outside its Season's span raises one
+`SLOT_OUTSIDE_SEASON` WARNING per place and is still written. An event starts at its slots' first
+game, so a season-long slate whose windowed games lie ahead is still created.
+
 For each provider event:
 
 - **New, start in the future, on a slot a contest template lists**: created as a `DRAFT`
@@ -413,7 +436,9 @@ column. Each finding names its sport league; its event, Provider row and the fee
   since a mapping is added by migration), `SLOT_NAME_UNMATCHED` (INFO, a tournament name no
   pattern matches; its action is Link to existing) and `SLOT_NAME_AMBIGUOUS` (ERROR, a name that
   matches more than one slot) and `SLOT_SEASON_PHASE_MISSING` (ERROR, a matched slot whose phase the
-  Season lacks), all three *Tournaments matched by name* above. Three are checked on an event by each sync that
+  Season lacks), all three *Tournaments matched by name* above, and `SLOT_OUTSIDE_SEASON` (WARNING),
+  `GAMES_UNPLACED` (INFO) and `SLOT_DATES_NEEDED` (WARNING, resolved once the Season's windows are
+  confirmed), all three *Matching by date window* above. Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
@@ -491,10 +516,12 @@ link to the `SportEvent` it synced.
 
 League notes that are not obvious from the code:
 
-- **CFP date rule.** College games carry no playoff marker, so the playoff is every game from
-  noon UTC the day after conference championship Saturday through January 31
-  (`CFP_LEAGUE.window`). The window starts after title games because one can pair two playoff
-  teams and would score the wrong match. Swap it for a vendor marker if the paid tier has one.
+- **CFP by date window.** College games carry no playoff marker, so the reader sends each
+  season's games (`seasons[]`) as plays with no code, and the CFP's four rounds are placed by
+  their Season slots' date windows (*Matching by date window* above). Live scores read
+  yesterday, today and tomorrow (`dates[]`). A conference title game can pair two playoff teams,
+  so no window covers title weekend. If the feed ever gains a playoff marker, it wins: map the
+  rounds by `PROVIDER_CODE` instead.
 - **Series playoffs** hand every postseason game over each sync, because the writer counts
   wins from the batch. Readers keep games by the vendor's `postseason` flag for the asked
   season, so every normalizer must read it.
@@ -550,9 +577,13 @@ every league, and the PR must say so.
   MLB's `quietAfterMinutes` is 210 in case innings are not notified. Confirm during the paid trial
   (#1500).
 - **CFP feed**: confirm bowl and playoff games are carried and whether a marker exists (#1500).
-- **College football creates no new events yet** (#2005): it sends no codes until slots match by
-  date window (slice 13). Events already linked keep syncing. Golf tournaments match by name
-  (#2011).
+- **CFP windows each Season**: a migration adds the next Season's round windows once the schedule
+  is published (2026 and 2027 are loaded; 2027's first round and final are not set yet). The admin
+  dialog to set them is a follow-up to #1924. Golf tournaments match by name (#2011).
+- **CFP read cost**: the events and field syncs each page the whole college season by
+  `seasons[]`, thousands of games, since the vendor marks no playoff game; the field sync reads it
+  only to refresh rows already on the field. Fine on the paid key; on the free key (5 requests a
+  minute) one sync spends several minutes of the shared budget. Revisit with the paid trial (#1500).
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
 - **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
 - **Per-event tier override** from the event ⚙ dialog is in progress.
