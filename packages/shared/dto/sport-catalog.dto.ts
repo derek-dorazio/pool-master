@@ -130,19 +130,6 @@ export const SportLeagueResponseSchema = z.object({
 }).describe('One sport league.');
 export type SportLeagueResponse = z.infer<typeof SportLeagueResponseSchema>;
 
-export const CreateSportLeagueRequestSchema = z.object({
-  sport: z.enum(Sport).describe('The sport the new sport league belongs to.'),
-  name: z.string().min(1).describe('Unique within the sport.'),
-  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).max(100).describe('The sport league\'s name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are.'),
-  participantType: z.enum(ParticipantType).describe('Who competes in its events: teams or individuals. Fixed once set.'),
-  scoringFamily: z.enum(ScoringFamily).describe('How its events are scored. Fixed once set.'),
-  bracketAdvancement: z.enum(BracketAdvancement).optional().describe('FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.'),
-  platformTierProfileId: z.uuid().describe('The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.'),
-  platformPricingProfileId: z.uuid().describe('The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.'),
-  timeZone: z.string().min(1).max(64).describe('The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know.'),
-}).describe('A new sport league. It has no Season until a migration adds one.');
-export type CreateSportLeagueRequest = z.infer<typeof CreateSportLeagueRequestSchema>;
-
 export const UpdateSportLeagueRequestSchema = z.object({
   name: z.string().min(1).optional(),
   isActive: z.boolean().optional(),
@@ -517,7 +504,6 @@ registerSchema('SportLeagueDto', SportLeagueDtoSchema);
 registerSchema('SportLeagueListQuery', SportLeagueListQuerySchema);
 registerSchema('SportLeagueListResponse', SportLeagueListResponseSchema);
 registerSchema('SportLeagueResponse', SportLeagueResponseSchema);
-registerSchema('CreateSportLeagueRequest', CreateSportLeagueRequestSchema);
 registerSchema('UpdateSportLeagueRequest', UpdateSportLeagueRequestSchema);
 registerSchema('SportLeagueOverviewDto', SportLeagueOverviewDtoSchema);
 registerSchema('SportLeagueOverviewListResponse', SportLeagueOverviewListResponseSchema);

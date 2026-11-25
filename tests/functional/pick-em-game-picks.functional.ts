@@ -8,7 +8,6 @@ import {
   clearGamePick,
   createContest,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getGamePicks,
@@ -31,7 +30,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -42,7 +41,7 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A confidence pick'em week end to end over HTTP (#716). An admin builds a four-team basketball
 // event and releases it; its final, whose teams are still to be decided, is called off, so the
@@ -110,8 +109,8 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     // --- An event of two first-round games and a final, released ----------------------------
     const firstKickoff = new Date(Date.now() + 2 * DAY);
     const secondKickoff = new Date(firstKickoff.getTime() + DAY);
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Pickem Conference ${RUN}` } });
-    const sportLeagueId = expectDefined(conference.data).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Pickem Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
     const tournament = await createTestEvent({
       client: a,

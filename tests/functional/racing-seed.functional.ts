@@ -64,7 +64,7 @@ describe('SDK Functional: racing test seed', () => {
     const a = admin.client;
     const file = taggedSeed();
 
-    created.sportLeagueIds.add(await addRunSportLeague(a, Sport.HORSE_RACING, file.sportLeagues[0].name));
+    created.sportLeagueIds.add(await addRunSportLeague(Sport.HORSE_RACING, file.sportLeagues[0].name));
     // Dated from today: release refuses a race that has started.
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
 

@@ -95,7 +95,7 @@ describe('SDK Functional: test participants', () => {
     const file = taggedSeed();
     const players = testPlayers();
     const getClient = () => Promise.resolve(a);
-    created.sportLeagueIds.add(await addRunSportLeague(a, Sport.HORSE_RACING, file.sportLeagues[0].name));
+    created.sportLeagueIds.add(await addRunSportLeague(Sport.HORSE_RACING, file.sportLeagues[0].name));
     await loadSportData(file, { getClient, now: new Date(), mode: LoadMode.APPLY });
     const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.HORSE_RACING } })).data).sportLeagues
       .find((league) => league.name === file.sportLeagues[0].name));

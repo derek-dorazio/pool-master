@@ -1,6 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
-  CreateSportLeagueRequest,
   CreateTestSlotRequest,
   SportLeagueListQuery,
   SportLeagueListResponse,
@@ -44,7 +43,7 @@ type SportLeagueParams = { Params: { sportLeagueId: string } };
  * Service errors carry their own code and status; the global error handler sends them. `lists`
  * keeps the public list by its filters (#1181); the routes clear it on every write.
  */
-export function createSportLeagueHandlers(
+export function buildSportLeagueHandlers(
   sportLeagues: SportLeagueService,
   lists: ReadCache<SportLeagueListResponse>,
   overviews: SportLeagueOverviewService,
@@ -107,12 +106,6 @@ export function createSportLeagueHandlers(
         return sendError(reply, 404, 'SPORT_LEAGUE_NOT_FOUND', `Sport league ${request.params.sportLeagueId} was not found.`);
       }
       return { sportLeague: mapSportLeagueToDto(sportLeague) } satisfies SportLeagueResponse;
-    },
-
-    createSportLeague: async (request: FastifyRequest<{ Body: CreateSportLeagueRequest }>, reply: FastifyReply) => {
-      const { sport, ...input } = request.body;
-      const sportLeague = await sportLeagues.createSportLeague(sport, input);
-      return reply.status(201).send({ sportLeague: mapSportLeagueToDto(sportLeague) } satisfies SportLeagueResponse);
     },
 
     createTestSlot: async (request: FastifyRequest<SportLeagueParams & { Body: CreateTestSlotRequest }>, reply: FastifyReply) => {

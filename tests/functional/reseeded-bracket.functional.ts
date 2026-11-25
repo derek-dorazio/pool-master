@@ -5,7 +5,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createParticipant,
-  createSportLeague,
   getEventBracket,
   listEventParticipants,
   loadEventBracket,
@@ -18,7 +17,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStandingStatus, Sport } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema, SportEventRoundMatchupsResponseSchema } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -29,7 +28,7 @@ import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A reseeded bracket end to end over HTTP (#722), shaped like one NFL conference: seven seeds, the
 // 1 seed on a bye, Wild Card games that link nowhere, a Divisional round the admin places by seed,
@@ -85,9 +84,8 @@ describe('SDK Functional: Reseeded bracket', () => {
     const a = admin.client;
 
     // --- A league that reseeds, and its playoff -------------------------------------------------
-    const league = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } });
-    expect(league.data?.sportLeague.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
-    const sportLeagueId = expectDefined(league.data).sportLeague.id;
+    const league = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    const sportLeagueId = league.id;
     created.sportLeagueIds.add(sportLeagueId);
     const playoff = await createTestEvent({
       client: a,

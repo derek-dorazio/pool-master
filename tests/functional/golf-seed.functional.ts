@@ -109,7 +109,7 @@ async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ i
 }
 
 async function addSportLeague(name: string, sport: Sport = Sport.GOLF): Promise<void> {
-  await addRunSportLeague(admin.client, sport, name);
+  await addRunSportLeague(sport, name);
 }
 
 async function eventsOf(sportLeagueId: string, championshipYear: number) {
@@ -416,7 +416,7 @@ describe('Filling an event from a test slate through the admin API', () => {
 
   beforeAll(async () => {
     // The loader writes into the league's current Season, so the schedule's 2027 one is made current.
-    await inCurrentSeason(await addRunSportLeague(admin.client, Sport.GOLF, tour), 2027);
+    await inCurrentSeason(await addRunSportLeague(Sport.GOLF, tour), 2027);
     // A test seed held back as a draft puts the event on the site with a field of golfers 1 to 3.
     const schedule: SportDataFile = {
       schemaVersion: 1,

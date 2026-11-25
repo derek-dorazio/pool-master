@@ -43,7 +43,6 @@ import {
   SportLeagueEventOverviewListResponseSchema,
   SportLeagueParticipantOverviewListResponseSchema,
   SportLeagueStructureResponseSchema,
-  SportLeagueResponseSchema,
   SportListResponseSchema,
 } from '@poolmaster/shared/dto';
 import type {
@@ -64,7 +63,6 @@ import type {
   SportEventRoundListResponse,
   SportEventTierListResponse,
   SportLeagueListResponse,
-  SportLeagueResponse,
   SuccessResponse,
   UserResetPasswordResponse,
   UserResponse,
@@ -121,6 +119,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
+import { insertTestSportLeague } from '../../support/test-sport-league';
 
 // The shared package exports the participant response schema but not its inferred type.
 type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
@@ -1212,16 +1211,15 @@ describe('Contract verification (root admin)', () => {
     };
 
     try {
-      // --- createSportLeague (201: { sportLeague }) ----------------------------
-      const leagueRes = await getApp().inject({
+      // --- POST /sport-leagues (404) — removed (#2075): a sport league comes only from a migration ---
+      const removedCreateRes = await getApp().inject({
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
+        payload: { ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
       });
-      expect(leagueRes.statusCode).toBe(201);
-      expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
-      const leagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
+      expect(removedCreateRes.statusCode).toBe(404);
+      const leagueId = (await insertTestSportLeague(getPrisma(), { sport: Sport.GOLF, name: `Z3L Contract Tour ${stamp}`, championshipYear: 2081 })).id;
       created.sportLeagueId = leagueId;
       // A migration adds a league's Seasons and the daily recompute makes one current; the test's own league stands in.
       const currentSeasonId = await withCurrentSeason(getPrisma(), leagueId, 2081);

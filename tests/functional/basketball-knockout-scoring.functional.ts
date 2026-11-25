@@ -7,7 +7,6 @@ import {
   autoAssignEventTiers,
   createContest,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -34,7 +33,7 @@ import {
   SelectionStateResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -45,7 +44,7 @@ import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // Knockout scoring end to end over HTTP (#699): an admin releases a four-team, two-round bracket, a
 // commissioner runs a contest scored by knockout round points (1 for a first-round win, 2 for the
@@ -113,8 +112,8 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const a = admin.client;
 
     // --- A released two-round tournament ------------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
-    const sportLeagueId = expectDefined(conference.data).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
     const tournament = await createTestEvent({
       client: a,

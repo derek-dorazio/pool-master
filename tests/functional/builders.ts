@@ -1,10 +1,8 @@
-import { createEvent, createLeague, createSportLeague, createTestSlot, listEvents, updateEvent, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createEvent, createLeague, createTestSlot, listEvents, updateEvent, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import { SPORT_PLATFORM_TIER_PROFILE_CODE, STANDARD_PLATFORM_PRICING_PROFILE_CODE } from '../support/league-profiles';
 import { fixtureSeasonId, withCurrentSeason } from '../support/event-edition';
 import { testSlotDefinitionId, uniqueTestSlotLabel } from '../support/test-slots';
-import { sportPlay } from '../support/sport-play';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
@@ -12,6 +10,7 @@ import {
   getFunctionalPrisma,
   getSdkClient,
 } from './setup';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 function describeSdkFailure(result: {
   response?: Response | undefined;
@@ -275,36 +274,17 @@ export async function attachContestEvent(contestId: string, sportEventId: string
 }
 
 /**
- * What a functional test's new sport league needs beside its sport and name: the profile ids it
- * names (#1844), read through the API as an admin would (its sport's tier layout,
- * `SPORT_PLATFORM_TIER_PROFILE_CODE`, and Standard pricing), and a URL segment no other test's
- * league of the sport has (#2042).
- */
-export async function sportLeagueCreateBody(client: Client, sport: Sport): Promise<{ platformTierProfileId: string; platformPricingProfileId: string; urlSegment: string }> {
-  const [tiers, prices] = await Promise.all([listPlatformTierProfiles({ client }), listPlatformPricingProfiles({ client })]);
-  const platformTierProfile = tiers.data?.platformTierProfiles.find((profile) => profile.code === SPORT_PLATFORM_TIER_PROFILE_CODE[sport]);
-  const platformPricingProfile = prices.data?.platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE);
-  if (!platformTierProfile || !platformPricingProfile) {
-    throw new Error(`The ${SPORT_PLATFORM_TIER_PROFILE_CODE[sport]} tier profile or the Standard pricing profile is missing.`);
-  }
-  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id, urlSegment: `test-${randomUUID()}` };
-}
-
-/**
  * A run's own sport league, standing in for one a migration adds: a test data file loads into a
  * league the site has and never creates one, so a suite that loads a file under a tagged league
  * name adds that league first, playing as its sport's leagues do. Returns its id.
  */
-export async function addRunSportLeague(client: Client, sport: Sport, name: string): Promise<string> {
-  const created = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, sport)), ...sportPlay(sport), timeZone: 'UTC', sport, name } });
-  if (!created.data) {
-    throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
-  }
+export async function addRunSportLeague(sport: Sport, name: string): Promise<string> {
   // A migration adds a league with its Seasons and slot definitions; this year's Season stands in
   // for them, made current, with one definition (TEST_EVENT) a test slot can play.
-  const seasonId = await withCurrentSeason(getFunctionalPrisma(), created.data.sportLeague.id);
-  await testSlotDefinitionId(getFunctionalPrisma(), created.data.sportLeague.id, seasonId);
-  return created.data.sportLeague.id;
+  const { id } = await insertTestSportLeague(getFunctionalPrisma(), { sport, name });
+  const seasonId = await withCurrentSeason(getFunctionalPrisma(), id);
+  await testSlotDefinitionId(getFunctionalPrisma(), id, seasonId);
+  return id;
 }
 
 /**

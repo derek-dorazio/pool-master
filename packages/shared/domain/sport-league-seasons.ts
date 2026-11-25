@@ -154,9 +154,6 @@ export function orderSportLeagueSeasons(seasons: readonly SportLeagueSeasonDetai
     }));
 }
 
-/** A Season's own facts, as a write gives them. */
-export type SportLeagueSeasonSpan = Pick<SportLeagueSeason, 'name' | 'championshipYear' | 'startsAt' | 'endsAt'>;
-
 /**
  * Whether an event is a test event (#2004, plan §2): it covers a test slot. A league is synced or
  * off, so every other event is one its sync keeps, and the provider wins over an edit to it.

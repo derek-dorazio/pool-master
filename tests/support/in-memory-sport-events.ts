@@ -324,14 +324,7 @@ export class InMemorySportEvents {
         (filters.sportId === undefined || row.sportId === filters.sportId)
         && (filters.isActive === undefined || row.isActive === filters.isActive)
       )),
-      findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
-      findBySportAndUrlSegment: async (sportId, urlSegment) => this.sportLeagues.find((row) => row.sportId === sportId && row.urlSegment === urlSegment) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
-      create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
-        this.sportLeagues.push(created);
-        return created;
-      },
       update: async (id, { syncProviderLeagueId, ...updates }) => {
         const row = this.sportLeagues.find((candidate) => candidate.id === id) as SportLeague;
         Object.assign(row, Object.fromEntries(Object.entries<unknown>(updates).filter(([, value]) => value !== undefined)));

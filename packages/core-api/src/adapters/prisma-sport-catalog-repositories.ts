@@ -63,7 +63,6 @@ import type {
   SportLeague,
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
-  SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
 import { compareCoveredSlots, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
@@ -159,17 +158,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return rows.map(toSportLeague);
   }
 
-  async findBySportAndName(sportId: string, name: string): Promise<SportLeague | null> {
-    // poolmaster-allow-name-match: the duplicate-name check on create; a league name is unique per sport
-    const row = await this.prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
-    return row ? toSportLeague(row) : null;
-  }
-
-  async findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null> {
-    const row = await this.prisma.sportLeague.findUnique({ where: { sportId_urlSegment: { sportId, urlSegment } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
-    return row ? toSportLeague(row) : null;
-  }
-
   async findEventSynced(): Promise<SportLeague[]> {
     const rows = await this.prisma.sportLeague.findMany({
       where: EVENT_SYNCED_LEAGUE,
@@ -177,36 +165,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       orderBy: { name: 'asc' },
     });
     return rows.map(toSportLeague);
-  }
-
-  async create(
-    input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
-    firstSeason: SportLeagueSeasonSpan,
-  ): Promise<SportLeague> {
-    // The current Season's composite key needs the league and its Season first: two writes.
-    return toSportLeague(await this.prisma.$transaction(async (tx) => {
-      const created = await tx.sportLeague.create({
-        data: {
-          sportId: input.sportId,
-          name: input.name,
-          urlSegment: input.urlSegment,
-          participantType: input.participantType,
-          scoringFamily: input.scoringFamily,
-          timeZone: input.timeZone,
-          bracketAdvancement: input.bracketAdvancement,
-          platformTierProfileId: input.platformTierProfileId,
-          platformPricingProfileId: input.platformPricingProfileId,
-          seasons: { create: firstSeason },
-        },
-        select: { id: true, seasons: { select: { id: true } } },
-      });
-      return tx.sportLeague.update({
-        where: { id: created.id },
-        // poolmaster-allow-position: the one Season this nested create writes
-        data: { currentSeasonId: created.seasons[0]?.id },
-        include: SELECTED_PROVIDER_MAPPING_INCLUDE,
-      });
-    }));
   }
 
   async update(id: string, updates: SportLeagueUpdate): Promise<SportLeague> {

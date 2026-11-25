@@ -28,7 +28,7 @@ import type { PlanEntitlements } from '../../../packages/core-api/src/modules/pl
 import type { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import { SportLeagueOverviewService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-overview';
 import { SportLeaguePageService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-page';
-import { createSportLeagueHandlers } from '../../../packages/core-api/src/modules/sport-leagues/handler';
+import { buildSportLeagueHandlers } from '../../../packages/core-api/src/modules/sport-leagues/handler';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
 
 const boom = new Error('database down');
@@ -226,7 +226,6 @@ describe('sport league handlers', () => {
   const service = {
     listSportLeagues: jest.fn((..._args: unknown[]) => Promise.resolve([sportLeague])),
     getSportLeague: jest.fn((id: string) => Promise.resolve(id === 'sl1' ? sportLeague : null)),
-    createSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve(sportLeague)),
     updateSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve(sportLeague)),
     deleteSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve()),
     listParticipants: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
@@ -283,7 +282,7 @@ describe('sport league handlers', () => {
     webhookProviderIds: () => [],
     now: () => AT,
   });
-  const handlers = createSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews, page);
+  const handlers = buildSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews, page);
   const params = { sportLeagueId: 'sl1' };
 
   it('answers the root admin\'s overview with every sport league mapped to its row', async () => {
@@ -314,13 +313,10 @@ describe('sport league handlers', () => {
     expect(missing).toMatchObject({ statusCode: 404, body: { error: { code: 'SPORT_LEAGUE_NOT_FOUND' } } });
   });
 
-  it('creates a sport league for the sport the body names with 201, and updates and deletes one', async () => {
-    const created = await callHandler(handlers.createSportLeague, stubRequest({ body: { sport: Sport.GOLF, name: 'PGA Tour' } }));
+  it('updates a sport league and deletes one with 204', async () => {
     const updated = await callHandler(handlers.updateSportLeague, stubRequest({ params, body: { name: 'PGA' } }));
     const deleted = await callHandler(handlers.deleteSportLeague, stubRequest({ params }));
 
-    expect(service.createSportLeague).toHaveBeenCalledWith(Sport.GOLF, { name: 'PGA Tour' });
-    expect(created).toMatchObject({ statusCode: 201, body: { sportLeague: { id: 'sl1' } } });
     expect(updated.body).toMatchObject({ sportLeague: { id: 'sl1' } });
     expect(deleted.statusCode).toBe(204);
   });

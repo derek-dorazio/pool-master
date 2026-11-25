@@ -5,7 +5,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createParticipant,
-  createSportLeague,
   getEventBracket,
   listEventParticipants,
   loadEventBracket,
@@ -22,7 +21,7 @@ import {
   SportEventRoundMatchResponseSchema,
   SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -33,7 +32,7 @@ import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
 // run's own league, with one place standing for a First Four pairing, loads its
@@ -95,9 +94,8 @@ describe('SDK Functional: Basketball bracket', () => {
     const a = admin.client;
 
     // --- A league, a tournament in it, and its field --------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
-    expect(conference.response?.status).toBe(201);
-    const sportLeagueId = expectDefined(conference.data).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
 
     const tournament = await createTestEvent({

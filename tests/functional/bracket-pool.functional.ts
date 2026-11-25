@@ -8,7 +8,6 @@ import {
   clearGamePick,
   createContest,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getBracketLeaderboard,
@@ -48,7 +47,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventRoundMatchupsResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -63,7 +62,7 @@ import { createEventLifecycleService } from '../../packages/core-api/src/modules
 import { PrismaSportEventRepository } from '../../packages/core-api/src/adapters';
 import { NO_SETTLE_JOBS } from '../support/event-settlement';
 import { sportRowKeys } from '../support/sport-rows';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -147,11 +146,7 @@ async function releasedKnockout(options: {
   await promoteToRootAdmin(admin);
   const a = admin.client;
 
-  const sportLeague = await createSportLeague({
-    client: a,
-    body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
-  });
-  const sportLeagueId = expectDefined(sportLeague.data, JSON.stringify(sportLeague.error)).sportLeague.id;
+  const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, bracketAdvancement: options.bracketAdvancement });
   created.sportLeagueIds.add(sportLeagueId);
   const event = await createTestEvent({
     client: a,

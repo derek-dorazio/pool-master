@@ -2676,11 +2676,7 @@ export interface paths {
          */
         get: operations["listSportLeagues"];
         put?: never;
-        /**
-         * Create a sport league
-         * @description A new sport league, with who competes in its events and how they are scored (#2001), both fixed once set. The platform's own leagues and their Seasons are added by migration (the add-sport skill, #2003); one made here starts with this calendar year's Season as its current one, a stopgap for the browser journeys until they move to test slots (#2004). 400 TIME_ZONE_UNKNOWN for a time zone the runtime does not know. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.
-         */
-        post: operations["createSportLeague"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -10177,45 +10173,6 @@ export interface components {
                  */
                 updatedAt: string;
             };
-        };
-        /** @description A new sport league. It has no Season until a migration adds one. */
-        CreateSportLeagueRequest: {
-            /**
-             * @description The sport the new sport league belongs to.
-             * @enum {string}
-             */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description Unique within the sport. */
-            name: string;
-            /** @description The sport league's name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are. */
-            urlSegment: string;
-            /**
-             * @description Who competes in its events: teams or individuals. Fixed once set.
-             * @enum {string}
-             */
-            participantType: "INDIVIDUAL" | "TEAM";
-            /**
-             * @description How its events are scored. Fixed once set.
-             * @enum {string}
-             */
-            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-            /**
-             * @description FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
-             * @enum {string}
-             */
-            bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
-            /**
-             * Format: uuid
-             * @description The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.
-             */
-            platformTierProfileId: string;
-            /**
-             * Format: uuid
-             * @description The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.
-             */
-            platformPricingProfileId: string;
-            /** @description The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know. */
-            timeZone: string;
         };
         /** @description Changes to a sport league; omitted fields are left alone. */
         UpdateSportLeagueRequest: {
@@ -35126,75 +35083,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    createSportLeague: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSportLeagueRequest"];
-            };
-        };
-        responses: {
-            /** @description One sport league. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportLeagueResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
                 headers: {
                     [name: string]: unknown;
                 };
