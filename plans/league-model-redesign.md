@@ -823,8 +823,7 @@ Contest:
   event's slots. The events sync loads each Season's whole schedule ahead, so coverage is
   fixed at creation from the Season's slots, with no "slot created" join handler. The
   existing late-join job `ADD_RELEASED_EDITION_TO_CONTEST` (the release-into-template-contests
-  handler, `addReleasedEditionToContest`) is deleted in slice 15, or slice 11 if its templates
-  go first.
+  handler, `addReleasedEditionToContest`) is deleted in slice 11.
   Future rule (Derek 2026-11-24): if a field contest ever spans several events, it takes
   one set of picks made once ("Scottie Scheffler for the next three tournaments"), never a
   pick window per event. Not built now.
@@ -874,7 +873,7 @@ Contest:
     differ. `Cup` keeps `sportLeagueId` with composite FKs to its Season and definition; the
     definition gets a stable `key`. Cup routes and the squad cup-points route take a cup id,
     since one sport league can have several cups in a Season.
-  - Cup is re-keyed once, in 20c; slice 15 only adds `sportLeagueSeasonId`. The 20c
+  - Cup is re-keyed once, in 20f; slice 15 only adds `sportLeagueSeasonId`. The 20f
     migration deletes cups that match no definition (an NFL pick'em cup) and finishes from
     squares; the 20b migration refills or deletes old finish and year-review rows.
   - The cup counting rule has a model home: `ContestConfigTemplate.countsInCups`, seeded by
@@ -992,8 +991,8 @@ and Actions; later slices add actions by kind. Sync kinds come from `ProviderSyn
   the year import and manual linking; the run-sync page's pickers go and "Sync now" queues
   the job; the hand-made event form becomes "pick a test slot of the current Season". The
   Event page gets a *Slots* tab whose rows open a `DetailEditModal`; later slices add their
-  actions there. Venue moves to the Game; `participantCount` is an API field over team rows;
-  event dates derive from its slots; `metadata` is dropped or typed.
+  actions there. Venue moves to the Game and `participantCount` becomes an API field over team rows, both in
+  10f; event dates derive from its slots; `metadata` is dropped or typed.
 - 7b (new): team tiers, valuations and the `tierConfig`/`pricingConfig` JSON re-keyed to the
   event slot. A slot's tier set covers field rows not eliminated entering that slot. The
   Field tab gets a slot selector; query keys move to (event, slot).
