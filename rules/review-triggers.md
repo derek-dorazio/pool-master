@@ -411,7 +411,10 @@ Read every added or changed line for these, and report each one found:
    or seed counts; a date window that finds one league's event; a new per-league mapping
    file, or a function copied per league with different literals. Ask: would the next league
    need this file edited? (`workflow-rules.md` §1 *One global solution, never one sport's*
-   rejects the path; this item rejects the data.)
+   rejects the path; this item rejects the data.) `poolmaster/no-clock-year-or-league-tables`
+   lints only a `Record<K, V>` or `new Map<K, V>` whose key type names a league or sport; an
+   object literal keyed by enum values with no annotation (`{ [Sport.GOLF]: 3 }`) and a
+   `switch` pass it, so read for them.
 5. **A second computation of a fact** — the current year or season from today's date (the
    `getFullYear` form is linted, §1; read for the other forms, such as a year sliced from an
    ISO string); a status set spelt inline; a web helper restating a server rule or a value the API could

@@ -160,8 +160,11 @@ retires or moves a fact:
 - **This comes before the plan reviews.** Reviewers get the plan, the tickets and the reader
   lists, and check each list against the code, not the plan against itself. A plan review
   that cites no code has not done this.
-- **Add each retired name to `scripts/retired-names.json`** with its owner ticket, so
-  `rules:check:retired-names` stops new readers appearing while the slices are built.
+- **Register each retired name in `scripts/retired-names.json`** with its owner ticket under
+  `$owners` and today's count, and declare the new entry in `scripts/baseline-raises.json`
+  (reason "retired by #N"), which is the only way `rules:check:baseline-ratchet` lets a new
+  baseline key through. From then on `rules:check:retired-names` stops new readers appearing
+  while the slices are built.
 - **Re-map owners after every split.** When a ticket is split or merged, one pass checks that
   each plan line and each reader hit has exactly one owning ticket. A line that was carried
   "by slices 7 and 8" is carried by neither.

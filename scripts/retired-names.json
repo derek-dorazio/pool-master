@@ -1,5 +1,5 @@
 {
-  "$comment": "Retired names and how many uses production source still has (scripts/check-retired-names.mjs; rules/review-triggers.md §10). Counts only go down: run the check with --update after a cleanup. Add a name by hand, with its owner ticket under $owners, when a plan or code pass retires it.",
+  "$comment": "Retired names and how many uses production source still has (scripts/check-retired-names.mjs; rules/review-triggers.md §10). Counts only go down: run the check with --update after a cleanup. When a plan or code pass retires a name, add it with its owner ticket under $owners and declare the new entry in scripts/baseline-raises.json (reason \"retired by #N\").",
   "$owners": {
     "catalogSlug": "#2042 (3c): SportLeague.urlSegment, read from the DTO",
     "sportSlug": "#2042 (3c): Sport.urlSegment, read from the DTO",

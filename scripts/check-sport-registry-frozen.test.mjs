@@ -26,6 +26,11 @@ describe('check-sport-registry-frozen', () => {
     assert.deepEqual(exportedNames('export const A = 1;\nexport function b() {}\nexport type C = 1;\nconst d = 2;'), ['A', 'b', 'C']);
   });
 
+  it('lists names in a local export list and a default export, but not a re-export from another file', () => {
+    const text = "const a = 1;\nconst b = 2;\nexport { a, b as B };\nexport type { T } from './t';\nexport { c } from './c';\nexport default a;";
+    assert.deepEqual(exportedNames(text), ['a', 'B', 'default']);
+  });
+
   it('names fields from the definition file and exports from every file', () => {
     assert.deepEqual(registryEntries({ 'sport-definition.ts': DEFINITION, 'golf.ts': 'export const GOLF = {};' }), [
       'export:golf.ts:GOLF',

@@ -14,10 +14,11 @@
  * - fewer: a slice removed some uses, so the entry comes down in the same PR. `--update` only
  *   ever lowers entries and drops those that reach 0; it never adds or raises one.
  *
- * A name is added to the file by hand, with its owner, when a plan or a code pass retires it.
- * `rules:check:baseline-ratchet` refuses a raised or new count unless `scripts/baseline-raises.json`
- * declares it. Counts are whole-word matches in production source; tests, generated clients and
- * migrations are not counted.
+ * A name is added to the file, with its owner, when a plan or a code pass retires it, and the new
+ * entry is declared in `scripts/baseline-raises.json` (reason "retired by #N"):
+ * `rules:check:baseline-ratchet` refuses a raised or new count otherwise. Counts are whole-word
+ * matches in production source, tracked or untracked (ignored files excepted); tests, generated
+ * clients and migrations are not counted.
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -76,7 +77,7 @@ export function ratchetBaseline(counts, baseline) {
 
 function main() {
   const repoRoot = new URL('..', import.meta.url).pathname;
-  const listed = spawnSync('git', ['ls-files', ...COUNTED_PATHS], { cwd: repoRoot, encoding: 'utf8' });
+  const listed = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', ...COUNTED_PATHS], { cwd: repoRoot, encoding: 'utf8' });
   if (listed.status !== 0) {
     console.error(listed.stderr);
     process.exit(1);

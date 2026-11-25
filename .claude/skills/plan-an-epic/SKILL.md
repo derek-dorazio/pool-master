@@ -49,8 +49,10 @@ by and Done when. A ticket that says only "see the plan, section N" is not writt
 ## Step 4 — register the retired names
 
 Add each retired name to `scripts/retired-names.json` with its owner ticket under `$owners`
-and its count from step 2 (or a high number, then `node scripts/check-retired-names.mjs
---update` lowers it to today's count). From then on `rules:check:retired-names` stops new
+and its count from step 2, then run `node scripts/check-retired-names.mjs` to confirm the
+count. A new entry is a new baseline key, so declare it in `scripts/baseline-raises.json` as
+`{ file, key, now, reason }` with reason "retired by #N"; the ratchet refuses it otherwise,
+and the reviewer sees the declaration in the diff. From then on `rules:check:retired-names` stops new
 readers appearing while the slices are built. A new field or export in the sport registry is
 never part of a plan: the registry is frozen (`rules/architecture-rules.md` §4 *Sport
 extension*).

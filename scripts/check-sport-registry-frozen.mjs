@@ -5,7 +5,11 @@
  * `packages/shared/domain/sports/` once held every fact that differed between sports. Under the
  * league model those facts are model rows on the sport league, its slot definitions or its
  * Seasons, and the registry is emptied slice by slice. Until it is gone, nothing new goes in:
- * no new `SportDefinition` field and no new export from the folder. This check lists both and
+ * no new `SportDefinition` field and no new export from the folder. Only `SportDefinition`'s own
+ * fields are frozen; the fields of the other registry interfaces (`SportPickEm`,
+ * `SportMatchPeriods`, `SportLeagueDefinition`…) are not listed, so a reviewer reads for those
+ * (rules/review-triggers.md §9). Exports are every `export const|function|type|…`, every name
+ * in a local `export { … }` list and `export default`. This check lists both and
  * compares them with `scripts/sport-registry-frozen.json`:
  *
  * - a field or export the baseline lacks fails: put the fact in the model (a column or row the
@@ -39,9 +43,22 @@ export function definitionFields(text) {
   return fields;
 }
 
-/** The names a registry file exports: `export const|function|type|interface|enum|class X`. */
+/**
+ * The names a registry file exports: `export const|function|type|interface|enum|class X`, each
+ * name (or its `as` alias) in a local `export { … }` list, and `default`. A re-export
+ * (`export { X } from './y'`, `export * from`) is counted in the file that declares it.
+ */
 export function exportedNames(text) {
-  return [...text.matchAll(/^export\s+(?:declare\s+)?(?:async\s+)?(?:const|let|function|type|interface|enum|class)\s+([A-Za-z_$][\w$]*)/gm)].map((match) => match[1]);
+  const declared = [...text.matchAll(/^export\s+(?:declare\s+)?(?:async\s+)?(?:const|let|function|type|interface|enum|class)\s+([A-Za-z_$][\w$]*)/gm)].map((match) => match[1]);
+  const listed = [...text.matchAll(/^export\s+(?:type\s+)?\{([^}]*)\}(?!\s*from\b)/gm)].flatMap((match) =>
+    match[1]
+      .split(',')
+      .map((part) => part.trim().replace(/^type\s+/, ''))
+      .filter(Boolean)
+      .map((part) => part.split(/\s+as\s+/).pop()),
+  );
+  const fallback = /^export\s+default\b/m.test(text) ? ['default'] : [];
+  return [...declared, ...listed, ...fallback];
 }
 
 /** Every frozen entry: `field:<name>` for SportDefinition, `export:<file>:<name>` for the folder. */

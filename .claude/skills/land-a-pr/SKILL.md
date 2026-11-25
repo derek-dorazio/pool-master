@@ -34,6 +34,11 @@ Fetch main and merge it into the PR's branch locally. Then, before anything is p
 - **Migrations**: every migration this branch adds must sort after main's latest, and share no
   timestamp with any other. Rename only the branch's own, unapplied migration, never one main
   has shipped (`npm run rules:check:migration-timestamps`, after fetching main).
+- **Retired names and the frozen registry** (`scripts/retired-names.json`,
+  `scripts/sport-registry-frozen.json`): never hand-merge the counts. Take main's file, then run
+  `node scripts/check-retired-names.mjs --update` and `node scripts/check-sport-registry-frozen.mjs
+  --update` on the merged tree; both only lower or remove entries, so a count still above main's
+  means the branch added a reader (`rules/review-triggers.md` §10).
 - **Code conflicts**: resolve them for both sides' intent. A resolution that changed code is
   new code nobody reviewed: say so to the reviewer before merging.
 
