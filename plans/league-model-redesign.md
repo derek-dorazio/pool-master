@@ -179,7 +179,7 @@ The current model was built one sport at a time and leans on code to look right:
   Season slots, and `championParticipantId`, set from the FINAL Match's winner when it
   completes (null until then, and always null without a FINAL slot, as for BOWLS and
   REGULAR). Season rows hold only values derived from the feed, never feed values. The
-  handlers are slice 14's.
+  handlers are slice 14c's.
 - **SportLeagueSeasonCompetitionSlot** (named SportLeagueSeasonPhaseSlot until 6b): FK to
   its slot definition and its Season competition, plus:
   - `startsAt`, `endsAt` and `status` (SCHEDULED / IN_PROGRESS / COMPLETED);
@@ -1179,8 +1179,8 @@ blockers beyond the slice before it; see §9d for what each slice also carries.
 12. Sync matching by golf name, with the finding actions. (after 8)
 13. Sync matching by date window and calendar week, all of #1924. (after 8)
 6b. Competitions between phase and slots; slot tables renamed; CFP as a competition (#2153). (after 13)
-13b. NCAA football BOWLS and CONFERENCE_CHAMPIONSHIPS competitions; rest-of-phase placement; bowl templates (#2154). (after 6b)
-13c. College conference tournaments as competitions (#2155). (after 6b, 21b, 14)
+13b. NCAA football BOWLS and CONFERENCE_CHAMPIONSHIPS competitions; rest-of-phase placement; bowl templates (#2154). (after 6b, 10: the NCAAF adapter's CFP-only scope event goes, and the sync makes a Match per game)
+13c. College conference tournaments as competitions (#2155). (after 6b, 10, 21b, 14c)
 10. Games, GameProviderMapping, webhook routing, moved and re-issued games. (after 8, 9, 13)
 10e. Match sides, Game side results and period scores; pick'em, bracket and squares readers.
 10f. Field row metadata columns and the period count.
@@ -1192,8 +1192,9 @@ blockers beyond the slice before it; see §9d for what each slice also carries.
 10d. F1 adapter: races on FIELD Matches from BALLDONTLIE's F1 API. (after 10b)
 11. EventSeries removed; event page offers and templates point at slots
     (`ContestConfigTemplateSlot`, `coverageMode`); Create contest interim.
-14. Status bubbling (Game, Match, Slot, Event, and Season competition and phase with the champion) on the handler map, completion per scoring
+14. Status bubbling (Game, Match, Slot, Event) on the handler map, including the first writer of Season slot status, completion per scoring
     family, Game overdue, postponement wait, set and cancel slot. (after #1953)
+14c. Season competition and Season phase status, and the champion (#2158). (after 14, 6b)
 14b. Release by the next unstarted slot; seeds readiness check.
 15. ContestSeasonSlot replaces ContestSportEvent; Season FK on Contest and Cup;
     `templateId` required; web consumers. (after 7b, 10e, 11)
