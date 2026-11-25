@@ -398,6 +398,20 @@ export type PasswordResetRequest = {
 };
 
 /**
+ * The answer to a password reset request, the same whether or not an account matched.
+ */
+export type PasswordResetRequestedResponse = {
+    /**
+     * The request was taken. It reads the same whether or not an account matched.
+     */
+    success: true;
+    /**
+     * How many minutes an emailed reset link works, for the confirmation screen to quote.
+     */
+    linkValidMinutes: number;
+};
+
+/**
  * Sets a new password with a reset link. Every session of the account is signed out.
  */
 export type PasswordResetConfirmRequest = {
@@ -2596,6 +2610,14 @@ export type LeagueDto = {
      */
     cupCustomPoints: Array<number>;
     /**
+     * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+     */
+    cupCustomPointsMax: number;
+    /**
+     * The most places a CUSTOM table can list; a save with more is refused with 400.
+     */
+    cupCustomPointsMaxPlaces: number;
+    /**
      * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
      */
     hallOfLameVisible: boolean;
@@ -2911,6 +2933,14 @@ export type LeagueResponse = {
          */
         cupCustomPoints: Array<number>;
         /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
+        /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
         hallOfLameVisible: boolean;
@@ -3015,6 +3045,14 @@ export type LeagueContextResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
         /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
@@ -3301,6 +3339,14 @@ export type LeagueListResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
         /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
@@ -11157,6 +11203,14 @@ export type SportEventDto = {
      */
     roundsPar: number | null;
     /**
+     * The lowest par per round an update takes; a lower one is refused with 400.
+     */
+    roundsParMin: number;
+    /**
+     * The highest par per round an update takes; a higher one is refused with 400.
+     */
+    roundsParMax: number;
+    /**
      * Field size the provider reports, when it reports one; null otherwise.
      */
     participantCount: number | null;
@@ -11587,6 +11641,14 @@ export type SportEventListResponse = {
          */
         roundsPar: number | null;
         /**
+         * The lowest par per round an update takes; a lower one is refused with 400.
+         */
+        roundsParMin: number;
+        /**
+         * The highest par per round an update takes; a higher one is refused with 400.
+         */
+        roundsParMax: number;
+        /**
          * Field size the provider reports, when it reports one; null otherwise.
          */
         participantCount: number | null;
@@ -11991,6 +12053,14 @@ export type SportEventResponse = {
          * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
          */
         roundsPar: number | null;
+        /**
+         * The lowest par per round an update takes; a lower one is refused with 400.
+         */
+        roundsParMin: number;
+        /**
+         * The highest par per round an update takes; a higher one is refused with 400.
+         */
+        roundsParMax: number;
         /**
          * Field size the provider reports, when it reports one; null otherwise.
          */
@@ -16480,6 +16550,10 @@ export type GamePicksResponse = {
      */
     tiebreakerValue: number | null;
     /**
+     * The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400.
+     */
+    tiebreakerMax: number;
+    /**
      * Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed.
      */
     points: number | null;
@@ -16825,6 +16899,10 @@ export type GamePickPreviewResponse = {
      * The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.
      */
     tiebreakerMatchId: string | null;
+    /**
+     * The highest tiebreaker an entry's save would take; 0 is the lowest.
+     */
+    tiebreakerMax: number;
     /**
      * The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round.
      */
@@ -31078,9 +31156,9 @@ export type RequestPasswordResetError = RequestPasswordResetErrors[keyof Request
 
 export type RequestPasswordResetResponses = {
     /**
-     * Minimal success response envelope.
+     * The answer to a password reset request, the same whether or not an account matched.
      */
-    202: SuccessResponse;
+    202: PasswordResetRequestedResponse;
 };
 
 export type RequestPasswordResetResponse = RequestPasswordResetResponses[keyof RequestPasswordResetResponses];

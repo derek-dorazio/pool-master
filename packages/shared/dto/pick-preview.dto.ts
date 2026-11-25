@@ -82,6 +82,7 @@ export const GamePickPreviewResponseSchema = z.object({
   pickedCount: z.number().int().describe('How many games hold a trial pick that stands.'),
   gameCount: z.number().int(),
   tiebreakerMatchId: z.uuid().nullable().describe('The game an entry\'s tiebreaker would guess the total points of: a bracket\'s final, a pick\'em week\'s last game. Null where there is none.'),
+  tiebreakerMax: z.number().int().describe('The highest tiebreaker an entry\'s save would take; 0 is the lowest.'),
   games: z.array(GamePickPreviewGameDtoSchema).describe('The games an entry would pick, in game-number order: cancelled games left out, a bracket\'s from its starting round.'),
 }).describe('A game setup\'s pick screen as members would see it, with the trial picks on it. Nothing is saved.');
 export type GamePickPreviewResponse = z.infer<typeof GamePickPreviewResponseSchema>;

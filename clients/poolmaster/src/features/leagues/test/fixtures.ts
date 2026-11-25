@@ -25,6 +25,8 @@ type LeagueFixture = Pick<
   | 'cupName'
   | 'cupPointsScale'
   | 'cupCustomPoints'
+  | 'cupCustomPointsMax'
+  | 'cupCustomPointsMaxPlaces'
   | 'hallOfLameVisible'
   | 'planEntitlements'
   | 'planRenewsAt'
@@ -130,6 +132,8 @@ const baseLeague: LeagueFixture = {
   cupName: 'Big Dawgs Cup',
   cupPointsScale: 'STANDARD',
   cupCustomPoints: [],
+  cupCustomPointsMax: 1000,
+  cupCustomPointsMaxPlaces: 50,
   hallOfLameVisible: true,
   planEntitlements: buildPlanEntitlements(),
   planRenewsAt: '2027-04-24T00:00:00.000Z',

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { LEAGUE_PLANS, type PlanCap, type PlanFeature } from '@poolmaster/shared/domain';
+import { explicitOrderValues, LeaguePlanOrder, type PlanCap, type PlanFeature } from '@poolmaster/shared/domain';
 import {
   DataGrid,
   DateDisplay,
@@ -65,7 +65,7 @@ export function RootAdminPlansPage() {
 function LastChangeLine({ group }: { group: PlanSettingsGroup }) {
   return (
     <span data-testid="root-admin-plans-last-change">
-      {plural(LEAGUE_PLANS.length, 'plan')}
+      {plural(explicitOrderValues(LeaguePlanOrder).length, 'plan')}
       {' · '}
       {group.updatedAt
         ? <>Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay timeStyle={null} value={group.updatedAt} /></>

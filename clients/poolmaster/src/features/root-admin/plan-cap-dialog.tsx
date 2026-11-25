@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { LEAGUE_PLANS } from '@poolmaster/shared/domain';
+import { explicitOrderValues, LeaguePlanOrder } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { Checkbox, FormField, Input, Text, useDisplayPreferences } from '@/features/shared/ui';
 import { formatPlanLimit, UNLIMITED_LABEL } from '@/features/plans/plan-labels';
@@ -13,7 +13,7 @@ export function PlanCapDialog({ group, onClose, row }: { group: PlanSettingsGrou
 
   return (
     <PlanRowDialog<PlanCapFormValues>
-      facts={LEAGUE_PLANS.map((plan) => ({
+      facts={explicitOrderValues(LeaguePlanOrder).map((plan) => ({
         id: plan,
         label: enumLabel('LeaguePlan', plan),
         value: formatPlanLimit(row.limits[plan], locale),
@@ -27,7 +27,7 @@ export function PlanCapDialog({ group, onClose, row }: { group: PlanSettingsGrou
       toForm={(config) => planCapFormValues(config, row.cap)}
       toValue={(values) => withPlanCap(group.value, row.cap, values)}
     >
-      {(form) => LEAGUE_PLANS.map((plan) => (
+      {(form) => explicitOrderValues(LeaguePlanOrder).map((plan) => (
         <div className="grid gap-2" key={plan}>
           <FormField error={form.formState.errors[plan]?.limit?.message} label={enumLabel('LeaguePlan', plan)}>
             {form.watch(`${plan}.unlimited`)

@@ -21,25 +21,29 @@ import {
   CUP_POINTS_SCALE_COPY,
   POINTS_PREVIEW_FIELD,
   parseCustomPoints,
+  type CustomPointsLimits,
   previewPoints,
 } from './cup-settings-view';
 
-const championshipSettingsFormSchema = z.object({
-  cupName: z.string().trim().min(1, 'Championship name is required').max(100, 'Championship name must be 100 characters or fewer'),
-  cupPointsScale: z.enum(CupPointsScale),
-  customPoints: z.string(),
-  hallOfLameVisible: z.boolean(),
-}).superRefine((values, context) => {
-  if (values.cupPointsScale !== CupPointsScale.CUSTOM) {
-    return;
-  }
-  const parsed = parseCustomPoints(values.customPoints);
-  if (parsed.error !== null) {
-    context.addIssue({ code: 'custom', message: parsed.error, path: ['customPoints'] });
-  }
-});
+/** The form's checks, with the custom table's bounds the league's read sent. */
+function championshipSettingsFormSchema(limits: CustomPointsLimits) {
+  return z.object({
+    cupName: z.string().trim().min(1, 'Championship name is required').max(100, 'Championship name must be 100 characters or fewer'),
+    cupPointsScale: z.enum(CupPointsScale),
+    customPoints: z.string(),
+    hallOfLameVisible: z.boolean(),
+  }).superRefine((values, context) => {
+    if (values.cupPointsScale !== CupPointsScale.CUSTOM) {
+      return;
+    }
+    const parsed = parseCustomPoints(values.customPoints, limits);
+    if (parsed.error !== null) {
+      context.addIssue({ code: 'custom', message: parsed.error, path: ['customPoints'] });
+    }
+  });
+}
 
-type ChampionshipSettingsFormValues = z.infer<typeof championshipSettingsFormSchema>;
+type ChampionshipSettingsFormValues = z.infer<ReturnType<typeof championshipSettingsFormSchema>>;
 
 /**
  * Edit championships: the league championship's name, the points table every cup scores on, and
@@ -68,8 +72,8 @@ export function EditChampionshipSettingsPage() {
 }
 
 /** The first places' points on the table being chosen, so the commissioner sees what it pays. */
-function PointsPreview({ scale, customPoints }: { scale: CupPointsScale; customPoints: string }) {
-  const custom = scale === CupPointsScale.CUSTOM ? parseCustomPoints(customPoints) : null;
+function PointsPreview({ scale, customPoints, limits }: { scale: CupPointsScale; customPoints: string; limits: CustomPointsLimits }) {
+  const custom = scale === CupPointsScale.CUSTOM ? parseCustomPoints(customPoints, limits) : null;
   if (custom?.error) {
     return <Text as="p" data-testid="championship-points-preview-empty" variant="meta">Enter the custom points to see what each place earns.</Text>;
   }
@@ -93,7 +97,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
   const queryClient = useQueryClient();
   const settingsPath = buildLeagueAdminPath(league.leagueCode);
   const form = useForm<ChampionshipSettingsFormValues>({
-    resolver: zodResolver(championshipSettingsFormSchema),
+    resolver: zodResolver(championshipSettingsFormSchema(league)),
     defaultValues: {
       cupName: league.cupName,
       cupPointsScale: league.cupPointsScale,
@@ -115,7 +119,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
           cupName: values.cupName,
           cupPointsScale: values.cupPointsScale,
           // The resolver has checked the custom points; every other table sends none.
-          cupCustomPoints: isCustom ? parseCustomPoints(values.customPoints).points ?? [] : [],
+          cupCustomPoints: isCustom ? parseCustomPoints(values.customPoints, league).points ?? [] : [],
           hallOfLameVisible: values.hallOfLameVisible,
         },
       });
@@ -197,7 +201,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
 
         <div className="space-y-2">
           <Text as="div" variant="strong">What each place earns</Text>
-          <PointsPreview customPoints={customPoints} scale={scale} />
+          <PointsPreview customPoints={customPoints} limits={league} scale={scale} />
         </div>
 
         <Notice data-testid="championship-points-change-note">

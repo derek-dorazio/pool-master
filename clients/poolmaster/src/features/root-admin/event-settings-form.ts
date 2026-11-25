@@ -1,22 +1,24 @@
 import { FieldOrderBasis } from '@poolmaster/shared/domain';
-import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 import { z } from 'zod';
 import type { SportEventDto, UpdateSportEventRequest } from '@/lib/api';
 
-export const settingsSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required'),
-  venue: z.string().trim(),
-  location: z.string().trim(),
-  rounds: z.string().refine((value) => /^\d+$/.test(value) && Number(value) >= 1, 'At least one round'),
-  // Blank means "not set": contest scoring then derives each round's par from the field.
-  roundsPar: z.string().trim().refine((value) => {
-    if (value === '') return true;
-    const par = Number(value);
-    return Number.isInteger(par) && par >= ROUNDS_PAR_MIN && par <= ROUNDS_PAR_MAX;
-  }, `Par is a whole number from ${String(ROUNDS_PAR_MIN)} to ${String(ROUNDS_PAR_MAX)}, or blank`),
-});
+/** The details form's checks, with the par bounds the event's read sent. */
+export function settingsSchema({ roundsParMin, roundsParMax }: Pick<SportEventDto, 'roundsParMin' | 'roundsParMax'>) {
+  return z.object({
+    name: z.string().trim().min(1, 'Name is required'),
+    venue: z.string().trim(),
+    location: z.string().trim(),
+    rounds: z.string().refine((value) => /^\d+$/.test(value) && Number(value) >= 1, 'At least one round'),
+    // Blank means "not set": contest scoring then derives each round's par from the field.
+    roundsPar: z.string().trim().refine((value) => {
+      if (value === '') return true;
+      const par = Number(value);
+      return Number.isInteger(par) && par >= roundsParMin && par <= roundsParMax;
+    }, `Par is a whole number from ${String(roundsParMin)} to ${String(roundsParMax)}, or blank`),
+  });
+}
 
-export type SettingsValues = z.infer<typeof settingsSchema>;
+export type SettingsValues = z.infer<ReturnType<typeof settingsSchema>>;
 
 /** Each value the field can be ordered by, as the ⚙ dialog names it. */
 export const TIER_ORDER_LABELS: Record<FieldOrderBasis, string> = {

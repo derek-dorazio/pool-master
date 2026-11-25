@@ -5,7 +5,7 @@
  * `UserRow` interface, one of four copies; `users.mapper.ts` owns the only one now, over the
  * canonical domain `User`.
  */
-import type { AuthResponse, TokenRefreshResponse } from '@poolmaster/shared/dto';
+import type { AuthResponse, PasswordResetRequestedResponse, TokenRefreshResponse } from '@poolmaster/shared/dto';
 import type { User } from '@poolmaster/shared/domain';
 import { toUserDto } from './users.mapper';
 
@@ -39,4 +39,9 @@ export function toTokenRefreshResponse(tokens: TokenPair): TokenRefreshResponse 
     csrfToken: tokens.csrfToken,
     expiresIn: tokens.expiresIn,
   };
+}
+
+/** A password reset request's answer: the same for every caller, with how long a link works. */
+export function toPasswordResetRequestedResponse(linkValidMinutes: number): PasswordResetRequestedResponse {
+  return { success: true, linkValidMinutes };
 }

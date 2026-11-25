@@ -292,13 +292,13 @@ describe('Bracket contest entry page', () => {
     expect(screen.getByTestId('bracket-finish')).not.toHaveTextContent(/\bteams?\b|\bgames?\b/);
   });
 
-  it('refuses a tiebreaker outside 0 to 999 at the field without saving it', async () => {
-    primeMocks({ gamePicks: gamePicksFixture({ games: filledBracketGames() }) });
+  it('refuses a tiebreaker above the most the picks read says the server takes, at the field and without saving it', async () => {
+    primeMocks({ gamePicks: gamePicksFixture({ games: filledBracketGames(), tiebreakerMax: 250 }) });
     renderBracketEntry();
 
-    fireEvent.change(await screen.findByTestId('bracket-tiebreaker-input'), { target: { value: '1000' } });
+    fireEvent.change(await screen.findByTestId('bracket-tiebreaker-input'), { target: { value: '251' } });
 
-    expect(screen.getByText('Enter a whole number from 0 to 999.')).toBeInTheDocument();
+    expect(screen.getByText('Enter a whole number from 0 to 250.')).toBeInTheDocument();
     expect(screen.getByTestId('bracket-submit')).toBeDisabled();
     expect(saveGamePicksMock).not.toHaveBeenCalled();
   });

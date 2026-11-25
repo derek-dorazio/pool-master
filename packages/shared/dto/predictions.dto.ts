@@ -106,6 +106,7 @@ export const GamePicksResponseSchema = z.object({
   gameCount: z.number().int(),
   tiebreakerMatchId: z.uuid().nullable().describe('The game whose total points the tiebreaker guesses: a bracket\'s final, a pick\'em week\'s last game by kickoff. Null while there is none.'),
   tiebreakerValue: z.number().int().nullable().describe('The entry\'s tiebreaker for the event, the tiebreaker game\'s total points. Null when not given, and on another team\'s entry until that game\'s picks are revealed.'),
+  tiebreakerMax: z.number().int().describe('The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400.'),
   points: z.number().int().nullable().describe('Points so far: a bracket\'s round values and upset bonuses, a pick\'em pick\'s 1 point, or its confidence value, for each correct pick. Null on another team\'s entry until all its picks are revealed.'),
   maxPossiblePoints: z.number().int().nullable().describe('Points so far plus what every pick still pending is worth: the most the entry can still reach. Null where points is.'),
   games: z.array(GamePickGameDtoSchema).describe('The event\'s games in game-number order. Cancelled games are left out: they are not picked.'),

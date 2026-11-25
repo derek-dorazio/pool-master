@@ -6,7 +6,6 @@
  * regional rounds. Everything here is derived from the game-pick read; nothing is stored.
  */
 import { PickOutcome } from '@poolmaster/shared/domain';
-import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 import type { PickEmGame } from './pick-em-week';
@@ -109,12 +108,12 @@ export function formatPickProgress(pickedCount: number, gameCount: number): stri
   return `${pickedCount} of ${gameCount} picked`;
 }
 
-/** A tiebreaker as typed: a whole number of total points from 0 to the most the server takes, or null. */
-export function parseBracketTiebreaker(text: string): number | null {
+/** A tiebreaker as typed: a whole number of total points from 0 to `max`, the most the server takes, or null. */
+export function parseBracketTiebreaker(text: string, max: number): number | null {
   const trimmed = text.trim();
   if (!/^\d+$/.test(trimmed)) {
     return null;
   }
   const value = Number(trimmed);
-  return value <= GAME_PICKS_TIEBREAKER_MAX ? value : null;
+  return value <= max ? value : null;
 }

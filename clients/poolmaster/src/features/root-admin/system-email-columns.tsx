@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { EmailTemplateStatusOrder, LEAGUE_PLANS, type EmailTemplateStatus } from '@poolmaster/shared/domain';
+import { type EmailTemplateStatus, EmailTemplateStatusOrder, explicitOrderValues, LeaguePlanOrder } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SystemEmailDto } from '@/lib/api';
 import { EmailStatusChip } from './email-status-chip';
@@ -7,7 +7,7 @@ import { EMAIL_AUDIENCE_LABELS, EmailAudienceOrder, type EmailAudience, EVERY_PL
 
 const PLAN_OPTIONS = [
   { value: EVERY_PLAN, label: planText(null) },
-  ...LEAGUE_PLANS.map((plan) => ({ value: plan, label: enumLabel('LeaguePlan', plan) })),
+  ...explicitOrderValues(LeaguePlanOrder).map((plan) => ({ value: plan, label: enumLabel('LeaguePlan', plan) })),
 ];
 
 const columnHelper = createColumnHelper<SystemEmailDto>();

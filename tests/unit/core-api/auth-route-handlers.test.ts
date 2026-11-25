@@ -11,6 +11,7 @@ import { createAuthHandlers } from '../../../packages/core-api/src/modules/auth/
 import { PasswordResetError, type PasswordResetService } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { buildUser } from '../../factories';
 import { callHandler, stubRequest } from '../../support/handler-call';
+import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 
 const boom = new Error('database down');
 const tokens = { accessToken: 'a', refreshToken: 'r', csrfToken: 'c', expiresIn: 900, sessionId: 's' };
@@ -127,14 +128,14 @@ describe('refresh and logout handlers', () => {
 });
 
 describe('password reset and email change undo handlers', () => {
-  it('answers a reset request with 202 once its address is under the limit, and runs the reset for its identifier', async () => {
+  it('answers a reset request with 202 and how long its link works once its address is under the limit, and runs the reset for its identifier', async () => {
     const r = resets();
 
     const reply = await callHandler(handlersOver(auth(), r).requestPasswordReset, stubRequest({ body: { identifier: 'ada@example.test' }, ip: '10.0.0.1', contextLogger: false }));
 
     expect(r.assertRequestAllowed).toHaveBeenCalledWith('10.0.0.1');
     expect(r.requestReset).toHaveBeenCalledWith('ada@example.test');
-    expect(reply).toMatchObject({ statusCode: 202, body: { success: true } });
+    expect(reply).toMatchObject({ statusCode: 202, body: { success: true, linkValidMinutes: PASSWORD_RESET_LINK_MINUTES } });
   });
 
   it('refuses a rate-limited reset request with its own status and code, and runs no reset', async () => {

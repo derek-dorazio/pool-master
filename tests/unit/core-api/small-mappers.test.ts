@@ -18,7 +18,7 @@ import {
   type SportConfig,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
-import { SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
+import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, GAME_PICKS_TIEBREAKER_MAX, SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
 import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
 import { toAuthResponse, toTokenRefreshResponse } from '../../../packages/core-api/src/mappers/auth.mapper';
 import { toLeaguePaymentListResponse, toUserPaymentListResponse } from '../../../packages/core-api/src/mappers/billing.mapper';
@@ -26,7 +26,7 @@ import {
   toBracketLeaderboardSnapshotResponse,
 } from '../../../packages/core-api/src/mappers/bracket-leaderboard.mapper';
 import { toEmailTestResponseDto } from '../../../packages/core-api/src/mappers/email-test.mapper';
-import { toGamePicksResponse } from '../../../packages/core-api/src/mappers/game-picks.mapper';
+import { toGamePickPreviewResponse, toGamePicksResponse } from '../../../packages/core-api/src/mappers/game-picks.mapper';
 import { mapGolfRoundScorePreviewToDto } from '../../../packages/core-api/src/mappers/golf-scores.mapper';
 import { toLeagueDto } from '../../../packages/core-api/src/mappers/leagues.mapper';
 import { toPickEmLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/pick-em-leaderboard.mapper';
@@ -44,7 +44,7 @@ import { toSurvivorLeaderboardResponse, toSurvivorLeaderboardSnapshotResponse } 
 import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import type { PlanEntitlements } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import type { RaceResultPreviewRow } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
-import type { GamePickGame, GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
+import type { GamePickGame, GamePicksView, GamesPreview } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import type { SquaresBoard } from '../../../packages/core-api/src/modules/selections/squares-service';
 import type { SelectionGroup } from '../../../packages/core-api/src/modules/selections/types';
 import type { SportLeagueSummary } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
@@ -275,6 +275,13 @@ describe('toLeagueDto', () => {
   it('sends a league with no description as null', () => {
     expect(toLeagueDto(league(undefined), entitlements, { memberCount: 0, activeContestCount: 0 }).description).toBeNull();
   });
+
+  it('sends the bounds a custom points table is saved under, so the settings form checks what the server checks', () => {
+    expect(toLeagueDto(league(undefined), entitlements, { memberCount: 0, activeContestCount: 0 })).toEqual(expect.objectContaining({
+      cupCustomPointsMax: CUP_CUSTOM_POINTS_MAX,
+      cupCustomPointsMaxPlaces: CUP_CUSTOM_POINTS_MAX_PLACES,
+    }));
+  });
 });
 
 describe('toSelectionGroupDto', () => {
@@ -428,10 +435,11 @@ describe('toGamePicksResponse', () => {
   } as unknown as GamePicksView);
   const pick = { predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', confidence: 2, pickedAt: AT } as unknown as GamePickGame['pick'];
 
-  it('sends a game with no pick as a null pick, and an unsubmitted entry\'s submission time as null', () => {
+  it('sends a game with no pick as a null pick, an unsubmitted entry\'s submission time as null, and the highest tiebreaker a save takes', () => {
     const dto = toGamePicksResponse(view([game({})], null));
 
     expect(dto.submittedAt).toBeNull();
+    expect(dto.tiebreakerMax).toBe(GAME_PICKS_TIEBREAKER_MAX);
     expect(dto.games[0]).toEqual(expect.objectContaining({ sportEventRoundMatchId: 'm1', matchNumber: 3, kickoff: ISO, pick: null }));
   });
 
@@ -450,5 +458,26 @@ describe('toGamePicksResponse', () => {
     const dto = toGamePicksResponse(view([game({ pick, pickScore })], AT));
 
     expect(dto.games[0].pick).toEqual(expect.objectContaining({ outcome: 'CORRECT', points: 2 }));
+  });
+});
+
+describe('toGamePickPreviewResponse', () => {
+  it('sends the highest tiebreaker a save takes with a setup\'s pick preview', () => {
+    const preview = {
+      sportEventId: 'e1',
+      selectionType: 'PICK_EM',
+      mode: null,
+      againstTheSpread: false,
+      tiePicksOffered: false,
+      pickedCount: 0,
+      gameCount: 0,
+      tiebreakerMatchId: null,
+      games: [],
+    } as unknown as GamesPreview;
+
+    const dto = toGamePickPreviewResponse(preview);
+
+    expect(dto.tiebreakerMax).toBe(GAME_PICKS_TIEBREAKER_MAX);
+    expect(dto).toEqual(expect.objectContaining({ sportEventId: 'e1', pickedCount: 0, gameCount: 0, games: [] }));
   });
 });

@@ -23,7 +23,7 @@ export type PickEmTeam = NonNullable<PickEmGame['home']>;
  */
 export type PickEmWeek = Pick<
   GamePicksResponse,
-  'againstTheSpread' | 'gameCount' | 'mode' | 'ownEntry' | 'selectionType' | 'survivor' | 'tiePicksOffered' | 'tiebreakerMatchId' | 'tiebreakerValue'
+  'againstTheSpread' | 'gameCount' | 'mode' | 'ownEntry' | 'selectionType' | 'survivor' | 'tiePicksOffered' | 'tiebreakerMatchId' | 'tiebreakerMax' | 'tiebreakerValue'
 > & { games: PickEmGame[] };
 type GamePickWrite = SaveGamePicksRequest['picks'][number];
 

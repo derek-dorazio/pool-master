@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { PASSWORD_RESET_LINK_MINUTES, PasswordResetRequestSchema } from "@poolmaster/shared/dto";
+import { PasswordResetRequestSchema } from "@poolmaster/shared/dto";
 import { requestPasswordReset } from "@/lib/api";
 import { extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
@@ -41,7 +41,7 @@ export function ForgotPasswordPage() {
     invalidates: [],
   });
 
-  if (requestMutation.isSuccess) {
+  if (requestMutation.data) {
     return (
       <StatusPage
         action={(
@@ -49,7 +49,7 @@ export function ForgotPasswordPage() {
             Back to sign in
           </LinkButton>
         )}
-        body={`If an account matches, a reset link is on its way. It works once, for ${PASSWORD_RESET_LINK_MINUTES} minutes.`}
+        body={`If an account matches, a reset link is on its way. It works once, for ${String(requestMutation.data.linkValidMinutes)} minutes.`}
         bodyTestId="forgot-password-sent"
         kind="done"
         testId="forgot-password-done"
