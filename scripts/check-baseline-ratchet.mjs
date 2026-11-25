@@ -64,6 +64,16 @@ function coverageFloors(text) {
   return entries;
 }
 
+/**
+ * The web app's shared-domain import baseline (#2107): a count per disallowed name, and each allow
+ * pattern as an entry of 1, so a new pattern (which would let a name through) counts as a raise.
+ */
+function webSharedImports(text) {
+  const entries = countsPerFile(text);
+  for (const { pattern } of JSON.parse(text).$allowed ?? []) entries.set(`$allowed:${pattern}`, 1);
+  return entries;
+}
+
 export { coverageFloors };
 
 /** Every ratcheted baseline and how its entries are read. A new baseline is added here. */
@@ -81,6 +91,7 @@ export const BASELINES = [
   { file: 'scripts/coverage-floors.json', read: coverageFloors },
   { file: 'scripts/coverage-floors-merged.json', read: coverageFloors },
   { file: 'scripts/coverage-floors-web.json', read: coverageFloors },
+  { file: 'scripts/web-shared-imports-baseline.json', read: webSharedImports },
 ];
 
 /**

@@ -70,6 +70,13 @@ describe('check-baseline-ratchet (#1619)', () => {
     assert.deepEqual(findRaises(readFloors(base), readFloors(better)), []);
   });
 
+  it('counts a new allow pattern in the web shared-import baseline as a raise, so widening the allowlist needs a declaration (#2107)', () => {
+    const readImports = read('scripts/web-shared-imports-baseline.json');
+    const base = JSON.stringify({ $allowed: [{ pattern: '^format', reason: 'r' }], getSportDefinition: 3 });
+    const head = JSON.stringify({ $allowed: [{ pattern: '^format', reason: 'r' }, { pattern: '^get', reason: 'r' }], getSportDefinition: 2 });
+    assert.deepEqual(findRaises(readImports(base), readImports(head)), [{ key: '$allowed:^get', was: 0, now: 1 }]);
+  });
+
   it('refuses a declared raise with no reason', () => {
     const text = JSON.stringify({ raises: [{ file: 'f.json', key: 'a.tsx', now: 2, reason: ' ' }] });
     assert.throws(() => declaredRaises(text, 'f.json'), /needs a reason/);
