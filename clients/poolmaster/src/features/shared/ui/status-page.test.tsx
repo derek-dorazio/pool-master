@@ -44,4 +44,12 @@ describe("StatusPage", () => {
     rerender(<StatusPage body="Line." kind="expired" testId="status" title="Title" />);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
+
+  it("leaves out the test ids and the heading link when no test id is given", () => {
+    render(<StatusPage body="Line." kind="done" title="All set" />);
+
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "All set" })).not.toHaveAttribute("id");
+    expect(screen.getByText("Line.")).not.toHaveAttribute("data-testid");
+  });
 });

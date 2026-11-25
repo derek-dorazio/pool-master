@@ -12,6 +12,5 @@
   "clients/poolmaster/src/features/root-admin/email-send-result.ts": 1,
   "clients/poolmaster/src/features/root-admin/golf-round-score-patch.ts": 1,
   "clients/poolmaster/src/features/root-admin/provider-league-columns.tsx": 1,
-  "clients/poolmaster/src/features/shared/ui/data-grid-filters.ts": 1,
   "clients/poolmaster/src/lib/logger/types.ts": 1
 }

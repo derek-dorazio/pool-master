@@ -147,4 +147,66 @@ describe("pool-master-pjr.4: shared mutation action workflow", () => {
     expect(await screen.findByText("Try again.")).toBeInTheDocument();
     expect(screen.getByTestId("pending")).toHaveTextContent("idle");
   });
+
+  it("builds the toast and the lists to refresh from what the action returned, and shows no toast when the builder gives none", async () => {
+    const action = vi.fn().mockResolvedValue({ id: "league-1", quiet: false });
+    const invalidateQueries = vi.fn().mockResolvedValue([QueryKeys.leagues.list]);
+    const { invalidateSpy } = renderWorkflow({
+      action,
+      invalidateQueries,
+      successToast: (data: { id: string }, variables) => ({ title: `Saved ${data.id} from ${String(variables)}` }),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    expect(await screen.findByText("Saved league-1 from payload")).toBeInTheDocument();
+    expect(invalidateQueries).toHaveBeenCalledWith({ id: "league-1", quiet: false }, "payload");
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QueryKeys.leagues.list });
+  });
+
+  it("shows no success toast when the toast builder returns nothing, and stays open when closeOnSuccess is off", async () => {
+    const onClose = vi.fn();
+    const onSuccess = vi.fn();
+    renderWorkflow({
+      action: () => Promise.resolve("ok"),
+      closeOnSuccess: false,
+      onClose,
+      onSuccess,
+      successToast: () => null,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledWith("ok", "payload"));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("app-toast")).not.toBeInTheDocument();
+  });
+
+  it("treats a thrown non-Error as a failure, building the error toast from it, or showing none when the builder gives none", async () => {
+    const onError = vi.fn();
+    renderWorkflow({
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- the case under test: an action that rejects with a bare string.
+      action: () => Promise.reject("timed out"),
+      errorToast: (error, variables) => ({ title: `${error.message} (${String(variables)})`, tone: "danger" }),
+      onError,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    expect(await screen.findByText("timed out (payload)")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Action failed");
+    expect(onError).toHaveBeenCalledWith(new Error("timed out"), "payload");
+  });
+
+  it("shows no error toast when the error toast builder returns nothing, but still reports the failure", async () => {
+    renderWorkflow({
+      action: () => Promise.reject(new Error("Nope")),
+      errorToast: () => undefined,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Action failed");
+    expect(screen.queryByTestId("app-toast")).not.toBeInTheDocument();
+  });
 });

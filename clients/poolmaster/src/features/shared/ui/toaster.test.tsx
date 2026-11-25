@@ -1,7 +1,7 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Toaster } from "./toaster";
-import { dismissAllToasts, dismissToast, showToast } from "./toast-store";
+import { dismissAllToasts, dismissToast, getShownToasts, showToast } from "./toast-store";
 
 describe("Toaster", () => {
   it("shows each toast called for anywhere in the app, in order, with its second line", () => {
@@ -32,5 +32,17 @@ describe("Toaster", () => {
 
     act(() => dismissAllToasts());
     expect(screen.queryByTestId("app-toast")).not.toBeInTheDocument();
+  });
+
+  it("drops a toast from the list once it closes itself, as when the viewer presses Escape on it", () => {
+    render(<Toaster />);
+    act(() => {
+      showToast({ title: "Settings saved" });
+    });
+
+    fireEvent.keyDown(screen.getByTestId("app-toast"), { key: "Escape" });
+
+    expect(screen.queryByText("Settings saved")).not.toBeInTheDocument();
+    expect(getShownToasts()).toEqual([]);
   });
 });
