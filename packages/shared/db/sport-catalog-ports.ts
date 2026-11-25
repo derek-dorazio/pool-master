@@ -622,6 +622,8 @@ export interface SportLeaguePageLeague {
   isActive: boolean;
   syncProviderId: string | null;
   autoReleaseDaysBeforeStart: number | null;
+  /** The values its tier profile orders a field by, first deciding (#2160). */
+  tierSources: FieldOrderBasis[];
 }
 
 /** A sync run as the League page reads it. */
