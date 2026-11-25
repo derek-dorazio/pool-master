@@ -86,13 +86,6 @@ export interface SportLeague extends DomainEntity {
    */
   noun: SportLeagueNoun | null;
   /**
-   * What screens call it away from its sport's own pages, when its name alone does not say the
-   * sport; null shows the name, as for every seeded league, each named with its sport
-   * ("NCAA Men's Basketball").
-   * Reference data, set where the league is seeded.
-   */
-  displayName: string | null;
-  /**
    * Where it sits among its sport's leagues wherever they are listed together: the major
    * professional leagues first, then the NCAA's. Lower comes first; null comes after every
    * ordered league. Reference data, set where the league is seeded.

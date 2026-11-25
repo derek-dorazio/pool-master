@@ -1300,7 +1300,6 @@ function toSportLeague(row: SportLeagueRow): SportLeague {
     matchPeriodLayout: row.matchPeriodLayout,
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,
-    displayName: row.displayName,
     displayOrder: row.displayOrder,
     participantType: row.participantType,
     scoringFamily: row.scoringFamily,

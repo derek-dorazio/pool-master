@@ -152,18 +152,18 @@ describe('the contest types catalog', () => {
       .toEqual(['NFL', 'NCAA Men\'s Football', 'Arena League', 'XFL']);
   });
 
-  it('gives the public page each sport\'s active leagues, named as they are beside other sports\' leagues, each with the formats its own templates offer, led by its defaults', () => {
+  it('gives the public page each sport\'s active leagues, each under its own name, with the formats its own templates offer, led by its defaults', () => {
     const catalog = buildPublicContestCatalog(TEMPLATES, [
       sportLeagueFixture({ id: PGA, sport: 'GOLF', name: 'PGA TOUR' }),
       sportLeagueFixture({ id: LPGA, sport: 'GOLF', name: 'LPGA Tour' }),
       sportLeagueFixture({ id: NFL, sport: 'FOOTBALL', name: 'NFL' }),
-      sportLeagueFixture({ id: CFP, sport: 'FOOTBALL', name: 'NCAA Men\'s Football', displayName: 'College Football', urlSegment: 'ncaamf' }),
+      sportLeagueFixture({ id: CFP, sport: 'FOOTBALL', name: 'NCAA Men\'s Football', urlSegment: 'ncaamf' }),
       sportLeagueFixture({ id: XFL, sport: 'FOOTBALL', name: 'XFL', isActive: false }),
     ]);
 
     expect(catalog.map(({ sport, leagues }) => [sport, leagues.map(({ name, urlSegment, groups }) => [name, urlSegment, groups.map(({ featured }) => featured.templateKey)])])).toEqual([
       ['FOOTBALL', [
-        ['College Football', 'ncaamf', ['cfp-tiered-doubling']],
+        ['NCAA Men\'s Football', 'ncaamf', ['cfp-tiered-doubling']],
         ['NFL', 'nfl', ['nfl-tiered-doubling', 'nfl-survivor', 'nfl-squares']],
       ]],
       ['GOLF', [

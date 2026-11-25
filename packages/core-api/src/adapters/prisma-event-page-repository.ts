@@ -72,14 +72,14 @@ export class PrismaEventPageRepository implements EventPageRepository {
       // A disabled setup is left out, as Create contest refuses it, and so is a switched-off
       // sport league's offer (#1812), as Create contest offers none of its events.
       where: { eventPageId: { in: [...eventPageIds] }, template: { active: true }, sportLeague: { isActive: true } },
-      include: { template: { include: TEMPLATE_INCLUDE }, sportLeague: { select: { name: true, displayName: true } } },
+      include: { template: { include: TEMPLATE_INCLUDE }, sportLeague: { select: { name: true } } },
       orderBy: [{ eventPageId: 'asc' }, { sortOrder: 'asc' }],
     });
     return rows.map((row) => ({
       id: row.id,
       eventPageId: row.eventPageId,
       sportLeagueId: row.sportLeagueId,
-      sportLeagueName: row.sportLeague.displayName ?? row.sportLeague.name,
+      sportLeagueName: row.sportLeague.name,
       sportLeaguePhaseSlotId: row.sportLeaguePhaseSlotId,
       template: mapContestConfigTemplate(row.template),
       bracketStartRound: row.bracketStartRound,
