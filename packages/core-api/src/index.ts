@@ -135,7 +135,6 @@ import { registerConfiguredProviders, type SportDataProviderFactory } from './mo
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
 import { JobLeaderboardRebuilds, leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService, createReleasedEditionContests } from './modules/contest-management/wiring';
 import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
@@ -219,11 +218,9 @@ export function buildApp(options: BuildAppOptions = {}) {
   // board is computed from tells this, which queues one rebuild job per event or contest (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs);
   const leaderboardRebuilder = createContestService(prisma, app.log, { planEntitlements });
-  // What follows each change (#1946): built once, with every dependency its handlers need. A
-  // released edition joins its template contests by a job per contest (#1318).
+  // What follows each change (#1946): built once, with every dependency its handlers need.
   const domainEvents = new DomainEvents({
     queue: backgroundJobs,
-    releasedEditionContests: createReleasedEditionContests(prisma, app.log),
     sportEventChanged: contestNotices,
   });
   // The one list of problems the sync found (#1999); the sync raises them, Findings lists them.
@@ -242,8 +239,6 @@ export function buildApp(options: BuildAppOptions = {}) {
     logger: app.log,
   });
   const contestSettlement = createContestSettlementService(prisma, app.log, { domainEvents });
-  // Each job that adds a released edition to a template contest is run by contest management.
-  const contestManagement = createContestManagementService(prisma, app.log, planEntitlements, { domainEvents });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: app.log,
@@ -437,7 +432,6 @@ export function buildApp(options: BuildAppOptions = {}) {
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
       REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-      ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
       RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
       SYNC_EVENT_GAMES_AND_TIERS: (payload) => syncedFieldFollowUps.run(payload),

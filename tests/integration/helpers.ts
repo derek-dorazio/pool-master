@@ -92,7 +92,6 @@ import { testDomainEvents } from '../support/domain-events';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
 import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService, createReleasedEditionContests } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { ProviderSettingsStore } from '../../packages/core-api/src/modules/ingestion/provider-settings-store';
@@ -349,10 +348,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   // A write's boards are rebuilt by a job per event or contest, as in index.ts (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs.queue);
   const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
-  // What follows each change (#1946), as in index.ts. A released edition joins its template
-  // contests by a job per contest (#1318), which contest management runs.
-  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, releasedEditionContests: createReleasedEditionContests(prisma, testApp.log), sportEventChanged: contestNotices });
-  const contestManagement = createContestManagementService(prisma, testApp.log, planEntitlements, { domainEvents });
+  // What follows each change (#1946), as in index.ts.
+  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, sportEventChanged: contestNotices });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: testApp.log,
@@ -397,7 +394,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-    ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
     RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(integrationSyncFindings(prisma)),
   });
   backgroundJobRunner = runner;
@@ -1035,17 +1031,17 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.contestEntryEvent.deleteMany();
   await prisma.contestSportEvent.deleteMany();
   await prisma.sportEvent.deleteMany();
-  await prisma.eventSeries.deleteMany();
   // A sport league that a contest template names is reference data (auto racing's series, seeded
   // with their points presets), and the template's foreign key restricts its delete: it stays.
   // So does every seeded league, which alone has a display order (the API sets none): US
   // Thoroughbred has no template of its own, only horse racing's every-race ones (#1716).
   // Sport rows are migration reference data too and always stay: without them a functional suite
   // run after this lane on the same database finds no sport to load into.
-  // Test slots go with their events (#2004); a league's Season phases restrict its phases'
-  // delete, so a test league's Season phases and their slots go before the league.
-  const testLeagueIds = (await prisma.sportLeague.findMany({ where: { contestConfigTemplates: { none: {} }, displayOrder: null }, select: { id: true } }))
-    .map((league) => league.id);
+  // A test's league goes with its Seasons, whose slots and phases hold RESTRICT foreign keys to
+  // the league's slot and phase definitions, so they clear first (#2010: tests put events in
+  // Season slots). A test's Season slot in a seeded league goes too.
+  const testLeagues = { contestConfigTemplates: { none: {} }, displayOrder: null };
+  const testLeagueIds = (await prisma.sportLeague.findMany({ where: testLeagues, select: { id: true } })).map(({ id }) => id);
   await prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }] } });
   await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
   await prisma.sportLeague.deleteMany({ where: { id: { in: testLeagueIds } } });

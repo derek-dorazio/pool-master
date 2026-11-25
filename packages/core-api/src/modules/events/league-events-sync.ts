@@ -7,7 +7,7 @@
  * named, #2003), the events of the provider league the league's selected provider mapping names,
  * asked for by the provider's own id for that Season (`ProviderSeasonScheduleReader.listSeasonEvents`,
  * #1997), become its events in that Season (`SportEventService.importProviderSeason`, the one
- * creation path: series, rounds and default tiers seeded alike, and a re-run skips what is there),
+ * creation path: rounds and default tiers seeded alike, and a re-run skips what is there),
  * and the events already linked keep their provider's name, venue and dates
  * (`SportEventService.keepProviderEventsCurrent`, ADR 0011). Nothing works out a season from
  * today's date: when the league's last Season mapped to its provider has ended and no later one is

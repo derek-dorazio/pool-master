@@ -100,7 +100,7 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions 
     schema: {
       tags: ['History'],
       summary: 'List the perpetual trophies',
-      description: `The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, the same event series and the same way of picking, with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.TROPHY_SHELF])}`,
+      description: `The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, on the same slot definitions and the same way of picking (by template from #2024), with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.TROPHY_SHELF])}`,
       operationId: 'listPerpetualTrophies',
       response: {
         200: schemaRef('PerpetualTrophyListResponse'),

@@ -55,13 +55,13 @@ describe('display string lookups', () => {
   });
 
   it('give a screen\'s own wording of an error code under error.<CODE>.<context>, with its placeholders filled', () => {
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'tour', event: 'tournament' }))
-      .toBe('This tour already has this tournament in its current Season.');
-    expect(flattenDisplayStrings(enUS)['error.EVENT_EDITION_ALREADY_EXISTS.createEvent']).toBe(enUS.errorContext.EVENT_EDITION_ALREADY_EXISTS.createEvent);
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { participant: 'team' }))
+      .toBe('You picked that team in another week or round. Each team can be picked once.');
+    expect(flattenDisplayStrings(enUS)['error.PREDICTION_TEAM_ALREADY_USED.pickEm']).toBe(enUS.errorContext.PREDICTION_TEAM_ALREADY_USED.pickEm);
   });
 
   it('say whether a key built at run time has words, so a screen\'s context is tried before the code\'s own message', () => {
-    expect(hasDisplayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toBe(true);
+    expect(hasDisplayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL.createEvent')).toBe(false);
     expect(hasDisplayString('error.CONTEST_FULL')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL', 'fr-CA')).toBe(true);
@@ -126,13 +126,13 @@ describe('display string lookups', () => {
   });
 
   it('refuse at compile time a screen\'s error wording without its placeholder values, and fill them when given', () => {
-    // @ts-expect-error The create-event wording needs its sportLeague and event.
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toContain('{{sportLeague}}');
-    // @ts-expect-error The placeholder is event, not game.
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', game: 'game' }))
-      .toContain('{{event}}');
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', event: 'game' }))
-      .toBe('This league already has this game in its current Season.');
+    // @ts-expect-error The pick'em wording needs its participant.
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm')).toContain('{{participant}}');
+    // @ts-expect-error The placeholder is participant, not team.
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { team: 'team' }))
+      .toContain('{{participant}}');
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { participant: 'player' }))
+      .toBe('You picked that player in another week or round. Each player can be picked once.');
   });
 
   it('refuse at compile time a key the modules do not hold', () => {

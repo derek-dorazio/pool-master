@@ -37,7 +37,6 @@ afterAll(async () => {
   await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-  await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: [...created.sportLeagueIds] } } });
   await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
   await db.user.deleteMany({ where: { id: { in: [...created.userIds] } } });

@@ -72,9 +72,10 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      straight up or by confidence, optionally against the spread; and `SURVIVOR`, one team a
      week, each team once. The validity matrix allows prediction contests only on events of
      games.
-   - Any sport: a multi-event contest, one contest across many events whose entries submit
-     per event (a golf majors pool, an NFL season of weeks). It is a shape of contest, not a
-     selection type, so the sport adds nothing for it.
+   - Any sport: a contest across several slots of a Season, whose entries submit per event
+     (an NFL pick'em or survivor across weeks). Which slots a template covers is its
+     `ContestConfigTemplateSlot` rows and `coverageMode`, so the sport adds nothing for it; a
+     field pool never spans events (ADR 0014).
    A new selection type is separate work through the selection-engine registry, not part of
    adding a sport.
 4. **Results source.** A new provider follows `rules/architecture-rules.md` §3 *Provider and
@@ -282,13 +283,13 @@ down: a lesson that was true mid-series may not be by the end.
   season from August to May (the Premier League) is two test files, one per year its weeks start
   in, each with the same players and rankings.
 - **A league with no knockout.** A league played only in weeks has no roster presets, since
-  roster formats are played on a knockout, and its week templates are its only defaults.
+  roster formats cover one event, and its week templates are its only defaults.
 - **League presets without their leagues.** A per-league template needs its league row, so the
   league is reference data even though admins normally create leagues
   (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Every template
   names its sport league, so a setup each league of the sport plays is one row per league with
   the same key, never one row for the whole sport. Give each league its templates and one
-  default per format and kind of event, named and described
+  default per format, the slots each covers (`contest_config_template_slots`), named and described
   as `rules/ux-rules.md` §12 *League Pages and Commissioner Tools* (item 12) says. The template's foreign key then keeps
   those leagues through any test cleanup that empties sport leagues, and a test that counts
   sports or leagues sees them.
@@ -344,9 +345,10 @@ down: a lesson that was true mid-series may not be by the end.
   games won, so it has no single game for a grid. Leave squares out of such a sport's selection
   types and its period layout off the definition, and add the league to the template checks'
   series leagues, which otherwise expect a squares default (MLB, the NBA, the NHL).
-- **Choosing templates for an event by hand.** Whether a template fits an event (its sport,
-  its league or none, its kind of event or none) is `isTemplateOfferedOn`. A script or screen
-  that filters templates itself drifts from Create contest
+- **Choosing templates for an event by hand.** Which templates fit an event is the template
+  list asked for the event's league and the slot definitions its slots play
+  (`sportLeagueId`, `slotDefinitionIds`). A script or screen that filters templates itself
+  drifts from Create contest
   (`rules/architecture-rules.md` §4 *Sport extension*).
 - **A stale sport line on How to Play.** Adding a league or format to a sport that already has
   one fails no build and no test: the new tiles appear, and the sport's line goes on naming only

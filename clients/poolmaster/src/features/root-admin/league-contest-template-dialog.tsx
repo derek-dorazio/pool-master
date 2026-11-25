@@ -8,6 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
+import { templateCoversLabel } from './league-contest-template-covers';
 import { contestTemplateUpdateBody, contestTemplateValuesOf, type TemplateValues } from './league-contest-template-form';
 
 const logger = getLogger().child({ feature: 'root-admin-league-page' });
@@ -42,7 +43,7 @@ export function LeagueContestTemplateDialog({ onClose, template }: { onClose: ()
     { id: 'description', label: 'Description', value: template.description },
     { id: 'contestType', label: 'Contest type', value: enumLabel('ContestFormat', template.contestFormat) },
     { id: 'selectionType', label: 'Selection type', value: formatSelectionTypeName(template.selectionType) },
-    { id: 'events', label: 'Events', value: template.eventType ? enumLabel('ContestTemplateEventType', template.eventType) : 'Every event' },
+    { id: 'covers', label: 'Covers', value: templateCoversLabel(template), testId: 'root-admin-league-contest-template-covers' },
     { id: 'default', label: 'Default', value: template.isDefault ? 'Yes' : 'No', testId: 'root-admin-league-contest-template-default' },
     { id: 'status', label: 'Status', value: template.active ? 'On' : 'Off', testId: 'root-admin-league-contest-template-status' },
     { id: 'key', label: 'Key', value: template.templateKey },

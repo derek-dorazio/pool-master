@@ -523,18 +523,24 @@ export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
 export const SelectionTypeOrder = alphabeticalOrder('SelectionType');
 
 /**
- * The kind of event a contest template is offered for (#802), where a sport's events come in more
- * than one kind. Only a sport played as matches has two: a KNOCKOUT (the playoffs, a tournament
- * bracket) and a WEEK of a season's games (an NFL regular-season week). A template with none is
- * offered for every event of its sport. Mirrors `PrismaContestTemplateEventType`.
+ * How a contest made from a template covers the template's slot definitions (#2010, plan §7).
+ * ONE_SLOT: the commissioner picks one of them (tiered, budget, quick pick, squares, a week's
+ * pick'em). ALL_LISTED: every listed slot of one event (a bracket, a whole-playoffs pool).
+ * FROM_SLOT: a starting slot and every later listed slot of its Season (survivor). Mirrors
+ * `PrismaTemplateCoverageMode`.
  */
-export const ContestTemplateEventType = {
-  KNOCKOUT: 'KNOCKOUT',
-  WEEK: 'WEEK',
+export const TemplateCoverageMode = {
+  ONE_SLOT: 'ONE_SLOT',
+  ALL_LISTED: 'ALL_LISTED',
+  FROM_SLOT: 'FROM_SLOT',
 } as const;
-export type ContestTemplateEventType = (typeof ContestTemplateEventType)[keyof typeof ContestTemplateEventType];
-/** No natural order: A to Z by its display strings. */
-export const ContestTemplateEventTypeOrder = alphabeticalOrder('ContestTemplateEventType');
+export type TemplateCoverageMode = (typeof TemplateCoverageMode)[keyof typeof TemplateCoverageMode];
+/** From the narrowest coverage to the widest. */
+export const TemplateCoverageModeOrder = explicitOrder<TemplateCoverageMode>({
+  ONE_SLOT: 0,
+  ALL_LISTED: 1,
+  FROM_SLOT: 2,
+});
 
 /**
  * How a pick'em contest is played (#716). STRAIGHT_UP: pick the winner of every game.
@@ -1941,8 +1947,6 @@ export const BackgroundJobType = {
   SETTLE_GAME_CONTESTS: 'SETTLE_GAME_CONTESTS',
   /** Rebuilds the stored live leaderboards of one event's contests, or of one contest (#1463). */
   REBUILD_LEADERBOARDS: 'REBUILD_LEADERBOARDS',
-  /** Adds a released edition to one contest made from a template covering its series, a majors pool's major (#1318). */
-  ADD_RELEASED_EDITION_TO_CONTEST: 'ADD_RELEASED_EDITION_TO_CONTEST',
   /** Syncs one sport league's events from the provider that creates them, for one or more years (#1819). */
   SYNC_LEAGUE_EVENTS: 'SYNC_LEAGUE_EVENTS',
   /** Tries one synced DRAFT event's automatic release: every ready check passing releases it, any failing holds it (#1823). */

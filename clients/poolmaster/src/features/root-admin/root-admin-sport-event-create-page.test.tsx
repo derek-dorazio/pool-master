@@ -136,6 +136,16 @@ describe('RootAdminSportEventCreatePage', () => {
     expect(listSportLeagueSeasonsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'league-1' } }));
   });
 
+  it('reads the test slots of the tour picked from the list, not the one the URL named', async () => {
+    renderPage();
+    await slotOptions();
+
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-tour'), { target: { value: 'league-2' } });
+
+    await waitFor(() => expect(listSportLeagueSeasonsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'league-2' } })));
+    expect(screen.getByTestId('root-admin-sport-event-create-tour')).toHaveValue('league-2');
+  });
+
   it('offers exactly the slots the API says take a test event, and none it says do not', () => {
     expect(testEventSlotsOf(SEASONS).map((each) => each.id)).toEqual(['free']);
     expect(testEventSlotsOf([season('old', false, [slot('a', { takesTestEvent: false })])])).toEqual([]);
@@ -187,18 +197,6 @@ describe('RootAdminSportEventCreatePage', () => {
     fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
 
     expect(await screen.findByText('That slot already has an event.')).toBeInTheDocument();
-  });
-
-  it('shows a second edition of a series in one Season as its own refusal', async () => {
-    createEventMock.mockResolvedValue({ error: { error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'exists' } }, response: { status: 409 } });
-    renderPage();
-    await slotOptions();
-
-    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-slot'), { target: { value: 'free' } });
-    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-name'), { target: { value: 'The Masters' } });
-    fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
-
-    expect(await screen.findByText('This tour already has this tournament in its current Season.')).toBeInTheDocument();
   });
 
   it('adds a test slot of one of the tour\'s slot definitions to its current Season, then picks it once the Season lists it', async () => {

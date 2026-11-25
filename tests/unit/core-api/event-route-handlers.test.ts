@@ -34,7 +34,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     status: 'SCHEDULED',
     startDate: new Date('2999-04-09T12:00:00.000Z'),
     participantCount: 88,
-    eventSeriesId: 'series-1',
+    slotDefinitions: [],
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'pga',

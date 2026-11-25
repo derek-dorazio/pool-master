@@ -46,10 +46,11 @@ afterEach(async () => {
 /** A contest template of the event's sport league, which contests on it are set up from. */
 async function templateFor(sportEventId: string) {
   const prisma = getPrisma();
-  const event = await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { eventSeries: { select: { sportLeagueId: true } } } });
+  const event = await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { sportLeagueId: true } });
   const template = await prisma.contestConfigTemplate.create({
     data: {
-      sportLeagueId: event.eventSeries.sportLeagueId,
+      sportLeagueId: event.sportLeagueId,
+      coverageMode: 'ONE_SLOT',
       contestFormat: 'ROSTER',
       selectionType: SelectionType.TIERED,
       templateKey: `pick-6-${randomUUID().slice(0, 8)}`,

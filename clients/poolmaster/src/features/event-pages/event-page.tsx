@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Navigate, useParams } from 'react-router';
-import { EventPageOfferState, getSportDefinition, isUrlSegment } from '@poolmaster/shared/domain';
+import { EventPageOfferState, isUrlSegment } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -58,14 +58,14 @@ function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: 
 function EventPageContent({ page }: { page: EventPageDto }) {
   const displayPreferences = useDisplayPreferences();
   const copy = eventPageCopy(page);
-  const sportName = getSportDefinition(page.sport).name;
+  const sportName = page.sportName;
   const primary = page.offers.find((offer) => offer.isPrimary);
   const plansQuery = useLeaguePlansQuery();
   const gift = plansQuery.data ? previewOffer(plansQuery.data, displayPreferences.locale) : null;
   const sportPagesQuery = useEventPagesQuery(page.sport, { upcoming: true });
   // poolmaster-allow-list-lookup: the sport's few upcoming event pages, shown as what comes next
   const nextUp = withPrimaryOffer((sportPagesQuery.data ?? []).filter((other) => other.id !== page.id))
-    .find(({ primary: other }) => primary === undefined || other.edition.startDate > primary.edition.startDate);
+    .find(({ primary: other }) => primary === undefined || other.nextSlot.startDate > primary.nextSlot.startDate);
   const startRequest: StartRequest = { sportUrlSegment: page.sportUrlSegment, urlSegment: page.urlSegment, templateId: primary?.template.id ?? null };
   const hero = useRef<HTMLDivElement>(null);
 
@@ -78,7 +78,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
         <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
         {primary ? (
           <div className="flex flex-wrap gap-2" data-testid="event-page-when">
-            <Chip>{formatDateDisplay(primary.edition.startDate, displayPreferences)}</Chip>
+            <Chip>{formatDateDisplay(primary.nextSlot.startDate, displayPreferences)}</Chip>
             <Chip>{copy.picksClose}</Chip>
           </div>
         ) : (

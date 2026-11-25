@@ -6,7 +6,6 @@
 
 import type { BackgroundJobRequest, BackgroundJobType } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import type { ReleasedEditionContests } from '../contest-management/released-edition-contests';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import type { DomainEventOf, DomainEventType } from './domain-event';
 
@@ -16,8 +15,6 @@ import type { DomainEventOf, DomainEventType } from './domain-event';
  */
 export interface DomainEventHandlerContext {
   queue: Pick<BackgroundJobQueue, 'request'>;
-  /** The template contests a released edition joins (#714, #1318). */
-  releasedEditionContests: ReleasedEditionContests;
   /** The contests told an event was postponed or moved (#1458, #1464). */
   sportEventChanged: Pick<SportEventChangedNotice, 'sportEventChangedJobs'>;
 }

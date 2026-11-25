@@ -52,7 +52,7 @@ async function golfEvent() {
     update: {},
   });
   const edition = await freshEventEdition(prisma);
-  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
+  const { sportLeagueId } = edition;
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,

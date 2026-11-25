@@ -504,8 +504,8 @@ describe('Championships › Trophy case', () => {
     const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
-      eventSeriesId: '11111111-1111-4111-8111-111111111111',
-      seriesName: 'Super Bowl',
+      trophyId: '11111111-1111-4111-8111-111111111111',
+      name: 'Super Bowl',
       sportLeagueName: 'NFL',
       selectionType: 'SQUARES',
       plates: [
@@ -527,9 +527,9 @@ describe('Championships › Trophy case', () => {
 
   it('tells apart the men\'s and women\'s trophies of a shared series by their sports league', async () => {
     primeViewer([buildRunningCup()]);
-    const draw = (eventSeriesId: string, sportLeagueName: string) => ({
-      eventSeriesId,
-      seriesName: 'US Open',
+    const draw = (trophyId: string, sportLeagueName: string) => ({
+      trophyId,
+      name: 'US Open',
       sportLeagueName,
       selectionType: 'BRACKET',
       plates: [{ year: 2026, contestId: `${sportLeagueName}-2026`, winners: [] }, { year: 2025, contestId: `${sportLeagueName}-2025`, winners: [] }],
@@ -548,8 +548,8 @@ describe('Championships › Trophy case', () => {
   it('shows the perpetual trophies even in a year with no cup on show', async () => {
     primeViewer([NBA_CUP]);
     listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
-      eventSeriesId: '11111111-1111-4111-8111-111111111111',
-      seriesName: 'Masters Tournament',
+      trophyId: '11111111-1111-4111-8111-111111111111',
+      name: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: 'TIERED',
       plates: [{ year: 2025, contestId: 'masters-2025', winners: [] }, { year: 2024, contestId: 'masters-2024', winners: [] }],

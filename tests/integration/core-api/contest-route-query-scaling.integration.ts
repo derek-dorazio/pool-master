@@ -292,10 +292,11 @@ async function seedFinishedYears(years: number) {
 async function seedTemplates(templates: number) {
   const prisma = getPrisma();
   const { event } = await seedEventWithField(0, { ownSportLeague: true });
-  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+  const { sportLeagueId } = event;
   await prisma.contestConfigTemplate.createMany({
     data: Array.from({ length: templates }, (_, index) => ({
       sportLeagueId,
+      coverageMode: 'ONE_SLOT' as const,
       contestFormat: 'ROSTER' as const,
       selectionType: SelectionType.TIERED,
       templateKey: `${SCALING_TEMPLATE_KEY}-${String(index)}`,

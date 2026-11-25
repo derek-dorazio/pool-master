@@ -1,4 +1,4 @@
-import { sportPlay } from '@/test/sport-play';
+import { sportFacts, sportPlay } from '@/test/sport-play';
 import type {
   ParticipantDto,
   PlatformPricingProfileDto,
@@ -64,8 +64,8 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
       { selectionType: 'RANDOM_DRAW', opening: 'NOT_YET', startsAtRounds: [] },
     ],
     tiersLocked: false,
-    eventSeriesId: 'event-series-1',
     sportLeagueSeasonId: 'season-2026',
+    slotDefinitionIds: [],
     championshipYear: 2026,
     sportLeagueId: 'league-1',
     ...sportPlay(overrides.sport ?? 'GOLF'),
@@ -367,6 +367,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     noun: null,
     displayName: null,
     ...sportPlay(overrides.sport ?? 'GOLF'),
+    ...sportFacts(overrides.sport ?? 'GOLF'),
     displayOrder: null,
     currentSeasonId: 'season-2026',
     timeZone: 'America/New_York',

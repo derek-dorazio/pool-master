@@ -1621,9 +1621,6 @@ describe('Contract verification (root admin)', () => {
           where: { participantId: { in: created.participantIds } },
         });
       }
-      if (created.sportLeagueId) {
-        await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
-      }
       if (created.participantIds.length) {
         await prisma.participant.deleteMany({ where: { id: { in: created.participantIds } } });
       }
@@ -1690,7 +1687,7 @@ describe('Contract verification (root admin)', () => {
       expect(ProviderSyncRunDetailDtoSchema.parse(runRes.json())).toMatchObject({
         kind: 'EVENTS', trigger: 'ADMIN', sportLeagueId: synced.id, backgroundJobId: queued.id, status: 'COMPLETED',
       });
-      expect(await prisma.sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id }, sportLeagueSeasonId: seasonId } })).toBe(2);
+      expect(await prisma.sportEvent.count({ where: { sportLeagueId: synced.id, sportLeagueSeasonId: seasonId } })).toBe(2);
 
       const refusedRes = await app.inject({
         method: 'POST',
@@ -1701,12 +1698,11 @@ describe('Contract verification (root admin)', () => {
       expect(refusedRes.statusCode).toBe(422);
       expect(ErrorEnvelopeSchema.parse(refusedRes.json()).error.code).toBe('SPORT_LEAGUE_NOT_SYNCED');
     } finally {
-      const eventIds = (await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: { in: [synced.id, unsynced.id] } } }, select: { id: true } }))
+      const eventIds = (await prisma.sportEvent.findMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } }, select: { id: true } }))
         .map((event) => event.id);
       await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
       await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
       await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-      await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } } });
       await deleteTestSportLeagues(prisma, [synced.id, unsynced.id]);
       await app.close();
     }

@@ -78,7 +78,6 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     endDate: '2026-07-19T20:00:00.000Z',
     status: 'DRAFT',
     rounds: 4,
-    eventSeriesId: 'event-series-1',
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'league-1',

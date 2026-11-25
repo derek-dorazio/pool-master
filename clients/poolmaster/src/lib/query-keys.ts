@@ -1,4 +1,3 @@
-import type { ContestTemplateEventType } from '@poolmaster/shared/domain';
 import type { GamePickPreviewRequest, RosterPickPreviewRequest } from '@poolmaster/shared/dto';
 
 type QueryKeyId = string | null | undefined;
@@ -76,7 +75,7 @@ export const QueryKeys = {
    */
   contestConfigTemplates: {
     all: ['poolmaster', 'contest-config-templates'] as const,
-    list: (filters: { sport?: QueryKeyId; sportLeagueId?: QueryKeyId; eventType?: ContestTemplateEventType; active?: boolean }) =>
+    list: (filters: { sportLeagueId?: QueryKeyId; slotDefinitionIds?: readonly QueryKeyId[]; active?: boolean }) =>
       ['poolmaster', 'contest-config-templates', filters] as const,
   },
   contestEntries: {

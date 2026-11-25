@@ -37,7 +37,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
   const logger = useMemo(() => getLogger().child({ feature: 'start-page' }), []);
   const contestsQuery = useLeagueContestsQuery(offer ? league.id : '');
   const cap = league.planEntitlements.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
-  const year = offer?.edition.championshipYear ?? 0;
+  const year = offer?.nextSlot.championshipYear ?? 0;
   const isCapCounted = offer !== null && cap !== null;
   const usedQuery = useQuery({ ...sportLeaguesUsedQuery(league.id, year), enabled: isCapCounted });
   const isChecking = (offer !== null && contestsQuery.isPending) || (isCapCounted && usedQuery.isPending);
@@ -53,7 +53,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
   const existing = offer
     // poolmaster-allow-list-lookup: the league's current contests (#1161), checked for one already made
     ? (contestsQuery.data ?? []).find((contest) => contest.selectionType === offer.template.selectionType
-      && contest.sportEvents.some((event) => event.sportEventId === offer.edition.sportEventId))
+      && contest.sportEvents.some((event) => event.sportEventId === offer.nextSlot.sportEventId))
     : undefined;
   const used = usedQuery.data?.sportLeagueIds;
   const isCapped = offer !== null && cap !== null && used !== undefined && used.length >= cap && !used.includes(offer.sportLeagueId);

@@ -1,6 +1,7 @@
 /**
- * Perpetual trophies (#874, plan §12): one per contest a league runs again every year, the same
- * event series and the same way of picking, with a plate per year's winners. Pure functions over
+ * Perpetual trophies (#874, plan §12): one per contest a league runs again every year, on the same
+ * slot definitions and the same way of picking (#2010; by template from #2024), with a plate per
+ * year's winners. Pure functions over
  * the league's one-event contests and its finishes, worked out on read and never stored.
  */
 
@@ -18,8 +19,10 @@ export interface PerpetualPlate {
 }
 
 export interface PerpetualTrophy {
-  eventSeriesId: string;
-  seriesName: string;
+  /** Until #2024: the first slot definition, in play order, of the slots its contests cover. */
+  trophyId: string;
+  /** What it is run on: its first slot's proper name, else its newest run's event name. */
+  name: string;
   sportLeagueName: string;
   selectionType: SelectionType;
   /** Newest year first; a year it didn't run has no plate. */
@@ -28,7 +31,7 @@ export interface PerpetualTrophy {
 
 /**
  * Whether an event is a week of games rather than one big event (an NFL regular-season week, a
- * group matchday): several games, one round, none sending its winner on. Its series recurs every
+ * group matchday): several games, one round, none sending its winner on. Its slots recur every
  * year, but a contest on it is a weekly slate, not a tradition, so it earns no trophy. A single
  * game (a Super Bowl), a bracket and an event without games (a golf tournament, a race) do.
  */
@@ -38,7 +41,7 @@ export function isWeekOfGames(games: SeriesContest['games']): boolean {
 }
 
 /**
- * The league's perpetual trophies, in sports league, series and selection type order. Contests
+ * The league's perpetual trophies, in sports league, name and selection type order. Contests
  * not counted are left out, as everywhere; a contest that went final with nobody placed is a
  * plate with no winner.
  */
@@ -49,25 +52,27 @@ export function buildPerpetualTrophies(contests: readonly SeriesContest[], finis
   }
   const byTrophy = new Map<string, SeriesContest[]>();
   for (const contest of contests) {
-    if (contest.cupWeight === CupWeight.NOT_COUNTED || isWeekOfGames(contest.games)) continue;
-    const key = `${contest.eventSeriesId}:${contest.selectionType}`;
+    // An event with no Season slot is no contest run again: there is nothing to key it by.
+    if (contest.cupWeight === CupWeight.NOT_COUNTED || isWeekOfGames(contest.games) || contest.slotDefinitionIds.length === 0) continue;
+    // A map key only, never read back: the definitions the event covers and the way of picking.
+    const key = JSON.stringify([[...contest.slotDefinitionIds].sort(), contest.selectionType]);
     byTrophy.set(key, [...(byTrophy.get(key) ?? []), contest]);
   }
   return [...byTrophy.values()]
     .filter((runs) => new Set(runs.map((contest) => contest.championshipYear)).size >= PERPETUAL_TROPHY_MIN_YEARS)
     .map((runs): PerpetualTrophy => {
-      const [first] = runs as [SeriesContest, ...SeriesContest[]];
+      const newestFirst = [...runs]
+        .sort((left, right) => right.championshipYear - left.championshipYear || (right.completedAt?.getTime() ?? 0) - (left.completedAt?.getTime() ?? 0));
+      const [newest] = newestFirst as [SeriesContest, ...SeriesContest[]];
       return {
-        eventSeriesId: first.eventSeriesId,
-        seriesName: first.seriesName,
-        sportLeagueName: first.sportLeagueName,
-        selectionType: first.selectionType,
-        plates: [...runs]
-          .sort((left, right) => right.championshipYear - left.championshipYear || (right.completedAt?.getTime() ?? 0) - (left.completedAt?.getTime() ?? 0))
-          .map((contest) => ({ year: contest.championshipYear, contestId: contest.id, winnerSquadIds: winners.get(contest.id) ?? [] })),
+        trophyId: newest.slotDefinitionIds[0],
+        name: newest.slotName ?? newest.eventName,
+        sportLeagueName: newest.sportLeagueName,
+        selectionType: newest.selectionType,
+        plates: newestFirst.map((contest) => ({ year: contest.championshipYear, contestId: contest.id, winnerSquadIds: winners.get(contest.id) ?? [] })),
       };
     })
     .sort((left, right) => left.sportLeagueName.localeCompare(right.sportLeagueName)
-      || left.seriesName.localeCompare(right.seriesName)
+      || left.name.localeCompare(right.name)
       || left.selectionType.localeCompare(right.selectionType));
 }

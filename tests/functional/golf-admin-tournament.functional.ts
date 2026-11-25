@@ -13,7 +13,6 @@ import {
   getEvent,
   listEventParticipants,
   listEventRounds,
-  listEvents,
   listEventTiers,
   previewEventGolfRoundScores,
   previewEventParticipantUpload,
@@ -114,9 +113,6 @@ async function cleanup(): Promise<void> {
   if (created.participantIds.size) {
     const pids = [...created.participantIds];
     await db.participantProviderMapping.deleteMany({ where: { participantId: { in: pids } } });
-  }
-  if (leagueIds.length) {
-    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
@@ -441,44 +437,6 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const corrected = expectDefined(expectDefined(afterResettle.data).participants.find((row) => row.id === correctedId));
     expect(corrected.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
   }, 60_000);
-
-  // @@unique([eventSeriesId, sportLeagueSeasonId]): there is one edition of a series a Season.
-  // Driven through createEvent, so it proves the constraint reaches the caller as a 409 rather
-  // than a 500, and that the same series in another Season is still allowed.
-  it('BR-EVENT-EDITION-UNIQUE: refuses a second edition of a series in one Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
-    await ensureGolfSportRow();
-    const admin = await buildRegisteredUser({ displayName: 'Golf Admin Editions' });
-    created.userIds.add(admin.userId);
-    await promoteToRootAdmin(admin);
-    const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueCreateBody(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Editions Tour ${RUN}` } });
-    const sportLeagueId = expectDefined(league.data).sportLeague.id;
-    created.sportLeagueIds.add(sportLeagueId);
-    // A new event goes in the league's current Season, so each edition first makes its year's current.
-    const edition = async (championshipYear: number) => createTestEvent({
-      client: c,
-      body: {
-        sportLeagueId,
-        championshipYear,
-        name: `The ${RUN} Masters`,
-        startDate: `${championshipYear}-04-09T12:00:00.000Z`,
-      },
-    });
-
-    const first = await edition(2026);
-    expect(first.response?.status).toBe(201);
-    created.sportEventIds.add(expectDefined(first.data).event.id);
-
-    expectFunctionalError(await edition(2026), { status: 409, code: 'EVENT_EDITION_ALREADY_EXISTS' });
-
-    const nextYear = await edition(2027);
-    expect(nextYear.response?.status).toBe(201);
-    created.sportEventIds.add(expectDefined(nextYear.data).event.id);
-    expect(expectDefined(nextYear.data).event.eventSeriesId).toBe(expectDefined(first.data).event.eventSeriesId);
-
-    const editions = await listEvents({ client: c, query: { sportLeagueId } });
-    expect(expectDefined(editions.data).events.map((event) => event.championshipYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
-  });
 
   it('BR-GOLF-ADMIN-AUTHZ: every golf administration write rejects a non-root-admin caller with 403, before validating its input', async () => {
     const member = await buildRegisteredUser({ displayName: 'Golf Non Admin' });

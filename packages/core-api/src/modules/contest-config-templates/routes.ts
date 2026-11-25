@@ -47,7 +47,7 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance, opts: Con
       tags: ['Contest Config Templates'],
       summary: 'List contest configuration templates',
       description:
-        'The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport\'s active templates, narrowed to the chosen event\'s sport league (every template is one league\'s) and kind of event.',
+        'The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for the chosen event\'s sport league\'s active templates (every template is one league\'s) covering one of the event\'s slot definitions.',
       operationId: 'listContestConfigTemplates',
       querystring: schemaRef('ListContestConfigTemplatesQuery'),
       response: {
@@ -63,7 +63,7 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance, opts: Con
       tags: ['Contest Config Templates'],
       summary: 'Update a contest configuration template',
       description:
-        'Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template\'s own selection type\'s rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise).',
+        'Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template\'s own selection type\'s rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league\'s (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT) and fit its coverage: ALL_LISTED lists one event\'s slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.',
       operationId: 'updateContestConfigTemplate',
       body: schemaRef('UpdateContestConfigTemplateRequest'),
       response: {

@@ -20,7 +20,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { SelectionPickResponseSchema } from '@poolmaster/shared/dto';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
 import { sportRowKeys } from '../support/sport-rows';
@@ -111,7 +111,6 @@ async function cleanupDraftArtifacts(): Promise<void> {
         },
       },
     });
-    await cleanupFreshEventEditions(prisma);
     createdSportEventIds.length = 0;
   }
 

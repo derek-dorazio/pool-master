@@ -115,8 +115,8 @@ function toRecordStandDto(view: RecordStandView): RecordStandDto {
 
 export function toPerpetualTrophyDto(view: PerpetualTrophyView): PerpetualTrophyDto {
   return {
-    eventSeriesId: view.eventSeriesId,
-    seriesName: view.seriesName,
+    trophyId: view.trophyId,
+    name: view.name,
     sportLeagueName: view.sportLeagueName,
     selectionType: view.selectionType,
     plates: view.plates.map((plate) => ({

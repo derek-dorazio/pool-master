@@ -3,7 +3,7 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestEntryPick,
-  ContestTemplateEventType,
+  ContestTemplateSlot,
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
   ParticipantInactiveReason,
@@ -25,20 +25,22 @@ export interface ContestConfigurationRepository {
 export interface ContestConfigTemplateRepository {
   findById(id: string): Promise<ContestConfigTemplate | null>;
   /**
-   * Ordered by sport, format, sort order, name. `eventType` narrows to that type's templates
-   * plus the ones for any event type; `sportLeagueId` narrows to that league's own templates
-   * (never another league's); every filter is optional.
+   * Ordered by sport league, format, sort order, name. `slotDefinitionIds` narrows to the
+   * templates covering one of those slot definitions (#2010); `sportLeagueId` narrows to that
+   * league's own templates (never another league's); every filter is optional.
    */
   list(input?: {
-    sport?: ContestConfigTemplate['sport'];
     sportLeagueId?: string;
-    eventType?: ContestTemplateEventType | null;
+    slotDefinitionIds?: readonly string[];
     active?: boolean;
   }): Promise<ContestConfigTemplate[]>;
-  update(
-    id: string,
-    updates: Partial<ContestConfigTemplate>,
-  ): Promise<ContestConfigTemplate>;
+  /**
+   * Updates the template in one transaction. `slotDefinitionIds` replaces the slots it covers;
+   * `isDefault: true` first unsets the default of its sport league and selection type (#2010).
+   */
+  update(id: string, updates: ContestConfigTemplateUpdate): Promise<ContestConfigTemplate>;
+  /** The sport league's slot definitions with these ids, as a template lists them (#2010); another league's are left out. */
+  findSlotDefinitions(sportLeagueId: string, ids: readonly string[]): Promise<ContestTemplateSlot[]>;
 }
 
 export interface ParticipantContestScoringRuleRepository {
@@ -215,4 +217,17 @@ export interface ContestEntryEventStandingRepository {
    * (the event's leaderboard rebuild, #1973) are written in the same transaction, rows changed or not.
    */
   upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[], jobs: readonly BackgroundJobRequest[]): Promise<void>;
+}
+
+/** A template edit (#2010): undefined leaves a field alone. */
+export interface ContestConfigTemplateUpdate {
+  name?: string;
+  description?: string;
+  sortOrder?: number;
+  isDefault?: boolean;
+  active?: boolean;
+  configJson?: ContestConfigTemplate['configJson'];
+  coverageMode?: ContestConfigTemplate['coverageMode'];
+  /** The slot definitions the template covers from now on, replacing its list. */
+  slotDefinitionIds?: readonly string[];
 }

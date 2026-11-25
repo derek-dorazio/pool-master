@@ -1,6 +1,6 @@
 /**
  * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
- * Sport, SportLeague, SportEvent, EventSeries,
+ * Sport, SportLeague, SportEvent,
  * SportEventRound, SportEventParticipant, SportEventTier,
  * and SportEventParticipantValuation.
  *
@@ -12,7 +12,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
-  EventSeriesRepository,
   PriceAssignment,
   SportEventCreate,
   SportEventFilters,
@@ -50,7 +49,6 @@ import type {
   BackgroundJobRequest,
   EventPricingConfig,
   EventTierConfig,
-  EventSeries,
   MatchStatus,
   ParticipantRoundStatus,
   RoundResultFacts,
@@ -67,7 +65,7 @@ import type {
   SportLeagueSeasonSlot,
   SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
-import { compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -247,25 +245,22 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   async deleteUnlessUsed(id: string): Promise<SportLeagueUses | null> {
     return forgettingReads(ReadMemoKey.sportLeague, () => this.prisma.$transaction(async (tx) => {
       // FOR UPDATE conflicts with the FOR KEY SHARE a child insert takes on the row it references:
-      // a cup, setup or offer (on the sport league) or an event (on its series) made meanwhile
+      // a cup, setup, offer or event (each on the sport league) made meanwhile
       // either committed first and is counted below, or waits and then fails once the rows are gone.
       // A cup would otherwise go silently, by its cascade.
       // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "sport_leagues" WHERE id = ${id}::uuid FOR UPDATE`;
       if (locked.length === 0) return null;
-      // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
-      await tx.$queryRaw`SELECT id FROM "event_series" WHERE sport_league_id = ${id}::uuid ORDER BY id FOR UPDATE`;
       // Each use is counted where its sport league is: a relation `_count` would group every row of
       // the child table and join the groups back, reading the whole sport event catalog.
       const uses: SportLeagueUses = {
-        sportEventCount: await tx.sportEvent.count({ where: { sportLeagueSeason: { sportLeagueId: id } } }),
+        sportEventCount: await tx.sportEvent.count({ where: { sportLeagueId: id } }),
         contestTemplateCount: await tx.contestConfigTemplate.count({ where: { sportLeagueId: id } }),
         eventPageOfferCount: await tx.eventPageOffer.count({ where: { sportLeagueId: id } }),
         cupCount: await tx.cup.count({ where: { sportLeagueId: id } }),
         participantCount: await tx.participant.count({ where: { sportLeagueId: id } }),
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
-      await tx.eventSeries.deleteMany({ where: { sportLeagueId: id } });
       // A Season's phases restrict their phase definition's delete, and its slots their slot
       // definition's, so the league's cascade cannot take them: they go first, slots before phases.
       await tx.sportLeagueSeasonPhaseSlot.deleteMany({ where: { sportLeagueId: id } });
@@ -356,7 +351,9 @@ export class PrismaSportEventRepository implements SportEventRepository {
           },
         }),
         ...(filters.sportLeagueSeasonId !== undefined && { sportLeagueSeasonId: filters.sportLeagueSeasonId }),
-        ...(filters.eventSeriesId !== undefined && { eventSeriesId: filters.eventSeriesId }),
+        ...(filters.slotDefinitionIds !== undefined && {
+          slots: { some: { seasonSlot: { sportLeaguePhaseSlotId: { in: [...filters.slotDefinitionIds] } } } },
+        }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
         ...(filters.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
         ...((filters.startsFrom !== undefined || filters.startsBefore !== undefined) && {
@@ -386,7 +383,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
           status: input.status,
           rounds: input.rounds ?? null,
           roundsPar: input.roundsPar ?? null,
-          eventSeriesId: input.eventSeriesId,
+          sportLeagueId: input.sportLeagueId,
           sportLeagueSeasonId: input.sportLeagueSeasonId,
           autoLifecycleEnabled: input.autoLifecycleEnabled,
         })),
@@ -783,27 +780,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
       include: SPORT_EVENT_INCLUDE,
     });
     return rows.map(toSportEvent);
-  }
-}
-
-export class PrismaEventSeriesRepository implements EventSeriesRepository {
-  constructor(private readonly prisma: Db) {}
-
-  async findOrCreateMany(sportLeagueId: string, names: readonly string[]): Promise<EventSeries[]> {
-    if (names.length === 0) return [];
-    await this.prisma.eventSeries.createMany({
-      data: names.map((name) => ({ sportLeagueId, name })),
-      skipDuplicates: true,
-    });
-    const rows = await this.prisma.eventSeries.findMany({ where: { sportLeagueId, name: { in: [...names] } } });
-    return rows.map((row) => ({
-      id: row.id,
-      sportLeagueId: row.sportLeagueId,
-      name: row.name,
-      isActive: row.isActive,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
   }
 }
 
@@ -1333,7 +1309,6 @@ const SPORT_EVENT_INCLUDE = {
   sportLeagueSeason: {
     select: {
       championshipYear: true,
-      sportLeagueId: true,
       sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, ...SPORT_LEAGUE_SPORT_SELECT, ...SYNC_PROVIDER_SELECT } },
     },
   },
@@ -1341,6 +1316,8 @@ const SPORT_EVENT_INCLUDE = {
     select: { externalId: true, provider: { select: { code: true, name: true } } },
     orderBy: { provider: { name: 'asc' } },
   },
+  // The slot definitions it covers (#2010): where contest templates are offered on it.
+  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, phase: { select: { phase: true } } } } } } } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1360,10 +1337,13 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     rounds: row.rounds ?? undefined,
     roundsPar: row.roundsPar ?? undefined,
     participantCount: row.participantCount ?? undefined,
-    eventSeriesId: row.eventSeriesId,
+    slotDefinitions: row.slots
+      .map(({ seasonSlot: { definition } }) => ({ ...definition, phase: definition.phase.phase }))
+      .sort(compareCoveredSlots)
+      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind })),
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
-    sportLeagueId: row.sportLeagueSeason.sportLeagueId,
+    sportLeagueId: row.sportLeagueId,
     ...(row.sportLeagueSeason.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.sportLeagueSeason.sportLeague.matchPeriodLayout }),
     ...(row.sportLeagueSeason.sportLeague.squaresFromRound !== null && { squaresFromRound: row.sportLeagueSeason.sportLeague.squaresFromRound }),
     participantType: row.sportLeagueSeason.sportLeague.participantType,

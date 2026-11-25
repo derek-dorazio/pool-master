@@ -51,7 +51,8 @@ export interface EventPageOffer {
   sportLeagueId: string;
   /** The sport league as screens away from its sport's own pages name it. */
   sportLeagueName: string;
-  eventSeriesName: string;
+  /** The slot definition it runs on (#2010): shown with the next Season slot of it not yet over. */
+  sportLeaguePhaseSlotId: string;
   template: ContestConfigTemplate;
   /** The round a bracket starts at, when not the template's own; null otherwise. */
   bracketStartRound: number | null;
@@ -59,8 +60,12 @@ export interface EventPageOffer {
   isPrimary: boolean;
 }
 
-/** An edition an offer may be shown with: one of its series' editions not yet over. */
-export interface EventPageEdition {
+/**
+ * A Season slot an offer may be shown with (#2010): one of its slot definition's Season slots not
+ * yet over, with the event that owns it.
+ */
+export interface EventPageNextSlot {
+  seasonSlotId: string;
   sportEventId: string;
   name: string;
   /** The year its Season is named for. */

@@ -17,7 +17,7 @@ import {
   updateContestEntry,
   updateUserEmailPreference,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ParticipantType, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ParticipantType, SelectionType } from '@poolmaster/shared/domain';
 import {
   buildLeagueWithCommissioner,
   buildRegisteredUser,
@@ -27,7 +27,7 @@ import {
 import { awaitSentMailTo, linksIn, sentMailTo, sentMailWithSubject } from './mail';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
-import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { freshEventEdition } from '../support/event-edition';
 import { seededSportLeagueId } from '../support/contest-setups';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
@@ -53,7 +53,6 @@ async function cleanupEventFixtures(): Promise<void> {
   await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: createdSportEventIds } } });
   await unlinkContestsFromSportEvents(prisma, createdSportEventIds);
   await prisma.sportEvent.deleteMany({ where: { id: { in: createdSportEventIds } } });
-  await cleanupFreshEventEditions(prisma);
   await prisma.participant.deleteMany({ where: { id: { in: createdParticipantIds } } });
   createdSportEventParticipantIds.length = 0;
   createdSportEventIds.length = 0;
@@ -158,7 +157,7 @@ async function enteredContest() {
   const event = await seedScheduledGolfEvent(`Email Open ${randomUUID().slice(0, 6)}`);
   const templates = await listContestConfigTemplates({
     client: commissioner.client,
-    query: { sport: Sport.GOLF, sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'), active: true },
+    query: { sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'), active: true },
   });
   const template = templates.data?.templates.find((candidate) => candidate.contestFormat === ContestFormat.ROSTER && candidate.isDefault);
   expect(template).toBeDefined();

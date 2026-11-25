@@ -1,11 +1,11 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
-  ContestTemplateEventType,
   MatchEnding,
   ProviderSyncKind,
   RaceResultChange,
   RaceResultRowError,
   SportEventReleaseMode,
+  TemplateCoverageMode,
 } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import { syncFailedText } from './sport-league-overview-text';
@@ -16,11 +16,10 @@ import { syncFailedText } from './sport-league-overview-text';
  * screens kept their words when their own maps were deleted.
  */
 describe('root admin words come from the display strings', () => {
-  it('a contest template dialog names the event type in full, while a tile asks for the short form', () => {
-    expect(enumLabel('ContestTemplateEventType', ContestTemplateEventType.KNOCKOUT)).toBe('Playoffs and brackets');
-    expect(enumLabel('ContestTemplateEventType', ContestTemplateEventType.WEEK)).toBe('A week of games');
-    expect(enumLabel('ContestTemplateEventType', ContestTemplateEventType.KNOCKOUT, { form: 'short' })).toBe('Playoffs');
-    expect(enumLabel('ContestTemplateEventType', ContestTemplateEventType.WEEK, { form: 'short' })).toBe('Weekly');
+  it('a contest template dialog says how a template covers its slots in words, not codes', () => {
+    expect(enumLabel('TemplateCoverageMode', TemplateCoverageMode.ONE_SLOT)).toBe('One of these');
+    expect(enumLabel('TemplateCoverageMode', TemplateCoverageMode.ALL_LISTED)).toBe('All of these');
+    expect(enumLabel('TemplateCoverageMode', TemplateCoverageMode.FROM_SLOT)).toBe('From one of these on');
   });
 
   it('the release checks dialog spells out Automatic, and the Events grid column says Auto', () => {

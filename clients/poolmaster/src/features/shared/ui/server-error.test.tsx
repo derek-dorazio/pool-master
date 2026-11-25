@@ -29,13 +29,13 @@ describe("ServerErrorBar", () => {
 
     render(
       <ServerErrorBar
-        context="createEvent"
-        values={{ sportLeague: "tour", event: "tournament" }}
+        context="gamePicks"
+        values={{ match: "game" }}
         error={
           new ApiError({
             error: {
-              code: "EVENT_EDITION_ALREADY_EXISTS",
-              message: "Series sr-1 already has an edition in season s-1",
+              code: "PREDICTION_GAME_STARTED",
+              message: "Match m-1 is not in event e-1",
             },
           })
         }
@@ -45,8 +45,8 @@ describe("ServerErrorBar", () => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent("Sync failed");
-    expect(screen.getByText("This tour already has this tournament in its current Season.")).toBeInTheDocument();
-    expect(screen.queryByText("Series sr-1 already has an edition in season s-1")).not.toBeInTheDocument();
+    expect(screen.getByText("That game has started, so its pick is locked.")).toBeInTheDocument();
+    expect(screen.queryByText("Match m-1 is not in event e-1")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetry).toHaveBeenCalledTimes(1);

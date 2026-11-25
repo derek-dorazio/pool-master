@@ -497,13 +497,17 @@ administration area (root admin included), reusing the same shared components.
     `<Format>: <how you pick>, <how it scores>`, the format named as
     `formatSelectionTypeName` names it ("Tiered: 1 golfer per tier, best 4
     count", "Bracket: full bracket, doubling + upset bonus"), with digits, the
-    sport's own noun, under 60 characters and no full stop; a template covering
-    several events puts its scope after the format ("Tiered majors pool: …").
+    sport's own noun, under 60 characters and no full stop; a template whose
+    coverage is narrower than its format suggests puts its scope after the
+    format ("Survivor, playoffs: …").
     The description is one or two plain sentences of at most 220 characters,
     how an entry picks and then how it scores, with no setup words (template,
-    preset, config). Every sport league has exactly one default for each format
-    it can host on each kind of event it plays (`ContestTemplateEventType`:
-    a knockout, or a week of a season's games), so setup never starts blank; a
+    preset, config). A template lists the slots of its league's Season shape it
+    covers (`ContestConfigTemplateSlot`) and how a contest covers them
+    (`coverageMode`: one listed slot, all listed slots of one event, or every
+    listed slot from a chosen one on), and Create contest offers the templates
+    covering a slot the chosen event plays. Every sport league has exactly one
+    default for each format (selection type), so setup never starts blank; a
     variation is added only where there is something to vary (an upset bonus,
     a second-chance bracket), never for its own sake. A league starts on the
     format whose default sorts first. The seeded-template integration test
@@ -647,7 +651,7 @@ administration area (root admin included), reusing the same shared components.
 ## 13. Event Pages
 
 An event page (`/play/<sport URL segment>/<page URL segment>`) is the public page for one event a fan would name
-(Championship Weekend, the Super Bowl), whatever sport leagues and series run it. It is the
+(Championship Weekend, the Super Bowl), whatever sport leagues run it. It is the
 landing page that ads, emails and shared links point at.
 
 `/play/clutch-card` keeps its address (item 7) and shows as an inactive page linking to How to
@@ -656,10 +660,11 @@ Play until the Clutch Card returns as a contest type (#2054).
 1. **Hand-picked, not generated.** A page exists because someone chose it: its row and its
    offers are reference data in a migration (`rules/architecture-rules.md` §6 *Reference data
    goes in a migration*). Each offer is one contest setup (a template, found by its key in its
-   own sport league) on one series of that league, with an optional bracket starting round. One
-   offer is the primary, whose edition dates the page.
+   own sport league) on one slot of that league's Season shape (a slot definition), with an
+   optional bracket starting round. One offer is the primary, whose edition dates the page.
 2. **Each offer opens on its own.** An offer shows open, or "opens soon" with when, from Create
-   contest's own checks on the series' next edition; one with no edition left is left out. A
+   contest's own checks on the event that plays the definition's next Season slot not yet over;
+   one with no such slot left is left out. A
    page's words never claim an offer is open.
 3. **Words live in the web app.** A page's name, eyebrow, hook line, when picks close, the
    league named in its "not affiliated" footer, and each offer's card (contest type, one line,

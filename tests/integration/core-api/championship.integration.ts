@@ -13,7 +13,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { freshEventEdition } from '../../support/event-edition';
+import { fixtureTourSlotId, freshEventEdition, putEventInSlot } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -137,8 +137,8 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await contest('Last year', { endsAt: new Date('2026-01-01T04:59:59.000Z') });
     const undated = await contest('Undated');
     await contest('Live', { status: 'ACTIVE', endsAt: new Date('2026-06-01T00:00:00.000Z') });
-    const sportLeague = await getPrisma().eventSeries.findUniqueOrThrow({
-      where: { id: first.sportEvents[0]?.sportEvent.eventSeriesId ?? '' },
+    const sportLeague = await getPrisma().sportEvent.findUniqueOrThrow({
+      where: { id: expectDefined(first.sportEvents[0]).sportEventId },
       select: { sportLeague: { select: { name: true } } },
     });
 
@@ -172,9 +172,14 @@ describe('PrismaChampionshipRepository (#863)', () => {
     const slate = await round(weekEventId, 1);
     for (const matchNumber of [1, 2, 3]) await game(weekEventId, matchNumber, slate.id);
 
+    // The Masters plays the fixture tour's slot (#2010), so its contest is keyed by that definition.
+    const mastersEventId = expectDefined(masters.sportEvents[0]).sportEventId;
+    const definitionId = await fixtureTourSlotId(prisma);
+    await putEventInSlot(prisma, mastersEventId, definitionId);
+
     const contests = await repo.findSeriesContests(league.id);
 
-    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId }, select: { name: true, sportLeague: { select: { name: true } } } });
+    const event = await prisma.sportEvent.findUniqueOrThrow({ where: { id: mastersEventId }, select: { name: true, sportLeague: { select: { name: true } } } });
     const names = new Map([[masters.id, 'Masters'], [final.id, 'Final'], [week.id, 'Week']]);
     expect(contests.map((row) => ({ name: names.get(row.id) ?? '', row })).sort((left, right) => left.name.localeCompare(right.name))
       .map(({ name, row }) => [name, row.cupWeight, row.championshipYear, row.games])).toEqual([
@@ -183,9 +188,10 @@ describe('PrismaChampionshipRepository (#863)', () => {
       ['Week', CupWeight.NORMAL, 2026, { count: 3, roundCount: 1, sendingWinnerOn: 0 }],
     ]);
     expect(contests.find((row) => row.id === masters.id)).toMatchObject({
-      eventSeriesId: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId,
-      seriesName: series.name,
-      sportLeagueName: series.sportLeague.name,
+      slotDefinitionIds: [definitionId],
+      eventName: event.name,
+      slotName: null,
+      sportLeagueName: event.sportLeague.name,
       selectionType: SelectionType.TIERED,
     });
     await expect(repo.findSeriesContests(randomUUID())).resolves.toEqual([]);

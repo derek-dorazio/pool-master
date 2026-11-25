@@ -8,7 +8,6 @@
  * docs/BACKGROUND-JOBS.md is generated from it (`npm run docs:domain-events`).
  */
 
-import { releaseIntoTemplateContestsHandler } from '../contest-management/released-edition-job-requests';
 import {
   rebuildChangedResultsLeaderboardsHandler,
   rebuildContestLeaderboardsHandler,
@@ -37,7 +36,6 @@ export const DOMAIN_EVENT_HANDLERS = {
     activateEventContestsHandler,
     followPostponedEventContestsHandler,
     settleFinishedEventContestsHandler,
-    releaseIntoTemplateContestsHandler,
     tellLeaguesEventPostponedHandler,
     tellLeaguesEventCancelledHandler,
     rebuildEventLeaderboardsHandler,

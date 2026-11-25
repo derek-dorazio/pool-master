@@ -84,7 +84,6 @@
   "own:packages/core-api/src/modules/billing/contest-expansion-service.ts": 1,
   "own:packages/core-api/src/modules/client-logs/service.ts": 2,
   "own:packages/core-api/src/modules/contest-entry-picks/service.ts": 2,
-  "own:packages/core-api/src/modules/contest-management/service.ts": 1,
   "own:packages/core-api/src/modules/contest-management/wiring.ts": 1,
   "own:packages/core-api/src/modules/contests/abandoned-draft-retention.ts": 1,
   "own:packages/core-api/src/modules/contests/contest-leaderboard-reads.ts": 1,

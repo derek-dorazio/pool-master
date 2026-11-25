@@ -12,9 +12,9 @@ const XFL = '80300000-0000-4000-8000-000000000005';
 function template(templateKey: string, overrides: Partial<ContestConfigTemplateDto>): ContestConfigTemplateDto {
   return {
     id: `id-${templateKey}`,
-    sport: 'AMERICAN_FOOTBALL',
     sportLeagueId: NFL,
-    eventType: 'KNOCKOUT',
+    coverageMode: 'ALL_LISTED',
+    slots: [],
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     templateKey,
@@ -31,19 +31,19 @@ function template(templateKey: string, overrides: Partial<ContestConfigTemplateD
 
 /** Each golf tour's own copy of one setup (#1825): the same key and rules, a template id each. */
 function golfCopies(templateKey: string, overrides: Partial<ContestConfigTemplateDto>): ContestConfigTemplateDto[] {
-  return [PGA, LPGA].map((sportLeagueId) => template(templateKey, { id: `id-${templateKey}-${sportLeagueId}`, sport: 'GOLF', sportLeagueId, eventType: null, ...overrides }));
+  return [PGA, LPGA].map((sportLeagueId) => template(templateKey, { id: `id-${templateKey}-${sportLeagueId}`, sportLeagueId, ...overrides }));
 }
 
 const TEMPLATES = [
   template('nfl-tiered-doubling-upset-bonus', { sortOrder: 2 }),
   template('nfl-tiered-doubling', { isDefault: true }),
-  template('nfl-survivor', { eventType: 'WEEK', selectionType: 'SURVIVOR', isDefault: true, sortOrder: 4 }),
+  template('nfl-survivor', { selectionType: 'SURVIVOR', isDefault: true, sortOrder: 4 }),
   template('nfl-playoff-survivor', { selectionType: 'SURVIVOR', isDefault: true, sortOrder: 11 }),
-  template('nfl-squares', { eventType: null, selectionType: 'SQUARES', contestFormat: 'SQUARES', isDefault: true, sortOrder: 10 }),
+  template('nfl-squares', { selectionType: 'SQUARES', contestFormat: 'SQUARES', isDefault: true, sortOrder: 10 }),
   template('cfp-tiered-doubling', { sportLeagueId: CFP, isDefault: true }),
   ...golfCopies('golf-tiered-pick-6', { isDefault: true }),
   ...golfCopies('golf-budget-pick-6-best-4', { selectionType: 'BUDGET_PICK', isDefault: true, sortOrder: 3 }),
-  template('lpga-tour-majors-tiered', { sport: 'GOLF', sportLeagueId: LPGA, eventType: null, sortOrder: 5 }),
+  template('golf-tiered-top-four-tiers', { sportLeagueId: LPGA, sortOrder: 5 }),
 ];
 
 describe('the contest types catalog', () => {
@@ -69,7 +69,7 @@ describe('the contest types catalog', () => {
   it('lists in a league\'s section only its own templates, its default leading each format with the rest as variations', () => {
     const catalog = buildLeagueContestCatalog([
       ...TEMPLATES,
-      template('golf-tiered-pick-12', { sport: 'GOLF', sportLeagueId: PGA, eventType: null, sortOrder: 2 }),
+      template('golf-tiered-pick-12', { sportLeagueId: PGA, sortOrder: 2 }),
     ], LEAGUES);
     const golf = catalog.find(({ sport }) => sport === 'GOLF')?.groups;
 
@@ -79,7 +79,7 @@ describe('the contest types catalog', () => {
         ['golf-budget-pick-6-best-4', []],
       ]],
       ['LPGA Tour', [
-        ['golf-tiered-pick-6', ['lpga-tour-majors-tiered']],
+        ['golf-tiered-pick-6', ['golf-tiered-top-four-tiers']],
         ['golf-budget-pick-6-best-4', []],
       ]],
     ]);
@@ -87,8 +87,8 @@ describe('the contest types catalog', () => {
 
   it('gives a league with only formats every league of its sport plays a section of its own', () => {
     const catalog = buildLeagueContestCatalog([
-      template('horse-racing-tiered', { sport: 'HORSE_RACING', sportLeagueId: 'us-thoroughbred', eventType: null, isDefault: true }),
-      template('horse-racing-budget', { sport: 'HORSE_RACING', sportLeagueId: 'us-thoroughbred', eventType: null, selectionType: 'BUDGET_PICK', isDefault: true }),
+      template('horse-racing-tiered', { sportLeagueId: 'us-thoroughbred', isDefault: true }),
+      template('horse-racing-budget', { sportLeagueId: 'us-thoroughbred', selectionType: 'BUDGET_PICK', isDefault: true }),
     ], [sportLeagueFixture({ id: 'us-thoroughbred', sport: 'HORSE_RACING', name: 'US Thoroughbred', displayOrder: 10 })]);
 
     expect(catalog.map(({ sport, groups }) => [sport, groups.map(({ name, urlSegment, tiles }) => [name, urlSegment, tiles.length])])).toEqual([
@@ -96,14 +96,13 @@ describe('the contest types catalog', () => {
     ]);
   });
 
-  it('gives a league one tile per format and kind of event, in its sport\'s format order, each led by its default with the other templates of that format as variations', () => {
+  it('gives a league one tile per format, whatever slots its templates cover, in its sport\'s format order, each led by its default with the other templates of that format as variations', () => {
     const catalog = buildLeagueContestCatalog(TEMPLATES, LEAGUES);
     const nfl = catalog.find(({ sport }) => sport === 'AMERICAN_FOOTBALL')?.groups.find(({ name }) => name === 'NFL');
 
     expect(nfl?.tiles.map(({ featured, variations }) => [featured.templateKey, variations.map(({ templateKey }) => templateKey)])).toEqual([
       ['nfl-tiered-doubling', ['nfl-tiered-doubling-upset-bonus']],
-      ['nfl-survivor', []],
-      ['nfl-playoff-survivor', []],
+      ['nfl-survivor', ['nfl-playoff-survivor']],
       ['nfl-squares', []],
     ]);
   });
@@ -118,7 +117,7 @@ describe('the contest types catalog', () => {
   it('counts the contest types it lists for a sport, every league\'s tiles together', () => {
     const catalog = buildLeagueContestCatalog(TEMPLATES, LEAGUES);
 
-    expect(catalog.map(({ sport, groups }) => [sport, contestTypeCount(groups)])).toEqual([['AMERICAN_FOOTBALL', 5], ['GOLF', 4]]);
+    expect(catalog.map(({ sport, groups }) => [sport, contestTypeCount(groups)])).toEqual([['AMERICAN_FOOTBALL', 4], ['GOLF', 4]]);
   });
 
   it('gives the public page one tile per format for each sport, in the sports\' display order, in the sport\'s format order, led by a default, with no variations', () => {
@@ -133,7 +132,7 @@ describe('the contest types catalog', () => {
   it('lists the public page\'s sports in the display order the API gives them: the major team sports first and cycling and running last', () => {
     const sports = ['RUNNING', 'CYCLING', 'GOLF', 'BASEBALL', 'BASKETBALL', 'AMERICAN_FOOTBALL'] as const;
     const catalog = buildPublicContestCatalog(
-      sports.map((sport) => template(`${sport}-tiered`, { sport, sportLeagueId: `${sport}-league`, eventType: null })),
+      sports.map((sport) => template(`${sport}-tiered`, { sportLeagueId: `${sport}-league` })),
       sports.map((sport) => sportLeagueFixture({ id: `${sport}-league`, sport, name: `${sport} league` })),
     );
 
@@ -141,7 +140,7 @@ describe('the contest types catalog', () => {
   });
 
   it('lists a sport\'s leagues on the public page in their display order, the NFL before the College Football Playoff, with unordered leagues after them by name', () => {
-    const everyFootballLeague = [XFL, 'arena'].map((sportLeagueId) => template('football-pickem', { id: `pickem-${sportLeagueId}`, sportLeagueId, eventType: 'WEEK', selectionType: 'PICK_EM' }));
+    const everyFootballLeague = [XFL, 'arena'].map((sportLeagueId) => template('football-pickem', { id: `pickem-${sportLeagueId}`, sportLeagueId, selectionType: 'PICK_EM' }));
     const catalog = buildPublicContestCatalog([...TEMPLATES, ...everyFootballLeague], [
       sportLeagueFixture({ id: CFP, sport: 'AMERICAN_FOOTBALL', name: 'College Football Playoff', displayOrder: 20 }),
       sportLeagueFixture({ id: XFL, sport: 'AMERICAN_FOOTBALL', name: 'XFL', displayOrder: null }),
@@ -175,7 +174,7 @@ describe('the contest types catalog', () => {
   });
 
   it('leaves out of the public page a sport whose every league is switched off, so no empty sport chip shows', () => {
-    const cycling = template('cycling-tiered', { sport: 'CYCLING', sportLeagueId: 'uci', eventType: null });
+    const cycling = template('cycling-tiered', { sportLeagueId: 'uci' });
     const catalog = buildPublicContestCatalog([...TEMPLATES, cycling], [
       ...LEAGUES,
       sportLeagueFixture({ id: 'uci', sport: 'CYCLING', name: 'UCI WorldTour', isActive: false }),
@@ -186,8 +185,8 @@ describe('the contest types catalog', () => {
 
   it('builds a sport\'s format tiles on the public page from its active leagues\' setups, never a switched-off league\'s', () => {
     const catalog = buildPublicContestCatalog([
-      template('f1-budget', { sport: 'AUTO_RACING', sportLeagueId: 'f1', eventType: null, selectionType: 'BUDGET_PICK', isDefault: true }),
-      template('nascar-tiered', { sport: 'AUTO_RACING', sportLeagueId: 'nascar', eventType: null, isDefault: true }),
+      template('f1-budget', { sportLeagueId: 'f1', selectionType: 'BUDGET_PICK', isDefault: true }),
+      template('nascar-tiered', { sportLeagueId: 'nascar', isDefault: true }),
     ], [
       sportLeagueFixture({ id: 'f1', sport: 'AUTO_RACING', name: 'Formula 1' }),
       sportLeagueFixture({ id: 'nascar', sport: 'AUTO_RACING', name: 'NASCAR Cup Series', isActive: false }),

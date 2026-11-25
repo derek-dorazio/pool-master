@@ -5,7 +5,6 @@
  */
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type { DomainEvents } from '../domain-events';
-import { releasedEditionContests, type ReleasedEditionContests } from './released-edition-contests';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
@@ -68,14 +67,6 @@ export function createContestManagementService(
     contestOpened: options.contestOpened,
     domainEvents: options.domainEvents,
   });
-}
-
-/**
- * The template contests a released edition joins (#714, #1318), for the handler map: it only
- * reads, so the map is built from it before the contest services that collect from the map.
- */
-export function createReleasedEditionContests(prisma: PrismaClient, logger: FastifyBaseLogger): ReleasedEditionContests {
-  return releasedEditionContests({ contests: new PrismaContestRepository(prisma), logger });
 }
 
 /**

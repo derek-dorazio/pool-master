@@ -122,8 +122,9 @@ describe('HistoryService (#837)', () => {
         id: `masters-${year}`,
         selectionType: SelectionType.TIERED,
         cupWeight: CupWeight.NORMAL,
-        eventSeriesId: 'masters',
-        seriesName: 'Masters Tournament',
+        slotDefinitionIds: ['masters'],
+        eventName: 'Masters Tournament',
+        slotName: null,
         sportLeagueName: 'PGA Tour',
         championshipYear: year,
         completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
@@ -135,7 +136,7 @@ describe('HistoryService (#837)', () => {
 
     const trophies = await service.getPerpetualTrophies(LEAGUE);
 
-    expect(trophies.map((trophy) => [trophy.seriesName, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.name)])])).toEqual([
+    expect(trophies.map((trophy) => [trophy.name, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.name)])])).toEqual([
       ['Masters Tournament', [[2025, 'masters-2025', ['Birdies']], [2024, 'masters-2024', ['Bogeys', 'Eagles']]]],
     ]);
   });
@@ -148,8 +149,9 @@ describe('HistoryService (#837)', () => {
         id: `masters-${year}`,
         selectionType: SelectionType.TIERED,
         cupWeight: CupWeight.NORMAL,
-        eventSeriesId: 'masters',
-        seriesName: 'Masters Tournament',
+        slotDefinitionIds: ['masters'],
+        eventName: 'Masters Tournament',
+        slotName: null,
         sportLeagueName: 'PGA Tour',
         championshipYear: year,
         completedAt: new Date(`${year}-04-14T00:00:00.000Z`),

@@ -65,7 +65,6 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
   );
   const service = new SportEventService({
     sportEvents,
-    eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     seasons: seasons?.(store) ?? store.seasonRepo(),
@@ -154,7 +153,7 @@ describe('SportEventService.createEvent', () => {
     expect(created.tierCount).toBe(6);
   });
 
-  it('resolves the event to its sport league\'s series by name in the slot\'s Season, creating the series once', async () => {
+  it('puts each event in its sport league\'s current Season, the league\'s own, so a year later the same event goes in the new Season', async () => {
     const { store, service, sportLeague } = setup();
 
     const first = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
@@ -162,9 +161,8 @@ describe('SportEventService.createEvent', () => {
     sportLeague.currentSeasonId = 'season-2027';
     const second = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
 
-    expect(second.event.eventSeriesId).toBe(first.event.eventSeriesId);
-    expect(second.event.sportLeagueSeasonId).toBe('season-2027');
-    expect(store.eventSeriesRows).toHaveLength(1);
+    expect([first.event.sportLeagueId, second.event.sportLeagueId]).toEqual([sportLeague.id, sportLeague.id]);
+    expect([first.event.sportLeagueSeasonId, second.event.sportLeagueSeasonId]).toEqual([IN_MEMORY_SEASON_ID, 'season-2027']);
   });
 
   it('refuses a slot the sync keeps with 422 SEASON_SLOT_NOT_TEST, creating nothing', async () => {
@@ -215,17 +213,6 @@ describe('SportEventService.createEvent', () => {
 
     await expect(service.createEvent({ seasonSlotId: 'missing', name: MANUAL_INPUT.name }))
       .rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
-  });
-
-  // plans/147 decision 5 — one edition of a series per year. The store raises the database's
-  // unique violation; the service turns it into a 409 rather than a 500.
-  it('refuses a second edition of a series in one Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
-    const { store, service, sportLeague } = setup();
-    await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
-
-    await expect(service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name }))
-      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409, message: `"${MANUAL_INPUT.name}" already has an edition in this Season.` });
-    expect(store.events).toHaveLength(1);
   });
 });
 
@@ -296,18 +283,15 @@ describe('SportEventService.importProviderSeason', () => {
       .toEqual(slate.map(({ externalId }) => ({ externalId, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, rounds: 4 })));
   });
 
-  it('skips an event already linked to the provider event and a series that already has an edition that Season, creating only the rest', async () => {
+  it('skips an event already linked to the provider event, and creates one whose name a hand-made event of the Season shares, telling events apart by feed id, never by name', async () => {
     const { store, service, sportLeague } = setup();
     store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-a' } });
     await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
 
     const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: FEED, providerEvents: slate });
 
-    expect(result.created.map(({ event }) => feedIdOf(event))).toEqual(['pga-2026-b']);
-    expect(result.skipped).toEqual([
-      { externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'ALREADY_LINKED' },
-      { externalId: 'pga-2026-c', name: 'Harbour Open', reason: 'EDITION_EXISTS' },
-    ]);
+    expect(result.created.map(({ event }) => feedIdOf(event))).toEqual(['pga-2026-b', 'pga-2026-c']);
+    expect(result.skipped).toEqual([{ externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'ALREADY_LINKED' }]);
   });
 
   it('creates the provider\'s event beside a "Test- " event the test data loaded with its name and dates, and leaves the test event as it was (#1850)', async () => {

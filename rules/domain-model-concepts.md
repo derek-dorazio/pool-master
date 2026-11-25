@@ -13,7 +13,7 @@ Fields are
 
 ## 1. The Entity Chain
 
-> **Being replaced.** The sport half of this chain (`EventSeries`, `SportEvent` in a Season, `ContestSportEvent`, `SportEventRoundMatch` with home and away sides, a bracket's `startsAtRound`, `winnerSide` and the home/away shoot-out scores, squares on one match) describes today's schema. The target model, which new code is designed toward, is §5
+> **Being replaced.** The sport half of this chain (`SportEvent` in a Season, `ContestSportEvent`, `SportEventRoundMatch` with home and away sides, a bracket's `startsAtRound`, `winnerSide` and the home/away shoot-out scores, squares on one match) describes today's schema. The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
@@ -24,7 +24,7 @@ Pool side (one League's data)                Sport side (global, shared by every
 
 User                                         Sport                (golf)
  ├─→ LeagueMembership ─→ League               └─→ SportLeague      (a tour: PGA Tour)
- │     (role: COMMISSIONER | MEMBER)                └─→ EventSeries (The Masters, every year)
+ │     (role: COMMISSIONER | MEMBER)                └─→ SportLeagueSeason (2026)
  └─→ SquadMembership ─→ Squad                            └─→ SportEvent (the 2026 Masters)
        (an owner; one per user per league)                     ├─→ SportEventRound   (Round 1..4)
                           │                                    ├─→ SportEventTier    (Tier A..)
@@ -48,8 +48,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A pick points at a `SportEventParticipant`, not a `Participant`.** It picks a golfer *in
   this event's field* (a golfer, a horse, a team), with that event's rank, tier and status.
 - **A Contest belongs to one League and covers one or more SportEvents** (`ContestSportEvent`,
-  in `sequence` order, #713). A tournament pool covers one event; a golf majors pool covers each
-  major of a year, and an NFL pick'em one event per week. Every event of a contest comes from the same sport league. Many contests, in many
+  in `sequence` order, #713). A tournament pool covers one event, and an NFL pick'em one event per
+  week; a field pool never spans events (ADR 0014). Every event of a contest comes from the same sport league. Many contests, in many
   leagues, can run on the same event; they share its field, scores and tiers.
 - **Draft and submitted are per entry per event** (`ContestEntryEvent`). An entry submits each
   event's picks on its own; a pick belongs to an event through the field row it points at.
@@ -161,7 +161,7 @@ a Team On Screen*.
 
 ### The sport side
 
-> **Being replaced.** Stale against the target model: `SportLeague`'s `roundNames` and `bracketAdvancement`; `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `EventSeries` (removed); `SportEvent` as an edition of a series (it sits in a Season, which it does since #2003); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventRoundMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game side results). The target model, which new code is designed toward, is §5
+> **Being replaced.** Stale against the target model: `SportLeague`'s `roundNames` and `bracketAdvancement`; `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventRoundMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game side results). The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
@@ -172,8 +172,7 @@ a Team On Screen*.
 | `SportLeaguePosition` | position | One of a sport league's playing positions (#2001): the NFL's QB. Set by migration with each provider's codes for it (`SportLeaguePositionProviderMapping`); only a field-eligible position's players are kept on a Season's roster. `displayOrder` is display only | A field member's finishing place, which the standing tables call `position` |
 | `PlatformTierProfile` | tier profile | A named tier layout, defined once for the platform (#1844): how many tiers a new event starts with, how many participants auto-tiering puts in each tier but the last, and whether the last takes everyone left or at most a cap (anyone beyond is in no tier and can't be picked). A field too small to reach the last tier is spread evenly, a rule fixed in code. Each sport league names one; an event records the layout it was last auto-tiered with (`SportEvent.tierConfig`) | The event's own `SportEventTier` rows, which an admin may still add or delete |
 | `PlatformPricingProfile` | pricing profile | A named set of the five budget pricing values (#1844: Standard, Small). Each sport league names one; a synced field never priced is priced with it, and the event records the values it was priced with (`SportEvent.pricingConfig`) | The event's recorded values, which a later profile edit never moves |
-| `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
-| `SportEvent` | tournament, event | One edition of a series in one Season of its league (`sportLeagueSeasonId`, #2003), with a start date, round count and status | `Contest`, which is the pool's game played on it |
+| `SportEvent` | tournament, event | One event in one Season of its league (`sportLeagueSeasonId`, #2003), with a start date, round count and status | `Contest`, which is the pool's game played on it |
 | `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A participant's result in that round, `SportEventParticipantRound`; and a pick's `lineupSlot`, its position in the entry's lineup |
 | `Participant` | golfer, horse, team (the sport's word) | A real competitor in one sport league (#1853): a golfer on the PGA Tour, or a team such as an NBA team (`participantType` `INDIVIDUAL` or `TEAM`). Its sport is its league's, and its `ranking` is its rank there. A playoff field's teams are its season league's. A provider's feed id names one participant per sport league | A league member (a person in the pool), and a `SportEventParticipant` |
 | `SportEventParticipant` | the field, a field member | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
@@ -238,8 +237,7 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
 - **Driver**: an auto racing `Participant`, one per person in each series they race in. An
   auto racing result names only the driver, so its `riderName` stays empty.
 - **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar, Formula 1),
-  and running too (World Marathon Majors (men), World Marathon Majors (women)). Not
-  `EventSeries`, the recurring named event.
+  and running too (World Marathon Majors (men), World Marathon Majors (women)).
 - **Rider (cycling)**: a cycling `Participant`. Not the result's `riderName`, which is horse
   racing's jockey: a cycling result names only the rider, so its `riderName` stays empty. A rider
   who abandons mid-race is a `DID_NOT_FINISH` result, not a withdrawal.
