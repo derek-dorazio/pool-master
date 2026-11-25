@@ -223,7 +223,9 @@ describe('pool-master-m32 — committed generated artifacts are 3.1-clean and ca
 
   it('pool-master-m32: representative nullable fields carry `| null` in the hey-api SDK', () => {
     // plain nullable string, nullable number, nullable enum
-    expect(heyApiTypes).toMatch(/displayName:\s*string\s*\|\s*null/);
+    // The representative nullable string was `SportLeagueDto.displayName` until #2147 dropped it;
+    // what matters is the generator, so any nullable string serves.
+    expect(heyApiTypes).toMatch(/teamAffiliation\??:\s*string\s*\|\s*null/);
     expect(heyApiTypes).toMatch(/price:\s*number\s*\|\s*null/);
     // The representative nullable enum was `LeagueSummaryDto.memberType` until #202 step 3.4
     // deleted it under access rule A8 (viewer context does not travel on the entity). What
