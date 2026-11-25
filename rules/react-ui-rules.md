@@ -133,6 +133,11 @@ Do not hide broken requests with local fallbacks.
 - Do not define page-local API-shaped type aliases or interfaces with the same
   names as generated `hey-api` types. The `poolmaster/no-parallel-api-types`
   ESLint rule enforces this.
+- Do not copy a generated type under another name either: a local interface or
+  object type whose fields are mostly one DTO's is that DTO. Use it, `Pick<>` it,
+  or have the API add a field. `poolmaster/no-dto-shaped-local-types` enforces
+  this (`rules/domain-model-conventions-rules.md` §17 *The web app holds no
+  domain values*).
 - When a mutation succeeds, list the affected query keys explicitly in
   `invalidateQueries`, update the cache from the authoritative mutation
   response, or navigate away from stale state.

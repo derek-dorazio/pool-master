@@ -46,6 +46,10 @@ Already enforced mechanically, and therefore **not** triggers:
 | A new use of a name a plan retired (the registry's round labels, `eventSeries`, `IngestionFeedType`…) | `rules:check:retired-names` (`scripts/retired-names.json`) |
 | A new field or export in the frozen sport registry | `rules:check:sport-registry-frozen` |
 | A year worked out from a date (`getFullYear`, `getUTCFullYear`), or a `Record`/`Map` keyed by sport, league or Season holding facts | `poolmaster/no-clock-year-or-league-tables` (ESLint, shrink-only baseline) |
+| A web import from `@poolmaster/shared` or `/domain` that is not contract vocabulary (a sport definition, a limit, a derivation) | `rules:check:web-shared-imports` (`scripts/web-shared-imports-baseline.json`, its `$allowed` patterns ratcheted too) |
+| A shared enum value written as a string in a web comparison, `case` label or literal type | `poolmaster/no-enum-string-literals` (ESLint, shrink-only baseline) |
+| A web interface or object type copying a generated hey-api type under another name | `poolmaster/no-dto-shaped-local-types` (ESLint, shrink-only baseline) |
+| An enum of the web app's own, declared or as a `const` object of codes | `poolmaster/no-local-enums` (ESLint, shrink-only baseline) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
@@ -443,6 +447,10 @@ Read every added or changed line for these, and report each one found:
     shared constant, rather than read from the API. Blocking whenever the diff adds one; the
     web app owns only display strings and pure layout constants
     (`domain-model-conventions-rules.md` §17 *The web app holds no domain values*).
+    The web contract gates (§1) catch an imported rule, an enum value compared as a string,
+    a copied DTO and a local enum; they do not see a status set written as a literal array
+    (`['OPEN', 'DRAFT'].includes(status)`) or a value passed as a bare string, so the reviewer
+    still reads for those.
 
 For each finding, state **the model home it belongs in** (a column on a definition, a
 reference row, a mapping table, a field the API returns, one shared predicate) — "hard-coded"
