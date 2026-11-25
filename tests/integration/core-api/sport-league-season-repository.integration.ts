@@ -13,6 +13,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { mapEventToProvider } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { linkTestSlot, testSlotDefinitionId, testSlotIdIn } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -97,6 +98,52 @@ describe('PrismaSportLeagueSeasonRepository', () => {
     ]);
 
     expect([await current(first.league.id), await current(second.league.id)]).toEqual([first.s2026, null]);
+  });
+});
+
+describe('PrismaSportLeagueSeasonRepository test slots (#2004)', () => {
+  const STARTS = new Date('2026-05-01T12:00:00.000Z');
+
+  it('adds a labelled test slot to the Season on one of the league\'s definitions, copying its series format, and refuses a label the Season already has on that definition', async () => {
+    const { league, s2026 } = await seasonedLeague();
+    const prisma = getPrisma();
+    const slotDefinitionId = await testSlotDefinitionId(prisma, league.id, s2026);
+    const repository = new PrismaSportLeagueSeasonRepository(prisma);
+    const input = { sportLeagueId: league.id, sportLeagueSeasonId: s2026, slotDefinitionId, label: 'QA 1', startsAt: STARTS, endsAt: null };
+
+    const created = await repository.createTestSlot(input);
+    if (created.outcome !== 'CREATED') throw new Error(`Expected CREATED, got ${created.outcome}`);
+    expect(created.slot).toMatchObject({ slotDefinitionId, isTestData: true, label: 'QA 1', startsAt: STARTS, endsAt: null, seriesFormat: 'SINGLE_GAME', seriesGames: 1 });
+    await expect(repository.createTestSlot(input)).resolves.toEqual({ outcome: 'LABEL_TAKEN' });
+    await expect(repository.createTestSlot({ ...input, label: 'QA 2' })).resolves.toMatchObject({ outcome: 'CREATED' });
+  });
+
+  it('refuses a definition of another league as not found, and one whose phase the Season lacks as not in the Season', async () => {
+    const { league, s2026, s2027 } = await seasonedLeague();
+    const other = await seasonedLeague();
+    const prisma = getPrisma();
+    const slotDefinitionId = await testSlotDefinitionId(prisma, league.id, s2026);
+    const otherDefinitionId = await testSlotDefinitionId(prisma, other.league.id, other.s2026);
+    await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueSeasonId: s2027 } });
+    const repository = new PrismaSportLeagueSeasonRepository(prisma);
+    const input = { sportLeagueId: league.id, sportLeagueSeasonId: s2026, label: 'QA', startsAt: STARTS, endsAt: null };
+
+    await expect(repository.createTestSlot({ ...input, slotDefinitionId: otherDefinitionId })).resolves.toEqual({ outcome: 'DEFINITION_NOT_FOUND' });
+    await expect(repository.createTestSlot({ ...input, sportLeagueSeasonId: s2027, slotDefinitionId })).resolves.toEqual({ outcome: 'PHASE_NOT_IN_SEASON' });
+  });
+
+  it('finds a slot with its league and Season, with no event while free and its event once one covers it, and null for an id no slot has', async () => {
+    const { league, s2026 } = await seasonedLeague();
+    const prisma = getPrisma();
+    const freeSlotId = await testSlotIdIn(prisma, league.id, s2026, STARTS);
+    const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `Series ${randomUUID().slice(0, 8)}` } });
+    const event = await prisma.sportEvent.create({ data: { eventSeriesId: series.id, sportLeagueSeasonId: s2026, name: series.name, startDate: STARTS } });
+    const takenSlotId = await linkTestSlot(prisma, event);
+    const repository = new PrismaSportLeagueSeasonRepository(prisma);
+
+    await expect(repository.findSlot(freeSlotId)).resolves.toMatchObject({ sportLeagueId: league.id, sportLeagueSeasonId: s2026, sportEventId: null, slot: { id: freeSlotId, isTestData: true } });
+    await expect(repository.findSlot(takenSlotId)).resolves.toMatchObject({ sportEventId: event.id, slot: { id: takenSlotId } });
+    await expect(repository.findSlot(randomUUID())).resolves.toBeNull();
   });
 });
 

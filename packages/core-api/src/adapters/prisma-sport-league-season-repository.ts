@@ -91,20 +91,20 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     let row: SeasonSlotRow;
     try {
       row = await this.prisma.sportLeagueSeasonPhaseSlot.create({
-      data: {
-        sportLeagueId: input.sportLeagueId,
-        sportLeagueSeasonId: input.sportLeagueSeasonId,
-        sportLeagueSeasonPhaseId: phase.id,
-        sportLeaguePhaseSlotId: input.slotDefinitionId,
-        startsAt: input.startsAt,
-        endsAt: input.endsAt,
-        seriesFormat: definition.seriesFormat,
-        seriesGames: definition.seriesGames,
-        pairing: definition.pairing,
-        isTestData: true,
-        label: input.label,
-      },
-      select: SEASON_SLOT_SELECT,
+        data: {
+          sportLeagueId: input.sportLeagueId,
+          sportLeagueSeasonId: input.sportLeagueSeasonId,
+          sportLeagueSeasonPhaseId: phase.id,
+          sportLeaguePhaseSlotId: input.slotDefinitionId,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+          seriesFormat: definition.seriesFormat,
+          seriesGames: definition.seriesGames,
+          pairing: definition.pairing,
+          isTestData: true,
+          label: input.label,
+        },
+        select: SEASON_SLOT_SELECT,
       });
     } catch (error) {
       // The Season's unique key on its definition and label.
