@@ -7,7 +7,7 @@ import { DISCARD_BACKGROUND_JOB } from '../../../packages/core-api/src/modules/b
  * tests/integration/core-api/sync-findings.integration.ts.
  */
 import { expect } from '@jest/globals';
-import type { ProviderSyncFindingRepository, ProviderSyncFindingResolveFilter } from '@poolmaster/shared/db';
+import type { ProviderSyncFindingRepository, ProviderSyncFindingResolveFilter, SlotNamePatternChoices, SlotNamePatternRepository } from '@poolmaster/shared/db';
 import {
   ParticipantStatus,
   ParticipantType,
@@ -18,6 +18,7 @@ import {
   providerSourceIdOf,
   providerSyncFindingActions,
   RESOLVED_SYNC_FINDING_RETENTION_DAYS,
+  SlotKind,
   Sport,
   type Participant,
   type ProviderSyncFinding,
@@ -89,8 +90,27 @@ function inMemoryFindings(rows: ProviderSyncFinding[] = []) {
   return { repository, rows, raised, resolved };
 }
 
+/** The PGA's NAME_PATTERN definitions through its mapping to BALLDONTLIE, and the patterns added (#2011). */
+function inMemorySlotPatterns() {
+  const choices: SlotNamePatternChoices = {
+    sportLeagueProviderMappingId: 'pga-balldontlie',
+    slots: [{ slotDefinitionId: 'masters', key: 'MASTERS', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: 'Masters Tournament', patterns: ['masters tournament'] }],
+  };
+  const added: Array<{ sportLeagueId: string; sportLeagueProviderMappingId: string; slotDefinitionId: string; pattern: string }> = [];
+  const repository: SlotNamePatternRepository = {
+    findChoices: async (sportLeagueId, providerId) => (sportLeagueId === LEAGUE.id && providerId === PROVIDER.id ? choices : null),
+    addPattern: async (input) => {
+      if (choices.slots.some((slot) => slot.patterns.includes(input.pattern))) return 'TAKEN';
+      added.push(input);
+      return 'ADDED';
+    },
+  };
+  return { repository, added };
+}
+
 function service(overrides: Partial<ProviderSyncFindingServiceDeps> = {}) {
   const table = inMemoryFindings();
+  const patterns = inMemorySlotPatterns();
   const bound: [string, string, string][] = [];
   const logger = fakeLogger();
   const deps: ProviderSyncFindingServiceDeps = {
@@ -103,11 +123,12 @@ function service(overrides: Partial<ProviderSyncFindingServiceDeps> = {}) {
         return { id: 'mapping-1', participantId, sportLeagueId: LEAGUE.id, providerId, externalId, createdAt: NOW, updatedAt: NOW } as never;
       },
     },
+    slotNamePatterns: patterns.repository,
     now: () => NOW,
     logger,
     ...overrides,
   };
-  return { findings: new ProviderSyncFindingService(deps), table, bound, logger };
+  return { findings: new ProviderSyncFindingService(deps), table, bound, logger, patterns };
 }
 
 describe('providerSyncFindingActions', () => {
@@ -379,6 +400,67 @@ describe('ProviderSyncFindingService.changeStatus', () => {
 
     await expect(findings.changeStatus('finding-1', { action: ProviderSyncFindingAction.RESOLVE, waiveNote: null, userId: 'admin-1' }))
       .rejects.toMatchObject({ code: 'SYNC_FINDING_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('ProviderSyncFindingService "link to existing" (#2011)', () => {
+  const unmatched = (overrides: Partial<ProviderSyncFinding> = {}) => finding({
+    kind: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, severity: ProviderSyncFindingSeverity.INFO, providerValue: 'the masters', providerValueName: 'The 2027 Masters', ...overrides,
+  });
+
+  it('offers LINK_SLOT, then resolve and waive, only on an open tournament name finding', () => {
+    expect(providerSyncFindingActions(unmatched())).toEqual([ProviderSyncFindingAction.LINK_SLOT, ProviderSyncFindingAction.RESOLVE, ProviderSyncFindingAction.WAIVE]);
+    expect(providerSyncFindingActions(unmatched({ kind: ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS }))).toEqual([ProviderSyncFindingAction.RESOLVE, ProviderSyncFindingAction.WAIVE]);
+  });
+
+  it('lists the league\'s name-matched slot definitions through its mapping to the finding\'s Provider', async () => {
+    const table = inMemoryFindings([unmatched()]);
+    const { findings } = service({ repository: table.repository });
+
+    expect(await findings.slotLinkChoices('finding-1')).toEqual([expect.objectContaining({ slotDefinitionId: 'masters', patterns: ['masters tournament'] })]);
+  });
+
+  it('adds the finding\'s normalized name as a pattern of the chosen definition and resolves the finding', async () => {
+    const table = inMemoryFindings([unmatched()]);
+    const { findings, patterns } = service({ repository: table.repository });
+
+    const saved = await findings.linkSlot('finding-1', { slotDefinitionId: 'masters', userId: 'admin-1' });
+
+    expect(patterns.added).toEqual([{ sportLeagueId: LEAGUE.id, sportLeagueProviderMappingId: 'pga-balldontlie', slotDefinitionId: 'masters', pattern: 'the masters' }]);
+    expect(saved).toMatchObject({ status: ProviderSyncFindingStatus.RESOLVED, statusChangedBy: { id: 'admin-1' } });
+  });
+
+  it('refuses a definition it does not offer as 404 SLOT_DEFINITION_NOT_FOUND and adds nothing', async () => {
+    const table = inMemoryFindings([unmatched()]);
+    const { findings, patterns } = service({ repository: table.repository });
+
+    await expect(findings.linkSlot('finding-1', { slotDefinitionId: 'week-1', userId: 'admin-1' })).rejects.toMatchObject({ code: 'SLOT_DEFINITION_NOT_FOUND', statusCode: 404 });
+    expect(patterns.added).toEqual([]);
+  });
+
+  it('refuses a name that already places a tournament as 409 SLOT_NAME_PATTERN_TAKEN and leaves the finding open', async () => {
+    const table = inMemoryFindings([unmatched({ providerValue: 'masters tournament' })]);
+    const { findings } = service({ repository: table.repository });
+
+    await expect(findings.linkSlot('finding-1', { slotDefinitionId: 'masters', userId: 'admin-1' })).rejects.toMatchObject({ code: 'SLOT_NAME_PATTERN_TAKEN', statusCode: 409 });
+    expect(table.rows[0].status).toBe(ProviderSyncFindingStatus.OPEN);
+  });
+
+  it('offers no slots, and links none, for a finding whose league has no mapping to its Provider or that names no Provider', async () => {
+    const table = inMemoryFindings([unmatched({ id: 'other', sportLeague: { ...LEAGUE, id: 'league-2' } }), unmatched({ id: 'no-provider', provider: null })]);
+    const { findings } = service({ repository: table.repository });
+
+    expect(await findings.slotLinkChoices('other')).toEqual([]);
+    expect(await findings.slotLinkChoices('no-provider')).toEqual([]);
+    await expect(findings.linkSlot('other', { slotDefinitionId: 'masters', userId: 'admin-1' })).rejects.toMatchObject({ code: 'SLOT_DEFINITION_NOT_FOUND' });
+  });
+
+  it('refuses both on a finding that does not offer LINK_SLOT now as 409 SYNC_FINDING_ACTION_NOT_OFFERED', async () => {
+    const table = inMemoryFindings([unmatched({ status: ProviderSyncFindingStatus.RESOLVED })]);
+    const { findings } = service({ repository: table.repository });
+
+    await expect(findings.slotLinkChoices('finding-1')).rejects.toMatchObject({ code: 'SYNC_FINDING_ACTION_NOT_OFFERED', statusCode: 409 });
+    await expect(findings.linkSlot('finding-1', { slotDefinitionId: 'masters', userId: 'admin-1' })).rejects.toMatchObject({ code: 'SYNC_FINDING_ACTION_NOT_OFFERED', statusCode: 409 });
   });
 });
 

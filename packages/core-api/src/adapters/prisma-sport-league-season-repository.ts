@@ -6,6 +6,7 @@
  */
 import { Prisma, PrismaSlotProviderMatchType, PrismaSlotWindowStatus, type PrismaClient } from '@prisma/client';
 import type {
+  NameMatchedSlotsRecord,
   SeasonSlotWithEvent,
   SportLeagueCurrentSeasonFacts,
   SportLeagueSeasonRepository,
@@ -14,7 +15,7 @@ import type {
   TestSeasonSlotCreate,
   TestSlotCreateResult,
 } from '@poolmaster/shared/db';
-import type { SportLeagueSeason, SyncSeasonSlot } from '@poolmaster/shared/domain';
+import type { SlotNamePattern, SportLeagueSeason, SyncSeasonSlot } from '@poolmaster/shared/domain';
 import { SEASON_SLOT_SELECT, toSeasonSlot, type SeasonSlotRow } from './season-slot-select';
 
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
@@ -120,12 +121,14 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       where: { sportLeagueSeasonId, isTestData: false },
       select: {
         id: true,
+        sportLeaguePhaseSlotId: true,
         startsAt: true,
         endsAt: true,
         windowStartsAt: true,
         windowEndsAt: true,
         windowStatus: true,
         eventSlot: { select: { sportEventId: true } },
+        providerLinks: { where: { sportLeagueProviderMappingId }, select: { providerValue: true } },
         definition: {
           select: {
             key: true,
@@ -140,13 +143,16 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       orderBy: { id: 'asc' },
     });
     return rows.map((row) => {
-      // A slot has one mapping row per provider mapping (the mappings' unique key).
-      const mapping = row.definition.providerMappings.at(0);
-      const byWindow = mapping?.matchType === PrismaSlotProviderMatchType.DATE_WINDOW;
+      const mappings = row.definition.providerMappings;
+      const byWindow = mappings.some((mapping) => mapping.matchType === PrismaSlotProviderMatchType.DATE_WINDOW);
       return {
         seasonSlotId: row.id,
+        slotDefinitionId: row.sportLeaguePhaseSlotId,
         key: row.definition.key,
-        providerCode: mapping?.matchType === PrismaSlotProviderMatchType.PROVIDER_CODE ? mapping.providerValue : null,
+        // A slot has one PROVIDER_CODE row per provider mapping (the mappings' partial unique key).
+        providerCode: mappings.find((mapping) => mapping.matchType === PrismaSlotProviderMatchType.PROVIDER_CODE)?.providerValue ?? null,
+        // A Season slot has one link per provider mapping (the links' unique key).
+        linkedCode: row.providerLinks.at(0)?.providerValue ?? null,
         coveredByTemplate: row.definition._count.templateSlots > 0,
         sportEventId: row.eventSlot?.sportEventId ?? null,
         startsAt: row.startsAt,
@@ -157,6 +163,64 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
           ? { startsAt: row.windowStartsAt, endsAt: row.windowEndsAt, status: row.windowStatus }
           : null,
       };
+    });
+  }
+
+  async findSlotNamePatterns(sportLeagueProviderMappingId: string): Promise<SlotNamePattern[]> {
+    const rows = await this.prisma.sportLeaguePhaseSlotProviderMapping.findMany({
+      where: { sportLeagueProviderMappingId, matchType: PrismaSlotProviderMatchType.NAME_PATTERN, providerValue: { not: null } },
+      select: { sportLeaguePhaseSlotId: true, providerValue: true },
+      orderBy: { id: 'asc' },
+    });
+    return rows.flatMap((row) => (row.providerValue === null ? [] : [{ slotDefinitionId: row.sportLeaguePhaseSlotId, pattern: row.providerValue }]));
+  }
+
+  async linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<{ phaseMissing: string[] }> {
+    if (input.links.length === 0 && input.creates.length === 0) return { phaseMissing: [] };
+    const { sportLeagueId, sportLeagueSeasonId, sportLeagueProviderMappingId } = input;
+    return this.prisma.$transaction(async (tx) => {
+      const definitionIds = input.creates.map((create) => create.slotDefinitionId);
+      const [definitions, phases] = definitionIds.length === 0 ? [[], []] : await Promise.all([
+        tx.sportLeaguePhaseSlot.findMany({
+          where: { sportLeagueId, id: { in: definitionIds } },
+          select: { id: true, sportLeaguePhaseId: true, seriesFormat: true, seriesGames: true, pairing: true },
+        }),
+        tx.sportLeagueSeasonPhase.findMany({ where: { sportLeagueSeasonId }, select: { id: true, sportLeaguePhaseId: true } }),
+      ]);
+      const seasonPhaseIdByPhase = new Map(phases.map((phase) => [phase.sportLeaguePhaseId, phase.id]));
+      const definitionById = new Map(definitions.map((definition) => [definition.id, definition]));
+      const creatable = input.creates.flatMap((create) => {
+        const definition = definitionById.get(create.slotDefinitionId);
+        const seasonPhaseId = definition === undefined ? undefined : seasonPhaseIdByPhase.get(definition.sportLeaguePhaseId);
+        return definition === undefined || seasonPhaseId === undefined ? [] : [{ create, definition, seasonPhaseId }];
+      });
+      const created = creatable.length === 0 ? [] : await tx.sportLeagueSeasonPhaseSlot.createManyAndReturn({
+        data: creatable.map(({ definition, seasonPhaseId }) => ({
+          sportLeagueId,
+          sportLeagueSeasonId,
+          sportLeagueSeasonPhaseId: seasonPhaseId,
+          sportLeaguePhaseSlotId: definition.id,
+          seriesFormat: definition.seriesFormat,
+          seriesGames: definition.seriesGames,
+          pairing: definition.pairing,
+        })),
+        select: { id: true, sportLeaguePhaseSlotId: true },
+      });
+      const codeByDefinition = new Map(input.creates.map((create) => [create.slotDefinitionId, create.code]));
+      const links = [
+        ...input.links,
+        ...created.flatMap((slot) => {
+          const code = codeByDefinition.get(slot.sportLeaguePhaseSlotId);
+          return code === undefined ? [] : [{ seasonSlotId: slot.id, code }];
+        }),
+      ];
+      await tx.sportLeagueSeasonPhaseSlotProviderMapping.createMany({
+        data: links.map((link) => ({ sportLeagueId, sportLeagueSeasonPhaseSlotId: link.seasonSlotId, sportLeagueProviderMappingId, providerValue: link.code })),
+        // A slot or a code already linked keeps its link: the links' unique keys skip it.
+        skipDuplicates: true,
+      });
+      const made = new Set(creatable.map(({ create }) => create.slotDefinitionId));
+      return { phaseMissing: input.creates.flatMap((create) => (made.has(create.slotDefinitionId) ? [] : [create.slotDefinitionId])) };
     });
   }
 

@@ -275,9 +275,9 @@ export function createSportEventServices(
 /** The sport league admin's service: its settings, its sync switch and its rankings. */
 export function buildSportLeagueService(
   prisma: PrismaClient,
-  logger?: FastifyBaseLogger,
-  /** The provider leagues a sport league's event sync may name (ADR 0011, #1997); none, turning a league's sync on is refused. */
-  providers: SportDataProviderLookup = NO_PROVIDERS,
+  logger: FastifyBaseLogger | undefined,
+  /** The provider leagues a sport league's event sync may name (ADR 0011, #1997). */
+  providers: SportDataProviderLookup,
 ): SportLeagueService {
   return new SportLeagueService({
     sports: new PrismaSportRepository(prisma),

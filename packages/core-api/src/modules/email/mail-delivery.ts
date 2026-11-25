@@ -294,6 +294,11 @@ export function readApplicationBaseUrl(env: NodeJS.ProcessEnv = process.env): st
   return (env.APP_BASE_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
 }
 
+/** The SNS topic SES delivery events arrive on; unset or blank, no topic is accepted. */
+export function readSesEventsTopicArn(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  return env.SES_EVENTS_TOPIC_ARN?.trim() || undefined;
+}
+
 function parseProviderName(value: string): MailDeliveryProviderName {
   const provider = value.trim().toLowerCase();
   if (provider === 'smtp' || provider === 'ses') return provider;

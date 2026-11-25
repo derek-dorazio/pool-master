@@ -72730,11 +72730,14 @@
               "GAMES_NOT_SYNCED",
               "SLOT_VALUE_UNMAPPED",
               "PROVIDER_LEAGUE_UNKNOWN",
+              "SLOT_NAME_UNMATCHED",
+              "SLOT_NAME_AMBIGUOUS",
+              "SLOT_SEASON_PHASE_MISSING",
               "SLOT_OUTSIDE_SEASON",
               "GAMES_UNPLACED",
               "SLOT_DATES_NEEDED"
             ],
-            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
+            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
           },
           "severity": {
             "type": "string",
@@ -72832,7 +72835,7 @@
             "additionalProperties": false
           },
           "providerValue": {
-            "description": "What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.",
+            "description": "What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.",
             "type": [
               "string",
               "null"
@@ -72901,13 +72904,14 @@
               "type": "string",
               "enum": [
                 "MAP_PARTICIPANT",
+                "LINK_SLOT",
                 "RESOLVE",
                 "WAIVE",
                 "REOPEN"
               ],
-              "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
+              "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. LINK_SLOT: listProviderSyncFindingSlotChoices, then linkProviderSyncFindingSlot. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
             },
-            "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
+            "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
           }
         },
         "required": [
@@ -72930,6 +72934,159 @@
         ],
         "additionalProperties": false,
         "description": "One sync finding: a problem the sync found, one per kind and subject."
+      },
+      "ProviderSyncFindingSlotChoiceDto": {
+        "type": "object",
+        "properties": {
+          "slotDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The slot definition (SportLeagueSlotDefinitionDto.id)."
+          },
+          "key": {
+            "type": "string",
+            "description": "Its key in the sport league, such as MASTERS."
+          },
+          "slotKind": {
+            "type": "string",
+            "enum": [
+              "WEEK",
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "ROUND_OF_16",
+              "QUARTERFINAL",
+              "SEMIFINAL",
+              "THIRD_PLACE",
+              "FINAL",
+              "TOURNAMENT"
+            ]
+          },
+          "weekNumber": {
+            "description": "The week's number in its phase; set only on a WEEK slot.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "description": "The league's own name for it (Masters Tournament); null when screens show the word for its kind.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "patterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The normalized names that already place a tournament on it, in order."
+          }
+        },
+        "required": [
+          "slotDefinitionId",
+          "key",
+          "slotKind",
+          "weekNumber",
+          "name",
+          "patterns"
+        ],
+        "additionalProperties": false,
+        "description": "A slot definition a SLOT_NAME_UNMATCHED finding's tournament can be linked to."
+      },
+      "ProviderSyncFindingSlotChoiceListResponse": {
+        "type": "object",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slotDefinitionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The slot definition (SportLeagueSlotDefinitionDto.id)."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "Its key in the sport league, such as MASTERS."
+                },
+                "slotKind": {
+                  "type": "string",
+                  "enum": [
+                    "WEEK",
+                    "PLAY_IN",
+                    "ROUND_OF_64",
+                    "ROUND_OF_32",
+                    "ROUND_OF_16",
+                    "QUARTERFINAL",
+                    "SEMIFINAL",
+                    "THIRD_PLACE",
+                    "FINAL",
+                    "TOURNAMENT"
+                  ]
+                },
+                "weekNumber": {
+                  "description": "The week's number in its phase; set only on a WEEK slot.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "description": "The league's own name for it (Masters Tournament); null when screens show the word for its kind.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "patterns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The normalized names that already place a tournament on it, in order."
+                }
+              },
+              "required": [
+                "slotDefinitionId",
+                "key",
+                "slotKind",
+                "weekNumber",
+                "name",
+                "patterns"
+              ],
+              "additionalProperties": false,
+              "description": "A slot definition a SLOT_NAME_UNMATCHED finding's tournament can be linked to."
+            },
+            "description": "Every slot definition the finding's sport league matches tournaments to by name through its mapping to the finding's Provider, by key. Never paged."
+          }
+        },
+        "required": [
+          "slots"
+        ],
+        "additionalProperties": false,
+        "description": "The slots \"link to existing\" offers."
+      },
+      "LinkProviderSyncFindingSlotRequest": {
+        "type": "object",
+        "properties": {
+          "slotDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "One of the slot definitions listProviderSyncFindingSlotChoices offers."
+          }
+        },
+        "required": [
+          "slotDefinitionId"
+        ],
+        "additionalProperties": false,
+        "description": "Adds a SLOT_NAME_UNMATCHED finding's tournament name as a pattern of a slot definition, which resolves it."
       },
       "ProviderSyncFindingListResponse": {
         "type": "object",
@@ -72955,11 +73112,14 @@
                     "GAMES_NOT_SYNCED",
                     "SLOT_VALUE_UNMAPPED",
                     "PROVIDER_LEAGUE_UNKNOWN",
+                    "SLOT_NAME_UNMATCHED",
+                    "SLOT_NAME_AMBIGUOUS",
+                    "SLOT_SEASON_PHASE_MISSING",
                     "SLOT_OUTSIDE_SEASON",
                     "GAMES_UNPLACED",
                     "SLOT_DATES_NEEDED"
                   ],
-                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
+                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
                 },
                 "severity": {
                   "type": "string",
@@ -73057,7 +73217,7 @@
                   "additionalProperties": false
                 },
                 "providerValue": {
-                  "description": "What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.",
+                  "description": "What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.",
                   "type": [
                     "string",
                     "null"
@@ -73126,13 +73286,14 @@
                     "type": "string",
                     "enum": [
                       "MAP_PARTICIPANT",
+                      "LINK_SLOT",
                       "RESOLVE",
                       "WAIVE",
                       "REOPEN"
                     ],
-                    "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
+                    "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. LINK_SLOT: listProviderSyncFindingSlotChoices, then linkProviderSyncFindingSlot. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
                   },
-                  "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
+                  "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
                 }
               },
               "required": [
@@ -73186,11 +73347,14 @@
                   "GAMES_NOT_SYNCED",
                   "SLOT_VALUE_UNMAPPED",
                   "PROVIDER_LEAGUE_UNKNOWN",
+                  "SLOT_NAME_UNMATCHED",
+                  "SLOT_NAME_AMBIGUOUS",
+                  "SLOT_SEASON_PHASE_MISSING",
                   "SLOT_OUTSIDE_SEASON",
                   "GAMES_UNPLACED",
                   "SLOT_DATES_NEEDED"
                 ],
-                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
+                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
               },
               "severity": {
                 "type": "string",
@@ -73288,7 +73452,7 @@
                 "additionalProperties": false
               },
               "providerValue": {
-                "description": "What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.",
+                "description": "What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.",
                 "type": [
                   "string",
                   "null"
@@ -73357,13 +73521,14 @@
                   "type": "string",
                   "enum": [
                     "MAP_PARTICIPANT",
+                    "LINK_SLOT",
                     "RESOLVE",
                     "WAIVE",
                     "REOPEN"
                   ],
-                  "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
+                  "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. LINK_SLOT: listProviderSyncFindingSlotChoices, then linkProviderSyncFindingSlot. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
                 },
-                "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
+                "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
               }
             },
             "required": [
@@ -90145,6 +90310,194 @@
             }
           },
           "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/sync-findings/{findingId}/slot-choices": {
+      "get": {
+        "operationId": "listProviderSyncFindingSlotChoices",
+        "summary": "List the slots a tournament name finding can be linked to",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "What an OPEN SLOT_NAME_UNMATCHED finding's \"link to existing\" offers (#2011): every slot definition its sport league matches tournaments to by name through its mapping to the finding's Provider, by key, each with the names that already place a tournament on it. Read in a fixed number of queries. 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer LINK_SLOT now. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "findingId",
+            "required": true,
+            "description": "The finding (ProviderSyncFindingDto.id)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The slots \"link to existing\" offers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSyncFindingSlotChoiceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/sync-findings/{findingId}/slot-link": {
+      "post": {
+        "operationId": "linkProviderSyncFindingSlot",
+        "summary": "Link a tournament name finding to an existing slot",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "An OPEN SLOT_NAME_UNMATCHED finding's fix, \"link to existing\" (#2011): adds the tournament's normalized name (providerValue) as a NAME_PATTERN mapping of the chosen slot definition and resolves the finding; the next events sync links the tournament there. There is no \"create new\": slot definitions are set by migration. 404 SYNC_FINDING_NOT_FOUND, or SLOT_DEFINITION_NOT_FOUND for a slot listProviderSyncFindingSlotChoices does not offer. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer LINK_SLOT now, or SLOT_NAME_PATTERN_TAKEN when the name already places a tournament. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkProviderSyncFindingSlotRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "findingId",
+            "required": true,
+            "description": "The finding (ProviderSyncFindingDto.id)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One sync finding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSyncFindingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

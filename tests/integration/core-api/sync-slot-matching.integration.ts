@@ -8,12 +8,12 @@ import { ProviderSeasonScheduleReader, type ProviderEventDetailSummary } from '.
 import { BalldontlieAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { BALLDONTLIE_TEST_LEAGUES } from '../../support/balldontlie-provider-rows';
-import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSportEventServices, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSportEventServices, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
-import { syncSlotsFor, type TestSlotWindow } from '../../support/sync-slots';
+import { nameSlotDefinitionFor, syncSlotsFor, type TestSlotWindow } from '../../support/sync-slots';
 import { recordStatements, statementCounts } from '../statement-log';
 import { JobTrigger } from '@poolmaster/shared/domain';
 
@@ -342,5 +342,128 @@ describe('The events sync reads only a league its provider reads (#2005)', () =>
 
     expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.providerId, finding.status]))
       .toEqual([[ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, provider.id, ProviderSyncFindingStatus.RESOLVED]]);
+  });
+});
+
+/**
+ * A golf tour synced from BALLDONTLIE's PGA TOUR, with its 2027 Season current, and a tournament
+ * slot definition for each pattern in `patterns`, each matched by name and
+ * listed by a template, with no Season slot yet.
+ */
+async function golfTour(patterns: readonly string[]) {
+  const prisma = getPrisma();
+  const sport = await prisma.sport.upsert({
+    where: { sport: Sport.GOLF },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Name Tour ${randomUUID().slice(0, 8)}` } });
+  const sportLeagueProviderMappingId = await syncLeagueTo(prisma, league.id, 'pga');
+  const [seasonId] = await syncSeasonsTo(prisma, league.id, sportLeagueProviderMappingId, [2027]);
+  const definitionIds: string[] = [];
+  for (const pattern of patterns) {
+    definitionIds.push(await nameSlotDefinitionFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId, pattern, seasonIds: [seasonId] }));
+  }
+  return { league, seasonId, definitionIds };
+}
+
+/** The tour's Season slots with their definition and the provider codes linked to them. */
+async function seasonSlotsOf(sportLeagueId: string) {
+  return (await getPrisma().sportLeagueSeasonPhaseSlot.findMany({
+    where: { sportLeagueId },
+    select: { id: true, sportLeaguePhaseSlotId: true, startsAt: true, providerLinks: { select: { providerValue: true } } },
+  })).map((slot) => ({ id: slot.id, definitionId: slot.sportLeaguePhaseSlotId, startsAt: slot.startsAt, codes: slot.providerLinks.map((link) => link.providerValue) }));
+}
+
+describe('The events sync matches golf tournaments to slots by name (#2011)', () => {
+  it('creates the Season slot when a tournament\'s normalized name first matches, links its id, and puts the event on it', async () => {
+    const { league, definitionIds } = await golfTour(['the memorial tournament']);
+    const memorial = slateEvent('pga-31', 'The Memorial Tournament presented by Workday', [play('31', '2027-06-03T12:00:00Z', '2027-06-06T23:00:00Z')]);
+
+    await runSync(buildSync({ events: [memorial] }), league.id);
+
+    const slots = await seasonSlotsOf(league.id);
+    expect(slots.map((slot) => [slot.definitionId, slot.codes, slot.startsAt])).toEqual([[definitionIds[0], ['31'], new Date('2027-06-03T12:00:00Z')]]);
+    expect(await eventsWithSlots(league.id)).toEqual([{
+      name: 'The Memorial Tournament presented by Workday', startDate: new Date('2027-06-03T12:00:00Z'), endDate: new Date('2027-06-06T23:00:00Z'), slotIds: [slots[0].id],
+    }]);
+    expect(await getPrisma().providerSyncFinding.count({ where: { sportLeagueId: league.id } })).toBe(0);
+  });
+
+  it('matches a linked tournament by its id on the next sync after the provider renames it: no second slot and no finding', async () => {
+    const { league } = await golfTour(['the memorial tournament']);
+    const slate = { events: [slateEvent('pga-31', 'The Memorial Tournament', [play('31', '2027-06-03T12:00:00Z', '2027-06-06T23:00:00Z')])] };
+    const sync = buildSync(slate);
+    await runSync(sync, league.id);
+    const [slot] = await seasonSlotsOf(league.id);
+
+    slate.events = [slateEvent('pga-31', 'Jack\'s Invitational', [play('31', '2027-06-04T12:00:00Z', '2027-06-07T23:00:00Z')])];
+    await runSync(sync, league.id);
+
+    expect((await seasonSlotsOf(league.id)).map((each) => [each.id, each.codes, each.startsAt])).toEqual([[slot.id, ['31'], new Date('2027-06-04T12:00:00Z')]]);
+    expect((await eventsWithSlots(league.id)).map((event) => event.slotIds)).toEqual([[slot.id]]);
+    expect(await getPrisma().providerSyncFinding.count({ where: { sportLeagueId: league.id } })).toBe(0);
+  });
+
+  it('creates nothing for a tournament no pattern names and raises one INFO SLOT_NAME_UNMATCHED finding by its normalized name, seen again on the next sync', async () => {
+    const { league } = await golfTour(['the memorial tournament']);
+    const sync = buildSync({ events: [slateEvent('pga-77', 'Zurich Classic of New Orleans 2027', [play('77', '2027-04-22T12:00:00Z', '2027-04-25T23:00:00Z')])] });
+
+    await runSync(sync, league.id);
+    await runSync(sync, league.id);
+
+    expect(await seasonSlotsOf(league.id)).toEqual([]);
+    expect(await eventsWithSlots(league.id)).toEqual([]);
+    expect((await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.severity, finding.providerValue, finding.providerValueName, finding.status, finding.seenCount]))
+      .toEqual([[ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, ProviderSyncFindingSeverity.INFO, 'zurich classic of new orleans', 'Zurich Classic of New Orleans 2027', ProviderSyncFindingStatus.OPEN, 2]]);
+  });
+
+  it('links nothing for a second tournament whose name matches a slot already linked to another, and raises an ERROR SLOT_NAME_AMBIGUOUS finding', async () => {
+    const { league } = await golfTour(['u.s. open']);
+    const open = slateEvent('pga-50', 'U.S. Open', [play('50', '2027-06-17T12:00:00Z', '2027-06-20T23:00:00Z')]);
+    const slate = { events: [open] };
+    const sync = buildSync(slate);
+    await runSync(sync, league.id);
+    const before = await seasonSlotsOf(league.id);
+
+    slate.events = [open, slateEvent('pga-51', 'U.S. Open', [play('51', '2027-06-24T12:00:00Z', '2027-06-27T23:00:00Z')])];
+    await runSync(sync, league.id);
+
+    expect(await seasonSlotsOf(league.id)).toEqual(before);
+    expect(before.map((slot) => slot.codes)).toEqual([['50']]);
+    expect((await eventsWithSlots(league.id)).map((event) => event.startDate)).toEqual([new Date('2027-06-17T12:00:00Z')]);
+    expect((await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.severity, finding.providerValue]))
+      .toEqual([[ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS, ProviderSyncFindingSeverity.ERROR, 'u.s. open']]);
+  });
+
+  it('creates no slot and raises an ERROR SLOT_SEASON_PHASE_MISSING finding for a tournament whose matched slot has no phase in the Season', async () => {
+    const prisma = getPrisma();
+    const { league } = await golfTour([]);
+    const mapping = await prisma.sportLeagueProviderMapping.findFirstOrThrow({ where: { sportLeagueId: league.id }, select: { id: true } });
+    // The definition's phase exists in no Season.
+    await nameSlotDefinitionFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId: mapping.id, pattern: 'the memorial tournament', seasonIds: [] });
+
+    await runSync(buildSync({ events: [slateEvent('pga-31', 'The Memorial Tournament', [play('31', '2027-06-03T12:00:00Z', '2027-06-06T23:00:00Z')])] }), league.id);
+
+    expect(await seasonSlotsOf(league.id)).toEqual([]);
+    expect(await eventsWithSlots(league.id)).toEqual([]);
+    expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.severity, finding.providerValue]))
+      .toEqual([[ProviderSyncFindingKind.SLOT_SEASON_PHASE_MISSING, ProviderSyncFindingSeverity.ERROR, 'the memorial tournament']]);
+  });
+
+  it('links a tournament on the next sync once "link to existing" adds its name to a slot, resolving its finding', async () => {
+    const { league, definitionIds } = await golfTour(['the memorial tournament']);
+    const sync = buildSync({ events: [slateEvent('pga-31', 'Memorial Tournament presented by Workday', [play('31', '2027-06-03T12:00:00Z', '2027-06-06T23:00:00Z')])] });
+    await runSync(sync, league.id);
+    const [finding] = await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id } });
+    const { user: admin } = await createTestUser({ isRootAdmin: true });
+
+    await integrationSyncFindings(getAppPrisma()).linkSlot(finding.id, { slotDefinitionId: definitionIds[0], userId: admin.id });
+    await runSync(sync, league.id);
+
+    expect((await seasonSlotsOf(league.id)).map((slot) => [slot.definitionId, slot.codes])).toEqual([[definitionIds[0], ['31']]]);
+    expect((await eventsWithSlots(league.id)).map((event) => event.name)).toEqual(['Memorial Tournament presented by Workday']);
+    expect((await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((each) => [each.kind, each.status]))
+      .toEqual([[ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, ProviderSyncFindingStatus.RESOLVED]]);
   });
 });

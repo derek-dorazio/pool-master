@@ -38,6 +38,7 @@ import {
   isProviderSyncedEvent,
   isWithinAutoReleaseWindow,
   matchProviderSlots,
+  placeSlotsByName,
   providerSourceIdOf,
   type ProviderSlotPlay,
   slotNeedsDates,
@@ -55,6 +56,7 @@ import {
   slotDatesChange,
   sportLeagueDefinitionOf,
   sportVocabulary,
+  type SlotNamePattern,
   type SyncSeasonSlot,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
@@ -146,6 +148,12 @@ export interface ProviderSeasonImport {
    * (#2012, #1924); null when the Season has no slot placed by date window.
    */
   slotsNeedingDates: string[] | null;
+  /**
+   * Each tournament name no NAME_PATTERN mapping placed (#2011), once per normalized name: matched
+   * by none, ambiguous (more than one slot, or a slot another tournament already has), or matched
+   * to a slot whose phase the Season lacks.
+   */
+  unplacedNames: Array<{ normalizedName: string; name: string; reason: 'UNMATCHED' | 'AMBIGUOUS' | 'SEASON_PHASE_MISSING' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -187,7 +195,7 @@ export interface SportEventServiceDeps {
   sportLeagues: SportLeagueRepository;
   sports: SportRepository;
   /** The Season slot a test event is made on (#2004). */
-  seasons: Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'recordSyncedSlots'>;
+  seasons: Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'>;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
@@ -295,6 +303,11 @@ export class SportEventService {
    * A provider event whose start has passed is skipped too (#1821): created now it would be a
    * draft nobody can release or play. Every matched slot takes its dates from its games. Nothing is
    * ever deleted: a page that lists fewer events or games leaves the rest as they are.
+   *
+   * A league whose provider mapping has NAME_PATTERN mappings (an open phase, #2011) places a
+   * tournament no code places by its normalized name, once: its Season slot is created, or the
+   * existing one linked, to the tournament's code, which matches it from then on. A name that
+   * matches nothing, or more than one slot, places nothing and is reported in `unplacedNames`.
    */
   async importProviderSeason(input: {
     sportLeagueId: string;
@@ -306,10 +319,13 @@ export class SportEventService {
   }): Promise<ProviderSeasonImport> {
     const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
     const now = this.now();
-    const [linkedEvents, slots] = await Promise.all([
+    const [linkedEvents, seasonSlots, namePatterns] = await Promise.all([
       this.deps.sportEvents.findByProviderRefs(input.providerId, input.providerEvents.map((providerEvent) => providerEvent.externalId)),
       this.deps.seasons.findSyncSlots(input.sportLeagueSeasonId, input.sportLeagueProviderMappingId),
+      this.deps.seasons.findSlotNamePatterns(input.sportLeagueProviderMappingId),
     ]);
+    const named = await this.placeByName(input, seasonSlots, namePatterns);
+    const slots = named.slots;
     const linkedIdByExternalId = new Map(linkedEvents.flatMap((event) => externalIdsAt(event, input.providerId).map((externalId) => [externalId, event.id] as const)));
 
     const editions: NewEdition[] = [];
@@ -326,7 +342,8 @@ export class SportEventService {
       const { externalId, name } = providerEvent;
       const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots);
       for (const play of missed) {
-        if (!unmatched.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
+        // A tournament name matching handled is reported by its name, not again by its code.
+        if (!unmatched.has(play.code) && !named.handledCodes.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
       }
       if (unplacedGames.length > 0) unplaced.push({ eventName: name, count: unplacedGames.length });
       for (const { slot, play } of matched) {
@@ -389,7 +406,60 @@ export class SportEventService {
       },
       'Imported provider Season',
     );
-    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates };
+    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates, unplacedNames: named.unplaced };
+  }
+
+  /**
+   * The name step of a Season import (#2011): each provider event of one play that no code places
+   * is placed by its normalized name (`placeSlotsByName`), the slots it places are written, and
+   * the Season's slots read again so the import matches them by code. Nothing is read or written
+   * for a league with no NAME_PATTERN mapping.
+   */
+  private async placeByName(
+    input: { sportLeagueId: string; sportLeagueSeasonId: string; sportLeagueProviderMappingId: string; providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }> },
+    seasonSlots: SyncSeasonSlot[],
+    namePatterns: readonly SlotNamePattern[],
+  ): Promise<{ slots: SyncSeasonSlot[]; handledCodes: Set<string>; unplaced: ProviderSeasonImport['unplacedNames'] }> {
+    const unplacedEvents = namePatterns.length === 0 ? [] : input.providerEvents.flatMap((providerEvent) => {
+      const [play] = providerEvent.providerSlots;
+      if (providerEvent.providerSlots.length !== 1 || play.code === null) return [];
+      const { code } = play;
+      return matchProviderSlots([play], seasonSlots).matched.length === 0
+        ? [{ name: providerEvent.name, play: { ...play, code } }]
+        : [];
+    });
+    if (unplacedEvents.length === 0) return { slots: seasonSlots, handledCodes: new Set(), unplaced: [] };
+    const placements = placeSlotsByName(unplacedEvents, seasonSlots, namePatterns);
+    const links = placements.flatMap((placement) => (placement.outcome === 'LINK' ? [{ seasonSlotId: placement.seasonSlotId, code: placement.play.code }] : []));
+    const creates = placements.flatMap((placement) => (placement.outcome === 'CREATE' ? [{ slotDefinitionId: placement.slotDefinitionId, code: placement.play.code }] : []));
+    const unplaced = new Map<string, ProviderSeasonImport['unplacedNames'][number]>();
+    for (const placement of placements) {
+      if ((placement.outcome === 'UNMATCHED' || placement.outcome === 'AMBIGUOUS') && !unplaced.has(placement.normalizedName)) {
+        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: placement.outcome });
+      }
+    }
+    const { phaseMissing } = await this.deps.seasons.linkNameMatchedSlots({
+      sportLeagueId: input.sportLeagueId,
+      sportLeagueSeasonId: input.sportLeagueSeasonId,
+      sportLeagueProviderMappingId: input.sportLeagueProviderMappingId,
+      links,
+      creates,
+    });
+    // A matched slot whose phase the Season lacks got no Season slot: said, never dropped silently.
+    const missing = new Set(phaseMissing);
+    for (const placement of placements) {
+      if (placement.outcome === 'CREATE' && missing.has(placement.slotDefinitionId)) {
+        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: 'SEASON_PHASE_MISSING' });
+      }
+    }
+    this.deps.logger?.info(
+      { sportLeagueId: input.sportLeagueId, sportLeagueSeasonId: input.sportLeagueSeasonId, linkedCount: links.length, createdCount: creates.length, unplacedNames: [...unplaced.keys()] },
+      'Placed provider tournaments on Season slots by name',
+    );
+    const slots = links.length + creates.length === missing.size
+      ? seasonSlots
+      : await this.deps.seasons.findSyncSlots(input.sportLeagueSeasonId, input.sportLeagueProviderMappingId);
+    return { slots, handledCodes: new Set(unplacedEvents.map(({ play }) => play.code)), unplaced: [...unplaced.values()] };
   }
 
   /**

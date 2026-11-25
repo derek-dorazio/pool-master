@@ -939,6 +939,28 @@ export const ProviderSyncFindingKind = {
    */
   PROVIDER_LEAGUE_UNKNOWN: 'PROVIDER_LEAGUE_UNKNOWN',
   /**
+   * The events sync read a tournament that no code places and whose normalized name no NAME_PATTERN
+   * mapping of the league matches (#2011): no Season slot is created and it is not synced. INFO,
+   * as for an unmapped code (inclusion only). "Link to existing" adds its name as a pattern of a
+   * slot definition; a tournament with no definition waits for the migration that adds one.
+   * Subject: league, Provider and the normalized name, with the feed's name.
+   */
+  SLOT_NAME_UNMATCHED: 'SLOT_NAME_UNMATCHED',
+  /**
+   * A tournament's normalized name matched the NAME_PATTERN mappings of more than one slot
+   * definition, or of one whose Season slot another tournament is already linked to (#2011): it is
+   * linked to none. ERROR, since a tournament the league plays is missing until the patterns are
+   * fixed. Subject: league, Provider and the normalized name, with the feed's name.
+   */
+  SLOT_NAME_AMBIGUOUS: 'SLOT_NAME_AMBIGUOUS',
+  /**
+   * A tournament's normalized name matched one slot definition, but the Season has no phase for
+   * that definition's phase, so no Season slot could be made and the tournament is not synced
+   * (#2011). ERROR, since a tournament the league plays is missing until the Season's phase is
+   * added. Subject: league, Provider and the normalized name, with the feed's name.
+   */
+  SLOT_SEASON_PHASE_MISSING: 'SLOT_SEASON_PHASE_MISSING',
+  /**
    * The events sync placed games in a Season slot dated outside the Season's span (#2012): before
    * it starts or after it ends. The games are still written. WARNING, since the Season row's span
    * is what to check. Subject: league, Provider and the code.
@@ -966,6 +988,8 @@ export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindi
 export const ProviderSyncFindingAction = {
   /** Map the provider's participant id to a participant of the league (UNMAPPED_PARTICIPANT). */
   MAP_PARTICIPANT: 'MAP_PARTICIPANT',
+  /** Add the tournament's name as a pattern of one of the league's slot definitions (SLOT_NAME_UNMATCHED). */
+  LINK_SLOT: 'LINK_SLOT',
   /** Mark it fixed. */
   RESOLVE: 'RESOLVE',
   /** Accept it as it is, with a note. */
@@ -977,9 +1001,10 @@ export type ProviderSyncFindingAction = (typeof ProviderSyncFindingAction)[keyof
 /** The order the dialog's Actions section lists them in. */
 export const ProviderSyncFindingActionOrder = explicitOrder<ProviderSyncFindingAction>({
   [ProviderSyncFindingAction.MAP_PARTICIPANT]: 0,
-  [ProviderSyncFindingAction.RESOLVE]: 1,
-  [ProviderSyncFindingAction.WAIVE]: 2,
-  [ProviderSyncFindingAction.REOPEN]: 3,
+  [ProviderSyncFindingAction.LINK_SLOT]: 1,
+  [ProviderSyncFindingAction.RESOLVE]: 2,
+  [ProviderSyncFindingAction.WAIVE]: 3,
+  [ProviderSyncFindingAction.REOPEN]: 4,
 });
 
 /** How a sport event is released for contests, on the League page (#1865). */

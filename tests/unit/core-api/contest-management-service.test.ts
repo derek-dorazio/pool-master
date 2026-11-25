@@ -7,6 +7,7 @@ import {
   type ContestScoringSettings,
   MatchSide,
   MatchStatus,
+  getDefaultTournamentFormatForSport,
   type ParticipantContestScoringRule,
   type ParticipantType,
   PickEmMode,
@@ -60,7 +61,7 @@ import {
 import type { ContestOpenedNotice } from '../../../packages/core-api/src/modules/notifications';
 import type { CupService } from '../../../packages/core-api/src/modules/cups/service';
 import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
-import { createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { createBatchedContestOpeningReader, createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/contest-sport-event-reader';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestRepo,
@@ -69,7 +70,7 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import { fakeLogger } from '../../support/fake-logger';
 import { expectDefined } from '../../support/expect-defined';
-import { EIGHT_SEEDS, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
+import { EIGHT_SEEDS, bracketMatches, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
@@ -3184,5 +3185,133 @@ describe('createContestSportEventReader field, game and price reads', () => {
     await expect(reader.countGamesWithoutSpread(EVENT)).resolves.toBe(1);
     await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2 });
     await expect(reader.findGame(EVENT, 'missing')).resolves.toBeNull();
+  });
+});
+
+describe('createContestSportEventReader event and game counts', () => {
+  function readerOn(store: InMemorySportEvents, countParticipants?: () => Promise<Map<string, number>>) {
+    const sportEvents = store.sportEventRepo();
+    return createContestSportEventReader({
+      sportEvents: countParticipants ? { ...sportEvents, countParticipants } : sportEvents,
+      sports: store.sportRepo(),
+      field: store.fieldRepo(),
+      valuations: store.valuationRepo(),
+      matches: store.matchRepo(),
+    });
+  }
+
+  function addGame(store: InMemorySportEvents, sportEventId: string, game: {
+    id: string; roundNumber: number; status?: MatchStatus; scheduledDate?: Date | null; home?: string | null; away?: string | null;
+  }) {
+    const [row] = bracketMatches(sportEventId, [{
+      matchNumber: store.matchRows.length + 1,
+      round: game.roundNumber,
+      home: game.home === undefined ? 'home' : game.home,
+      away: game.away === undefined ? 'away' : game.away,
+    }]);
+    store.matchRows.push({ ...expectDefined(row, 'game row'), id: game.id, status: game.status ?? MatchStatus.SCHEDULED, scheduledDate: game.scheduledDate ?? null });
+  }
+
+  it('falls back to the sport\'s default tournament format when its sport has no stored row', async () => {
+    const store = new InMemorySportEvents();
+    const golf = store.addEvent({ sport: Sport.GOLF });
+
+    const state = await readerOn(store).findById(golf.id);
+
+    expect(state?.tournamentFormat).toBe(getDefaultTournamentFormatForSport(Sport.GOLF));
+  });
+
+  it('reads an event the participant count leaves out as having no loaded field', async () => {
+    const store = new InMemorySportEvents();
+    store.addSport(Sport.GOLF);
+    const golf = store.addEvent({ sport: Sport.GOLF });
+
+    const state = await readerOn(store, async () => new Map()).findById(golf.id);
+
+    expect(state?.loadedParticipantCount).toBe(0);
+  });
+
+  it('counts the games that are not cancelled, and the undecided ones in the whole event or its opening round only', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({});
+    addGame(store, event.id, { id: 'set', roundNumber: 1 });
+    addGame(store, event.id, { id: 'no-home', roundNumber: 1, home: null });
+    addGame(store, event.id, { id: 'no-away', roundNumber: 2, away: null });
+    addGame(store, event.id, { id: 'cancelled', roundNumber: 1, home: null, status: MatchStatus.CANCELLED });
+    const reader = readerOn(store);
+
+    await expect(reader.countGames(event.id)).resolves.toBe(3);
+    await expect(reader.countUndecidedGames(event.id)).resolves.toBe(2);
+    await expect(reader.countUndecidedGames(event.id, { openingRoundOnly: true })).resolves.toBe(1);
+  });
+});
+
+describe('createBatchedContestOpeningReader', () => {
+  const NOW = new Date('2026-09-10T12:00:00Z');
+
+  function openingReaderOn(store: InMemorySportEvents, overrides: { countParticipants?: () => Promise<Map<string, number>> } = {}) {
+    const sportEvents = store.sportEventRepo();
+    const sports = store.sportRepo();
+    const sportReads = { count: 0 };
+    return {
+      sportReads,
+      reader: createBatchedContestOpeningReader({
+        sportEvents: { ...sportEvents, ...overrides },
+        sports: { ...sports, findAll: () => { sportReads.count += 1; return sports.findAll(); } },
+        field: store.fieldRepo(),
+        valuations: store.valuationRepo(),
+        matches: store.matchRepo(),
+      }),
+    };
+  }
+
+  function addGame(store: InMemorySportEvents, sportEventId: string, id: string, roundNumber: number, scheduledDate: Date, status: MatchStatus = MatchStatus.SCHEDULED) {
+    const [row] = bracketMatches(sportEventId, [{ matchNumber: store.matchRows.length + 1, round: roundNumber, home: 'home', away: 'away' }]);
+    store.matchRows.push({ ...expectDefined(row, 'game row'), id, status, scheduledDate });
+  }
+
+  it('reads the sport rows once for every event asked about on one page', async () => {
+    const store = new InMemorySportEvents();
+    store.addSport(Sport.GOLF);
+    const first = store.addEvent({ sport: Sport.GOLF });
+    const second = store.addEvent({ sport: Sport.GOLF });
+    const { reader, sportReads } = openingReaderOn(store);
+
+    await reader.findById(first.id);
+    await reader.findById(second.id);
+
+    expect(sportReads.count).toBe(1);
+  });
+
+  it('reads an event the participant count leaves out as having no loaded field', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({});
+    const { reader } = openingReaderOn(store, { countParticipants: async () => new Map() });
+
+    await expect(reader.findById(event.id)).resolves.toEqual(expect.objectContaining({ loadedParticipantCount: 0 }));
+  });
+
+  it('finds the earliest squares kickoff still to come, leaving out cancelled, started and earlier-round games', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({ squaresFromRound: 2, startDate: new Date('2026-09-09T00:00:00Z') });
+    addGame(store, event.id, 'earlier-round', 1, new Date('2026-09-11T00:00:00Z'));
+    addGame(store, event.id, 'cancelled', 2, new Date('2026-09-11T01:00:00Z'), MatchStatus.CANCELLED);
+    addGame(store, event.id, 'started', 2, new Date('2026-09-10T11:00:00Z'));
+    addGame(store, event.id, 'later', 3, new Date('2026-09-13T00:00:00Z'));
+    addGame(store, event.id, 'next', 2, new Date('2026-09-12T00:00:00Z'));
+    const { reader } = openingReaderOn(store);
+    const state = expectDefined(await reader.findById(event.id), 'event state');
+
+    await expect(reader.nextSquaresKickoff(state, NOW)).resolves.toEqual(new Date('2026-09-12T00:00:00Z'));
+  });
+
+  it('answers no squares kickoff when every game has started', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({ startDate: new Date('2026-09-09T00:00:00Z') });
+    addGame(store, event.id, 'started', 1, new Date('2026-09-10T11:00:00Z'));
+    const { reader } = openingReaderOn(store);
+    const state = expectDefined(await reader.findById(event.id), 'event state');
+
+    await expect(reader.nextSquaresKickoff(state, NOW)).resolves.toBeNull();
   });
 });
