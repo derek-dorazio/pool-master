@@ -33,6 +33,7 @@ import noClockYearOrLeagueTables from '../no-clock-year-or-league-tables.mjs';
 import noEnumStringLiterals from '../no-enum-string-literals.mjs';
 import noDtoShapedLocalTypes from '../no-dto-shaped-local-types.mjs';
 import noLocalEnums from '../no-local-enums.mjs';
+import noPositionalPick from '../no-positional-pick.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
@@ -1572,6 +1573,44 @@ ruleTester.run('no-local-enums', noLocalEnums, {
     { code: "// poolmaster-allow-local-enum: nothing here\nconst x = 1;", errors: [{ messageId: 'unusedAllow' }] },
     {
       code: "enum A { X = 'X' }\nenum B { Y = 'Y' }",
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2115: no domain item picked by array position when the model gives it a meaning.
+ruleTester.run('no-positional-pick', noPositionalPick, {
+  valid: [
+    // Iterating and mapping read every item, not one by its place.
+    'for (const round of rounds) visit(round);',
+    'const labels = rounds.map((round) => round.label);',
+    'const final = rounds.find((round) => round.slotKind === SlotKind.FINAL);',
+    // Destructuring a parsed, non-domain tuple, and indexing a list that is not a domain list.
+    "const [home, away] = line.split(',');",
+    'const first = parts[0];',
+    'const last = values.at(-1);',
+    // A variable index is a lookup by number, not a fixed place.
+    'const round = rounds[roundIndex];',
+    // Sorted by a declared field, then first, says the order it relies on.
+    'events.sort(byStartsAt);\n// poolmaster-allow-position: sorted by startsAt, the earliest event\nconst first = events.at(0);',
+    '// poolmaster-allow-position: the one Season this nested create writes\nconst id = created.seasons[0]?.id;',
+    { code: 'const g = series.games[0];', filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
+  ],
+  invalid: [
+    { code: 'const final = rounds.at(-1);', errors: [{ messageId: 'positionalPick' }] },
+    { code: 'const gameOne = series.games[0];', errors: [{ messageId: 'positionalPick' }] },
+    { code: 'const event = entry.events.at(0);', errors: [{ messageId: 'positionalPick' }] },
+    { code: 'const final = league.rounds[league.rounds.length - 1];', errors: [{ messageId: 'positionalPick' }] },
+    { code: 'const region = finalRound?.regions?.[0];', errors: [{ messageId: 'positionalPick' }] },
+    { code: 'const away = match.sides[1];', errors: [{ messageId: 'positionalPick' }] },
+    { code: '// poolmaster-allow-position\nconst final = rounds.at(-1);', errors: [{ messageId: 'missingReason' }] },
+    { code: '// poolmaster-allow-position: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
+    // A marker excuses one pick: a second list in the same statement still needs its own reason.
+    { code: '// poolmaster-allow-position: sorted ascending, the last round is the final\nconst pair = [rounds.at(-1), games[0]];', errors: [{ messageId: 'positionalPick' }] },
+    {
+      code: 'const a = rounds[0];\nconst b = games.at(-1);',
       filename: 'legacy.ts',
       options: [{ baseline: { 'legacy.ts': 1 } }],
       errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],

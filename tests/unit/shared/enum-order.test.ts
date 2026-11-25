@@ -6,7 +6,6 @@ import {
   compareByEnumOrder,
   explicitOrder,
   explicitOrderValues,
-  sortByEnumOrder,
   type EnumOrder,
 } from '@poolmaster/shared/domain/enum-order';
 import { enumLabel } from '@poolmaster/shared/display-strings';
@@ -27,12 +26,12 @@ const ToneOrder = explicitOrder<Tone>({ [Tone.QUIET]: 0, [Tone.MIDDLE]: 1, [Tone
 
 describe('enum orders', () => {
   it('sorts an explicit order by each value\'s place, whatever the values are called', () => {
-    expect(sortByEnumOrder([Tone.LOUD, Tone.QUIET, Tone.MIDDLE], ToneOrder)).toEqual(['QUIET', 'MIDDLE', 'LOUD']);
+    expect([Tone.LOUD, Tone.QUIET, Tone.MIDDLE].sort(compareByEnumOrder(ToneOrder))).toEqual(['QUIET', 'MIDDLE', 'LOUD']);
   });
 
   it('sorts an alphabetical order A to Z by the display strings, not by the codes', () => {
     const values = Object.values(enums.RecordType);
-    const sorted = sortByEnumOrder(values, enums.RecordTypeOrder);
+    const sorted = [...values].sort(compareByEnumOrder(enums.RecordTypeOrder));
 
     const words = sorted.map((value) => enumLabel('RecordType', value));
     expect(words).toEqual([...words].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' })));
@@ -42,15 +41,7 @@ describe('enum orders', () => {
   it('sorts an alphabetical order by a given label instead, ignoring case, where a screen still keeps its own words', () => {
     const labels: Record<string, string> = { TEAM: 'apple', INDIVIDUAL: 'Banana' };
 
-    expect(sortByEnumOrder(['INDIVIDUAL', 'TEAM'], alphabeticalOrder('ParticipantType'), (value) => labels[value])).toEqual(['TEAM', 'INDIVIDUAL']);
-  });
-
-  it('leaves the given array as it was', () => {
-    const values: Tone[] = [Tone.LOUD, Tone.QUIET];
-
-    sortByEnumOrder(values, ToneOrder);
-
-    expect(values).toEqual(['LOUD', 'QUIET']);
+    expect([enums.ParticipantType.INDIVIDUAL, enums.ParticipantType.TEAM].sort(compareByEnumOrder(alphabeticalOrder('ParticipantType'), (value) => labels[value]))).toEqual(['TEAM', 'INDIVIDUAL']);
   });
 
   it('compares two values as a sort callback would: negative, zero or positive', () => {

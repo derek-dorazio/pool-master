@@ -25,7 +25,6 @@ export { ConfirmDialog, type ConfirmationInput, type ConfirmDialogProps } from "
 export { DataGrid, type DataGridDetailRow, type DataGridViews } from "./data-grid";
 export {
   isSpanToNow,
-  optionsFromLabels,
   type DataGridColumnOptions,
   type DataGridColumnType,
   type DataGridFilter,
@@ -75,7 +74,6 @@ export { IconPalette } from "./icon-palette";
 export { DetailsPeek, PeekCard, type PeekFact } from "./details-peek";
 export { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
 export { HelpTip } from "./help-tip";
-export { SplitContentLayout } from "./layout-presets";
 export { MetricGrid, MetricTile } from "./metric-grid";
 export { StatStrip, type StatStripItem } from "./stat-strip";
 export { FactList, type Fact, type FactListDensity, type FactListLayout } from "./fact-list";
@@ -100,8 +98,6 @@ export {
   SegmentedControl,
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from "./tabs";
 export {
   DropdownMenu,

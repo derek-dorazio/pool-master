@@ -50,6 +50,9 @@ Already enforced mechanically, and therefore **not** triggers:
 | A shared enum value written as a string in a web comparison, `case` label or literal type | `poolmaster/no-enum-string-literals` (ESLint, shrink-only baseline) |
 | A web interface or object type copying a generated hey-api type under another name | `poolmaster/no-dto-shaped-local-types` (ESLint, shrink-only baseline) |
 | An enum of the web app's own, declared or as a `const` object of codes | `poolmaster/no-local-enums` (ESLint, shrink-only baseline) |
+| An export nothing else uses, or one only tests, stories or fixtures use (a test-only path in production source) | `rules:check:dead-exports` (`scripts/dead-exports.json`; a test hook that must stay takes `poolmaster-allow-test-export: <reason>`) |
+| A round, slot, phase, event, game, match, side, season, region or field row picked by a literal index, `.at(n)` or `length - 1` | `poolmaster/no-positional-pick` (ESLint, shrink-only baseline) |
+| A `Json` column, or a feed key (`externalId`, `provider…Id`, `providerCode`) outside a `…ProviderMapping` table, in the Prisma schema | `rules:check:schema-shapes` (listed with owner or reason, shrink-only) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
@@ -409,7 +412,10 @@ Read every added or changed line for these, and report each one found:
    regex that chooses an adapter, reader or handler.
 3. **Position as identity** — `[0]`, `[n]`, `.at(-1)`, `length - 1`, `indexOf(...) + 1` or a
    counter used to say *which* round, phase, slot, match or event something is, rather than to
-   iterate. Sorting by a declared order is fine; picking by position is not.
+   iterate. The rule and when position is allowed are `domain-model-conventions-rules.md` §17
+   *Identify by key, never by position*. `poolmaster/no-positional-pick` catches the literal
+   forms on the domain list names; look for the rest (`indexOf`, counters, other names), and
+   check that each `poolmaster-allow-position` reason names an order that really holds.
 4. **Per-league or per-sport facts in code** — a constant, `Record`, `Map` or `switch` keyed by
    a league, sport, provider league code or season that holds numbers, names, months, dates
    or seed counts; a date window that finds one league's event; a new per-league mapping

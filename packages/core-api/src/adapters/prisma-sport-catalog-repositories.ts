@@ -200,6 +200,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       });
       return tx.sportLeague.update({
         where: { id: created.id },
+        // poolmaster-allow-position: the one Season this nested create writes
         data: { currentSeasonId: created.seasons[0]?.id },
         include: SELECTED_PROVIDER_MAPPING_INCLUDE,
       });

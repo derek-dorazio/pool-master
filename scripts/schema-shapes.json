@@ -1,0 +1,20 @@
+{
+  "$comment": "#2112 -- every Json column and every feed key outside a provider mapping table in packages/core-api/prisma/schema.prisma, with its owner ticket or the reason it is allowed. Read by scripts/check-schema-shapes.mjs. Entries only go: --update removes one whose column is gone, and rules:check:baseline-ratchet refuses a new one unless scripts/baseline-raises.json declares it.",
+  "json:BackgroundJob.payload": "allowed: the job envelope, validated per job type by background-job-payloads.ts",
+  "json:BackgroundJob.result": "allowed: the job envelope's result, validated per job type by background-job-payloads.ts",
+  "json:ContestConfigTemplate.configJson": "#2018 (slice 18b) for the scoring part; #2120 for the contest settings, validated by the shared zod schema until then",
+  "json:ContestConfiguration.configJson": "#2120: contest settings, validated by the shared zod schema until they become typed columns",
+  "json:ContestLeaderboardSnapshot.board": "allowed: a cached projection of computed standings, never queried by field",
+  "json:Participant.injuryStatus": "#2121: becomes an enum and columns, or moves with the roster rows in #2025 (slice 21)",
+  "json:ParticipantContestScoringRule.config": "#2018 (slice 18b): ContestScoringConfiguration replaces it",
+  "json:PlatformRuntimeConfig.configJson": "allowed: runtime settings validated by their schema",
+  "json:PlatformRuntimeConfigHistory.newJson": "allowed: the history of the runtime settings",
+  "json:PlatformRuntimeConfigHistory.previousJson": "allowed: the history of the runtime settings",
+  "json:ProviderSyncRun.detailsJson": "allowed: the raw provider response kept for audit (integration boundary)",
+  "json:ProviderSyncRun.stats": "allowed: the raw provider response kept for audit (integration boundary)",
+  "json:SportEvent.pricingConfig": "#2044 (slice 7b)",
+  "json:SportEvent.tierConfig": "#2044 (slice 7b)",
+  "json:SportEventParticipant.metadata": "#2047 (slice 10f): field row metadata becomes columns",
+  "key:EmailMessage.providerMessageId": "allowed: the email vendor's message id, owned by the email adapter, not a sports feed key",
+  "key:SportEventRoundMatch.externalGameId": "#2007 (slice 10): moves to GameProviderMapping"
+}

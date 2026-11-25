@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { DataGrid } from "./data-grid";
-import { optionsFromLabels } from "./data-grid-filters";
+import { optionsFromLabels } from "../../../test/data-grid-options";
 
 type Member = { id: string; name: string; role: string; entries: number };
 
