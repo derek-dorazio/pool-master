@@ -1,8 +1,9 @@
 /**
  * The BALLDONTLIE college football reads behind the adapter (#1496): each season's College
- * Football Playoff as an event, the teams playing in its window, every college football team, and
- * the window's game scores. The games and teams endpoints name no paid tier in the vendor's
- * document.
+ * Football Playoff as an event, its season's games, every college football team, and the scores of
+ * the games played around now. The vendor marks no playoff game, so the events sync places the
+ * season's games by its Season slots' date windows (#2012). The games and teams endpoints name no
+ * paid tier in the vendor's document.
  */
 
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
@@ -10,13 +11,11 @@ import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } fro
 import type { BalldontlieClient } from './balldontlie-client';
 import { ncaafGameListSchema, ncaafTeamListSchema, type NcaafGame } from './ncaaf-contract';
 import {
-  CFP_LEAGUE,
-  cfpGamesOf,
   cfpScopeId,
   NCAAF_GAMES_PATH,
   NCAAF_TEAMS_PATH,
+  teamsOfGames,
   toCfpEvent,
-  toCfpFieldParticipants,
   toCfpGameScoreUpdates,
   toNcaafTeamParticipant,
   type CfpScope,
@@ -24,6 +23,8 @@ import {
 
 /** A range spanning more seasons than this reads none. */
 const MAX_SEASONS_READ = 3;
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** A `format: date` query value: the UTC calendar date. */
 const calendarDate = (moment: Date) => moment.toISOString().slice(0, 10);
@@ -36,27 +37,29 @@ export class NcaafReader {
 
   /**
    * One season's playoff, when `season` names it (the events sync asks for a Season by its id,
-   * #2003); otherwise the playoffs whose first game starts inside `dateRange`. A playoff runs from
-   * December into the next January, so a range reads the seasons from the year before it starts to
-   * the year it ends. With neither, or a range too wide to walk, it reads none.
+   * #2003); otherwise the seasons' playoffs whose first game starts inside `dateRange`. A season
+   * runs from August into the next January, so a range reads the seasons from the year before it
+   * starts to the year it ends. With neither, or a range too wide to walk, it reads none.
    */
   async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
     const events: SportEvent[] = [];
     for (const each of season === undefined ? this.seasonsFor(dateRange) : [season]) {
       const scope = { season: each };
       const games = await this.gamesOf(scope);
-      if (games.length > 0) events.push(toCfpEvent(scope, games, this.windowClosed(scope)));
+      if (games.length > 0) events.push(toCfpEvent(scope, games));
     }
     return events
       .filter((event) => season !== undefined || !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The season's playoff with the teams playing in its window; null when the vendor has no game in it yet. */
+  /**
+   * The season's playoff with the teams its games have; null when the vendor has no game yet. The
+   * feed names no field size: the field is the seeds placed on the event (#1715).
+   */
   async eventDetails(scope: CfpScope): Promise<SportEventDetail | null> {
     const games = await this.gamesOf(scope);
     if (games.length === 0) return null;
-    const participants = toCfpFieldParticipants(games);
-    return { ...toCfpEvent(scope, games, this.windowClosed(scope), participants.length), participants };
+    return { ...toCfpEvent(scope, games), participants: teamsOfGames(games) };
   }
 
   /** Every college football team the vendor lists. */
@@ -65,27 +68,20 @@ export class NcaafReader {
     return page.data.map((team) => toNcaafTeamParticipant(team, NCAAF_TEAMS_PATH));
   }
 
-  /** Every game in the season's window, with its teams, state and score. */
-  async liveScores(scope: CfpScope): Promise<LiveScoreResult> {
-    return { category: 'GAME', externalEventId: cfpScopeId(scope), games: toCfpGameScoreUpdates(await this.gamesOf(scope)) };
-  }
-
   /**
-   * The games inside the season's window. Asked for by date alone, not by `seasons[]`: how the
-   * vendor numbers a January game's season is not documented, and the window names one season.
+   * The games of yesterday, today and tomorrow (UTC), with their teams, state and score: the ones
+   * that can be live now. The GAME writer links each only to the bracket match whose teams it has.
    */
-  private async gamesOf(scope: CfpScope): Promise<NcaafGame[]> {
-    const { from, to } = CFP_LEAGUE.window(scope.season);
-    const games = await this.client.getAllPages(
-      NCAAF_GAMES_PATH,
-      { start_date: calendarDate(from), end_date: calendarDate(to) },
-      ncaafGameListSchema,
-    );
-    return cfpGamesOf(scope, games);
+  async liveScores(scope: CfpScope): Promise<LiveScoreResult> {
+    const now = this.now();
+    const dates = [now - MS_PER_DAY, now, now + MS_PER_DAY].map((moment) => calendarDate(new Date(moment)));
+    const games = await this.client.getAllPages(NCAAF_GAMES_PATH, { 'dates[]': dates }, ncaafGameListSchema);
+    return { category: 'GAME', externalEventId: cfpScopeId(scope), games: toCfpGameScoreUpdates(games) };
   }
 
-  private windowClosed(scope: CfpScope): boolean {
-    return this.now() >= CFP_LEAGUE.window(scope.season).to.getTime();
+  /** The season's games, numbered by the year the season starts, as the vendor numbers them. */
+  private gamesOf(scope: CfpScope): Promise<NcaafGame[]> {
+    return this.client.getAllPages(NCAAF_GAMES_PATH, { 'seasons[]': [scope.season] }, ncaafGameListSchema);
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {

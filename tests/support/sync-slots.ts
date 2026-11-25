@@ -18,16 +18,24 @@ let definitionCount = 0;
  */
 export const COVERING_TEMPLATE_KEY = 'sync-slot-cover';
 
+/** A Season slot's date window as a test sets it (#2012). */
+export interface TestSlotWindow {
+  startsAt: Date;
+  endsAt: Date;
+  status: 'TENTATIVE' | 'CONFIRMED';
+}
+
 /**
- * A slot definition of the league mapped by the PROVIDER_CODE `code` at its provider mapping,
- * played by one synced Season slot in each of `seasonIds`, and listed by an active contest template
- * unless `covered` is false. Answers the Season slot ids in the order of `seasonIds`.
+ * A slot definition of the league mapped by the PROVIDER_CODE `code` at its provider mapping, or
+ * by DATE_WINDOW when `code` is null, played by one synced Season slot in each of `seasonIds` (with
+ * `window` as each one's date window, when given), and listed by an active contest template unless
+ * `covered` is false. Answers the Season slot ids in the order of `seasonIds`.
  */
 export async function syncSlotsFor(
   prisma: Db,
-  input: { sportLeagueId: string; sportLeagueProviderMappingId: string; code: string; seasonIds: readonly string[]; covered?: boolean },
+  input: { sportLeagueId: string; sportLeagueProviderMappingId: string; code: string | null; seasonIds: readonly string[]; covered?: boolean; window?: TestSlotWindow },
 ): Promise<string[]> {
-  return (await slotDefinitionFor(prisma, { ...input, matchType: 'PROVIDER_CODE', value: input.code })).seasonSlotIds;
+  return (await slotDefinitionFor(prisma, { ...input, matchType: input.code === null ? 'DATE_WINDOW' : 'PROVIDER_CODE', value: input.code })).seasonSlotIds;
 }
 
 /**
@@ -46,8 +54,8 @@ export async function nameSlotDefinitionFor(
 async function slotDefinitionFor(
   prisma: Db,
   input: {
-    sportLeagueId: string; sportLeagueProviderMappingId: string; matchType: 'PROVIDER_CODE' | 'NAME_PATTERN'; value: string;
-    seasonIds: readonly string[]; covered?: boolean; seasonSlots?: boolean;
+    sportLeagueId: string; sportLeagueProviderMappingId: string; matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW'; value: string | null;
+    seasonIds: readonly string[]; covered?: boolean; seasonSlots?: boolean; window?: TestSlotWindow;
   },
 ): Promise<{ definitionId: string; seasonSlotIds: string[] }> {
   const { sportLeagueId } = input;
@@ -115,6 +123,7 @@ async function slotDefinitionFor(
       data: {
         sportLeagueId, sportLeagueSeasonId, sportLeagueSeasonPhaseId: seasonPhase.id, sportLeaguePhaseSlotId: definition.id,
         seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+        ...(input.window && { windowStartsAt: input.window.startsAt, windowEndsAt: input.window.endsAt, windowStatus: input.window.status }),
       },
       select: { id: true },
     })).id);

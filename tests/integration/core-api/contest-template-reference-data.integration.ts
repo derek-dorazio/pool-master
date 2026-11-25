@@ -708,8 +708,8 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  // Squares (#711, #786, #787): the NFL's, the College Football Playoff's, each March Madness league's, each college hockey league's and each soccer league's squares preset, the default for its own format.
-  it('seeds one squares template on the NFL, the College Football Playoff, men\'s and women\'s March Madness, men\'s and women\'s college hockey and each soccer competition, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
+  // Squares (#711, #786, #787): the NFL's, NCAA men's football's, each March Madness league's, each college hockey league's and each soccer league's squares preset, the default for its own format.
+  it('seeds one squares template on the NFL, NCAA men\'s football, men\'s and women\'s March Madness, men\'s and women\'s college hockey and each soccer competition, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: { include: { sport: true } } },
@@ -964,10 +964,10 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
   });
 });
 
-// The College Football Playoff (#707): an American football sport league, data only, with its own
-// round names, its own six tiers and knockout presets for its four rounds.
-describe('The seeded College Football Playoff league and its knockout templates', () => {
-  it('seeds the College Football Playoff as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
+// NCAA men's football (#707, renamed in #2143): a football sport league, data only, whose College
+// Football Playoff has its own round names, its own six tiers and knockout presets for its four rounds.
+describe('The seeded NCAA Men\'s Football league and its knockout templates', () => {
+  it('seeds NCAA Men\'s Football as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
     const football = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.FOOTBALL } });
     const seeded = seededLeagueReader(football.id);
 

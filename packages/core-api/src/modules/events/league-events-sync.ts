@@ -27,6 +27,7 @@ import {
   ProviderSyncFindingSeverity,
   ProviderSyncKind,
   seasonsToSync,
+  playsOutsideSeason,
   ProviderSyncRunStatus,
   JobTrigger,
   type BackgroundJob,
@@ -266,7 +267,11 @@ export class LeagueEventsSync {
    * One Season: its slate is imported and its linked events kept current, and each code of the
    * slate no slot mapping includes raises one INFO SLOT_VALUE_UNMAPPED finding per league, Provider
    * and code (#2005); a tournament its name places nowhere raises SLOT_NAME_UNMATCHED (INFO),
-   * SLOT_NAME_AMBIGUOUS or SLOT_SEASON_PHASE_MISSING (ERROR) per league, Provider and normalized name (#2011). The finding's subject dedupes it across syncs, and a waived one stays waived.
+   * SLOT_NAME_AMBIGUOUS or SLOT_SEASON_PHASE_MISSING (ERROR) per league, Provider and normalized name (#2011).
+   * Games with no code that no slot's window holds, inside the Season's span, raise one INFO
+   * GAMES_UNPLACED per league, Provider and Season, placed games dated outside the Season a WARNING, and date-window slots still needing
+   * dates a WARNING per Season (#2012). The findings' subjects dedupe them across syncs, and a
+   * waived one stays waived.
    */
   private async syncSeason(
     sportLeagueId: string,
@@ -293,8 +298,91 @@ export class LeagueEventsSync {
       providerValue: value.normalizedName,
       providerValueName: value.name,
     })));
+    await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, imported.placed);
+    await this.raiseGamesUnplaced(sportLeagueId, providerId, season, imported.unplaced);
+    await this.checkSlotDates(sportLeagueId, providerId, season, imported.slotsNeedingDates);
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
+  }
+
+  /**
+   * One WARNING SLOT_OUTSIDE_SEASON per league, Provider and place whose placed games are dated
+   * outside the Season's span (#2012), before it or after it. The games are still written; the
+   * finding's subject dedupes it across syncs. A place found by date window has no code, so its
+   * finding names none.
+   */
+  private async raiseSlotsOutsideSeason(
+    sportLeagueId: string,
+    providerId: string,
+    season: { startsAt: Date; endsAt: Date },
+    placed: ProviderSeasonImport['placed'],
+  ): Promise<void> {
+    const outside = new Map<string | null, string>();
+    for (const play of playsOutsideSeason(placed, season)) {
+      if (!outside.has(play.code)) outside.set(play.code, play.eventName);
+    }
+    if (outside.size === 0) return;
+    await this.options.findings.raiseOfSource(providerId, [...outside].map(([code, eventName]) => ({
+      kind: ProviderSyncFindingKind.SLOT_OUTSIDE_SEASON,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: code,
+      providerValueName: eventName,
+    })));
+  }
+
+  /**
+   * One INFO GAMES_UNPLACED per league, Provider and Season for the games with no code that no
+   * slot's window holds and that are dated inside the Season's span (#2012). A game outside the
+   * span is not this Season's, so waiving the finding covers one Season's known games, never a
+   * later Season's gap. The finding names the events the games are in.
+   */
+  private async raiseGamesUnplaced(
+    sportLeagueId: string,
+    providerId: string,
+    season: { startsAt: Date; endsAt: Date; providerSeasonId: string },
+    unplaced: ProviderSeasonImport['unplaced'],
+  ): Promise<void> {
+    const outside = new Set(playsOutsideSeason(unplaced, season));
+    const inSeason = unplaced.filter((game) => !outside.has(game));
+    if (inSeason.length === 0) return;
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.GAMES_UNPLACED,
+      severity: ProviderSyncFindingSeverity.INFO,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: season.providerSeasonId,
+      providerValueName: [...new Set(inSeason.map((game) => game.eventName))].join(', '),
+    }]);
+  }
+
+  /**
+   * One WARNING SLOT_DATES_NEEDED per league, Provider and Season while slots its provider places
+   * by date window have no window or only a tentative one (#2012, #1924), naming their keys; the
+   * Season's finding resolves once none does. A Season with no slot placed by date window has
+   * nothing to check. The Seasons the sync reads are the open and upcoming ones, so an ended Season
+   * raises none.
+   */
+  private async checkSlotDates(
+    sportLeagueId: string,
+    providerId: string,
+    season: { providerSeasonId: string },
+    slotKeys: readonly string[] | null,
+  ): Promise<void> {
+    if (slotKeys === null) return;
+    if (slotKeys.length === 0) {
+      await this.options.findings.resolveOfSource(providerId, { kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED, sportLeagueId, providerValues: [season.providerSeasonId] });
+      return;
+    }
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: season.providerSeasonId,
+      providerValueName: slotKeys.join(', '),
+    }]);
   }
 
   /** An earlier try of this job that stopped mid-run left its run IN_PROGRESS: it is FAILED as interrupted. */

@@ -39,7 +39,7 @@ const OLD_STAT_POOL_PLATFORM_TIER_PROFILE_ID = '3ab96023-4255-43c1-ab20-f4c79ae9
 const STANDARD_VALUES = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 describe('The migration to tier and pricing profiles', () => {
-  it('points every seeded sport league at its old layout: its sport\'s, or the College Football Playoff\'s and the PWHL\'s own count of two', async () => {
+  it('points every seeded sport league at its old layout: its sport\'s, or NCAA Men\'s Football\'s and the PWHL\'s own count of two', async () => {
     const leagues = await getPrisma().sportLeague.findMany({
       include: { sport: true, platformTierProfile: true },
       orderBy: [{ sport: { sport: 'asc' } }, { name: 'asc' }],

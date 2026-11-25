@@ -239,7 +239,7 @@ describe('SportEvent provider sync on the wire (ADR 0011)', () => {
     const slot = {
       id: 'slot-1', slotDefinitionId: 'def-1', key: 'MASTERS', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: 'Masters Tournament',
       startsAt: AT, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1,
-      pairing: SlotPairing.FIXED, isTestData: true, label: 'QA A',
+      pairing: SlotPairing.FIXED, isTestData: true, label: 'QA A', window: null,
     };
     const dto = mapSportEventToDto({ ...summary(event({ syncProviderId: 'balldontlie', providerMappings: [] }), 72), slots: [slot] });
 

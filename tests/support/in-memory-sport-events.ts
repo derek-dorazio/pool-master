@@ -40,7 +40,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -127,7 +127,7 @@ export class InMemorySportEvents {
     this.seasonSlots.push({
       id, slotDefinitionId: 'slot-definition', key: 'TEST_EVENT', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: null,
       startsAt, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
-      isTestData: true, label: id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: sportLeague.currentSeasonId ?? IN_MEMORY_SEASON_ID,
+      isTestData: true, label: id, window: null, sportLeagueId: sportLeague.id, sportLeagueSeasonId: sportLeague.currentSeasonId ?? IN_MEMORY_SEASON_ID,
       ...overrides,
     });
     return id;
@@ -157,6 +157,18 @@ export class InMemorySportEvents {
     return id;
   }
 
+  /** The synced slots placed by date window, each with its window or none (#2012). */
+  slotWindows = new Map<string, SlotWindow | null>();
+
+  /** A synced slot placed by date window, with `window` or none, listed by a template (#2012). Answers its id. */
+  addWindowSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, key: string, window: SlotWindow | null): string {
+    const id = this.addSyncSlot(sportLeague, null);
+    const slot = this.seasonSlots.find((candidate) => candidate.id === id);
+    if (slot) Object.assign(slot, { key, window });
+    this.slotWindows.set(id, window);
+    return id;
+  }
+
   /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
   seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
     const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
@@ -166,12 +178,15 @@ export class InMemorySportEvents {
         .map((slot) => ({
           seasonSlotId: slot.id,
           slotDefinitionId: slot.slotDefinitionId,
+          key: slot.key,
           providerCode: this.slotProviderCodes.get(slot.id) ?? null,
           linkedCode: this.slotLinks.get(slot.id) ?? null,
           coveredByTemplate: this.templateCoveredSlotIds.has(slot.id) || this.templateCoveredDefinitionIds.has(slot.slotDefinitionId),
           sportEventId: ownerOf(slot.id),
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
+          placedByWindow: this.slotWindows.has(slot.id),
+          window: this.slotWindows.get(slot.id) ?? null,
         })),
       findSlotNamePatterns: async () => [...this.slotNamePatterns],
       linkNameMatchedSlots: async ({ sportLeagueId, sportLeagueSeasonId, links, creates }) => {
@@ -195,7 +210,11 @@ export class InMemorySportEvents {
         }
         return { phaseMissing };
       },
-      recordSyncedSlots: async ({ eventSlots, slotDates }) => {
+      recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows }) => {
+        for (const slotId of confirmedWindows) {
+          const window = this.slotWindows.get(slotId);
+          if (window) this.slotWindows.set(slotId, { ...window, status: SlotWindowStatus.CONFIRMED });
+        }
         for (const change of slotDates) {
           const slot = this.seasonSlots.find((candidate) => candidate.id === change.seasonSlotId);
           if (slot) Object.assign(slot, { startsAt: change.startsAt, endsAt: change.endsAt });
@@ -437,6 +456,18 @@ export class InMemorySportEvents {
         }),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => this.externalIdAt(row.id, providerId) === externalId) ?? null,
       findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => externalIds.includes(this.externalIdAt(row.id, providerId) ?? '')),
+      findFieldFeedIds: async (providerId, sportLeagueId, ids) => {
+        const provider = TEST_PROVIDER_ROWS[requireProviderCodeOfSourceId(providerId)].id;
+        const fields = new Map<string, Set<string>>();
+        for (const row of this.field.filter((entry) => ids.includes(entry.sportEventId) && entry.isActive)) {
+          const field = fields.get(row.sportEventId) ?? new Set<string>();
+          for (const mapping of this.mappings) {
+            if (mapping.participantId === row.participantId && mapping.providerId === provider && mapping.sportLeagueId === sportLeagueId) field.add(mapping.externalId);
+          }
+          fields.set(row.sportEventId, field);
+        }
+        return fields;
+      },
       // No sport filter: every event is golf while Sport has one member.
       findAll: async (filters) => this.events.filter((row) => (
         (filters.statuses === undefined || filters.statuses.includes(row.status))

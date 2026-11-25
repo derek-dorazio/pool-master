@@ -138,7 +138,7 @@ function toFormatTiles(
     .sort((left, right) => selectionTypes.indexOf(left.selectionType) - selectionTypes.indexOf(right.selectionType));
 }
 
-/** Sport leagues in their display order, the NFL before the College Football Playoff; unordered ones after, by name. */
+/** Sport leagues in their display order, the NFL before NCAA Men's Football; unordered ones after, by name. */
 function bySportLeagueDisplayOrder(left: SportLeagueDto, right: SportLeagueDto) {
   return (left.displayOrder ?? Number.MAX_SAFE_INTEGER) - (right.displayOrder ?? Number.MAX_SAFE_INTEGER)
     || (left.displayName ?? left.name).localeCompare(right.displayName ?? right.name);

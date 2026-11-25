@@ -10,7 +10,7 @@
  * without, with a `BalldontlieContractError` naming it.
  *
  * The document gives a game no postseason flag, bowl name or venue, which is why the playoff's
- * games are found by date (`CFP_LEAGUE` in `ncaaf-mapping.ts`).
+ * games are placed by the Season slots' date windows (#2012), not by anything a game carries.
  *
  * `tests/unit/core-api/balldontlie/ncaaf-contract.test.ts` holds every field here against the
  * vendored copy of the document.

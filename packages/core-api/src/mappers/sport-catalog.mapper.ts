@@ -19,6 +19,7 @@ import {
   type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
+  slotNeedsDates,
   testEventSlotRefusal,
 } from '@poolmaster/shared/domain';
 import type {
@@ -254,6 +255,17 @@ export function mapSportLeagueStructureToDto(structure: SportLeagueStructure): S
 
 /** One Season with its provider ids, phases and slots (#2003), in the order the domain gave them. */
 export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): SportLeagueSeasonDto {
+  const phases = season.phases.map((phase) => {
+    const slots = phase.slots.map((slot) => ({
+      ...mapSportLeagueSeasonSlotToDto(slot),
+      sportEventId: slot.sportEventId,
+      takesTestEvent: testEventSlotRefusal(slot, season.isCurrent) === null,
+      placedByWindow: slot.placedByWindow,
+      // The one rule (#1924), for the Seasons the sync reads.
+      needsDates: season.readBySync && slotNeedsDates(slot),
+    }));
+    return { id: phase.id, phase: phase.phase, isSynced: phase.isSynced, slots, slotsNeedingDates: slots.filter((slot) => slot.needsDates).length };
+  });
   return {
     id: season.id,
     name: season.name,
@@ -268,16 +280,8 @@ export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): Spor
       providerLeagueCode: mapping.providerLeagueCode,
       providerSeasonId: mapping.providerSeasonId,
     })),
-    phases: season.phases.map((phase) => ({
-      id: phase.id,
-      phase: phase.phase,
-      isSynced: phase.isSynced,
-      slots: phase.slots.map((slot) => ({
-        ...mapSportLeagueSeasonSlotToDto(slot),
-        sportEventId: slot.sportEventId,
-        takesTestEvent: testEventSlotRefusal(slot, season.isCurrent) === null,
-      })),
-    })),
+    phases,
+    slotsNeedingDates: phases.reduce((total, phase) => total + phase.slotsNeedingDates, 0),
   };
 }
 
@@ -298,5 +302,6 @@ export function mapSportLeagueSeasonSlotToDto(slot: SportLeagueSeasonSlot): Spor
     pairing: slot.pairing,
     isTestData: slot.isTestData,
     label: slot.label,
+    window: slot.window === null ? null : { startsAt: slot.window.startsAt.toISOString(), endsAt: slot.window.endsAt.toISOString(), status: slot.window.status },
   };
 }
