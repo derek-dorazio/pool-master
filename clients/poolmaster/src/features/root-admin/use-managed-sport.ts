@@ -1,4 +1,4 @@
-import { getSportDefinition, type Sport, type SportDefinition } from '@poolmaster/shared/domain';
+import type { Sport } from '@poolmaster/shared/domain';
 import { useParams } from 'react-router';
 import { useSportsQuery } from './use-sport-catalog';
 
@@ -6,7 +6,6 @@ export type ManagedSport = {
   sport: Sport;
   /** The sport's stored URL segment, as `/manage/sports/:sport` names it. */
   sportUrlSegment: string;
-  definition: SportDefinition;
 };
 
 /**
@@ -20,7 +19,7 @@ export function useManagedSportParam() {
   // poolmaster-allow-list-lookup: the platform's dozen sports, matched by the address's segment
   const row = sportsQuery.data?.find((candidate) => candidate.urlSegment === segment);
   const managed: ManagedSport | null = row
-    ? { sport: row.sport, sportUrlSegment: row.urlSegment, definition: getSportDefinition(row.sport) }
+    ? { sport: row.sport, sportUrlSegment: row.urlSegment }
     : null;
   return { managed, sportsQuery };
 }

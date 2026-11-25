@@ -263,7 +263,7 @@ const POSITIONS: SportLeaguePositionDto[] = [
 function renderLeaguePage(path: string) {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [NBA, SUMMER] } });
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: OVERVIEWS } });
-  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['BASKETBALL'] }] } });
+  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }] } });
   listSportLeagueSyncsMock.mockResolvedValue({ data: { syncs: [sync('EVENTS'), sync('FIELD'), sync('SCORES')] } });
   listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons: SEASONS } });
   const queryClient = sportsQueryClient();

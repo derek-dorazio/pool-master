@@ -557,7 +557,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     // place of a stored value; the background refresh then carries other tasks' saves here.
     await appSettings.load();
     appSettings.start();
-    // The provider rows load before any provider is called; a change of enable, priority or the
+    // The provider rows load before any provider is called; a change of enable or the
     // leagues read takes effect when the task next starts, the rest on the next read (#1997).
     await providerSettings.load();
     providerSettings.start();

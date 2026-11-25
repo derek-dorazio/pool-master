@@ -1,4 +1,4 @@
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { SportDataProvider } from '../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -16,13 +16,14 @@ import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/
  *     });
  *
  * To hand one to a service that takes a `ProviderRegistry`, use `registryWith(provider)`
- * below rather than casting a literal `{ getProviderById }`.
+ * below rather than casting a literal registry.
  */
 export function fakeSportDataProvider(overrides: Partial<SportDataProvider> = {}): SportDataProvider {
   return {
     providerId: 'mock-provider',
+    providerCode: ProviderCode.BALLDONTLIE,
     providerName: 'Mock Provider',
-    sportsCovered: [Sport.GOLF],
+    servesLeague: jest.fn().mockReturnValue(true),
     getUpcomingEvents: jest.fn().mockResolvedValue([]),
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
@@ -32,15 +33,14 @@ export function fakeSportDataProvider(overrides: Partial<SportDataProvider> = {}
 }
 
 /**
- * A real `ProviderRegistry` with `provider` registered as PRIMARY for each sport it covers
- * (or an empty one for `null`), so `getProvider` / `getProviderById` are the real lookups
- * rather than stubs that agree with whatever the test assumed.
+ * A real `ProviderRegistry` with these providers registered by their Provider codes (or an empty
+ * one for `null`), so `byCode` / `bySourceId` / `forLeague` are the real lookups rather than stubs
+ * that agree with whatever the test assumed.
  */
-export function registryWith(provider: SportDataProvider | null): ProviderRegistry {
+export function registryWith(...providers: Array<SportDataProvider | null>): ProviderRegistry {
   const registry = new ProviderRegistry();
-  if (!provider) return registry;
-  for (const sport of provider.sportsCovered) {
-    registry.register(sport, provider, 'PRIMARY');
+  for (const provider of providers) {
+    if (provider) registry.register(provider);
   }
   return registry;
 }

@@ -55,8 +55,8 @@ export function SportEventManualCreateForm({
   const logger = getLogger().child({ feature: 'root-admin-sport-event-create-page' });
   const navigate = useNavigate();
   const preferences = useDisplayPreferences();
-  const { sport, sportUrlSegment, definition } = useManagedSport();
-  const { event, participant } = sportVocabulary(definition);
+  const { sport, sportUrlSegment } = useManagedSport();
+  const { event, participant } = sportVocabulary(sport);
   const sportLeague = sportLeagues.find((candidate) => candidate.id === edition.sportLeagueId);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague?.noun ?? null);
   const seasonsQuery = useSportLeagueSeasonsQuery(edition.sportLeagueId);

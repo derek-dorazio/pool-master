@@ -1,4 +1,4 @@
-import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import { ParticipantInactiveReason, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type {
   DateRange,
@@ -59,11 +59,16 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
    * production model has no test provider.
    */
   readonly providerId = 'balldontlie';
+  readonly providerCode = ProviderCode.BALLDONTLIE;
   readonly providerName = 'Mock Contest Feed Provider';
-  readonly sportsCovered: Sport[] = [Sport.GOLF];
   private readonly payloads = new ProviderPayloadRecorder('mock-contest-feed.request');
   private readonly scenarioIdByEventId = new Map<string, string>();
   private readonly scenarioIdByExternalId = new Map<string, string>();
+
+  /** It reads every league a test names. */
+  servesLeague(): boolean {
+    return true;
+  }
 
   /** The scenario a listed event came from, by the event's provider id; undefined until it is listed. */
   scenarioIdOf(externalId: string): string | undefined {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ParticipantRoundStatus, Sport } from '../../../../packages/shared/domain';
+import { ParticipantRoundStatus, ProviderCode, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { UnsupportedPgaFormatError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-mapping';
@@ -80,12 +80,14 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
   let restore: (() => void) | undefined;
   afterEach(() => restore?.());
 
-  it('identifies itself as the balldontlie provider covering golf, american football, basketball and soccer', () => {
+  it('identifies itself as the BALLDONTLIE Provider and reads only the enabled leagues it has a reader for', () => {
     const harness = setup();
     restore = harness.restore;
     expect(harness.adapter.providerId).toBe('balldontlie');
+    expect(harness.adapter.providerCode).toBe(ProviderCode.BALLDONTLIE);
     expect(harness.adapter.providerName).toBe('BALLDONTLIE');
-    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.SOCCER, Sport.HOCKEY, Sport.BASEBALL]);
+    expect(['pga', 'nfl', 'nba', 'epl', 'nhl', 'mlb'].every((code) => harness.adapter.servesLeague(code))).toBe(true);
+    expect(harness.adapter.servesLeague('lpga')).toBe(false);
   });
 
   describe('getUpcomingEvents', () => {

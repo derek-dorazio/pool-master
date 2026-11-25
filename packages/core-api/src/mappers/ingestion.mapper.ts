@@ -16,7 +16,6 @@ import type {
 import {
   PROVIDER_LEAGUE_MINUTES_RANGE,
   PROVIDER_POLL_MINUTES_RANGE,
-  PROVIDER_PRIORITY_RANGE,
   PROVIDER_REQUESTS_PER_MINUTE_RANGE,
   type ProviderLeagueSettings,
   type ProviderSettings,
@@ -35,7 +34,6 @@ export function toProviderListResponse(providers: readonly ProviderSummary[]): P
     settingRanges: {
       requestsPerMinute: { ...PROVIDER_REQUESTS_PER_MINUTE_RANGE },
       pollMinutes: { ...PROVIDER_POLL_MINUTES_RANGE },
-      priority: { ...PROVIDER_PRIORITY_RANGE },
       leagueMinutes: { ...PROVIDER_LEAGUE_MINUTES_RANGE },
     },
   };
@@ -48,8 +46,6 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     status: provider.status,
     errorRate: provider.errorRate,
     lastEventAt: provider.lastEventAt?.toISOString() ?? null,
-    sportsCovered: provider.sportsCovered,
-    primaryForSports: provider.primaryForSports,
     activeEventCount: provider.activeEventCount,
     requestsPerMinute: provider.requestsPerMinute,
     webhooksEnabled: provider.webhooksEnabled,
@@ -72,7 +68,6 @@ export function toProviderSettingsDto(provider: ProviderSettings, webhookSecretS
     webhookRoundPollMinutes: provider.webhookRoundPollMinutes,
     hasPlayerStats: provider.hasPlayerStats,
     isEnabled: provider.isEnabled,
-    priority: provider.priority,
     leagues: provider.leagues.map(toProviderLeagueDto),
   };
 }

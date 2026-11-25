@@ -6,9 +6,10 @@
 
 import type { PrismaClient } from '@prisma/client';
 import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '../../adapters/prisma-sport-catalog-repositories';
-import { ProviderRegistry } from '../ingestion/core/provider-registry';
-import { ProviderLeagueRefusedError } from '../ingestion/core/provider-interface';
+import { LeagueProviderNotResolvedError, ProviderRegistry, type LeagueProviderSource } from '../ingestion/core/provider-registry';
+import { ProviderLeagueRefusedError, type SportDataProvider } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import type { SportLeagueProviderMapping } from '@poolmaster/shared/domain';
 
 export class ProviderSeasonScheduleError extends Error {
   constructor(
@@ -40,17 +41,13 @@ export class ProviderSeasonScheduleReader {
    * selected provider mapping names (#1997), by the code the provider stamps on each, never by a
    * name, asked for by the provider's own id for the Season. The provider is asked for that league
    * alone, and a refusal of it by the provider's plan is a `PROVIDER_LEAGUE_REFUSED` error (#1797).
-   * 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to this provider.
+   * The provider is the one that mapping names (#2073): 422 SPORT_LEAGUE_NOT_SYNCED when the league
+   * has no selected mapping, 404 PROVIDER_NOT_FOUND when its provider is not running here.
    */
   async listSeasonEvents(
-    providerId: string,
     sportLeagueId: string,
     providerSeasonId: string,
   ): Promise<Array<ProviderEventDetailSummary & { externalId: string }>> {
-    const provider = this.providerRegistry.getProviderById(providerId);
-    if (!provider) {
-      throw new ProviderSeasonScheduleError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
-    }
     const sportLeague = await this.prisma.sportLeague.findUnique({
       where: { id: sportLeagueId },
       include: { sport: true, ...SELECTED_PROVIDER_MAPPING_INCLUDE },
@@ -58,14 +55,7 @@ export class ProviderSeasonScheduleReader {
     if (!sportLeague) {
       throw new ProviderSeasonScheduleError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     }
-    const mapping = toSelectedProviderMapping(sportLeague.selectedProviderMapping);
-    if (mapping === null || mapping.providerId !== providerId) {
-      throw new ProviderSeasonScheduleError(
-        `${sportLeague.name} is not synced from provider ${providerId}, so none of its leagues is ${sportLeague.name}'s.`,
-        'SPORT_LEAGUE_NOT_SYNCED',
-        422,
-      );
-    }
+    const { provider, mapping } = this.providerFor({ name: sportLeague.name, selectedProviderMapping: toSelectedProviderMapping(sportLeague.selectedProviderMapping) });
     const providerLeagueCode = mapping.providerLeagueCode;
 
     const events = await provider.getUpcomingEvents(sportLeague.sport.sport, undefined, { providerLeagueCode, providerSeasonId }).catch((error: unknown) => {
@@ -84,5 +74,15 @@ export class ProviderSeasonScheduleReader {
         startDate: event.startDate,
         endDate: event.endDate ?? null,
       }));
+  }
+
+  /** The league's provider, through its selected mapping (#2073), as this reader's error. */
+  private providerFor<M extends SportLeagueProviderMapping>(league: LeagueProviderSource<M>): { provider: SportDataProvider; mapping: M } {
+    try {
+      return this.providerRegistry.forLeague(league);
+    } catch (error) {
+      if (error instanceof LeagueProviderNotResolvedError) throw new ProviderSeasonScheduleError(error.message, error.code, error.statusCode);
+      throw error;
+    }
   }
 }

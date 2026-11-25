@@ -1,4 +1,4 @@
-import { Sport } from '../../../packages/shared/domain';
+import { ProviderCode } from '../../../packages/shared/domain';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
   buildProvidersFromRows,
@@ -49,7 +49,7 @@ describe('provider bindings', () => {
 
     registerConfiguredProviders(registry, NO_ROWS, { ...LOCAL });
 
-    expect(registry.getSupportedSports()).toEqual([]);
+    expect(registry.all()).toEqual([]);
   });
 
   it('reads no provider from the retired SPORT_DATA_DEFAULT_PROVIDER and SPORT_DATA_PROVIDER_BINDINGS_JSON, so the old QA mock binding registers nothing', () => {
@@ -63,17 +63,19 @@ describe('provider bindings', () => {
       }),
     });
 
-    expect(registry.getAllProviders()).toEqual([]);
+    expect(registry.all()).toEqual([]);
   });
 
   describe('the Provider rows', () => {
-    it('registers an enabled BALLDONTLIE row as the primary provider of every sport its leagues cover, with the key from the environment', () => {
+    it('registers an enabled BALLDONTLIE row by its Provider code, reading its enabled leagues, with the key from the environment', () => {
       const registry = new ProviderRegistry();
 
       registerConfiguredProviders(registry, rowsOf([balldontlieTestProvider()]), { ...LOCAL, BALLDONTLIE_API_KEY: 'a-key' });
 
-      expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('balldontlie');
-      expect(registry.getProvider(Sport.BASEBALL)?.providerId).toBe('balldontlie');
+      const provider = registry.byCode(ProviderCode.BALLDONTLIE);
+      expect(provider?.providerId).toBe('balldontlie');
+      expect(provider?.servesLeague('pga')).toBe(true);
+      expect(provider?.servesLeague('mlb')).toBe(true);
     });
 
     it('registers nothing for a row that is switched off', () => {
@@ -81,7 +83,7 @@ describe('provider bindings', () => {
 
       registerConfiguredProviders(registry, rowsOf([balldontlieTestProvider({ isEnabled: false })]), { ...LOCAL, BALLDONTLIE_API_KEY: 'a-key' });
 
-      expect(registry.getAllProviders()).toEqual([]);
+      expect(registry.all()).toEqual([]);
     });
 
     it('skips an enabled row whose key is missing or blank and logs why, rather than calling the vendor unauthenticated', () => {
@@ -92,8 +94,8 @@ describe('provider bindings', () => {
       registerConfiguredProviders(missing, rowsOf([balldontlieTestProvider()]), LOCAL, logger);
       registerConfiguredProviders(blank, rowsOf([balldontlieTestProvider()]), { ...LOCAL, BALLDONTLIE_API_KEY: '  ' }, logger);
 
-      expect(missing.getAllProviders()).toEqual([]);
-      expect(blank.getAllProviders()).toEqual([]);
+      expect(missing.all()).toEqual([]);
+      expect(blank.all()).toEqual([]);
       expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.providers.apiKeyMissing', providerCode: 'BALLDONTLIE' }), expect.any(String));
     });
 
@@ -102,8 +104,8 @@ describe('provider bindings', () => {
         .toThrow('No sport data provider is configured for this runtime.');
     });
 
-    it('builds the enabled rows\' adapters lowest priority first', () => {
-      const rows = rowsOf([balldontlieTestProvider({ priority: 2 })]);
+    it('builds an adapter for each enabled row', () => {
+      const rows = rowsOf([balldontlieTestProvider()]);
 
       const providers = buildProvidersFromRows(rows, { ...LOCAL, BALLDONTLIE_API_KEY: 'a-key' });
 
@@ -121,28 +123,28 @@ describe('provider bindings', () => {
   });
 
   describe('an injected provider factory', () => {
-    it('registers the providers it builds in its order: the first covering a sport is its primary, the rest secondary', () => {
+    it('registers each provider it builds by its own Provider code, none ahead of another', () => {
       const registry = new ProviderRegistry();
-      const first = fakeSportDataProvider({ providerId: 'feed-a', sportsCovered: [Sport.GOLF] });
-      const second = fakeSportDataProvider({ providerId: 'feed-b', sportsCovered: [Sport.GOLF, Sport.BASEBALL] });
+      const first = fakeSportDataProvider({ providerId: 'feed-a' });
+      const second = fakeSportDataProvider({ providerId: 'feed-b', providerCode: 'OTHER_FEED' as ProviderCode });
 
       registerConfiguredProviders(registry, NO_ROWS, LOCAL, undefined, () => [first, second]);
 
-      expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('feed-a');
-      expect(registry.getProvider(Sport.BASEBALL)?.providerId).toBe('feed-b');
-      expect(registry.getProvidersForSport(Sport.GOLF).map((provider) => provider.providerId).sort()).toEqual(['feed-a', 'feed-b']);
+      expect(registry.byCode(ProviderCode.BALLDONTLIE)).toBe(first);
+      expect(registry.byCode('OTHER_FEED' as ProviderCode)).toBe(second);
+      expect(registry.all()).toEqual([first, second]);
     });
 
-    it('is handed the Provider rows and environment, so a factory can add its fake to the rows\' adapters', () => {
+    it('is handed the Provider rows and environment, so a factory can add its fake beside the rows\' adapters', () => {
       const registry = new ProviderRegistry();
       const rows = rowsOf([balldontlieTestProvider()]);
       const env = { ...LOCAL, BALLDONTLIE_API_KEY: 'a-key' };
-      const fake = fakeSportDataProvider({ providerId: 'feed-a', sportsCovered: [Sport.GOLF] });
+      const fake = fakeSportDataProvider({ providerId: 'feed-a', providerCode: 'OTHER_FEED' as ProviderCode });
 
       registerConfiguredProviders(registry, rows, env, undefined, (givenRows, givenEnv, logger) => [fake, ...buildProvidersFromRows(givenRows, givenEnv, logger)]);
 
-      expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('feed-a');
-      expect(registry.getProvider(Sport.BASEBALL)?.providerId).toBe('balldontlie');
+      expect(registry.byCode('OTHER_FEED' as ProviderCode)).toBe(fake);
+      expect(registry.byCode(ProviderCode.BALLDONTLIE)?.providerId).toBe('balldontlie');
     });
 
     it('fails a deployed startup when it builds no provider, as with nothing configured', () => {

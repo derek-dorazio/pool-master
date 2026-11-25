@@ -7,7 +7,6 @@ import { expect } from '@jest/globals';
 import {
   PROVIDER_LEAGUE_MINUTES_RANGE,
   PROVIDER_POLL_MINUTES_RANGE,
-  PROVIDER_PRIORITY_RANGE,
   PROVIDER_REQUESTS_PER_MINUTE_RANGE,
 } from '../../../packages/shared/domain';
 import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
@@ -59,7 +58,6 @@ describe('ingestion provider and run handlers', () => {
       settingRanges: {
         requestsPerMinute: PROVIDER_REQUESTS_PER_MINUTE_RANGE,
         pollMinutes: PROVIDER_POLL_MINUTES_RANGE,
-        priority: PROVIDER_PRIORITY_RANGE,
         leagueMinutes: PROVIDER_LEAGUE_MINUTES_RANGE,
       },
     });

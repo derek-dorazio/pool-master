@@ -132,10 +132,10 @@ API so any drift shows up as the field that broke.
 on their own, so together they can go over the plan's limit; the client then waits out the vendor's
 429 and retries.
 
-Every enabled Provider row with its key is registered, by its `priority`, and nothing else: no
-environment variable picks a provider, and no mock feed runs in any environment (#2039). An event
-syncs from the provider it is linked to, and a root admin picks the provider wherever more than one
-serves a sport. Tests register their own fake through `buildApp({ buildSportDataProviders })`.
+Every enabled Provider row with its key is registered, by its Provider code, and nothing else: no
+environment variable picks a provider, and no mock feed runs in any environment (#2039). A league
+syncs from the provider its selected mapping names, and an event from the provider it is linked to;
+no provider is primary for a sport (#2073). Tests register their own fake through `buildApp({ buildSportDataProviders })`.
 
 **Webhooks (#1498):** BALLDONTLIE posts a signed notification to
 `POST /api/v1/provider-webhooks/balldontlie` when something happens in a game or tournament. The
@@ -172,7 +172,7 @@ is the first group finishing. A weather delay or other long stoppage sets off th
 `PROVIDER_WEBHOOK_POLL_SECONDS` and `PROVIDER_WEBHOOK_ROUND_POLL_SECONDS` override the two poll
 paces (`notified-provider-cadence.ts`).
 
-**Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
+**Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 
 ---
 
