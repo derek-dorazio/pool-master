@@ -28,6 +28,8 @@ import type {
   ProviderNotifiedEvent,
   ProviderNotifiedEventQuery,
   ProviderNotificationReceipt,
+  AutoLifecycleCandidate,
+  AutoLifecycleStatus,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,
@@ -75,6 +77,13 @@ import { toRaceResult } from './prisma-race-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 import { SPORT_EVENT_SPORT_SELECT, SPORT_LEAGUE_SPORT_SELECT, sportEventSportWhere, sportOfEvent, sportUrlSegmentOfEvent } from './sport-of';
 import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
+
+/** The statuses the lifecycle scheduler moves an event on from. */
+const AUTO_LIFECYCLE_STATUSES: readonly AutoLifecycleStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED];
+
+function isAutoLifecycleCandidate(event: SportEvent): event is AutoLifecycleCandidate {
+  return (AUTO_LIFECYCLE_STATUSES as readonly SportEventStatus[]).includes(event.status);
+}
 
 type Db = PrismaClient;
 
@@ -771,15 +780,16 @@ export class PrismaSportEventRepository implements SportEventRepository {
     });
   }
 
-  async findAutoLifecycleCandidates(): Promise<SportEvent[]> {
+  async findAutoLifecycleCandidates(): Promise<AutoLifecycleCandidate[]> {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         autoLifecycleEnabled: true,
-        status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED] },
+        status: { in: [...AUTO_LIFECYCLE_STATUSES] },
       },
       include: SPORT_EVENT_INCLUDE,
     });
-    return rows.map(toSportEvent);
+    // The query keeps to these statuses; the filter tells the type so.
+    return rows.map(toSportEvent).filter(isAutoLifecycleCandidate);
   }
 }
 

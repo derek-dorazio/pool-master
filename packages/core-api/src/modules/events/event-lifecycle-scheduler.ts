@@ -27,7 +27,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
+import type { AutoLifecycleCandidate, SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
@@ -107,37 +107,37 @@ export class EventLifecycleScheduler {
     }
   }
 
-  private async applyDueTransition(candidate: SportEvent, roundSchedule: SportEventRound[], now: Date): Promise<void> {
-    if (candidate.status === SportEventStatus.POSTPONED) {
-      // Its contests take entries until its start, wherever that has moved to (#1792).
-      await this.eventLifecycleService.followPostponedStart(candidate, now);
-      return;
-    }
-
-    if (candidate.status === SportEventStatus.SCHEDULED) {
-      const dueAt = minDate(roundSchedule.map((round) => round.scheduledDate)) ?? candidate.startDate;
-      if (now >= dueAt) {
+  private async applyDueTransition(candidate: AutoLifecycleCandidate, roundSchedule: SportEventRound[], now: Date): Promise<void> {
+    // Each status the candidate read answers has its case, and lint holds the switch whole.
+    switch (candidate.status) {
+      case SportEventStatus.POSTPONED:
+        // Its contests take entries until its start, wherever that has moved to (#1792).
+        await this.eventLifecycleService.followPostponedStart(candidate, now);
+        return;
+      case SportEventStatus.SCHEDULED: {
+        const dueAt = minDate(roundSchedule.map((round) => round.scheduledDate)) ?? candidate.startDate;
+        if (now < dueAt) return;
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,
           toStatus: SportEventStatus.IN_PROGRESS,
           actor: { type: 'SYSTEM' },
           fromStatus: SportEventStatus.SCHEDULED,
         });
+        return;
       }
-      return;
+      case SportEventStatus.IN_PROGRESS: {
+        // A second-chance bracket goes live at its starting round's first game, mid-event (#721).
+        await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
+        const dueAt = completionDueAt(candidate, roundSchedule);
+        if (dueAt === undefined || now < dueAt) return;
+        await this.eventLifecycleService.applySportEventStatusTransition({
+          sportEventId: candidate.id,
+          toStatus: SportEventStatus.COMPLETED,
+          actor: { type: 'SYSTEM' },
+          fromStatus: SportEventStatus.IN_PROGRESS,
+        });
+      }
     }
-
-    // IN_PROGRESS: the candidate read answers only SCHEDULED, IN_PROGRESS and POSTPONED events.
-    // A second-chance bracket goes live at its starting round's first game, mid-event (#721).
-    await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
-    const dueAt = completionDueAt(candidate, roundSchedule);
-    if (dueAt === undefined || now < dueAt) return;
-    await this.eventLifecycleService.applySportEventStatusTransition({
-      sportEventId: candidate.id,
-      toStatus: SportEventStatus.COMPLETED,
-      actor: { type: 'SYSTEM' },
-      fromStatus: SportEventStatus.IN_PROGRESS,
-    });
   }
 }
 

@@ -462,5 +462,4 @@ describe('EventLifecycleScheduler and the order and reach of its reads', () => {
 
     expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: 'evt-1', toStatus: 'IN_PROGRESS' }));
   });
-
 });

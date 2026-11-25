@@ -36,6 +36,7 @@ import type {
   SportRepository,
   PlatformPricingProfileRepository,
   PlatformTierProfileRepository,
+  AutoLifecycleCandidate,
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
@@ -501,7 +502,7 @@ export class InMemorySportEvents {
         else this.autoReleaseChecks.set(sportEventId, check);
       },
       findAutoReleaseCheck: async (sportEventId) => this.autoReleaseChecks.get(sportEventId) ?? null,
-      findAutoLifecycleCandidates: async () => this.events.filter((row) => (
+      findAutoLifecycleCandidates: async () => this.events.filter((row): row is AutoLifecycleCandidate => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')
       )),
