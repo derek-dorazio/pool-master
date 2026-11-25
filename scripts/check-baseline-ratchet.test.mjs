@@ -58,6 +58,16 @@ describe('check-baseline-ratchet (#1619)', () => {
     assert.deepEqual(undeclared([{ key: 'a.tsx', was: 1, now: 4 }], allowed), [{ key: 'a.tsx', was: 1, now: 4 }]);
   });
 
+  it('counts a lowered coverage floor, a lowered exception and a new exception as raises, and a raised or deleted exception as none (#2103)', () => {
+    const readFloors = read('scripts/coverage-floors-web.json');
+    const config = (floor, exceptions) => JSON.stringify({ floors: [{ name: 'web', include: 'src/**', ...floor, exceptions }] });
+    const base = config({ lines: 80, branches: 80 }, { 'src/a.ts': { lines: 50, reason: 'x' }, 'src/b.ts': { branches: 60, reason: 'x' } });
+    const worse = config({ lines: 75, branches: 80 }, { 'src/a.ts': { lines: 40, reason: 'x' }, 'src/b.ts': { branches: 60, reason: 'x' }, 'src/c.ts': { lines: 10, reason: 'x' } });
+    assert.deepEqual(findRaises(readFloors(base), readFloors(worse)).map((r) => r.key).sort(), ['web', 'web:src/a.ts', 'web:src/b.ts', 'web:src/c.ts']);
+    const better = config({ lines: 80, branches: 80 }, { 'src/a.ts': { lines: 60, reason: 'x' } });
+    assert.deepEqual(findRaises(readFloors(base), readFloors(better)), []);
+  });
+
   it('refuses a declared raise with no reason', () => {
     const text = JSON.stringify({ raises: [{ file: 'f.json', key: 'a.tsx', now: 2, reason: ' ' }] });
     assert.throws(() => declaredRaises(text, 'f.json'), /needs a reason/);

@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { after, describe, it } from 'node:test';
 
-import { checkCoverageFloors, formatMarkdown } from './check-coverage-floors.mjs';
+import { checkCoverageFloors, formatMarkdown, suggestExceptions } from './check-coverage-floors.mjs';
 import { mergeServiceCoverage } from './merge-service-coverage.mjs';
 
 const script = fileURLToPath(new URL('./check-coverage-floors.mjs', import.meta.url));
@@ -98,6 +98,48 @@ describe('check-coverage-floors (#1483)', () => {
     const { failures, problems } = checkCoverageFloors({ coverage, floors, root });
     assert.equal(failures.length, 0);
     assert.equal(problems.length, 0);
+  });
+
+  it('asks to raise an exception once the file covers more than it allows, so exceptions only tighten (#2103)', () => {
+    const coverage = fileCoverage('packages/core-api/src/adapters/a.ts', { total: 10, hit: 8 });
+    const floors = [
+      repositories({ exceptions: { 'packages/core-api/src/adapters/a.ts': { lines: 70, reason: 'x' } } }),
+    ];
+    const { failures, problems } = checkCoverageFloors({ coverage, floors, root });
+    assert.equal(failures.length, 0);
+    assert.match(problems.join('\n'), /raise its exception from 70 to 80/);
+  });
+
+  it('asks to delete an exception once the file reaches the floor itself (#2103)', () => {
+    const coverage = fileCoverage('packages/core-api/src/adapters/a.ts', { total: 10, hit: 10 });
+    const floors = [
+      repositories({ exceptions: { 'packages/core-api/src/adapters/a.ts': { lines: 70, reason: 'x' } } }),
+    ];
+    const { problems } = checkCoverageFloors({ coverage, floors, root });
+    assert.match(problems.join('\n'), /now meets floor "repositories".*delete its exception/);
+  });
+
+  it('leaves out files an exclude glob names, however low their coverage (#2103)', () => {
+    const coverage = {
+      ...fileCoverage('packages/core-api/src/adapters/a.ts', { total: 10, hit: 10 }),
+      ...fileCoverage('packages/core-api/src/adapters/index.ts', { total: 10, hit: 0 }),
+    };
+    const floors = [repositories({ exclude: ['**/index.ts'] })];
+    const { results, failures } = checkCoverageFloors({ coverage, floors, root });
+    assert.deepEqual(results.map((r) => r.file), ['packages/core-api/src/adapters/a.ts']);
+    assert.equal(failures.length, 0);
+  });
+
+  it('suggests an exception at today\'s numbers rounded down for each file under the floor, and none for a file that meets it', () => {
+    const coverage = {
+      ...fileCoverage('packages/core-api/src/adapters/a.ts', { total: 3, hit: 2, branchHits: [1, 1] }),
+      ...fileCoverage('packages/core-api/src/adapters/b.ts', { total: 10, hit: 10 }),
+    };
+    const floors = [repositories()];
+    const outcome = checkCoverageFloors({ coverage, floors, root });
+    assert.deepEqual(suggestExceptions(outcome, floors, 'r'), {
+      repositories: { 'packages/core-api/src/adapters/a.ts': { reason: 'r', lines: 66 } },
+    });
   });
 
   it('reports an exception with no reason as a configuration problem', () => {
