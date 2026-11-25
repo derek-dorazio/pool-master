@@ -106,7 +106,7 @@ function createEventRequest(input: {
 function createJob(input: {
   jobType: IngestionJobRecord['jobType'];
   feed: IngestionFeedType;
-  eventId?: string;
+  eventId: string;
   status?: IngestionJobRecord['status'];
   recordsProcessed: number;
   errors?: number;
