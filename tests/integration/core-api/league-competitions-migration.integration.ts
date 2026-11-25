@@ -91,7 +91,7 @@ describe('the league competitions migration', () => {
     expect(cfp.slots.map((slot) => slot.key)).toEqual(['FINAL', 'QUARTERFINAL', 'ROUND_OF_16', 'SEMIFINAL']);
     // The 2026 Season's windows, set as data by 13 (#2012), came through the move unchanged.
     const of2026 = seasonSlots.filter((slot) => slot.season.championshipYear === 2026);
-    expect(of2026.map((slot) => [slot.definition.key, slot.windowStatus]).sort(([left], [right]) => left.localeCompare(right))).toEqual([
+    expect([...of2026].sort((left, right) => left.definition.key.localeCompare(right.definition.key)).map((slot) => [slot.definition.key, slot.windowStatus])).toEqual([
       ['FINAL', 'CONFIRMED'], ['QUARTERFINAL', 'CONFIRMED'], ['ROUND_OF_16', 'TENTATIVE'], ['SEMIFINAL', 'CONFIRMED'],
     ]);
     expect(of2026.every((slot) => slot.windowStartsAt !== null && slot.windowEndsAt !== null)).toBe(true);
