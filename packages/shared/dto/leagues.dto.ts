@@ -187,6 +187,8 @@ export const LeagueDtoSchema = z.object({
   cupName: z.string().describe('The league championship\'s name, shown after its year: "2026 Big Dawgs Cup".'),
   cupPointsScale: z.enum(CupPointsScale).describe('The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner\'s list.'),
   cupCustomPoints: z.array(z.number().int()).describe('CUSTOM\'s whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.'),
+  cupCustomPointsMax: z.number().int().describe('The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.'),
+  cupCustomPointsMaxPlaces: z.number().int().describe('The most places a CUSTOM table can list; a save with more is refused with 400.'),
   hallOfLameVisible: z.boolean().describe('Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.'),
   planEntitlements: PlanEntitlementsDtoSchema.describe(
     'The league\'s plan and what it allows now: its caps and features. Premium at creation. The app shows the plan\'s name to commissioners only; members only meet its effects.',

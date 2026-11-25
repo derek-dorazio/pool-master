@@ -113,6 +113,7 @@ export function pickEmWeekFixture(overrides: Partial<GamePicksResponse> = {}): G
     pickedCount: games.filter((each) => each.pick !== null).length,
     gameCount: games.length,
     tiebreakerMatchId: 'match-1',
+    tiebreakerMax: 999,
     tiebreakerValue: null,
     points: 0,
     maxPossiblePoints: games.length,

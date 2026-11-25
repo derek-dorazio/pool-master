@@ -8,6 +8,7 @@ import {
 } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import type { SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
 import { standardEventPricing } from '../../support/budget-pricing';
+import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
   return {
@@ -52,6 +53,12 @@ describe('SportEvent pricing on the wire (#93)', () => {
 
   it('carries null pricing for an event whose prices were never assigned', () => {
     expect(mapSportEventToDto(summary(event(), 72)).pricing).toBeNull();
+  });
+});
+
+describe('SportEvent par bounds on the wire', () => {
+  it('sends the par per round an update takes, so the settings form checks what the server checks', () => {
+    expect(mapSportEventToDto(summary(event(), 72))).toEqual(expect.objectContaining({ roundsParMin: ROUNDS_PAR_MIN, roundsParMax: ROUNDS_PAR_MAX }));
   });
 });
 

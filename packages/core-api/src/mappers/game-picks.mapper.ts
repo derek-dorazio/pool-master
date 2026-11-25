@@ -5,14 +5,15 @@
 
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
 import { PredictedResult, type PredictedChoice } from '@poolmaster/shared/domain';
-import type {
-  GamePickGameDto,
-  GamePickPreviewGameDto,
-  GamePickPreviewRequest,
-  GamePickPreviewResponse,
-  GamePickWrite,
-  GamePicksResponse,
-  SaveGamePicksRequest,
+import {
+  GAME_PICKS_TIEBREAKER_MAX,
+  type GamePickGameDto,
+  type GamePickPreviewGameDto,
+  type GamePickPreviewRequest,
+  type GamePickPreviewResponse,
+  type GamePickWrite,
+  type GamePicksResponse,
+  type SaveGamePicksRequest,
 } from '@poolmaster/shared/dto';
 import type { GamePickGame, GamePicksView, GamePreview, GamesPreview } from '../modules/selections/prediction-service';
 import { selectionErrors } from '../modules/selections/selection-errors';
@@ -66,6 +67,7 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
     gameCount: view.gameCount,
     tiebreakerMatchId: view.tiebreakerMatchId,
     tiebreakerValue: view.tiebreakerValue,
+    tiebreakerMax: GAME_PICKS_TIEBREAKER_MAX,
     points: view.points,
     maxPossiblePoints: view.maxPossiblePoints,
     games: view.games.map(toGamePickGameDto),
@@ -129,6 +131,7 @@ export function toGamePickPreviewResponse(preview: GamesPreview): GamePickPrevie
     pickedCount: preview.pickedCount,
     gameCount: preview.gameCount,
     tiebreakerMatchId: preview.tiebreakerMatchId,
+    tiebreakerMax: GAME_PICKS_TIEBREAKER_MAX,
     games: preview.games.map(toGamePickPreviewGameDto),
   };
 }

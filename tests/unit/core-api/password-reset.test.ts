@@ -20,7 +20,7 @@ import {
   EmailService,
   renderSystemEmailTemplate,
 } from '../../../packages/core-api/src/modules/email';
-import type { EmailConfig } from '../../../packages/shared/dto';
+import { PASSWORD_RESET_LINK_MINUTES, type EmailConfig } from '../../../packages/shared/dto';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
@@ -327,7 +327,7 @@ describe('password reset request handler', () => {
     await handlers.requestPasswordReset(createRequest() as never, reply);
 
     expect(reply.status).toHaveBeenCalledWith(202);
-    expect(reply.send).toHaveBeenCalledWith({ success: true });
+    expect(reply.send).toHaveBeenCalledWith({ success: true, linkValidMinutes: PASSWORD_RESET_LINK_MINUTES });
     expect(order).toEqual(['reply', 'lookup']);
   });
 });

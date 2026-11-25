@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_DISPLAY_PREFERENCES } from '@/features/shared/ui';
 import { EVENT_PAGE_TABS } from './event-page-context';
 import { releaseCheckValueText, releaseTriesText } from './event-release-checks-text';
-import { settingsRequestBody } from './event-settings-form';
+import { settingsRequestBody, settingsSchema } from './event-settings-form';
 
 // The Event page's pure parts (#1890): which tabs it shows, how a ready check's value and the
 // release's timing read, and what the ⚙ dialog's Save sends.
@@ -66,5 +66,22 @@ describe('settingsRequestBody', () => {
       current,
       { isTestData: false, sendsRoundsPar: false },
     )).toEqual({ location: 'Wirral' });
+  });
+});
+
+describe('settingsSchema', () => {
+  // Bounds other than the server's own, so a bound the web wrote itself would show.
+  const schema = settingsSchema({ roundsParMin: 50, roundsParMax: 55 });
+  const values = { name: 'Open', venue: '', location: '', rounds: '4' };
+
+  it('takes a par per round inside the bounds the event read sent, or blank', () => {
+    expect(schema.safeParse({ ...values, roundsPar: '55' }).success).toBe(true);
+    expect(schema.safeParse({ ...values, roundsPar: '' }).success).toBe(true);
+  });
+
+  it('refuses a par per round outside the bounds the event read sent, naming them', () => {
+    const result = schema.safeParse({ ...values, roundsPar: '56' });
+
+    expect(result.error?.issues[0]?.message).toBe('Par is a whole number from 50 to 55, or blank');
   });
 });

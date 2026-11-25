@@ -687,6 +687,30 @@
         "additionalProperties": false,
         "description": "Asks for a password reset link. The answer is the same whether or not an account matches."
       },
+      "PasswordResetRequestedResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "The request was taken. It reads the same whether or not an account matched."
+          },
+          "linkValidMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "How many minutes an emailed reset link works, for the confirmation screen to quote."
+          }
+        },
+        "required": [
+          "success",
+          "linkValidMinutes"
+        ],
+        "additionalProperties": false,
+        "description": "The answer to a password reset request, the same whether or not an account matched."
+      },
       "PasswordResetConfirmRequest": {
         "type": "object",
         "properties": {
@@ -5250,6 +5274,18 @@
             },
             "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
           },
+          "cupCustomPointsMax": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400."
+          },
+          "cupCustomPointsMaxPlaces": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The most places a CUSTOM table can list; a save with more is refused with 400."
+          },
           "hallOfLameVisible": {
             "type": "boolean",
             "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
@@ -5372,6 +5408,8 @@
           "cupName",
           "cupPointsScale",
           "cupCustomPoints",
+          "cupCustomPointsMax",
+          "cupCustomPointsMaxPlaces",
           "hallOfLameVisible",
           "planEntitlements",
           "planRenewsAt",
@@ -5843,6 +5881,18 @@
                 },
                 "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
               },
+              "cupCustomPointsMax": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400."
+              },
+              "cupCustomPointsMaxPlaces": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The most places a CUSTOM table can list; a save with more is refused with 400."
+              },
               "hallOfLameVisible": {
                 "type": "boolean",
                 "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
@@ -5965,6 +6015,8 @@
               "cupName",
               "cupPointsScale",
               "cupCustomPoints",
+              "cupCustomPointsMax",
+              "cupCustomPointsMaxPlaces",
               "hallOfLameVisible",
               "planEntitlements",
               "planRenewsAt",
@@ -6072,6 +6124,18 @@
                 },
                 "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
               },
+              "cupCustomPointsMax": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400."
+              },
+              "cupCustomPointsMaxPlaces": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The most places a CUSTOM table can list; a save with more is refused with 400."
+              },
               "hallOfLameVisible": {
                 "type": "boolean",
                 "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
@@ -6194,6 +6258,8 @@
               "cupName",
               "cupPointsScale",
               "cupCustomPoints",
+              "cupCustomPointsMax",
+              "cupCustomPointsMaxPlaces",
               "hallOfLameVisible",
               "planEntitlements",
               "planRenewsAt",
@@ -6610,6 +6676,18 @@
                   },
                   "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
                 },
+                "cupCustomPointsMax": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400."
+                },
+                "cupCustomPointsMaxPlaces": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The most places a CUSTOM table can list; a save with more is refused with 400."
+                },
                 "hallOfLameVisible": {
                   "type": "boolean",
                   "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
@@ -6732,6 +6810,8 @@
                 "cupName",
                 "cupPointsScale",
                 "cupCustomPoints",
+                "cupCustomPointsMax",
+                "cupCustomPointsMaxPlaces",
                 "hallOfLameVisible",
                 "planEntitlements",
                 "planRenewsAt",
@@ -25856,6 +25936,18 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "roundsParMin": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The lowest par per round an update takes; a lower one is refused with 400."
+          },
+          "roundsParMax": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The highest par per round an update takes; a higher one is refused with 400."
+          },
           "participantCount": {
             "description": "Field size the provider reports, when it reports one; null otherwise.",
             "type": [
@@ -26638,6 +26730,8 @@
           "endDate",
           "rounds",
           "roundsPar",
+          "roundsParMin",
+          "roundsParMax",
           "participantCount",
           "loadedParticipantCount",
           "pricing",
@@ -26853,6 +26947,18 @@
                   ],
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
+                },
+                "roundsParMin": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The lowest par per round an update takes; a lower one is refused with 400."
+                },
+                "roundsParMax": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The highest par per round an update takes; a higher one is refused with 400."
                 },
                 "participantCount": {
                   "description": "Field size the provider reports, when it reports one; null otherwise.",
@@ -27636,6 +27742,8 @@
                 "endDate",
                 "rounds",
                 "roundsPar",
+                "roundsParMin",
+                "roundsParMax",
                 "participantCount",
                 "loadedParticipantCount",
                 "pricing",
@@ -27805,6 +27913,18 @@
                 ],
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
+              },
+              "roundsParMin": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The lowest par per round an update takes; a lower one is refused with 400."
+              },
+              "roundsParMax": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The highest par per round an update takes; a higher one is refused with 400."
               },
               "participantCount": {
                 "description": "Field size the provider reports, when it reports one; null otherwise.",
@@ -28588,6 +28708,8 @@
               "endDate",
               "rounds",
               "roundsPar",
+              "roundsParMin",
+              "roundsParMax",
               "participantCount",
               "loadedParticipantCount",
               "pricing",
@@ -38470,6 +38592,12 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "tiebreakerMax": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400."
+          },
           "points": {
             "description": "Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed.",
             "type": [
@@ -38807,6 +38935,7 @@
           "gameCount",
           "tiebreakerMatchId",
           "tiebreakerValue",
+          "tiebreakerMax",
           "points",
           "maxPossiblePoints",
           "games"
@@ -39336,6 +39465,12 @@
             ],
             "format": "uuid"
           },
+          "tiebreakerMax": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The highest tiebreaker an entry's save would take; 0 is the lowest."
+          },
           "games": {
             "type": "array",
             "items": {
@@ -39611,6 +39746,7 @@
           "pickedCount",
           "gameCount",
           "tiebreakerMatchId",
+          "tiebreakerMax",
           "games"
         ],
         "additionalProperties": false,
@@ -75155,7 +75291,7 @@
         "tags": [
           "Auth"
         ],
-        "description": "Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after 10 minutes, and a newer request cancels it. The answer is 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.",
+        "description": "Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after `linkValidMinutes`, and a newer request cancels it. The answer is the same 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.",
         "requestBody": {
           "required": true,
           "content": {
@@ -75168,11 +75304,11 @@
         },
         "responses": {
           "202": {
-            "description": "Minimal success response envelope.",
+            "description": "The answer to a password reset request, the same whether or not an account matched.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "$ref": "#/components/schemas/PasswordResetRequestedResponse"
                 }
               }
             }

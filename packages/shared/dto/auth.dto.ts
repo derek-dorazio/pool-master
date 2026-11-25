@@ -83,6 +83,16 @@ export const PasswordResetRequestSchema = z.object({
 }).describe('Asks for a password reset link. The answer is the same whether or not an account matches.');
 export type PasswordResetRequest = z.infer<typeof PasswordResetRequestSchema>;
 
+export const PasswordResetRequestedResponseSchema = z.object({
+  success: z.literal(true).describe('The request was taken. It reads the same whether or not an account matched.'),
+  linkValidMinutes: z
+    .number()
+    .int()
+    .min(1)
+    .describe('How many minutes an emailed reset link works, for the confirmation screen to quote.'),
+}).describe('The answer to a password reset request, the same whether or not an account matched.');
+export type PasswordResetRequestedResponse = z.infer<typeof PasswordResetRequestedResponseSchema>;
+
 export const PasswordResetConfirmRequestSchema = z.object({
   token: z
     .string()
@@ -94,7 +104,7 @@ export const PasswordResetConfirmRequestSchema = z.object({
 }).describe('Sets a new password with a reset link. Every session of the account is signed out.');
 export type PasswordResetConfirmRequest = z.infer<typeof PasswordResetConfirmRequestSchema>;
 
-export const EmailChangeUndoRequestSchema = z.object({
+const EmailChangeUndoRequestSchema = z.object({
   token: z
     .string()
     .min(1)
@@ -105,7 +115,7 @@ export type EmailChangeUndoRequest = z.infer<typeof EmailChangeUndoRequestSchema
 
 // --- Response Sub-schemas ---
 
-export const AuthTokensDtoSchema = z.object({
+const AuthTokensDtoSchema = z.object({
   accessToken: z.string().describe('Short-lived bearer token used for authenticated API requests.'),
   refreshToken: z.string().describe('Longer-lived token that can be exchanged for a fresh access token.'),
   csrfToken: z.string().describe('Anti-CSRF token that must be echoed on state-changing browser requests.'),
@@ -144,6 +154,7 @@ registerSchema('AuthTokensDto', AuthTokensDtoSchema);
 registerSchema('RegisterRequest', RegisterRequestSchema);
 registerSchema('LoginRequest', LoginRequestSchema);
 registerSchema('PasswordResetRequest', PasswordResetRequestSchema);
+registerSchema('PasswordResetRequestedResponse', PasswordResetRequestedResponseSchema);
 registerSchema('PasswordResetConfirmRequest', PasswordResetConfirmRequestSchema);
 registerSchema('EmailChangeUndoRequest', EmailChangeUndoRequestSchema);
 registerSchema('AuthResponse', AuthResponseSchema);

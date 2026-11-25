@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LEAGUE_PLANS, LeaguePlan } from '@poolmaster/shared/domain';
+import { explicitOrderValues, LeaguePlan, LeaguePlanOrder } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { FormField, Select } from '@/features/shared/ui';
 import { PlanRowDialog, type PlanSettingsGroup } from './plan-row-dialog';
@@ -30,7 +30,7 @@ export function PlanFeatureDialog({ group, onClose, row }: { group: PlanSettings
       {(form) => (
         <FormField help="The first plan with it; every plan above has it too." label="Starts at">
           <Select data-testid={`${testId}-starts-at-select`} {...form.register('startsAt')}>
-            {LEAGUE_PLANS.map((plan) => (
+            {explicitOrderValues(LeaguePlanOrder).map((plan) => (
               <option key={plan} value={plan}>{enumLabel('LeaguePlan', plan)}</option>
             ))}
           </Select>

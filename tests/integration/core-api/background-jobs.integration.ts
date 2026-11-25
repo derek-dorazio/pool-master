@@ -378,6 +378,49 @@ describe('Activity reads and job results (#1819)', () => {
     await expect(getPrisma().backgroundJob.count()).resolves.toBe(2);
   });
 
+  it('fails loudly rather than answer no job when a worker frees the key between each skipped insert and its read, and another request takes it again', async () => {
+    const plain = repository();
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('raced-twice'), dedupeKey: 'raced-twice-key', start: TEST_JOB_START };
+    await plain.enqueueReturning(request);
+    // After each skipped insert a worker claims the waiting job, which frees the key; after each
+    // read that then finds nothing, another request takes the key before this one tries again.
+    const racing = getAppPrisma().$extends({
+      query: {
+        backgroundJob: {
+          async createManyAndReturn({ args, query }) {
+            const written = await query(args);
+            if (written.length === 0) await plain.claimDue({ now: soonAfterQueued(), limit: 1, leaseUntil: new Date(Date.now() + MINUTE) });
+            return written;
+          },
+          async findUnique({ args, query }) {
+            const found = await query(args);
+            if (found === null) await plain.enqueue(request);
+            return found;
+          },
+        },
+      },
+    });
+
+    await expect(new PrismaBackgroundJobRepository(racing as unknown as PrismaClient).enqueueReturning(request))
+      .rejects.toThrow('A MANUAL_EVENT_SYNC job was neither written nor found waiting');
+  });
+
+  it('queues a job to run at the time its request names, not now', async () => {
+    const runAt = new Date(Date.now() + 60 * MINUTE);
+
+    await repository().enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('later'), runAt, start: TEST_JOB_START });
+
+    await expect(getPrisma().backgroundJob.findFirstOrThrow()).resolves.toMatchObject({ runAt });
+    await expect(repository().claimDue({ now: soonAfterQueued(), limit: 5, leaseUntil: new Date(Date.now() + MINUTE) })).resolves.toEqual([]);
+  });
+
+  it('deletes nothing and answers 0 when no finished job is older than the cutoff', async () => {
+    await repository().enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('kept'), start: TEST_JOB_START });
+
+    await expect(repository().deleteBatchCompletedBefore(BackgroundJobStatus.SUCCEEDED, new Date(), 100)).resolves.toBe(0);
+    await expect(getPrisma().backgroundJob.count()).resolves.toBe(1);
+  });
+
   it('keeps a succeeded job\'s changed count and reported result, with no error type', async () => {
     const jobs = repository();
     await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('result'), start: TEST_JOB_START });

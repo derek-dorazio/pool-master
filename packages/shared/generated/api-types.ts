@@ -148,7 +148,7 @@ export interface paths {
         put?: never;
         /**
          * Email a password reset link
-         * @description Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after 10 minutes, and a newer request cancels it. The answer is 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.
+         * @description Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after `linkValidMinutes`, and a newer request cancels it. The answer is the same 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.
          */
         post: operations["requestPasswordReset"];
         delete?: never;
@@ -4318,6 +4318,16 @@ export interface components {
             /** @description Email or username of the account to reset, matched the same way as sign in. */
             identifier: string;
         };
+        /** @description The answer to a password reset request, the same whether or not an account matched. */
+        PasswordResetRequestedResponse: {
+            /**
+             * @description The request was taken. It reads the same whether or not an account matched.
+             * @enum {boolean}
+             */
+            success: true;
+            /** @description How many minutes an emailed reset link works, for the confirmation screen to quote. */
+            linkValidMinutes: number;
+        };
         /** @description Sets a new password with a reset link. Every session of the account is signed out. */
         PasswordResetConfirmRequest: {
             /** @description The one-time token from the reset link. It works once and expires 10 minutes after it was sent. */
@@ -5842,6 +5852,10 @@ export interface components {
             cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
             /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
             cupCustomPoints: number[];
+            /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+            cupCustomPointsMax: number;
+            /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+            cupCustomPointsMaxPlaces: number;
             /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
             hallOfLameVisible: boolean;
             /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */
@@ -6079,6 +6093,10 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+                cupCustomPointsMax: number;
+                /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+                cupCustomPointsMaxPlaces: number;
                 /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
                 hallOfLameVisible: boolean;
                 /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */
@@ -6151,6 +6169,10 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+                cupCustomPointsMax: number;
+                /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+                cupCustomPointsMaxPlaces: number;
                 /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
                 hallOfLameVisible: boolean;
                 /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */
@@ -6373,6 +6395,10 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+                cupCustomPointsMax: number;
+                /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+                cupCustomPointsMaxPlaces: number;
                 /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
                 hallOfLameVisible: boolean;
                 /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */
@@ -12523,6 +12549,10 @@ export interface components {
             rounds: number | null;
             /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
             roundsPar: number | null;
+            /** @description The lowest par per round an update takes; a lower one is refused with 400. */
+            roundsParMin: number;
+            /** @description The highest par per round an update takes; a higher one is refused with 400. */
+            roundsParMax: number;
             /** @description Field size the provider reports, when it reports one; null otherwise. */
             participantCount: number | null;
             /** @description Number of event participants currently persisted for the event. */
@@ -12852,6 +12882,10 @@ export interface components {
                 rounds: number | null;
                 /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
                 roundsPar: number | null;
+                /** @description The lowest par per round an update takes; a lower one is refused with 400. */
+                roundsParMin: number;
+                /** @description The highest par per round an update takes; a higher one is refused with 400. */
+                roundsParMax: number;
                 /** @description Field size the provider reports, when it reports one; null otherwise. */
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
@@ -13160,6 +13194,10 @@ export interface components {
                 rounds: number | null;
                 /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
                 roundsPar: number | null;
+                /** @description The lowest par per round an update takes; a lower one is refused with 400. */
+                roundsParMin: number;
+                /** @description The highest par per round an update takes; a higher one is refused with 400. */
+                roundsParMax: number;
                 /** @description Field size the provider reports, when it reports one; null otherwise. */
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
@@ -16539,6 +16577,8 @@ export interface components {
             tiebreakerMatchId: string | null;
             /** @description The entry's tiebreaker for the event, the tiebreaker game's total points. Null when not given, and on another team's entry until that game's picks are revealed. */
             tiebreakerValue: number | null;
+            /** @description The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400. */
+            tiebreakerMax: number;
             /** @description Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed. */
             points: number | null;
             /** @description Points so far plus what every pick still pending is worth: the most the entry can still reach. Null where points is. */
@@ -16804,6 +16844,8 @@ export interface components {
              * @description The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.
              */
             tiebreakerMatchId: string | null;
+            /** @description The highest tiebreaker an entry's save would take; 0 is the lowest. */
+            tiebreakerMax: number;
             /** @description The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round. */
             games: {
                 /** Format: uuid */
@@ -27185,13 +27227,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Minimal success response envelope. */
+            /** @description The answer to a password reset request, the same whether or not an account matched. */
             202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessResponse"];
+                    "application/json": components["schemas"]["PasswordResetRequestedResponse"];
                 };
             };
             /** @description Standard API error envelope. */

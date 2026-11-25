@@ -6,7 +6,6 @@
   "clients/poolmaster/src/features/contests/contest-leaderboard.ts": 2,
   "clients/poolmaster/src/features/contests/pick-em-board.ts": 1,
   "clients/poolmaster/src/features/contests/squares-board.ts": 1,
-  "clients/poolmaster/src/features/plans/plan-comparison.ts": 1,
   "clients/poolmaster/src/features/root-admin/golf-round-score-patch.ts": 1,
   "clients/poolmaster/src/features/root-admin/provider-league-columns.tsx": 1,
   "clients/poolmaster/src/lib/logger/types.ts": 1

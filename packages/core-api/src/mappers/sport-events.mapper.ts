@@ -15,12 +15,14 @@ import {
   type SportEventTier,
   eventProviderNameOf,
 } from '@poolmaster/shared/domain';
-import type {
-  ReleaseCheckDto,
-  SportEventContestListResponse,
-  SportEventDto,
-  SportEventRoundDto,
-  SportEventTierDto,
+import {
+  ROUNDS_PAR_MAX,
+  ROUNDS_PAR_MIN,
+  type ReleaseCheckDto,
+  type SportEventContestListResponse,
+  type SportEventDto,
+  type SportEventRoundDto,
+  type SportEventTierDto,
 } from '@poolmaster/shared/dto/events.dto';
 import { mapSportLeagueSeasonSlotToDto } from './sport-catalog.mapper';
 import { eventContestOpenings } from '../modules/contest-management/contest-opening';
@@ -69,6 +71,8 @@ export function mapSportEventToDto({
     endDate: event.endDate?.toISOString() ?? null,
     rounds: event.rounds ?? null,
     roundsPar: event.roundsPar ?? null,
+    roundsParMin: ROUNDS_PAR_MIN,
+    roundsParMax: ROUNDS_PAR_MAX,
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
     pricing: event.pricingConfig ?? null,

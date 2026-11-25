@@ -3,19 +3,22 @@ import { describe, expect, it } from 'vitest';
 import { describePointsTable, parseCustomPoints, previewPoints } from './cup-settings-view';
 
 describe('parseCustomPoints', () => {
+  // Bounds other than the server's own, so a bound the web wrote itself would show.
+  const LIMITS = { cupCustomPointsMax: 300, cupCustomPointsMaxPlaces: 4 };
+
   it('reads whole points 1st place first, separated by commas, spaces or both', () => {
-    expect(parseCustomPoints(' 10, 6 3,,0 ')).toEqual({ points: [10, 6, 3, 0], error: null });
+    expect(parseCustomPoints(' 10, 6 3,,0 ', LIMITS)).toEqual({ points: [10, 6, 3, 0], error: null });
   });
 
   it.each([
     ['nothing typed', '  ', 'Enter the points for 1st place at least.'],
-    ['a fraction', '10, 2.5', "Each place's points must be a whole number from 0 to 1000."],
-    ['numbers written another way', '10, 1e1, 0x5', "Each place's points must be a whole number from 0 to 1000."],
-    ['a word', '10, lots', "Each place's points must be a whole number from 0 to 1000."],
-    ['more than the cap', '1001', "Each place's points must be a whole number from 0 to 1000."],
-    ['more than 50 places', Array.from({ length: 51 }, () => '1').join(','), 'Enter points for no more than 50 places.'],
+    ['a fraction', '10, 2.5', "Each place's points must be a whole number from 0 to 300."],
+    ['numbers written another way', '10, 1e1, 0x5', "Each place's points must be a whole number from 0 to 300."],
+    ['a word', '10, lots', "Each place's points must be a whole number from 0 to 300."],
+    ['more than the cap the league sent', '301', "Each place's points must be a whole number from 0 to 300."],
+    ['more places than the league sent', '1,1,1,1,1', 'Enter points for no more than 4 places.'],
   ])('refuses %s with a reason the form shows', (_case, text, error) => {
-    expect(parseCustomPoints(text)).toEqual({ points: null, error });
+    expect(parseCustomPoints(text, LIMITS)).toEqual({ points: null, error });
   });
 });
 

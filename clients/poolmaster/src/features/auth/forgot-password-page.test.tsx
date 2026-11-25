@@ -34,15 +34,15 @@ describe('ForgotPasswordPage', () => {
     requestPasswordResetMock.mockReset();
   });
 
-  it('sends the typed email or username and shows the same check-your-email confirmation', async () => {
-    requestPasswordResetMock.mockResolvedValue({ data: { success: true }, status: 202 });
+  it('sends the typed email or username and shows the same check-your-email confirmation, quoting how long the API says the link works', async () => {
+    requestPasswordResetMock.mockResolvedValue({ data: { success: true, linkValidMinutes: 25 }, status: 202 });
     renderPage();
 
     fireEvent.change(screen.getByLabelText('Email or username'), { target: { value: 'riley@example.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
 
     expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
-    expect(screen.getByTestId('forgot-password-sent')).toHaveTextContent('If an account matches, a reset link is on its way.');
+    expect(screen.getByTestId('forgot-password-sent')).toHaveTextContent('If an account matches, a reset link is on its way. It works once, for 25 minutes.');
     expect(screen.getByTestId('forgot-password-done')).toHaveAttribute('data-kind', 'done');
     expect(requestPasswordResetMock).toHaveBeenCalledWith(
       expect.objectContaining({ body: { identifier: 'riley@example.com' } }),

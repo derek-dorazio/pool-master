@@ -64,6 +64,7 @@ function preview(overrides: Partial<GamePickPreviewResponse> = {}): GamePickPrev
     pickedCount: 0,
     gameCount: 2,
     tiebreakerMatchId: 'match-2',
+    tiebreakerMax: 999,
     games: [previewGame(1), previewGame(2)],
     ...overrides,
   };

@@ -21,6 +21,7 @@ export function gameEntryFinish({
   savedTiebreaker,
   submitFallback,
   submits,
+  tiebreakerMax,
   writes: { saveMutation, submitMutation, tiebreakerDraft },
 }: {
   /** The server's word that the entry can be submitted now, its tiebreaker as saved. */
@@ -31,13 +32,15 @@ export function gameEntryFinish({
   /** Runs once a submit lands, such as returning to the contest's page. */
   onSubmitted: () => void;
   savedTiebreaker: number | null;
+  /** The highest tiebreaker the server takes, from the picks read. */
+  tiebreakerMax: number;
   /** The submit refusal's fallback, which names what is submitted: "this bracket", "this week". */
   submitFallback: string;
   /** The button submits; otherwise it only saves the name and tiebreaker of a submitted entry. */
   submits: boolean;
   writes: GamePicksWrites;
 }) {
-  const typedTiebreaker = tiebreakerDraft === null ? null : parseBracketTiebreaker(tiebreakerDraft);
+  const typedTiebreaker = tiebreakerDraft === null ? null : parseBracketTiebreaker(tiebreakerDraft, tiebreakerMax);
   const tiebreakerChanged = typedTiebreaker !== null && typedTiebreaker !== savedTiebreaker;
   // A save with no picks is the tiebreaker's, from this card.
   const isTiebreakerSave = saveMutation.variables?.picks.length === 0;

@@ -63,7 +63,7 @@ export function EventSettingsDialog({
   const fieldQuery = useSportEventFieldQuery(event.id);
   const current = valuesOf(event);
 
-  const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema), defaultValues: current, mode: 'onChange' });
+  const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema(event)), defaultValues: current, mode: 'onChange' });
   const dialog = useDetailEditDialog(form, current, onClose);
   const eventKeys = [QueryKeys.rootAdmin.manageSport.event(event.id), QueryKeys.rootAdmin.manageSport.events];
 

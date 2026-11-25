@@ -103,6 +103,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     savedTiebreaker: gamePicks.tiebreakerValue,
     submitFallback: 'We could not submit this bracket. Please try again.',
     submits,
+    tiebreakerMax: gamePicks.tiebreakerMax,
     writes: { saveMutation, submitMutation, tiebreakerDraft },
   });
   const pickError = isTiebreakerSave ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
@@ -188,6 +189,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
                 <TiebreakerNumberField
                   disabled={isFinishing}
                   label={`Tiebreaker · total ${scoreUnit} in the final`}
+                  max={gamePicks.tiebreakerMax}
                   onChange={setTiebreakerDraft}
                   testId="bracket-tiebreaker-input"
                   text={tiebreakerText}

@@ -5,7 +5,7 @@ import {
   refreshToken,
   requestPasswordReset,
 } from '@poolmaster/shared/generated/hey-api';
-import { ErrorEnvelopeSchema, SuccessResponseSchema } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema, PASSWORD_RESET_LINK_MINUTES, PasswordResetRequestedResponseSchema, SuccessResponseSchema } from '@poolmaster/shared/dto';
 import type { CapturedMail } from '../support/smtp-sink';
 import { buildRegisteredUser } from './builders';
 import { awaitSentMailTo, sentMailWithSubject } from './mail';
@@ -52,7 +52,8 @@ describe('SDK Functional: password recovery (#847)', () => {
       body: { identifier: ` ${user.email.toUpperCase()} ` },
     });
     expect(requested.response?.status).toBe(202);
-    expect(SuccessResponseSchema.safeParse(requested.data).success).toBe(true);
+    expect(PasswordResetRequestedResponseSchema.safeParse(requested.data).success).toBe(true);
+    expect(requested.data?.linkValidMinutes).toBe(PASSWORD_RESET_LINK_MINUTES);
 
     const mail = expectDefined((await awaitSentMailTo(user.email, 1, RESET_SUBJECT))[0]);
     const confirmed = await confirmPasswordReset({
