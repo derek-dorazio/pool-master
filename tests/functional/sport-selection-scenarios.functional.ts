@@ -241,7 +241,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
 
       const templates = expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
-        query: { active: true },
+        query: { sportLeagueId: sportLeague.id, active: true },
       })).data).templates
         .filter((template) => template.contestFormat === ContestFormat.ROSTER)
         .filter((template) => template.selectionType === selectionType)

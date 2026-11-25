@@ -78,6 +78,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // the crowned cup.
 
 const RUN = `cups-${Date.now()}`;
+/** The run in a slot definition key, which is upper case words joined by underscores. */
+const RUN_KEY = `CUPS_${Date.now()}`;
 const SEASON = 2099;
 const RUNNERS = ['Kiplimo', 'Lemma', 'Kipruto', 'Tola', 'Abdi'];
 const COMMISSIONER_LINEUP = ['Kiplimo', 'Lemma', 'Kipruto', 'Tola'];
@@ -144,7 +146,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         body: { sportLeagueId: await inCurrentSeason(majorsMen.id, eventYear), name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
-      const definitionId = await testSlotDefinitionId(getFunctionalPrisma(), majorsMen.id, `${slotKey}_${RUN}`, { name: `${name} ${RUN}` });
+      const definitionId = await testSlotDefinitionId(getFunctionalPrisma(), majorsMen.id, `${slotKey}_${RUN_KEY}`, { name: `${name} ${RUN}` });
       created.slotDefinitionIds.add(definitionId);
       await putEventInSlot(getFunctionalPrisma(), eventId, definitionId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });

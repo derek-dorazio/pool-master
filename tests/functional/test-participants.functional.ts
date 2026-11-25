@@ -11,6 +11,7 @@ import { addRunSportLeague, buildRegisteredUser, promoteToRootAdmin } from './bu
 import { cleanupFunctionalData, createAuthenticatedClient, createFunctionalEmail, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
+import { coverLeagueEventsWithTestSlot } from '../support/event-edition';
 
 // The pool side of a test seed over HTTP: test players join a test league for the seed's sport
 // league, each upcoming race gets an open contest, and every player's squad submits an entry;
@@ -33,11 +34,16 @@ async function cleanup(): Promise<void> {
     await db.sportEventParticipant.deleteMany({ where });
     await db.sportEventRound.deleteMany({ where });
     await db.sportEventTier.deleteMany({ where });
+    await db.sportEventSlot.deleteMany({ where });
     await db.sportEvent.deleteMany({ where: series });
+    await db.sportLeagueSeasonPhaseSlot.deleteMany({ where: series });
+    await db.sportLeagueSeasonPhase.deleteMany({ where: series });
   }
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).
   if (leagueIds.length) await db.participant.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   if (leagueIds.length) await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
+  if (leagueIds.length) await db.sportLeaguePhaseSlot.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
+  if (leagueIds.length) await db.sportLeaguePhase.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   if (leagueIds.length) await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
 }
 
@@ -95,6 +101,8 @@ describe('SDK Functional: test participants', () => {
     created.sportLeagueIds.add(sportLeague.id);
     // A sport league a test adds has no contest setups until a migration adds them (#1825).
     await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'US Thoroughbred', toSportLeagueId: sportLeague.id });
+    // Templates are offered by the slots an event plays (#2010); the sync gives a race its slot in slice 8.
+    await coverLeagueEventsWithTestSlot(getFunctionalPrisma(), sportLeague.id);
 
     const options = { getClient, signIn, players, password: PASSWORD };
     const dryRun = await loadTestParticipants(file, { ...options, mode: LoadMode.DRY_RUN });

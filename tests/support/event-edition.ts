@@ -205,11 +205,13 @@ function sportRow(prisma: Db, sport: Sport) {
 }
 
 /**
- * The events made on a fixture edition, on the fixture tour or the PGA TOUR: a cleanup's own. No
- * migration adds an event, so every PGA TOUR event in a test database is a test's.
+ * The events made on the fixture tour: a shared cleanup's own. An event a test makes on the PGA
+ * TOUR is that test's to remove: other suites running beside it hold PGA TOUR events with rounds
+ * and contests, which a sweep of the whole tour would reach (#2010; the series that once told a
+ * fixture edition apart are gone).
  */
 export const FIXTURE_EDITION_EVENTS: Prisma.SportEventWhereInput = {
-  sportLeague: { name: { in: [FIXTURE_TOUR_NAME, 'PGA TOUR'] } },
+  sportLeague: { name: FIXTURE_TOUR_NAME },
 };
 
 /**
@@ -285,4 +287,21 @@ export async function linkedProviderEvent(
   });
   await mapEventToProvider(prisma, event.id, { providerId: input.providerId, externalId: input.externalId });
   return event;
+}
+
+/**
+ * Puts every event of the league that plays no Season slot in a test slot of one definition its
+ * templates all cover (#2010). Templates are offered by the slots an event plays, and until the
+ * sync gives events their slots (slice 8) a test's loaded events play none.
+ */
+export async function coverLeagueEventsWithTestSlot(prisma: PrismaClient, sportLeagueId: string): Promise<string> {
+  const definitionId = await testSlotDefinitionId(prisma, sportLeagueId, 'TEST_TOURNAMENT');
+  const templates = await prisma.contestConfigTemplate.findMany({ where: { sportLeagueId }, select: { id: true } });
+  await prisma.contestConfigTemplateSlot.createMany({
+    data: templates.map((template) => ({ sportLeagueId, templateId: template.id, sportLeaguePhaseSlotId: definitionId })),
+    skipDuplicates: true,
+  });
+  const events = await prisma.sportEvent.findMany({ where: { sportLeagueId, slots: { none: {} } }, select: { id: true } });
+  for (const event of events) await putEventInSlot(prisma, event.id, definitionId);
+  return definitionId;
 }
