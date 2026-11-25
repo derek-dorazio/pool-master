@@ -25,6 +25,10 @@ const BUTTON_STYLE_BASELINE = Object.fromEntries(
   Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/button-style-baseline.json', import.meta.url), 'utf8')))
     .filter(([key]) => !key.startsWith('$')),
 );
+const CLOCK_YEAR_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/clock-year-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
 
 /**
  * Selector sets are hoisted to module scope on purpose.
@@ -574,6 +578,26 @@ export default tseslint.config(
     ],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-sport-branching': 'error' },
+  },
+  {
+    // #1927: no year worked out from a date and no table of facts keyed by league, sport or
+    // Season (rules/domain-model-conventions-rules.md §17). Files that still have one sit on a
+    // shrink-only baseline. The frozen sport registry, the scoring families and the display
+    // strings are exempt; tests build dates and per-sport fixtures freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/domain/sports/**',
+      'packages/core-api/src/modules/scoring-families/**',
+      'packages/shared/display-strings/**',
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      'clients/poolmaster/src/test/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-clock-year-or-league-tables': ['error', { baseline: CLOCK_YEAR_BASELINE }] },
   },
   {
     // What a league plan allows comes from the plan entitlements service (#944), the one place

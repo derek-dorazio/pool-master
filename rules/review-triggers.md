@@ -3,12 +3,12 @@
 Every PR body carries a **Review triggers** section under `<!-- review:triggers -->`. It
 names what this slice touched that warrants a closer read than a file list gives.
 
-This file covers both halves of that: **§1–§4 are what an author discloses**, and **§5–§9
+This file covers both halves of that: **§1–§4 are what an author discloses**, and **§5–§10
 are what a reviewer looks for** on the axes where a repo-specific checklist beats general
 judgement. None of them is a separate pass with its own vote — each is a lens applied during
 the ordinary review, used when the diff has that surface and skipped when it does not.
 Skipping is the common case and is not a gap — except for §9, which applies to every diff
-that touches production source.
+that touches production source, and §10, which applies to every PR that implements a ticket.
 
 This exists because the repo owner reviews at file-list-and-changeset resolution. That
 altitude reliably catches scope creep, unexpected files, and structurally wrong changes. It
@@ -43,6 +43,9 @@ Already enforced mechanically, and therefore **not** triggers:
 | A list route with no query-scaling test (statements counted for 2 rows and 20) | `rules:check:query-scaling` |
 | An app query on a growing table that no index can serve | the integration run's index check (`rules/model-change-rules.md` *Indexes Follow The Reads And The Foreign Keys*) |
 | A route running more than 25 queries per request | the functional suite's query budget check (`rules/testing-rules.md` §6 *Backend Functional API Tests*) |
+| A new use of a name a plan retired (the registry's round labels, `eventSeries`, `IngestionFeedType`…) | `rules:check:retired-names` (`scripts/retired-names.json`) |
+| A new field or export in the frozen sport registry | `rules:check:sport-registry-frozen` |
+| A year worked out from a date (`getFullYear`, `getUTCFullYear`), or a `Record`/`Map` keyed by sport, league or Season holding facts | `poolmaster/no-clock-year-or-league-tables` (ESLint, shrink-only baseline) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
@@ -408,9 +411,13 @@ Read every added or changed line for these, and report each one found:
    or seed counts; a date window that finds one league's event; a new per-league mapping
    file, or a function copied per league with different literals. Ask: would the next league
    need this file edited? (`workflow-rules.md` §1 *One global solution, never one sport's*
-   rejects the path; this item rejects the data.)
-5. **A second computation of a fact** — the current year or season from today's date; a
-   status set spelt inline; a web helper restating a server rule or a value the API could
+   rejects the path; this item rejects the data.) `poolmaster/no-clock-year-or-league-tables`
+   lints only a `Record<K, V>` or `new Map<K, V>` whose key type names a league or sport; an
+   object literal keyed by enum values with no annotation (`{ [Sport.GOLF]: 3 }`) and a
+   `switch` pass it, so read for them.
+5. **A second computation of a fact** — the current year or season from today's date (the
+   `getFullYear` form is linted, §1; read for the other forms, such as a year sliced from an
+   ISO string); a status set spelt inline; a web helper restating a server rule or a value the API could
    return; a function that matches another under a different name; a "keep in sync with"
    comment. Search for the existing computation before accepting a new one, and name it in
    the finding.
@@ -451,3 +458,31 @@ are fine; a hand-written subset or range is not. The finding is a fact about a *
 sport, league, season or event, or a fact derived a second time. When in doubt, report it with
 the question; a wrong-but-asked finding costs a reply, a missed one costs a redesign later.
 
+
+## 10. Reviewing against the ticket: omissions and leftovers
+
+Every lens above reads the diff, and a diff cannot show a file that should have changed and
+didn't. Slice 1 of the league model merged with three web id→name lookups its ticket had
+retired, because the line sat in a ticket comment and the review read only what changed. So
+every review of a ticketed slice also reads the ticket against the whole branch:
+
+1. **Each checklist line is done or deferred.** The ticket body is a checklist
+   (`workflow-rules.md` §1 *A slice ticket is a checklist*), and the PR body ticks each line
+   with the file or commit that does it. A line with no matching change and no linked
+   deferral ticket is a blocking finding, however good the diff is. A ticket that still
+   carries review comments not folded into its body is read with them, and the finding is
+   also that the body is stale.
+2. **Each named test layer exists.** For each *Tests* line, a test at that layer covers the
+   behaviour (`testing-rules.md` §2 *Each slice names its layers*). A list GET the slice adds
+   or changes has its pinned query-count case (`testing-rules.md` §9B *Query Scaling Tests*),
+   and a defect fix shows its failing test first (`testing-rules.md` §3 *Defect Verification
+   Protocol*). A missing layer is blocking. Coverage floors are CI's job, not the reviewer's.
+3. **Nothing retired is left.** For each name in the ticket's *Retires* section, search the
+   merged branch, not the diff (`git grep -nw <name>` over production source, tests, e2e,
+   scripts and docs). A hit that is not a migration or a deliberate historical note is a
+   leftover: blocking when the slice owns it, a linked ticket when a later slice does. The
+   name's entry in `scripts/retired-names.json` is lowered or deleted in the same PR, which
+   `rules:check:retired-names` enforces once the count drops.
+4. **The fact is not now held twice.** When the slice moves a fact into the model, search for
+   the old computation by what it computes, not by its name (§9 item 5), so a copy under
+   another name does not survive beside the new column.

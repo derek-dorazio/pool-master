@@ -143,6 +143,54 @@ What a plan file does **not** contain:
 - Epics: short imperative noun phrase that names the effort. Examples: "Root admin elevation", "Test data hygiene", "Contest event feed integration". Avoid date prefixes, internal version numbers, or references to the plan file number — issue numbers are stable and the plan file may be deleted later.
 - Slices: short imperative phrase describing what the slice produces. Each title should make sense without reading the parent epic.
 
+### Grounding a plan in code before it is reviewed
+
+A plan that moves facts into the model is two lists: each fact and its model home, and every
+place in the code that reads the fact today. The second list is what the league model plan
+lacked. Three review rounds read the plan against itself, so they never saw a reader the plan
+had not named, and a later pass over the code found about seventy. So, for every plan that
+retires or moves a fact:
+
+- **Generate the readers; never recall them.** For each name the plan retires (a column, a
+  field, a constant, a helper, a registry entry, an enum value), `git grep -nw` it across
+  `packages/`, `clients/poolmaster/`, `tests/`, the e2e journeys and `scripts/`, and paste
+  the hits, grouped by owning slice, into the ticket's *Readers* section. A fact held under
+  no single name (the current year worked out from the clock, a round found by position)
+  gets the search that finds it, from `review-triggers.md` §9, and its hits.
+- **This comes before the plan reviews.** Reviewers get the plan, the tickets and the reader
+  lists, and check each list against the code, not the plan against itself. A plan review
+  that cites no code has not done this.
+- **Register each retired name in `scripts/retired-names.json`** with its owner ticket under
+  `$owners` and today's count, and declare the new entry in `scripts/baseline-raises.json`
+  (reason "retired by #N"), which is the only way `rules:check:baseline-ratchet` lets a new
+  baseline key through. From then on `rules:check:retired-names` stops new readers appearing
+  while the slices are built.
+- **Re-map owners after every split.** When a ticket is split or merged, one pass checks that
+  each plan line and each reader hit has exactly one owning ticket. A line that was carried
+  "by slices 7 and 8" is carried by neither.
+
+### A slice ticket is a checklist
+
+The ticket body is the one statement of what the slice does. Review comments on a ticket
+(a final review, a code pass) are folded into the body as they are agreed, never left as
+comments that override it, because an implementer reads the body. The body has these
+sections, each a list of lines the PR can tick:
+
+- **Scope** — each change, with the model home for each fact it moves.
+- **Retires** — each name the slice deletes, and **Readers**, the generated hits for each
+  (above). The slice is done when none is left, or each one left is a line with a linked
+  deferral ticket.
+- **Tests** — for each Scope line, the layer or layers that prove it (unit, data
+  integration, contract verification, functional API, web unit or MSW integration, browser
+  journey: `testing-rules.md` §2 *Test Layers*), plus a pinned query-count case for each list
+  GET it adds or changes (`testing-rules.md` §9B *Query Scaling Tests*) and the failing test
+  first for a defect (`testing-rules.md` §3 *Defect Verification Protocol*).
+- **Blocked by** and **Done when**, as before.
+
+The PR body repeats the list and ticks each line with the file or commit that does it, or
+links the ticket that takes it. The reviewer checks every line
+(`review-triggers.md` §10 *Reviewing against the ticket: omissions and leftovers*).
+
 ### Tracker conventions: scope of use
 
 - Use one epic issue per active feature lane or cross-module initiative.
@@ -248,8 +296,9 @@ league fills in.
 - **More than one global path is fine** where a property any league can have chooses it (a
   provider, a scoring family, a participant type, a match format), never a league's or
   sport's name. Each path serves every league that has the property.
-- **A sport's real difference lives in its data or its adapter**, behind the shared seam: the
-  sport definition and scoring family (`architecture-rules.md` §4 *Sport extension*), a
+- **A sport's real difference lives in its data or its adapter**, behind the shared seam:
+  model rows (its leagues, slot definitions and Seasons) and its scoring family
+  (`architecture-rules.md` §4 *Sport extension*; the sport registry is frozen there), a
   provider adapter's reads, a profile or setup row. The flow around it stays one flow.
 - **Connecting one league first is allowed; designing for it alone is not.** A slice may
   land a global path with one league connected, only when the code has no branch that only
