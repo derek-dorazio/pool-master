@@ -38,6 +38,7 @@ import noClockYearOrLeagueTables from './no-clock-year-or-league-tables.mjs';
 import noEnumStringLiterals from './no-enum-string-literals.mjs';
 import noDtoShapedLocalTypes from './no-dto-shaped-local-types.mjs';
 import noLocalEnums from './no-local-enums.mjs';
+import noPositionalPick from './no-positional-pick.mjs';
 import noArbitraryTypeSizes from './no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from './no-raw-theme-colors.mjs';
 import noUnawaitedSendError from './no-unawaited-send-error.mjs';
@@ -72,6 +73,7 @@ export default {
     'no-enum-string-literals': noEnumStringLiterals,
     'no-dto-shaped-local-types': noDtoShapedLocalTypes,
     'no-local-enums': noLocalEnums,
+    'no-positional-pick': noPositionalPick,
     'no-raw-theme-colors': noRawThemeColors,
     'no-arbitrary-type-sizes': noArbitraryTypeSizes,
     'no-unawaited-send-error': noUnawaitedSendError,

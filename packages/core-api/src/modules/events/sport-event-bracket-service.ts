@@ -93,6 +93,7 @@ function describeSide(matchNumber: number, side: MatchSide): string {
  * bracket. `links` says whether a game sends its winner on, for a loaded match or one being loaded.
  */
 export function formsNoBracket<M extends { roundNumber: number }>(matches: readonly M[], links: (match: M) => boolean): boolean {
+  // poolmaster-allow-position: any one match: every match must share its round number
   return matches.every((match) => !links(match) && match.roundNumber === matches[0]?.roundNumber);
 }
 

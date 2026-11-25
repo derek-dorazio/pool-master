@@ -825,6 +825,18 @@ by where it sits in an array or by counting.
   `SportLeague` or a league's positions), is fine.
 - Positions shift the moment a provider adds a round, a league adds a play-in or a season is
   shorter; a key does not.
+- **The rule:** never pick a domain item by its position when the model gives it a meaning,
+  such as a slot kind (`FINAL`), a round or game number, a phase, a covered slot or the
+  contest's event. Position is fine only when the order **is** the meaning: iterating, the
+  first item after sorting by a declared field (the earliest by `startsAt`), the one row a
+  nested create wrote, or destructuring a parsed value. Such a read carries
+  `// poolmaster-allow-position: <the order it relies on>` on the line before.
+- **Enforced (#2115):** `poolmaster/no-positional-pick` reports `[n]` with a literal index,
+  `.at(n)` and `[x.length - 1]` on a list named `rounds`, `slots`, `phases`, `events`,
+  `games`, `matches`, `sides`, `seasons`, `regions` or `fieldRows` in production source.
+  Files that still have one sit on a shrink-only count (`eslint-rules/positional-pick-baseline.json`).
+  It cannot see `indexOf(...) + 1`, a counter, or a list under another name; review still
+  owns those.
 
 ### Never build or parse an id string
 

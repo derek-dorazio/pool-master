@@ -74,8 +74,8 @@ export async function fillPlayInPlaces(
       continue;
     }
     const places = matches.flatMap((match) => {
-      const sides = [match.homeSportEventParticipantId, match.awaySportEventParticipantId];
-      const other = sides[0] === opponentRowId ? sides[1] : sides[1] === opponentRowId ? sides[0] : null;
+      const { homeSportEventParticipantId: home, awaySportEventParticipantId: away } = match;
+      const other = home === opponentRowId ? away : away === opponentRowId ? home : null;
       return other !== null && placeIds.has(other) ? [other] : [];
     });
     if (places.length !== 1) {

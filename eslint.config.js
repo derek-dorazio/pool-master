@@ -42,6 +42,12 @@ const DTO_SHAPE_BASELINE = Object.fromEntries(
     .filter(([key]) => !key.startsWith('$')),
 );
 
+// #2115: the positional picks of a domain item each grandfathered file may still have, by repo path.
+const POSITIONAL_PICK_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/positional-pick-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
 // #2107: the local enums each grandfathered web file may still have, by repo path.
 const LOCAL_ENUM_BASELINE = Object.fromEntries(
   Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/local-enum-baseline.json', import.meta.url), 'utf8')))
@@ -616,6 +622,22 @@ export default tseslint.config(
     ],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-clock-year-or-league-tables': ['error', { baseline: CLOCK_YEAR_BASELINE }] },
+  },
+  {
+    // #2115: no domain item picked by array position when the model gives it a meaning
+    // (rules/domain-model-conventions-rules.md §17). Files that still have one sit on a
+    // shrink-only baseline; tests and stories index freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      'clients/poolmaster/src/test/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-positional-pick': ['error', { baseline: POSITIONAL_PICK_BASELINE }] },
   },
   {
     // #2107: the web app names a shared enum member, never its value as a string, in a

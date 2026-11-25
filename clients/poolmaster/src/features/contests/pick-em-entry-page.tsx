@@ -126,6 +126,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const eventPicks = gamePicksQuery.data;
   const isPlayoff = isPlayoffSurvivor(eventPicks);
   const rounds = weekRounds(eventPicks);
+  // poolmaster-allow-position: weekRounds sorts round numbers ascending: the highest is the last round
   const roundCount = rounds.at(-1) ?? 1;
   const round = requestedRound !== null && rounds.includes(requestedRound) ? requestedRound : currentWeekRound(eventPicks);
   // A playoff round reads as a week of its own; any other event is one week.
@@ -146,6 +147,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     return round === undefined ? displayString('word.weekNumber', { n: weekNumber }) : roundLabel(round, roundCount);
   };
   const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound, roundCount)}` : `week ${eliminatedInWeek ?? ''}`;
+  // poolmaster-allow-position: weekRounds sorts round numbers ascending: the lowest is the first round
   const roundNeedsPick = isPlayoff && round !== rounds.at(0) && canChangeWeek(gamePicks) && gamePicks.pickedCount === 0;
   const survivorTeam = isSurvivor ? survivorPickTeam(gamePicks) : null;
 
