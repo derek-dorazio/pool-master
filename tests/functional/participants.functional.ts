@@ -97,7 +97,7 @@ describe('SDK Functional: Participants', () => {
     expect(updated.data?.participant.name).toBe(`${name} (renamed)`);
   });
 
-  it('in a provider-synced league, creates a participant with the feed id or as test data, refuses one with neither with 409, and removes a test slot with 204', async () => {
+  it('in a provider-synced league, creates a participant with the feed id or as test data, refuses one with neither with 409, and removes a test slot with 204, keeping a test participant on no field', async () => {
     const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.GOLF, name: `FAPI Synced Tour ${randomUUID()}` });
     createdSportLeagueIds.push(sportLeagueId);
     await syncLeagueTo(getFunctionalPrisma(), sportLeagueId, 'pga');
@@ -118,8 +118,8 @@ describe('SDK Functional: Participants', () => {
     expectFunctionalError(unmapped, { status: 409, code: 'PARTICIPANT_FEED_ID_REQUIRED' });
     expect(removed.response?.status).toBe(204);
     await expect(getFunctionalPrisma().sportLeagueSeasonPhaseSlot.count({ where: { id: slotId } })).resolves.toBe(0);
-    // The test participant was on no field, so the slot's removal took it too.
-    await expect(getFunctionalPrisma().participant.count({ where: { id: test.data?.participant.id } })).resolves.toBe(0);
+    // The removal takes only test participants from the slot's own field; this one was on no field, so it stays.
+    await expect(getFunctionalPrisma().participant.count({ where: { id: test.data?.participant.id } })).resolves.toBe(1);
   });
 
   it('saves a participant update\'s injury status, returning the injury dates as sent', async () => {
