@@ -3,6 +3,7 @@
  * read whole and never paged.
  */
 import type {
+  FieldOrderBasis,
   ParticipantAddedBy,
   ProviderCode,
   ParticipantType,
@@ -15,7 +16,6 @@ import type {
   SportLeagueSyncMode,
 } from './enums';
 import type { AutoReleaseCheck, SportLeagueIssue } from './sport-league-overview';
-import type { FieldOrderBasis } from './field-ordering';
 
 /** A sync's latest run, as the Syncs card shows it. */
 export interface SportLeagueSyncLastRun {
