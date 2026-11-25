@@ -25,6 +25,7 @@ import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, t
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // The NBA and WNBA playoffs end to end over HTTP (#706): each test seed loads into its seeded sport
 // league, played out series by series. The NBA's play-in places take their winners after release,
@@ -110,7 +111,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
   });

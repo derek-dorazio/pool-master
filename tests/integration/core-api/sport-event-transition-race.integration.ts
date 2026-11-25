@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { testDomainEvents } from '../../support/domain-events';
-import { BackgroundJobType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigurationRepository,
   PrismaContestRepository,
@@ -61,7 +61,6 @@ async function createInProgressEvent() {
     ...(await freshEventEdition(getPrisma())),
     externalId: `race-${randomUUID()}`,
     providerId: 'integration-test',
-    sport: Sport.GOLF,
     name: 'Race Open',
     startDate: new Date('2026-06-04T12:00:00.000Z'),
     endDate: new Date('2026-06-07T12:00:00.000Z'),

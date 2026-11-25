@@ -1,4 +1,4 @@
-import { formatSelectionTypeName, type Sport } from '@poolmaster/shared/domain';
+import { formatSelectionTypeName, type EventPageAddress } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { SPORT_BLURBS } from '@/features/contest-types/sport-blurbs';
 
@@ -11,7 +11,7 @@ export interface EventPageOfferCopy {
   opensWhen: string;
 }
 
-/** An event page's words (#1007): copy lives in the web app, keyed by the page's stored slug. */
+/** An event page's words (#1007): copy lives in the web app, keyed by the page's stored URL segments. */
 export interface EventPageCopy {
   name: string;
   /** Over the name: what the event is, "NFL conference championships". */
@@ -33,11 +33,12 @@ export const EVENT_PAGE_ACTIONS = {
 } as const;
 
 /**
- * Every event page's copy, by sport then slug. A page with no entry falls back to its sport's
- * How to Play line, and an offer with none to its template's own name and description.
+ * Every event page's copy, by its sport's URL segment then its own, as the page's address spells
+ * them. A page with no entry falls back to its sport's How to Play line, and an offer with none
+ * to its template's own name and description.
  */
-export const EVENT_PAGE_COPY: Readonly<Partial<Record<Sport, Readonly<Record<string, EventPageCopy>>>>> = {
-  AMERICAN_FOOTBALL: {
+export const EVENT_PAGE_COPY: Readonly<Record<string, Readonly<Record<string, EventPageCopy>>>> = {
+  'american-football': {
     'championship-weekend': {
       name: 'Championship Weekend',
       eyebrow: 'NFL conference championships',
@@ -62,15 +63,26 @@ export const EVENT_PAGE_COPY: Readonly<Partial<Record<Sport, Readonly<Record<str
   },
 };
 
-/** What a page with no copy entry is called: its slug in words, "Championship weekend". */
-function nameFromSlug(slug: string): string {
-  const words = slug.replaceAll('-', ' ');
+/** What a page with no copy entry is called: its URL segment in words, "Championship weekend". */
+function nameFromUrlSegment(urlSegment: string): string {
+  const words = urlSegment.replaceAll('-', ' ');
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-export function eventPageCopy(page: Pick<EventPageDto, 'sport' | 'slug'>): EventPageCopy {
-  return EVENT_PAGE_COPY[page.sport]?.[page.slug] ?? {
-    name: nameFromSlug(page.slug),
+function copyEntryAt(address: Pick<EventPageAddress, 'sportUrlSegment' | 'urlSegment'>): EventPageCopy | undefined {
+  if (!Object.hasOwn(EVENT_PAGE_COPY, address.sportUrlSegment)) return undefined;
+  const sportPages = EVENT_PAGE_COPY[address.sportUrlSegment];
+  return Object.hasOwn(sportPages, address.urlSegment) ? sportPages[address.urlSegment] : undefined;
+}
+
+/** What a page at an address is called, before the page itself is read: sign-up's banner. */
+export function eventPageName(address: Pick<EventPageAddress, 'sportUrlSegment' | 'urlSegment'>): string {
+  return copyEntryAt(address)?.name ?? nameFromUrlSegment(address.urlSegment);
+}
+
+export function eventPageCopy(page: Pick<EventPageDto, 'sport' | 'sportUrlSegment' | 'urlSegment'>): EventPageCopy {
+  return copyEntryAt(page) ?? {
+    name: nameFromUrlSegment(page.urlSegment),
     eyebrow: '',
     hook: SPORT_BLURBS[page.sport],
     picksClose: 'Picks close when it starts',

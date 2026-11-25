@@ -64,7 +64,7 @@ const draftEntry: EntryRow = { contestId: 'contest-1', contest: { contestFormat:
 const heldPick = { id: 'pick-old', sportEventParticipantId: 'sep-old', lineupSlot: 1, sportEventParticipant: { participantId: 'p-old' } };
 
 describe('ContestEntryPickService.changeEntryPick', () => {
-  it('swaps a pick: deletes the old one, adds the new one with the contest format and the next contest pick sequence, submits the entry at the given time and logs the change', async () => {
+  it('swaps a pick: deletes the old one, adds the new one in the old one\'s lineup slot with the next contest pick sequence, submits the entry at the given time and logs the change', async () => {
     const tx = fakeTx({ entry: draftEntry, picks: [heldPick], contestPickCount: 7 });
     const { service, logger } = serviceOver(tx);
     const settle = jest.fn(() => ContestEntryStatus.SUBMITTED);
@@ -81,7 +81,7 @@ describe('ContestEntryPickService.changeEntryPick', () => {
     expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
     expect(tx.contestEntryPick.delete).toHaveBeenCalledWith({ where: { id: 'pick-old' } });
     expect(tx.contestEntryPick.create).toHaveBeenCalledWith({
-      data: { entryId: 'entry-1', sportEventParticipantId: 'sep-new', contestFormat: 'ROSTER', lineupSlot: 1, pickSequence: 8, isAutoPicked: false },
+      data: { entryId: 'entry-1', sportEventParticipantId: 'sep-new', lineupSlot: 1, pickSequence: 8, isAutoPicked: false },
       select: { id: true },
     });
     expect(settle).toHaveBeenCalledWith({
@@ -212,10 +212,10 @@ describe('ContestEntryPickService.recordDraw', () => {
     });
     expect(tx.contestEntryPick.createMany).toHaveBeenCalledWith({
       data: [
-        { entryId: 'entry-1', sportEventParticipantId: 'sep-a', contestFormat: 'ROSTER', lineupSlot: 1, pickSequence: 1, isAutoPicked: true },
-        { entryId: 'entry-1', sportEventParticipantId: 'sep-c', contestFormat: 'ROSTER', lineupSlot: 2, pickSequence: 3, isAutoPicked: true },
-        { entryId: 'entry-2', sportEventParticipantId: 'sep-b', contestFormat: 'ROSTER', lineupSlot: 1, pickSequence: 2, isAutoPicked: true },
-        { entryId: 'entry-2', sportEventParticipantId: 'sep-d', contestFormat: 'ROSTER', lineupSlot: 2, pickSequence: 4, isAutoPicked: true },
+        { entryId: 'entry-1', sportEventParticipantId: 'sep-a', lineupSlot: 1, pickSequence: 1, isAutoPicked: true },
+        { entryId: 'entry-1', sportEventParticipantId: 'sep-c', lineupSlot: 2, pickSequence: 3, isAutoPicked: true },
+        { entryId: 'entry-2', sportEventParticipantId: 'sep-b', lineupSlot: 1, pickSequence: 2, isAutoPicked: true },
+        { entryId: 'entry-2', sportEventParticipantId: 'sep-d', lineupSlot: 2, pickSequence: 4, isAutoPicked: true },
       ],
     });
     expect(tx.contestEntryEvent.updateMany).toHaveBeenCalledWith({

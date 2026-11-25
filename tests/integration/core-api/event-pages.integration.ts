@@ -7,7 +7,7 @@ import {
   SelectionType,
   Sport,
   SportEventStatus,
-  isEventPageSlug,
+  isUrlSegment,
 } from '@poolmaster/shared/domain';
 import { PrismaEventPageRepository } from '../../../packages/core-api/src/adapters';
 import { createContestOpeningReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
@@ -19,7 +19,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { cleanupFreshEventEditions, freshEventEdition, seriesSeasonId } from '../../support/event-edition';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -35,7 +35,7 @@ describe('Seeded event pages', () => {
   it('seeds Championship Weekend with the NFL bracket from the conference round first and primary, then NFL Squares', async () => {
     const pages = new PrismaEventPageRepository(getAppPrisma());
 
-    const page = await pages.findBySportSlug(Sport.AMERICAN_FOOTBALL, 'championship-weekend');
+    const page = await pages.findByUrlSegments('american-football', 'championship-weekend');
     const offers = await pages.findOffers([page?.id ?? '']);
 
     expect(page).toMatchObject({ isActive: true, redirectTo: null });
@@ -45,47 +45,47 @@ describe('Seeded event pages', () => {
     ]);
   });
 
-  it('gives every page a valid slug and exactly one primary offer, and every offer an active template its sport league can use', async () => {
+  it('gives every page a valid URL segment and exactly one primary offer, and every offer an active template its sport league can use', async () => {
     const rows = await getPrisma().eventPage.findMany({
       include: { offers: { include: { template: true, sportLeague: { include: { sport: true } } } } },
     });
 
     expect(rows.length).toBeGreaterThan(0);
     const problems = rows.flatMap((page) => [
-      ...(isEventPageSlug(page.slug) ? [] : [`${page.slug}: not a valid slug`]),
-      ...(page.offers.filter((offer) => offer.isPrimary).length === 1 ? [] : [`${page.slug}: not exactly one primary offer`]),
+      ...(isUrlSegment(page.urlSegment) ? [] : [`${page.urlSegment}: not a valid URL segment`]),
+      ...(page.offers.filter((offer) => offer.isPrimary).length === 1 ? [] : [`${page.urlSegment}: not exactly one primary offer`]),
       ...page.offers.flatMap((offer) => [
-        ...(offer.template.active ? [] : [`${page.slug}: ${offer.template.templateKey} is inactive`]),
-        ...(offer.sportLeague.sport.sport === page.sport && offer.template.sport === page.sport ? [] : [`${page.slug}: ${offer.template.templateKey} is another sport's`]),
-        ...(offer.template.sportLeagueId === offer.sportLeagueId ? [] : [`${page.slug}: ${offer.template.templateKey} is another sport league's`]),
-        ...(offer.bracketStartRound === null || offer.template.selectionType === SelectionType.BRACKET ? [] : [`${page.slug}: a starting round on ${offer.template.templateKey}, not a bracket`]),
+        ...(offer.template.active ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is inactive`]),
+        ...(offer.sportLeague.sport.sport === page.sport ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is another sport's`]),
+        ...(offer.template.sportLeagueId === offer.sportLeagueId ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is another sport league's`]),
+        ...(offer.bracketStartRound === null || offer.template.selectionType === SelectionType.BRACKET ? [] : [`${page.urlSegment}: a starting round on ${offer.template.templateKey}, not a bracket`]),
       ]),
     ]);
     expect(problems).toEqual([]);
   });
 
-  it('refuses a slug that is not lower case words joined by single dashes', async () => {
+  it('refuses a URL segment that is not lower case words joined by single dashes', async () => {
     const prisma = getPrisma();
 
-    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, slug: 'The-Masters', displayOrder: 1 } })).rejects.toThrow();
-    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, slug: 'the--masters', displayOrder: 1 } })).rejects.toThrow();
+    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: 'The-Masters', displayOrder: 1 } })).rejects.toThrow();
+    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: 'the--masters', displayOrder: 1 } })).rejects.toThrow();
   });
 });
 
 describe('PrismaEventPageRepository page reads', () => {
-  it('reads a retired page with the sport and slug it redirects to, and null for a slug with no page', async () => {
+  it('reads a retired page with the address it redirects to, and null for an address with no page', async () => {
     const prisma = getPrisma();
     const pages = new PrismaEventPageRepository(getAppPrisma());
-    const target = await prisma.eventPage.create({ data: { sport: Sport.GOLF, slug: `target-${randomUUID()}`, displayOrder: 998 } });
+    const target = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: `target-${randomUUID()}`, displayOrder: 998 } });
     const retired = await prisma.eventPage.create({
-      data: { sport: Sport.GOLF, slug: `retired-${randomUUID()}`, displayOrder: 999, isActive: false, redirectToPageId: target.id },
+      data: { sport: Sport.GOLF, urlSegment: `retired-${randomUUID()}`, displayOrder: 999, isActive: false, redirectToPageId: target.id },
     });
     try {
-      await expect(pages.findBySportSlug(Sport.GOLF, retired.slug)).resolves.toMatchObject({
+      await expect(pages.findByUrlSegments('golf', retired.urlSegment)).resolves.toMatchObject({
         isActive: false,
-        redirectTo: { sport: Sport.GOLF, slug: target.slug },
+        redirectTo: { sport: Sport.GOLF, sportUrlSegment: 'golf', urlSegment: target.urlSegment },
       });
-      await expect(pages.findBySportSlug(Sport.GOLF, `missing-${randomUUID()}`)).resolves.toBeNull();
+      await expect(pages.findByUrlSegments('golf', `missing-${randomUUID()}`)).resolves.toBeNull();
     } finally {
       await prisma.eventPage.delete({ where: { id: retired.id } });
       await prisma.eventPage.delete({ where: { id: target.id } });
@@ -104,11 +104,10 @@ describe('Event page offers', () => {
   /** A throwaway golf page with the seeded primary offer's league and a copy of its template, removed after. */
   async function scratchPage(templateActive: boolean) {
     const prisma = getPrisma();
-    const seeded = await prisma.eventPageOffer.findFirstOrThrow({ where: { isPrimary: true, eventPage: { slug: 'championship-weekend' } }, include: { template: true } });
+    const seeded = await prisma.eventPageOffer.findFirstOrThrow({ where: { isPrimary: true, eventPage: { urlSegment: 'championship-weekend' } }, include: { template: true } });
     const template = seeded.template;
     const copy = await prisma.contestConfigTemplate.create({
       data: {
-        sport: template.sport,
         sportLeagueId: template.sportLeagueId,
         contestFormat: template.contestFormat,
         selectionType: template.selectionType,
@@ -120,7 +119,7 @@ describe('Event page offers', () => {
         configJson: template.configJson ?? {},
       },
     });
-    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, slug: `scratch-${randomUUID()}`, displayOrder: 999 } });
+    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: `scratch-${randomUUID()}`, displayOrder: 999 } });
     const offer = (sortOrder: number, isPrimary: boolean) => prisma.eventPageOffer.create({
       data: { eventPageId: page.id, sportLeagueId: seeded.sportLeagueId, eventSeriesName: 'Scratch', templateId: copy.id, sortOrder, isPrimary },
     });
@@ -158,8 +157,8 @@ describe('Event page offers', () => {
     const prisma = getPrisma();
     const { page, remove } = await scratchPage(true);
     const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
-    const switchedOff = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
-    const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sport: Sport.GOLF } });
+    const switchedOff = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
+    const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sportLeague: { sport: { sport: Sport.GOLF } } } });
     try {
       await prisma.eventPageOffer.create({
         data: { eventPageId: page.id, sportLeagueId: switchedOff.id, eventSeriesName: 'Scratch', templateId: template.id, sortOrder: 1, isPrimary: true },
@@ -181,7 +180,7 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     const make = async (eventYear: number, status: SportEventStatus, startDate: string) => prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventYear), status, startDate: new Date(startDate),
-        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF, name: `${series.name} ${eventYear}`,
+        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', name: `${series.name} ${eventYear}`,
       },
     });
     await make(2025, SportEventStatus.COMPLETED, '2025-04-10T12:00:00.000Z');
@@ -194,7 +193,7 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     await prisma.sportEvent.create({
       data: {
         eventSeriesId: other.id, sportLeagueSeasonId: await seriesSeasonId(prisma, other.id, 2027), status: SportEventStatus.SCHEDULED, startDate: new Date('2027-01-10T12:00:00.000Z'),
-        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF, name: `${other.name} 2027`,
+        externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', name: `${other.name} 2027`,
       },
     });
     const unasked = { sportLeagueId: series.sportLeagueId, eventSeriesName: 'No such series' };
@@ -218,8 +217,8 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     const prisma = getPrisma();
     const sportEvent = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL, name: 'Event page squares' })),
-        externalId: `event-page-squares-${randomUUID()}`, providerId: 'integration-test', sport: Sport.AMERICAN_FOOTBALL,
+        ...(await freshEventEdition(prisma, { name: 'Event page squares', sport: Sport.AMERICAN_FOOTBALL })),
+        externalId: `event-page-squares-${randomUUID()}`, providerId: 'integration-test',
         name: 'Event page squares', startDate: new Date('2030-01-09T18:00:00.000Z'), status: SportEventStatus.IN_PROGRESS,
       },
     });

@@ -10,12 +10,12 @@ import { useParticipantQuery } from './use-sport-catalog';
  * participant is read, and the Sports page when it cannot be.
  */
 export function ParticipantLinkRedirect() {
-  const { sport } = useManagedSport();
+  const { sportUrlSegment } = useManagedSport();
   const { participantId = '' } = useParams<{ participantId: string }>();
   const participantQuery = useParticipantQuery(participantId);
 
   if (participantQuery.data) {
-    return <Navigate replace to={`${buildSportLeaguePath(sport, participantQuery.data.sportLeagueId)}/participants`} />;
+    return <Navigate replace to={`${buildSportLeaguePath(sportUrlSegment, participantQuery.data.sportLeagueId)}/participants`} />;
   }
   if (participantQuery.isError || participantId === '') {
     return <Navigate replace to={SPORTS_PATH} />;

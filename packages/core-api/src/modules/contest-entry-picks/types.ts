@@ -1,8 +1,4 @@
-/**
- * Internal types for the ContestEntryPick module. A pick change names no
- * `contestFormat`: the service resolves it from the parent contest per
- * plans/117 §7.1.
- */
+/** Internal types for the ContestEntryPick module. */
 
 import type { ContestEntryStatus } from '@poolmaster/shared/domain';
 

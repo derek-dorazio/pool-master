@@ -572,7 +572,7 @@ describe('LeagueService', () => {
 
       expect(locked).toEqual(['contest-a', 'contest-b']);
       expect(deleted).toEqual([
-        'contestEntryPick', 'contestEntry', 'participantContestScoringRule', 'contestPrizeDefinition', 'contestConfiguration',
+        'contestEntryPick', 'contestEntry', 'participantContestScoringRule', 'contestConfiguration',
         'contest', 'leagueInvitation', 'squadOwnerInvitation', 'squadMembership', 'leagueMembership', 'squad', 'league!',
       ]);
     });

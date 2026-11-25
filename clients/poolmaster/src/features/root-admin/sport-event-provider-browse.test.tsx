@@ -1,10 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { SportEventProviderBrowse } from './sport-event-provider-browse';
-import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { sportEventFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 import type { SportEventEdition } from './sport-event-edition';
 
 // plans/124 §4.4 — "Browse provider events" on the create page: the golf provider's catalog,
@@ -58,7 +58,7 @@ function withSportProvider() {
 
 function renderBrowse(edition: SportEventEdition = COMPLETE_EDITION) {
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={sportsQueryClient()}>
       <MemoryRouter initialEntries={['/manage/sports/golf/events/new']}>
         <Routes>
           <Route

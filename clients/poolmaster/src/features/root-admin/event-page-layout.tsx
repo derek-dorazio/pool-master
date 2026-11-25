@@ -75,7 +75,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [releaseOpen, setReleaseOpen] = useState(false);
   const [openSyncRunId, setOpenSyncRunId] = useState<string | null>(null);
-  const basePath = buildSportEventPath(event.sport, event.id);
+  const basePath = buildSportEventPath(event.sportUrlSegment, event.id);
   const openSegment = pathname.slice(basePath.length + 1).split('/')[0];
   // Held here, not in the Activity tab, so the tab keeps its failed count; it re-reads only while open.
   const activity = useActivity({ sportEventId: event.id }, { poll: openSegment === 'activity' });
@@ -126,7 +126,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
         breadcrumbs={[
           { href: SPORTS_PATH, label: 'Sports' },
           { label: getSportDefinition(event.sport).name },
-          ...(sportLeague === undefined ? [] : [{ href: buildSportLeaguePath(event.sport, sportLeague.id), label: sportLeague.name }]),
+          ...(sportLeague === undefined ? [] : [{ href: buildSportLeaguePath(event.sportUrlSegment, sportLeague.id), label: sportLeague.name }]),
           { label: event.name },
         ]}
         meta={(
@@ -135,7 +135,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
             {overview === undefined || headerIssues(overview).length === 0 ? null : (
               <SportLeagueIssueChips
                 onOpenSyncRun={setOpenSyncRunId}
-                overview={{ id: event.id, issues: headerIssues(overview), name: event.name, sport: event.sport }}
+                overview={{ id: event.id, issues: headerIssues(overview), name: event.name, sportUrlSegment: event.sportUrlSegment }}
               />
             )}
             {event.status === SportEventStatus.DRAFT ? (

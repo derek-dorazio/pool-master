@@ -56,7 +56,7 @@ export function SportEventManualCreateForm({
     feature: 'root-admin-sport-event-create-page',
   });
   const navigate = useNavigate();
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { timeZone } = useDisplayPreferences();
   const { event, participant, round } = sportVocabulary(definition);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId)?.noun ?? null);
@@ -100,7 +100,7 @@ export function SportEventManualCreateForm({
         { action: 'event.create.manual', data: { id: tournament.id } },
         'Created event manually',
       );
-      void navigate(buildSportEventPath(sport, tournament.id));
+      void navigate(buildSportEventPath(sportUrlSegment, tournament.id));
     },
     onError: (error) => {
       logger.warn(

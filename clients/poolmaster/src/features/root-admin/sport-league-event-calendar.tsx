@@ -27,7 +27,7 @@ export function SportLeagueEventCalendar({
   sportLeague: SportNoun;
   tournaments: SportEventDto[];
 }) {
-  const { sport, definition } = useManagedSport();
+  const { sportUrlSegment, definition } = useManagedSport();
   const { event } = sportVocabulary(definition);
   const columns = useMemo(() => buildCalendarColumns(upperFirst(event.one)), [event.one]);
   return (
@@ -41,7 +41,7 @@ export function SportLeagueEventCalendar({
           : `No ${event.many} are scheduled in this year yet.`
       }
       getRowId={(tournament) => tournament.id}
-      getRowLink={(tournament) => buildSportEventPath(sport, tournament.id)}
+      getRowLink={(tournament) => buildSportEventPath(sportUrlSegment, tournament.id)}
       rowTestId={(tournament) => `root-admin-sport-league-event-row-${tournament.id}`}
       tableTestId="root-admin-sport-league-calendar-table"
     />

@@ -14,7 +14,7 @@ import { useEventPageQuery } from './use-event-pages-query';
 export function OpensSoonCard({ leagueCode }: { leagueCode: string }) {
   const location = useLocation();
   const request = useMemo(() => parseStartRequest(location.search), [location.search]);
-  const pageQuery = useEventPageQuery(request?.sport ?? null, request?.slug);
+  const pageQuery = useEventPageQuery(request?.sportUrlSegment, request?.urlSegment);
   const page = pageQuery.data;
   const offer = page && request?.templateId
     ? page.offers.find((candidate) => candidate.template.id === request.templateId)

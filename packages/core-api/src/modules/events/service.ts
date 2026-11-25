@@ -222,7 +222,6 @@ export class SportEventService {
       event: {
         externalId: `manual-${randomUUID()}`,
         providerId: MANUAL_ADMIN_PROVIDER_ID,
-        sport,
         name: input.name,
         venue: input.venue,
         location: input.location,
@@ -261,7 +260,7 @@ export class SportEventService {
     rounds?: number;
     providerEvent: ProviderEventDetail;
   }): Promise<SportEventAdminSummary> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
     const sportLeagueSeasonId = currentSeasonIdOf(sportLeague);
     if (await this.deps.sportEvents.findByProviderRef(input.providerId, input.externalId)) {
       throw new SportEventError(
@@ -278,7 +277,7 @@ export class SportEventService {
       );
     }
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
-    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId, sportLeagueSeasonId });
+    const edition = providerEdition(seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId, sportLeagueSeasonId });
     const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
 
     this.deps.logger?.info(
@@ -305,7 +304,7 @@ export class SportEventService {
     providerId: string;
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderSeasonImport> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
     const now = this.now();
     const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
       input.providerId,
@@ -335,7 +334,7 @@ export class SportEventService {
         continue;
       }
       seriesWithEdition.add(eventSeriesId);
-      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
+      editions.push(providerEdition(seriesIdByName, { ...providerEvent, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
     }
     const created = await this.createEditions(sportLeague, editions);
 
@@ -792,7 +791,6 @@ function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminS
  * `rounds` always matches the rounds created.
  */
 function providerEdition(
-  sport: Sport,
   seriesIdByName: ReadonlyMap<string, string>,
   input: ProviderEventDetail & { externalId: string; sportLeagueSeasonId: string; providerId: string; rounds?: number },
 ): NewEdition {
@@ -803,7 +801,6 @@ function providerEdition(
     event: {
       externalId: input.externalId,
       providerId: input.providerId,
-      sport,
       name: input.name,
       venue: input.venue ?? undefined,
       startDate: input.startDate,

@@ -85,6 +85,10 @@ A root admin page to edit them can come later if pages change more than a few ti
 
 ### Slugs and URLs
 
+Since #2042 the page's slug is its stored `url_segment`, and the sport segment is the sport row's
+own stored `urlSegment` (no `sportPathSegment` any more): the route is
+`/play/:sportUrlSegment/:urlSegment`, and the API returns each page's `path`.
+
 - Path: **`/play/:sport/:pageSlug`**, for example `/play/american-football/championship-weekend`. The
   sport segment is the existing sport path segment (`sportPathSegment`), so `ncaa-...` slugs can
   repeat across sports without clashing.

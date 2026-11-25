@@ -15,7 +15,7 @@ import type {
   SportLeagueSyncFacts,
 } from '@poolmaster/shared/db';
 import type { SportLeaguePhaseDefinition, SportLeaguePosition, SportLeagueSeasonDetail, SportLeagueSeasonSlot, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
-import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { buildEventPagePath, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
@@ -258,7 +258,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       // An offer names its series by sport league and name, as a template's series names do.
       this.prisma.eventPageOffer.findFirst({
         where: { sportLeagueId: eventSeries.sportLeagueId, eventSeriesName: eventSeries.name, eventPage: { isActive: true } },
-        select: { eventPage: { select: { slug: true } } },
+        select: { eventPage: { select: { urlSegment: true, sportConfig: { select: { urlSegment: true } } } } },
         orderBy: [{ eventPage: { displayOrder: 'asc' } }, { id: 'asc' }],
       }),
     ]);
@@ -295,7 +295,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         name: row.participant.name,
         mapping: mappingByParticipant.get(row.participantId) ?? null,
       })),
-      eventPageSlug: offer?.eventPage.slug ?? null,
+      eventPagePath: offer ? buildEventPagePath({ sportUrlSegment: offer.eventPage.sportConfig.urlSegment, urlSegment: offer.eventPage.urlSegment }) : null,
     };
   }
 

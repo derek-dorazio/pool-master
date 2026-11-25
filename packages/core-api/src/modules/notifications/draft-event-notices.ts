@@ -61,7 +61,7 @@ export class DraftEventNotices implements DueNotifications {
   ): Promise<void> {
     const daysLeft = Math.ceil((sportEvent.startDate.getTime() - now.getTime()) / DAY_MS);
     const stillNeeded = await this.deps.releaseReadiness.releaseBlockersOf(sportEvent.id);
-    const eventAdminUrl = buildSportEventAdminUrl(this.deps.appBaseUrl, sportEvent.sport, sportEvent.id);
+    const eventAdminUrl = buildSportEventAdminUrl(this.deps.appBaseUrl, sportEvent);
     for (const user of rootAdmins) {
       await this.deps.email.send('EVENT_STILL_DRAFT', {
         to: emailRecipientOf(user),

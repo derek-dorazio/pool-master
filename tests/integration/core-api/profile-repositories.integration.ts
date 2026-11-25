@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { Sport, PlatformTierProfileLastTier } from '@poolmaster/shared/domain';
 import { PrismaPlatformPricingProfileRepository, PrismaPlatformTierProfileRepository } from '../../../packages/core-api/src/adapters';
 import { getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { SPORT_PLATFORM_TIER_PROFILE_CODE, leagueProfiles } from '../../support/league-profiles';
+import { SPORT_PLATFORM_TIER_PROFILE_CODE, sportLeagueRowDefaults } from '../../support/league-profiles';
 import { expectDefined } from '../../support/expect-defined';
 import type { ProfileTaken } from '@poolmaster/shared/db';
 import { sportPlay } from '../../support/sport-play';
@@ -122,7 +122,7 @@ describe('PrismaPlatformTierProfileRepository', () => {
     made.platformTierProfileIds.add(profile.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const leagues = await Promise.all([1, 2].map(async (index) => prisma.sportLeague.create({
-      data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), platformTierProfileId: profile.id, sportId: golf.id, name: uniqueName(`Counted tour ${index}`) },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), platformTierProfileId: profile.id, sportId: golf.id, name: uniqueName(`Counted tour ${index}`) },
     })));
     leagues.forEach((league) => made.sportLeagueIds.add(league.id));
 
@@ -173,7 +173,7 @@ describe('PrismaPlatformTierProfileRepository', () => {
     made.platformTierProfileIds.add(used.id);
     made.platformTierProfileIds.add(unused.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), platformTierProfileId: used.id, sportId: golf.id, name: uniqueName('Using tour') } });
+    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), platformTierProfileId: used.id, sportId: golf.id, name: uniqueName('Using tour') } });
     made.sportLeagueIds.add(league.id);
 
     await expect(repo.deleteUnlessUsed(used.id)).resolves.toBe(1);
@@ -193,7 +193,7 @@ describe('PrismaPlatformPricingProfileRepository', () => {
     const profile = written(await repo.create({ code, name, ...STANDARD_VALUES, steepness: 2.5 }));
     made.platformPricingProfileIds.add(profile.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), platformPricingProfileId: profile.id, sportId: golf.id, name: uniqueName('Priced tour') } });
+    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), platformPricingProfileId: profile.id, sportId: golf.id, name: uniqueName('Priced tour') } });
     made.sportLeagueIds.add(league.id);
 
     await expect(repo.findById(profile.id)).resolves.toMatchObject({ code, name, steepness: 2.5 });

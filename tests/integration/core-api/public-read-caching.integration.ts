@@ -26,7 +26,7 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
 } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 import { Sport } from '@poolmaster/shared/domain';
 
@@ -54,7 +54,7 @@ async function createSportLeague(headers: Record<string, string>): Promise<strin
     method: 'POST',
     url: '/api/v1/sport-leagues',
     headers,
-    payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Cache Tour ${randomUUID()}` },
+    payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Cache Tour ${randomUUID()}` },
   });
   expect(response.statusCode).toBe(201);
   const id = response.json<SportLeagueResponse>().sportLeague.id;
@@ -142,7 +142,7 @@ describe('admin saves clear the public reads they change (#1181)', () => {
       method: 'POST',
       url: '/api/v1/sport-leagues',
       headers: member.headers,
-      payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Refused Tour ${randomUUID()}` },
+      payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Refused Tour ${randomUUID()}` },
     });
 
     expect(response.statusCode).toBe(403);

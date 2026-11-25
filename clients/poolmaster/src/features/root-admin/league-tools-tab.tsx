@@ -22,7 +22,7 @@ export function LeagueToolsTab() {
               <LinkButton
                 data-testid="root-admin-league-add-participant"
                 size="sm"
-                to={`${buildSportPath(sportLeague.sport)}/participants/new?sportLeague=${sportLeague.id}`}
+                to={`${buildSportPath(sportLeague.sportUrlSegment)}/participants/new?sportLeague=${sportLeague.id}`}
                 variant="secondary"
               >
                 Add participant

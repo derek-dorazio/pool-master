@@ -47,6 +47,7 @@ interface ContestRow {
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   sport?: Contest['sport'] | null;
+  sportUrlSegment?: string | null;
   startsAt?: Date | null;
   endsAt?: Date | null;
   drawnAt?: Date | null;
@@ -85,7 +86,6 @@ export interface ScoredContestEntryPickRow {
   pickId: string;
   sportEventParticipantId: string;
   pickedAt: Date;
-  slot: number | null;
   isCounting: boolean;
   isDropped: boolean;
   participant: ParticipantScore;
@@ -186,6 +186,7 @@ export function toContestDto(
       return event ? [toContestSportEventDto(event, index + 1)] : [];
     }),
     sport: contest.sport ?? null,
+    sportUrlSegment: contest.sportUrlSegment ?? null,
     entryCount: opts.detail?.totals.submittedEntryCount ?? opts.entryCount,
     enteredSquadCount: opts.detail?.totals.enteredSquadCount,
     allEntryCount: opts.detail?.totals.allEntryCount ?? opts.allEntryCount,
@@ -392,7 +393,7 @@ export function toContestLeaderboardResponse(
         pickId: pick.pickId,
         sportEventParticipantId: pick.sportEventParticipantId,
         pickedAt: pick.pickedAt.toISOString(),
-        slot: pick.slot,
+        slot: null,
         isCounting: pick.isCounting,
         isDropped: pick.isDropped,
         ...pickDetail(pick),

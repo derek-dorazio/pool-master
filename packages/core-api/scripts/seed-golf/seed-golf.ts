@@ -383,9 +383,12 @@ class Loader {
    * rule the file names is changed on a league that has another.
    */
   private async ensureLeague(client: Client, league: SportDataLeague): Promise<SportLeagueDto> {
-    const { name, bracketAdvancement } = league;
+    const { name, urlSegment, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
-    const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
+    // A file that names the league's stored URL segment finds it by that; an older file, by name.
+    const existing = urlSegment === undefined
+      ? sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase())
+      : sportLeagues.find((row) => row.urlSegment === urlSegment);
     if (existing && (existing.participantType !== this.file.scope.participantType || existing.scoringFamily !== this.file.scope.scoringFamily)) {
       // The league on the site is the one home of how it plays (#2001); a file that says otherwise is wrong.
       throw new Error(`${name} on the site plays ${existing.participantType} ${existing.scoringFamily}; the file says ${this.file.scope.participantType} ${this.file.scope.scoringFamily}.`);

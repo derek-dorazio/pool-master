@@ -1,10 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ParticipantLinkRedirect } from './participant-link-redirect';
-import { participantFixture } from './sport-test-fixtures';
+import { participantFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // A participant's old Manage address (#1866) opens its league's Participants tab.
 
@@ -17,7 +17,7 @@ function LocationProbe() {
 }
 
 function renderAt(path: string) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryClient = sportsQueryClient();
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>

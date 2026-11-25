@@ -1,3 +1,4 @@
+import { buildEventPagePath, type EventPageAddress } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@poolmaster/shared/dto';
 import type { EventPageOfferView, EventPageView } from '../modules/event-pages/service';
 import { mapContestConfigTemplateDto } from './contest-management.mapper';
@@ -23,14 +24,22 @@ export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto
   };
 }
 
+function toAddressDto(address: EventPageAddress) {
+  return {
+    sport: address.sport,
+    sportUrlSegment: address.sportUrlSegment,
+    urlSegment: address.urlSegment,
+    path: buildEventPagePath(address),
+  };
+}
+
 export function toEventPageDto(view: EventPageView): EventPageDto {
   return {
     id: view.page.id,
-    sport: view.page.sport,
-    slug: view.page.slug,
+    ...toAddressDto(view.page),
     displayOrder: view.page.displayOrder,
     isActive: view.page.isActive,
-    redirectTo: view.page.redirectTo,
+    redirectTo: view.page.redirectTo === null ? null : toAddressDto(view.page.redirectTo),
     offers: view.offers.map(toEventPageOfferDto),
   };
 }

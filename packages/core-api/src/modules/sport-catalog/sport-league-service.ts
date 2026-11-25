@@ -29,6 +29,7 @@ import {
   type ProviderLeagueSettings,
   type ProviderSettings,
   type Sport,
+  type SportConfig,
   type SportLeaguePlay,
   type SportLeague,
   type SportLeagueSeasonSpan,
@@ -40,6 +41,9 @@ import { feedIdsOfCandidates, matchAmong, participantMatchQuery, resolveParticip
 /** A sport league with its sport and the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
   sport: Sport;
+  /** Its sport's stored URL segment and display order (#2042), read from the sport row. */
+  sportUrlSegment: string;
+  sportDisplayOrder: number;
   participantCount: number;
   /** Events across every series of the sport league, every year. */
   sportEventCount: number;
@@ -118,7 +122,7 @@ export class SportLeagueService {
    */
   async createSportLeague(
     sport: Sport,
-    input: { name: string; timeZone: string; bracketAdvancement?: BracketAdvancement } & SportLeaguePlay & SportLeagueProfileIds,
+    input: { name: string; urlSegment: string; timeZone: string; bracketAdvancement?: BracketAdvancement } & SportLeaguePlay & SportLeagueProfileIds,
   ): Promise<SportLeagueSummary> {
     if (!isKnownTimeZone(input.timeZone)) {
       throw new SportCatalogError(`Unknown time zone: ${input.timeZone}.`, 'TIME_ZONE_UNKNOWN', 400);
@@ -133,9 +137,17 @@ export class SportLeagueService {
         409,
       );
     }
+    if (await this.deps.sportLeagues.findBySportAndUrlSegment(sportRow.id, input.urlSegment)) {
+      throw new SportCatalogError(
+        `A sport league of ${sport} already has the URL segment "${input.urlSegment}".`,
+        'SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS',
+        409,
+      );
+    }
     const sportLeague = await this.deps.sportLeagues.create({
       sportId: sportRow.id,
       name: input.name,
+      urlSegment: input.urlSegment,
       participantType: input.participantType,
       scoringFamily: input.scoringFamily,
       timeZone: input.timeZone,
@@ -371,23 +383,28 @@ export class SportLeagueService {
       this.deps.participants.countBySportLeagues(ids),
       this.deps.sportEvents.countBySportLeagues(ids),
     ]);
-    const sportsById = new Map(sportRows.map((sportRow) => [sportRow.id, sportRow.sport]));
-    return sportLeagues.map((sportLeague) => ({
-      ...sportLeague,
-      sport: requireSportOf(sportsById, sportLeague),
-      participantCount: participantCounts.get(sportLeague.id) ?? 0,
-      sportEventCount: eventCounts.get(sportLeague.id) ?? 0,
-    }));
+    const sportsById = new Map(sportRows.map((sportRow) => [sportRow.id, sportRow]));
+    return sportLeagues.map((sportLeague) => {
+      const sportRow = requireSportOf(sportsById, sportLeague);
+      return {
+        ...sportLeague,
+        sport: sportRow.sport,
+        sportUrlSegment: sportRow.urlSegment,
+        sportDisplayOrder: sportRow.displayOrder,
+        participantCount: participantCounts.get(sportLeague.id) ?? 0,
+        sportEventCount: eventCounts.get(sportLeague.id) ?? 0,
+      };
+    });
   }
 }
 
 /** A sport league's sport, read from its sport row; every sport league has one (a foreign key). */
-function requireSportOf(sportsById: ReadonlyMap<string, Sport>, sportLeague: SportLeague): Sport {
-  const sport = sportsById.get(sportLeague.sportId);
-  if (sport === undefined) {
+function requireSportOf(sportsById: ReadonlyMap<string, SportConfig>, sportLeague: SportLeague): SportConfig {
+  const sportRow = sportsById.get(sportLeague.sportId);
+  if (sportRow === undefined) {
     throw new SportCatalogError(`No Sport row exists for sport league ${sportLeague.id}.`, 'SPORT_NOT_FOUND', 404);
   }
-  return sport;
+  return sportRow;
 }
 
 function sportLeagueNotFound(sportLeagueId: string): SportCatalogError {

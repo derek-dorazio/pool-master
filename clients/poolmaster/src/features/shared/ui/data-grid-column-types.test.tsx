@@ -1,4 +1,7 @@
-import { Sport, SportOrder, alphabeticalOrder } from "@poolmaster/shared/domain";
+import { Sport, alphabeticalOrder, explicitOrder } from "@poolmaster/shared/domain";
+
+/** The sports' display order as the API gives it (SportDto.displayOrder). */
+const SPORT_DISPLAY_ORDER = explicitOrder<string>({ AMERICAN_FOOTBALL: 0, BASKETBALL: 1, BASEBALL: 2, HOCKEY: 3, SOCCER: 4, GOLF: 5, AUTO_RACING: 6, TENNIS: 7, HORSE_RACING: 8, CYCLING: 9, RUNNING: 10 });
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -28,7 +31,7 @@ const COLUMNS: ColumnDef<Row, any>[] = [
   helper.accessor("name", { header: "Name", meta: { type: { kind: "text" } } }),
   helper.accessor("members", { header: "Members", meta: { type: { kind: "number" } } }),
   helper.accessor("active", { header: "Active", meta: { type: { kind: "boolean", nullable: true } } }),
-  helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: SportOrder } } }),
+  helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: SPORT_DISPLAY_ORDER } } }),
   helper.accessor("starts", { header: "Starts", meta: { type: { kind: "datetime", direction: "both" } } }),
   helper.accessor("season", { header: "Season", meta: { type: { kind: "dateRange", direction: "both" } } }),
   helper.display({ id: "actions", header: "Actions", cell: () => "…" }),

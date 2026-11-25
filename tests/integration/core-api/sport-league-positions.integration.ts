@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { ParticipantType, ProviderCode, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import { SportLeaguePositionListResponseSchema } from '@poolmaster/shared/dto';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportPlay } from '../../support/sport-play';
 
@@ -30,7 +30,7 @@ async function sportId(sport: Sport): Promise<string> {
 async function mappedGolfLeague(name: string) {
   const prisma = getPrisma();
   const league = await prisma.sportLeague.create({
-    data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: await sportId(Sport.GOLF), name: `${name} ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: await sportId(Sport.GOLF), name: `${name} ${randomUUID().slice(0, 8)}` },
   });
   const mappingId = await syncLeagueTo(prisma, league.id, 'pga');
   return { league, mappingId };
@@ -153,7 +153,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/positions', () => {
 describe('POST /api/v1/sport-leagues', () => {
   it('creates a sport league with the participant type and scoring family the request names', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
-    const profiles = await leagueProfiles(getPrisma());
+    const profiles = await sportLeagueRowDefaults(getPrisma());
 
     const response = await getApp().inject({
       method: 'POST',
@@ -169,7 +169,7 @@ describe('POST /api/v1/sport-leagues', () => {
 
   it('refuses a request that leaves out the participant type or scoring family with 400, writing nothing', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
-    const profiles = await leagueProfiles(getPrisma());
+    const profiles = await sportLeagueRowDefaults(getPrisma());
     const name = `No Play Tour ${randomUUID().slice(0, 8)}`;
 
     const response = await getApp().inject({

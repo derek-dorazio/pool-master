@@ -28,7 +28,7 @@ import {
 } from '../helpers';
 import { get, okBody } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 
 const made = { platformTierProfileNames: new Set<string>(), platformPricingProfileNames: new Set<string>(), sportLeagueIds: new Set<string>() };
@@ -70,7 +70,7 @@ function pricingWrite(name: string, overrides: Partial<PlatformPricingProfileWri
 async function leagueNaming(ids: { platformTierProfileId?: string; platformPricingProfileId?: string }): Promise<string> {
   const prisma = getPrisma();
   const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), ...ids, sportId: golf.id, name: `Profile tour ${randomUUID().slice(0, 8)}` } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), ...ids, sportId: golf.id, name: `Profile tour ${randomUUID().slice(0, 8)}` } });
   made.sportLeagueIds.add(league.id);
   return league.id;
 }

@@ -38,7 +38,8 @@ import { recordStatements, statementsOn, StatementVerb } from '../statement-log'
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
@@ -63,12 +64,12 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
   // The integration cleanup empties sport leagues no template names, so the football rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
+    create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
@@ -77,7 +78,6 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
     externalId: `pickem-board-${randomUUID()}`,
     providerId: 'integration-test',
-    sport: Sport.AMERICAN_FOOTBALL,
     name: label,
     startDate,
     status,
@@ -330,9 +330,9 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
-    // The contest (6), the reader's squad membership (1; the task keeps the league membership,
+    // The contest (9: its sport is read through its events' series and league since #2042), the reader's squad membership (1; the task keeps the league membership,
     // #1438), and the snapshot (1): pinned however many weeks, games, entries and picks the season has.
-    expect(statements).toHaveLength(8);
+    expect(statements).toHaveLength(11);
   });
 
   it('stores the board until the next game kicks off, whose picks it would then reveal', async () => {

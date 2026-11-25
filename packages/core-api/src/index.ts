@@ -79,7 +79,6 @@ import {
   PrismaSportEventRoundRepository,
   PrismaBackgroundJobRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
   PrismaSquaresRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
@@ -388,7 +387,6 @@ export function buildApp(options: BuildAppOptions = {}) {
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, registry, app.log),
     sportEvents: sportEventServices.sportEvents,
     findings: syncFindings,

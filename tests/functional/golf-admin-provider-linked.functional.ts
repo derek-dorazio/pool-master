@@ -17,7 +17,7 @@ import {
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { ProviderCode } from '@poolmaster/shared/domain';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -26,6 +26,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { pinMockFeedEventState } from './mock-feed';
+import { sportRowKeys } from '../support/sport-rows';
 import { Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../support/sport-play';
 
@@ -88,6 +89,7 @@ async function ensureGolfSportRow(): Promise<string> {
     where: { sport: 'GOLF' },
     create: {
       sport: 'GOLF',
+      ...sportRowKeys('GOLF'),
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
@@ -159,7 +161,6 @@ async function cleanup(): Promise<void> {
     await db.contestEntryStanding.deleteMany({ where: { contestId: { in: cids } } });
     await db.contestEntry.deleteMany({ where: { contestId: { in: cids } } });
     await db.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: { in: cids } } } });
-    await db.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: { in: cids } } } });
     await db.contestConfiguration.deleteMany({ where: { contestId: { in: cids } } });
     await db.contest.deleteMany({ where: { id: { in: cids } } });
   }
@@ -236,7 +237,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     // --- Tour ------------------------------------------------------------
     const league = await createSportLeague({
       client: admin,
-      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `USGA ${RUN}` },
+      body: { ...(await sportLeagueCreateBody(admin, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `USGA ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
@@ -660,11 +661,9 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
     take: 3,
   });
   await db.contestEntryPick.createMany({
-    data: field.map((sep, index) => ({
+    data: field.map((sep) => ({
       entryId: entry.id,
       sportEventParticipantId: sep.id,
-      contestFormat: 'ROSTER' as const,
-      slot: index + 1,
     })),
   });
 

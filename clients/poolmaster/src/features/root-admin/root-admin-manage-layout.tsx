@@ -5,7 +5,9 @@ import {
   buildManageTabs,
   getManageBreadcrumbLabel,
   MANAGE_LANDING_PATH,
+  type SportAddress,
 } from "./manage-navigation";
+import { useSportsQuery } from "./use-sport-catalog";
 import {
   ManageBreadcrumbContext,
   type ManageBreadcrumbContextValue,
@@ -18,7 +20,7 @@ type BreadcrumbOverrides = Record<string, string>;
  * `sports/<sport>/` it starts at the sport and skips the sport's old list pages, which now open
  * Sports; a League or Event page draws its own trail in its header, so it gets none here.
  */
-function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
+function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides, sports: readonly SportAddress[]) {
   const segments = pathname.split("/").filter(Boolean);
   const manageIndex = segments.indexOf("manage");
 
@@ -39,7 +41,7 @@ function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   return relevantSegments
     .map((segment, index) => ({
       index,
-      label: overrides[segment] ?? getManageBreadcrumbLabel(relevantSegments, index),
+      label: overrides[segment] ?? getManageBreadcrumbLabel(relevantSegments, index, sports),
       href: `/manage/${relevantSegments.slice(0, index + 1).join("/")}`,
     }))
     .filter(({ index }) => !underSport || (index !== 0 && index !== 2))
@@ -59,6 +61,7 @@ export function ManageLandingRedirect() {
 export function RootAdminManageLayout() {
   const location = useLocation();
   const [overrides, setOverrides] = useState<BreadcrumbOverrides>({});
+  const sportsQuery = useSportsQuery();
 
   const contextValue = useMemo<ManageBreadcrumbContextValue>(
     () => ({
@@ -84,7 +87,7 @@ export function RootAdminManageLayout() {
     [],
   );
 
-  const breadcrumbs = buildBreadcrumbs(location.pathname, overrides);
+  const breadcrumbs = buildBreadcrumbs(location.pathname, overrides, sportsQuery.data ?? []);
 
   return (
     <ManageBreadcrumbContext.Provider value={contextValue}>

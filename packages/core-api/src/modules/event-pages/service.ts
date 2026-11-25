@@ -76,11 +76,11 @@ export class EventPageService {
     this.logger = deps.logger;
   }
 
-  async getPage(sport: Sport, slug: string): Promise<EventPageView> {
-    this.logger?.debug({ action: 'eventPages.get.enter', sport, slug }, 'Getting event page');
-    const page = await this.pages.findBySportSlug(sport, slug);
+  async getPage(sportUrlSegment: string, urlSegment: string): Promise<EventPageView> {
+    this.logger?.debug({ action: 'eventPages.get.enter', sportUrlSegment, urlSegment }, 'Getting event page');
+    const page = await this.pages.findByUrlSegments(sportUrlSegment, urlSegment);
     if (page === null) {
-      this.logger?.info({ action: 'eventPages.get.notFound', sport, slug }, 'Event page not found');
+      this.logger?.info({ action: 'eventPages.get.notFound', sportUrlSegment, urlSegment }, 'Event page not found');
       throw new EventPageNotFoundError('There is no event page at that address.');
     }
     if (!page.isActive) {

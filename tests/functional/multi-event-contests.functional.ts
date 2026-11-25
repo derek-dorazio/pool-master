@@ -32,7 +32,7 @@ import {
   LeagueMembershipResponseSchema,
   SelectionStateResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
@@ -121,7 +121,7 @@ async function buildTwoTournamentContest(
   const a = admin.client;
 
   // --- A tour, its two tournaments, and the same seven golfers in each -----------------------
-  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
+  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
   expect(tour.response?.status).toBe(201);
   const sportLeagueId = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);
@@ -177,7 +177,6 @@ async function buildTwoTournamentContest(
   const tieredTemplate = seriesTemplate
     ? await getFunctionalPrisma().contestConfigTemplate.create({
       data: {
-        sport: Sport.GOLF,
         sportLeagueId,
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,

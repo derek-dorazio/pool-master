@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SportLeagueSeasonDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { SportLeagueCalendarCard } from './sport-league-calendar-card';
-import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { sportEventFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // A tour's tournaments one Season at a time (#2003): Seasons are added by migration and a new
 // tournament goes in the current Season, so the card only picks which Season to show.
@@ -61,7 +61,7 @@ function renderCard(sportLeague = SPORT_LEAGUE, seasons = SEASONS) {
     Promise.resolve({ data: { events: EVENTS.filter((event) => event.sportLeagueSeasonId === query.sportLeagueSeasonId) } }));
   listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons } });
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={sportsQueryClient()}>
       <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${sportLeague.id}`]}>
         <Routes>
           <Route element={<SportLeagueCalendarCard sportLeague={sportLeague} />} path="/manage/sports/:sport/leagues/:leagueId" />
