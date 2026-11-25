@@ -2,7 +2,7 @@ import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { nhlGameListSchema, nhlTeamListSchema, type NhlGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-contract';
 import { isNhlFranchise, NHL_PLAYOFFS, toNhlPlayoffGame, toNhlPlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
-import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
+import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { toPlayoffsEvent } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
@@ -98,6 +98,11 @@ describe('toNhlPlayoffGame', () => {
   it('refuses a game whose side has no team id, naming the games path', () => {
     expect(() => toNhlPlayoffGame({ ...partialFinal, away_team: { full_name: 'Ottawa Senators' } }))
       .toThrow(new BalldontlieContractError('/nhl/v1/games', ['a team has no id']));
+  });
+
+  it('reduces each postseason game to its series\' round as POST codes, the first round POST:1 to the Stanley Cup Final POST:4 (#2005)', () => {
+    const event = toPlayoffsEvent(NHL_PLAYOFFS, 2024, postseason2024.map(toNhlPlayoffGame));
+    expect(event.providerSlots.map((play) => play.code)).toEqual(['POST:1', 'POST:2', 'POST:3', 'POST:4']);
   });
 
   it('makes a full postseason, sixteen teams to a Stanley Cup Final won four games to two, a completed event of 2025', () => {

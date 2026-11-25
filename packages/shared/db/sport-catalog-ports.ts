@@ -46,6 +46,7 @@ import type {
   SportLeagueSeason,
   SportLeagueSeasonDetail,
   SportLeagueSeasonSlot,
+  SyncSeasonSlot,
   CurrentSeasonCandidate,
 } from '../domain';
 
@@ -810,6 +811,25 @@ export interface SportLeagueSeasonRepository {
    * already has a test slot of that label on that definition.
    */
   createTestSlot(input: TestSeasonSlotCreate): Promise<TestSlotCreateResult>;
+  /**
+   * A Season's slots as its events sync reads them (#2005): each with the PROVIDER_CODE value the
+   * league's provider mapping names its definition by, whether one of the league's active contest
+   * templates lists that definition, the event on it and its dates. Test slots are left out, since
+   * the sync never reads or writes them. A fixed number of reads however many slots.
+   */
+  findSyncSlots(sportLeagueSeasonId: string, sportLeagueProviderMappingId: string): Promise<SyncSeasonSlot[]>;
+  /**
+   * What the events sync learned of a Season's slots (#2005), in one transaction: the slots already
+   * synced events now play (a slot that has an event already keeps it), and each slot's dates from
+   * its games.
+   */
+  recordSyncedSlots(input: SyncedSlotsRecord): Promise<void>;
+}
+
+/** The slots synced events now play, and slot dates from their games, for `recordSyncedSlots`. */
+export interface SyncedSlotsRecord {
+  eventSlots: ReadonlyArray<{ sportEventId: string; sportLeagueSeasonId: string; seasonSlotId: string }>;
+  slotDates: ReadonlyArray<{ seasonSlotId: string; startsAt: Date; endsAt: Date }>;
 }
 
 /** What adding a test slot did: the slot, or why there is none. */

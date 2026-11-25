@@ -2,7 +2,7 @@ import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { mlbGameListSchema, mlbTeamListSchema, type MlbGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-contract';
 import { isMlbClub, MLB_POSTSEASON, toMlbPlayoffGame, toMlbPlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-mapping';
-import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
+import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { toPlayoffsEvent } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
@@ -113,6 +113,12 @@ describe('toMlbPlayoffGame', () => {
       startDate: new Date('2025-09-30T23:08:00.000Z'),
       endDate: new Date('2025-10-30T23:08:00.000Z'),
     });
+  });
+
+  it('reduces each postseason game to its series\' round as POST codes, the Wild Card Series POST:1 to the World Series POST:4 (#2005)', () => {
+    const event = toPlayoffsEvent(MLB_POSTSEASON, 2025, postseason2025.map(toMlbPlayoffGame));
+    expect(event.providerSlots.map((play) => play.code)).toEqual(['POST:1', 'POST:2', 'POST:3', 'POST:4']);
+    expect(event.providerSlots.at(-1)?.endsAt).toEqual(new Date('2025-10-30T23:08:00.000Z'));
   });
 
   it('keeps the postseason in progress after the Division Series, with every listed game final but no World Series yet', () => {

@@ -129,6 +129,8 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], windowC
     status,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
+    // The vendor's college games carry no season type, week or round: the playoff is matched by date (slice 13, #2012).
+    providerSlots: [],
   };
 }
 

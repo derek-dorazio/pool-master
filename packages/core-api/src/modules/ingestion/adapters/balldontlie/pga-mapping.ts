@@ -76,6 +76,8 @@ export function toSportEvent(tournament: PgaTournament, participantCount?: numbe
     participantCount,
     // Once play starts the field cannot change.
     fieldLocked: tournament.status_state !== PgaStatusState.SCHEDULED,
+    // A tournament's code is the vendor's id for it.
+    providerSlots: [{ code: String(tournament.id), startsAt: toUtcDate(tournament.start_date), endsAt: toUtcDate(tournament.end_date ?? tournament.start_date) }],
   };
 }
 

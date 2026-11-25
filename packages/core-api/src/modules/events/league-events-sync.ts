@@ -57,7 +57,7 @@ export interface LeagueEventsSyncOptions {
   seasons: Pick<SportLeagueSeasonRepository, 'findForSync'>;
   seasonSchedule: Pick<ProviderSeasonScheduleReader, 'listSeasonEvents'>;
   sportEvents: Pick<SportEventService, 'importProviderSeason' | 'keepProviderEventsCurrent'>;
-  findings: Pick<ProviderSyncFindingService, 'raise'>;
+  findings: Pick<ProviderSyncFindingService, 'raiseOfSource'>;
   syncRuns: Pick<ProviderSyncRunRepository, 'create' | 'update' | 'findByBackgroundJobIds'>;
   jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll' | 'enqueueRequestReturning'>;
   logger?: FastifyBaseLogger;
@@ -156,7 +156,7 @@ export class LeagueEventsSync {
         // A Season's reads can wait on the provider's rate limit, so each later Season starts on a
         // fresh lease; a try whose job another task has claimed stops here.
         if (index > 0 && !await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
-        synced.push(await this.syncSeason(sportLeague.id, providerId, season));
+        synced.push(await this.syncSeason(sportLeague.id, { providerId, sportLeagueProviderMappingId: selected.id }, season));
         // poolmaster-allow-query-in-loop: the run's progress after each Season
         await this.options.syncRuns.update(run.id, {
           status: ProviderSyncRunStatus.IN_PROGRESS,
@@ -223,20 +223,37 @@ export class LeagueEventsSync {
       action: 'events.leagueSync.seasonMissing',
       data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, lastMappedSeasonId: lastMapped?.id ?? null },
     }, 'A sport league has no Season left to sync from its provider');
-    await this.options.findings.raise([{
+    await this.options.findings.raiseOfSource(providerId, [{
       kind: ProviderSyncFindingKind.SEASON_MISSING,
       severity: ProviderSyncFindingSeverity.ERROR,
       sportLeagueId: sportLeague.id,
       sportEventId: null,
-      providerId,
       providerValue: null,
       providerValueName: null,
     }]);
   }
 
-  private async syncSeason(sportLeagueId: string, providerId: string, season: SyncableSportLeagueSeason & { providerSeasonId: string }): Promise<SeasonSync> {
+  /**
+   * One Season: its slate is imported and its linked events kept current, and each code of the
+   * slate no slot mapping includes raises one INFO SLOT_VALUE_UNMAPPED finding per league, Provider
+   * and code (#2005). The finding's subject dedupes it across syncs, and a waived one stays waived.
+   */
+  private async syncSeason(
+    sportLeagueId: string,
+    provider: { providerId: string; sportLeagueProviderMappingId: string },
+    season: SyncableSportLeagueSeason & { providerSeasonId: string },
+  ): Promise<SeasonSync> {
+    const { providerId, sportLeagueProviderMappingId } = provider;
     const providerEvents = await this.options.seasonSchedule.listSeasonEvents(sportLeagueId, season.providerSeasonId);
-    const imported = await this.options.sportEvents.importProviderSeason({ sportLeagueId, sportLeagueSeasonId: season.id, providerId, providerEvents });
+    const imported = await this.options.sportEvents.importProviderSeason({ sportLeagueId, sportLeagueSeasonId: season.id, providerId, sportLeagueProviderMappingId, providerEvents });
+    if (imported.unmatched.length > 0) await this.options.findings.raiseOfSource(providerId, imported.unmatched.map((value) => ({
+      kind: ProviderSyncFindingKind.SLOT_VALUE_UNMAPPED,
+      severity: ProviderSyncFindingSeverity.INFO,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: value.code,
+      providerValueName: value.eventName,
+    })));
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
   }

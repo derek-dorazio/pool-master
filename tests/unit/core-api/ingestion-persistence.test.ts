@@ -26,6 +26,7 @@ function buildInProgressEvent(): SportEvent {
     startDate: new Date('2026-05-02T20:00:00.000Z'),
     status: 'IN_PROGRESS',
     fieldLocked: true,
+    providerSlots: [],
   };
 }
 
@@ -46,6 +47,7 @@ function linkedRow(overrides: Record<string, unknown> & { sport?: Sport } = {}) 
     releaseAt: new Date('2026-05-01T20:00:00.000Z'),
     fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
     fieldLocked: false,
+    providerSlots: [],
     metadata: {},
     // The event's sport league, which the sync's new participants belong to (#1853).
     sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport } } },
@@ -137,6 +139,7 @@ describe('IngestionPersistence', () => {
             releaseAt: existingReleaseAt,
             fieldLocksAt: existingFieldLocksAt,
             fieldLocked: false,
+            providerSlots: [],
           }]),
       sportEvent: { update: jest.fn().mockResolvedValueOnce({ id: 'sport-event-1' }) },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
@@ -156,6 +159,7 @@ describe('IngestionPersistence', () => {
         rounds: 4,
         participantCount: 80,
         fieldLocked: false,
+        providerSlots: [],
       },
       {
         externalId: 'golf-weekend-2',
@@ -169,6 +173,7 @@ describe('IngestionPersistence', () => {
         rounds: 4,
         participantCount: 80,
         fieldLocked: false,
+        providerSlots: [],
       },
     ];
 
@@ -248,6 +253,7 @@ describe('IngestionPersistence', () => {
         releaseAt: new Date('2026-05-01T20:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
         fieldLocked: true,
+        providerSlots: [],
       },
       linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
@@ -439,6 +445,7 @@ describe('IngestionPersistence', () => {
         releaseAt: new Date('2026-05-01T20:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
         fieldLocked: true,
+        providerSlots: [],
       },
       linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {

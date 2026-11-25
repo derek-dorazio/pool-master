@@ -10,7 +10,7 @@
  * result with Zod and persists it through the event's scoring family.
  */
 
-import type { MatchSide, ParticipantInactiveReason, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import type { MatchSide, ParticipantInactiveReason, ProviderCode, ProviderSlotPlay, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
@@ -157,6 +157,14 @@ export interface SportEvent {
    * provider that does not read league by league.
    */
   providerLeagueCode?: string;
+  /**
+   * The places the event's games are in, as the provider itself names them (league model slice 8,
+   * #2005): a season type and the provider's own week or round (`REG:5`, `POST:3`), or a
+   * tournament id. Each comes with its games' earliest and latest start. The sync matches each
+   * code to a Season slot through the league's slot provider mappings; a code no mapping includes
+   * is not synced. Empty where the provider names no place (a playoff read by date window).
+   */
+  providerSlots: ProviderSlotPlay[];
 }
 
 export interface SportEventDetail extends SportEvent {

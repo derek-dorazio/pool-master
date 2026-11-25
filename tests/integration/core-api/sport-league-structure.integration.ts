@@ -51,7 +51,7 @@ describe('the seeded phase and slot definitions', () => {
     expect(seeded.flatMap((league) => league.phases.filter((phase) => !phase.isSynced && phase._count.slots > 0)).length).toBe(0);
   });
 
-  it('seed the NFL with an unsynced preseason, 18 weeks matched by provider code, and a reseeded postseason ending in the Super Bowl', async () => {
+  it('seed the NFL with an unsynced preseason, 18 weeks matched by provider code, and a reseeded postseason ending in the Super Bowl at provider code POST:5', async () => {
     const response = await get(`/api/v1/sport-leagues/${NFL_ID}/structure`);
 
     expect(response.statusCode).toBe(200);
@@ -70,7 +70,7 @@ describe('the seeded phase and slot definitions', () => {
       [SlotKind.ROUND_OF_16, 'Wild Card', SlotPairing.RESEEDED, 'POST:1'],
       [SlotKind.QUARTERFINAL, 'Divisional', SlotPairing.RESEEDED, 'POST:2'],
       [SlotKind.SEMIFINAL, 'Conference Championships', SlotPairing.RESEEDED, 'POST:3'],
-      [SlotKind.FINAL, 'Super Bowl', SlotPairing.RESEEDED, 'POST:4'],
+      [SlotKind.FINAL, 'Super Bowl', SlotPairing.RESEEDED, 'POST:5'], // the provider's own week for the Super Bowl, after its gap week (#2005)
     ]);
     expect(postseason.slots.at(-1)).toEqual(expect.objectContaining({ awardsTrophy: true, squaresEligible: true }));
   });

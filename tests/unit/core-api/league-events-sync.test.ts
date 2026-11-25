@@ -48,7 +48,7 @@ function seasonsOf(overrides: Partial<Record<'last' | 'current' | 'next', Partia
 }
 
 function providerEvent(externalId: string) {
-  return { externalId, name: `Event ${externalId}`, venue: null, startDate: new Date('2026-12-01T00:00:00Z'), endDate: null };
+  return { externalId, name: `Event ${externalId}`, venue: null, startDate: new Date('2026-12-01T00:00:00Z'), endDate: null, providerSlots: [] };
 }
 
 function created(name: string): ProviderSeasonImport['created'][number] {
@@ -83,6 +83,7 @@ function build(options: {
       ?? jest.fn(async ({ sportLeagueSeasonId }: { sportLeagueSeasonId: string }): Promise<ProviderSeasonImport> => ({
         created: [created(`Open ${sportLeagueSeasonId}`)],
         skipped: [{ externalId: 'old', name: 'Old Open', reason: 'ALREADY_LINKED' }],
+        unmatched: [],
       })),
     keepProviderEventsCurrent: options.keepProviderEventsCurrent ?? jest.fn(async (): Promise<ProviderEventDetailsChange[]> => []),
   };
@@ -93,7 +94,7 @@ function build(options: {
   const seasons = {
     findForSync: jest.fn(async (sportLeagueId: string) => options.seasons?.get(sportLeagueId) ?? []),
   };
-  const findings = { raise: jest.fn(async (_found: unknown) => undefined) };
+  const findings = { raiseOfSource: jest.fn(async (_providerSourceId: string, _found: unknown) => undefined) };
   const logger = fakeLogger();
   const sync = new LeagueEventsSync({
     sportLeagues,
@@ -280,8 +281,8 @@ describe('LeagueEventsSync', () => {
 
       expect(seasonSchedule.listSeasonEvents.mock.calls).toEqual([[pga.id, '2026'], [pga.id, '2027']]);
       expect(sportEvents.importProviderSeason.mock.calls).toEqual([
-        [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2026`)] }],
-        [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.next.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2027`)] }],
+        [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id, providerId: 'balldontlie', sportLeagueProviderMappingId: pga.selectedProviderMapping?.id, providerEvents: [providerEvent(`${pga.id}-2026`)] }],
+        [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.next.id, providerId: 'balldontlie', sportLeagueProviderMappingId: pga.selectedProviderMapping?.id, providerEvents: [providerEvent(`${pga.id}-2027`)] }],
       ]);
       expect(sportEvents.keepProviderEventsCurrent.mock.calls).toEqual([
         [{ sportLeagueId: pga.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2026`)] }],
@@ -318,12 +319,11 @@ describe('LeagueEventsSync', () => {
 
       await sync.run({ sportLeagueId: pga.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
-      expect(findings.raise).toHaveBeenCalledWith([{
+      expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [{
         kind: ProviderSyncFindingKind.SEASON_MISSING,
         severity: ProviderSyncFindingSeverity.ERROR,
         sportLeagueId: pga.id,
         sportEventId: null,
-        providerId: 'balldontlie',
         providerValue: null,
         providerValueName: null,
       }]);
@@ -338,7 +338,7 @@ describe('LeagueEventsSync', () => {
       await sync.run({ sportLeagueId: pga.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
       expect(seasonSchedule.listSeasonEvents).not.toHaveBeenCalled();
-      expect(findings.raise).toHaveBeenCalledWith([expect.objectContaining({ kind: ProviderSyncFindingKind.SEASON_MISSING, sportLeagueId: pga.id })]);
+      expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [expect.objectContaining({ kind: ProviderSyncFindingKind.SEASON_MISSING, sportLeagueId: pga.id })]);
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'events.leagueSync.seasonMissing', data: expect.objectContaining({ lastMappedSeasonId: null }) }),
         expect.any(String),
@@ -353,7 +353,31 @@ describe('LeagueEventsSync', () => {
 
       await sync.run({ sportLeagueId: pga.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
-      expect(findings.raise).not.toHaveBeenCalled();
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+    });
+
+    it('imports each Season through the league\'s selected provider mapping, and raises one INFO SLOT_VALUE_UNMAPPED finding for each code the import could not place', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const own = seasonsOf();
+      const pga = syncedLeague(seasons, {}, own);
+      const importProviderSeason = jest.fn(async (_input: { sportLeagueProviderMappingId: string }): Promise<ProviderSeasonImport> => ({
+        created: [],
+        skipped: [{ externalId: 'pre-1', name: 'Preseason Week 1', reason: 'NO_SLOT' }],
+        unmatched: [{ code: 'PRE:1', eventName: 'Preseason Week 1' }],
+      }));
+      const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
+
+      await sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
+
+      expect(importProviderSeason).toHaveBeenCalledWith(expect.objectContaining({ sportLeagueProviderMappingId: pga.selectedProviderMapping?.id }));
+      expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [{
+        kind: ProviderSyncFindingKind.SLOT_VALUE_UNMAPPED,
+        severity: ProviderSyncFindingSeverity.INFO,
+        sportLeagueId: pga.id,
+        sportEventId: null,
+        providerValue: 'PRE:1',
+        providerValueName: 'Preseason Week 1',
+      }]);
     });
 
     it('raises no SEASON_MISSING finding while a Season the provider has an id for has not ended', async () => {
@@ -363,7 +387,7 @@ describe('LeagueEventsSync', () => {
 
       await sync.run({ sportLeagueId: pga.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
-      expect(findings.raise).not.toHaveBeenCalled();
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
     });
 
     it('records one COMPLETED EVENTS run linked to its job, with each Season\'s events it created, updated and skipped, and reports the counts as its result', async () => {
@@ -420,6 +444,7 @@ describe('LeagueEventsSync', () => {
           { externalId: 'w1', name: 'Week 1', reason: 'ALREADY_STARTED' },
           { externalId: 'w2', name: 'Week 2', reason: 'ALREADY_LINKED' },
         ],
+        unmatched: [],
       }));
       const { sync, syncRuns } = build({ leagues: [pga], seasons, importProviderSeason });
 
