@@ -587,17 +587,17 @@ describe('My team › Trophies and past years', () => {
     const rival = { squadId: 'team-2', squadName: 'Rival Squad', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listRecordsMock.mockResolvedValue(apiSuccess({ records: [
       {
-        type: 'MOST_WINS_IN_A_YEAR',
+        type: 'MOST_WINS_IN_A_YEAR', isHallOfLame: false,
         best: { value: 4, holders: [{ squad: rival, year: 2025, contestId: null, contestName: null }, { squad: mine, year: 2024, contestId: null, contestName: null }] },
         nextBest: null,
       },
       {
-        type: 'MOST_WINS_ALL_TIME',
+        type: 'MOST_WINS_ALL_TIME', isHallOfLame: false,
         best: { value: 9, holders: [{ squad: rival, year: null, contestId: null, contestName: null }] },
         nextBest: { value: 7, holders: [{ squad: mine, year: null, contestId: null, contestName: null }] },
       },
       {
-        type: 'BIGGEST_FIELD_WON',
+        type: 'BIGGEST_FIELD_WON', isHallOfLame: false,
         best: { value: 48, holders: [{ squad: mine, year: 2025, contestId: 'contest-1', contestName: 'Masters Pick 6' }] },
         nextBest: null,
       },

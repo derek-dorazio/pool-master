@@ -1311,14 +1311,14 @@ describe('Event emails', () => {
     expect(await screen.findByText('3 of 4 sport leagues')).toBeInTheDocument();
   });
 
-  it('lists the active sport leagues ticked in groups by sport, golf before basketball, each by name with its sport\'s count chosen and the chosen rows highlighted', async () => {
+  it('lists the active sport leagues ticked in groups by sport, in the sports\' display order the API sends (basketball before golf), each by name with its sport\'s count chosen and the chosen rows highlighted', async () => {
     primeMocks({ league: { mutedSportLeagueIds: [WNBA.id] } });
 
     renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
 
     const golf = within(await screen.findByTestId('edit-event-emails-sport-GOLF'));
     const basketball = within(screen.getByTestId('edit-event-emails-sport-BASKETBALL'));
-    expect(screen.getByTestId('edit-event-emails-sport-GOLF').compareDocumentPosition(screen.getByTestId('edit-event-emails-sport-BASKETBALL')))
+    expect(screen.getByTestId('edit-event-emails-sport-BASKETBALL').compareDocumentPosition(screen.getByTestId('edit-event-emails-sport-GOLF')))
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByTestId('edit-event-emails-sport-GOLF')).toHaveTextContent(/^Golf\s*2 chosen\s*LPGA Tour\s*PGA Tour$/);
     expect(basketball.getByTestId('edit-event-emails-sport-BASKETBALL-count')).toHaveTextContent('1 chosen');

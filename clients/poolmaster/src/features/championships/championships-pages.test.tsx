@@ -1051,12 +1051,12 @@ describe('Championships › All years', () => {
     const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listRecordsMock.mockResolvedValue(apiSuccess({ records: [
       {
-        type: 'MOST_WINS_IN_A_YEAR',
+        type: 'MOST_WINS_IN_A_YEAR', isHallOfLame: false,
         best: { value: 4, holders: [{ squad: birdies, year: 2025, contestId: null, contestName: null }, { squad: casey, year: 2024, contestId: null, contestName: null }] },
         nextBest: { value: 1, holders: [{ squad: casey, year: 2025, contestId: null, contestName: null }] },
       },
       {
-        type: 'BIGGEST_FIELD_WON',
+        type: 'BIGGEST_FIELD_WON', isHallOfLame: false,
         best: { value: 48, holders: [{ squad: casey, year: 2025, contestId: 'contest-1', contestName: 'Masters Pick 6' }] },
         nextBest: null,
       },
@@ -1074,9 +1074,9 @@ describe('Championships › All years', () => {
     getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
     const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listRecordsMock.mockResolvedValue(apiSuccess({ records: [
-      { type: 'MOST_WINS_ALL_TIME', best: { value: 3, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
-      { type: 'MOST_RUNNER_UPS', best: { value: 5, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
-      { type: 'LONGEST_DROUGHT', best: { value: 7, holders: [{ squad: casey, year: 2026, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'MOST_WINS_ALL_TIME', isHallOfLame: false, best: { value: 3, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'MOST_RUNNER_UPS', isHallOfLame: true, best: { value: 5, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'LONGEST_DROUGHT', isHallOfLame: true, best: { value: 7, holders: [{ squad: casey, year: 2026, contestId: null, contestName: null }] }, nextBest: null },
     ] }));
 
     renderChampionships('/league/BIGDAWGS/history');

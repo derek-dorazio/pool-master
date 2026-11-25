@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { explicitOrderValues, findTierLayoutProblem, PlatformTierProfileLastTier, PlatformTierProfileLastTierOrder } from '@poolmaster/shared/domain';
+import { explicitOrderValues, PlatformTierProfileLastTier, PlatformTierProfileLastTierOrder } from '@poolmaster/shared/domain';
 import { PlatformTierProfileWriteRequestSchema } from '@poolmaster/shared/dto';
 import { createPlatformTierProfile, updatePlatformTierProfile, type PlatformTierProfileDto, type PlatformTierProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, Select, useMutationActionWorkflow } from '@/features/shared/ui';
@@ -21,11 +21,6 @@ const tierErrors = numberFieldErrors({
   lastTierMax: { schema: shape.lastTierMax.unwrap(), range: countRange, blank: 'Enter the most the last tier takes.', whole: 'Whole numbers only.' },
 });
 
-/** The server's own checks, with a capped last tier's most it takes asked for only when Capped. */
-const PlatformTierProfileFormSchema = PlatformTierProfileWriteRequestSchema.superRefine((values, context) => {
-  const problem = findTierLayoutProblem(values);
-  if (problem) context.addIssue({ code: 'custom', path: ['lastTierMax'], message: problem });
-});
 
 const NEW_PROFILE: PlatformTierProfileWriteRequest = { code: '', name: '', tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
 
@@ -43,7 +38,9 @@ function formValuesOf(profile: PlatformTierProfileDto | null): PlatformTierProfi
 export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTierProfileDto>) {
   const { onSaved, profile } = dialog;
   const form = useForm<PlatformTierProfileWriteRequest>({
-    resolver: zodResolver(PlatformTierProfileFormSchema, { error: tierErrors }),
+    // The request's own shape. Whether the layout can be used (a capped last tier needs the most
+    // it takes) is the server's call: its PLATFORM_TIER_PROFILE_INVALID refusal shows in the form.
+    resolver: zodResolver(PlatformTierProfileWriteRequestSchema, { error: tierErrors }),
     defaultValues: formValuesOf(profile),
   });
   const save = useMutationActionWorkflow({
