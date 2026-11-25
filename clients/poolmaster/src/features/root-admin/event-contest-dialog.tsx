@@ -57,7 +57,8 @@ export function EventContestDialog({ contest, onClose }: { contest: SportEventCo
       facts={facts}
       mode="view"
       onCancel={onClose}
-      onOpenChange={(open) => (open ? undefined : onClose())}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={onClose}
       open
       testId={testId}
       title={contest.name}

@@ -41,9 +41,8 @@ export function ProfileDeleteDialog({
       onCancel={cancel}
       // A refusal shows its reason in the dialog, so the rejection is already handled.
       onConfirm={() => void deletion.run().catch(() => undefined)}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) cancel();
-      }}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={cancel}
       open
       pendingLabel="Deleting..."
       testId={testId}

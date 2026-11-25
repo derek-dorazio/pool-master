@@ -33,7 +33,8 @@ export function useDetailEditDialog<TValues extends FieldValues>(form: UseFormRe
       setMode('view');
     },
     onEdit: () => setMode('edit'),
-    onOpenChange: (open: boolean) => (open ? undefined : onClose()),
+    // The dialog is open from the moment it renders, so the one change it reports is a close.
+    onOpenChange: onClose,
     onSave: () => void form.handleSubmit((values) => mutation.mutate(values))(),
     open: true,
     pendingLabel: 'Saving...',

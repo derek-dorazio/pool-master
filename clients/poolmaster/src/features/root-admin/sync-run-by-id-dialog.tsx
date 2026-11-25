@@ -36,7 +36,8 @@ export function SyncRunByIdDialog({ onClose, syncRunId }: { onClose: () => void;
         />
       ) : <LoadingState body="Loading sync run..." size="plain" />}
       onCancel={onClose}
-      onOpenChange={(open) => (open ? undefined : onClose())}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={onClose}
       open
       size="sm"
       testId="root-admin-sync-run-by-id"

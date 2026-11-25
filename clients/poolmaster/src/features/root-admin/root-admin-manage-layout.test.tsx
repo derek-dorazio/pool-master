@@ -1,5 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
@@ -15,6 +17,24 @@ function EntityHomeProbe() {
   return <h1>Tiered Pick 6</h1>;
 }
 
+function NamedLater({ label }: { label: string | undefined }) {
+  useManageBreadcrumbOverride('golf-tiered-pick-6', label);
+  return null;
+}
+
+/** A page that names its entity once it has loaded, and can be left. */
+function LoadingEntityProbe() {
+  const [label, setLabel] = useState<string | undefined>(undefined);
+  const [shown, setShown] = useState(true);
+  return (
+    <>
+      {shown ? <NamedLater label={label} /> : null}
+      <button onClick={() => setLabel('Tiered Pick 6')} type="button">Load</button>
+      <button onClick={() => setShown(false)} type="button">Leave</button>
+    </>
+  );
+}
+
 function renderManage(path: string) {
   render(
     <QueryClientProvider client={sportsQueryClient()}>
@@ -28,6 +48,7 @@ function renderManage(path: string) {
           <Route element={<div>Plans body</div>} path="plans" />
           <Route element={<div>Detail body</div>} path="content-configuration/:templateKey" />
           <Route element={<EntityHomeProbe />} path="content-configuration/:templateKey/home" />
+          <Route element={<LoadingEntityProbe />} path="content-configuration/:templateKey/loading" />
           <Route element={<div>Providers body</div>} path="providers" />
           <Route element={<div>League page body</div>} path="sports/golf/leagues/:leagueId/participants" />
           <Route element={<div>Event field body</div>} path="sports/golf/events/:eventId/field" />
@@ -140,5 +161,17 @@ describe('RootAdminManageLayout', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
     expect(within(breadcrumbNav).getByRole('link', { name: 'Tiered Pick 6' })).toHaveAttribute('href', '/manage/content-configuration/golf-tiered-pick-6');
+  });
+
+  it('shows an entity\'s id in the trail until its page names it, and the id again once the page has gone', async () => {
+    renderManage('/manage/content-configuration/golf-tiered-pick-6/loading');
+    const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
+    expect(within(breadcrumbNav).getByRole('link', { name: 'golf-tiered-pick-6' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load' }));
+    expect(within(breadcrumbNav).getByRole('link', { name: 'Tiered Pick 6' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Leave' }));
+    expect(within(breadcrumbNav).getByRole('link', { name: 'golf-tiered-pick-6' })).toBeInTheDocument();
   });
 });

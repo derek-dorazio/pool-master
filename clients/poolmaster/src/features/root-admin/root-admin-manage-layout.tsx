@@ -21,14 +21,9 @@ type BreadcrumbOverrides = Record<string, string>;
  * Sports; a League or Event page draws its own trail in its header, so it gets none here.
  */
 function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides, sports: readonly SportAddress[]) {
+  // The layout is mounted at /manage, so every path it draws a trail for starts there.
   const segments = pathname.split("/").filter(Boolean);
-  const manageIndex = segments.indexOf("manage");
-
-  if (manageIndex === -1) {
-    return [];
-  }
-
-  const relevantSegments = segments.slice(manageIndex + 1);
+  const relevantSegments = segments.slice(segments.indexOf("manage") + 1);
   const underSport = relevantSegments[0] === "sports" && relevantSegments.length > 2;
   const ownsTrail = relevantSegments[2] === "leagues" || relevantSegments[2] === "events";
   if (underSport && ownsTrail && relevantSegments.length > 3 && relevantSegments[3] !== "new") {
@@ -76,9 +71,8 @@ export function RootAdminManageLayout() {
             return next;
           }
 
-          if (current[segment] === label) {
-            return current;
-          }
+          // A page's own label is set once and cleared when it changes or the page goes, so
+          // setting it never finds the same label already there.
 
           return { ...current, [segment]: label };
         });

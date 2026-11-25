@@ -64,7 +64,8 @@ function PhaseDialog({ onClose, phase }: { onClose: () => void; phase: SportLeag
       facts={facts}
       mode="view"
       onCancel={onClose}
-      onOpenChange={(open) => (open ? undefined : onClose())}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={onClose}
       open
       testId="root-admin-league-structure-phase"
       title={enumLabel('LeaguePhase', phase.phase)}

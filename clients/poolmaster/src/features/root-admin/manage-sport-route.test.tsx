@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -58,5 +59,15 @@ describe('ManageSportRoute', () => {
     renderAt('/manage/sports/golf', freshClient());
 
     expect(await screen.findByTestId('root-admin-sport-error')).toBeInTheDocument();
+  });
+
+  it('reads the sports again on Retry after they could not be loaded, then shows the pages', async () => {
+    listSportsMock.mockResolvedValueOnce({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+    listSportsMock.mockResolvedValue({ data: { sports: SPORTS_FIXTURE } });
+    renderAt('/manage/sports/golf', freshClient());
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Sport pages')).toBeInTheDocument();
   });
 });
