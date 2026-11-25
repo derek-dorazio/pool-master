@@ -6,6 +6,7 @@ import {
   QueryState,
   StatusBadge,
   Text,
+  type StatusBadgeProps,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import {
@@ -13,12 +14,23 @@ import {
   formatJsonPayload,
   type ProviderSyncRun,
   type ProviderSyncRunDetail,
+  type ProviderSyncRunDetails,
 } from './root-admin-sync-utils';
+
+type WriteDisposition = NonNullable<ProviderSyncRunDetails['writeDiagnostics']>['rows'][number]['disposition'];
+
+/** A row the sync left alone reads quietly; one it wrote stands out. */
+const DISPOSITION_TONES = {
+  UNCHANGED: 'neutral',
+  CREATED: 'warning',
+  UPDATED: 'warning',
+  DELETED: 'warning',
+} as const satisfies Record<WriteDisposition, StatusBadgeProps['tone']>;
 
 /** One row a sync wrote (or left alone), with the JSON behind it. */
 export type SyncRunEvidenceRow = {
   id: string;
-  disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
+  disposition: WriteDisposition;
   entityType: string;
   identifier: string;
   name: string;
@@ -95,7 +107,7 @@ export function SyncRunDetail({
                   label={`JSON for ${row.disposition} ${row.entityType} ${row.name}`}
                   summary={(
                     <span className="flex flex-wrap items-center gap-2">
-                      <StatusBadge tone={row.disposition === 'UNCHANGED' ? 'neutral' : 'warning'}>{row.disposition}</StatusBadge>
+                      <StatusBadge tone={DISPOSITION_TONES[row.disposition]}>{row.disposition}</StatusBadge>
                       <Text variant="strong">{row.entityType}</Text>
                       <Text>{row.name}</Text>
                       <Text variant="meta">{row.identifier}</Text>

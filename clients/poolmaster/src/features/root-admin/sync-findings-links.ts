@@ -19,5 +19,5 @@ export function buildLeagueOpenFindingsPath(sportLeagueId: string, severity: Pro
       { id: 'status', value: { kind: 'enum', values: [ProviderSyncFindingStatus.OPEN], match: 'any' } },
     ],
   });
-  return state === null ? SYNC_FINDINGS_PATH : `${SYNC_FINDINGS_PATH}?${new URLSearchParams({ [SYNC_FINDINGS_GRID_KEY]: state }).toString()}`;
+  return `${SYNC_FINDINGS_PATH}?${new URLSearchParams({ [SYNC_FINDINGS_GRID_KEY]: state }).toString()}`;
 }

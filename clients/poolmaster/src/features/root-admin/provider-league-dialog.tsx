@@ -76,7 +76,8 @@ export function ProviderLeagueDialog({ league, onClose, ranges }: {
       onCancel={onClose}
       onCancelEdit={cancelEdit}
       onEdit={() => setMode('edit')}
-      onOpenChange={(open) => (open ? undefined : onClose())}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={onClose}
       onSave={() => void form.handleSubmit((values) => updateMutation.mutate({
         ...(values.isEnabled !== current.isEnabled && { isEnabled: values.isEnabled === 'on' }),
         ...(values.typicalGameMinutes !== current.typicalGameMinutes && { typicalGameMinutes: Number(values.typicalGameMinutes) }),
