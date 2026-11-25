@@ -11714,6 +11714,24 @@ export interface components {
             /** @description The provider's own id for the Season, as the sync asks the feed for it. */
             providerSeasonId: string;
         };
+        /** @description The dates a provider that names no place for its games has them placed by (DATE_WINDOW), kept apart from the dates its Games give. */
+        SlotWindowDto: {
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description Exclusive.
+             */
+            endsAt: string;
+            /**
+             * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+             * @enum {string}
+             */
+            status: "TENTATIVE" | "CONFIRMED";
+        };
         /** @description One slot of one Season. */
         SportLeagueSeasonSlotDto: {
             /** Format: uuid */
@@ -11754,6 +11772,24 @@ export interface components {
             isTestData: boolean;
             /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
             label: string | null;
+            /** @description Its date window, set as data (#2012); null when it has none. */
+            window: {
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Format: date-time
+                 * @description Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 * @enum {string}
+                 */
+                status: "TENTATIVE" | "CONFIRMED";
+            } | null;
         };
         /** @description One slot of one Season, as its Season lists it. */
         SportLeagueSeasonPhaseSlotDto: {
@@ -11795,6 +11831,24 @@ export interface components {
             isTestData: boolean;
             /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
             label: string | null;
+            /** @description Its date window, set as data (#2012); null when it has none. */
+            window: {
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Format: date-time
+                 * @description Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 * @enum {string}
+                 */
+                status: "TENTATIVE" | "CONFIRMED";
+            } | null;
             /**
              * Format: uuid
              * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
@@ -11802,6 +11856,10 @@ export interface components {
             sportEventId: string | null;
             /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
             takesTestEvent: boolean;
+            /** @description Whether the league's selected provider places its games by date window (DATE_WINDOW). */
+            placedByWindow: boolean;
+            /** @description Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one). */
+            needsDates: boolean;
         };
         /** @description A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season. */
         CreateTestSlotRequest: {
@@ -11865,6 +11923,24 @@ export interface components {
                 isTestData: boolean;
                 /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                 label: string | null;
+                /** @description Its date window, set as data (#2012); null when it has none. */
+                window: {
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    startsAt: string;
+                    /**
+                     * Format: date-time
+                     * @description Exclusive.
+                     */
+                    endsAt: string;
+                    /**
+                     * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                     * @enum {string}
+                     */
+                    status: "TENTATIVE" | "CONFIRMED";
+                } | null;
             };
         };
         /** @description One phase of one Season. */
@@ -11915,6 +11991,24 @@ export interface components {
                 isTestData: boolean;
                 /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                 label: string | null;
+                /** @description Its date window, set as data (#2012); null when it has none. */
+                window: {
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    startsAt: string;
+                    /**
+                     * Format: date-time
+                     * @description Exclusive.
+                     */
+                    endsAt: string;
+                    /**
+                     * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                     * @enum {string}
+                     */
+                    status: "TENTATIVE" | "CONFIRMED";
+                } | null;
                 /**
                  * Format: uuid
                  * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
@@ -11922,7 +12016,13 @@ export interface components {
                 sportEventId: string | null;
                 /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
                 takesTestEvent: boolean;
+                /** @description Whether the league's selected provider places its games by date window (DATE_WINDOW). */
+                placedByWindow: boolean;
+                /** @description Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one). */
+                needsDates: boolean;
             }[];
+            /** @description How many of its slots need dates (needsDates). */
+            slotsNeedingDates: number;
         };
         /** @description One Season of a sport league, added by migration. */
         SportLeagueSeasonDto: {
@@ -12004,6 +12104,24 @@ export interface components {
                     isTestData: boolean;
                     /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                     label: string | null;
+                    /** @description Its date window, set as data (#2012); null when it has none. */
+                    window: {
+                        /**
+                         * Format: date-time
+                         * @description ISO 8601 datetime string.
+                         */
+                        startsAt: string;
+                        /**
+                         * Format: date-time
+                         * @description Exclusive.
+                         */
+                        endsAt: string;
+                        /**
+                         * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                         * @enum {string}
+                         */
+                        status: "TENTATIVE" | "CONFIRMED";
+                    } | null;
                     /**
                      * Format: uuid
                      * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
@@ -12011,8 +12129,16 @@ export interface components {
                     sportEventId: string | null;
                     /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
                     takesTestEvent: boolean;
+                    /** @description Whether the league's selected provider places its games by date window (DATE_WINDOW). */
+                    placedByWindow: boolean;
+                    /** @description Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one). */
+                    needsDates: boolean;
                 }[];
+                /** @description How many of its slots need dates (needsDates). */
+                slotsNeedingDates: number;
             }[];
+            /** @description How many of its slots need dates (needsDates), across its phases. */
+            slotsNeedingDates: number;
         };
         /** @description A sport league's Seasons. */
         SportLeagueSeasonListResponse: {
@@ -12096,6 +12222,24 @@ export interface components {
                         isTestData: boolean;
                         /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                         label: string | null;
+                        /** @description Its date window, set as data (#2012); null when it has none. */
+                        window: {
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startsAt: string;
+                            /**
+                             * Format: date-time
+                             * @description Exclusive.
+                             */
+                            endsAt: string;
+                            /**
+                             * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                             * @enum {string}
+                             */
+                            status: "TENTATIVE" | "CONFIRMED";
+                        } | null;
                         /**
                          * Format: uuid
                          * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
@@ -12103,8 +12247,16 @@ export interface components {
                         sportEventId: string | null;
                         /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
                         takesTestEvent: boolean;
+                        /** @description Whether the league's selected provider places its games by date window (DATE_WINDOW). */
+                        placedByWindow: boolean;
+                        /** @description Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one). */
+                        needsDates: boolean;
                     }[];
+                    /** @description How many of its slots need dates (needsDates). */
+                    slotsNeedingDates: number;
                 }[];
+                /** @description How many of its slots need dates (needsDates), across its phases. */
+                slotsNeedingDates: number;
             }[];
         };
         /** @description Re-ranks participants of the sport league. */
@@ -12460,6 +12612,24 @@ export interface components {
                 isTestData: boolean;
                 /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                 label: string | null;
+                /** @description Its date window, set as data (#2012); null when it has none. */
+                window: {
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    startsAt: string;
+                    /**
+                     * Format: date-time
+                     * @description Exclusive.
+                     */
+                    endsAt: string;
+                    /**
+                     * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                     * @enum {string}
+                     */
+                    status: "TENTATIVE" | "CONFIRMED";
+                } | null;
             }[];
             /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
             autoLifecycleEnabled: boolean;
@@ -12771,6 +12941,24 @@ export interface components {
                     isTestData: boolean;
                     /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                     label: string | null;
+                    /** @description Its date window, set as data (#2012); null when it has none. */
+                    window: {
+                        /**
+                         * Format: date-time
+                         * @description ISO 8601 datetime string.
+                         */
+                        startsAt: string;
+                        /**
+                         * Format: date-time
+                         * @description Exclusive.
+                         */
+                        endsAt: string;
+                        /**
+                         * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                         * @enum {string}
+                         */
+                        status: "TENTATIVE" | "CONFIRMED";
+                    } | null;
                 }[];
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
@@ -13061,6 +13249,24 @@ export interface components {
                     isTestData: boolean;
                     /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                     label: string | null;
+                    /** @description Its date window, set as data (#2012); null when it has none. */
+                    window: {
+                        /**
+                         * Format: date-time
+                         * @description ISO 8601 datetime string.
+                         */
+                        startsAt: string;
+                        /**
+                         * Format: date-time
+                         * @description Exclusive.
+                         */
+                        endsAt: string;
+                        /**
+                         * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                         * @enum {string}
+                         */
+                        status: "TENTATIVE" | "CONFIRMED";
+                    } | null;
                 }[];
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
@@ -26032,7 +26238,7 @@ export interface components {
              * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
              * @enum {string}
              */
-            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED";
+            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED";
             /**
              * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
              * @enum {string}
@@ -26105,7 +26311,7 @@ export interface components {
                  * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -26180,7 +26386,7 @@ export interface components {
                  * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}

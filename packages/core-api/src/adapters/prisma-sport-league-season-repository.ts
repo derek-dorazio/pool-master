@@ -128,6 +128,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         eventSlot: { select: { sportEventId: true } },
         definition: {
           select: {
+            key: true,
             providerMappings: {
               where: { sportLeagueProviderMappingId, matchType: { in: [PrismaSlotProviderMatchType.PROVIDER_CODE, PrismaSlotProviderMatchType.DATE_WINDOW] } },
               select: { matchType: true, providerValue: true },
@@ -144,11 +145,13 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       const byWindow = mapping?.matchType === PrismaSlotProviderMatchType.DATE_WINDOW;
       return {
         seasonSlotId: row.id,
+        key: row.definition.key,
         providerCode: mapping?.matchType === PrismaSlotProviderMatchType.PROVIDER_CODE ? mapping.providerValue : null,
         coveredByTemplate: row.definition._count.templateSlots > 0,
         sportEventId: row.eventSlot?.sportEventId ?? null,
         startsAt: row.startsAt,
         endsAt: row.endsAt,
+        placedByWindow: byWindow,
         // The database check sets the three window columns together.
         window: byWindow && row.windowStartsAt !== null && row.windowEndsAt !== null && row.windowStatus !== null
           ? { startsAt: row.windowStartsAt, endsAt: row.windowEndsAt, status: row.windowStatus }

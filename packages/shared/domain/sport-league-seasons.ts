@@ -11,6 +11,7 @@ import {
   LeaguePhaseOrder,
   SlotKind,
   type LeaguePhase,
+  SlotWindowStatus,
   type SeasonSlotStatus,
   type SeriesFormat,
   type SlotPairing,
@@ -26,6 +27,18 @@ export interface SportLeagueSeasonProviderMapping {
   providerLeagueCode: string;
   /** The provider's season id as it sends it. */
   providerSeasonId: string;
+}
+
+/**
+ * A Season slot's date window (#2012): the dates a provider that names no place for its games
+ * (college football) has them placed by, set as data and kept apart from the dates its Games give.
+ */
+export interface SlotWindow {
+  startsAt: Date;
+  /** Exclusive. */
+  endsAt: Date;
+  /** TENTATIVE until the sync places a game in it. */
+  status: SlotWindowStatus;
 }
 
 /** One slot of one Season: a slot definition played that Season, or a labelled test slot. */
@@ -49,12 +62,16 @@ export interface SportLeagueSeasonSlot {
   isTestData: boolean;
   /** A test slot's label; null on a synced slot. */
   label: string | null;
+  /** Its date window; null when it has none. */
+  window: SlotWindow | null;
 }
 
 /** A Season slot as its Season lists it: with the event covering it, if any. */
 export interface SportLeagueSeasonPhaseSlot extends SportLeagueSeasonSlot {
   /** The event covering it; null while it is free. */
   sportEventId: string | null;
+  /** Whether the league's selected provider places its games by date window (DATE_WINDOW). */
+  placedByWindow: boolean;
 }
 
 /** One phase of one Season, with its slots in play order. */
@@ -81,6 +98,8 @@ export interface SportLeagueSeason {
 export interface SportLeagueSeasonDetail extends SportLeagueSeason {
   /** Whether it is its league's current Season. */
   isCurrent: boolean;
+  /** Whether the events sync reads it (`seasonsToSync`): the current Season or a later one. */
+  readBySync: boolean;
   providerMappings: SportLeagueSeasonProviderMapping[];
   phases: SportLeagueSeasonPhase[];
 }
@@ -123,6 +142,15 @@ export function seasonsToSync<Season extends Pick<SportLeagueSeason, 'id' | 'sta
   return [...seasons]
     .filter((season) => season.startsAt >= current.startsAt)
     .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime());
+}
+
+/**
+ * Whether a slot its provider places by date window still needs its dates (#2012, #1924): it has
+ * no window, or only a tentative one. Read only for a Season the sync reads (`seasonsToSync`): an
+ * open or upcoming one.
+ */
+export function slotNeedsDates(slot: { placedByWindow: boolean; window: SlotWindow | null }): boolean {
+  return slot.placedByWindow && (slot.window === null || slot.window.status === SlotWindowStatus.TENTATIVE);
 }
 
 const byPhase = compareByEnumOrder(LeaguePhaseOrder);

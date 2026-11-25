@@ -282,6 +282,7 @@ export const enUS = {
       PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
       SLOT_OUTSIDE_SEASON: 'Games outside the Season',
       GAMES_UNPLACED: 'Games in no slot',
+      SLOT_DATES_NEEDED: 'Slot dates needed',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

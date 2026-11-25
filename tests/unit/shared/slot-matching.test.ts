@@ -3,7 +3,7 @@ import { matchProviderSlots, playsOutsideSeason, slotDatesChange, SlotWindowStat
 // The one matcher of a provider's codes and dates to Season slots (league model slices 8 and 13, #2005, #2012).
 
 const slot = (seasonSlotId: string, providerCode: string | null, dates: Partial<Pick<SyncSeasonSlot, 'startsAt' | 'endsAt' | 'window'>> = {}): SyncSeasonSlot => ({
-  seasonSlotId, providerCode, coveredByTemplate: true, sportEventId: null, startsAt: dates.startsAt ?? null, endsAt: dates.endsAt ?? null, window: dates.window ?? null,
+  seasonSlotId, key: seasonSlotId, providerCode, coveredByTemplate: true, placedByWindow: dates.window !== undefined && dates.window !== null, sportEventId: null, startsAt: dates.startsAt ?? null, endsAt: dates.endsAt ?? null, window: dates.window ?? null,
 });
 const windowed = (seasonSlotId: string, from: string, to: string, status: SlotWindowStatus = SlotWindowStatus.CONFIRMED) =>
   slot(seasonSlotId, null, { window: { startsAt: new Date(from), endsAt: new Date(to), status } });

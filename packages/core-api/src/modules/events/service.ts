@@ -40,6 +40,7 @@ import {
   matchProviderSlots,
   providerSourceIdOf,
   type ProviderSlotPlay,
+  slotNeedsDates,
   SlotWindowStatus,
   ReleaseAttemptOutcome,
   type ReleaseAttemptResult,
@@ -140,6 +141,11 @@ export interface ProviderSeasonImport {
   placed: Array<ProviderSlotPlay & { eventName: string }>;
   /** Games with no code that no slot's window holds, by event: not synced (#2012). */
   unplaced: Array<{ eventName: string; count: number }>;
+  /**
+   * The keys of the slots placed by date window that still need their dates after this import
+   * (#2012, #1924); null when the Season has no slot placed by date window.
+   */
+  slotsNeedingDates: string[] | null;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -359,6 +365,10 @@ export class SportEventService {
     // The new events' slots as they now stand, with the dates just written: one read for them all.
     const slotsByEvent = written.length === 0 ? new Map<string, SportLeagueSeasonSlot[]>() : await this.deps.sportEvents.findSlots(written.map(({ event }) => event.id));
     const created = written.map((summary) => ({ ...summary, slots: slotsByEvent.get(summary.event.id) ?? [] }));
+    // A window this import confirmed no longer needs its dates.
+    const slotsNeedingDates = !slots.some((slot) => slot.placedByWindow) ? null : slots
+      .filter((slot) => slotNeedsDates(confirmedWindows.has(slot.seasonSlotId) && slot.window !== null ? { ...slot, window: { ...slot.window, status: SlotWindowStatus.CONFIRMED } } : slot))
+      .map((slot) => slot.key);
 
     this.deps.logger?.info(
       {
@@ -375,10 +385,11 @@ export class SportEventService {
         noCodeCount: input.providerEvents.filter((providerEvent) => providerEvent.providerSlots.length === 0).length,
         unplacedGameCount: unplaced.reduce((total, row) => total + row.count, 0),
         windowsConfirmedCount: confirmedWindows.size,
+        slotsNeedingDates,
       },
       'Imported provider Season',
     );
-    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced };
+    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates };
   }
 
   /**

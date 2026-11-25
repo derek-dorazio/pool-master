@@ -9,7 +9,7 @@ function season(id: string, year: number, overrides: Partial<SportLeagueSeasonDt
   return {
     id, name: String(year), championshipYear: year,
     startsAt: `${year}-01-01T00:00:00.000Z`, endsAt: `${year}-12-31T23:59:59.999Z`,
-    isCurrent: false, providerMappings: [], phases: [], ...overrides,
+    isCurrent: false, providerMappings: [], phases: [], slotsNeedingDates: 0, ...overrides,
   };
 }
 
@@ -17,14 +17,14 @@ function slot(id: string, overrides: Partial<SportLeagueSeasonDto['phases'][numb
   return {
     id, slotDefinitionId: `def-${id}`, key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
     startsAt: null, endsAt: null, status: 'SCHEDULED', seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
-    isTestData: false, label: null, sportEventId: null, takesTestEvent: false, ...overrides,
+    isTestData: false, label: null, window: null, sportEventId: null, takesTestEvent: false, placedByWindow: false, needsDates: false, ...overrides,
   };
 }
 
 const CURRENT = season('s2026', 2026, {
   isCurrent: true,
   providerMappings: [{ id: 'm1', providerId: 'balldontlie', providerName: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerSeasonId: '2026' }],
-  phases: [{ id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [slot('synced'), slot('test', { isTestData: true, label: 'QA A' })] }],
+  phases: [{ id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [slot('synced'), slot('test', { isTestData: true, label: 'QA A' })], slotsNeedingDates: 0 }],
 });
 const EARLIER = season('s2025', 2025);
 

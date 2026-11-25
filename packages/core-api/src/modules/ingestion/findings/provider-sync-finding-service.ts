@@ -244,12 +244,18 @@ export class ProviderSyncFindingService {
 
   /**
    * A league's sync against a Provider (named by its source id) succeeded: that league's OPEN
-   * findings of the kind resolve, in one statement. Returns how many did.
+   * findings of the kind resolve, only those with one of `providerValues` when given, in one
+   * statement. Returns how many did.
    */
-  async resolveOfSource(providerSourceId: string, input: { kind: ProviderSyncFindingKind; sportLeagueId: string }): Promise<number> {
+  async resolveOfSource(providerSourceId: string, input: { kind: ProviderSyncFindingKind; sportLeagueId: string; providerValues?: readonly string[] }): Promise<number> {
     const provider = this.providerOfSourceId(providerSourceId);
     if (provider === undefined) return 0;
-    return this.deps.repository.resolveOpen({ kind: input.kind, sportLeagueId: input.sportLeagueId, providerId: provider.id }, this.now());
+    return this.deps.repository.resolveOpen({
+      kind: input.kind,
+      sportLeagueId: input.sportLeagueId,
+      providerId: provider.id,
+      ...(input.providerValues !== undefined && { providerValues: input.providerValues }),
+    }, this.now());
   }
 
   /** The Provider answered again: its rate-limit findings resolve. Returns how many did. */

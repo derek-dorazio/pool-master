@@ -288,6 +288,7 @@ export class LeagueEventsSync {
       providerValue: null,
       providerValueName: imported.unplaced.map((row) => row.eventName).join(', '),
     }]);
+    await this.checkSlotDates(sportLeagueId, providerId, season, imported.slotsNeedingDates);
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
   }
@@ -317,6 +318,34 @@ export class LeagueEventsSync {
       providerValue: code,
       providerValueName: eventName,
     })));
+  }
+
+  /**
+   * One WARNING SLOT_DATES_NEEDED per league, Provider and Season while slots its provider places
+   * by date window have no window or only a tentative one (#2012, #1924), naming their keys; the
+   * Season's finding resolves once none does. A Season with no slot placed by date window has
+   * nothing to check. The Seasons the sync reads are the open and upcoming ones, so an ended Season
+   * raises none.
+   */
+  private async checkSlotDates(
+    sportLeagueId: string,
+    providerId: string,
+    season: { providerSeasonId: string },
+    slotKeys: readonly string[] | null,
+  ): Promise<void> {
+    if (slotKeys === null) return;
+    if (slotKeys.length === 0) {
+      await this.options.findings.resolveOfSource(providerId, { kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED, sportLeagueId, providerValues: [season.providerSeasonId] });
+      return;
+    }
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: season.providerSeasonId,
+      providerValueName: slotKeys.join(', '),
+    }]);
   }
 
   /** An earlier try of this job that stopped mid-run left its run IN_PROGRESS: it is FAILED as interrupted. */

@@ -951,6 +951,13 @@ export const ProviderSyncFindingKind = {
    * league and Provider.
    */
   GAMES_UNPLACED: 'GAMES_UNPLACED',
+  /**
+   * A Season still open or to come has slots its provider places by date window whose window is
+   * missing or still tentative (#2012, #1924): games in them may not be placed. WARNING; it
+   * resolves once every such slot of the Season has a confirmed window. Subject: league, Provider
+   * and the provider's id for the Season.
+   */
+  SLOT_DATES_NEEDED: 'SLOT_DATES_NEEDED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

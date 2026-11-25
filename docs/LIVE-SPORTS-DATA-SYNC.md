@@ -199,6 +199,23 @@ takes its dates from them (`eventDatesFromSlots`), on creation and on every late
 maps raises one `SLOT_VALUE_UNMAPPED` INFO finding per league and code; waive it for a code the
 league does not play (the preseason). A page that lists fewer events or games deletes nothing.
 
+**Matching by date window (#2012).** A feed that names no place for its games (BALLDONTLIE's
+college football has no round, bowl name or postseason flag) sends each game as a play with a null
+code. Such a game goes to the Season slot whose definition has a `DATE_WINDOW` mapping row and
+whose window (`window_starts_at` inclusive to `window_ends_at` exclusive on the Season slot, kept
+apart from the dates its games give) holds its start; a Season's windows do not overlap. The
+windows are data, loaded by migration each Season. A window is `TENTATIVE` (a best guess while the
+shape is known and the games are not) or `CONFIRMED`; a tentative window still places games, and
+the sync confirms it as soon as it places one. Games no window holds are not synced and raise one
+`GAMES_UNPLACED` INFO finding per league (inclusion only: the other bowls share the playoff's
+days). A Season the sync reads with a date-window slot that has no window, or a tentative one,
+raises one `SLOT_DATES_NEEDED` WARNING naming the slots, which resolves once every window is
+confirmed; the Structure tab flags those slots (`needsDates`). An event's field is the seeds placed
+on it: an event playing a date-window slot takes no new team from its feed, and the feed only
+refreshes the rows already there (#1715). Any game placed outside its Season's span raises one
+`SLOT_OUTSIDE_SEASON` WARNING per place and is still written. An event starts at its slots' first
+game, so a season-long slate whose windowed games lie ahead is still created.
+
 For each provider event:
 
 - **New, start in the future, on a slot a contest template lists**: created as a `DRAFT`
@@ -393,7 +410,9 @@ column. Each finding names its sport league; its event, Provider row and the fee
   `SEASON_MISSING` (ERROR, *The run* above), `PROVIDER_LEAGUE_UNKNOWN` (ERROR, a mapping's
   provider league code the provider does not read, *The run* above) and `SLOT_VALUE_UNMAPPED`
   (INFO, a provider code no slot maps, *Matching games to Season slots* above; it has no action,
-  since a mapping is added by migration). Three are checked on an event by each sync that
+  since a mapping is added by migration), and `SLOT_OUTSIDE_SEASON` (WARNING), `GAMES_UNPLACED`
+(INFO) and `SLOT_DATES_NEEDED` (WARNING, resolved once the Season's windows are confirmed), all
+under *Matching by date window* above. Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
@@ -471,10 +490,12 @@ link to the `SportEvent` it synced.
 
 League notes that are not obvious from the code:
 
-- **CFP date rule.** College games carry no playoff marker, so the playoff is every game from
-  noon UTC the day after conference championship Saturday through January 31
-  (`CFP_LEAGUE.window`). The window starts after title games because one can pair two playoff
-  teams and would score the wrong match. Swap it for a vendor marker if the paid tier has one.
+- **CFP by date window.** College games carry no playoff marker, so the reader sends each
+  season's games (`seasons[]`) as plays with no code, and the CFP's four rounds are placed by
+  their Season slots' date windows (*Matching by date window* above). Live scores read
+  yesterday, today and tomorrow (`dates[]`). A conference title game can pair two playoff teams,
+  so no window covers title weekend. If the feed ever gains a playoff marker, it wins: map the
+  rounds by `PROVIDER_CODE` instead.
 - **Series playoffs** hand every postseason game over each sync, because the writer counts
   wins from the batch. Readers keep games by the vendor's `postseason` flag for the asked
   season, so every normalizer must read it.
@@ -530,10 +551,12 @@ every league, and the PR must say so.
   MLB's `quietAfterMinutes` is 210 in case innings are not notified. Confirm during the paid trial
   (#1500).
 - **CFP feed**: confirm bowl and playoff games are carried and whether a marker exists (#1500).
-- **Golf and college football create no new events yet** (#2005): a PGA tournament's code is its
-  tournament id, which no slot maps until slots match by name (slice 12), so each raises a
-  `SLOT_VALUE_UNMAPPED` finding; college football sends no codes until slots match by date window
-  (slice 13). Events already linked keep syncing.
+- **Golf creates no new events yet** (#2005): a PGA tournament's code is its tournament id, which
+  no slot maps until slots match by name (slice 12), so each raises a `SLOT_VALUE_UNMAPPED`
+  finding. Events already linked keep syncing.
+- **CFP windows each Season**: a migration adds the next Season's round windows once the schedule
+  is published (2026 and 2027 are loaded; 2027's first round and final are not set yet). The admin
+  dialog to set them is a follow-up to #1924.
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
 - **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
 - **Per-event tier override** from the event ⚙ dialog is in progress.

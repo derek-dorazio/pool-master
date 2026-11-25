@@ -8,7 +8,7 @@
  * start (#2012). Name patterns come with slice 12 (#2011) and calendar weeks with #2142.
  */
 
-import type { SlotWindowStatus } from './enums';
+import type { SlotWindow } from './sport-league-seasons';
 
 /**
  * One place a provider event's games are in, by the provider's code, with its games' earliest and
@@ -23,6 +23,8 @@ export interface ProviderSlotPlay {
 /** A Season slot as the events sync reads it: what it is matched by, who covers it, and who plays it. */
 export interface SyncSeasonSlot {
   seasonSlotId: string;
+  /** Its definition's key. */
+  key: string;
   /**
    * The PROVIDER_CODE value the league's selected provider mapping names the slot's definition by;
    * null when that provider has no such mapping for it (golf's names, slice 12).
@@ -34,11 +36,10 @@ export interface SyncSeasonSlot {
   sportEventId: string | null;
   startsAt: Date | null;
   endsAt: Date | null;
-  /**
-   * The Season slot's date window, when the league's selected provider mapping matches the slot's
-   * definition by DATE_WINDOW and the Season has dates for it; null otherwise.
-   */
-  window: { startsAt: Date; endsAt: Date; status: SlotWindowStatus } | null;
+  /** Whether the league's selected provider mapping matches the slot's definition by DATE_WINDOW. */
+  placedByWindow: boolean;
+  /** The Season slot's date window, when it is placed by one and the Season has dates for it; null otherwise. */
+  window: SlotWindow | null;
 }
 
 /** A provider event's plays, each matched to its Season slot or left unmatched. */

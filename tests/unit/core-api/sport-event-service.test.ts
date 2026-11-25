@@ -1,6 +1,6 @@
 import { expect, jest } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
-import { BackgroundJobType, Sport, SportEventStatus, type SportEvent, type SportLeague } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SlotWindowStatus, Sport, SportEventStatus, type SportEvent, type SportLeague } from '@poolmaster/shared/domain';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
@@ -458,6 +458,28 @@ describe('SportEventService.importProviderSeason', () => {
 
     expect(result.skipped).toEqual([]);
     expect(result.created[0].event).toEqual(expect.objectContaining({ startDate: slate[0].startDate }));
+  });
+
+  it('places a game with no code in the window that holds it, confirms a tentative window it places one in, and names the date-window slots still needing dates (#2012)', async () => {
+    const { store, service, sportLeague } = setup();
+    const kickoff = slate[0].startDate;
+    const window = (status: SlotWindowStatus) => ({ startsAt: new Date(kickoff.getTime() - 60_000), endsAt: new Date(kickoff.getTime() + 60_000), status });
+    const firstRound = store.addWindowSlot(sportLeague, 'ROUND_OF_16', window(SlotWindowStatus.TENTATIVE));
+    store.addWindowSlot(sportLeague, 'FINAL', null);
+    const playoff = { ...providerEvent('ncaaf-2026-cfp', 'College Football Playoff', null, kickoff, kickoff), providerSlots: [{ code: null, startsAt: kickoff, endsAt: kickoff }] };
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [playoff]));
+
+    expect(result.created).toHaveLength(1);
+    expect(store.slotWindows.get(firstRound)?.status).toBe(SlotWindowStatus.CONFIRMED);
+    expect(result.slotsNeedingDates).toEqual(['FINAL']);
+  });
+
+  it('names no slot needing dates for a Season with no slot placed by date window', async () => {
+    const { store, service, sportLeague } = setup();
+    slotsFor(store, sportLeague, slate);
+
+    expect((await service.importProviderSeason(importOf(sportLeague, slate))).slotsNeedingDates).toBeNull();
   });
 
   it('reports a started provider event that is already linked as already linked, so the linked event keeps updating', async () => {

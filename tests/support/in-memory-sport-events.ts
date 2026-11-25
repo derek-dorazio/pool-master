@@ -40,7 +40,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -127,7 +127,7 @@ export class InMemorySportEvents {
     this.seasonSlots.push({
       id, slotDefinitionId: 'slot-definition', key: 'TEST_EVENT', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: null,
       startsAt, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
-      isTestData: true, label: id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: sportLeague.currentSeasonId ?? IN_MEMORY_SEASON_ID,
+      isTestData: true, label: id, window: null, sportLeagueId: sportLeague.id, sportLeagueSeasonId: sportLeague.currentSeasonId ?? IN_MEMORY_SEASON_ID,
       ...overrides,
     });
     return id;
@@ -149,6 +149,18 @@ export class InMemorySportEvents {
     return id;
   }
 
+  /** The synced slots placed by date window, each with its window or none (#2012). */
+  slotWindows = new Map<string, SlotWindow | null>();
+
+  /** A synced slot placed by date window, with `window` or none, listed by a template (#2012). Answers its id. */
+  addWindowSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, key: string, window: SlotWindow | null): string {
+    const id = this.addSyncSlot(sportLeague, null);
+    const slot = this.seasonSlots.find((candidate) => candidate.id === id);
+    if (slot) Object.assign(slot, { key, window });
+    this.slotWindows.set(id, window);
+    return id;
+  }
+
   /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
   seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'recordSyncedSlots'> {
     const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
@@ -157,14 +169,20 @@ export class InMemorySportEvents {
         .filter((slot) => slot.sportLeagueSeasonId === sportLeagueSeasonId && !slot.isTestData)
         .map((slot) => ({
           seasonSlotId: slot.id,
+          key: slot.key,
           providerCode: this.slotProviderCodes.get(slot.id) ?? null,
           coveredByTemplate: this.templateCoveredSlotIds.has(slot.id),
           sportEventId: ownerOf(slot.id),
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
-          window: null,
+          placedByWindow: this.slotWindows.has(slot.id),
+          window: this.slotWindows.get(slot.id) ?? null,
         })),
-      recordSyncedSlots: async ({ eventSlots, slotDates }) => {
+      recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows }) => {
+        for (const slotId of confirmedWindows) {
+          const window = this.slotWindows.get(slotId);
+          if (window) this.slotWindows.set(slotId, { ...window, status: SlotWindowStatus.CONFIRMED });
+        }
         for (const change of slotDates) {
           const slot = this.seasonSlots.find((candidate) => candidate.id === change.seasonSlotId);
           if (slot) Object.assign(slot, { startsAt: change.startsAt, endsAt: change.endsAt });
