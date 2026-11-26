@@ -1325,7 +1325,7 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
       ['ncaamh', 'REGION_SEEDS_EACH', 'STANDARD_BY_SEED'],
       ['ncaawb', 'REGION_SEED_LINES_4', 'STANDARD_BY_SEED'],
       ['nfl', 'PLAYOFF_SEEDS_1_4_REST', 'STANDARD_BY_SEED'],
-      ['nhl', 'SEEDS_2_5_REST', 'STANDARD_BY_SEED'],
+      ['nhl', 'SEEDS_1_2_REST', 'STANDARD_BY_SEED'],
       ['ucl', 'TIERS_4_OF_4_BY_ODDS', 'STANDARD'],
       ['womens-world-cup', 'TIERS_4_OF_4_BY_ODDS', 'STANDARD'],
       ['world-cup', 'TIERS_4_OF_8_BY_ODDS', 'STANDARD'],
@@ -1335,6 +1335,7 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
   it.each([
     ['SEEDS_4_8_12', 12, [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3]],
     ['SEEDS_2_5_REST', 10, [1, 1, 2, 2, 2, 3, 3, 3, 3, 3]],
+    ['SEEDS_1_2_REST', 4, [1, 2, 3, 3]],
     ['SEEDS_2_4_REST', 6, [1, 1, 2, 2, 3, 3]],
     ['SEEDS_3_6_REST', 9, [1, 1, 1, 2, 2, 2, 3, 3, 3]],
     ['REGION_SEED_LINES_4', 16, [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]],

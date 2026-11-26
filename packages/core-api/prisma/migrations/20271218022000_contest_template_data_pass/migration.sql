@@ -25,6 +25,7 @@
 INSERT INTO "platform_tier_profiles" ("code", "name", "type", "updated_at") VALUES
   ('SEEDS_4_8_12', 'Playoff seeds: top 4, 5-8, 9-12', 'RANGES', CURRENT_TIMESTAMP),
   ('SEEDS_2_5_REST', 'Playoff seeds: top 2, 3-5, 6+', 'RANGES', CURRENT_TIMESTAMP),
+  ('SEEDS_1_2_REST', 'Division seeds: 1, 2, 3+', 'RANGES', CURRENT_TIMESTAMP),
   ('SEEDS_2_4_REST', 'Playoff seeds: top 2, 3-4, 5+', 'RANGES', CURRENT_TIMESTAMP),
   ('SEEDS_3_6_REST', 'Playoff seeds: top 3, 4-6, 7+', 'RANGES', CURRENT_TIMESTAMP),
   ('REGION_SEED_LINES_4', 'Seed lines: 1-4, 5-8, 9-12, 13+', 'RANGES', CURRENT_TIMESTAMP),
@@ -36,6 +37,7 @@ FROM "platform_tier_profiles" p
 JOIN (VALUES
   ('SEEDS_4_8_12', 1, 1, 4), ('SEEDS_4_8_12', 2, 5, 8), ('SEEDS_4_8_12', 3, 9, 12),
   ('SEEDS_2_5_REST', 1, 1, 2), ('SEEDS_2_5_REST', 2, 3, 5), ('SEEDS_2_5_REST', 3, 6, NULL),
+  ('SEEDS_1_2_REST', 1, 1, 1), ('SEEDS_1_2_REST', 2, 2, 2), ('SEEDS_1_2_REST', 3, 3, NULL),
   ('SEEDS_2_4_REST', 1, 1, 2), ('SEEDS_2_4_REST', 2, 3, 4), ('SEEDS_2_4_REST', 3, 5, NULL),
   ('SEEDS_3_6_REST', 1, 1, 3), ('SEEDS_3_6_REST', 2, 4, 6), ('SEEDS_3_6_REST', 3, 7, NULL),
   ('REGION_SEED_LINES_4', 1, 1, 4), ('REGION_SEED_LINES_4', 2, 5, 8), ('REGION_SEED_LINES_4', 3, 9, 12), ('REGION_SEED_LINES_4', 4, 13, NULL),
@@ -51,7 +53,7 @@ INSERT INTO "platform_tier_profile_sources" ("platform_tier_profile_id", "order_
 SELECT p."id", s."order_index", s."basis"::"PrismaFieldOrderBasis"
 FROM "platform_tier_profiles" p
 CROSS JOIN (VALUES (0, 'SEED'), (1, 'ODDS'), (2, 'RANKING')) AS s("order_index", "basis")
-WHERE p."code" IN ('SEEDS_4_8_12', 'SEEDS_2_5_REST', 'SEEDS_2_4_REST', 'SEEDS_3_6_REST', 'REGION_SEED_LINES_4', 'REGION_SEEDS_EACH');
+WHERE p."code" IN ('SEEDS_4_8_12', 'SEEDS_2_5_REST', 'SEEDS_1_2_REST', 'SEEDS_2_4_REST', 'SEEDS_3_6_REST', 'REGION_SEED_LINES_4', 'REGION_SEEDS_EACH');
 
 INSERT INTO "platform_tier_profile_sources" ("platform_tier_profile_id", "order_index", "basis")
 SELECT p."id", s."order_index", s."basis"::"PrismaFieldOrderBasis"
@@ -65,7 +67,7 @@ SET "platform_tier_profile_id" = tp."id", "platform_pricing_profile_id" = pp."id
 FROM (VALUES
   ('ncaamf', 'SEEDS_4_8_12', 'STANDARD_BY_SEED'),
   ('nba', 'SEEDS_2_5_REST', 'STANDARD_BY_SEED'),
-  ('nhl', 'SEEDS_2_5_REST', 'STANDARD_BY_SEED'),
+  ('nhl', 'SEEDS_1_2_REST', 'STANDARD_BY_SEED'),
   ('mlb', 'SEEDS_2_4_REST', 'STANDARD_BY_SEED'),
   ('mls', 'SEEDS_3_6_REST', 'STANDARD_BY_SEED'),
   ('ncaamb', 'REGION_SEED_LINES_4', 'STANDARD_BY_SEED'),
@@ -111,7 +113,7 @@ FROM (VALUES
   ('ncaamf', 'BUDGET_PICK', 'cfp-budget-doubling', 'cfp-budget-pick-3', 3, 'Budget: 3 teams under the cap, doubling points', 'Every team has a price: pick three whose prices fit under the salary cap.'),
   ('nba', 'TIERED', 'nba-tiered-doubling', 'nba-tiered-pick-3', 3, 'Tiered: 1 team from each of 3 tiers, doubling points', 'Pick one team from each tier: the 1 and 2 seeds, the 3 to 5 seeds, and the rest.'),
   ('nba', 'BUDGET_PICK', 'nba-budget-doubling', 'nba-budget-pick-3', 3, 'Budget: 3 teams under the cap, doubling points', 'Every team has a price: pick three whose prices fit under the salary cap.'),
-  ('nhl', 'TIERED', 'nhl-tiered-doubling', 'nhl-tiered-pick-3', 3, 'Tiered: 1 team from each of 3 tiers, doubling points', 'Pick one team from each tier: the 1 and 2 seeds, the 3 to 5 seeds, and the rest.'),
+  ('nhl', 'TIERED', 'nhl-tiered-doubling', 'nhl-tiered-pick-3', 3, 'Tiered: 1 team from each of 3 tiers, doubling points', 'Pick one team from each tier: the four 1 seeds, the four 2 seeds, and the rest.'),
   ('nhl', 'BUDGET_PICK', 'nhl-budget-doubling', 'nhl-budget-pick-3', 3, 'Budget: 3 teams under the cap, doubling points', 'Every team has a price: pick three whose prices fit under the salary cap.'),
   ('mlb', 'TIERED', 'mlb-tiered-doubling', 'mlb-tiered-pick-3', 3, 'Tiered: 1 team from each of 3 tiers, doubling points', 'Pick one team from each tier: the 1 and 2 seeds, the 3 and 4 seeds, and the rest.'),
   ('mlb', 'BUDGET_PICK', 'mlb-budget-doubling', 'mlb-budget-pick-3', 3, 'Budget: 3 teams under the cap, doubling points', 'Every team has a price: pick three whose prices fit under the salary cap.'),

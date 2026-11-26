@@ -46,7 +46,7 @@ const SEED_RANGES = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 
 const PROFILES_FROM_THE_TEMPLATE_REVIEW: Record<string, string> = {
   ncaamf: 'SEEDS_4_8_12',
   nba: 'SEEDS_2_5_REST',
-  nhl: 'SEEDS_2_5_REST',
+  nhl: 'SEEDS_1_2_REST',
   mlb: 'SEEDS_2_4_REST',
   mls: 'SEEDS_3_6_REST',
   ncaamb: 'REGION_SEED_LINES_4',
