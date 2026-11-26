@@ -29,7 +29,7 @@ const at = (iso: string) => new Date(iso);
 const SYNCED_TO_BALLDONTLIE = { providerLeague: { provider: { code: 'BALLDONTLIE' } } };
 const LEAGUE_ROW = {
   id: 'tour', isActive: true, selectedProviderMapping: SYNCED_TO_BALLDONTLIE, autoReleaseDaysBeforeStart: 7, sport: { sport: Sport.GOLF },
-  platformTierProfile: { sources: [{ source: 'ODDS' }, { source: 'SEED' }] },
+  platformTierProfile: { sources: [{ basis: 'ODDS' }, { basis: 'SEED' }] },
 };
 
 function runRow(kind: ProviderSyncKind, overrides: Record<string, unknown> = {}) {

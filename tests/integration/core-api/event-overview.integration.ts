@@ -39,9 +39,10 @@ beforeEach(() => cleanupTestData());
  * starts), its field and the event page offering its series; then those latest runs and the
  * field's provider mappings; and the league's sync provider, its selected mapping, provider league
  * and provider one read each (#1997); and the event's provider mappings and their providers, one
-read each (#2004). A new read, or one sent per field row, moves it.
+ * read each (#2004); and the league's tier profile and its sources, one read each (#2160). A new
+ * read, or one sent per field row, moves it.
  */
-const OVERVIEW_STATEMENTS = 14;
+const OVERVIEW_STATEMENTS = 16;
 
 /**
  * A draft golf event `golfers` strong in a synced tour of its own that releases a week out, each
@@ -149,7 +150,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     });
   });
 
-  it('sends exactly 14 statements, the session check included, the league\'s selected mapping, provider league and provider one read each and the event\'s provider mappings and their providers one read each, for a field of 2 and of 20 alike', async () => {
+  it('sends exactly 16 statements, the session check included, the league\'s selected mapping, provider league and provider one read each, its tier profile and that profile\'s sources one read each (#2160), and the event\'s provider mappings and their providers one read each, for a field of 2 and of 20 alike', async () => {
     const { small, large } = await measureQueryScaling({
       seed: seedSyncedEvent,
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/overview`, rootAdmin),
