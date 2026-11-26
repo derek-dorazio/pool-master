@@ -54,6 +54,7 @@ CREATE TABLE "sport_league_season_competitions" (
 CREATE UNIQUE INDEX "sport_league_season_competitions_sport_league_season_id_spo_key" ON "sport_league_season_competitions"("sport_league_season_id", "sport_league_competition_id");
 CREATE UNIQUE INDEX "sport_league_season_competitions_sport_league_season_id_id_key" ON "sport_league_season_competitions"("sport_league_season_id", "id");
 CREATE INDEX "sport_league_season_competitions_sport_league_id_sport_leag_idx" ON "sport_league_season_competitions"("sport_league_id", "sport_league_competition_id");
+CREATE INDEX "sport_league_season_competitions_sport_league_phase_id_spor_idx" ON "sport_league_season_competitions"("sport_league_phase_id", "sport_league_competition_id");
 CREATE INDEX "sport_league_season_competitions_champion_participant_id_idx" ON "sport_league_season_competitions"("champion_participant_id");
 ALTER TABLE "sport_league_season_competitions"
   ADD CONSTRAINT "sport_league_season_competitions_season_fkey" FOREIGN KEY ("sport_league_id", "sport_league_season_id") REFERENCES "sport_league_seasons"("sport_league_id", "id") ON DELETE CASCADE ON UPDATE CASCADE,

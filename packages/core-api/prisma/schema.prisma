@@ -2939,6 +2939,8 @@ model SportLeagueSeasonCompetition {
   /// The target of a Season slot's composite key.
   @@unique([sportLeagueSeasonId, id])
   @@index([sportLeagueId, sportLeagueCompetitionId])
+  /// Behind the competition key, so deleting a competition never scans this table.
+  @@index([sportLeaguePhaseId, sportLeagueCompetitionId])
   @@index([championParticipantId])
   @@map("sport_league_season_competitions")
 }
