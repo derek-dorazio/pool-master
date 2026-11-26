@@ -106,7 +106,7 @@ function world({
   configurationReadFails?: boolean;
 } = {}) {
   // Each major is four rounds of par 72, the par read off the golfers' finished rounds.
-  const course = { rounds: 4 };
+  const course = { rounds: 4, slotDefinitions: [] };
   const events = new Map<string, SportEvent>([
     [MASTERS, { id: MASTERS, sport: Sport.GOLF, ...sportPlay(Sport.GOLF), status: SportEventStatus.SCHEDULED, startDate: new Date('2026-04-09T12:00:00.000Z'), ...course } as SportEvent],
     [PGA, { id: PGA, sport: Sport.GOLF, ...sportPlay(Sport.GOLF), status: SportEventStatus.SCHEDULED, startDate: new Date('2026-05-14T12:00:00.000Z'), ...course } as SportEvent],

@@ -204,6 +204,7 @@ const STARTED_EVENT = {
   ...sportPlay(Sport.GOLF),
   status: SportEventStatus.IN_PROGRESS,
   startDate: new Date('2026-01-01T12:00:00.000Z'),
+  slotDefinitions: [],
 } as SportEvent;
 
 /**

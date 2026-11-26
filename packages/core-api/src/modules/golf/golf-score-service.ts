@@ -288,6 +288,7 @@ export class GolfScoreService {
     // failed tick left behind is put right on the next one.
     const standingDiagnostics = await this.refreshGolfStandings(
       sportEventId,
+      [...roundByNumber.values()],
       [...new Set(persistable.map((entry) => entry.sportEventParticipantId))],
       new Date(),
     );
@@ -309,11 +310,12 @@ export class GolfScoreService {
    */
   private async refreshGolfStandings(
     sportEventId: string,
+    eventRounds: readonly SportEventRound[],
     sportEventParticipantIds: readonly string[],
     asOf: Date,
   ): Promise<SyncWriteDiagnostics> {
     if (sportEventParticipantIds.length === 0) return emptySyncWriteDiagnostics();
-    const diagnostics = await this.writeGolfStandings(sportEventParticipantIds, asOf);
+    const diagnostics = await this.writeGolfStandings(eventRounds, sportEventParticipantIds, asOf);
     await this.rankEventStandings(sportEventId);
     return diagnostics;
   }
@@ -352,7 +354,7 @@ export class GolfScoreService {
     rebuild.queued();
   }
 
-  private async writeGolfStandings(sportEventParticipantIds: readonly string[], asOf: Date): Promise<SyncWriteDiagnostics> {
+  private async writeGolfStandings(eventRounds: readonly SportEventRound[], sportEventParticipantIds: readonly string[], asOf: Date): Promise<SyncWriteDiagnostics> {
 
     const [rounds, existing] = await Promise.all([
       this.deps.golfRounds.findBySportEventParticipants(sportEventParticipantIds),
@@ -365,6 +367,7 @@ export class GolfScoreService {
       roundsByEntry.set(result.participantRound.sportEventParticipantId, list);
     }
     const existingByEntry = new Map(existing.map((result) => [result.standing.sportEventParticipantId, result]));
+    const holesByRoundId = new Map(eventRounds.map((round) => [round.id, round.slot.periods?.count ?? null]));
 
     const plans = sportEventParticipantIds.flatMap((sportEventParticipantId) => {
       const entryRounds = roundsByEntry.get(sportEventParticipantId) ?? [];
@@ -374,7 +377,10 @@ export class GolfScoreService {
       ));
       const eventScoreToPar = entryRounds.reduce((sum, result) => sum + result.golf.scoreToPar, 0);
       const eventStrokes = entryRounds.reduce((sum, result) => sum + result.golf.strokes, 0);
-      const currentRoundThru = current.golf.thru ?? (current.participantRound.status === ParticipantRoundStatus.COMPLETED ? 18 : null);
+      // A completed round with no thru reported was played through every hole its slot gives it.
+      const currentRoundThru = current.golf.thru ?? (current.participantRound.status === ParticipantRoundStatus.COMPLETED
+        ? holesByRoundId.get(current.participantRound.sportEventRoundId) ?? null
+        : null);
       const status = mapGolfLiveStatus(current.participantRound.status);
       const currentRound = current.participantRound.roundNumber;
       const before = existingByEntry.get(sportEventParticipantId);
@@ -481,7 +487,7 @@ export class GolfScoreService {
       }));
     if (writes.length > 0) {
       await this.deps.golfRounds.upsertMany(writes);
-      await this.refreshGolfStandings(sportEventId, writes.map((write) => write.sportEventParticipantId), new Date());
+      await this.refreshGolfStandings(sportEventId, await this.deps.rounds.findBySportEvent(sportEventId), writes.map((write) => write.sportEventParticipantId), new Date());
     }
   }
 
@@ -501,7 +507,8 @@ export class GolfScoreService {
       );
     }
     this.requireScheduledRound(event, sportEventId, roundNumber);
-    const storedRound = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
+    const eventRounds = await this.deps.rounds.findBySportEvent(sportEventId);
+    const storedRound = eventRounds.find((candidate) => candidate.roundNumber === roundNumber);
     const existing = storedRound
       ? (await this.deps.golfRounds.findBySportEventParticipants([sportEventParticipantId]))
         .find((result) => result.participantRound.sportEventRoundId === storedRound.id)
@@ -529,7 +536,7 @@ export class GolfScoreService {
       scoreToPar,
       thru: patch.thru !== undefined ? patch.thru : existing?.golf.thru ?? null,
     });
-    await this.refreshGolfStandings(sportEventId, [sportEventParticipantId], new Date());
+    await this.refreshGolfStandings(sportEventId, storedRound ? eventRounds : [...eventRounds, round], [sportEventParticipantId], new Date());
   }
 
   /**

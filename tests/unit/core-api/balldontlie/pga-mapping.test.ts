@@ -168,9 +168,10 @@ describe('BALLDONTLIE PGA results to golf round updates', () => {
     expect(updates.at(-1)).toEqual({ participantExternalId: '3', round: 3, strokes: null, scoreToPar: 0, status: ParticipantRoundStatus.IN_PROGRESS, thru: 4 });
   });
 
-  it('reads thru 18 as the round finished, and a missing thru as the round under way', () => {
+  it('reads a hole count as the round under way through those holes, leaving how many a round has to its slot, and a missing thru as under way', () => {
     const scheffler = resultFor(liveResults, 185);
-    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '18' }]).at(-1)?.status).toBe(ParticipantRoundStatus.COMPLETED);
+    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '18' }]).at(-1)).toMatchObject({ status: ParticipantRoundStatus.IN_PROGRESS, thru: 18 });
+    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '19' }]).at(-1)).toMatchObject({ status: ParticipantRoundStatus.IN_PROGRESS, thru: 19 });
     const noThru = toGolfRoundUpdates(bmw, [{ ...scheffler, thru: null }]).at(-1);
     expect(noThru).toEqual({ participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: ParticipantRoundStatus.IN_PROGRESS });
   });
@@ -233,10 +234,9 @@ describe('BALLDONTLIE PGA results to golf round updates', () => {
     expect(() => toGolfRoundUpdates(parMissing, [noRelative])).toThrow(BalldontlieContractError);
   });
 
-  it('refuses a thru value that is neither "F" nor a hole count, and one past 18 holes', () => {
+  it('refuses a thru value that is neither "F" nor a hole count', () => {
     const scheffler = resultFor(liveResults, 185);
     expect(() => toGolfRoundUpdates(bmw, [{ ...scheffler, thru: 'TEE 10:40' }])).toThrow('thru "TEE 10:40" is neither "F" nor a hole count');
-    expect(() => toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '19' }])).toThrow('thru "19" is more than 18 holes');
   });
 
   it('refuses a score for a round after the golfer\'s current round', () => {

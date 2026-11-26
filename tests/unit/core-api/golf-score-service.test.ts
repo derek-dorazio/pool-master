@@ -230,6 +230,20 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
     expect(store.golfRoundRows.map((round) => round.thru)).toEqual([18]);
   });
 
+  it('reads a completed round reported with no holes as played through every hole its slot gives a round, and leaves it unknown on a slot with no hole count', async () => {
+    const { store, service, event, anaEntry } = setup({ rounds: 4 });
+    store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 9 });
+
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
+    const [nine] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(nine.golf.currentRoundThru).toBe(9);
+
+    const noHoles = setup({ rounds: 4 });
+    await noHoles.service.updateRoundScore(noHoles.event.id, 1, noHoles.anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
+    const [unknown] = await noHoles.store.golfStandingRepo().findBySportEventParticipants([noHoles.anaEntry.id]);
+    expect(unknown.golf.currentRoundThru).toBeNull();
+  });
+
   it('refuses to preview a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE', async () => {
     const { service, event } = setup({ rounds: 4 });
 

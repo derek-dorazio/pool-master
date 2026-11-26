@@ -185,7 +185,6 @@ function readOutStatus(path: string, position: string | null): ParticipantRoundS
 /** `thru` while a round is played: the holes completed, with a `*` when the golfer started on the back nine. */
 const HOLES_THRU_PATTERN = /^(\d{1,2})\*?$/;
 const FINISHED_THRU = 'F';
-const HOLES_IN_ROUND = 18;
 
 type RoundProgress =
   | { status: typeof ParticipantRoundStatus.COMPLETED }
@@ -202,13 +201,8 @@ function readThru(path: string, thru: string | null): RoundProgress {
   if (!holes) {
     throw new BalldontlieContractError(path, [`thru "${thru}" is neither "F" nor a hole count`]);
   }
-  const completed = Number(holes[1]);
-  if (completed > HOLES_IN_ROUND) {
-    throw new BalldontlieContractError(path, [`thru "${thru}" is more than ${String(HOLES_IN_ROUND)} holes`]);
-  }
-  return completed === HOLES_IN_ROUND
-    ? { status: ParticipantRoundStatus.COMPLETED }
-    : { status: ParticipantRoundStatus.IN_PROGRESS, thru: completed };
+  // How many holes a round has is its slot's (#2047): the score service skips a thru past them.
+  return { status: ParticipantRoundStatus.IN_PROGRESS, thru: Number(holes[1]) };
 }
 
 /** The par of the course a round is played on, when the tournament names exactly one with a par. */

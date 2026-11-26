@@ -127,7 +127,7 @@ describe('SportEvent readiness on the wire', () => {
 
   // The Season and the sport league are always present: an event has exactly one of each (#2010).
   it('carries the event\'s slot definitions in play order, its Season with that Season\'s championship year, and its sport league', () => {
-    const slotted = event({ slotDefinitions: [{ id: 'afc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false }, { id: 'nfc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false }] });
+    const slotted = event({ slotDefinitions: [{ id: 'afc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null }, { id: 'nfc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null }] });
     expect(mapSportEventToDto(summary(slotted, 1))).toMatchObject({
       slotDefinitionIds: ['afc-championship', 'nfc-championship'],
       sportLeagueSeasonId: 'season-2026',

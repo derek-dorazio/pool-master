@@ -218,7 +218,7 @@ describe('contest scoring of unplayed rounds', () => {
     expect(score).toMatchObject({ score: 16, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3, 4] } });
   });
 
-  it('counts a last round with all 18 holes scored as played when the event completes before its status flips', () => {
+  it('counts a last round with every hole its slot gives a round scored as played when the event completes before its status flips', () => {
     const lastGroup = golfer('sep-last', 'IN_PROGRESS', [
       [1, 'COMPLETED', 70, -2],
       [2, 'COMPLETED', 70, -2],
@@ -304,5 +304,7 @@ function field(...golfers: ReturnType<typeof golfer>[]) {
 }
 
 function scoringEvent(event: { rounds: number | null; roundsPar: number | null; status?: string }) {
-  return { sport: 'GOLF', scoringFamily: 'STROKE_PLAY', status: 'IN_PROGRESS', ...event } as unknown as Parameters<typeof toParticipantScores>[1];
+  // A tournament's rounds are played in its one slot, of 18 holes a round.
+  const slotDefinitions = [{ id: 'slot-masters', slotKind: 'TOURNAMENT', canEndTied: false, periods: { unit: 'HOLE', count: 18 } }];
+  return { sport: 'GOLF', scoringFamily: 'STROKE_PLAY', status: 'IN_PROGRESS', slotDefinitions, ...event } as unknown as Parameters<typeof toParticipantScores>[1];
 }

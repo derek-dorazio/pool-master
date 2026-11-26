@@ -18,6 +18,7 @@ import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './conte
 import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
 import type { ScoringFamily } from './sports/scoring-family';
 import type { DomainEntity } from './types';
+import type { SlotPeriods } from './slot-periods';
 
 export type SportEventReadinessStatus =
   | 'NOT_RELEASED'
@@ -179,6 +180,8 @@ export interface SportEventSlotDefinition {
   slotKind: SlotKind;
   /** Whether the slot's games can finish level (#2043); where not, a shoot-out may decide one (#2046). */
   canEndTied: boolean;
+  /** What its games are played in (#2047): four quarters, eighteen holes; null for a race or tennis match. */
+  periods: SlotPeriods | null;
 }
 
 /** One slot definition a contest template covers (#2010), with the facts screens and checks read. */

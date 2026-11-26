@@ -66,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -1332,7 +1332,7 @@ const SPORT_EVENT_INCLUDE = {
     orderBy: { provider: { name: 'asc' } },
   },
   // The slot definitions it covers (#2010): where contest templates are offered on it.
-  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, ...SLOT_PLACE_SELECT } } } } } },
+  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1354,7 +1354,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     slotDefinitions: row.slots
       .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)
-      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied })),
+      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition) })),
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
     sportLeagueId: row.sportLeagueId,

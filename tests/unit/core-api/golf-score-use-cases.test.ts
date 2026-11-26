@@ -1,5 +1,5 @@
 import { testDomainEvents } from '../../support/domain-events';
-import { Sport } from '@poolmaster/shared/domain';
+import { PeriodUnit, Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { eventStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
@@ -14,6 +14,8 @@ async function setup() {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' }, rounds: 4 });
+  // Its rounds are played in its one slot, of 18 holes a round.
+  store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 18 });
   await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({
     roundNumber,
     scheduledDate: new Date('2026-06-04T12:00:00.000Z'),
@@ -190,7 +192,7 @@ describe('golf standings — cut, withdrawal and the current round', () => {
     expect((await standingOf(store, benEntry.id)).standing).toMatchObject({ status: 'COMPLETE', position: 1, displayPosition: '1' });
   });
 
-  it('reads a golfer between rounds as COMPLETE through 18, and on the first tee of the next round as thru 0', async () => {
+  it('reads a golfer between rounds as COMPLETE through every hole of the round\'s slot (18), and on the first tee of the next round as thru 0', async () => {
     const { store, service, event, anaEntry } = await setup();
 
     await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1, { thru: undefined })], 'balldontlie', 4);

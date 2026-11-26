@@ -268,6 +268,7 @@ export class InMemoryContestWorld {
       status: SportEventStatus.SCHEDULED,
       createdAt: T0,
       updatedAt: T0,
+      slotDefinitions: [],
       ...sportPlay(overrides.sport ?? Sport.GOLF),
       ...overrides,
     } as SportEvent;
