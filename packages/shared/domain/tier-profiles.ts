@@ -116,8 +116,9 @@ export function findTierLayoutProblem(values: TierProfileValues): string | null 
     if (range.tierNumber !== index + 1) return 'List the ranges by tier, from tier 1, one each.';
     if (range.toValue !== null && range.toValue < range.fromValue) return `Tier ${range.tierNumber}'s range ends before it starts.`;
     if (range.toValue === null && index !== values.ranges.length - 1) return 'Only the last tier can take everyone from its first value on.';
+    if (index === 0) continue;
     const previous = values.ranges[index - 1];
-    if (previous && previous.toValue !== null && range.fromValue !== previous.toValue + 1) {
+    if (previous.toValue !== null && range.fromValue !== previous.toValue + 1) {
       return `Tier ${range.tierNumber} must start right after tier ${previous.tierNumber} ends, with no gap or overlap.`;
     }
   }
