@@ -132,7 +132,8 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
 
       const detail = await harness.adapter.getEventDetails('ncaab-2025-tournament');
 
-      expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, participantCount: 5, rounds: 6, status: 'COMPLETED' });
+      expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, rounds: 6, status: 'COMPLETED' });
+      expect(detail?.participants).toHaveLength(5);
       expect(detail?.participants.map((team) => team.name)).not.toContain('Texas Longhorns');
       expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ seed: 1 });
       expect(requestLine(harness.api)).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100']);
@@ -144,7 +145,8 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
 
       const detail = await harness.adapter.getEventDetails('ncaaw-2025-tournament');
 
-      expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 5, rounds: 6 });
+      expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', rounds: 6 });
+      expect(detail?.participants).toHaveLength(5);
       expect(detail?.participants.map((team) => team.externalId)).toEqual(['41', '2636', '150', '2655', '2579']);
       expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
     });

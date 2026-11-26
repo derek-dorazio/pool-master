@@ -121,7 +121,6 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
         sport: Sport.BASKETBALL,
         status: 'COMPLETED',
         fieldLocked: true,
-        participantCount: 2,
         startDate: new Date('2025-06-06T00:30:00Z'),
         endDate: new Date('2025-06-23T00:30:00Z'),
       });
@@ -138,7 +137,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
       const detail = await harness.adapter.getEventDetails('nba-2025-postseason');
 
-      expect(detail).toMatchObject({ status: 'IN_PROGRESS', participantCount: 4, endDate: new Date('2026-04-21T00:00:00Z') });
+      expect(detail).toMatchObject({ status: 'IN_PROGRESS', endDate: new Date('2026-04-21T00:00:00Z') });
+      expect(detail?.participants).toHaveLength(4);
     });
 
     it('gives a playoffs under way no bracket and reads no standings while its first round is not all out', async () => {

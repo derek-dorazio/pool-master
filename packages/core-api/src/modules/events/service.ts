@@ -86,7 +86,7 @@ export interface SportEventAdminCounts {
 /** An event with the counts every reader needs, and a root admin's own counts when asked for. */
 export interface SportEventSummary {
   event: SportEvent;
-  loadedParticipantCount: number;
+  participantCount: number;
   tierCount: number;
   /** The Season slots it covers (#2004), in play order; empty for an event with none yet. */
   slots: SportLeagueSeasonSlot[];
@@ -766,7 +766,7 @@ export class SportEventService {
       startDate: event.startDate,
       now: this.now(),
       scheduledRoundCount: facts.scheduledRoundCount,
-      loadedParticipantCount: summary.loadedParticipantCount,
+      participantCount: summary.participantCount,
       untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
       emptyTierNumbers: summary.adminCounts.emptyTierNumbers,
       isPriced: event.pricingConfig !== undefined,
@@ -870,7 +870,7 @@ export class SportEventService {
       const tiers = tiersByEvent.get(event.id) ?? [];
       return {
         event,
-        loadedParticipantCount: 0,
+        participantCount: 0,
         tierCount: tiers.length,
         slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
         adminCounts: {
@@ -910,7 +910,7 @@ export class SportEventService {
     ]);
     return events.map((event) => ({
       event,
-      loadedParticipantCount: participants.get(event.id) ?? 0,
+      participantCount: participants.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
       slots: slots.get(event.id) ?? [],
       adminCounts: null,

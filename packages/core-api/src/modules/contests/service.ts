@@ -2020,9 +2020,9 @@ export class ContestService {
       return;
     }
 
-    const loadedParticipantCount = (await this.deps.sportEvents.countParticipants([firstSportEventId]))
+    const participantCount = (await this.deps.sportEvents.countParticipants([firstSportEventId]))
       .get(firstSportEventId) ?? 0;
-    if (loadedParticipantCount > 0) {
+    if (participantCount > 0) {
       return;
     }
 

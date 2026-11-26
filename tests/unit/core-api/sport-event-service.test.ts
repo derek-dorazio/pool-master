@@ -940,7 +940,7 @@ describe('SportEventService — read, update, delete', () => {
     const [summary] = await service.listEvents({ sportLeagueSeasonId: event.sportLeagueSeasonId }, { adminCounts: true });
 
     expect(summary).toMatchObject({
-      loadedParticipantCount: 1,
+      participantCount: 1,
       tierCount: 0,
       adminCounts: { untieredParticipantCount: 1, unpricedParticipantCount: 1, emptyTierNumbers: [], contestCount: 2 },
     });
@@ -962,7 +962,7 @@ describe('SportEventService — read, update, delete', () => {
 
     const [summary] = await service.listEvents({ sportLeagueSeasonId: event.sportLeagueSeasonId }, { adminCounts: false });
 
-    expect(summary).toMatchObject({ loadedParticipantCount: 1, tierCount: 0, adminCounts: null });
+    expect(summary).toMatchObject({ participantCount: 1, tierCount: 0, adminCounts: null });
     for (const count of adminCounts) {
       expect(count).not.toHaveBeenCalled();
     }

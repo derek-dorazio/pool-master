@@ -14,7 +14,7 @@ export interface ReleaseCheckInputs {
   startDate: Date;
   now: Date;
   scheduledRoundCount: number;
-  loadedParticipantCount: number;
+  participantCount: number;
   untieredParticipantCount: number;
   emptyTierNumbers: readonly number[];
   isPriced: boolean;
@@ -28,7 +28,7 @@ export function evaluateReleaseChecks(inputs: ReleaseCheckInputs): ReleaseCheck[
   const checks: ReleaseCheck[] = [
     { key: ReleaseCheckKey.NOT_STARTED, passed: inputs.startDate.getTime() > inputs.now.getTime(), value: inputs.startDate },
     { key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: inputs.scheduledRoundCount > 0, value: inputs.scheduledRoundCount },
-    { key: ReleaseCheckKey.FIELD_LOADED, passed: inputs.loadedParticipantCount > 0, value: inputs.loadedParticipantCount },
+    { key: ReleaseCheckKey.FIELD_LOADED, passed: inputs.participantCount > 0, value: inputs.participantCount },
   ];
   checks.push(
     { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: inputs.untieredParticipantCount === 0, value: inputs.untieredParticipantCount },

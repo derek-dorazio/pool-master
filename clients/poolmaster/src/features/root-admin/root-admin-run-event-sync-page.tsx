@@ -44,9 +44,7 @@ function getValidEventStatusesForPreset(presetId: EventSyncPresetId): SportEvent
 }
 
 function formatEventOptionLabel(event: SportEventDto, displayPreferences: DisplayPreferences) {
-  const participantText = typeof event.participantCount === 'number'
-    ? `${event.participantCount} participants`
-    : 'participants unknown';
+  const participantText = `${event.participantCount} participants`;
 
   return [
     event.name,

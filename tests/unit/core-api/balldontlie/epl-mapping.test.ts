@@ -51,7 +51,7 @@ describe('a season\'s matches by matchweek', () => {
 
 describe('a Premier League matchweek as an event', () => {
   it('is under way while one match is live and others are final or to play, spanning its first to its last kick-off', () => {
-    expect(toEplMatchweekEvent(MATCHWEEK_11, matchweek11, 10)).toEqual({
+    expect(toEplMatchweekEvent(MATCHWEEK_11, matchweek11)).toEqual({
       externalId: 'epl-2026-matchweek-11',
       providerId: 'balldontlie',
       sport: Sport.SOCCER,
@@ -60,7 +60,6 @@ describe('a Premier League matchweek as an event', () => {
       endDate: new Date('2026-11-23T20:00:00.000Z'),
       status: 'IN_PROGRESS',
       rounds: 1,
-      participantCount: 10,
       fieldLocked: true,
       providerSlots: [
         { code: 'REG:11', startsAt: new Date('2026-11-21T12:30:00.000Z'), endsAt: new Date('2026-11-23T20:00:00.000Z') },

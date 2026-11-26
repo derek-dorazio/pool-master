@@ -51,7 +51,6 @@ export interface SportEvent extends DomainEntity {
   rounds?: number;
   /** Par for every round, when an admin set it; unset, contest scoring derives each round's par from the field (#478). */
   roundsPar?: number;
-  participantCount?: number;
   /** The slot definitions of the Season slots the event covers, in play order (#2004, #2010): where templates are offered. */
   slotDefinitions: SportEventSlotDefinition[];
   /** The Season the event is played in (#2003). */

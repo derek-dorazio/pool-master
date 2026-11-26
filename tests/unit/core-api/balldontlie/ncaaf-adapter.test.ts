@@ -118,7 +118,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
 
       const detail = await harness.adapter.getEventDetails('ncaaf-2025-cfp');
 
-      expect(detail).toMatchObject({ externalId: 'ncaaf-2025-cfp', sport: Sport.FOOTBALL, participantCount: undefined, status: 'COMPLETED' });
+      expect(detail).toMatchObject({ externalId: 'ncaaf-2025-cfp', sport: Sport.FOOTBALL, status: 'COMPLETED' });
       expect(detail?.participants.map((team) => team.name)).toContain('Navy Midshipmen');
       expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/games?seasons[]=2025&per_page=100']);
     });

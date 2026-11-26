@@ -108,8 +108,7 @@ export interface ContestCreateSportEventState {
   /** Its Season's championship year (#2003): a majors pool's events share one (#714). */
   championshipYear: number;
   tournamentFormat: TournamentFormat;
-  participantCount: number | null;
-  loadedParticipantCount: number;
+  participantCount: number;
   /** The event's round count, which a knockout round-points table must match (#699); null when unset. */
   rounds: number | null;
   /** The salary cap the event's field was priced against, or null when it never was (#93). */
@@ -856,7 +855,7 @@ export class ContestManagementService {
     const operationalState = evaluateEventOperationalState({
       status: sportEvent.status,
       startDate: sportEvent.startDate,
-      participantCount: sportEvent.loadedParticipantCount,
+      participantCount: sportEvent.participantCount,
       now: this.now(),
     });
 
@@ -874,7 +873,6 @@ export class ContestManagementService {
     if (operationalState.readinessReasons.includes('FIELD_NOT_LOADED')) {
       this.logger.warn({
         sportEventId,
-        loadedParticipantCount: sportEvent.loadedParticipantCount,
         participantCount: sportEvent.participantCount,
       }, 'contest management create contest rejected for missing sport event field');
       throw new ContestManagementError(

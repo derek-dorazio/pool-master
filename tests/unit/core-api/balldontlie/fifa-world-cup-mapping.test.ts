@@ -46,7 +46,7 @@ describe('a World Cup knockout bracket as an event', () => {
   });
 
   it('is complete once every listed knockout match is final, spanning the round of 16 to the final', () => {
-    expect(toWorldCupEvent(WC_2022, knockout2022, 8)).toEqual({
+    expect(toWorldCupEvent(WC_2022, knockout2022)).toEqual({
       externalId: 'fifa-wc-2022-knockout',
       providerId: 'balldontlie',
       sport: Sport.SOCCER,
@@ -54,7 +54,6 @@ describe('a World Cup knockout bracket as an event', () => {
       startDate: new Date('2022-12-03T15:00:00.000Z'),
       endDate: new Date('2022-12-18T15:00:00.000Z'),
       status: 'COMPLETED',
-      participantCount: 8,
       fieldLocked: true,
       providerSlots: [
         { code: 'POST:2', startsAt: new Date('2022-12-03T15:00:00.000Z'), endsAt: new Date('2022-12-05T15:00:00.000Z') },

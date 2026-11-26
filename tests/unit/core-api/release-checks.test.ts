@@ -8,7 +8,7 @@ const READY = {
   startDate: new Date('2026-01-18T12:00:00.000Z'),
   now: NOW,
   scheduledRoundCount: 4,
-  loadedParticipantCount: 120,
+  participantCount: 120,
   untieredParticipantCount: 0,
   emptyTierNumbers: [],
   isPriced: true,

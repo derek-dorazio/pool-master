@@ -43,7 +43,7 @@ function genericTransitionsFrom(status: SportEventStatus): SportEventStatus[] {
 
 export function mapSportEventToDto({
   event,
-  loadedParticipantCount,
+  participantCount,
   tierCount,
   adminCounts,
   releaseChecks,
@@ -53,7 +53,7 @@ export function mapSportEventToDto({
   const operationalState = evaluateEventOperationalState({
     status: event.status,
     startDate: event.startDate,
-    participantCount: loadedParticipantCount,
+    participantCount: participantCount,
     now,
   });
 
@@ -73,14 +73,13 @@ export function mapSportEventToDto({
     roundsPar: event.roundsPar ?? null,
     roundsParMin: ROUNDS_PAR_MIN,
     roundsParMax: ROUNDS_PAR_MAX,
-    participantCount: event.participantCount ?? null,
-    loadedParticipantCount,
+    participantCount,
     pricing: event.pricingConfig ?? null,
     tierLayout: event.tierConfig ?? null,
     readinessStatus: operationalState.readinessStatus,
     readinessReasons: operationalState.readinessReasons,
     contestEligible: operationalState.contestEligible,
-    contestOpenings: eventContestOpenings({ ...event, loadedParticipantCount }, now),
+    contestOpenings: eventContestOpenings({ ...event, participantCount }, now),
     tiersLocked: !areTiersAndPricesEditable(event),
     slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
     sportLeagueSeasonId: event.sportLeagueSeasonId,

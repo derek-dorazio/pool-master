@@ -28153,19 +28153,10 @@
             "description": "The highest par per round an update takes; a higher one is refused with 400."
           },
           "participantCount": {
-            "description": "Field size the provider reports, when it reports one; null otherwise.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "loadedParticipantCount": {
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Number of event participants currently persisted for the event."
+            "description": "The event's field size: the teams or players on its field, counted on each read. 0 until the field loads."
           },
           "pricing": {
             "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
@@ -29020,7 +29011,6 @@
           "roundsParMin",
           "roundsParMax",
           "participantCount",
-          "loadedParticipantCount",
           "pricing",
           "tierLayout",
           "readinessStatus",
@@ -29248,19 +29238,10 @@
                   "description": "The highest par per round an update takes; a higher one is refused with 400."
                 },
                 "participantCount": {
-                  "description": "Field size the provider reports, when it reports one; null otherwise.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "loadedParticipantCount": {
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "Number of event participants currently persisted for the event."
+                  "description": "The event's field size: the teams or players on its field, counted on each read. 0 until the field loads."
                 },
                 "pricing": {
                   "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
@@ -30115,7 +30096,6 @@
                 "roundsParMin",
                 "roundsParMax",
                 "participantCount",
-                "loadedParticipantCount",
                 "pricing",
                 "tierLayout",
                 "readinessStatus",
@@ -30297,19 +30277,10 @@
                 "description": "The highest par per round an update takes; a higher one is refused with 400."
               },
               "participantCount": {
-                "description": "Field size the provider reports, when it reports one; null otherwise.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "loadedParticipantCount": {
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Number of event participants currently persisted for the event."
+                "description": "The event's field size: the teams or players on its field, counted on each read. 0 until the field loads."
               },
               "pricing": {
                 "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
@@ -31164,7 +31135,6 @@
               "roundsParMin",
               "roundsParMax",
               "participantCount",
-              "loadedParticipantCount",
               "pricing",
               "tierLayout",
               "readinessStatus",

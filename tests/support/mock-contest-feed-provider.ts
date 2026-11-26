@@ -105,7 +105,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
 
   async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
     const events = await this.mapScenarioEventDetails(sport, dateRange, (scenarioId, detail) => {
-      const event = toSportEvent(this.providerId, detail, resolveParticipants(detail).length);
+      const event = toSportEvent(this.providerId, detail);
       this.scenarioIdByExternalId.set(event.externalId, scenarioId);
       return event;
     });
@@ -127,7 +127,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const participants = resolveParticipants(detail);
 
     return {
-      ...toSportEvent(this.providerId, detail, participants.length),
+      ...toSportEvent(this.providerId, detail),
       participants: participants.map((contestant) =>
         toProviderParticipant(this.providerId, detail.sport, contestant, detail.event.eventId),
       ),
@@ -395,7 +395,6 @@ function toProviderParticipant(
 function toSportEvent(
   providerId: string,
   detail: EventDetailResponse,
-  participantCount: number,
 ): SportEvent {
   const domainSport = toDomainSport(detail.sport);
   if (!domainSport) {
@@ -413,7 +412,6 @@ function toSportEvent(
     startDate: new Date(detail.event.schedule.startsAt),
     endDate: detail.event.schedule.endsAt ? new Date(detail.event.schedule.endsAt) : undefined,
     status: mapEventStatus(detail.event.status),
-    participantCount,
     fieldLocked:
       detail.event.field.status === 'locked'
       || detail.event.field.status === 'final',

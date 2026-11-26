@@ -83,7 +83,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     championshipYear: 2026,
     sportLeagueId: 'league-1',
     autoLifecycleEnabled: true,
-    loadedParticipantCount: 3,
+    participantCount: 3,
     tierCount: 2,
     adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [], contestCount: 0 },
     createdAt: '2026-01-01T00:00:00.000Z',

@@ -31,7 +31,7 @@ const resultFor = (results: PgaTournamentResult[], playerId: number) =>
 
 describe('BALLDONTLIE PGA tournament to sport event', () => {
   it('maps a final tournament with its course, place, dates and rounds', () => {
-    expect(toSportEvent(wyndham, 156)).toEqual({
+    expect(toSportEvent(wyndham)).toEqual({
       externalId: '40',
       providerId: 'balldontlie',
       sport: Sport.GOLF,
@@ -42,7 +42,6 @@ describe('BALLDONTLIE PGA tournament to sport event', () => {
       endDate: new Date('2026-08-09T00:00:00.000Z'),
       status: 'COMPLETED',
       rounds: 4,
-      participantCount: 156,
       fieldLocked: true,
       providerSlots: [
         { code: '40', startsAt: new Date('2026-08-06T00:00:00.000Z'), endsAt: new Date('2026-08-09T00:00:00.000Z') },
@@ -58,7 +57,6 @@ describe('BALLDONTLIE PGA tournament to sport event', () => {
     expect(event.endDate).toBeUndefined();
     expect(event.venue).toBeUndefined();
     expect(event.location).toBeUndefined();
-    expect(event.participantCount).toBeUndefined();
   });
 
   it.each([

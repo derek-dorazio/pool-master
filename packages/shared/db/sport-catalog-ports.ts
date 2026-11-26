@@ -141,7 +141,7 @@ export interface SportEventFilters {
  * for an event the sync creates (#2004): it is kept under its Season's league's selected provider
  * mapping, which must be that provider's. A test event has none.
  */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'participantCount' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
   providerRef?: ProviderEventRef;
   /** The Season slots it covers (#2004), in its own Season: a test event's test slot. */
   seasonSlotIds?: readonly string[];

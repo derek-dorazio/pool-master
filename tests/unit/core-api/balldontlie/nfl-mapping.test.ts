@@ -69,7 +69,7 @@ describe('NFL event scopes', () => {
 
 describe('NFL events', () => {
   it('makes a week one round from its first game to its last, under the NFL league', () => {
-    expect(toNflSportEvent(WEEK_12, week12, 8)).toEqual({
+    expect(toNflSportEvent(WEEK_12, week12)).toEqual({
       externalId: 'nfl-2026-week-12',
       providerId: 'balldontlie',
       sport: Sport.FOOTBALL,
@@ -78,7 +78,6 @@ describe('NFL events', () => {
       endDate: new Date('2026-12-01T01:15:00.000Z'),
       status: 'IN_PROGRESS',
       rounds: 1,
-      participantCount: 8,
       fieldLocked: true,
       providerSlots: [
         { code: 'REG:12', startsAt: new Date('2026-11-26T17:30:00.000Z'), endsAt: new Date('2026-12-01T01:15:00.000Z') },

@@ -46,7 +46,7 @@ export function getContestReadinessChecks(
   const hasField = !event.readinessReasons.includes('FIELD_NOT_LOADED');
   const hasStarted = event.readinessReasons.includes('EVENT_STARTED');
   const { participant } = sportVocabulary(eventSportDefinition(event));
-  const golfers = countParticipants(event.loadedParticipantCount, participant);
+  const golfers = countParticipants(event.participantCount, participant);
   const tiers = `${event.tierCount} tier${event.tierCount === 1 ? '' : 's'}`;
 
   return [

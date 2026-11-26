@@ -599,7 +599,7 @@ describe('mock contest feed provider event-first verification', () => {
     );
 
     // plans/147 — sync updates the event linked to this provider event; it never creates one.
-    await linkedProviderEvent(prisma, {
+    const persistedEvent = await linkedProviderEvent(prisma, {
       providerId: expectDefined(detail).providerId,
       externalId: expectDefined(detail).externalId,
       name: expectDefined(detail).name,
@@ -616,12 +616,6 @@ describe('mock contest feed provider event-first verification', () => {
       participantsPersisted: detail?.participants.length,
       sportEventParticipantsPersisted: detail?.participants.length,
     });
-
-    const persistedEvent = await prisma.sportEvent.findFirstOrThrow({
-      where: providerEventWhere(providerId, eventExternalId),
-    });
-    // #435 — of the provider's event details, only the field size reaches the event.
-    expect(persistedEvent.participantCount).toBe(detail?.participants.length);
 
     const participantMappings = await prisma.participantProviderMapping.findMany({
       where: {

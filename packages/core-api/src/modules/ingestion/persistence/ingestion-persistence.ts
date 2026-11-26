@@ -33,7 +33,6 @@ import type { JobsForWrite } from '../../background-jobs/background-job-queue';
 import { backgroundJobsInsert, insertBackgroundJobs } from '../../../adapters/prisma-background-job-repository';
 import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { PublicReadPath } from '../../../core/public-cache';
-import { forgettingReads, ReadMemoKey } from '../../../core/request-read-memo';
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -80,7 +79,6 @@ export class IngestionPersistence {
     const latestByKey = new Map(events.map((event) => [providerKey(event), event]));
     const linkedEvents = await this.findLinkedEvents([...latestByKey.values()]);
     const linkedByKey = new Map(linkedEvents.map((row) => [providerKey(row), row]));
-    const updates: Array<{ id: string; participantCount: number | null }> = [];
 
     for (const event of latestByKey.values()) {
       const existingEvent = linkedByKey.get(providerKey(event));
@@ -92,24 +90,19 @@ export class IngestionPersistence {
         }, 'Skipped provider event with no linked sport event');
         continue;
       }
-      const before = normalizeSportEventRow(existingEvent);
-      const participantCount = event.participantCount ?? existingEvent.participantCount;
-      const after = { ...before, participantCount };
-
-      const disposition = resolveDisposition(before, after);
-      if (disposition !== 'UNCHANGED') {
-        updates.push({ id: existingEvent.id, participantCount });
-      }
+      // The provider changes nothing on a linked event itself (#2047): its field size is counted
+      // over its field rows on read, and its games and field are written by their own steps.
+      const row = normalizeSportEventRow(existingEvent);
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
         entityType: 'SportEvent',
-        disposition,
+        disposition: 'UNCHANGED',
         providerId: event.providerId,
         externalId: event.externalId,
         internalId: existingEvent.id,
         name: event.name,
-        before,
-        after,
+        before: row,
+        after: row,
       });
       count++;
       this.logger?.debug({
@@ -117,14 +110,7 @@ export class IngestionPersistence {
         externalId: event.externalId,
         sport: event.sport,
         name: event.name,
-        participantCount,
       }, 'Persisted sport event from ingestion');
-    }
-
-    if (updates.length > 0) {
-      await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(updates.map((update) =>
-        // poolmaster-allow-query-in-loop: the changed events of one provider feed (per-row values, one transaction)
-        this.prisma.sportEvent.update({ where: { id: update.id }, data: { participantCount: update.participantCount } }))));
     }
 
     this.logger?.info({ count }, 'Persisted sport events from ingestion');
@@ -569,7 +555,6 @@ function normalizeSportEventRow(row: {
   endDate: Date | null;
   status: SportEventStatus;
   rounds: number | null;
-  participantCount: number | null;
 }): Record<string, unknown> {
   return {
     externalId: row.externalId,
@@ -581,7 +566,6 @@ function normalizeSportEventRow(row: {
     endDate: row.endDate?.toISOString() ?? null,
     status: row.status,
     rounds: row.rounds,
-    participantCount: row.participantCount,
   };
 }
 

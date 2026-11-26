@@ -79,7 +79,7 @@ export async function contestOpening(
   const { readinessReasons } = evaluateEventOperationalState({
     status: sportEvent.status,
     startDate: sportEvent.startDate,
-    participantCount: sportEvent.loadedParticipantCount,
+    participantCount: sportEvent.participantCount,
     now,
   });
   if (readinessReasons.includes('EVENT_NOT_RELEASED') || readinessReasons.includes('FIELD_NOT_LOADED')) {
@@ -96,7 +96,7 @@ export interface EventOpeningFacts extends SportLeagueEvent {
   status: SportEventStatus;
   startDate: Date;
   rounds?: number | null;
-  loadedParticipantCount: number;
+  participantCount: number;
 }
 
 /** Whether a contest of one selection type can be created on an event, and for a bracket the rounds it can start at. */
@@ -141,7 +141,7 @@ export function eventContestOpenings(event: EventOpeningFacts, now: Date): Event
   const { readinessReasons, contestEligible } = evaluateEventOperationalState({
     status: event.status,
     startDate: event.startDate,
-    participantCount: event.loadedParticipantCount,
+    participantCount: event.participantCount,
     now,
   });
   const hasStarted = readinessReasons.includes('EVENT_STARTED');

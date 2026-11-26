@@ -80,7 +80,7 @@ export class PlayoffsReader {
     if (games.length === 0) return null;
     const { league } = this.source;
     const participants = toPlayoffsFieldParticipants(league, games);
-    const event = { ...toPlayoffsEvent(league, season, games, participants.length), participants };
+    const event = { ...toPlayoffsEvent(league, season, games), participants };
     // A league whose bracket is not built from its seeds gives no games: an admin builds its
     // bracket, and series games alone would not keep one.
     if (league.bracket === undefined || this.source.seedRanks === undefined) return event;
@@ -109,7 +109,6 @@ export class PlayoffsReader {
     return {
       ...event,
       participants: field,
-      participantCount: field.length,
       rounds: league.rounds.length,
       games: toPlayoffSeriesGames(games, bracket),
       ...(bracket !== null && { bracket }),

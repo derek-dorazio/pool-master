@@ -105,7 +105,7 @@ const gameName = (game: NcaaBracketGame) => `bracket game ${game.game_id === und
  * One event for a season's bracket, which must hold at least one game with a date. The
  * tournament is over once the bracket lists its championship and every game is done.
  */
-export function toNcaaTournamentEvent(scope: NcaaTournamentScope, games: readonly NcaaBracketGame[], participantCount?: number): SportEvent {
+export function toNcaaTournamentEvent(scope: NcaaTournamentScope, games: readonly NcaaBracketGame[]): SportEvent {
   const { league } = scope;
   const times = games.flatMap((game) => (game.date ? [Date.parse(game.date)] : []));
   if (times.length === 0) {
@@ -122,7 +122,6 @@ export function toNcaaTournamentEvent(scope: NcaaTournamentScope, games: readonl
     endDate: new Date(Math.max(...times)),
     status,
     rounds: tournamentRoundsOf(league),
-    participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     // A bracket game's code is the vendor's round, First Four included; an undated game has no place in time yet.
     providerSlots: slotPlaysOf(games.flatMap((game) => (game.date && game.round !== undefined

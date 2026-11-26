@@ -51,7 +51,7 @@ function toUtcDate(date: string): Date {
   return new Date(`${date}T00:00:00.000Z`);
 }
 
-export function toSportEvent(tournament: PgaTournament, participantCount?: number): SportEvent {
+export function toSportEvent(tournament: PgaTournament): SportEvent {
   if (tournament.status_state === PgaStatusState.UNKNOWN) {
     throw new BalldontlieContractError(
       `/pga/v2/tournaments ${String(tournament.id)}`,
@@ -70,7 +70,6 @@ export function toSportEvent(tournament: PgaTournament, participantCount?: numbe
     endDate: tournament.end_date ? toUtcDate(tournament.end_date) : undefined,
     status: EVENT_STATUS_BY_STATE[tournament.status_state],
     rounds: tournament.rounds.length > 0 ? tournament.rounds.length : undefined,
-    participantCount,
     // Once play starts the field cannot change.
     fieldLocked: tournament.status_state !== PgaStatusState.SCHEDULED,
     // A tournament's code is the vendor's id for it.

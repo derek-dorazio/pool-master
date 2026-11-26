@@ -49,7 +49,7 @@ export class WorldCupReader {
     const participants = toWorldCupFieldParticipants(matches);
     const bracket = toWorldCupBracket(matches);
     return {
-      ...toWorldCupEvent(scope, matches, participants.length),
+      ...toWorldCupEvent(scope, matches),
       participants,
       games: toWorldCupScheduledGames(matches),
       ...(bracket !== null && { bracket }),

@@ -41,7 +41,7 @@ describe('contest readiness', () => {
 
   it('fails the release and field checks exactly when the API gives those reasons, and names no tiers on a field not yet tiered', () => {
     const notReady = getContestReadinessChecks(buildSportEvent({
-      loadedParticipantCount: 0,
+      participantCount: 0,
       readinessStatus: 'NOT_RELEASED',
       readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
       contestEligible: false,

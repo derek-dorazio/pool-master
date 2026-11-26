@@ -165,7 +165,6 @@ class OperationalContractProvider implements SportDataProvider {
         endDate: new Date('2026-04-14T21:00:00.000Z'),
         status: 'SCHEDULED',
         rounds: 4,
-        participantCount: 2,
         fieldLocked: false,
         providerSlots: [],
       },
@@ -188,7 +187,6 @@ class OperationalContractProvider implements SportDataProvider {
       endDate: new Date('2026-04-14T21:00:00.000Z'),
       status: 'SCHEDULED',
       rounds: 4,
-      participantCount: 2,
       fieldLocked: false,
       providerSlots: [],
       participants: [
@@ -828,7 +826,6 @@ describe('Contract verification (root admin)', () => {
         endDate: new Date('2026-04-14T21:00:00.000Z'),
         status: 'SCHEDULED',
         rounds: 4,
-        participantCount: 2,
       },
     });
     await mapEventToProvider(getPrisma(), contractEvent.id, { providerId: 'balldontlie', externalId: 'event-1' });
@@ -1385,7 +1382,7 @@ describe('Contract verification (root admin)', () => {
       // tiers/rounds seeded in the same request (not the pre-seed zero snapshot)
       // and must match what a subsequent GET returns.
       expect(tournamentRes.json<SportEventResponse>().event.tierCount).toBe(6);
-      expect(tournamentRes.json<SportEventResponse>().event.loadedParticipantCount).toBe(0);
+      expect(tournamentRes.json<SportEventResponse>().event.participantCount).toBe(0);
       const tournamentGetRes = await getApp().inject({
         method: 'GET',
         url: `/api/v1/events/${eventId}`,
@@ -1393,7 +1390,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(tournamentGetRes.statusCode).toBe(200);
       expect(tournamentGetRes.json<SportEventResponse>().event.tierCount).toBe(tournamentRes.json<SportEventResponse>().event.tierCount);
-      expect(tournamentGetRes.json<SportEventResponse>().event.loadedParticipantCount).toBe(tournamentRes.json<SportEventResponse>().event.loadedParticipantCount);
+      expect(tournamentGetRes.json<SportEventResponse>().event.participantCount).toBe(tournamentRes.json<SportEventResponse>().event.participantCount);
 
       // --- listEvents by Season (200) -----------------------------------------
       const tournamentListRes = await getApp().inject({

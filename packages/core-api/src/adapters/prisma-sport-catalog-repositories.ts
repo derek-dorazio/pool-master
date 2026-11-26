@@ -1352,7 +1352,6 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     status: row.status,
     rounds: row.rounds ?? undefined,
     roundsPar: row.roundsPar ?? undefined,
-    participantCount: row.participantCount ?? undefined,
     slotDefinitions: row.slots
       .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)

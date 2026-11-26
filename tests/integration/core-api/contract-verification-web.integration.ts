@@ -350,7 +350,7 @@ describe('Contract verification (web)', () => {
         id: eventId,
         contestEligible: true,
         readinessStatus: 'CONTEST_ELIGIBLE',
-        loadedParticipantCount: 1,
+        participantCount: 1,
         // A member's read counts no admin numbers (#1198).
         adminCounts: null,
       });

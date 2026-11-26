@@ -270,7 +270,7 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       route: 'GET /api/v1/events/{eventId}',
       seed: async (golfers) => ({ ...(await seedEventWithField(golfers)), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}`, rootAdmin),
-      rowsShown: (response) => okBody(response, SportEventResponseSchema).event.loadedParticipantCount,
+      rowsShown: (response) => okBody(response, SportEventResponseSchema).event.participantCount,
     });
   });
 

@@ -43,7 +43,6 @@ describe('a College Football Playoff as an event', () => {
       startDate: new Date('2025-11-29T17:00:00.000Z'),
       endDate: new Date('2026-01-20T00:30:00.000Z'),
       status: 'COMPLETED',
-      participantCount: undefined,
       fieldLocked: true,
       providerSlots: season2025.map((game) => ({
         code: null, startsAt: new Date(game.date as string), endsAt: new Date(game.date as string), teams: [String(game.home_team?.id), String(game.visitor_team?.id)],

@@ -58,7 +58,7 @@ function required<Value>(value: Value | null | undefined, path: string, row: str
 const matchName = (match: SoccerMatch) => `match ${match.id === undefined ? '(no id)' : String(match.id)}`;
 
 /** One event for a matchweek's matches, which must be at least one. */
-export function toEplMatchweekEvent(scope: EplScope, matches: readonly SoccerMatch[], participantCount?: number): SportEvent {
+export function toEplMatchweekEvent(scope: EplScope, matches: readonly SoccerMatch[]): SportEvent {
   const times = matches.map((match) => Date.parse(required(match.date, EPL_MATCHES_PATH, matchName(match), 'date')));
   const status = eventStatusOf(matches.map((match) => PROGRESS_BY_STATE[match.status_state]), true);
   return {
@@ -70,7 +70,6 @@ export function toEplMatchweekEvent(scope: EplScope, matches: readonly SoccerMat
     endDate: new Date(Math.max(...times)),
     status,
     rounds: 1,
-    participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     // A league match's code is the vendor's round number: the regular season is all there is.
     providerSlots: slotPlaysOf(matches.map((match, index) => ({

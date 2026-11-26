@@ -12166,13 +12166,9 @@ export type SportEventDto = {
      */
     roundsParMax: number;
     /**
-     * Field size the provider reports, when it reports one; null otherwise.
+     * The event's field size: the teams or players on its field, counted on each read. 0 until the field loads.
      */
-    participantCount: number | null;
-    /**
-     * Number of event participants currently persisted for the event.
-     */
-    loadedParticipantCount: number;
+    participantCount: number;
     /**
      * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
      */
@@ -12628,13 +12624,9 @@ export type SportEventListResponse = {
          */
         roundsParMax: number;
         /**
-         * Field size the provider reports, when it reports one; null otherwise.
+         * The event's field size: the teams or players on its field, counted on each read. 0 until the field loads.
          */
-        participantCount: number | null;
-        /**
-         * Number of event participants currently persisted for the event.
-         */
-        loadedParticipantCount: number;
+        participantCount: number;
         /**
          * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
          */
@@ -13065,13 +13057,9 @@ export type SportEventResponse = {
          */
         roundsParMax: number;
         /**
-         * Field size the provider reports, when it reports one; null otherwise.
+         * The event's field size: the teams or players on its field, counted on each read. 0 until the field loads.
          */
-        participantCount: number | null;
-        /**
-         * Number of event participants currently persisted for the event.
-         */
-        loadedParticipantCount: number;
+        participantCount: number;
         /**
          * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
          */
