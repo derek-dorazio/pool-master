@@ -48,7 +48,7 @@ import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
 import { upperFirst } from '@/lib/upper-first';
-import { useEventRoundLabels } from './use-bracket-round-label';
+import { useEventRoundNames } from './use-bracket-round-label';
 import { useLeaderboardEventGames } from './use-event-games';
 
 /**
@@ -367,8 +367,19 @@ export function ContestLeaderboardPage() {
   const isTeamPicks = leaderboardQuery.data !== undefined
     && eventSportDefinition(leaderboardQuery.data).scoringFamily === ScoringFamily.HEAD_TO_HEAD;
   const gamesQuery = useLeaderboardEventGames(shownEventId, contestQuery.data?.status, isTeamPicks);
-  const roundName = useEventRoundLabels(shownEventId);
-  const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
+  const rounds = useEventRoundNames(shownEventId);
+  const roundName = rounds.nameOfRound;
+  // The board waits for its event's round names, so its round never shows as "Round N" first (#2200).
+  const leaderboardFallback = useLeaderboardFallback(
+    {
+      data: leaderboardQuery.data,
+      error: leaderboardQuery.error,
+      isError: leaderboardQuery.isError,
+      isLoading: leaderboardQuery.isLoading || rounds.isLoading,
+      refetch: leaderboardQuery.refetch,
+    },
+    { action: 'contestLeaderboard.load.failed', contestId },
+  );
 
   if (contestQuery.isLoading) {
     return <PendingPage testId="contest-leaderboard-pending"><LoadingState body="Loading contest leaderboard..." /></PendingPage>;

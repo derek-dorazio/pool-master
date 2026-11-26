@@ -54,7 +54,7 @@ export function resolveCurrentRound(
 
 /**
  * The current-round header cue, or null when there is no round to name yet. The round is named
- * by the slot it is played in (`useEventRoundLabels`, #2006), so it reads the same everywhere.
+ * by the slot it is played in (`useEventRoundNames`, #2006), so it reads the same everywhere.
  */
 export function formatCurrentRoundLabel(
   round: LeaderboardRound | null,

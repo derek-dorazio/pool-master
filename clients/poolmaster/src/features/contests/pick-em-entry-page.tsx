@@ -53,7 +53,7 @@ import {
   type PickEmGame,
   type PickEmTeam,
 } from './pick-em-week';
-import { useEventRoundLabels } from './use-bracket-round-label';
+import { useEventRoundNames } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
 import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
 import { useEntryName } from './use-entry-name';
@@ -80,7 +80,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const sportEventId = requestedEventId ?? currentContestEvent(contest)?.sportEventId ?? '';
   // A playoff survivor pool's round on screen (#785), until the member switches: the one being picked.
   const [requestedRound, setRequestedRound] = useState<number | null>(null);
-  const nameOfRound = useEventRoundLabels(sportEventId);
+  const eventRounds = useEventRoundNames(sportEventId);
+  const nameOfRound = eventRounds.nameOfRound;
   const tieLabel = contestTieLabel(contest.sport);
   const match = contestMatchNoun(contest.sport);
   const participant = contestParticipantNoun(contest.sport);
@@ -110,7 +111,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     setRequestedEventId(next);
   };
 
-  if (gamePicksQuery.isLoading || entryQuery.isLoading) {
+  // The page waits for its event's round names too, so a round never shows as "Round N" first (#2200).
+  if (gamePicksQuery.isLoading || entryQuery.isLoading || eventRounds.isLoading) {
     return <LoadingState body="Loading picks..." />;
   }
   if (gamePicksQuery.isError || !gamePicksQuery.data) {
