@@ -238,7 +238,7 @@ export async function writeGameScores(
     ...placed.flatMap(({ feed, gameId, match: placedMatch }) => {
       if (placedMatch.slot.seriesGames !== 1 || feed.state === ProviderGameState.FINAL) return [];
       const match = rewritten.get(placedMatch.id) ?? placedMatch;
-      return [{ match, externalId: feed.providerGameId, status: liveStatusOf(feed, match), gameScored: scoredGameIds.has(gameId) }];
+      return [{ match, externalId: feed.providerGameId, status: liveStatusOf(feed, match, sidesOf, teamsOf), gameScored: scoredGameIds.has(gameId) }];
     }),
     ...series.flatMap((each) => {
       if (each.winnerSideNumber !== null) return [];
@@ -534,8 +534,9 @@ const GAME_STATUS_BY_STATE: Readonly<Record<ProviderGameState, MatchStatus>> = {
 /**
  * The provider's score of the game as its Game holds it, on the match's sides: a played game's
  * score, where each side played and its shoot-out; none for one not under way. Null when there is
- * nothing to write: the Game already holds it, or a played game has no score or teams that are
- * not the match's.
+ * nothing to write: the Game already holds it, a played game has no score or teams that are not
+ * the match's, or the Game is a single game's that the result writes (a final, or a match decided
+ * or cancelled).
  */
 function gameScoreOf(
   game: GameScoreUpdate,
@@ -546,6 +547,9 @@ function gameScoreOf(
   now: Date,
 ): Omit<SportEventRoundMatchGameScoreWrite, 'id'> | null {
   const status = GAME_STATUS_BY_STATE[game.state];
+  // A single game's Game 1 is its match: its final score is the result's to write (recordResult),
+  // and a match with a result, or cancelled, takes no live score.
+  if (match.slot.seriesGames === 1 && (status === MatchStatus.COMPLETED || (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS))) return null;
   const played = status === MatchStatus.IN_PROGRESS || status === MatchStatus.COMPLETED;
   const score = played ? resultFromGame(game, match, sidesOf, teamsOf) : null;
   if (played && score === null) return null;
@@ -572,7 +576,12 @@ function defaultHomeAway(match: SportEventRoundMatch, sideNumber: number): HomeA
  * match has a result or was cancelled, a live game has no score yet or teams that are not the
  * match's, or a game not under way meets a match already in its state.
  */
-function liveStatusOf(game: GameScoreUpdate, match: SportEventRoundMatch): MatchStatusWrite['status'] | null {
+function liveStatusOf(
+  game: GameScoreUpdate,
+  match: SportEventRoundMatch,
+  sidesOf: ReadonlyMap<string, string>,
+  teamsOf: ReadonlyMap<string, string>,
+): MatchStatusWrite['status'] | null {
   if (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS) return null;
   if (game.state === ProviderGameState.POSTPONED) return match.status === MatchStatus.POSTPONED ? null : MatchStatus.POSTPONED;
   if (game.state !== ProviderGameState.IN_PROGRESS) {
@@ -580,7 +589,7 @@ function liveStatusOf(game: GameScoreUpdate, match: SportEventRoundMatch): Match
       || (match.status === MatchStatus.POSTPONED && game.state === ProviderGameState.SCHEDULED);
     return backToScheduled ? MatchStatus.SCHEDULED : null;
   }
-  if (game.homeScore === null || game.awayScore === null) return null;
+  if (resultFromGame(game, match, sidesOf, teamsOf) === null) return null;
   return match.status === MatchStatus.IN_PROGRESS ? null : MatchStatus.IN_PROGRESS;
 }
 

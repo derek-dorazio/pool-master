@@ -7,7 +7,6 @@
  * Scaffolding only: no assertions and no test-specific results here.
  */
 import {
-  MatchEnding,
   MatchSide,
   MatchStatus,
   PredictedResult,
@@ -19,6 +18,7 @@ import {
   type TeamChoice,
 } from '@poolmaster/shared/domain';
 import { bracketRoundSlots } from './round-slots';
+import { homeAwayOf, legacyMatch, withHomeAway } from './match-sides';
 
 const T0 = new Date('2027-01-01T00:00:00.000Z');
 
@@ -38,7 +38,7 @@ export interface BracketMatchSpec {
 export function bracketMatches(sportEventId: string, specs: readonly BracketMatchSpec[], slotOf?: (roundNumber: number) => SportEventRoundSlot): SportEventRoundMatch[] {
   const rounds = Math.max(0, ...specs.map((spec) => spec.round));
   const slots = bracketRoundSlots(rounds);
-  return specs.map((spec) => ({
+  return specs.map((spec) => legacyMatch({
     id: `m${spec.matchNumber}`,
     sportEventId,
     roundNumber: spec.round,
@@ -46,21 +46,9 @@ export function bracketMatches(sportEventId: string, specs: readonly BracketMatc
     matchNumber: spec.matchNumber,
     homeSportEventParticipantId: spec.home,
     awaySportEventParticipantId: spec.away,
-    isNeutralSite: false,
-    scheduledDate: null,
-    status: MatchStatus.SCHEDULED,
-    winnerSide: null,
-    homeScore: null,
-    awayScore: null,
-    homeShootoutScore: null,
-    awayShootoutScore: null, ending: MatchEnding.PLAYED,
     advancesToMatchId: spec.advancesTo ? `m${spec.advancesTo.matchNumber}` : null,
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region ?? null,
-    homeSpread: null,
-    resultSource: null,
-    completedAt: null,
-    periodScores: [],
     createdAt: T0,
     updatedAt: T0,
   }));
@@ -149,15 +137,14 @@ export function withResults(bracket: readonly SportEventRoundMatch[], results: R
   return bracket.map((match) => {
     const result = results.get(match.matchNumber);
     if (result === undefined) return match;
-    return {
-      ...match,
-      homeSportEventParticipantId: result.home ?? match.homeSportEventParticipantId,
-      awaySportEventParticipantId: result.away ?? match.awaySportEventParticipantId,
+    return withHomeAway(match, {
+      homeSportEventParticipantId: result.home ?? homeAwayOf(match).homeSportEventParticipantId,
+      awaySportEventParticipantId: result.away ?? homeAwayOf(match).awaySportEventParticipantId,
       status: MatchStatus.COMPLETED,
       winnerSide: result.winner,
       homeScore: result.homeScore ?? null,
       awayScore: result.awayScore ?? null,
-    };
+    });
   });
 }
 

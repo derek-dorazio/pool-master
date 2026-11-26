@@ -8,7 +8,7 @@
  * in its own region. A side an earlier match's link fills keeps that winner.
  */
 
-import { finalRoundsOfMatches, isMatchUnplayed, matchSideOfSideNumber, MatchSide, MatchStatus, PeriodKind, sideNumberOfMatchSide, sideParticipantId, winnerParticipantId, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { finalRoundsOfMatches, isMatchUnplayed, matchSideOfSideNumber, MatchSide, MatchStatus, sideNumberOfMatchSide, sideParticipantId, winnerParticipantId, type SportEventRoundMatch, hasPeriodScores } from '@poolmaster/shared/domain';
 
 /**
  * Both sides of one match of a reseeded round, as the admin sets them: the host on the home side,
@@ -110,7 +110,7 @@ export function roundPlacementBlocker(bracket: readonly SportEventRoundMatch[], 
   }
   // A game with a quarter score (#772) has started, though its status may still read SCHEDULED.
   const started = bracket.filter((match) => match.roundNumber === roundNumber
-    && (!isMatchUnplayed(match.status) || match.games.some((game) => game.sideResults.some((result) => result.periodScores.some((period) => period.kind !== PeriodKind.SHOOTOUT)))));
+    && (!isMatchUnplayed(match.status) || hasPeriodScores(match)));
   if (started.length > 0) {
     return {
       code: 'BRACKET_ROUND_ALREADY_PLAYED',

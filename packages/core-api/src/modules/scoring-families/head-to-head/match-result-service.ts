@@ -69,6 +69,7 @@ import {
   type SportEventRoundMatch,
   type SportEventRoundMatchGame,
   type SportMatchPeriods,
+  hasPeriodScores,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
@@ -131,11 +132,6 @@ function pendingOutcomes(match: SportEventRoundMatch): MatchResultWrite['outcome
 /** Game 1's period scores of play, each side's running totals by period number. */
 function runningRegularPeriods(game: SportEventRoundMatchGame | null): { periodNumber: number; totals: ReadonlyMap<number, number> }[] {
   return game === null ? [] : runningPeriodScores(game).filter((period) => period.kind === PeriodKind.REGULAR);
-}
-
-/** Whether a match has a score at any period of its Game 1 (#772). */
-function hasPeriodScores(match: SportEventRoundMatch): boolean {
-  return gameNumbered(match, 1)?.sideResults.some((result) => result.periodScores.some((period) => period.kind !== PeriodKind.SHOOTOUT)) ?? false;
 }
 
 /** The match as a result leaves it: its status, its sides' outcomes and its Game 1's scores. */

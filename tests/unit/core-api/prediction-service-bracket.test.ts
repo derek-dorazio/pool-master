@@ -5,6 +5,7 @@
  * once the event is under way its picks are scored and revealed. Against an in-memory world, so
  * each test asserts the stored picks, the entry's status and the view rather than the calls.
  */
+import { withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   ContestEntryStatus,
@@ -373,7 +374,7 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
     const sportEventId = expectDefined(context.games.matches.get('m1')).sportEventId;
     Object.assign(expectDefined(context.games.field.get('T1')), { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
     context.games.addTeam(sportEventId, 'Lucky Loser', { id: 'LL' });
-    context.games.putMatches([...context.games.matches.values()].map((match) => (match.matchNumber === 1 ? { ...match, homeSportEventParticipantId: 'LL' } : match)));
+    context.games.putMatches([...context.games.matches.values()].map((match) => (match.matchNumber === 1 ? withHomeAway(match, { homeSportEventParticipantId: 'LL' }) : match)));
   }
 
   it('keeps the entry\'s picks of the withdrawn team, each busted as a first-round loss, rather than dropping them', async () => {

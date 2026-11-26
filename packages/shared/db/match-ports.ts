@@ -64,7 +64,10 @@ export interface MatchResultWrite {
   /** When a COMPLETED result was written (#1889); null for any other status. */
   completedAt: Date | null;
   outcomes: readonly { sideNumber: number; outcome: MatchSideOutcome }[];
-  /** Game 1's side scores in a single-game match; null leaves the match's Games as they are (a series). */
+  /**
+   * Game 1's side scores in a single-game match, whose Game 1 takes the match's status and
+   * completion time with them; null leaves the match's Games as they are (a series, a cancellation).
+   */
   gameOne: { gameId: string; scores: readonly GameSideScoreWrite[] } | null;
 }
 

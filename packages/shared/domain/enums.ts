@@ -1345,7 +1345,8 @@ export const RoundStatusOrder = explicitOrder<RoundStatus>({
  * Who set a match's result (#1496): the provider its game is linked to, the only writer on a
  * synced event (#2074). A test event's results are written by the test-data loader in its place.
  * No column holds it (#2046 dropped it, PROVIDER being its only value): the API answers PROVIDER
- * for a COMPLETED match until the web app stops reading it (#2046 part b).
+ * for a COMPLETED or CANCELLED match, a match with a result, until the web app stops reading it
+ * (#2046 part b).
  */
 export const MatchResultSource = {
   PROVIDER: 'PROVIDER',

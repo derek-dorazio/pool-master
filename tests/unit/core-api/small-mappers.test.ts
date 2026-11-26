@@ -2,6 +2,7 @@
  * The short mappers (#1481): each one's nullable and optional fields, its rollups and its dates,
  * one named case per branch.
  */
+import { legacyMatch, type HomeAwayFields } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import type { LeaguePaymentRecord, PayerPaymentRecord } from '@poolmaster/shared/db';
 import {
@@ -22,6 +23,7 @@ import {
   type EmailMessage,
   type SportConfig,
   type SportEventRoundMatch,
+  MatchEnding,
 } from '@poolmaster/shared/domain';
 import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, GAME_PICKS_TIEBREAKER_MAX, SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
 import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
@@ -59,8 +61,8 @@ import { weekRoundSlot } from '../../support/round-slots';
 const AT = new Date('2026-03-01T12:00:00.000Z');
 const ISO = AT.toISOString();
 
-function match(overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
-  return {
+function match(overrides: HomeAwayFields & Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
+  return legacyMatch({
     id: 'm1',
     sportEventId: 'e1',
     roundNumber: 1,
@@ -76,14 +78,14 @@ function match(overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMa
     awayScore: null,
     homeShootoutScore: null,
     awayShootoutScore: null,
-    ending: null,
+    ending: MatchEnding.PLAYED,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,
     homeSpread: null,
     periodScores: [],
     ...overrides,
-  } as unknown as SportEventRoundMatch;
+  });
 }
 
 describe('mapSportLeaguePositionToDto', () => {
@@ -103,7 +105,7 @@ describe('mapSportLeaguePositionToDto', () => {
 describe('mapSportEventRoundMatchToDto', () => {
   it('sends the scheduled date as ISO and each period score as its number and two scores only', () => {
     const dto = mapSportEventRoundMatchToDto(match({
-      periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 3, id: 'p1' }] as unknown as SportEventRoundMatch['periodScores'],
+      periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 3 }],
     }));
 
     expect(dto.scheduledDate).toBe(ISO);

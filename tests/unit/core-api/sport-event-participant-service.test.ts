@@ -1,6 +1,7 @@
+import { legacyMatch } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { MatchEnding, MatchStatus, SlotKind, Sport, SportEventStatus, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
+import { SlotKind, Sport, SportEventStatus, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
@@ -323,12 +324,10 @@ describe('SportEventParticipantService — changing the field', () => {
   it('refuses to remove a team a bracket match names (409 EVENT_PARTICIPANT_IN_BRACKET), keeping the row', async () => {
     const { store, service, sport, event } = setup(Sport.BASKETBALL);
     const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id);
-    store.matchRows.push({
+    store.matchRows.push(legacyMatch({
       id: 'match-1', sportEventId: event.id, roundNumber: 1, slot: roundSlot(SlotKind.FINAL), matchNumber: 1,
       homeSportEventParticipantId: null, awaySportEventParticipantId: duke.id, isNeutralSite: true,
-      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
-    });
+    }));
 
     await expect(service.removeParticipant(event.id, duke.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_IN_BRACKET', statusCode: 409 });
     expect(store.field.map((entry) => entry.id)).toEqual([duke.id]);

@@ -12,10 +12,10 @@
  * - Cara picks the Jets: out in week 1.
  * - Dan picks the Bills, then leaves week 2 in draft: out in week 2.
  */
+import { legacyMatch, withHomeAway, homeAwayOf, type HomeAwayFields } from '../../support/match-sides';
 import { fakeLogger } from '../../support/fake-logger';
 import { expect, jest } from '@jest/globals';
 import {
-  MatchEnding,
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
@@ -27,6 +27,7 @@ import {
   SurvivorWeekOutcome,
   type ContestEntry,
   type SportEventRoundMatch,
+  matchParticipantIds,
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { ContestOperationError, ContestService } from '../../../packages/core-api/src/modules/contests/service';
@@ -66,7 +67,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
   const g1 = games.addGame(week1.id, 1, WEEK_1);
   const g2 = games.addGame(week1.id, 2, later(WEEK_1, 24));
   const participantOf = (game: SportEventRoundMatch, side: 'home' | 'away') =>
-    expectDefined(games.field.get(expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId))).participantId;
+    expectDefined(games.field.get(expectDefined(side === 'home' ? homeAwayOf(game).homeSportEventParticipantId : homeAwayOf(game).awaySportEventParticipantId))).participantId;
   const team: Record<TeamName, string> = {
     Bills: participantOf(g1, 'home'),
     Jets: participantOf(g1, 'away'),
@@ -97,8 +98,8 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
 
   /** The field row the team plays the game from. */
   const sideOf = (game: SportEventRoundMatch, name: TeamName) => {
-    const row = [game.homeSportEventParticipantId, game.awaySportEventParticipantId]
-      .find((id) => id !== null && games.field.get(id)?.participantId === team[name]);
+    const row = matchParticipantIds(game)
+      .find((id) => games.field.get(id)?.participantId === team[name]);
     return expectDefined(row ?? undefined);
   };
   const users = new Map<string, string>();
@@ -171,7 +172,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
   });
 
   const play = (game: SportEventRoundMatch, winner: MatchSide | null) => {
-    games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore: 20, awayScore: winner === null ? 20 : 10 }]);
+    games.putMatches([withHomeAway(expectDefined(games.matches.get(game.id)), { status: MatchStatus.COMPLETED, winnerSide: winner, homeScore: 20, awayScore: winner === null ? 20 : 10 })]);
   };
   const cancel = (game: SportEventRoundMatch) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.CANCELLED }]);
@@ -215,14 +216,12 @@ function survivorWeek(overrides: Partial<SurvivorWeek> & Pick<SurvivorWeek, 'spo
   return { roundNumber: 1, started: true, cancelled: false, submitted: true, games: [], pick: null, pickedParticipantId: null, ...overrides };
 }
 
-function game(id: string, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
-  return {
+function game(id: string, overrides: HomeAwayFields & Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
+  return legacyMatch({
     id, sportEventId: 'week', roundNumber: 1, slot: weekRoundSlot(), matchNumber: 1,
     homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`,
-    isNeutralSite: false, scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null,
-    homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
     createdAt: T0, updatedAt: T0, ...overrides,
-  };
+  });
 }
 
 describe('survivorPickOutcome', () => {

@@ -54,7 +54,8 @@ export function mapSportEventRoundMatchToDto(match: SportEventRoundMatch): Sport
     homeShootoutScore: gameOne === null ? null : shootoutScoreOf(gameOne, HOME),
     awayShootoutScore: gameOne === null ? null : shootoutScoreOf(gameOne, AWAY),
     ending: match.ending,
-    resultSource: isFinal ? MatchResultSource.PROVIDER : null,
+    // The feed is the only writer (#2074): a match with a result, a cancellation included, has it from the feed.
+    resultSource: isFinal || match.status === MatchStatus.CANCELLED ? MatchResultSource.PROVIDER : null,
     completedAt: match.completedAt?.toISOString() ?? null,
     advancesToMatchId: match.advancesToMatchId,
     advancesToSide: match.advancesToSideNumber === null ? null : matchSideOfSideNumber(match.advancesToSideNumber),

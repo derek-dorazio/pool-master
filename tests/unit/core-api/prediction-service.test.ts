@@ -3,6 +3,7 @@
  * submitting, and what another team sees — against an in-memory world, so each test asserts the
  * stored picks and the week's status rather than the calls that wrote them.
  */
+import { withHomeAway, homeAwayOf } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
 import {
@@ -122,7 +123,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   const pick = (game: SportEventRoundMatch, confidence: number | null, side: 'home' | 'away' = 'home'): ContestEntryMatchPredictionWrite => ({
     sportEventRoundMatchId: game.id,
     predictedResult: PredictedResult.TEAM,
-    sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
+    sportEventParticipantId: expectDefined(side === 'home' ? homeAwayOf(game).homeSportEventParticipantId : homeAwayOf(game).awaySportEventParticipantId),
     confidence,
   });
   const tiePick = (game: SportEventRoundMatch, confidence: number | null): ContestEntryMatchPredictionWrite => ({
@@ -177,8 +178,8 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
     expect(view.gameCount).toBe(3);
     expect(view.status).toBe(ContestEntryStatus.DRAFT);
     expect(context.storedPicks()).toEqual([
-      ['game-1', context.games.thursday.homeSportEventParticipantId, 3],
-      ['game-2', context.games.sunday.awaySportEventParticipantId, 1],
+      ['game-1', homeAwayOf(context.games.thursday).homeSportEventParticipantId, 3],
+      ['game-2', homeAwayOf(context.games.sunday).awaySportEventParticipantId, 1],
     ]);
   });
 
@@ -266,7 +267,7 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
     await expectRefused(
       context.service.saveGamePicks({
         ...context.input,
-        picks: [{ sportEventRoundMatchId: context.games.sunday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.games.thursday.homeSportEventParticipantId ?? '', confidence: 99 }],
+        picks: [{ sportEventRoundMatchId: context.games.sunday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: homeAwayOf(context.games.thursday).homeSportEventParticipantId ?? '', confidence: 99 }],
       }),
       'PREDICTION_TEAM_NOT_IN_GAME', 400,
     );
@@ -605,7 +606,7 @@ describe('PredictionService — after the week\'s first kickoff', () => {
     const view = await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, 2, 'away')] });
 
     expect(view.status).toBe(ContestEntryStatus.SUBMITTED);
-    expect(context.storedPicks()).toContainEqual(['game-2', context.games.sunday.awaySportEventParticipantId, 2]);
+    expect(context.storedPicks()).toContainEqual(['game-2', homeAwayOf(context.games.sunday).awaySportEventParticipantId, 2]);
   });
 
   it('refuses a confidence change that would leave the submitted week invalid with 409 PREDICTION_CONFIDENCE_INVALID', async () => {
@@ -615,7 +616,7 @@ describe('PredictionService — after the week\'s first kickoff', () => {
       'PREDICTION_CONFIDENCE_INVALID', 409,
     );
     expect(context.weekStatus()).toBe(ContestEntryStatus.SUBMITTED);
-    expect(context.storedPicks()).toContainEqual(['game-2', context.games.sunday.homeSportEventParticipantId, 2]);
+    expect(context.storedPicks()).toContainEqual(['game-2', homeAwayOf(context.games.sunday).homeSportEventParticipantId, 2]);
   });
 
   it('refuses a change that leaves a submitted week with a game unpicked with 409 PREDICTION_WEEK_INCOMPLETE, not a confidence error', async () => {
@@ -697,8 +698,8 @@ describe('PredictionService.getGamePicks — what each viewer sees', () => {
     await submitFullWeek(context);
     const { thursday, sunday, monday } = context.games;
     context.week.putMatches([
-      { ...thursday, status: MatchStatus.COMPLETED, winnerSide: 'HOME', homeScore: 24, awayScore: 17 },
-      { ...monday, status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 20, awayScore: 20 },
+      withHomeAway(thursday, { status: MatchStatus.COMPLETED, winnerSide: 'HOME', homeScore: 24, awayScore: 17 }),
+      withHomeAway(monday, { status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 20, awayScore: 20 }),
     ]);
 
     const view = await context.service.getGamePicks(context.input);
@@ -765,7 +766,7 @@ describe('PredictionService — tie picks (#792)', () => {
     expect(context.storedPicks()).toEqual([['game-2', null, null]]);
 
     await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, null, 'away')] });
-    expect(context.storedPicks()).toEqual([['game-2', context.games.sunday.awaySportEventParticipantId, null]]);
+    expect(context.storedPicks()).toEqual([['game-2', homeAwayOf(context.games.sunday).awaySportEventParticipantId, null]]);
   });
 
   it('submits a confidence week whose picks include a tie, each value used once', async () => {
@@ -810,7 +811,7 @@ describe('PredictionService.previewGames on a pick\'em setup, before it is saved
     expect(preview.gameCount).toBe(3);
     expect(preview.games.map((row) => row.match.matchNumber)).toEqual([1, 2, 3]);
     expect(preview.pickedCount).toBe(2);
-    expect(preview.games[0].pick).toMatchObject({ sportEventParticipantId: context.games.thursday.homeSportEventParticipantId, confidence: 3 });
+    expect(preview.games[0].pick).toMatchObject({ sportEventParticipantId: homeAwayOf(context.games.thursday).homeSportEventParticipantId, confidence: 3 });
     expect(context.storedPicks()).toEqual([]);
   });
 

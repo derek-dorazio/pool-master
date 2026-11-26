@@ -164,7 +164,11 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
       await tx.sportEventRoundMatch.update({ where: { id }, data: values });
       // poolmaster-allow-query-in-loop: a match's two sides
       for (const { sideNumber, outcome } of outcomes) await tx.sportEventRoundMatchSide.updateMany({ where: { sportEventRoundMatchId: id, sideNumber }, data: { outcome } });
-      if (gameOne !== null) await writeSideScores(tx, id, gameOne.gameId, gameOne.scores);
+      if (gameOne !== null) {
+        // A single game's Game 1 is the match: it takes the result's status and completion time.
+        await tx.sportEventRoundMatchGame.update({ where: { id: gameOne.gameId }, data: { status: values.status, completedAt: values.completedAt } });
+        await writeSideScores(tx, id, gameOne.gameId, gameOne.scores);
+      }
       if (sideFill) {
         await tx.sportEventRoundMatchSide.updateMany({
           where: { sportEventRoundMatchId: sideFill.id, sideNumber: sideFill.sideNumber },

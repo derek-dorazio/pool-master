@@ -1,3 +1,4 @@
+import { homeAwayOf, legacyMatch } from '../../support/match-sides';
 import { sportPlay } from '../../support/sport-play';
 import {
   MatchEnding,
@@ -62,11 +63,11 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     return { name, entry, participant };
   });
   const idOf = (name: string | null) => (name === null ? null : rows.find((row) => row.name === name)?.entry.id ?? null);
-  const matches: SportEventRoundMatch[] = matchInputs.map((input) => ({
+  const matches: SportEventRoundMatch[] = matchInputs.map((input) => (legacyMatch({
     id: `match-${input.matchNumber}`,
     sportEventId: event.id,
     roundNumber: input.round,
-    slot: bracketRoundSlots(2)[input.round - 1],
+    slot: bracketRoundSlots(Math.max(2, ...matchInputs.map((each) => each.round)))[input.round - 1],
     matchNumber: input.matchNumber,
     homeSportEventParticipantId: idOf(input.home),
     awaySportEventParticipantId: idOf(input.away),
@@ -87,7 +88,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     periodScores: [],
     createdAt: new Date('2027-03-18T16:00:00.000Z'),
     updatedAt: new Date('2027-03-18T16:00:00.000Z'),
-  }));
+  })));
   return rows.map(({ entry, participant }) => ({
     entry,
     participant,
@@ -95,7 +96,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     standing: null,
     rounds: [],
     raceResult: null,
-    matches: matches.filter((match) => match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id),
+    matches: matches.filter((match) => homeAwayOf(match).homeSportEventParticipantId === entry.id || homeAwayOf(match).awaySportEventParticipantId === entry.id),
     affiliatedWithSportLeague: true,
   }));
 }

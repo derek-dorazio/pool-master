@@ -31,6 +31,7 @@ import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../
 import type { ChampionshipService } from '../../../packages/core-api/src/modules/championship/service';
 import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { SquaresAutoDrawScheduler } from '../../../packages/core-api/src/modules/selections/squares-auto-draw-scheduler';
+import { homeAwayOf, legacyMatch, withHomeAway, type HomeAwayFields } from '../../support/match-sides';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
@@ -116,8 +117,8 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
   const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: squares.repo(), championship: { recordContest: async () => 0 } });
 
   const actor = (name: string, isRootAdmin = false): SquaresActor => ({ userId: expectDefined(users.get(name)), isRootAdmin });
-  const updateGame = (changes: Partial<SportEventRoundMatch>) => {
-    games.putMatches([{ ...expectDefined(games.matches.get(game.id)), ...changes }]);
+  const updateGame = (changes: HomeAwayFields & Partial<SportEventRoundMatch>) => {
+    games.putMatches([withHomeAway(expectDefined(games.matches.get(game.id)), changes)]);
   };
   /** Draws digits in order, as if the shuffle had left them unmoved, so a score's last digits name its box. */
   const drawInOrder = () => {
@@ -137,8 +138,9 @@ async function expectRefused(promise: Promise<unknown>, code: string, statusCode
   expect(error).toMatchObject({ code, statusCode });
 }
 
-function scoredGame(overrides: Partial<SportEventRoundMatch>): Pick<SportEventRoundMatch, 'status' | 'homeScore' | 'awayScore' | 'periodScores'> {
-  return { status: MatchStatus.IN_PROGRESS, homeScore: null, awayScore: null, periodScores: [], ...overrides };
+/** A game with its home and away scores and its quarters' running scores on Game 1 (#2046). */
+function scoredGame(overrides: HomeAwayFields & Partial<SportEventRoundMatch>): SportEventRoundMatch {
+  return legacyMatch({ id: 'game', status: MatchStatus.IN_PROGRESS, ...overrides });
 }
 
 const period = (periodNumber: number, homeScore: number, awayScore: number) => ({ periodNumber, homeScore, awayScore });
@@ -294,7 +296,9 @@ describe('SquaresService reading the board', () => {
     expect(board.game.id).toBe(context.game.id);
     expect([board.awayTeamName, board.homeTeamName]).toEqual(['Away 1', 'Home 1']);
     expect(gameReads.mock.calls).toEqual([[context.game.id]]);
-    expect(fieldReads.mock.calls).toEqual([[[context.game.homeSportEventParticipantId, context.game.awaySportEventParticipantId]]]);
+    const teams = homeAwayOf(context.game);
+    // Its two sides' field rows, side 1 (away) first.
+    expect(fieldReads.mock.calls).toEqual([[[teams.awaySportEventParticipantId, teams.homeSportEventParticipantId]]]);
   });
 
   it('refuses a board whose game is not one of its contest\'s event, as a broken setup', async () => {

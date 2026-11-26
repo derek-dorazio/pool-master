@@ -1,0 +1,217 @@
+/**
+ * Matches with sides and Games (#2046), built from the home-and-away shape tests have always
+ * written: home is side 2 and away side 1, as the sync and the API name them. Test code only.
+ *
+ * `legacyMatch` builds a domain match from the old row's fields; `homeAwayOf` reads one back the
+ * way the API's DTO still does (`mapSportEventRoundMatchToDto`), so an assertion can name home and
+ * away; `withHomeAway` changes some of those fields on a built match.
+ */
+import {
+  HomeAway,
+  MatchEnding,
+  MatchSide,
+  MatchSideOutcome,
+  MatchStatus,
+  PeriodKind,
+  SlotKind,
+  sideNumberOfMatchSide,
+  type SportEventRoundMatch,
+  type SportEventRoundMatchGame,
+  type SportEventRoundMatchGameSideResult,
+  type SportEventRoundMatchSide,
+} from '@poolmaster/shared/domain';
+import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
+import { mapSportEventRoundMatchToDto } from '../../packages/core-api/src/mappers/sport-event-matches.mapper';
+import type { MatchResultInput, PeriodScoreInput } from '../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
+import { roundSlot } from './round-slots';
+
+const T0 = new Date('2026-01-01T00:00:00.000Z');
+export const HOME_SIDE = sideNumberOfMatchSide(MatchSide.HOME);
+export const AWAY_SIDE = sideNumberOfMatchSide(MatchSide.AWAY);
+
+/** A Game 1 period's running totals, home and away, as the API gives them. */
+export interface RunningPeriod {
+  periodNumber: number;
+  homeScore: number;
+  awayScore: number;
+}
+
+/** The old match row's home-and-away fields, each optional. */
+export interface HomeAwayFields {
+  homeSportEventParticipantId?: string | null;
+  awaySportEventParticipantId?: string | null;
+  winnerSide?: MatchSide | null;
+  /** Game 1's score in a single game; in a series, the games each side has won. */
+  homeScore?: number | null;
+  awayScore?: number | null;
+  homeShootoutScore?: number | null;
+  awayShootoutScore?: number | null;
+  homeSpread?: number | null;
+  advancesToSide?: MatchSide | null;
+  /** Game 1's REGULAR periods as running totals. */
+  periodScores?: readonly RunningPeriod[];
+  /** Ignored: the column is gone (#2046). */
+  resultSource?: unknown;
+}
+
+/** A match's own fields with the old home-and-away ones; every field but the place has a default. */
+export type LegacyMatchRow = Partial<Omit<SportEventRoundMatch, 'sides' | 'games' | 'advancesToSideNumber'>>
+  & Pick<SportEventRoundMatch, 'id'> & HomeAwayFields & { games?: readonly SportEventRoundMatchGame[] };
+
+/** The object without the named keys. */
+function omitKeys<T extends object, K extends keyof T>(value: T, keys: readonly K[]): Omit<T, K> {
+  return Object.fromEntries(Object.entries(value).filter(([key]) => !(keys as readonly PropertyKey[]).includes(key))) as Omit<T, K>;
+}
+
+/** A match built from its old home-and-away row. A series' score becomes one Game per game won. */
+export function legacyMatch(row: LegacyMatchRow): SportEventRoundMatch {
+  const {
+    homeSportEventParticipantId = null, awaySportEventParticipantId = null, winnerSide = null, homeScore = null, awayScore = null,
+    homeShootoutScore = null, awayShootoutScore = null, homeSpread = null, advancesToSide = null, periodScores = [],
+    games, ...rest
+  } = row;
+  const match = omitKeys(rest, ['resultSource']);
+  const base = {
+    sportEventId: 'event',
+    roundNumber: 1,
+    slot: roundSlot(SlotKind.TOURNAMENT),
+    matchNumber: 1,
+    isNeutralSite: false,
+    scheduledDate: null,
+    status: MatchStatus.SCHEDULED,
+    ending: MatchEnding.PLAYED,
+    advancesToMatchId: null,
+    regionLabel: null,
+    completedAt: null,
+    createdAt: T0,
+    updatedAt: T0,
+    ...match,
+  };
+  const outcomeOf = (side: MatchSide): MatchSideOutcome => {
+    if (winnerSide !== null) return winnerSide === side ? MatchSideOutcome.WON : MatchSideOutcome.LOST;
+    return base.status === MatchStatus.COMPLETED ? MatchSideOutcome.TIED : MatchSideOutcome.PENDING;
+  };
+  const sides: SportEventRoundMatchSide[] = [
+    { id: `${base.id}-s1`, sideNumber: AWAY_SIDE, sportEventParticipantId: awaySportEventParticipantId, spread: homeSpread === null ? null : 0 - homeSpread, outcome: outcomeOf(MatchSide.AWAY) },
+    { id: `${base.id}-s2`, sideNumber: HOME_SIDE, sportEventParticipantId: homeSportEventParticipantId, spread: null, outcome: outcomeOf(MatchSide.HOME) },
+  ];
+  return {
+    ...base,
+    advancesToSideNumber: advancesToSide === null ? null : sideNumberOfMatchSide(advancesToSide),
+    sides,
+    games: games ?? gamesOf(base, sides, { homeScore, awayScore, homeShootoutScore, awayShootoutScore, periodScores }),
+  };
+}
+
+type MatchBase = Pick<SportEventRoundMatch, 'id' | 'sportEventId' | 'roundNumber' | 'slot' | 'isNeutralSite' | 'scheduledDate' | 'status' | 'completedAt'>;
+
+function gamesOf(
+  match: MatchBase,
+  sides: readonly SportEventRoundMatchSide[],
+  scores: Pick<HomeAwayFields, 'homeScore' | 'awayScore' | 'homeShootoutScore' | 'awayShootoutScore'> & { periodScores: readonly RunningPeriod[] },
+): SportEventRoundMatchGame[] {
+  const homeAway = (sideNumber: number): HomeAway => {
+    if (match.isNeutralSite) return HomeAway.NONE;
+    return sideNumber === HOME_SIDE ? HomeAway.HOME : HomeAway.AWAY;
+  };
+  const game = (gameNumber: number, status: MatchStatus, completedAt: Date | null, scoreOf: (sideNumber: number) => number | null, periods: (sideNumber: number) => SportEventRoundMatchGameSideResult['periodScores']): SportEventRoundMatchGame => ({
+    id: `${match.id}-g${String(gameNumber)}`,
+    sportEventId: match.sportEventId,
+    sportEventRoundMatchId: match.id,
+    sportEventSlotId: `event-slot-${String(match.roundNumber)}`,
+    gameNumber,
+    scheduledDate: gameNumber === 1 ? match.scheduledDate : null,
+    status,
+    completedAt,
+    movedToGameId: null,
+    lastProviderNotificationAt: null,
+    createdAt: T0,
+    updatedAt: T0,
+    sideResults: sides.map((side) => ({ sportEventRoundMatchSideId: side.id, sideNumber: side.sideNumber, score: scoreOf(side.sideNumber), homeAway: homeAway(side.sideNumber), periodScores: periods(side.sideNumber) })),
+  });
+  const homeScore = scores.homeScore ?? null;
+  const awayScore = scores.awayScore ?? null;
+  if (match.slot.seriesGames > 1) {
+    // A series' score is games won: home wins its games first, then away its own. One with none won has its Game 1 to play.
+    const winners = [...Array<number>(homeScore ?? 0).fill(HOME_SIDE), ...Array<number>(awayScore ?? 0).fill(AWAY_SIDE)];
+    if (winners.length === 0) return [game(1, MatchStatus.SCHEDULED, null, () => null, () => [])];
+    return winners.map((winner, index) => game(index + 1, MatchStatus.COMPLETED, match.completedAt, (sideNumber) => (sideNumber === winner ? 100 : 90), () => []));
+  }
+  const scoreOf = (sideNumber: number) => (sideNumber === HOME_SIDE ? homeScore : awayScore);
+  const shootoutOf = (sideNumber: number) => (sideNumber === HOME_SIDE ? scores.homeShootoutScore : scores.awayShootoutScore) ?? null;
+  const periodsOf = (sideNumber: number) => {
+    const totals = [...scores.periodScores].sort((left, right) => left.periodNumber - right.periodNumber);
+    const regular = totals.map((period, index) => {
+      const pick = (each: RunningPeriod) => (sideNumber === HOME_SIDE ? each.homeScore : each.awayScore);
+      return { kind: PeriodKind.REGULAR, periodNumber: period.periodNumber, score: pick(period) - (index === 0 ? 0 : pick(totals[index - 1])) };
+    });
+    const shootout = shootoutOf(sideNumber);
+    return shootout === null ? regular : [...regular, { kind: PeriodKind.SHOOTOUT, periodNumber: 1, score: shootout }];
+  };
+  const single = match.slot.seriesGames === 1;
+  return [game(1, single ? match.status : MatchStatus.SCHEDULED, single ? match.completedAt : null, scoreOf, periodsOf)];
+}
+
+/** A match's home-and-away fields as the API still reads them (#2046 part b moves the API to sides). */
+export function homeAwayOf(match: SportEventRoundMatch): SportEventRoundMatchDto {
+  return mapSportEventRoundMatchToDto(match);
+}
+
+/** The match with some of its home-and-away fields changed; its Games are rebuilt only when a score field or the status is named. */
+export function withHomeAway(match: SportEventRoundMatch, fields: HomeAwayFields & Partial<Omit<SportEventRoundMatch, 'sides' | 'games'>>): SportEventRoundMatch {
+  const view = homeAwayOf(match);
+  // A single game's Game 1 takes the match's status, as a result writes it.
+  const rebuildsGames = ['homeScore', 'awayScore', 'homeShootoutScore', 'awayShootoutScore', 'periodScores', 'status'].some((key) => key in fields);
+  const { games } = match;
+  const own = omitKeys(match, ['sides', 'games', 'advancesToSideNumber']);
+  const rebuilt = legacyMatch({
+    ...own,
+    homeSportEventParticipantId: view.homeSportEventParticipantId,
+    awaySportEventParticipantId: view.awaySportEventParticipantId,
+    winnerSide: view.winnerSide,
+    homeSpread: view.homeSpread,
+    advancesToSide: view.advancesToSide,
+    homeScore: view.homeScore,
+    awayScore: view.awayScore,
+    homeShootoutScore: view.homeShootoutScore,
+    awayShootoutScore: view.awayShootoutScore,
+    periodScores: view.periodScores,
+    ...(rebuildsGames ? {} : { games }),
+    ...fields,
+  });
+  // A side keeps its id and its outcome unless the result changes.
+  return 'winnerSide' in fields || 'status' in fields ? rebuilt : { ...rebuilt, sides: rebuilt.sides.map((side, index) => ({ ...side, outcome: match.sides[index].outcome })) };
+}
+
+/** A result request in the old home-and-away shape. */
+export interface HomeAwayResultRequest {
+  winnerSide: MatchSide | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  homeShootoutScore?: number | null;
+  awayShootoutScore?: number | null;
+  ending?: MatchEnding;
+}
+
+/** A result request in the old home-and-away shape, as the result service takes it. */
+export function homeAwayResult({ winnerSide, homeScore, awayScore, homeShootoutScore = null, awayShootoutScore = null, ending }: HomeAwayResultRequest): MatchResultInput {
+  return {
+    winnerSideNumber: winnerSide === null ? null : sideNumberOfMatchSide(winnerSide),
+    sides: [
+      { sideNumber: AWAY_SIDE, score: awayScore, shootoutScore: awayShootoutScore },
+      { sideNumber: HOME_SIDE, score: homeScore, shootoutScore: homeShootoutScore },
+    ],
+    ...(ending !== undefined && { ending }),
+  };
+}
+
+/** A period's running totals in the old home-and-away shape, as the result service takes them. */
+export function homeAwayPeriod({ homeScore, awayScore }: { homeScore: number; awayScore: number }): PeriodScoreInput {
+  return [{ sideNumber: AWAY_SIDE, score: awayScore }, { sideNumber: HOME_SIDE, score: homeScore }];
+}
+
+/** Puts a team on a stored match's home or away side, as a test arranging the store does. */
+export function placeTeam(match: SportEventRoundMatch, side: MatchSide, sportEventParticipantId: string | null): void {
+  const sideNumber = sideNumberOfMatchSide(side);
+  match.sides = match.sides.map((each) => (each.sideNumber === sideNumber ? { ...each, sportEventParticipantId } : each));
+}

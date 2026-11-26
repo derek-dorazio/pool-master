@@ -24,6 +24,8 @@ import type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
+  GameSideScoreWrite,
+  MatchSideTeam,
   SportEventRoundMatchGameRepository,
   SportEventRoundMatchRepository,
   SportEventRepository,
@@ -41,7 +43,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -78,7 +80,54 @@ const T0 = new Date('2026-01-01T00:00:00.000Z');
 
 /** A round's slot as the round read gives it (#2006). */
 function roundSlotOf({ id, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot): SportEventRoundSlot {
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing };
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false };
+}
+
+/** A Game read back, as a database hands it: a copy, its side results in side order. */
+function copyGame(game: SportEventRoundMatchGame): SportEventRoundMatchGame {
+  return {
+    ...game,
+    sideResults: [...game.sideResults]
+      .sort((left, right) => left.sideNumber - right.sideNumber)
+      .map((result) => ({
+        ...result,
+        periodScores: [...result.periodScores]
+          .sort((left, right) => PeriodKindOrder.orderIndex[left.kind] - PeriodKindOrder.orderIndex[right.kind] || left.periodNumber - right.periodNumber)
+          .map((period) => ({ ...period })),
+      })),
+  };
+}
+
+/** A match read back: a copy, with its sides and its Games in order. */
+function copyMatch(match: SportEventRoundMatch): SportEventRoundMatch {
+  return {
+    ...match,
+    sides: [...match.sides].sort((left, right) => left.sideNumber - right.sideNumber).map((side) => ({ ...side })),
+    games: [...match.games].sort((left, right) => left.gameNumber - right.gameNumber).map(copyGame),
+  };
+}
+
+/** A Game with each side's score written, where it played when given, and its shoot-out or none (as the Prisma adapter's writeSideScores). */
+function withSideScores(match: SportEventRoundMatch, game: SportEventRoundMatchGame, scores: readonly (GameSideScoreWrite & { homeAway?: HomeAway })[]): SportEventRoundMatchGame {
+  const results = [...game.sideResults];
+  for (const { sideNumber, score, shootoutScore, homeAway } of scores) {
+    const side = match.sides.find((each) => each.sideNumber === sideNumber);
+    if (!side) throw new Error('unknown side');
+    const index = results.findIndex((result) => result.sideNumber === sideNumber);
+    const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, periodScores: [] } : results[index];
+    const written = {
+      ...stored,
+      score,
+      homeAway: homeAway ?? stored.homeAway,
+      periodScores: [
+        ...stored.periodScores.filter((period) => period.kind !== PeriodKind.SHOOTOUT),
+        ...(shootoutScore === null ? [] : [{ kind: PeriodKind.SHOOTOUT, periodNumber: 1, score: shootoutScore }]),
+      ],
+    };
+    if (index === -1) results.push(written);
+    else results[index] = written;
+  }
+  return { ...game, sideResults: results };
 }
 
 /** The profiles every in-memory sport league names (#1844); `platformTierProfileRepo` and `platformPricingProfileRepo` serve them. */
@@ -255,9 +304,12 @@ export class InMemorySportEvents {
   golfRoundRows: SportEventParticipantGolfRound[] = [];
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
   raceResultRows: SportEventParticipantRaceResult[] = [];
+  /** Each match with its sides and its Games (#2007, #2046). */
   matchRows: SportEventRoundMatch[] = [];
-  /** Each match's Games (#2007), with each one's provider ids. */
-  gameRows: SportEventRoundMatchGame[] = [];
+  /** Every match's Games (#2007): read from `matchRows`, where they are kept. */
+  get gameRows(): SportEventRoundMatchGame[] {
+    return this.matchRows.flatMap((match) => match.games);
+  }
   gameMappings: Array<{ sportEventRoundMatchGameId: string; providerCode: string; externalId: string }> = [];
   /** Each provider notification recorded against events (#1499). */
   readonly providerNotifications: ProviderNotificationReceipt[] = [];
@@ -940,9 +992,9 @@ export class InMemorySportEvents {
         }),
       raceResult: raceResult ? { ...raceResult } : null,
       matches: this.matchRows
-        .filter((match) => match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id)
+        .filter((match) => match.sides.some((side) => side.sportEventParticipantId === entry.id))
         .sort(compareMatchPlaces)
-        .map((match) => ({ ...match, periodScores: [...match.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) })),
+        .map(copyMatch),
       affiliatedWithSportLeague: this.participants.some((row) => row.id === entry.participantId && row.sportLeagueId === sportLeagueId),
     };
   }
@@ -1028,9 +1080,23 @@ export class InMemorySportEvents {
     return { standing: { ...standing }, golf: { ...golf } };
   }
 
+  /** The match a Game is on, and the Game. */
+  private requireGame(id: string): { match: SportEventRoundMatch; game: SportEventRoundMatchGame } {
+    for (const match of this.matchRows) {
+      const game = match.games.find((each) => each.id === id);
+      if (game) return { match, game };
+    }
+    throw new Error('unknown game');
+  }
+
+  /** Replaces one Game of its match. */
+  private putGame(match: SportEventRoundMatch, game: SportEventRoundMatchGame): void {
+    match.games = [...match.games.filter((each) => each.id !== game.id), game].sort((left, right) => left.gameNumber - right.gameNumber);
+  }
+
   gameRepo(): SportEventRoundMatchGameRepository {
     const mapped = (game: SportEventRoundMatchGame, providerCode: string) => ({
-      game: { ...game },
+      game: copyGame(game),
       externalId: this.gameMappings.find((mapping) => mapping.sportEventRoundMatchGameId === game.id && mapping.providerCode === providerCode)?.externalId ?? null,
     });
     return {
@@ -1042,23 +1108,30 @@ export class InMemorySportEvents {
         .filter((game) => this.gameMappings.some((mapping) => mapping.sportEventRoundMatchGameId === game.id && mapping.providerCode === providerCode && externalIds.includes(mapping.externalId)))
         .map((game) => mapped(game, providerCode)),
       applySync: async ({ providerCode, created, mapped: maps, moved, scores }) => {
-        this.gameRows.push(...created.map((game) => stamp({
-          ...game, scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
-        })));
+        for (const game of created) {
+          const match = this.matchRows.find((row) => row.id === game.sportEventRoundMatchId);
+          if (!match) throw new Error('unknown match');
+          this.putGame(match, stamp({ ...game, scheduledDate: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null, sideResults: [] }));
+        }
         const ids = new Set(maps.map((each) => each.externalId));
         const games = new Set(maps.map((each) => each.sportEventRoundMatchGameId));
         this.gameMappings = [
           ...this.gameMappings.filter((mapping) => mapping.providerCode !== providerCode || (!ids.has(mapping.externalId) && !games.has(mapping.sportEventRoundMatchGameId))),
           ...maps.map((each) => ({ ...each, providerCode })),
         ];
-        for (const { id, ...values } of [...moved, ...scores]) {
-          const row = this.gameRows.find((game) => game.id === id);
-          if (!row) throw new Error('unknown game');
-          Object.assign(row, values);
+        for (const { id, movedToGameId } of moved) {
+          const { match, game } = this.requireGame(id);
+          this.putGame(match, { ...game, movedToGameId });
+        }
+        for (const { id, sides, ...values } of scores) {
+          const { match, game } = this.requireGame(id);
+          this.putGame(match, withSideScores(match, { ...game, ...values }, sides));
         }
       },
       recordProviderNotification: async (gameIds, receivedAt) => {
-        for (const row of this.gameRows) if (gameIds.includes(row.id)) row.lastProviderNotificationAt = receivedAt;
+        for (const match of this.matchRows) {
+          match.games = match.games.map((game) => (gameIds.includes(game.id) ? { ...game, lastProviderNotificationAt: receivedAt } : game));
+        }
       },
     };
   }
@@ -1067,16 +1140,22 @@ export class InMemorySportEvents {
     const findBySportEvents = async (sportEventIds: readonly string[]) => this.matchRows
       .filter((row) => sportEventIds.includes(row.sportEventId))
       .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || compareMatchPlaces(left, right))
-      .map((row) => ({ ...row, periodScores: [...row.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) }));
+      .map(copyMatch);
     const requireRow = (id: string) => {
       const row = this.matchRows.find((match) => match.id === id);
       if (!row) throw new Error('unknown match');
       return row;
     };
+    const setTeams = (row: SportEventRoundMatch, teams: readonly MatchSideTeam[]) => {
+      row.sides = row.sides.map((side) => {
+        const team = teams.find((each) => each.sideNumber === side.sideNumber);
+        return team === undefined ? side : { ...side, sportEventParticipantId: team.sportEventParticipantId };
+      });
+    };
     return {
       findById: async (id) => {
         const row = this.matchRows.find((match) => match.id === id);
-        return row ? { ...row, periodScores: [...row.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) } : null;
+        return row ? copyMatch(row) : null;
       },
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
@@ -1089,70 +1168,64 @@ export class InMemorySportEvents {
           return round;
         };
         for (const match of matches) roundOf(match.roundNumber);
-        // As the Prisma adapter does: the event's Games go with its matches, and each match has its Game 1.
+        // As the Prisma adapter does: the event's Games go with its matches, and each match has its sides and its Game 1.
         const goneGames = new Set(this.gameRows.filter((game) => game.sportEventId === sportEventId).map((game) => game.id));
         this.gameMappings = this.gameMappings.filter((mapping) => !goneGames.has(mapping.sportEventRoundMatchGameId));
-        this.gameRows = [
-          ...this.gameRows.filter((game) => game.sportEventId !== sportEventId),
-          ...matches.map((match) => stamp({
-            id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${match.roundNumber}`, gameNumber: 1,
-            scheduledDate: match.scheduledDate, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, completedAt: null,
-            movedToGameId: null, lastProviderNotificationAt: null,
-          })),
-        ];
         this.matchRows = [
           ...this.matchRows.filter((row) => row.sportEventId !== sportEventId),
-          ...matches.map((match) => stamp({
-            ...match,
-            sportEventId,
-            slot: roundOf(match.roundNumber).slot,
-            homeSpread: null,
-            resultSource: null,
-            completedAt: null,
-            periodScores: [],
-            status: MatchStatus.SCHEDULED,
-            winnerSide: null,
-            homeScore: null,
-            awayScore: null,
-            homeShootoutScore: null,
-            awayShootoutScore: null, ending: MatchEnding.PLAYED,
-          })),
+          ...matches.map(({ sides, ...match }) => {
+            const stored = sides.map((side) => ({ id: `${match.id}-s${String(side.sideNumber)}`, sideNumber: side.sideNumber, sportEventParticipantId: side.sportEventParticipantId, spread: null, outcome: MatchSideOutcome.PENDING }));
+            return stamp({
+              ...match,
+              sportEventId,
+              slot: roundOf(match.roundNumber).slot,
+              completedAt: null,
+              status: MatchStatus.SCHEDULED,
+              ending: MatchEnding.PLAYED,
+              sides: stored,
+              games: [stamp({
+                id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${String(match.roundNumber)}`, gameNumber: 1,
+                scheduledDate: match.scheduledDate, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
+                sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, periodScores: [] })),
+              })],
+            });
+          }),
         ];
       },
-      applyLiveScores: async (scores) => {
-        for (const { id, ...values } of scores) {
-          const row = this.matchRows.find((match) => match.id === id);
-          if (!row) throw new Error('unknown match');
+      applyStatuses: async (statuses) => {
+        for (const { id, status } of statuses) {
+          const row = requireRow(id);
           // As the Prisma adapter does: a match with a result or cancelled keeps it.
-          if (isMatchUnplayed(row.status) || row.status === MatchStatus.IN_PROGRESS) Object.assign(row, values);
+          if (isMatchUnplayed(row.status) || row.status === MatchStatus.IN_PROGRESS) row.status = status;
         }
       },
-      placeSides: async (sides, jobs) => {
+      placeSides: async (matches, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
-        for (const { id, ...placed } of sides) {
-          const row = this.matchRows.find((match) => match.id === id);
-          if (!row) throw new Error('unknown match');
-          Object.assign(row, placed);
-        }
+        for (const { id, sides } of matches) setTeams(requireRow(id), sides);
       },
-      update: async (id, patch, jobs) => {
+      update: async (id, { sides = [], spread, gameOneHomeAway = [], ...patch }, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
-        const row = this.matchRows.find((match) => match.id === id);
-        if (!row) throw new Error('unknown match');
-        Object.assign(row, Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)));
+        const row = requireRow(id);
+        Object.assign(row, patch);
+        setTeams(row, sides);
+        if (spread !== undefined) row.sides = row.sides.map((side) => (side.sideNumber === 1 ? { ...side, spread } : side));
+        row.games = row.games.map((game) => (game.gameNumber !== 1 ? game : {
+          ...game,
+          sideResults: game.sideResults.map((result) => ({ ...result, homeAway: gameOneHomeAway.find((each) => each.sideNumber === result.sideNumber)?.homeAway ?? result.homeAway })),
+        }));
       },
       applyResult: async ({ result, sideFill, standings, jobs }) => {
         this.backgroundJobs.push(...(jobs ?? []));
-        const { id, ...values } = result;
-        const row = this.matchRows.find((match) => match.id === id);
-        if (!row) throw new Error('unknown match');
+        const { id, outcomes, gameOne, ...values } = result;
+        const row = requireRow(id);
         Object.assign(row, values);
-        if (sideFill) {
-          const next = this.matchRows.find((match) => match.id === sideFill.id);
-          if (!next) throw new Error('unknown match');
-          if (sideFill.side === MatchSide.HOME) next.homeSportEventParticipantId = sideFill.sportEventParticipantId;
-          else next.awaySportEventParticipantId = sideFill.sportEventParticipantId;
+        row.sides = row.sides.map((side) => ({ ...side, outcome: outcomes.find((each) => each.sideNumber === side.sideNumber)?.outcome ?? side.outcome }));
+        if (gameOne !== null) {
+          const game = row.games.find((each) => each.id === gameOne.gameId);
+          if (!game) throw new Error('unknown game');
+          this.putGame(row, withSideScores(row, { ...game, status: values.status, completedAt: values.completedAt }, gameOne.scores));
         }
+        if (sideFill) setTeams(requireRow(sideFill.id), [sideFill]);
         for (const { sportEventParticipantId, ...standing } of standings) {
           let stored = this.standingRows.find((candidate) => candidate.sportEventParticipantId === sportEventParticipantId);
           if (!stored) {
@@ -1162,10 +1235,24 @@ export class InMemorySportEvents {
           Object.assign(stored, standing);
         }
       },
-      savePeriodScore: async (sportEventRoundMatchId, score, jobs) => {
+      saveGamePeriodScores: async ({ sportEventRoundMatchId, gameId, sides }, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
         const row = requireRow(sportEventRoundMatchId);
-        row.periodScores = [...row.periodScores.filter((other) => other.periodNumber !== score.periodNumber), { ...score }];
+        const game = row.games.find((each) => each.id === gameId);
+        if (!game) throw new Error('unknown game');
+        // A Game's periods of play are replaced together; its shoot-out stays.
+        const withResults = withSideScores(row, game, []);
+        const results = [...withResults.sideResults];
+        for (const { sideNumber, periodScores } of sides) {
+          const side = row.sides.find((each) => each.sideNumber === sideNumber);
+          if (!side) throw new Error('unknown side');
+          const index = results.findIndex((each) => each.sideNumber === sideNumber);
+          const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, periodScores: [] } : results[index];
+          const written = { ...stored, periodScores: [...stored.periodScores.filter((period) => period.kind === PeriodKind.SHOOTOUT), ...periodScores.map((period) => ({ ...period }))] };
+          if (index === -1) results.push(written);
+          else results[index] = written;
+        }
+        this.putGame(row, { ...game, sideResults: results });
       },
     };
   }

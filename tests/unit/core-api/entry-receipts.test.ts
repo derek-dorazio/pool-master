@@ -3,6 +3,7 @@
  * survivor week. The contest world is in memory; the email service is the real one over an
  * in-memory outbox, so the tests assert on the emails recorded.
  */
+import { legacyMatch } from '../../support/match-sides';
 import { jest } from '@jest/globals';
 import {
   ContestEntryStatus,
@@ -10,7 +11,6 @@ import {
   SelectionType,
   Sport,
   type ContestEntryMatchPrediction,
-  type SportEventRoundMatch,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
@@ -49,7 +49,7 @@ function game(options: {
   const away = team(options.away);
   const home = team(options.home);
   return {
-    match: {
+    match: legacyMatch({
       id: options.id,
       homeSportEventParticipantId: home.sportEventParticipantId,
       awaySportEventParticipantId: away.sportEventParticipantId,
@@ -57,7 +57,7 @@ function game(options: {
       homeSpread: options.homeSpread ?? null,
       roundNumber: options.roundNumber ?? 1, slot: namedSlotOfRound(options.roundNumber ?? 1, slotNames),
       matchNumber: options.matchNumber ?? 1,
-    } as SportEventRoundMatch,
+    }),
     kickoff: options.kickoff ?? KICKOFF,
     home,
     away,
