@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { profileWords } from '@poolmaster/shared/display-strings';
+import { displayString, profileWords } from '@poolmaster/shared/display-strings';
 import {
   findBudgetPricingProblem,
   formatDollars,
@@ -50,7 +50,7 @@ function toDraft(values: BudgetPricingProfile | EventPricingConfig): PricingDraf
 /** The request the dialog would send, with the profile the values started from, or the first thing wrong with it. */
 function parseDraft(platformPricingProfileId: string, draft: PricingDraft): { pricing: AutoAssignSportEventPricesRequest; error: null } | { pricing: null; error: string } {
   if (platformPricingProfileId === '') {
-    return { pricing: null, error: 'Choose the pricing profile the values start from.' };
+    return { pricing: null, error: displayString('word.choosePricingProfile') };
   }
   const parsed = AutoAssignSportEventPricesRequestSchema.safeParse({
     platformPricingProfileId,

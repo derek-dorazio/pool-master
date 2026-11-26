@@ -1,4 +1,4 @@
-import { enumLabel, profileWords, tierLabel } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel, profileWords, tierLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -118,7 +118,7 @@ export function EventSettingsDialog({
 
   /** The profile the event was priced from, by its words (#2205); one since deleted is said so. */
   const pricedFromName = (profileId: string | null): string => {
-    if (profileId === null) return 'A deleted profile';
+    if (profileId === null) return displayString('word.deletedProfile');
     // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
     const profile = platformPricingProfilesQuery.data?.find((candidate) => candidate.id === profileId);
     return profile ? profileWords('pricingProfile', profile).name : '…';

@@ -635,6 +635,17 @@ describe('Event page ⚙ dialog', () => {
     );
   });
 
+  it('says an event was priced from a deleted profile when the profile it recorded is gone, still naming the values', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/field', {
+      event: tournament({ pricing: { platformPricingProfileId: null, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } }),
+    });
+
+    const dialog = await openSettings();
+    expect(within(dialog).getByTestId('root-admin-event-settings-dialog-priced-with')).toHaveTextContent(
+      'A deleted profile: $50,000 cap · $100 unit · best 30% · worst 12% · steepness 4',
+    );
+  });
+
   it('lists the event\'s tiers in tier order and opens the Tiers dialog from ⚙ while they are editable, but offers no edit once released', async () => {
     const { unmount } = renderEventPage('/manage/sports/golf/events/tour-1/field');
     const released = await openSettings();
