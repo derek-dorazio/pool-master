@@ -18,6 +18,7 @@ import {
   sportAllowsSelectionType,
   sportLeagueDefinitionOf,
   placeInRanges,
+  templateBracketRounds,
   templateCoverageProblem,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
@@ -1424,23 +1425,21 @@ function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[
 
 describe('Seeded knockout round points cover every round a template lists', () => {
   /**
-   * Every template a knockout round-points contest scores a whole bracket by: it covers all its
-   * listed slots, none of them a tournament (an event of its own, whose rounds its slots do not
-   * show). Each listed slot is a round of the bracket but the third-place play-off, a match beside
-   * the bracket that is no round of it.
+   * Every template a knockout round-points contest scores a whole bracket by, with the bracket
+   * rounds its slots list (`templateBracketRounds`): the third-place play-off is no round of it.
    */
   async function bracketTemplates() {
     const all = await new PrismaContestConfigTemplateRepository(getAppPrisma()).list();
     return all.flatMap((template) => {
       const scoring = template.configJson.scoring;
-      if (template.coverageMode !== TemplateCoverageMode.ALL_LISTED || scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS') return [];
-      if (template.slots.some((slot) => slot.slotKind === SlotKind.TOURNAMENT)) return [];
-      const rounds = template.slots.filter((slot) => slot.slotKind !== SlotKind.THIRD_PLACE).map((slot) => slot.slotKind);
+      const listed = templateBracketRounds(template, template.slots);
+      if (scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS' || listed === null) return [];
+      const rounds = listed.map((slot) => slot.slotKind);
       return [{ template, roundValues: scoring.config.roundValues, upsetBonus: scoring.config.upsetBonus, rounds }];
     });
   }
 
-  it('gives every knockout round-points template one round value for each bracket round it lists, so no round, the final included, scores nothing', async () => {
+  it('gives every knockout round-points template one round value for each bracket round it lists, so no round, the final included, scores nothing, and the MLS and Champions League templates list the play-in round they score first', async () => {
     const templates = await bracketTemplates();
     const problems = templates.flatMap(({ template, roundValues, rounds }) => (roundValues.length === rounds.length
       ? []
@@ -1448,6 +1447,8 @@ describe('Seeded knockout round points cover every round a template lists', () =
 
     expect(templates.length).toBeGreaterThan(50);
     expect(problems).toEqual([]);
+    expect(templates.filter(({ template }) => ['mls-bracket-doubling', 'champions-league-bracket-doubling'].includes(template.templateKey)).map(({ rounds }) => rounds))
+      .toEqual(Array.from({ length: 2 }, () => [SlotKind.PLAY_IN, SlotKind.ROUND_OF_16, SlotKind.QUARTERFINAL, SlotKind.SEMIFINAL, SlotKind.FINAL]));
   });
 
   it('scores a champion who wins every round a knockout template lists the sum of its round values, the final its last value, in every league', async () => {

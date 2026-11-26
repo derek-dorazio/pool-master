@@ -117,7 +117,9 @@ const SPORTS: readonly SportScenario[] = [
   { sport: Sport.FOOTBALL, seed: oneEventOf('american-football-2026-nfl-playoffs-test.json', 'NFL', 'NFL Playoffs') },
   { sport: Sport.HOCKEY, seed: oneEventOf('hockey-2026-nhl-playoffs-test.json', 'NHL', 'Stanley Cup Playoffs') },
   { sport: Sport.BASEBALL, seed: oneEventOf('baseball-2025-mlb-postseason-test.json', 'MLB', 'MLB Postseason') },
-  { sport: Sport.SOCCER, seed: oneEventOf('soccer-2022-fifa-world-cup-test.json', 'FIFA World Cup', 'FIFA World Cup') },
+  // The Women's World Cup: the men's test seed is the 2022 edition's 16-team knockout, four rounds,
+  // and the men's presets score the five rounds of today's 48-team format, Round of 32 on (#2177).
+  { sport: Sport.SOCCER, seed: oneEventOf('soccer-2023-fifa-womens-world-cup-test.json', 'FIFA Women\'s World Cup', 'FIFA Women\'s World Cup') },
   { sport: Sport.TENNIS, seed: oneEventOf('tennis-2026-us-open-test.json', 'ATP', 'US Open') },
 ];
 
