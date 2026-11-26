@@ -9,7 +9,7 @@ import { UpsetBonusRule, type KnockoutRoundPointsSettings } from './contest-scor
 import { isPredictionSelectionType } from './contest-validity';
 import { PickEmMode, SelectionType } from './enums';
 import type { SportNoun } from './sports';
-import { getTieredRosterSize, getTiersInPlay } from './tiered-roster';
+import { getTieredRosterSize } from './tiered-roster';
 
 /**
  * Money as budget contests show it (#93): whole dollars, grouped, such as "$50,000". Prices and
@@ -69,17 +69,14 @@ function formatCountedScores(countedScores: number, rosterSize: number | null) {
       : `The best ${countedScores} scores count.`;
 }
 
-function formatTieredRules({ countedScores, picksPerTier, tiersUsed }: TieredRules, tierCount: number, participant: SportNoun) {
+function formatTieredRules({ countedScores, picksPerTier }: TieredRules, tierCount: number, participant: SportNoun) {
   const golfers = countParticipants(picksPerTier, participant);
-  const inPlay = getTiersInPlay(tierCount, tiersUsed);
   const pick = tierCount === 0
-    ? tiersUsed === undefined ? `Pick ${golfers} from each of the event's tiers.` : `Pick ${golfers} from each of the event's first ${tiersUsed} tiers.`
-    : inPlay < tierCount
-      ? `Pick ${golfers} from each of the first ${inPlay} of ${tierCount} tiers.`
-      : tierCount === 1
-        ? `Pick ${golfers} from the event's one tier.`
-        : `Pick ${golfers} from each of ${tierCount} tiers.`;
-  const rosterSize = tierCount > 0 ? getTieredRosterSize(inPlay, picksPerTier) : null;
+    ? `Pick ${golfers} from each of the event's tiers.`
+    : tierCount === 1
+      ? `Pick ${golfers} from the event's one tier.`
+      : `Pick ${golfers} from each of ${tierCount} tiers.`;
+  const rosterSize = tierCount > 0 ? getTieredRosterSize(tierCount, picksPerTier) : null;
   return `${pick} ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
@@ -134,28 +131,9 @@ export function describeSquaresRules(maxSquaresPerEntry: number) {
 /** A round of a knockout event by its number, in the event's words: "Sweet 16", "Divisional Round". */
 export type RoundName = (roundNumber: number) => string;
 
-/** Until an event's round names are known, a round reads by its number. */
-const numberedRoundName: RoundName = (roundNumber) => `Round ${roundNumber}`;
-
-/** Whether a bracket starting at this round is a second-chance bracket (#721): any round after the first. */
-export function isSecondChanceBracket(startsAtRound: number) {
-  return startsAtRound > 1;
-}
-
-/**
- * A bracket contest's rules (#721): every game picked to the final before the first game, or for
- * a second-chance bracket, every game from its starting round on, before that round's first game.
- * `startRoundName` is that round's name, or null for a full bracket.
- */
-export function describeBracketRules(startRoundName: string | null = null) {
-  return startRoundName === null
-    ? 'Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.'
-    : `Second-chance bracket from the ${startRoundName}: pick the winner of every game from the ${startRoundName} on, all the way to the final, before its first game.`;
-}
-
-/** "Full bracket" or "From the Sweet 16": where a bracket starts, as its choice reads. */
-export function formatBracketStartLabel(startsAtRound: number, roundName: RoundName) {
-  return isSecondChanceBracket(startsAtRound) ? `From the ${roundName(startsAtRound)}` : 'Full bracket';
+/** A bracket contest's rules (#721): every game picked to the final before the first game. */
+export function describeBracketRules() {
+  return 'Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.';
 }
 
 /**
@@ -163,14 +141,13 @@ export function formatBracketStartLabel(startsAtRound: number, roundName: RoundN
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.
  * `tierCount` is the event's; an event with no tiers yet still reads sensibly. `participant` is
  * what the event's sport calls a competitor. `salaryCap` is the event's too, named in a budget
- * sentence when it is known. `roundName` names a second-chance bracket's starting round.
+ * sentence when it is known.
  */
 export function formatContestRules(
   configuration: ContestRules,
   tierCount: number,
   participant: SportNoun,
   salaryCap: number | null = null,
-  roundName: RoundName = numberedRoundName,
 ) {
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
@@ -182,7 +159,7 @@ export function formatContestRules(
     case SelectionType.PICK_EM:
       return describePickEmRules(configuration);
     case SelectionType.BRACKET:
-      return describeBracketRules(isSecondChanceBracket(configuration.startsAtRound) ? roundName(configuration.startsAtRound) : null);
+      return describeBracketRules();
     case SelectionType.SURVIVOR:
       return describeSurvivorRules(configuration.reuseTeamsOnceAllUsed ?? true, configuration.lives ?? SURVIVOR_LIVES_DEFAULT);
     case SelectionType.SQUARES:
@@ -225,7 +202,7 @@ export function formatEntriesPerTeamSentence(maxEntriesPerSquad: number | null |
 /**
  * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6" or
  * "The Masters Budget Pick 6", "The Masters Sweepstake" for a random draw, "NFL Week 1 Pick'em",
- * "March Madness Bracket" or "March Madness Second-Chance Bracket", until the commissioner types
+ * or "March Madness Bracket", until the commissioner types
  * their own.
  */
 export function suggestContestName(
@@ -237,7 +214,7 @@ export function suggestContestName(
   switch (selectionType) {
     case SelectionType.TIERED:
       return configuration?.selectionType === SelectionType.TIERED && tierCount > 0
-        ? `${eventName} Pick ${getTieredRosterSize(getTiersInPlay(tierCount, configuration.tiersUsed), configuration.picksPerTier)}`
+        ? `${eventName} Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
         : `${eventName} Tiered`;
     case SelectionType.BUDGET_PICK:
       return configuration?.selectionType === SelectionType.BUDGET_PICK
@@ -248,9 +225,7 @@ export function suggestContestName(
     case SelectionType.PICK_EM:
       return `${eventName} Pick’em`;
     case SelectionType.BRACKET:
-      return configuration?.selectionType === SelectionType.BRACKET && isSecondChanceBracket(configuration.startsAtRound)
-        ? `${eventName} Second-Chance Bracket`
-        : `${eventName} Bracket`;
+      return `${eventName} Bracket`;
     case SelectionType.SURVIVOR:
       return `${eventName} Survivor`;
     case SelectionType.SQUARES:

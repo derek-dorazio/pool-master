@@ -109,7 +109,7 @@ export interface BracketReceipt {
   eventName: string;
   /** The last rounds, the final first: "Championship: Duke", "Final Four: Duke, Houston". */
   rounds: Array<{ name: string; picks: string[] }>;
-  /** When the bracket's picks lock: its starting round's first game. */
+  /** When the bracket's picks lock: its event's start. */
   changeUntil: Date;
 }
 

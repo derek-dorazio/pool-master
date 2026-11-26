@@ -53,7 +53,6 @@ function offer(id: string, overrides: Partial<EventPageOffer>): EventPageOffer {
     sportLeagueName: 'NFL',
     sportLeagueCompetitionSlotId: 'nfl-playoffs',
     template: template(`${id}-template`, { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }),
-    bracketStartRound: null,
     sortOrder: 1,
     isPrimary: false,
     ...overrides,
@@ -68,8 +67,7 @@ const TIERED = offer('tiered', {
   isPrimary: true,
 });
 const BRACKET = offer('bracket', {
-  template: template('nfl-second-chance', { selectionType: SelectionType.BRACKET, startsAtRound: 2 }),
-  bracketStartRound: 3,
+  template: template('nfl-bracket', { selectionType: SelectionType.BRACKET }),
   sortOrder: 2,
 });
 const SQUARES = offer('squares', { sortOrder: 3 });
@@ -171,25 +169,15 @@ describe('EventPageService', () => {
     expect(eventPagesChangeAt([{ page: PAGE, offers: [] }])).toBeNull();
   });
 
-  it('asks about a bracket from the offer\'s own starting round, over its template\'s, and about anything else with none', async () => {
+  it('asks about each offer by its template\'s selection type alone', async () => {
     const { service, asked } = build({ slots: { 'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')] } });
 
-    const view = await service.getPage('football', 'championship-weekend');
+    await service.getPage('football', 'championship-weekend');
 
     expect(asked.map((each) => each.setup)).toEqual([
-      { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
-      { selectionType: SelectionType.SQUARES, startsAtRound: null },
+      { selectionType: SelectionType.BRACKET },
+      { selectionType: SelectionType.SQUARES },
     ]);
-    expect(view.offers.map((each) => each.startsAtRound)).toEqual([3, null]);
-  });
-
-  it('takes a bracket\'s starting round from its template when the offer names none', async () => {
-    const { service } = build({
-      offers: [{ ...BRACKET, bracketStartRound: null }],
-      slots: { 'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')] },
-    });
-
-    expect((await service.getPage('football', 'championship-weekend')).offers[0]?.startsAtRound).toBe(2);
   });
 
   it('skips a slot past the contest\'s cutoff for the next one, and leaves out an offer with none left', async () => {

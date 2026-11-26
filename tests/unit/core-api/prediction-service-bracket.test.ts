@@ -76,7 +76,7 @@ function setup(options: { bracket?: SportEventRoundMatch[]; seeds?: ReadonlyMap<
   });
   const configuration = world.addConfiguration(contest.id, {
     selectionType: SelectionType.BRACKET,
-    configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+    configJson: { selectionType: SelectionType.BRACKET },
   });
   const rules = [knockoutScoringRule(configuration.id, {
     roundValues: [1, 2, 4, 8],
@@ -451,7 +451,7 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
 });
 
 describe('PredictionService.previewGames on a bracket setup, before it is saved', () => {
-  const BRACKET_RULES = { selectionType: SelectionType.BRACKET, startsAtRound: 1 } as const;
+  const BRACKET_RULES = { selectionType: SelectionType.BRACKET } as const;
   const eventId = (context: ReturnType<typeof setup>) => context.input.sportEventId;
   const previewed = (games: readonly { match: SportEventRoundMatch; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }[], matchNumber: number) => {
     const each = expectDefined(games.find((row) => row.match.matchNumber === matchNumber));

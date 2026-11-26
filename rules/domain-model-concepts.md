@@ -13,7 +13,7 @@ Fields are
 
 ## 1. The Entity Chain
 
-> **Being replaced.** The sport half of this chain (`SportEvent` in a Season, `ContestSportEvent`, `SportEventRoundMatch` with home and away sides, a bracket's `startsAtRound`, `winnerSide` and the home/away shoot-out scores, squares on one match) describes today's schema. The target model, which new code is designed toward, is §5
+> **Being replaced.** The sport half of this chain (`SportEvent` in a Season, `ContestSportEvent`, `SportEventRoundMatch` with home and away sides, `winnerSide` and the home/away shoot-out scores, squares on one match) describes today's schema. The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
@@ -60,9 +60,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
   type decides the format: `PICK_EM`, `BRACKET` and `SURVIVOR` are `PREDICTION`, `SQUARES` is
   `SQUARES`, every other type `ROSTER`.
 - **A bracket is one knockout picked to its final** (`BRACKET`, #721). Its contest covers one
-  event, and every pick is made before the event starts. A **second-chance bracket** starts at a
-  later round (`startsAtRound`, the Sweet 16): it is picked from that round on, and its picks close,
-  are revealed and the contest goes live at that round's first game, while the event is under way. A later game's pick is a team the entry
+  event, picked from its first round to the final, and every pick is made before the event
+  starts. A later game's pick is a team the entry
   picked to get there (in a reseeded round, its picked winners paired by seed), so changing a pick
   clears the later picks that followed from it. A correct pick scores its round's value under the
   knockout round points, as a knockout roster pool does.

@@ -80,10 +80,10 @@ const teamPickOf = (team: typeof bills, confidence?: number | null) => ({
 });
 
 describe('previewRulesFor', () => {
-  it('sends a tiered setup\'s pick rules without its entry limit, keeping the tiers used', () => {
-    expect(previewRulesFor({ selectionType: 'TIERED', picksPerTier: 2, countedScores: 4, tiersUsed: 3, maxEntriesPerSquad: 2 })).toEqual({
+  it('sends a tiered setup\'s pick rules without its entry limit', () => {
+    expect(previewRulesFor({ selectionType: 'TIERED', picksPerTier: 2, countedScores: 4, maxEntriesPerSquad: 2 })).toEqual({
       kind: 'roster',
-      rules: { selectionType: 'TIERED', picksPerTier: 2, countedScores: 4, tiersUsed: 3 },
+      rules: { selectionType: 'TIERED', picksPerTier: 2, countedScores: 4 },
     });
   });
 
@@ -93,9 +93,9 @@ describe('previewRulesFor', () => {
       kind: 'games',
       rules: { selectionType: 'PICK_EM', mode: 'CONFIDENCE', againstTheSpread: true },
     });
-    expect(previewRulesFor({ selectionType: 'BRACKET', startsAtRound: 3 })).toEqual({
+    expect(previewRulesFor({ selectionType: 'BRACKET' })).toEqual({
       kind: 'games',
-      rules: { selectionType: 'BRACKET', startsAtRound: 3 },
+      rules: { selectionType: 'BRACKET' },
     });
     expect(previewRulesFor({ selectionType: 'SURVIVOR', reuseTeamsOnceAllUsed: false })).toEqual({
       kind: 'games',

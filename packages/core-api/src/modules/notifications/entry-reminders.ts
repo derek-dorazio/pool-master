@@ -50,7 +50,6 @@ import {
   SelectionType,
   contestEntryEventStatus,
   getTieredRosterSize,
-  getTiersInPlay,
   type Contest,
   type ContestEntry,
   survivorLivesOf,
@@ -240,8 +239,7 @@ export class EntryReminders implements DueNotifications {
   ): Promise<{ due: DueReminder[]; next: Date | null }> {
     const rules = (await deps.configurations.findByContest(contest.id))?.configJson;
     const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
-    // Each event's window closes at the contest's cutoff on it: a second-chance bracket's is its
-    // starting round, after the event itself has started, and a squares grid's is its game's kickoff.
+    // Each event's window closes at the contest's cutoff on it: a squares grid's is its game's kickoff.
     const games: SportEventRoundMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START
       ? []
       : await deps.matches.findBySportEvents(contestEvents.map((sportEvent) => sportEvent.id));
@@ -423,10 +421,7 @@ export class EntryReminders implements DueNotifications {
         const picks = await this.deps.picks.findByEntriesWithParticipant(ids, { sportEventId: sportEvent.id });
         made = countBy(picks.map((pick) => pick.entryId));
         of = rules.selectionType === SelectionType.TIERED
-          ? getTieredRosterSize(
-            getTiersInPlay((await deps.tiers.getEffectiveTiersForSportEvent(sportEvent.id)).length, rules.tiersUsed),
-            rules.picksPerTier,
-          )
+          ? getTieredRosterSize((await deps.tiers.getEffectiveTiersForSportEvent(sportEvent.id)).length, rules.picksPerTier)
           : rules.rosterSize;
         break;
       }
@@ -434,7 +429,7 @@ export class EntryReminders implements DueNotifications {
       case SelectionType.BRACKET: {
         const allGames = await deps.matches.findBySportEvent(sportEvent.id);
         const games = rules.selectionType === SelectionType.BRACKET
-          ? contestBracketGames(allGames, rules.startsAtRound)
+          ? contestBracketGames(allGames)
           : allGames.filter((game) => game.status !== MatchStatus.CANCELLED);
         const gameIds = new Set(games.map((game) => game.id));
         const predictions = (await this.deps.predictions.findByEntriesAndEvent(ids, sportEvent.id))

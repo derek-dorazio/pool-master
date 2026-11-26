@@ -65,7 +65,6 @@ describe('EntryReminders.queueDue', () => {
   let outbox: InMemoryEmailMessages;
   let matches: SportEventRoundMatch[];
   /** Batched match reads: the cutoff windows of a contest's events come from one. */
-  let matchReads: number;
   let predictions: ContestEntrySeasonPrediction[];
   let boxes: ContestEntrySquare[];
   let logger: ReturnType<typeof fakeLogger>;
@@ -77,7 +76,6 @@ describe('EntryReminders.queueDue', () => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     matches = [];
-    matchReads = 0;
     predictions = [];
     boxes = [];
     logger = fakeLogger();
@@ -119,7 +117,6 @@ describe('EntryReminders.queueDue', () => {
           return matches.filter((match) => match.sportEventId === sportEventId);
         },
         findBySportEvents: async (sportEventIds) => {
-          matchReads += 1;
           reads.push(`matches:${sportEventIds.join(',')}`);
           return matches.filter((match) => sportEventIds.includes(match.sportEventId));
         },
@@ -281,61 +278,6 @@ describe('EntryReminders.queueDue', () => {
 
     expect(remindedUserIds()).toEqual([drafting.user.id]);
     expect(outbox.rows[0]?.textBody).toContain('Your Week 7 entry is saved as a draft.');
-  });
-
-  it('reads the games of every event of a bracket contest in one read, each event closing at its own starting round', async () => {
-    const league = world.addLeague();
-    const events = ['East', 'West'].map((name) => world.addSportEvent({
-      name,
-      status: SportEventStatus.IN_PROGRESS,
-      startDate: new Date('2026-03-19T16:00:00.000Z'),
-    }));
-    const contest = world.addContest(league.id, { selectionType: SelectionType.BRACKET, sportEventIds: events.map((event) => event.id) });
-    world.addConfiguration(contest.id, {
-      selectionType: SelectionType.BRACKET,
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
-    });
-    matches = events.map((event, index) => legacyMatch({
-      id: `game-${String(index)}`,
-      sportEventId: event.id,
-      roundNumber: 3, slot: slotOfRound(3),
-      status: MatchStatus.SCHEDULED,
-      scheduledDate: index === 0 ? CLOSES_AT : new Date(CLOSES_AT.getTime() + 72 * HOUR),
-    }));
-    const nora = member(league.id, 'Nora');
-    matchReads = 0;
-
-    await reminders().queueDue(before(CLOSES_AT, 24, 1));
-
-    expect(remindedUserIds()).toEqual([nora.user.id]);
-    expect(matchReads).toBe(1);
-  });
-
-  it('reminds members of a second-chance bracket before its starting round, after the event itself has started', async () => {
-    const league = world.addLeague();
-    const tournament = world.addSportEvent({
-      name: 'March Madness',
-      status: SportEventStatus.IN_PROGRESS,
-      startDate: new Date('2026-03-19T16:00:00.000Z'),
-    });
-    const contest = world.addContest(league.id, { selectionType: SelectionType.BRACKET, sportEventIds: [tournament.id] });
-    world.addConfiguration(contest.id, {
-      selectionType: SelectionType.BRACKET,
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
-    });
-    matches = [2, 3].map((roundNumber) => legacyMatch({
-      id: `game-${String(roundNumber)}`,
-      sportEventId: tournament.id,
-      roundNumber, slot: slotOfRound(roundNumber),
-      status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
-      scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : CLOSES_AT,
-    }));
-    const nora = member(league.id, 'Nora');
-
-    await reminders().queueDue(before(CLOSES_AT, 24, 1));
-
-    expect(remindedUserIds()).toEqual([nora.user.id]);
-    expect(outbox.rows[0]?.textBody).toContain('You haven\'t entered');
   });
 
   it('sends no reminder within 6 hours of the contest opening, when the new contest email has just gone out', async () => {
@@ -562,27 +504,19 @@ describe('EntryReminders.queueDue', () => {
     expect(outbox.rows).toHaveLength(0);
   });
 
-  it('reads every due contest\'s rules in one read a sweep, and the event\'s games and sport league once, however many contests on it are reminded', async () => {
+  it('reads every due contest\'s rules in one read a sweep, and the event\'s sport league once, with no games for a bracket closing at the event\'s start, however many contests on it are reminded', async () => {
     const tournament = world.addSportEvent({
       name: 'March Madness',
       sportLeagueId: 'NCAA',
-      status: SportEventStatus.IN_PROGRESS,
-      startDate: new Date('2026-03-19T16:00:00.000Z'),
+      startDate: CLOSES_AT,
     });
-    matches = [2, 3].map((roundNumber) => legacyMatch({
-      id: `game-${String(roundNumber)}`,
-      sportEventId: tournament.id,
-      roundNumber, slot: slotOfRound(roundNumber),
-      status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
-      scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : CLOSES_AT,
-    }));
     const contests = [1, 2, 3].map((index) => {
       const league = world.addLeague();
       member(league.id, `Member${String(index)}`);
       const contest = world.addContest(league.id, { selectionType: SelectionType.BRACKET, sportEventIds: [tournament.id] });
       world.addConfiguration(contest.id, {
         selectionType: SelectionType.BRACKET,
-        configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
+        configJson: { selectionType: SelectionType.BRACKET },
       });
       return contest;
     });
@@ -593,7 +527,6 @@ describe('EntryReminders.queueDue', () => {
     expect(reads).toEqual([
       `events:${tournament.id}`,
       `rules:${contests.map((contest) => contest.id).join(',')}`,
-      `matches:${tournament.id}`,
       'sportLeague:NCAA',
     ]);
   });

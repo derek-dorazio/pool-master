@@ -126,7 +126,7 @@ export const FinishPositionPointsSettingsSchema = z.object({
 export type FinishPositionPointsSettings = z.infer<typeof FinishPositionPointsSettingsSchema>;
 
 /** The most rounds a knockout round-points table may score: a 128-place draw plays seven, the NFL four. */
-export const KNOCKOUT_ROUND_VALUES_MAX_ROUNDS = 8;
+const KNOCKOUT_ROUND_VALUES_MAX_ROUNDS = 8;
 
 /** How a knockout win over a better seed earns more (plans/knockout-and-pickem-design.md §3.2). */
 export const UpsetBonusRule = {

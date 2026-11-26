@@ -29,8 +29,6 @@ import {
   Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { bracketStartRoundOptions } from './bracket-start-round';
-import { bracketStartRoundsOf } from './contest-template-events';
 import { firstContestEvent } from './contest-events';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
@@ -39,7 +37,6 @@ import {
   toContestRulesValues,
   type ContestRulesValues,
 } from './contest-rules-form';
-import { useEventRoundLabels } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
@@ -104,20 +101,7 @@ function EditContestForm({
     defaultValues: { contestName: contest.name, ...toContestRulesValues(configuration) },
   });
   const values = form.watch();
-  // A bracket starts at the full bracket or a later round; once its event is under way, only a
-  // later round, as a second-chance bracket (#721).
-  const roundName = useEventRoundLabels(selectionType === SelectionType.BRACKET ? event.id : '');
-  const bracketStartRounds = selectionType === SelectionType.BRACKET
-    ? bracketStartRoundOptions(bracketStartRoundsOf(event), roundName)
-    : [];
-  const parseRules = (submitted: EditContestFormValues) => {
-    const parsed = parseContestRules(submitted, selectionType, tierCount, participant);
-    if (parsed.error === null && bracketStartRounds.length
-      && !bracketStartRounds.some((option) => String(option.roundNumber) === submitted.startsAtRound)) {
-      return { configuration: null, error: 'Choose the round the bracket starts at.' } as const;
-    }
-    return parsed;
-  };
+  const parseRules = (submitted: EditContestFormValues) => parseContestRules(submitted, selectionType, tierCount, participant);
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (submitted: EditContestFormValues) => {
@@ -164,7 +148,7 @@ function EditContestForm({
 
   const parsedPreview = parseRules(values);
   const previewRules = parsedPreview.configuration
-    ? membersWillSeeRules(parsedPreview.configuration, null, { participant, roundName, salaryCap, tierCount })
+    ? membersWillSeeRules(parsedPreview.configuration, null, { participant, salaryCap, tierCount })
     : null;
 
   const errorMessage = rulesError
@@ -234,7 +218,6 @@ function EditContestForm({
       </FormSection>
       <FormSection testId="edit-contest-rules" title="Rules">
         <ContestRulesFields
-          bracketStartRounds={bracketStartRounds}
           onChange={(next: Partial<ContestRulesValues>) => {
             for (const [field, value] of Object.entries(next) as Array<[keyof ContestRulesValues, string | boolean]>) {
               form.setValue(field, value, { shouldDirty: true });

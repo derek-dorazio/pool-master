@@ -74,8 +74,8 @@ export class PrismaContestRepository implements ContestRepository {
         status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
         // A draft that can never open is left out (#1161, #1217): one with an event finished or
         // cancelled, which is past every cutoff, and one closing at its event's start once an
-        // event has started, since a started event cannot be removed. Only a bracket starting
-        // after round 1 and a squares contest with its game close later, as `contestCutoff` says.
+        // event has started, since a started event cannot be removed. Only a squares contest with
+        // its game closes later, as `contestCutoff` says.
         NOT: {
           status: ContestStatus.DRAFT,
           OR: [
@@ -83,12 +83,7 @@ export class PrismaContestRepository implements ContestRepository {
             {
               // Started as `hasSportEventStarted` has it: by its start date, or under way early.
               sportEvents: { some: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
-              NOT: {
-                OR: [
-                  { selectionType: SelectionType.BRACKET, configuration: { configJson: { path: ['startsAtRound'], gt: 1 } } },
-                  { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
-                ],
-              },
+              NOT: { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
             },
           ],
         },

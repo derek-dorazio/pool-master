@@ -19,30 +19,18 @@ import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness'
 import { RunDrawAction } from './run-draw-action';
 import { useContestDrawState } from './use-contest-draw';
 
-/**
- * When a contest's entries close, for a sentence: its event's start, or a second-chance bracket's
- * starting round's first game (#721).
- */
-function entriesCloseAt(event: SportEventDto, secondChanceRoundName: string | null) {
-  return secondChanceRoundName === null
-    ? `the ${sportVocabulary(event.sport).eventStart}`
-    : `the first game of the ${secondChanceRoundName}`;
-}
-
 function NotOpenCard({
   configuration,
   contest,
   event,
-  secondChanceRoundName,
   tierCount,
 }: {
   configuration: ContestManagementDetailDto['configuration'];
   contest: ContestDto;
   event: SportEventDto;
-  secondChanceRoundName: string | null;
   tierCount: number;
 }) {
-  const checks = getContestReadinessChecks(event, new Date(), secondChanceRoundName);
+  const checks = getContestReadinessChecks(event, new Date());
   const isReady = checks.every((check) => check.isMet);
 
   return (
@@ -64,7 +52,7 @@ function NotOpenCard({
           />
         </>
       )}
-      help={`Only commissioners can see it until it's open. Once it's open, members can enter until ${entriesCloseAt(event, secondChanceRoundName)}, and these settings can't change.`}
+      help={`Only commissioners can see it until it's open. Once it's open, members can enter until the ${sportVocabulary(event.sport).eventStart}, and these settings can't change.`}
       status={contest.status}
       title={isReady ? 'Ready to open to the league' : 'Not ready to open yet'}
     >
@@ -96,13 +84,11 @@ function OpenCard({
   contest,
   event,
   leagueCode,
-  secondChanceRoundName,
   teamCount,
 }: {
   contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
-  secondChanceRoundName: string | null;
   teamCount: number;
 }) {
   const displayPreferences = useDisplayPreferences();
@@ -112,21 +98,12 @@ function OpenCard({
   return (
     <LifecyclePanel
       actions={<ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />}
-      help={secondChanceRoundName === null
-        ? `Entries close at the ${sportVocabulary(event.sport).eventStart}, ${formatDateTimeDisplay(event.startDate, displayPreferences)}. The contest goes live then and is final when the event ends.`
-        : (
-          <span data-testid="contest-second-chance-close">
-            {`Entries close at ${entriesCloseAt(event, secondChanceRoundName)}. The contest goes live then and is final when the event ends.`}
-          </span>
-        )}
+      help={`Entries close at the ${sportVocabulary(event.sport).eventStart}, ${formatDateTimeDisplay(event.startDate, displayPreferences)}. The contest goes live then and is final when the event ends.`}
       stats={entered
         ? [
           { label: 'Entries', testId: 'contest-stat-entries', value: formatNumber(entered.submittedEntryCount, locale) },
           { label: 'Yet to enter', testId: 'contest-stat-teams-to-go', value: formatNumber(Math.max(teamCount - entered.teamCount, 0), locale) },
-          // A second-chance bracket closes at a round's first game, which this panel does not read.
-          ...(secondChanceRoundName === null
-            ? [{ label: 'Until close', testId: 'contest-stat-until-close', value: formatTimeUntil(event.startDate) }]
-            : []),
+          { label: 'Until close', testId: 'contest-stat-until-close', value: formatTimeUntil(event.startDate) },
         ]
         : undefined}
       status={contest.status}
@@ -255,7 +232,6 @@ export function ContestStatusCard({
   contest,
   event,
   leagueCode,
-  secondChanceRoundName = null,
   teamCount,
   tierCount,
 }: {
@@ -264,8 +240,6 @@ export function ContestStatusCard({
   contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
-  /** A second-chance bracket's starting round by name (#721): its entries close at that round's first game. */
-  secondChanceRoundName?: string | null;
   teamCount: number;
   /** The event's tier count, which a tiered preview needs. */
   tierCount: number;
@@ -277,7 +251,6 @@ export function ContestStatusCard({
           configuration={configuration}
           contest={contest}
           event={event}
-          secondChanceRoundName={secondChanceRoundName}
           tierCount={tierCount}
         />
       );
@@ -289,7 +262,6 @@ export function ContestStatusCard({
             contest={contest}
             event={event}
             leagueCode={leagueCode}
-            secondChanceRoundName={secondChanceRoundName}
             teamCount={teamCount}
           />
         );

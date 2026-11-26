@@ -791,7 +791,7 @@ export function hasSportEventStarted(
 
 /**
  * The statuses an event can still take a contest in: released and not yet started (or moved), or a
- * knockout under way for a second-chance bracket or a squares game to come. A finished or called
+ * knockout under way for a squares game to come. A finished or called
  * off event never can. Contest setup lists events in these statuses, and they bound what a
  * caller other than a root admin may list (#1348).
  */

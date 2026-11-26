@@ -23,7 +23,6 @@ import {
   SportEventStatus,
   SurvivorWeekOutcome,
   type Contest,
-  type ContestConfiguration,
   type SportLeague,
   type SportEvent,
   type SportEventRoundMatch,
@@ -154,9 +153,6 @@ describe('lastFinishedMatchRound', () => {
     ])).toEqual({ roundNumber: 2, finishedAt: DONE });
   });
 
-  it('leaves out rounds before the one a second-chance bracket starts at', () => {
-    expect(lastFinishedMatchRound([game(1, MatchStatus.COMPLETED, DONE), game(2, MatchStatus.SCHEDULED, DONE)], 2)).toBeNull();
-  });
 });
 
 describe('LiveStandings.queueDue', () => {
@@ -243,7 +239,6 @@ describe('LiveStandings.queueDue', () => {
         },
       },
       matches: { findBySportEvent: async (sportEventId) => matches.get(sportEventId) ?? [] },
-      configurations: world.configurationRepo(),
       sportLeagues: { findById: async () => (sportLeagueFound ? ({ name: 'PGA Tour' }) as unknown as SportLeague : null) },
       positions: {
         findByContest: async (contestId) => new Map(
@@ -868,19 +863,11 @@ describe('LiveStandings.queueDue', () => {
     expect(toAna.subject).toBe('After Conference Semifinals: Playoff Bracket');
   });
 
-  it('sends nothing after a bracket\'s final, which the final results cover, nor for rounds before a second-chance bracket starts', async () => {
+  it('sends nothing after a bracket\'s final, which the final results cover', async () => {
     const done = new Date('2026-03-21T04:30:00.000Z');
     const { league, tournament, contest } = liveBracket(done);
     const ana = member(league.id, 'Ana');
     bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
-    world.addConfiguration(contest.id, {
-      selectionType: SelectionType.BRACKET,
-      // Only its starting round is read here.
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 } as ContestConfiguration['configJson'],
-    });
-
-    await standings().queueDue(after(done, 31));
-    expect(outbox.rows).toHaveLength(0);
 
     matches.set(tournament.id, Array.from({ length: 6 }, (_, index) => game(index + 1, MatchStatus.COMPLETED, done)));
     await standings().queueDue(after(done, 31));
