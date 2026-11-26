@@ -492,7 +492,7 @@ test('act 4: the root admin starts the playoffs and names each series\' winner t
     await expect(page.getByTestId('contest-leaderboard-upset-bonus-header')).toBeVisible();
     const fever = pickOf(read, state.fieldEntryIds, 6);
     const storm = pickOf(read, state.fieldEntryIds, 7);
-    await expect(page.getByTestId(`contest-leaderboard-pick-upset-bonus-${state.entryId}-${fever.pickId}`)).toHaveText('+3');
+    await expect(page.getByTestId(`contest-leaderboard-pick-upset-bonus-${state.entryId}-${fever.pickId}`)).toHaveText('+5');
     await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${fever.pickId}`)).toHaveText('In');
     await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${storm.pickId}`)).toHaveText(/^Out · /);
     await expect(page.getByTestId('contest-leaderboard-settled-note')).toHaveCount(0);
