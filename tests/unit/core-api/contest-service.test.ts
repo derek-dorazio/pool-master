@@ -2674,6 +2674,40 @@ describe('a squares contest\'s entry window, which closes at its game\'s kickoff
     expect(findBySportEvents).toHaveBeenCalledTimes(1);
   });
 
+  it('closes at the event\'s start like any other contest when it names no game, reading no games for it', async () => {
+    const { findBySportEvents, service } = squaresService(new Date(KICKOFF.getTime() - 60_000));
+
+    expect(await service.areEntriesOpen({ ...squares, squaresGameMatchId: undefined })).toBe(false);
+    expect(findBySportEvents).not.toHaveBeenCalled();
+  });
+
+  it('keeps a live squares contest\'s other squads\' boxes hidden in its entry list until its game kicks off, after the event itself has started', async () => {
+    const live = { ...squares, status: ContestStatus.ACTIVE };
+    const findByContest = jest.fn().mockResolvedValue({
+      id: 'config-squares',
+      contestId: squares.id,
+      selectionType: SelectionType.SQUARES,
+      configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
+    });
+    const findBySportEvents = jest.fn().mockResolvedValue([
+      legacyMatch({ id: 'game-1', sportEventId: STARTED_EVENT.id, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: KICKOFF }),
+    ]);
+    const listAt = (now: Date) => buildService({
+      contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(live) }),
+      configurations: createMockContestConfigurationRepo({ findByContest }),
+      matches: { findBySportEvent: jest.fn().mockResolvedValue([]), findBySportEvents },
+      memberships: createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' })),
+      }),
+      squadMemberships: createMockSquadMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP) }),
+      now: () => now,
+    }).listEntries(live.id, 'user-1');
+
+    expect((await listAt(new Date(KICKOFF.getTime() - 60_000))).picksRevealed).toBe(false);
+    expect((await listAt(new Date(KICKOFF.getTime() + 60_000))).picksRevealed).toBe(true);
+    expect(findBySportEvents).toHaveBeenCalledWith([STARTED_EVENT.id]);
+  });
+
   it('is closed once its game has kicked off', async () => {
     const { service } = squaresService(new Date(KICKOFF.getTime() + 60_000));
 
