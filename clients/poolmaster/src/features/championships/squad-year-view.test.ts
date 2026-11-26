@@ -40,6 +40,14 @@ describe('squad year lines', () => {
     expect(describeSquadYearLine(past)).toEqual({ title: '2025', detail: 'Championship 2nd of 12 · 2025 NFL Cup champion' });
   });
 
+  it('words each cup trophy on the year line as one sentence with the cup name, never a lowercased label', () => {
+    const line = (trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD') =>
+      describeSquadYearLine(buildSquadYear({ year: 2025, isOver: true, championship: null, cups: [buildSquadCup({ name: '2025 NFL Cup', status: 'CROWNED' }, { trophy })] })).detail;
+    expect(line('CHAMPION')).toBe('2025 NFL Cup champion');
+    expect(line('RUNNER_UP')).toBe('2025 NFL Cup runner-up');
+    expect(line('THIRD')).toBe('2025 NFL Cup 3rd place');
+  });
+
   it('leaves out a year and a cup in which the squad has a 0-point row it never placed in', () => {
     const unplaced = { contestsCounted: 0, points: 0, position: 3, displayPosition: 'T3' };
     const noResults = buildSquadYear({ year: 2026, championship: buildSquadChampionship({}, { played: 0 }), cups: [buildSquadCup({ name: '2026 NFL Cup' }, unplaced)] });

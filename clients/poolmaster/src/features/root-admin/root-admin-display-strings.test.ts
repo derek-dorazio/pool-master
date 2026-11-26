@@ -1,9 +1,12 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
+  FieldValueSetBy,
+  GolfRoundScoreChange,
   MatchEnding,
   ProviderSyncKind,
   RaceResultChange,
   RaceResultRowError,
+  ReleaseCheckKey,
   SportEventReleaseMode,
   TemplateCoverageMode,
 } from '@poolmaster/shared/domain';
@@ -44,6 +47,23 @@ describe('root admin words come from the display strings', () => {
     expect(enumLabel('RaceResultChange', RaceResultChange.CREATE)).toBe('New');
     expect(enumLabel('RaceResultChange', RaceResultChange.UPDATE)).toBe('Changed');
     expect(enumLabel('RaceResultChange', RaceResultChange.UNCHANGED)).toBe('Unchanged');
+  });
+
+  it('a golf round-score preview row reads New, Changed, Unchanged or Not stored, never its raw code', () => {
+    expect(enumLabel('GolfRoundScoreChange', GolfRoundScoreChange.CREATE)).toBe('New');
+    expect(enumLabel('GolfRoundScoreChange', GolfRoundScoreChange.UPDATE)).toBe('Changed');
+    expect(enumLabel('GolfRoundScoreChange', GolfRoundScoreChange.UNCHANGED)).toBe('Unchanged');
+    expect(enumLabel('GolfRoundScoreChange', GolfRoundScoreChange.SKIPPED)).toBe('Not stored (no strokes)');
+  });
+
+  it('a held release names each failed ready check in the admin’s words', () => {
+    expect(enumLabel('ReleaseCheckKey', ReleaseCheckKey.TIERS_ASSIGNED)).toBe('Every participant in a tier');
+    expect(enumLabel('ReleaseCheckKey', ReleaseCheckKey.CONTEST_SETUPS_ON)).toBe('Contest template on');
+  });
+
+  it('a field row says whether its tier and price were set automatically or by a root admin', () => {
+    expect(enumLabel('FieldValueSetBy', FieldValueSetBy.AUTO)).toBe('Auto');
+    expect(enumLabel('FieldValueSetBy', FieldValueSetBy.MANUAL)).toBe('Manual');
   });
 
   it('the field sync is called Field on the League page, the Event page and the failed chip alike', () => {

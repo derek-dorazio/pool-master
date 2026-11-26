@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -25,7 +26,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { fieldOutLabel } from './event-field-columns';
 import type { EventFieldPatch } from './event-field-patch';
-import { FIELD_VALUE_SET_BY_LABELS, type EventFieldRow } from './event-field-rows';
+import type { EventFieldRow } from './event-field-rows';
 import {
   participantCorrection,
   participantSchema,
@@ -114,7 +115,7 @@ export function EventParticipantDialog({
   const tierFacts: Fact[] = [
     { id: 'tier', label: 'Tier', value: row.tierLabel ?? 'Untiered', testId: `${testId}-tier` },
     { id: 'price', label: 'Price', value: shown(row.price), testId: `${testId}-price` },
-    { id: 'setBy', label: 'Set by', value: row.setBy === null ? 'Not set' : FIELD_VALUE_SET_BY_LABELS[row.setBy], testId: `${testId}-set-by` },
+    { id: 'setBy', label: 'Set by', value: row.setBy === null ? 'Not set' : enumLabel('FieldValueSetBy', row.setBy), testId: `${testId}-set-by` },
   ];
   const canEdit = editable.tierAndPrice || editable.orderValues;
   const modal = dialog.modalProps(saveMutation);

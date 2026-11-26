@@ -6,12 +6,12 @@ import type {
   AutoReleaseCheckOutcome,
   ProviderSyncFindingSeverity,
   ProviderSyncKind,
+  ReleaseCheckKey,
   Sport,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
 } from './enums';
-import type { ReleaseCheckKey } from './release-checks';
 
 /**
  * A sport event's latest automatic release check (#1847): when the release job judged it, whether
