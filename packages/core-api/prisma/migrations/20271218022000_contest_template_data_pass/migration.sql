@@ -23,12 +23,12 @@
 -- Tier profiles ------------------------------------------------------------------------------
 
 INSERT INTO "platform_tier_profiles" ("code", "name", "type", "updated_at") VALUES
-  ('SEEDS_4_8_12', 'Playoff seeds: 1-4, 5-8, 9-12', 'RANGES', CURRENT_TIMESTAMP),
-  ('SEEDS_2_5_REST', 'Playoff seeds: 1-2, 3-5, 6+', 'RANGES', CURRENT_TIMESTAMP),
-  ('SEEDS_2_4_REST', 'Playoff seeds: 1-2, 3-4, 5+', 'RANGES', CURRENT_TIMESTAMP),
-  ('SEEDS_3_6_REST', 'Playoff seeds: 1-3, 4-6, 7+', 'RANGES', CURRENT_TIMESTAMP),
+  ('SEEDS_4_8_12', 'Playoff seeds: top 4, 5-8, 9-12', 'RANGES', CURRENT_TIMESTAMP),
+  ('SEEDS_2_5_REST', 'Playoff seeds: top 2, 3-5, 6+', 'RANGES', CURRENT_TIMESTAMP),
+  ('SEEDS_2_4_REST', 'Playoff seeds: top 2, 3-4, 5+', 'RANGES', CURRENT_TIMESTAMP),
+  ('SEEDS_3_6_REST', 'Playoff seeds: top 3, 4-6, 7+', 'RANGES', CURRENT_TIMESTAMP),
   ('REGION_SEED_LINES_4', 'Seed lines: 1-4, 5-8, 9-12, 13+', 'RANGES', CURRENT_TIMESTAMP),
-  ('REGION_SEEDS_EACH', 'Seed lines: 1, 2, 3, 4', 'RANGES', CURRENT_TIMESTAMP);
+  ('REGION_SEEDS_EACH', 'Seed lines: each of 1, 2, 3, 4', 'RANGES', CURRENT_TIMESTAMP);
 
 INSERT INTO "platform_tier_profile_ranges" ("platform_tier_profile_id", "tier_number", "from_value", "to_value")
 SELECT p."id", r."tier_number", r."from_value", r."to_value"
