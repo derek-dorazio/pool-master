@@ -42,6 +42,7 @@ import { createContestRow } from '../../support/contest-rows';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
+import { applySlotTiebreakerRule } from '../slot-tiebreakers';
 import { sportPlay } from '../../support/sport-play';
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
@@ -103,6 +104,8 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     advancesToSide: null,
     regionLabel: null,
   })));
+  // The week's last kickoff is its tiebreaker game, as the rule names it (#2048).
+  await applySlotTiebreakerRule(event.id);
   const games = await matchRepo.findBySportEvent(event.id);
   return { event, games };
 }
