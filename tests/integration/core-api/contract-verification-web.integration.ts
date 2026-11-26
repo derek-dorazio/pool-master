@@ -314,7 +314,6 @@ describe('Contract verification (web)', () => {
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
-        participantCount: 144,
       },
     });
     await prisma.participant.create({
@@ -418,7 +417,6 @@ describe('Contract verification (web)', () => {
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
-        participantCount: 144,
       },
     });
 

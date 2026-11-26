@@ -681,7 +681,6 @@ describe('mock contest feed provider event-first verification', () => {
       startDate: adminStart,
       rounds: 4,
       status: linked.status,
-      participantCount: expectDefined(detail).participants.length,
     });
     await expect(prisma.sportEventParticipant.count({ where: { sportEventId: linked.id } }))
       .resolves.toBe(expectDefined(detail).participants.length);

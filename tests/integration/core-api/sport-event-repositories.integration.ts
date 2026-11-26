@@ -204,7 +204,7 @@ describe('SportEventRepository — writes', () => {
       source: 'MANUAL',
     })));
 
-    expect(await events.findEmptyTierNumbers([event.id, bare.id])).toEqual(new Map([[event.id, ['Tier 2', 'Tier 3']], [bare.id, []]]));
+    expect(await events.findEmptyTierNumbers([event.id, bare.id])).toEqual(new Map([[event.id, [2, 3]], [bare.id, []]]));
   });
 
   it('finds the lifecycle scheduler\'s candidates: auto lifecycle on and scheduled, in progress or postponed, linked to a provider or not', async () => {
