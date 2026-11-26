@@ -1,6 +1,6 @@
-import { PLAN_FEATURE_GROUP, PlanCap, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
+import { PlanCap, type PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import type { PlanEntitlementsDto } from '@/lib/api';
+import type { PlanEntitlementsDto, PlanFeatureGroupDto } from '@/lib/api';
 import {
   EVERY_PLAN_INCLUDES,
   PLAN_CAP_DESCRIPTION,
@@ -32,10 +32,14 @@ export interface PlanComparisonSection {
 
 /**
  * The comparison table (#945, #971): the limits, what every plan includes, then each group of
- * features, one column per plan in the order given. Built from what the API says each plan has,
- * never from the plan's name.
+ * features, one column per plan in the order given. Built from what the API says each plan has
+ * and which group each feature is in, never from the plan's name.
  */
-export function buildPlanComparison(plans: readonly ComparedPlan[], locale: string): PlanComparisonSection[] {
+export function buildPlanComparison(
+  plans: readonly ComparedPlan[],
+  featureGroups: readonly PlanFeatureGroupDto[],
+  locale: string,
+): PlanComparisonSection[] {
   const limits: PlanComparisonSection = {
     key: 'limits',
     title: 'Limits',
@@ -60,12 +64,11 @@ export function buildPlanComparison(plans: readonly ComparedPlan[], locale: stri
       cells: plans.map(() => row.value),
     })),
   };
-  const groups = Object.values(PlanFeatureGroup).map((group) => ({
+  const groups = featureGroups.map(({ group, features }) => ({
     key: group,
     title: enumLabel('PlanFeatureGroup', group),
     group,
-    rows: Object.values(PlanFeature)
-      .filter((feature) => PLAN_FEATURE_GROUP[feature] === group)
+    rows: features
       .map((feature) => ({
         key: feature,
         cap: null,

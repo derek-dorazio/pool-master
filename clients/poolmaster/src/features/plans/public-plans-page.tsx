@@ -87,13 +87,14 @@ export function PublicPlansPage() {
         <>
           <PlanCards
             expansion={plansQuery.data}
+            featureGroups={plansQuery.data.featureGroups}
             plans={plansQuery.data.plans}
             renderAction={(plan) => plansQuery.data.plans.find((each) => each.plan === plan)?.commissionerSelectable === false ? (
               <Chip className="self-start" data-testid={`public-plans-card-${plan}-coming-soon`}>Coming soon</Chip>
             ) : action(`public-plans-card-${plan}-start`)}
           />
           <SectionCard testId="public-plans-compare" title="Compare plans">
-            <PlanComparisonTable highlightedPlan={plansQuery.data.previewPlan} initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data.plans} />
+            <PlanComparisonTable featureGroups={plansQuery.data.featureGroups} highlightedPlan={plansQuery.data.previewPlan} initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data.plans} />
           </SectionCard>
         </>
       )}
