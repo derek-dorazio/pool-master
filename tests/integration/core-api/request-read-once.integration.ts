@@ -376,7 +376,7 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
       ['SELECT sport_leagues', 4],
-      ['SELECT sports', 4],
+      ['SELECT sports', 3], // contest setup's reader no longer reads the sport rows: whether an event plays matches is its slots' (#2008)
       ['SELECT users', 1],
       ['UPDATE contests', 1],
     ]);
