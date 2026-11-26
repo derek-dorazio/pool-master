@@ -406,14 +406,14 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
       result: resultOf(first, { outcomes: SIDE_ONE_WINS, scores: [80, 70] }),
       sideFill: { id: final.id, sideNumber: 2, sportEventParticipantId: entryOf('Vermont').id },
       standings: [
-        { sportEventParticipantId: entryOf('Vermont').id, position: 1, displayPosition: '1', status: 'ACTIVE', currentRound: 2, asOf },
-        { sportEventParticipantId: entryOf('Duke').id, position: 4, displayPosition: '4', status: 'ELIMINATED', currentRound: 1, asOf },
+        { sportEventParticipantId: entryOf('Vermont').id, position: 1, displayPosition: '1', status: 'ACTIVE', asOf },
+        { sportEventParticipantId: entryOf('Duke').id, position: 4, displayPosition: '4', status: 'ELIMINATED', asOf },
       ],
     });
     await repos().matches.applyResult({
       result: resultOf(first, { outcomes: SIDE_ONE_WINS, scores: [81, 70] }),
       sideFill: null,
-      standings: [{ sportEventParticipantId: entryOf('Duke').id, position: 3, displayPosition: 'T3', status: 'ELIMINATED', currentRound: 1, asOf }],
+      standings: [{ sportEventParticipantId: entryOf('Duke').id, position: 3, displayPosition: 'T3', status: 'ELIMINATED', asOf }],
     });
 
     const [completed, , filled] = await repos().matches.findBySportEvent(event.id);

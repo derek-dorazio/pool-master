@@ -24,7 +24,6 @@ import type {
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
-  ProviderParticipantMetadata,
 } from '../core/provider-interface';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
@@ -406,7 +405,7 @@ export class IngestionPersistence {
       const existing = existingByParticipantId.get(participantId);
       const seedNumber = seedsLocked && existing
         ? existing.seedNumber
-        : readIntegerMetadata(participant.metadata, 'seed');
+        : participant.seed ?? null;
       // #384 — the field's own ranking wins. When the field gives none, the rank already on
       // the row stays rather than being blanked.
       const ranking = participant.ranking ?? existing?.ranking ?? null;
@@ -417,12 +416,12 @@ export class IngestionPersistence {
         seedNumber,
       };
       const before = existing ? normalizeSportEventParticipantRow(existing) : undefined;
-      const after = normalizeSportEventParticipantInput({ ...values, metadata: participant.metadata });
+      const after = normalizeSportEventParticipantInput(values);
       return {
         participantId,
         participant,
         existing,
-        data: { ...values, metadata: toPrismaJson(participant.metadata) },
+        data: values,
         before,
         after,
         disposition: resolveDisposition(before, after),
@@ -525,12 +524,7 @@ function readEventScopedOddsToWin(
   participant: ProviderParticipant,
   eventExternalId: string,
 ): number | null {
-  const oddsSourceEventId = participant.metadata.oddsSourceEventId;
-  if (oddsSourceEventId !== eventExternalId) {
-    return null;
-  }
-
-  return readNumberMetadata(participant.metadata, 'odds');
+  return participant.odds?.eventExternalId === eventExternalId ? participant.odds.toWin : null;
 }
 
 function resolveDisposition(
@@ -573,14 +567,12 @@ function normalizeSportEventParticipantInput(input: {
   ranking: number | null;
   oddsToWin: number | null;
   seedNumber: number | null;
-  metadata: Record<string, unknown>;
 }): Record<string, unknown> {
   return {
     status: input.status,
     ranking: input.ranking,
     oddsToWin: input.oddsToWin,
     seedNumber: input.seedNumber,
-    metadata: jsonClone(input.metadata),
   };
 }
 
@@ -589,14 +581,12 @@ function normalizeSportEventParticipantRow(row: {
   ranking: number | null;
   oddsToWin: Prisma.Decimal | number | null;
   seedNumber: number | null;
-  metadata: Prisma.JsonValue;
 }): Record<string, unknown> {
   return {
     status: row.status,
     ranking: row.ranking,
     oddsToWin: decimalToNumber(row.oddsToWin),
     seedNumber: row.seedNumber,
-    metadata: jsonClone(row.metadata),
   };
 }
 
@@ -606,10 +596,6 @@ function decimalToNumber(value: Prisma.Decimal | number | null): number | null {
   }
 
   return typeof value === 'number' ? value : value.toNumber();
-}
-
-function jsonClone(value: unknown): unknown {
-  return JSON.parse(JSON.stringify(value));
 }
 
 function stableJson(value: unknown): string {
@@ -628,28 +614,5 @@ function sortJson(value: unknown): unknown {
     );
   }
   return value;
-}
-
-/** The participant metadata keys that carry a number. */
-type NumericParticipantMetadataKey = 'seed' | 'odds';
-
-function readNumberMetadata(
-  metadata: ProviderParticipantMetadata,
-  key: NumericParticipantMetadataKey,
-): number | null {
-  const value = metadata[key];
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-function readIntegerMetadata(
-  metadata: ProviderParticipantMetadata,
-  key: NumericParticipantMetadataKey,
-): number | null {
-  const value = readNumberMetadata(metadata, key);
-  return value === null ? null : Math.trunc(value);
-}
-
-function toPrismaJson(value: unknown): Prisma.InputJsonValue {
-  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 

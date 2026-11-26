@@ -120,7 +120,6 @@ export interface SportEventParticipant extends DomainEntity {
   oddsToWin?: number;
   /** Event-relative seed number (e.g., NCAA tournament seed). */
   seedNumber?: number;
-  metadata: Record<string, unknown>;
 }
 
 /** Raw provider payload captured for a sport-event participant synchronization. */

@@ -89,7 +89,6 @@ async function golfEvent() {
     data: {
       sportEventParticipantId: ana.id,
       position: 1,
-      currentRound: 2,
       status: 'ACTIVE',
       golf: { create: { eventScoreToPar: -6, eventStrokes: 138, currentRoundThru: 18 } },
     },

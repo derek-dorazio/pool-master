@@ -358,7 +358,6 @@ async function createGolfLeaderboardParticipant(input: {
   await prisma.sportEventParticipantStanding.create({
     data: {
       sportEventParticipantId: sportEventParticipant.id,
-      currentRound: 2,
       status: input.status,
       asOf: new Date('2026-05-31T18:00:00.000Z'),
       golf: {

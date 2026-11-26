@@ -53,7 +53,7 @@ function golfer(sportEventParticipantId: string, eventScoreToPar: number) {
     participant: { id: `participant-${sportEventParticipantId}`, name: `Golfer ${sportEventParticipantId}` },
     valuation: null,
     standing: {
-      standing: { currentRound: 4, status: 'COMPLETE', asOf: T },
+      standing: { status: 'COMPLETE', asOf: T },
       golf: { eventScoreToPar, eventStrokes: 288 + eventScoreToPar, currentRoundThru: 18 },
     },
     // Four par-72 rounds, the event's to-par all in the first.

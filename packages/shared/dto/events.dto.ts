@@ -323,7 +323,7 @@ export const SportEventParticipantStandingDtoSchema = z.object({
   displayPosition: z.string().nullable().describe('Position as shown, e.g. "T3".'),
   status: z.enum(ParticipantStandingStatus).describe('ELIMINATED covers a missed cut; golf surfaces show it as "Cut".'),
   asOf: DateTimeSchema.nullable(),
-  currentRound: z.number().int().nullable(),
+  currentRound: z.number().int().nullable().describe('The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.'),
   golf: SportEventParticipantGolfStandingDtoSchema.nullable().describe('Present for a golf event with scores; null otherwise.'),
 }).describe('A field row\'s running standing. The score lives in the sport\'s extension.');
 export type SportEventParticipantStandingDto = z.infer<typeof SportEventParticipantStandingDtoSchema>;

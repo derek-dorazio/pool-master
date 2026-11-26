@@ -192,7 +192,7 @@ export function toNflPlayoffField(standings: readonly NflStanding[]): ProviderPa
       const seed = standing.playoff_seed;
       if (seed === undefined || seed < 1 || seed > NFL_PLAYOFF_SEEDS || standing.team === undefined) return [];
       const participant = toNflTeamParticipant(standing.team, STANDINGS_PATH);
-      return [{ ...participant, metadata: { ...participant.metadata, seed } }];
+      return [{ ...participant, seed }];
     })
     .sort((left, right) => conferenceOrder(left) - conferenceOrder(right) || seedOf(left) - seedOf(right));
 }
@@ -202,7 +202,7 @@ function conferenceOrder(participant: ProviderParticipant): number {
 }
 
 function seedOf(participant: ProviderParticipant): number {
-  return participant.metadata.seed ?? Number.MAX_SAFE_INTEGER;
+  return participant.seed ?? Number.MAX_SAFE_INTEGER;
 }
 
 /**
@@ -219,7 +219,7 @@ export function toNflPlayoffBracket(field: readonly ProviderParticipant[], games
   const conferences: Array<{ label: string; teamOfSeed: (seed: number) => string }> = [];
   for (const conference of NFL_CONFERENCES) {
     const teams = field.filter((participant) => participant.metadata['conference'] === conference);
-    const bySeed = new Map(teams.map((participant) => [participant.metadata.seed, participant.externalId]));
+    const bySeed = new Map(teams.map((participant) => [participant.seed, participant.externalId]));
     if (teams.length !== NFL_PLAYOFF_SEEDS || bySeed.size !== NFL_PLAYOFF_SEEDS) return null;
     conferences.push({
       label: conference,
