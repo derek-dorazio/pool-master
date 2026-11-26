@@ -437,8 +437,7 @@ export class IngestionPersistence {
       const rebuild = await this.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
       const [created] = await this.prisma.$transaction([
         this.prisma.sportEventParticipant.createManyAndReturn({
-          // A play-in place is marked as one when its row is made; a later load leaves the mark to the bracket's own fill (#1571).
-          data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data, isPlayInPlace: plan.participant.metadata.playInPlace === true })),
+          data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data })),
           select: { id: true, participantId: true },
         }),
         // poolmaster-allow-query-in-loop: the changed rows of one event's field (per-row values, one transaction)

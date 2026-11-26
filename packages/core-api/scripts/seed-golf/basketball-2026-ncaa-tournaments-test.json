@@ -20,7 +20,7 @@
   "testData": true,
   "provenance": {
     "gatheredAt": "2026-10-18",
-    "gatheredBy": "load-sport-data, the 2026 NCAA Division I men's and women's tournaments as played: regions, seeds, pairings and every game's score from Wikipedia's tournament pages, cross-checked game by game against the ESPN tournament scoreboards, which agree on every pairing, seed, region and winner. Two women's scores differ by a point or two and the file takes ESPN's (North Carolina 82-51 Western Illinois, where Wikipedia has 83-51; Duke 69-46 Baylor, where Wikipedia has 69-48). Tip-offs (scheduledAt) are ESPN's. Each First Four game is a play-in place named for its pairing, whose winner is its playInWinner. Women's first and second round games at a top-16 seed's arena are marked home only where the host is on the bracket's home side; the other 13 are marked neutral. Ranking is seed line, then region. Odds to win are made up by seed.",
+    "gatheredBy": "load-sport-data, the 2026 NCAA Division I men's and women's tournaments as played: regions, seeds, pairings and every game's score from Wikipedia's tournament pages, cross-checked game by game against the ESPN tournament scoreboards, which agree on every pairing, seed, region and winner. Two women's scores differ by a point or two and the file takes ESPN's (North Carolina 82-51 Western Illinois, where Wikipedia has 83-51; Duke 69-46 Baylor, where Wikipedia has 69-48). Tip-offs (scheduledAt) are ESPN's. Each First Four winner is in the field in its bracket place, and the First Four itself is left out (#2184). Women's first and second round games at a top-16 seed's arena are marked home only where the host is on the bracket's home side; the other 13 are marked neutral. Ranking is seed line, then region. Odds to win are made up by seed.",
     "sources": [
       {
         "name": "2026 NCAA Division I men's basketball tournament (Wikipedia)",
@@ -385,18 +385,6 @@
           "ranking": 42
         },
         {
-          "key": "ncaam-west-11-seed-play-in",
-          "name": "Texas / NC State",
-          "countryCode": "US",
-          "ranking": 43
-        },
-        {
-          "key": "ncaam-midwest-11-seed-play-in",
-          "name": "Miami (OH) / SMU",
-          "countryCode": "US",
-          "ranking": 44
-        },
-        {
           "key": "ncaam-northern-iowa-panthers",
           "name": "Northern Iowa Panthers",
           "countryCode": "US",
@@ -499,22 +487,10 @@
           "ranking": 61
         },
         {
-          "key": "ncaam-south-16-seed-play-in",
-          "name": "Prairie View A&M / Lehigh",
-          "countryCode": "US",
-          "ranking": 62
-        },
-        {
           "key": "ncaam-long-island-university-sharks",
           "name": "Long Island University Sharks",
           "countryCode": "US",
           "ranking": 63
-        },
-        {
-          "key": "ncaam-midwest-16-seed-play-in",
-          "name": "UMBC / Howard",
-          "countryCode": "US",
-          "ranking": 64
         },
         {
           "key": "ncaam-howard-bison",
@@ -830,20 +806,16 @@
               "oddsToWin": 121.0
             },
             {
-              "player": "ncaam-west-11-seed-play-in",
+              "player": "ncaam-texas-longhorns",
               "ranking": 43,
               "seed": 11,
-              "isPlayInPlace": true,
-              "oddsToWin": 122.0,
-              "playInWinner": "ncaam-texas-longhorns"
+              "oddsToWin": 122.0
             },
             {
-              "player": "ncaam-midwest-11-seed-play-in",
+              "player": "ncaam-miami-oh-redhawks",
               "ranking": 44,
               "seed": 11,
-              "isPlayInPlace": true,
-              "oddsToWin": 123.0,
-              "playInWinner": "ncaam-miami-oh-redhawks"
+              "oddsToWin": 123.0
             },
             {
               "player": "ncaam-northern-iowa-panthers",
@@ -948,12 +920,10 @@
               "oddsToWin": 1000.0
             },
             {
-              "player": "ncaam-south-16-seed-play-in",
+              "player": "ncaam-prairie-view-am-panthers",
               "ranking": 62,
               "seed": 16,
-              "isPlayInPlace": true,
-              "oddsToWin": 1001.0,
-              "playInWinner": "ncaam-prairie-view-am-panthers"
+              "oddsToWin": 1001.0
             },
             {
               "player": "ncaam-long-island-university-sharks",
@@ -962,12 +932,10 @@
               "oddsToWin": 1002.0
             },
             {
-              "player": "ncaam-midwest-16-seed-play-in",
+              "player": "ncaam-howard-bison",
               "ranking": 64,
               "seed": 16,
-              "isPlayInPlace": true,
-              "oddsToWin": 1003.0,
-              "playInWinner": "ncaam-howard-bison"
+              "oddsToWin": 1003.0
             }
           ],
           "matches": [
@@ -1127,7 +1095,7 @@
               "matchNumber": 9,
               "roundNumber": 1,
               "home": "ncaam-florida-gators",
-              "away": "ncaam-south-16-seed-play-in",
+              "away": "ncaam-prairie-view-am-panthers",
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T01:25:00Z",
               "advancesTo": {
@@ -1355,7 +1323,7 @@
               "matchNumber": 21,
               "roundNumber": 1,
               "home": "ncaam-byu-cougars",
-              "away": "ncaam-west-11-seed-play-in",
+              "away": "ncaam-texas-longhorns",
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T23:35:00Z",
               "advancesTo": {
@@ -1431,7 +1399,7 @@
               "matchNumber": 25,
               "roundNumber": 1,
               "home": "ncaam-michigan-wolverines",
-              "away": "ncaam-midwest-16-seed-play-in",
+              "away": "ncaam-howard-bison",
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T23:30:00Z",
               "advancesTo": {
@@ -1507,7 +1475,7 @@
               "matchNumber": 29,
               "roundNumber": 1,
               "home": "ncaam-tennessee-volunteers",
-              "away": "ncaam-midwest-11-seed-play-in",
+              "away": "ncaam-miami-oh-redhawks",
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T20:25:00Z",
               "advancesTo": {
@@ -2391,12 +2359,6 @@
           "ranking": 37
         },
         {
-          "key": "ncaaw-sacramento-4-10-seed-play-in",
-          "name": "Virginia / Arizona State",
-          "countryCode": "US",
-          "ranking": 38
-        },
-        {
           "key": "ncaaw-villanova-wildcats",
           "name": "Villanova Wildcats",
           "countryCode": "US",
@@ -2419,12 +2381,6 @@
           "name": "South Dakota State Jackrabbits",
           "countryCode": "US",
           "ranking": 42
-        },
-        {
-          "key": "ncaaw-sacramento-2-11-seed-play-in",
-          "name": "Nebraska / Richmond",
-          "countryCode": "US",
-          "ranking": 43
         },
         {
           "key": "ncaaw-rhode-island-rams",
@@ -2535,22 +2491,10 @@
           "ranking": 61
         },
         {
-          "key": "ncaaw-sacramento-4-16-seed-play-in",
-          "name": "Samford / Southern",
-          "countryCode": "US",
-          "ranking": 62
-        },
-        {
           "key": "ncaaw-california-baptist-lancers",
           "name": "California Baptist Lancers",
           "countryCode": "US",
           "ranking": 63
-        },
-        {
-          "key": "ncaaw-fort-worth-3-16-seed-play-in",
-          "name": "Missouri State / Stephen F. Austin",
-          "countryCode": "US",
-          "ranking": 64
         },
         {
           "key": "ncaaw-arizona-state-sun-devils",
@@ -2836,12 +2780,10 @@
               "oddsToWin": 100.0
             },
             {
-              "player": "ncaaw-sacramento-4-10-seed-play-in",
+              "player": "ncaaw-virginia-cavaliers",
               "ranking": 38,
               "seed": 10,
-              "isPlayInPlace": true,
-              "oddsToWin": 101.0,
-              "playInWinner": "ncaaw-virginia-cavaliers"
+              "oddsToWin": 101.0
             },
             {
               "player": "ncaaw-villanova-wildcats",
@@ -2868,12 +2810,10 @@
               "oddsToWin": 121.0
             },
             {
-              "player": "ncaaw-sacramento-2-11-seed-play-in",
+              "player": "ncaaw-nebraska-cornhuskers",
               "ranking": 43,
               "seed": 11,
-              "isPlayInPlace": true,
-              "oddsToWin": 122.0,
-              "playInWinner": "ncaaw-nebraska-cornhuskers"
+              "oddsToWin": 122.0
             },
             {
               "player": "ncaaw-rhode-island-rams",
@@ -2984,12 +2924,10 @@
               "oddsToWin": 1000.0
             },
             {
-              "player": "ncaaw-sacramento-4-16-seed-play-in",
+              "player": "ncaaw-southern-jaguars",
               "ranking": 62,
               "seed": 16,
-              "isPlayInPlace": true,
-              "oddsToWin": 1001.0,
-              "playInWinner": "ncaaw-southern-jaguars"
+              "oddsToWin": 1001.0
             },
             {
               "player": "ncaaw-california-baptist-lancers",
@@ -2998,12 +2936,10 @@
               "oddsToWin": 1002.0
             },
             {
-              "player": "ncaaw-fort-worth-3-16-seed-play-in",
+              "player": "ncaaw-missouri-state-lady-bears",
               "ranking": 64,
               "seed": 16,
-              "isPlayInPlace": true,
-              "oddsToWin": 1003.0,
-              "playInWinner": "ncaaw-missouri-state-lady-bears"
+              "oddsToWin": 1003.0
             }
           ],
           "matches": [
@@ -3163,7 +3099,7 @@
               "matchNumber": 9,
               "roundNumber": 1,
               "home": "ncaaw-south-carolina-gamecocks",
-              "away": "ncaaw-sacramento-4-16-seed-play-in",
+              "away": "ncaaw-southern-jaguars",
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T17:00:00Z",
               "advancesTo": {
@@ -3277,7 +3213,7 @@
               "matchNumber": 15,
               "roundNumber": 1,
               "home": "ncaaw-georgia-lady-bulldogs",
-              "away": "ncaaw-sacramento-4-10-seed-play-in",
+              "away": "ncaaw-virginia-cavaliers",
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T17:30:00Z",
               "advancesTo": {
@@ -3391,7 +3327,7 @@
               "matchNumber": 21,
               "roundNumber": 1,
               "home": "ncaaw-baylor-bears",
-              "away": "ncaaw-sacramento-2-11-seed-play-in",
+              "away": "ncaaw-nebraska-cornhuskers",
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T18:00:00Z",
               "advancesTo": {
@@ -3467,7 +3403,7 @@
               "matchNumber": 25,
               "roundNumber": 1,
               "home": "ncaaw-texas-longhorns",
-              "away": "ncaaw-fort-worth-3-16-seed-play-in",
+              "away": "ncaaw-missouri-state-lady-bears",
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T20:07:00Z",
               "advancesTo": {

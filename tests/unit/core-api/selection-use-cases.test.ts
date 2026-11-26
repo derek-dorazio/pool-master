@@ -150,7 +150,7 @@ function buildWorld(options: WorldOptions = {}) {
     status: withdrawn.has(golfer) ? SportEventParticipantStatus.WITHDRAWN : SportEventParticipantStatus.ACTIVE,
     metadata: {},
     ...TIMESTAMPS,
-  }) as SportEventParticipant);
+  }));
   const participants = golfers.map((golfer): Participant => ({
     id: `p-${golfer}`,
     isTestData: false,

@@ -10,7 +10,6 @@ import {
   loadEventBracket,
   releaseEvent,
   removeEventParticipant,
-  setEventPlayInWinner,
   updateEventBracketMatch,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
@@ -19,7 +18,6 @@ import {
   AddSportEventParticipantsResponseSchema,
   SportEventBracketResponseSchema,
   SportEventRoundMatchResponseSchema,
-  SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
@@ -35,19 +33,16 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
-// run's own league, with one place standing for a First Four pairing, loads its
-// bracket, and releases it only once the bracket holds the whole field. After release the
-// pairings and seeds are locked while a match's time can still move, and the First Four winner
-// takes over the pairing's place.
+// run's own league, loads its bracket, and releases it only once the bracket holds the whole
+// field. After release the pairings and seeds are locked while a match's time can still move.
 
 const RUN = `basketball-${Date.now()}`;
-const PAIRING = 'Texas / Xavier';
 // Seeds, best first; the seeds also order the field into its four tiers, one team to a tier.
 const FIELD: readonly { name: string; seed: number }[] = [
   { name: 'Duke', seed: 1 },
   { name: 'Houston', seed: 2 },
   { name: 'Vermont', seed: 15 },
-  { name: PAIRING, seed: 16 },
+  { name: 'Texas', seed: 16 },
 ];
 
 const created = {
@@ -82,7 +77,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Basketball bracket', () => {
-  it('releases a tournament only once its bracket holds the field, then locks pairings and seeds and lets the First Four winner take its place', async () => {
+  it('releases a tournament only once its bracket holds the field, then locks pairings and seeds while a match\'s time can still move', async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
@@ -107,7 +102,7 @@ describe('SDK Functional: Basketball bracket', () => {
     created.sportEventIds.add(eventId);
 
     const teamIdOf = new Map<string, string>();
-    for (const name of [...FIELD.map((team) => team.name), 'Texas']) {
+    for (const name of FIELD.map((team) => team.name)) {
       const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${name} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
@@ -129,15 +124,6 @@ describe('SDK Functional: Basketball bracket', () => {
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;
 
-    // --- The pairing's row is marked a play-in place; only such a row can take a play-in winner --
-    const marked = await updateEventParticipants({
-      client: a,
-      path: { eventId },
-      body: { participants: [{ sportEventParticipantId: rowOf(PAIRING), isPlayInPlace: true }] },
-    });
-    expect(marked.error).toBeUndefined();
-    expect(expectDefined(marked.data).participants.find((row) => row.id === rowOf(PAIRING))?.isPlayInPlace).toBe(true);
-
     // --- No release without a bracket, and no bracket with two finals ---------------------------
     const early = await releaseEvent({ client: a, path: { eventId } });
     expectFunctionalError(early, { status: 422, code: 'SPORT_EVENT_NOT_READY' });
@@ -145,7 +131,7 @@ describe('SDK Functional: Basketball bracket', () => {
     expect(expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches).toEqual([]);
 
     const firstRound = [
-      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf(PAIRING), isNeutralSite: true, scheduledDate: '2099-03-19T16:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
+      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: '2099-03-19T16:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
       { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: '2099-03-19T19:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
     ];
     expectFunctionalError(
@@ -213,38 +199,5 @@ describe('SDK Functional: Basketball bracket', () => {
       body: { scheduledDate: '2099-03-21T18:30:00.000Z' },
     });
     expect(expectMatchesSchema(SportEventRoundMatchResponseSchema, moved.data).match.scheduledDate).toBe('2099-03-21T18:30:00.000Z');
-
-    // A row that is not a play-in place cannot take a play-in winner, so a real team stays put.
-    expectFunctionalError(
-      await setEventPlayInWinner({
-        client: a,
-        path: { eventId, sportEventParticipantId: rowOf('Vermont') },
-        body: { participantId: expectDefined(teamIdOf.get('Texas')) },
-      }),
-      { status: 409, code: 'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE' },
-    );
-
-    // --- The First Four winner takes the pairing's place, keeping its seed and its match --------
-    const filled = await setEventPlayInWinner({
-      client: a,
-      path: { eventId, sportEventParticipantId: rowOf(PAIRING) },
-      body: { participantId: expectDefined(teamIdOf.get('Texas')) },
-    });
-    expect(filled.response?.status).toBe(200);
-    expect(expectMatchesSchema(SportEventParticipantResponseSchema, filled.data).participant).toMatchObject({ id: rowOf(PAIRING), seedNumber: 16, participant: { name: `Texas ${RUN}` } });
-    const afterFill = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
-    expect(expectDefined(afterFill.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))).awaySportEventParticipantId).toBe(rowOf(PAIRING));
-    const pairing = await getFunctionalPrisma().participant.findUniqueOrThrow({ where: { id: expectDefined(teamIdOf.get(PAIRING)) } });
-    expect(pairing.status).toBe('INACTIVE');
-
-    // The place is filled, so it is a play-in place no more and a second winner is refused.
-    expectFunctionalError(
-      await setEventPlayInWinner({
-        client: a,
-        path: { eventId, sportEventParticipantId: rowOf(PAIRING) },
-        body: { participantId: expectDefined(teamIdOf.get('Texas')) },
-      }),
-      { status: 409, code: 'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE' },
-    );
   });
 });

@@ -105,11 +105,6 @@ export const UpdateSportEventRoundMatchRequestSchema = z.object({
 }).describe('One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.');
 export type UpdateSportEventRoundMatchRequest = z.infer<typeof UpdateSportEventRoundMatchRequestSchema>;
 
-export const FillPlayInSlotRequestSchema = z.object({
-  participantId: z.uuid().describe('The team that won the play-in game: an active participant of the event\'s sport not yet on the field.'),
-}).describe('The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing\'s participant is inactivated.');
-export type FillPlayInSlotRequest = z.infer<typeof FillPlayInSlotRequestSchema>;
-
 export const RecordSportEventRoundMatchResultRequestSchema = z.object({
   winnerSide: MatchSideDtoSchema.nullable().describe('The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.'),
   homeScore: z.number().int().min(0).nullable().describe('The home side\'s score (games won, for a series), or null with the away score null too.'),
@@ -155,7 +150,6 @@ registerSchema('SportEventBracketResponse', SportEventBracketResponseSchema);
 registerSchema('SportEventRoundMatchResponse', SportEventRoundMatchResponseSchema);
 registerSchema('LoadSportEventBracketRequest', LoadSportEventBracketRequestSchema);
 registerSchema('UpdateSportEventRoundMatchRequest', UpdateSportEventRoundMatchRequestSchema);
-registerSchema('FillPlayInSlotRequest', FillPlayInSlotRequestSchema);
 registerSchema('RecordSportEventRoundMatchResultRequest', RecordSportEventRoundMatchResultRequestSchema);
 registerSchema('RecordSportEventMatchPeriodScoreRequest', RecordSportEventMatchPeriodScoreRequestSchema);
 registerSchema('RoundMatchupDto', RoundMatchupDtoSchema);

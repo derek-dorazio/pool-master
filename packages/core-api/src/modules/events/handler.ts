@@ -33,7 +33,6 @@ import type {
   RaceResultUploadRequest,
 } from '@poolmaster/shared/dto/race-results.dto';
 import type {
-  FillPlayInSlotRequest,
   LoadSportEventBracketRequest,
   RecordSportEventMatchPeriodScoreRequest,
   RecordSportEventRoundMatchResultRequest,
@@ -457,14 +456,6 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
-    setEventPlayInWinner: async (
-      request: FastifyRequest<{ Params: { eventId: string; sportEventParticipantId: string }; Body: FillPlayInSlotRequest }>,
-    ): Promise<SportEventParticipantResponse> => {
-      const { eventId, sportEventParticipantId } = request.params;
-      await sportEvents.requireTestEvent(eventId);
-      await bracket.fillPlayInSlot(eventId, sportEventParticipantId, request.body.participantId);
-      return fieldRowResponse(eventId, sportEventParticipantId);
-    },
 
   };
 }

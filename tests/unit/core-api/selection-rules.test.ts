@@ -93,7 +93,7 @@ function fieldRow(overrides: Partial<SportEventParticipant> & { id: string }): S
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
-  } as SportEventParticipant;
+  };
 }
 
 function participant(id: string, overrides: Partial<Participant> = {}): Participant {

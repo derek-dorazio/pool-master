@@ -24,7 +24,6 @@ function team(overrides: Partial<SportEventParticipantDto> = {}): SportEventPart
     ranking: null,
     oddsToWin: null,
     seedNumber: 12,
-    isPlayInPlace: false,
     participant: {
       id: 'participant-1',
       sportLeagueId: 'league-basketball',

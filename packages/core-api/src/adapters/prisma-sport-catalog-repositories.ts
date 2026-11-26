@@ -66,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -1085,14 +1085,6 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   async countPicks(id: string): Promise<number> {
     return this.prisma.contestEntryPick.count({ where: { sportEventParticipantId: id } });
   }
-
-  async fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.sportEventParticipant.update({ where: { id: input.id }, data: { participantId: input.winnerParticipantId, isPlayInPlace: false } }),
-      this.prisma.participant.update({ where: { id: input.pairingParticipantId }, data: { status: ParticipantStatus.INACTIVE } }),
-      ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
-    ]);
-  }
 }
 
 export class PrismaSportEventTierRepository implements SportEventTierRepository {
@@ -1404,7 +1396,6 @@ function fieldPatch(patch: SportEventParticipantPatch) {
     ...(patch.ranking !== undefined && { ranking: patch.ranking }),
     ...(patch.oddsToWin !== undefined && { oddsToWin: patch.oddsToWin }),
     ...(patch.seedNumber !== undefined && { seedNumber: patch.seedNumber }),
-    ...(patch.isPlayInPlace !== undefined && { isPlayInPlace: patch.isPlayInPlace }),
   };
 }
 
@@ -1417,7 +1408,6 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
     ranking: row.ranking ?? undefined,
     oddsToWin: row.oddsToWin === null ? undefined : Number(row.oddsToWin),
     seedNumber: row.seedNumber ?? undefined,
-    isPlayInPlace: row.isPlayInPlace,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

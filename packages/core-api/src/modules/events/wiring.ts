@@ -108,10 +108,8 @@ export function createSportEventBracketService(
 ): SportEventBracketService {
   return new SportEventBracketService({
     sportEvents: new PrismaSportEventRepository(prisma),
-    sportLeagues: new PrismaSportLeagueRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
-    participants: new PrismaParticipantRepository(prisma),
     matches: new PrismaSportEventRoundMatchRepository(prisma),
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
@@ -173,7 +171,6 @@ export function createGameScoreWriterDeps(
     eventParticipants: new PrismaSportEventParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     results: createMatchResultService(prisma, domainEvents, contestActivation, logger),
-    playIns: createSportEventBracketService(prisma, domainEvents, logger),
     domainEvents,
     logger,
   };

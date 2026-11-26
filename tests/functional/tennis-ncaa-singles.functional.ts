@@ -61,10 +61,7 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
     const [draw] = league.events;
     draw.name = eventName(league.name);
     for (const player of league.players) player.key = expectDefined(tagged(player.key));
-    for (const entry of draw.field) {
-      entry.player = expectDefined(tagged(entry.player));
-      if (entry.playInWinner !== undefined) entry.playInWinner = expectDefined(tagged(entry.playInWinner));
-    }
+    for (const entry of draw.field) entry.player = expectDefined(tagged(entry.player));
     for (const match of draw.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
   }
   return file;

@@ -37,6 +37,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   11: '6df4bde63c84186efd1fd31bb5ef8f38beb5c6dcbaabe1cb1e0cb672163bc807',
   // #2184: a field row carries one status (ACTIVE, WITHDRAWN, ELIMINATED, DISQUALIFIED) in place of isActive and inactiveReason.
   12: 'f766fdcc93bc2d4505daefa55d5bed66231488e3dd0a086ed4f08b250849c8bf',
+  // #2184: a field row no longer marks a play-in place (isPlayInPlace); the play-in is the event's first round.
+  13: 'f071800314db17b475d3408f539cad17a261969e56214a8695831c5cff1f3326',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

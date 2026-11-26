@@ -47,10 +47,8 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
   let sequence = 0;
   const bracket = new SportEventBracketService({ domainEvents: testDomainEvents(),
     sportEvents: store.sportEventRepo(),
-    sportLeagues: store.sportLeagueRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
-    participants: store.participantRepo(),
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
@@ -314,10 +312,8 @@ describe('ProviderGameSlateService', () => {
       let sequence = 0;
       const bracket = new SportEventBracketService({ domainEvents: testDomainEvents(),
         sportEvents: store.sportEventRepo(),
-        sportLeagues: store.sportLeagueRepo(),
         rounds: store.roundRepo(),
         field: store.fieldRepo(),
-        participants: store.participantRepo(),
         matches: store.matchRepo(),
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),

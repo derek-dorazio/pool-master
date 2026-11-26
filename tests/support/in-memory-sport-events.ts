@@ -43,7 +43,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -469,7 +469,7 @@ export class InMemorySportEvents {
   }
 
   addToField(sportEventId: string, participantId: string, overrides: Partial<SportEventParticipant> = {}): SportEventParticipant {
-    const entry = stamp({ id: this.id('sep'), sportEventId, participantId, status: SportEventParticipantStatus.ACTIVE, isPlayInPlace: false, metadata: {}, ...overrides });
+    const entry = stamp({ id: this.id('sep'), sportEventId, participantId, status: SportEventParticipantStatus.ACTIVE, metadata: {}, ...overrides });
     this.field.push(entry);
     return entry;
   }
@@ -828,15 +828,6 @@ export class InMemorySportEvents {
         this.valuationRows = this.valuationRows.filter((row) => row.sportEventParticipantId !== id);
       },
       countPicks: async (id) => this.picksByEntry.get(id) ?? 0,
-      fillPlayInSlot: async ({ id, winnerParticipantId, pairingParticipantId }, jobs) => {
-        this.backgroundJobs.push(...(jobs ?? []));
-        const row = this.field.find((entry) => entry.id === id);
-        const pairing = this.participants.find((participant) => participant.id === pairingParticipantId);
-        if (!row || !pairing) throw new Error('unknown field row or participant');
-        row.participantId = winnerParticipantId;
-        row.isPlayInPlace = false;
-        pairing.status = ParticipantStatus.INACTIVE;
-      },
     };
   }
 

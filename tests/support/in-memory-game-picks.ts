@@ -74,7 +74,6 @@ export class InMemoryGamePicks {
       sportEventId,
       participantId: participant.id,
       status: SportEventParticipantStatus.ACTIVE,
-      isPlayInPlace: false,
       ...(options.seedNumber !== undefined && { seedNumber: options.seedNumber }),
       metadata: {},
       createdAt: T0,

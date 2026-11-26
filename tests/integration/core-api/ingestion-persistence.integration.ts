@@ -461,27 +461,6 @@ describe('IngestionPersistence', () => {
     });
   });
 
-  it('marks the row it makes for a provider\'s play-in place as one, and a team\'s row as none', async () => {
-    const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    const entrant = (externalId: string, metadata: Record<string, unknown>) => ({
-      externalId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${externalId}`, status: SportEventParticipantStatus.ACTIVE, metadata,
-    });
-    const detail = rankedFieldDetail('integration-play-in-place', [
-      entrant('ingestion-play-in-team', { seed: 1 }),
-      entrant('ingestion-play-in-place', { seed: 16, playInPlace: true }),
-    ]);
-    const event = await linkedProviderEvent(prisma, { providerId: detail.providerId, externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
-
-    await persistence.persistEventDetailWithDiagnostics(detail);
-
-    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } });
-    expect(Object.fromEntries(rows.map((row) => [feedIdOf(row.participant), row.isPlayInPlace]))).toEqual({
-      'ingestion-play-in-team': false,
-      'ingestion-play-in-place': true,
-    });
-  });
-
   // #118, #435 — the field sync never writes a linked event's header, rounds or status (the
   // events sync keeps those, #1727).
   it('leaves a linked event\'s stored name, start, rounds and status as they were',

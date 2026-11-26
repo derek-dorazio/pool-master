@@ -267,11 +267,6 @@ export interface ProviderParticipant {
  */
 export interface ProviderParticipantMetadata {
   seed?: number;
-  /**
-   * A play-in place (#1728): the participant stands for a First Four pairing until its winner
-   * fills the place, so the field row a load creates for it is marked as one.
-   */
-  playInPlace?: boolean;
   /** Odds to win, valid only for the event named by `oddsSourceEventId`. */
   odds?: number;
   oddsSourceEventId?: string;

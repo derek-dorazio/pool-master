@@ -19,7 +19,7 @@
  *
  * NCAA basketball, men's and women's (#1496, `ncaa-tournament-reader.ts`): each season's
  * tournament as an event (`ncaab-2025-tournament`, `ncaaw-2025-tournament`), from the vendor's
- * bracket (GOAT tier), its teams with their seeds and its play-in places, its games, the men's
+ * bracket (GOAT tier), its teams with their seeds, its First Four as round 1, its games, the men's
  * whole bracket (#1728), and its games' scores in the GAME category.
  *
  * NBA (#1496, `nba-mapping.ts` through the shared `series-playoffs-reader.ts`): each season's

@@ -90,7 +90,6 @@ describe('field row mappers', () => {
     sportEventId: 'event-1',
     participantId: 'p-scheffler',
     status: 'ACTIVE',
-    isPlayInPlace: false,
     createdAt: created,
     updatedAt: updated,
   };

@@ -86,7 +86,7 @@
   "SYNC_STATUS_OPTIONS": 2,
   "NFL_POSTSEASON_ROUNDS": 4,
   "NFL_POSTSEASON_GAMES": 2,
-  "firstFourRound": 14,
+  "firstFourRound": 7,
   "championshipRound": 5,
   "parseNflScope": 3,
   "parsePlayoffsScope": 3,

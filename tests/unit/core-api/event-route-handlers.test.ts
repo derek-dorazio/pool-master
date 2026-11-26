@@ -6,7 +6,7 @@
 import { legacyMatch, homeAwayResult, homeAwayPeriod } from '../../support/match-sides';
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
-import { Sport, SportEventStatus, type SportEvent, type SportEventOverview, MatchSide } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus, SportEventParticipantStatus, type SportEvent, type SportEventOverview, MatchSide } from '@poolmaster/shared/domain';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
@@ -48,7 +48,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
 }
 const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, adminCounts: null, slots: [] };
 const fieldRow = {
-  entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', isActive: true, isPlayInPlace: false, createdAt: AT, updatedAt: AT },
+  entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', status: SportEventParticipantStatus.ACTIVE, createdAt: AT, updatedAt: AT },
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },
   valuation: null, standing: null, rounds: [], raceResult: null, affiliatedWithSportLeague: true,
 };
@@ -115,7 +115,6 @@ function fakes() {
       updateMatch: fn(legacyMatch({ id: 'm1', slot: weekRoundSlot() })),
       proposeRoundMatchups: fn([{ matchNumber: 1 }]),
       setRoundMatchups: fn([]),
-      fillPlayInSlot: fn(undefined),
     },
   };
   const lifecycle = { applySportEventStatusTransition: fn(undefined) };
@@ -490,16 +489,6 @@ describe('bracket', () => {
     expect(services.bracket.setRoundMatchups).toHaveBeenCalledWith(EVENT_ID, 2, []);
     expect(set.body).toEqual({ matches: [] });
   });
-
-  it('answers a play-in winner with its slot\'s row', async () => {
-    const { services, handlers } = fakes();
-    const slot = { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' };
-
-    await callHandler(handlers.setEventPlayInWinner, stubRequest({ params: slot, body: { participantId: 'p9' } }));
-
-    expect(services.bracket.fillPlayInSlot).toHaveBeenCalledWith(EVENT_ID, 'sep-1', 'p9');
-    expect(services.field.getEventParticipant.mock.calls).toEqual([[EVENT_ID, 'sep-1']]);
-  });
 });
 
 describe('admin result writes on a test event only (#2074)', () => {
@@ -518,7 +507,6 @@ describe('admin result writes on a test event only (#2074)', () => {
       [handlers.recordEventMatchPeriodScore, stubRequest({ params: { ...matchParams, periodNumber: 2 }, body: { homeScore: 7, awayScore: 3 } })],
       [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
       [handlers.setEventRoundMatchups, stubRequest({ params: roundParams, body: { matches: [] } })],
-      [handlers.setEventPlayInWinner, stubRequest({ params: { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' }, body: { participantId: 'p9' } })],
       [handlers.applyGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } })],
       [handlers.updateGolfRoundScore, stubRequest({ params: { ...roundParams, sportEventParticipantId: 'sep-1' }, body: { strokes: 70 } })],
       [handlers.applyRaceResults, stubRequest({ params, body: { rows: [] } })],
@@ -530,7 +518,7 @@ describe('admin result writes on a test event only (#2074)', () => {
     expect(services.sportEvents.requireTestEvent).toHaveBeenCalledTimes(writes.length);
     expect(services.sportEvents.requireTestEvent.mock.calls.every(([eventId]) => eventId === EVENT_ID)).toBe(true);
     for (const write of [
-      services.bracket.loadBracket, services.bracket.updateMatch, services.bracket.setRoundMatchups, services.bracket.fillPlayInSlot,
+      services.bracket.loadBracket, services.bracket.updateMatch, services.bracket.setRoundMatchups,
       services.matchResults.recordResult, services.matchResults.recordPeriodScore, services.matchResults.cancelMatch,
       services.golfScores.applyRoundScores, services.golfScores.updateRoundScore, services.raceResults.applyResults,
     ]) {

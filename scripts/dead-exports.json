@@ -113,7 +113,7 @@
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-contract.ts": 3,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping.ts": 4,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-contract.ts": 4,
-  "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-mapping.ts": 3,
+  "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-mapping.ts": 2,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-contract.ts": 2,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-mapping.ts": 1,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-contract.ts": 3,
@@ -181,7 +181,7 @@
   "own:packages/shared/dto/api-error-codes.ts": 1,
   "own:packages/shared/dto/auth.dto.ts": 5,
   "own:packages/shared/dto/billing.dto.ts": 8,
-  "own:packages/shared/dto/bracket.dto.ts": 15,
+  "own:packages/shared/dto/bracket.dto.ts": 14,
   "own:packages/shared/dto/championship.dto.ts": 5,
   "own:packages/shared/dto/client-logs.dto.ts": 3,
   "own:packages/shared/dto/common.dto.ts": 1,
@@ -209,6 +209,7 @@
   "own:packages/shared/dto/race-results.dto.ts": 9,
   "own:packages/shared/dto/selections.dto.ts": 7,
   "own:packages/shared/dto/settings.dto.ts": 5,
+  "own:packages/shared/dto/slot-tiebreaker.dto.ts": 2,
   "own:packages/shared/dto/sport-catalog.dto.ts": 40,
   "own:packages/shared/dto/squads.dto.ts": 8,
   "own:packages/shared/dto/squares.dto.ts": 6,
@@ -216,6 +217,5 @@
   "own:packages/shared/dto/system-emails.dto.ts": 5,
   "own:packages/shared/dto/team-owner-invitations.dto.ts": 8,
   "own:packages/shared/dto/users.dto.ts": 5,
-  "own:packages/shared/dto/version.dto.ts": 1,
-  "own:packages/shared/dto/slot-tiebreaker.dto.ts": 2
+  "own:packages/shared/dto/version.dto.ts": 1
 }
