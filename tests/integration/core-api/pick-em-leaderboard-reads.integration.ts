@@ -4,6 +4,7 @@ import {
   ContestEntryStatus,
   ContestStatus,
   HomeAway,
+  MatchSide,
   PickEmMode,
   PredictedResult,
   SelectionType,
@@ -24,6 +25,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { createContestService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { expectDefined } from '../../support/expect-defined';
+import { resultBody } from '../../support/match-requests';
 import { linkTestSlot } from '../../support/test-slots';
 import { writePicks } from '../../support/prediction-writes';
 import {
@@ -367,7 +369,7 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
       method: 'PUT',
       url: `/api/v1/events/${season.liveWeek.event.id}/bracket/rounds/1/matches/3/result`,
       headers: admin.headers,
-      payload: { winnerSide: 'HOME', homeScore: 24, awayScore: 10 },
+      payload: resultBody({ winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 }),
     });
 
     expect(saved.statusCode).toBe(200);
