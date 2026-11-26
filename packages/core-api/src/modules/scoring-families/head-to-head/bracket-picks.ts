@@ -25,6 +25,7 @@ import {
   MatchSide,
   MatchSideOutcome,
   opposingSideOf,
+  matchSideOfSideNumber,
   sideNumberOfMatchSide,
   sideParticipantId,
   winningSide,
@@ -139,8 +140,12 @@ export function resolveBracketPicks<Pick extends BracketPick>(
       for (const matchup of matchups) {
         const match = round.find((candidate) => candidate.matchNumber === matchup.matchNumber);
         if (match) {
-          const teamOn = (side: MatchSide) => matchup.sides.find((each) => each.sideNumber === sideNumberOfMatchSide(side))?.sportEventParticipantId ?? null;
-          sides.set(match.id, { home: teamOn(MatchSide.HOME), away: teamOn(MatchSide.AWAY) });
+          const proposed: { home: string | null; away: string | null } = { home: null, away: null };
+          for (const each of matchup.sides) {
+            if (matchSideOfSideNumber(each.sideNumber) === MatchSide.HOME) proposed.home = each.sportEventParticipantId;
+            else proposed.away = each.sportEventParticipantId;
+          }
+          sides.set(match.id, proposed);
         }
       }
     }

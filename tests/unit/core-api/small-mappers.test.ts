@@ -199,6 +199,13 @@ describe('toSquaresBoardResponse', () => {
     expect(dto.digits).toEqual({ rowDigits: [1, 2, 3], columnDigits: [4, 5], drawnAt: ISO });
     expect(dto.digits?.rowDigits).not.toBe(rowDigits);
   });
+
+  it('sends each winner\'s scores as the row side\'s (the away team\'s) and the column side\'s (the home team\'s)', () => {
+    const winner = { periodNumber: 2, homeScore: 14, awayScore: 7, rowIndex: 7, columnIndex: 4, contestEntryId: 'e1', entryName: 'Pat' };
+    const dto = toSquaresBoardResponse({ ...board(null), winners: [winner] });
+
+    expect(dto.winners).toEqual([{ periodNumber: 2, rowScore: 7, columnScore: 14, rowIndex: 7, columnIndex: 4, contestEntryId: 'e1', entryName: 'Pat' }]);
+  });
 });
 
 describe('the upload previews count each resolution in their rollup', () => {
