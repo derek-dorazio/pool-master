@@ -2,7 +2,7 @@ import { expect, jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { BackgroundJobType, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, PeriodUnit, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type {
   ContestResponse,
   LeagueContextResponse,
@@ -39,7 +39,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
-import { oneEventSlotId } from '../../support/test-slots';
+import { oneEventSlotId, setEventSlotPeriods } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
@@ -414,7 +414,10 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
     });
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id } });
   }));
-  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
+  const sportEventSlotId = await oneEventSlotId(prisma, event.id);
+  // A football game of four quarters, its slot's periods (#2047), which a squares board is drawn for.
+  await setEventSlotPeriods(prisma, event.id, { unit: PeriodUnit.QUARTER, count: 4 });
+  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId, roundNumber: 1, scheduledDate: event.startDate } });
   // The away team on side 1 and the home team on side 2, each period its own points.
   const game = await createMatchRow(prisma, {
     sportEventId: event.id,

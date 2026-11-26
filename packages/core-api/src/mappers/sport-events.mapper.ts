@@ -53,7 +53,7 @@ export function mapSportEventToDto({
   const operationalState = evaluateEventOperationalState({
     status: event.status,
     startDate: event.startDate,
-    participantCount: participantCount,
+    participantCount,
     now,
   });
 

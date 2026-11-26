@@ -413,6 +413,15 @@ export class GolfScoreService {
 
   /** Dry run — resolves every row against the event's field and reports the change it would make. Writes nothing. */
   async previewRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<GolfScorePreviewRow[]> {
+    return (await this.previewWithRounds(sportEventId, roundNumber, rows)).preview;
+  }
+
+  /** The preview, with the event's rounds it read, so applying it reads them once. */
+  private async previewWithRounds(
+    sportEventId: string,
+    roundNumber: number,
+    rows: GolfScoreRowInput[],
+  ): Promise<{ preview: GolfScorePreviewRow[]; eventRounds: SportEventRound[] }> {
     const event = await this.requireGolfScoredEvent(sportEventId);
     this.requireScheduledRound(event, sportEventId, roundNumber);
     const [field, eventRounds] = await Promise.all([
@@ -428,7 +437,7 @@ export class GolfScoreService {
         .map((result) => [result.participantRound.sportEventParticipantId, result]),
     );
 
-    return Promise.all(rows.map(async (row) => {
+    const preview = await Promise.all(rows.map(async (row): Promise<GolfScorePreviewRow> => {
       const resolved = await resolveParticipantRow(row, matchAmong(participants, feedIds));
       const after: GolfRoundValues = { strokes: row.strokes, scoreToPar: row.scoreToPar, thru: row.thru ?? null, status: row.status };
       const sportEventParticipantId = resolved.participant ? entryIdByParticipantId.get(resolved.participant.id) ?? null : null;
@@ -453,6 +462,7 @@ export class GolfScoreService {
         after,
       };
     }));
+    return { preview, eventRounds };
   }
 
   /**
@@ -460,7 +470,7 @@ export class GolfScoreService {
    * refreshes standings exactly as the sync path does.
    */
   async applyRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<void> {
-    const preview = await this.previewRoundScores(sportEventId, roundNumber, rows);
+    const { preview, eventRounds } = await this.previewWithRounds(sportEventId, roundNumber, rows);
     const unresolved = preview.filter((row) => row.resolution !== 'MATCHED' || !row.sportEventParticipantId);
     if (unresolved.length > 0) {
       throw new GolfScoreError(
@@ -487,7 +497,8 @@ export class GolfScoreService {
       }));
     if (writes.length > 0) {
       await this.deps.golfRounds.upsertMany(writes);
-      await this.refreshGolfStandings(sportEventId, await this.deps.rounds.findBySportEvent(sportEventId), writes.map((write) => write.sportEventParticipantId), new Date());
+      const rounds = eventRounds.some((candidate) => candidate.id === round.id) ? eventRounds : [...eventRounds, round];
+      await this.refreshGolfStandings(sportEventId, rounds, writes.map((write) => write.sportEventParticipantId), new Date());
     }
   }
 

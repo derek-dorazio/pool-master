@@ -8,7 +8,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { isAtPlace, MatchSide, MatchStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchSide, MatchStatus, PeriodUnit, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
@@ -381,12 +381,14 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
   it('releases the playoffs with reseeded Divisional and conference rounds and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
     await addSportLeague(league, Sport.FOOTBALL);
     const stored = expectDefined(await leagueNamed(league, Sport.FOOTBALL));
-    // As the NFL's migration gives it: a postseason definition per round, each reseeded, the Super Bowl FINAL.
+    // As the NFL's migration gives it: a postseason definition per round, each reseeded and of four
+    // quarters, the Super Bowl FINAL.
+    const quarters = { unit: PeriodUnit.QUARTER, count: 4 };
     await roundSlotDefinitionIds(stored.id, [
-      { slotKind: 'ROUND_OF_16', pairing: 'RESEEDED' },
-      { slotKind: 'QUARTERFINAL', pairing: 'RESEEDED' },
-      { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' },
-      { slotKind: 'FINAL', pairing: 'RESEEDED' },
+      { slotKind: 'ROUND_OF_16', pairing: 'RESEEDED', periods: quarters },
+      { slotKind: 'QUARTERFINAL', pairing: 'RESEEDED', periods: quarters },
+      { slotKind: 'SEMIFINAL', pairing: 'RESEEDED', periods: quarters },
+      { slotKind: 'FINAL', pairing: 'RESEEDED', periods: quarters },
     ]);
     const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
     expect(counts(applied)).toEqual({ 'SPORT_LEAGUE SKIP': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
