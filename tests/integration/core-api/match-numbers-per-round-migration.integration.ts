@@ -82,6 +82,9 @@ describe('the match numbers per round migration', () => {
       await tx.$executeRawUnsafe('DROP INDEX "sport_event_round_matches_sport_event_round_id_match_number_key"');
       await tx.$executeRawUnsafe('CREATE INDEX "sport_event_round_matches_sport_event_id_match_number_key" ON "sport_event_round_matches"("sport_event_id", "match_number")');
       await tx.$executeRawUnsafe('CREATE INDEX "sport_event_round_matches_sport_event_round_id_idx" ON "sport_event_round_matches"("sport_event_round_id")');
+      // The column a match advanced into a side by, which the later match sides migration (#2046) replaced with a side number.
+      await tx.$executeRawUnsafe('CREATE TYPE "PrismaMatchSide" AS ENUM (\'HOME\', \'AWAY\')');
+      await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" DROP CONSTRAINT "sport_event_round_matches_advances_to_side_number_check", ADD COLUMN "advances_to_side" "PrismaMatchSide"');
       for (const row of rows) {
         // poolmaster-allow-query-in-loop: ten fixture matches, inserted as the old table held them
         await tx.$executeRaw`INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "advances_to_match_id", "advances_to_side", "is_neutral_site", "updated_at")

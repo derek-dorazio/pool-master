@@ -136,7 +136,7 @@ export async function testSlotIdIn(
   })).id;
 }
 
-/** The key prefix of a synced event's copy of a test definition, which test cleanup removes. */
+/** The key prefix of a slot definition a test adds to a seeded league (a synced event's copy of a test definition, or a scaling test's own), which test cleanup removes. */
 export const SYNCED_SLOT_KEY_PREFIX = 'SYNCED_';
 let syncedPlaceCount = 0;
 

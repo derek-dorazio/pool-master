@@ -14,6 +14,7 @@ import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardo
 import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { linkTestSlot } from '../../support/test-slots';
+import { uncachedStatement } from '../../support/put-back-sql';
 
 beforeAll(async () => {
   await setupIntegrationTests();
@@ -83,20 +84,21 @@ interface OldMatchRow {
 async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[], kickoff: Date): Promise<MigratedGame[]> {
   return getPrisma().$transaction(async (tx) => {
     // The tables as they were before the migration: first the match sides migration (#2046) taken
-    // back as far as this one needs, its side results gone with the Games and the match's result
-    // columns back.
+    // back as far as this one needs: its side results gone with the Games, its sides no longer tied
+    // to the match key this migration replaces, and the match's result columns back.
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_side_result_period_scores"');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_side_results"');
     await tx.$executeRawUnsafe('CREATE TYPE "PrismaMatchSide" AS ENUM (\'HOME\', \'AWAY\')');
     await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "winner_side" "PrismaMatchSide", ADD COLUMN "home_score" INTEGER, ADD COLUMN "away_score" INTEGER');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_provider_mappings"');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_games"');
+    await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_match_sides" DROP CONSTRAINT "sport_event_round_match_sides_match_fkey"');
     await tx.$executeRawUnsafe('DROP INDEX "sport_event_round_matches_event_id_key"');
     await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "external_game_id" VARCHAR(255)');
     await tx.$executeRawUnsafe('CREATE UNIQUE INDEX "sport_event_round_matches_sport_event_id_external_game_id_key" ON "sport_event_round_matches"("sport_event_id", "external_game_id")');
     for (const row of rows) {
       // poolmaster-allow-query-in-loop: a few fixture matches, inserted as the old table held them
-      await tx.$executeRaw`INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "external_game_id", "scheduled_date", "status", "winner_side", "home_score", "away_score", "is_neutral_site", "updated_at")
+      await tx.$executeRaw`${uncachedStatement()} INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "external_game_id", "scheduled_date", "status", "winner_side", "home_score", "away_score", "is_neutral_site", "updated_at")
         VALUES (${row.id}::uuid, ${row.event.eventId}::uuid, ${row.event.roundId}::uuid, ${row.number}, ${row.gameId}, ${kickoff}, ${row.status}::"PrismaMatchStatus", ${row.winner}::"PrismaMatchSide", ${row.home}, ${row.away}, false, now())`;
     }
     for (const statement of migrationStatements()) {

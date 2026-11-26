@@ -17,6 +17,7 @@ import { createSportEventRow } from '../../support/sport-event-rows';
 import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 import { linkTestSlot } from '../../support/test-slots';
+import { uncachedStatement } from '../../support/put-back-sql';
 
 beforeAll(async () => {
   await setupIntegrationTests();
@@ -183,9 +184,9 @@ async function migrate(event: Awaited<ReturnType<typeof eventWithField>>, matche
     // Feeders point at later matches, so the matches go in before any link.
     for (const match of matches) {
       // poolmaster-allow-query-in-loop: a few fixture matches, inserted as the old table held them
-      await tx.$executeRaw`INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "is_neutral_site", "status", "home_sport_event_participant_id", "away_sport_event_participant_id", "winner_side", "home_score", "away_score", "home_shootout_score", "away_shootout_score", "home_spread", "updated_at")
+      await tx.$executeRaw`${uncachedStatement()} INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "is_neutral_site", "status", "home_sport_event_participant_id", "away_sport_event_participant_id", "winner_side", "home_score", "away_score", "home_shootout_score", "away_shootout_score", "home_spread", "updated_at")
         VALUES (${match.id}::uuid, ${event.eventId}::uuid, ${event.roundId}::uuid, ${match.number}, ${match.neutral}, ${match.status}::"PrismaMatchStatus", ${match.home}::uuid, ${match.away}::uuid, ${match.winner}::"PrismaMatchSide", ${match.homeScore}, ${match.awayScore}, ${match.shootout?.home ?? null}, ${match.shootout?.away ?? null}, ${match.homeSpread ?? null}, now())`;
-      await tx.$executeRaw`INSERT INTO "sport_event_round_match_games" ("sport_event_id", "sport_event_round_match_id", "sport_event_slot_id", "game_number", "status", "winner_side", "home_score", "away_score", "updated_at")
+      await tx.$executeRaw`${uncachedStatement()} INSERT INTO "sport_event_round_match_games" ("sport_event_id", "sport_event_round_match_id", "sport_event_slot_id", "game_number", "status", "winner_side", "home_score", "away_score", "updated_at")
         VALUES (${event.eventId}::uuid, ${match.id}::uuid, ${event.sportEventSlotId}::uuid, 1, ${match.status}::"PrismaMatchStatus", ${match.winner}::"PrismaMatchSide", ${match.homeScore}, ${match.awayScore}, now())`;
       for (const [index, [home, away]] of (match.runningPeriods ?? []).entries()) {
         // poolmaster-allow-query-in-loop: a fixture match's few periods

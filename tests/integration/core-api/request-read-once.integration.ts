@@ -66,12 +66,19 @@ const TIER_KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
  * the game holds.
  */
 const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
+  // A result clears the Game's shoot-out scores before it writes its own (#2046).
+  ['DELETE sport_event_round_match_game_side_result_period_scores', 1],
   ['INSERT background_jobs', 1],
   ['INSERT sport_event_participant_standings', 1],
   ['SELECT contests', 1],
-  ['SELECT sport_event_match_period_scores', 1],
   ['SELECT sport_event_participant_standings', 1],
   ['SELECT sport_event_provider_mappings', 1],
+  // The match is read with its sides, Games, side results and their periods (#2046); the writer
+  // reads the sides and side results it writes once more, and the outcome its sides again.
+  ['SELECT sport_event_round_match_game_side_result_period_scores', 1],
+  ['SELECT sport_event_round_match_game_side_results', 2],
+  ['SELECT sport_event_round_match_games', 1],
+  ['SELECT sport_event_round_match_sides', 3],
   ['SELECT sport_event_round_matches', 1],
   ['SELECT sport_event_rounds', 1],
   // The slot definitions the event plays, read with it (#2010), and the slot the game's round is
@@ -89,6 +96,10 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
   ['SELECT sports', 1], // a sport is read through its event's Season and league since #2042 (#2089)
+  // The match, its Game 1, each side's outcome and each side's score (#2046).
+  ['UPDATE sport_event_round_match_game_side_results', 2],
+  ['UPDATE sport_event_round_match_games', 1],
+  ['UPDATE sport_event_round_match_sides', 2],
   ['UPDATE sport_event_round_matches', 1],
 ];
 
