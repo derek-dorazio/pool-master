@@ -3,7 +3,7 @@ import { withHomeAway, homeAwayOf } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { compareMatchPlaces, isAtPlace, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status, HomeAway } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, isAtPlace, matchIsNeutralSite, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status, HomeAway } from '@poolmaster/shared/domain';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
@@ -396,7 +396,8 @@ describe('ProviderGameSlateService', () => {
       const at = (roundNumber: number, matchNumber: number) => store.matchRows.find((match) => isAtPlace(match, { roundNumber, matchNumber }));
       expect(at(2, 1)?.advancesToMatchId).toBe(at(3, 1)?.id);
       expect(homeAwayOf(expectDefined(at(2, 2))).advancesToSide).toBe(MatchSide.AWAY);
-      expect(at(3, 1)).toMatchObject({ isNeutralSite: true, regionLabel: null });
+      expect(at(3, 1)).toMatchObject({ regionLabel: null });
+      expect(matchIsNeutralSite(expectDefined(at(3, 1)))).toBe(true);
       expect(at(1, 1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });
 
