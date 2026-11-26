@@ -213,7 +213,7 @@ export async function putEventInSlot(
     data: {
       sportLeagueId: event.sportLeagueId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonCompetitionId: seasonCompetitionId,
       sportLeagueCompetitionSlotId, seriesFormat: definition.seriesFormat, seriesGames: definition.seriesGames, pairing: definition.pairing,
-      isTestData: options.isTestData ?? true, label: (options.isTestData ?? true) ? `event ${sportEventId} ${sportLeagueCompetitionSlotId}` : null,
+      isTestData: options.isTestData ?? true, label: (options.isTestData ?? true) ? `event ${sportEventId}` : null,
     },
     select: { id: true },
   });

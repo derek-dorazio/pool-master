@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { bracketGroups, bracketHalves, drawBracket, openingRoundIndex, splitMiddle } from './bracket-view-model';
+import { bracketHalves, drawBracket, openingRoundIndex, splitMiddle, type BracketDrawing, type BracketGroup } from './bracket-view-model';
+
+/** Every group of a drawing: the regions, then the middle. */
+function bracketGroups(drawing: BracketDrawing): BracketGroup[] {
+  return drawing.middle ? [...drawing.regions, drawing.middle] : drawing.regions;
+}
 import { TEAMS, emptyBracketGames, filledBracketGames, gamePick } from './test/bracket-fixtures';
 import { midTournamentGames, tournamentGames } from './test/bracket-tournament-fixture';
 

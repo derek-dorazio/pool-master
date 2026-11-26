@@ -172,11 +172,6 @@ function firstMatch(games: readonly BracketGame[], regionLabel: string): number 
   return Math.min(...games.filter((game) => game.regionLabel === regionLabel).map((game) => game.matchNumber));
 }
 
-/** Every group in tab order: the regions, then the middle. */
-export function bracketGroups(drawing: BracketDrawing): BracketGroup[] {
-  return drawing.middle ? [...drawing.regions, drawing.middle] : drawing.regions;
-}
-
 /** The regions on each half of a desktop bracket: the first, third… on the left, the rest mirrored on the right. */
 export function bracketHalves(drawing: BracketDrawing): { left: BracketGroup[]; right: BracketGroup[] } {
   return {

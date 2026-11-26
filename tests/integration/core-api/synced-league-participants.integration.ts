@@ -52,7 +52,7 @@ function createParticipant(headers: Record<string, string>, payload: Record<stri
 async function testEvent(headers: Record<string, string>, sportLeagueId: string): Promise<{ eventId: string; slotId: string }> {
   const slotId = await testSlotId(getPrisma(), sportLeagueId, new Date('2084-06-16T08:00:00.000Z'), new Date('2084-06-19T20:00:00.000Z'));
   const response = await getApp().inject({
-    method: 'POST', url: '/api/v1/events', headers, payload: { name: `Test Open ${randomUUID()}`, seasonSlotId: slotId, autoLifecycleEnabled: false },
+    method: 'POST', url: '/api/v1/events', headers, payload: { name: `Test Open ${randomUUID()}`, seasonSlotIds: [slotId], autoLifecycleEnabled: false },
   });
   expect(response.statusCode).toBe(201);
   return { eventId: response.json<{ event: { id: string } }>().event.id, slotId };

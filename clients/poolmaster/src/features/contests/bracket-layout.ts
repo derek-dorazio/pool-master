@@ -105,11 +105,6 @@ export function describeBracketTiebreaker(value: number | null, scoreUnit: strin
   return value === null ? 'No tiebreaker was saved.' : `Tiebreaker: ${value} total ${scoreUnit} in the final.`;
 }
 
-/** "41 of 63 picked". */
-export function formatPickProgress(pickedCount: number, gameCount: number): string {
-  return `${pickedCount} of ${gameCount} picked`;
-}
-
 /** A tiebreaker as typed: a whole number of total points from 0 to `max`, the most the server takes, or null. */
 export function parseBracketTiebreaker(text: string, max: number): number | null {
   const trimmed = text.trim();
