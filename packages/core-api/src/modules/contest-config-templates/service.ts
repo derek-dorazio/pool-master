@@ -44,7 +44,8 @@ export class ContestConfigTemplateCoverageError extends Error {
       | 'CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT'
       | 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS'
       | 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS'
-      | 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT',
+      | 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT'
+      | 'CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH',
     message: string,
   ) {
     super(message);
@@ -64,6 +65,10 @@ const COVERAGE_PROBLEM_ERRORS: Record<TemplateCoverageProblem, { code: ContestCo
   [TemplateCoverageProblem.BRACKET_OUTSIDE_KNOCKOUT]: {
     code: 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT',
     message: 'A bracket template may list only knockout slots, where one side always advances.',
+  },
+  [TemplateCoverageProblem.ROUND_VALUES_MISMATCH]: {
+    code: 'CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH',
+    message: 'A template scored by knockout round points must give one round value for each bracket round it lists, the third-place play-off aside.',
   },
 };
 
@@ -153,7 +158,8 @@ export class ContestConfigTemplateService {
 
   /**
    * Refuses an edit whose slots do not fit (#2010): every listed definition its own sport league's,
-   * and the listed slots fitting the coverage mode and the selection type. An edit of neither is
+   * and the listed slots fitting the coverage mode, the selection type and the knockout round
+   * values (#2177), whichever of them the edit changes. An edit of none is
    * checked too, so a template already out of line cannot be saved again as it is.
    */
   private async assertCoverageFits(existing: ContestConfigTemplate, input: UpdateContestConfigTemplateRequest): Promise<void> {
@@ -164,7 +170,11 @@ export class ContestConfigTemplateService {
       this.logger.warn({ templateId: existing.id, asked: input.slotDefinitionIds.length, found: slots.length }, 'contest template admin update refused for a slot not of its sport league');
       throw new ContestConfigTemplateCoverageError('CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT', 'Every slot a template lists must be one of its own sport league\'s.');
     }
-    const problem = templateCoverageProblem({ coverageMode: input.coverageMode ?? existing.coverageMode, selectionType: existing.selectionType }, slots);
+    const problem = templateCoverageProblem({
+      coverageMode: input.coverageMode ?? existing.coverageMode,
+      selectionType: existing.selectionType,
+      configJson: input.configuration ?? existing.configJson,
+    }, slots);
     if (problem !== null) {
       this.logger.warn({ templateId: existing.id, problem }, 'contest template admin update refused for slots that do not fit');
       const { code, message } = COVERAGE_PROBLEM_ERRORS[problem];
