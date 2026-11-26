@@ -67,8 +67,11 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   });
   // Under the league's own provider league, so a seeded league (the NBA) gains no second mapping
   // that outlives the test.
+  // The seeded NBA has its BALLDONTLIE mapping without a selection, so the league's own mapping
+  // counts too; a second mapping would outlive the test and show in the seeded mapping checks.
   const selected = await prisma.sportLeagueProviderMapping.findFirst({
-    where: { selectedBy: { is: { id: sportLeague.id } } },
+    where: { OR: [{ selectedBy: { is: { id: sportLeague.id } } }, { sportLeagueId: sportLeague.id }] },
+    orderBy: { createdAt: 'asc' },
     select: { providerLeague: { select: { code: true } } },
   });
   await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, selected?.providerLeague.code ?? (sportOf === Sport.SOCCER ? 'worldcup' : 'ncaab'));
