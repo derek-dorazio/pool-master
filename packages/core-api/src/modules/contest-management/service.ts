@@ -78,7 +78,6 @@ import {
   eventSportDefinition,
   sportAllowsSelectionType,
   getTieredRosterSize,
-  getTiersInPlay,
   contestFormatForSelectionType,
   isContestFormatValidForTournamentFormat,
   isSquaresRound,
@@ -137,11 +136,11 @@ export interface ContestCreateSportEventReader {
   countUndecidedGames(sportEventId: string, options?: { openingRoundOnly: boolean }): Promise<number>;
   /** How many of those games have no spread yet (#720). */
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
-  /** Why the event's games from `startsAtRound` on cannot be filled in as a bracket, or null when they can (#721). */
-  findBracketProblem(sportEventId: string, startsAtRound: number): Promise<string | null>;
+  /** Why the event's games cannot be filled in as a bracket, or null when they can (#721). */
+  findBracketProblem(sportEventId: string): Promise<string | null>;
   /** The status and round of one of the event's games, or null when the game is not the event's (#711). */
   findGame(sportEventId: string, sportEventRoundMatchId: string): Promise<{ status: MatchStatus; roundNumber: number } | null>;
-  /** When a contest with this cutoff closes on the event (#721): at its start, or at its starting round's first game. */
+  /** When a contest with this cutoff closes on the event (#721): at its start, or at its squares game's kickoff. */
   findCutoffTiming(sportEvent: ContestCreateSportEventState, cutoff: ContestCutoff): Promise<EventTiming>;
 }
 
@@ -687,7 +686,7 @@ export class ContestManagementService {
 
   /**
    * Refuses opening a contest past its cutoff on any of its events: the event's start, or a
-   * second-chance bracket's starting round (#721), which may come while the event is under way.
+   * squares contest's game's kickoff.
    */
   private async assertCutoffAhead(
     contestId: string,
@@ -835,8 +834,8 @@ export class ContestManagementService {
 
   /**
    * Whether a contest can be built on the event: released, its field loaded, and its cutoff still
-   * ahead. The cutoff is the event's start, so nothing is built on an event under way, except a
-   * second-chance bracket (#721), which closes at its starting round's first game instead.
+   * ahead. The cutoff is the event's start, so nothing is built on an event under way, except
+   * squares, which closes at its own game's kickoff.
    */
   private async assertSportEventContestEligible(
     sportEventId: string,
@@ -890,11 +889,9 @@ export class ContestManagementService {
         cutoffAt: timing.startDate.toISOString(),
       }, 'contest management create contest rejected for a sport event past the contest cutoff');
       throw new ContestManagementError(
-        cutoff.kind === ContestCutoffKind.ROUND_START
-          ? 'The bracket\'s starting round has already started, so a bracket can no longer start there.'
-          : cutoff.kind === ContestCutoffKind.MATCH_START
-            ? 'That game has already kicked off, so a squares contest can no longer be played on it.'
-            : 'Selected sporting event has already started, so contests can no longer be created on it.',
+        cutoff.kind === ContestCutoffKind.MATCH_START
+          ? 'That game has already kicked off, so a squares contest can no longer be played on it.'
+          : 'Selected sporting event has already started, so contests can no longer be created on it.',
         'SPORT_EVENT_ALREADY_STARTED',
       );
     }
@@ -979,8 +976,9 @@ export class ContestManagementService {
     for (const each of sportEvents) {
       this.assertScoringFitsEvent(each, scoring);
       // Knockout round points score how far a team went (#715): a regular-season week's games form
-      // no bracket, so there is no round to reach.
-      if (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS') {
+      // no bracket, so there is no round to reach. A bracket makes the same check below, in its own
+      // words, since its entry picks every game.
+      if (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rules.selectionType !== SelectionType.BRACKET) {
         await this.assertEventIsKnockout(each.id);
       }
     }
@@ -992,7 +990,6 @@ export class ContestManagementService {
             selectionType: rules.selectionType,
             picksPerTier: rules.picksPerTier,
             countedScores: rules.countedScores,
-            ...(rules.tiersUsed === undefined ? {} : { tiersUsed: rules.tiersUsed }),
           },
           scoring,
         };
@@ -1019,24 +1016,23 @@ export class ContestManagementService {
           scoring,
         };
       case SelectionType.BRACKET:
-        // A bracket entry picks every game from its starting round to the final, so those games
-        // must fill in as a bracket (#721): a second-chance bracket's starting round needs its teams.
+        // A bracket entry picks every game to the final, so the games must fill in as a bracket (#721).
         for (const each of sportEvents) {
-          await this.assertEventIsBracket(each.id, rules.startsAtRound);
+          await this.assertEventIsBracket(each.id);
         }
         return {
-          configJson: { selectionType: rules.selectionType, startsAtRound: rules.startsAtRound },
+          configJson: { selectionType: rules.selectionType },
           scoring,
         };
     }
   }
 
-  private async assertEventIsBracket(sportEventId: string, startsAtRound: number): Promise<void> {
-    const problem = await this.sportEventReader.findBracketProblem(sportEventId, startsAtRound);
+  private async assertEventIsBracket(sportEventId: string): Promise<void> {
+    const problem = await this.sportEventReader.findBracketProblem(sportEventId);
     if (problem === null) {
       return;
     }
-    this.logger.warn({ sportEventId, startsAtRound, problem }, 'contest management rules refused a bracket event whose games do not fill in as a bracket');
+    this.logger.warn({ sportEventId, problem }, 'contest management rules refused a bracket event whose games do not fill in as a bracket');
     throw new ContestManagementError(
       `A bracket contest's event must be a knockout every game of which can be picked: ${problem}.`,
       CONTEST_EVENT_NOT_A_BRACKET,
@@ -1044,7 +1040,7 @@ export class ContestManagementService {
   }
 
   private async assertEventIsKnockout(sportEventId: string): Promise<void> {
-    const problem = await this.sportEventReader.findBracketProblem(sportEventId, 1);
+    const problem = await this.sportEventReader.findBracketProblem(sportEventId);
     if (problem === null) {
       return;
     }
@@ -1310,21 +1306,13 @@ export class ContestManagementError extends Error {
 
 /**
  * Tiers are event-owned (plans/124 §4.6) and every tier takes the contest's
- * picksPerTier (#479), so the roster is the event's tier count (or the contest's
- * tiersUsed, the first ones only) times picksPerTier. What is left to validate
- * against the event is that tiersUsed fits its tiers and countedScores that roster.
+ * picksPerTier (#479), so the roster is the event's tier count times picksPerTier.
+ * What is left to validate against the event is that countedScores fits that roster.
  */
 function assertCountedScoresFitRoster(
   configuration: TieredContestRules,
-  eventTierCount: number,
+  tierCount: number,
 ): void {
-  if (configuration.tiersUsed !== undefined && configuration.tiersUsed > eventTierCount) {
-    throw new ContestManagementError(
-      `tiersUsed (${configuration.tiersUsed}) cannot exceed the event's ${eventTierCount} tier(s).`,
-      'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-    );
-  }
-  const tierCount = getTiersInPlay(eventTierCount, configuration.tiersUsed);
   const rosterSize = getTieredRosterSize(tierCount, configuration.picksPerTier);
   if (configuration.countedScores > rosterSize) {
     throw new ContestManagementError(

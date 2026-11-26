@@ -236,7 +236,7 @@ describe('Preview contest entry', () => {
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sl-nfl', name: 'NFL' } } });
     previewGamePicksMock.mockResolvedValue({ data: gamesPreview({ selectionType: 'BRACKET', mode: null, againstTheSpread: false }) });
     renderAction({
-      configuration: { selectionType: 'BRACKET', startsAtRound: 1 },
+      configuration: { selectionType: 'BRACKET' },
       contestName: 'Playoff Bracket',
       event: nflEvent,
       participant: team,
@@ -247,7 +247,7 @@ describe('Preview contest entry', () => {
 
     expect(await screen.findByTestId('bracket-board')).toBeInTheDocument();
     expect(previewGamePicksMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: expect.objectContaining({ rules: { selectionType: 'BRACKET', startsAtRound: 1 } }) as unknown,
+      body: expect.objectContaining({ rules: { selectionType: 'BRACKET' } }) as unknown,
     }));
   });
 

@@ -436,65 +436,6 @@ describe('ContestManagementService', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  describe('a tiered contest that picks from the first tiers only (tiersUsed)', () => {
-    function tieredService(tierCount: number) {
-      const contestConfigurationRepo = createContestConfigurationRepo();
-      const contestCoreRepo = createContestRepo();
-      const service = new ContestManagementService({
-        domainEvents: testDomainEvents(),
-        contests: contestCoreRepo,
-        configTemplates: createContestConfigTemplateRepo(),
-        configurations: contestConfigurationRepo,
-        scoringRules: createParticipantScoringRuleRepo(),
-        tiers: createSportEventTierServiceStub(tierCount),
-        sportEventReader: createSportEventReader({ participantCount: 80 }),
-        cups: createCupKeeper(),
-        planEntitlements: platinumEntitlements(),
-      });
-      const create = (rules: { tiersUsed: number; countedScores: number }) => service.createContest(
-        { leagueId: 'league-1' },
-        {
-          name: 'Seeds only',
-          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
-          contestFormat: 'ROSTER',
-          selectionType: 'TIERED',
-          configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, ...rules },
-        },
-      );
-      return { create, contestCoreRepo, contestConfigurationRepo };
-    }
-
-    it('stores tiersUsed with the rules and counts the roster from those tiers alone', async () => {
-      const { create, contestConfigurationRepo } = tieredService(6);
-
-      await expect(create({ tiersUsed: 4, countedScores: 4 })).resolves.toBe('contest-1');
-
-      expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, tiersUsed: 4 } }),
-      );
-    });
-
-    it('refuses (CONTEST_TIER_FIELD_OUT_OF_RANGE) more counted scores than the tiers in play hold, writing nothing', async () => {
-      const { create, contestCoreRepo } = tieredService(6);
-
-      await expect(create({ tiersUsed: 4, countedScores: 5 })).rejects.toMatchObject({
-        code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-        message: 'countedScores (5) cannot exceed the roster of 4 (4 tier(s) × 1 pick(s) per tier).',
-      });
-      expect(contestCoreRepo.create).not.toHaveBeenCalled();
-    });
-
-    it('refuses (CONTEST_TIER_FIELD_OUT_OF_RANGE) more tiers than the event has, writing nothing', async () => {
-      const { create, contestCoreRepo } = tieredService(3);
-
-      await expect(create({ tiersUsed: 4, countedScores: 3 })).rejects.toMatchObject({
-        code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-        message: 'tiersUsed (4) cannot exceed the event\'s 3 tier(s).',
-      });
-      expect(contestCoreRepo.create).not.toHaveBeenCalled();
-    });
-  });
-
   it('creates a tiered contest whose countedScores equals the event\'s tier count times picksPerTier, storing picksPerTier and no roster size', async () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
@@ -2605,7 +2546,6 @@ describe('ContestManagementService bracket rules (#721)', () => {
     selectionType: SelectionType.BRACKET,
     configuration: {
       selectionType: SelectionType.BRACKET,
-      startsAtRound: 1,
       maxEntriesPerSquad: 2,
       scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } } },
     },
@@ -2648,7 +2588,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.BRACKET,
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+      configJson: { selectionType: SelectionType.BRACKET },
       maxEntriesPerSquad: 2,
     }));
   });
@@ -2681,7 +2621,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
   });
 });
 
-describe('ContestManagementService — a second-chance bracket, started at a later round (#721)', () => {
+describe('ContestManagementService — a bracket on a knockout already under way', () => {
   // Over the real event reader (the wiring's), so its bracket check and its cutoff read the event's
   // games: an eight-team, three-round knockout that tipped off two days before the clock.
   const NOW = CONTEST_MANAGEMENT_TEST_NOW;
@@ -2690,7 +2630,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
   /** Round 1 two days ago; round 2's first game (5) two hours from the clock, its second (6) five. */
   const KICKOFF_HOURS = new Map([[1, -48], [2, -48], [3, -46], [4, -46], [5, 2], [6, 5], [7, 50]]);
 
-  function secondChance(options: { roundOnePlayed?: boolean; eventStatus?: SportEventStatus; eventStartHours?: number } = {}) {
+  function underWay(options: { roundOnePlayed?: boolean; eventStatus?: SportEventStatus; eventStartHours?: number } = {}) {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.BASKETBALL);
     sport.tournamentFormat = TournamentFormat.MATCHES;
@@ -2742,14 +2682,13 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
-    const request = (startsAtRound: number): CreateContestRequest => ({
-      name: 'Second chance',
+    const request = (): CreateContestRequest => ({
+      name: 'Late bracket',
       sportEventIds: [event.id],
       contestFormat: 'PREDICTION',
       selectionType: SelectionType.BRACKET,
       configuration: {
         selectionType: SelectionType.BRACKET,
-        startsAtRound,
         maxEntriesPerSquad: 1,
         scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' } } },
       },
@@ -2757,7 +2696,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
     return {
       service, world, configurationRepo, request, event,
       setNow: (when: Date) => { now = when; },
-      create: (startsAtRound: number) => service.createContest({ leagueId: 'league-1' }, request(startsAtRound)),
+      create: () => service.createContest({ leagueId: 'league-1' }, request()),
     };
   }
 
@@ -2765,75 +2704,13 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
     return promise.then(() => undefined, (caught: unknown) => caught);
   }
 
-  it('creates a bracket starting at round 2 on an IN_PROGRESS event before round 2\'s first game, storing its starting round', async () => {
-    const context = secondChance();
+  it('refuses a bracket on the event under way with 422 SPORT_EVENT_ALREADY_STARTED, creating nothing', async () => {
+    const context = underWay();
 
-    const contestId = await context.create(2);
-
-    expect(expectDefined(context.world.contests.get(contestId))).toMatchObject({ status: ContestStatus.DRAFT, selectionType: SelectionType.BRACKET });
-    expect(context.configurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 2 },
-    }));
-  });
-
-  it('refuses it once round 2\'s first game time has passed with 422 SPORT_EVENT_ALREADY_STARTED, creating nothing', async () => {
-    const context = secondChance();
-    context.setNow(at(2.5));
-
-    const error = await refusal(context.create(2));
-
-    expect(error).toBeInstanceOf(ContestManagementError);
-    expect(error).toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 422 });
+    expect(await refusal(context.create())).toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 422 });
     expect(context.world.contests.size).toBe(0);
   });
 
-  it('refuses a starting round whose teams the results have not decided with 422 CONTEST_EVENT_NOT_A_BRACKET naming the game, creating nothing', async () => {
-    const context = secondChance({ roundOnePlayed: false });
-
-    const error = await refusal(context.create(2));
-
-    expect(error).toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
-    expect(error).toMatchObject({ message: expect.stringMatching(/game 5 of round 2 has a team that no pick can decide/) });
-    expect(context.world.contests.size).toBe(0);
-  });
-
-  it('still refuses a full bracket on the event under way with 422 SPORT_EVENT_ALREADY_STARTED', async () => {
-    const context = secondChance();
-
-    expect(await refusal(context.create(1))).toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 422 });
-    expect(context.world.contests.size).toBe(0);
-  });
-
-  it('refuses a starting round past the bracket\'s last round with 422 CONTEST_EVENT_NOT_A_BRACKET, creating nothing', async () => {
-    // An event still to start, so the refusal is the bracket's, not the cutoff's.
-    const context = secondChance({ eventStatus: SportEventStatus.SCHEDULED, eventStartHours: 24, roundOnePlayed: false });
-
-    const error = await refusal(context.create(4));
-
-    expect(error).toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
-    expect(error).toMatchObject({ message: expect.stringMatching(/it has no games from round 4 on/) });
-    expect(context.world.contests.size).toBe(0);
-  });
-
-  it('opens the second-chance draft while the event is under way, before round 2\'s first game', async () => {
-    const context = secondChance();
-    const contestId = await context.create(2);
-    context.setNow(at(1));
-
-    const opened = await context.service.openContest('league-1', contestId);
-
-    expect(opened.status).toBe(ContestStatus.OPEN);
-    expect(expectDefined(context.world.contests.get(contestId)).status).toBe(ContestStatus.OPEN);
-  });
-
-  it('refuses opening it once round 2\'s first game time has passed with 409 CONTEST_EVENT_ALREADY_STARTED, leaving it a draft', async () => {
-    const context = secondChance();
-    const contestId = await context.create(2);
-    context.setNow(at(2.5));
-
-    expect(await refusal(context.service.openContest('league-1', contestId))).toMatchObject({ code: CONTEST_EVENT_ALREADY_STARTED, statusCode: 409 });
-    expect(expectDefined(context.world.contests.get(contestId)).status).toBe(ContestStatus.DRAFT);
-  });
 });
 
 describe('ContestManagementService squares rules (#711)', () => {

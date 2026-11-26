@@ -34,10 +34,9 @@ export const EventPageOfferDtoSchema = z.object({
   sportLeagueName: z.string().describe('The sport league as screens away from its sport\'s own pages name it, such as "NFL".'),
   sportLeagueCompetitionSlotId: z.uuid().describe('The slot definition the offer runs on (#2010), such as the NFL\'s conference championships: each Season has a slot of it.'),
   template: ContestConfigTemplateDtoSchema.describe('The contest setup the offer starts as: Create contest\'s ?template=.'),
-  startsAtRound: z.number().int().min(1).nullable().describe('For a bracket, the round it starts at: the offer\'s own, else its template\'s (1 is the whole knockout). Null for any other selection type.'),
   sortOrder: z.number().int().describe('Where the offer sits on its page, first first.'),
   isPrimary: z.boolean().describe('The offer whose next slot heads the page: its dates are the page\'s. A page has one.'),
-  state: z.enum(EventPageOfferState).describe('OPEN: Create contest would take the contest on the next slot\'s event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket\'s teams not set); show when it is expected from its start date.'),
+  state: z.enum(EventPageOfferState).describe('OPEN: Create contest would take the contest on the next slot\'s event now. NOT_YET: the event is still to open (not released, field not loaded, or a bracket\'s teams not set); show when it is expected from its start date.'),
   nextSlot: EventPageNextSlotDtoSchema,
 }).describe('One way to play on an event page: a contest setup on one sport league\'s slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.');
 export type EventPageOfferDto = z.infer<typeof EventPageOfferDtoSchema>;

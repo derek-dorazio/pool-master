@@ -996,7 +996,7 @@ function previewConfiguration(
  */
 function selectionTiersOf(configuration: EngineRules, tierGroups: readonly SportEventTierGroup[]): SelectionTierConfig[] {
   return configuration?.configJson?.selectionType === SelectionType.TIERED
-    ? buildSelectionTiers(tierGroups, configuration.configJson.picksPerTier, configuration.configJson.tiersUsed)
+    ? buildSelectionTiers(tierGroups, configuration.configJson.picksPerTier)
     : buildSelectionTiers(tierGroups, 0);
 }
 

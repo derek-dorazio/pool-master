@@ -54,8 +54,6 @@ export interface EventPageOffer {
   /** The slot definition it runs on (#2010): shown with the next Season slot of it not yet over. */
   sportLeagueCompetitionSlotId: string;
   template: ContestConfigTemplate;
-  /** The round a bracket starts at, when not the template's own; null otherwise. */
-  bracketStartRound: number | null;
   sortOrder: number;
   isPrimary: boolean;
 }

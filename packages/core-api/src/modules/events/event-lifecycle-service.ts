@@ -108,7 +108,7 @@ export class EventLifecycleError extends Error {
  */
 export interface EventLifecycleContestDeps {
   contests: ContestRepository;
-  /** A second-chance bracket's rules and games: it goes live at its starting round, not the event's start (#721). */
+  /** A squares contest's rules and games: it goes live at its game's kickoff, not the event's start (#711). */
   configurations: Pick<ContestConfigurationRepository, 'findByContests'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
 }
@@ -361,9 +361,8 @@ export class EventLifecycleService {
    * The live contests on a postponed event that has not started which go back to OPEN (#1792),
    * by the start each reopens to: those that close at the event's start and none of whose events
    * has started. A season contest whose earlier week was played stays live, and its postponed week
-   * takes pick changes as any later week does. A bracket that starts at a later round and a squares
-   * contest close at a game, and a contest with a random draw has dealt its picks, so those stay
-   * live too. A game already under way, or with a period score, means play began before the
+   * takes pick changes as any later week does. A squares contest closes at a game, and a contest
+   * with a random draw has dealt its picks, so those stay live too. A game already under way, or with a period score, means play began before the
    * postponement, so nothing reopens. One decision for the reopen and for the event changed email
    * that leaves those contests to the reopen's email (#1910).
    */
@@ -375,14 +374,7 @@ export class EventLifecycleService {
     if (live.length === 0) return dueByStart;
     if ((await this.contestDeps.matches.findBySportEvent(sportEvent.id)).some(hasGameMovedOn)) return dueByStart;
 
-    const brackets = live.filter((contest) => contest.selectionType === SelectionType.BRACKET);
-    const configJsonByContest = new Map(
-      (brackets.length === 0 ? [] : await this.contestDeps.configurations.findByContests(brackets.map((contest) => contest.id)))
-        .map((configuration) => [configuration.contestId, configuration.configJson]),
-    );
-    const atEventStart = live.filter((contest) => contest.selectionType !== SelectionType.BRACKET
-      || contestCutoff(configJsonByContest.get(contest.id)).kind === ContestCutoffKind.EVENT_START);
-    const otherEventIds = [...new Set(atEventStart.flatMap((contest) => contest.sportEventIds))].filter((id) => id !== sportEvent.id);
+    const otherEventIds = [...new Set(live.flatMap((contest) => contest.sportEventIds))].filter((id) => id !== sportEvent.id);
     const startById = new Map<string, Date>([[sportEvent.id, sportEvent.startDate]]);
     const started = new Set<string>();
     for (const other of otherEventIds.length === 0 ? [] : await this.sportEvents.findByIds(otherEventIds)) {
@@ -392,7 +384,7 @@ export class EventLifecycleService {
 
     // A reopened contest starts at its first event's start again, now ahead, which is what its
     // pages count down to and close entries at.
-    for (const contest of atEventStart) {
+    for (const contest of live) {
       if (contest.sportEventIds.some((id) => started.has(id))) continue;
       const startsAt = Math.min(...contest.sportEventIds.map((id) => startById.get(id)?.getTime() ?? sportEvent.startDate.getTime()));
       dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), contest.id]);
@@ -430,8 +422,7 @@ export class EventLifecycleService {
 
   /**
    * The event's OPEN contests go live at their cutoff (#721): every contest when the event starts,
-   * a second-chance bracket at its starting round's first game, and a squares contest at its
-   * game's kickoff (#711), each of which comes while the event is under way, so the lifecycle scheduler asks again on each sweep of an event in progress.
+   * and a squares contest at its game's kickoff (#711), which comes while the event is under way, so the lifecycle scheduler asks again on each sweep of an event in progress.
    * `knownGames`, the event's games as a caller just wrote them, saves reading them. Answers how
    * many contests went live.
    */
@@ -442,8 +433,8 @@ export class EventLifecycleService {
   ): Promise<number> {
     const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
     let games: readonly SportEventRoundMatch[] | undefined = knownGames;
-    // A bracket's or squares contest's cutoff is in its configuration: all of them read at once (#1183).
-    const cutoffConfigured = candidates.filter((contest) => contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES);
+    // A squares contest's cutoff is in its configuration: all of them read at once (#1183).
+    const cutoffConfigured = candidates.filter((contest) => contest.selectionType === SelectionType.SQUARES);
     const configJsonByContest = new Map(
       (cutoffConfigured.length === 0 ? [] : await this.contestDeps.configurations.findByContests(cutoffConfigured.map((contest) => contest.id)))
         .map((configuration) => [configuration.contestId, configuration.configJson]),
@@ -453,7 +444,7 @@ export class EventLifecycleService {
     // (#1199), since an NFL Sunday can start hundreds of contests on one event.
     const dueByStart = new Map<number, Array<{ contest: Contest; cutoff: ContestCutoffKind }>>();
     for (const contest of candidates) {
-      const cutoff = contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES
+      const cutoff = contest.selectionType === SelectionType.SQUARES
         ? contestCutoff(configJsonByContest.get(contest.id), contest.squaresGameMatchId)
         : { kind: ContestCutoffKind.EVENT_START } as const;
       const window: EventTiming = cutoff.kind === ContestCutoffKind.EVENT_START
@@ -468,7 +459,7 @@ export class EventLifecycleService {
 
     let activatedCount = 0;
     for (const [startsAt, due] of dueByStart) {
-      // One guarded write per cutoff moment (the event's start, a bracket round's, a squares game's kickoff), not per contest.
+      // One guarded write per cutoff moment (the event's start, a squares game's kickoff), not per contest.
       const activated = new Set(await this.contestLifecycle.transitionAll(due.map(({ contest }) => contest.id), {
         from: STARTABLE,
         to: ContestStatus.ACTIVE,

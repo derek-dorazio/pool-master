@@ -1732,9 +1732,6 @@ model EventPageOffer {
   sportLeagueCompetitionSlotId String   @map("sport_league_competition_slot_id") @db.Uuid
   /// The contest setup the offer starts as (a template key alone is not unique).
   templateId             String   @map("template_id") @db.Uuid
-  /// The round a bracket starts at, when not the template's own: the NFL bracket from the
-  /// conference round. Null: the template's starting round.
-  bracketStartRound      Int?     @map("bracket_start_round")
   /// Where the offer sits on its page, first first.
   sortOrder              Int      @map("sort_order")
   /// The offer whose edition heads the page: its dates are the page's. One per page at most (a

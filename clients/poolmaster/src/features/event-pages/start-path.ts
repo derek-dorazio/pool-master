@@ -52,9 +52,6 @@ export function parseStartReturnPath(path: string): StartRequest | null {
 export function buildStartDestination(leagueCode: string, request: StartRequest, offer: EventPageOfferDto | null): string {
   if (offer?.state === EventPageOfferState.OPEN) {
     const query = new URLSearchParams({ template: offer.template.id, event: offer.nextSlot.sportEventId });
-    if (offer.startsAtRound !== null) {
-      query.set('startRound', String(offer.startsAtRound));
-    }
     return `${buildLeagueAdminContestCreatePath(leagueCode)}?${query.toString()}`;
   }
   return offer ? `${buildLeaguePath(leagueCode)}?${startQuery(request)}` : buildLeaguePath(leagueCode);

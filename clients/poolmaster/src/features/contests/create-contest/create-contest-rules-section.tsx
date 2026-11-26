@@ -2,7 +2,6 @@ import { sportVocabulary } from '@poolmaster/shared/domain';
 import type { SportDefinition } from '@poolmaster/shared/domain';
 import type { ReactElement } from 'react';
 import { FormSection, InlineError } from '@/features/shared/ui';
-import type { BracketStartRoundOption } from '../bracket-start-round';
 import { ContestRulesFields } from '../contest-rules-fields';
 import type { ScoringSettingsFieldsProps } from '../contest-scoring-settings';
 import type { CreateContestFormValues } from './create-contest-helpers';
@@ -12,7 +11,6 @@ import type { CreateContestFormValues } from './create-contest-helpers';
  * takes any, each with the first thing wrong under it. Any change leaves the preset for Custom.
  */
 export function CreateContestRulesSection({
-  bracketStartRounds,
   onChange,
   rulesError,
   salaryCap,
@@ -22,7 +20,6 @@ export function CreateContestRulesSection({
   tierCount,
   values,
 }: {
-  bracketStartRounds: readonly BracketStartRoundOption[];
   onChange: (next: Partial<CreateContestFormValues>) => void;
   rulesError: string | null;
   /** The event's salary cap, or null while its field is unpriced. */
@@ -42,7 +39,6 @@ export function CreateContestRulesSection({
       title="Rules"
     >
       <ContestRulesFields
-        bracketStartRounds={bracketStartRounds}
         onChange={onChange}
         participant={sportVocabulary(sportDefinition).participant}
         salaryCap={salaryCap}

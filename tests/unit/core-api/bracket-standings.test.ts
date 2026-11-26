@@ -82,7 +82,7 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
   });
   const configuration = world.addConfiguration(contest.id, {
     selectionType: SelectionType.BRACKET,
-    configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+    configJson: { selectionType: SelectionType.BRACKET },
   });
   const rules = options.rules?.(configuration.id)
     ?? [knockoutScoringRule(configuration.id, { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.NONE } })];
@@ -292,7 +292,7 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     });
     context.world.addConfiguration(second.id, {
       selectionType: SelectionType.BRACKET,
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+      configJson: { selectionType: SelectionType.BRACKET },
     });
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
     context.completeEvent();

@@ -21,13 +21,11 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/features/auth/auth-context';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { useSportLeaguesUsed } from '@/features/plans/use-sport-leagues-used';
-import { bracketStartRoundOptions } from '../bracket-start-round';
-import { bracketStartRoundsOf, canEventStartRules, contestEventsFor, contestEventsForTemplate } from '../contest-template-events';
+import { contestEventsFor, contestEventsForTemplate } from '../contest-template-events';
 import {
   DEFAULT_CONTEST_RULES,
   defaultCountedScoresFor,
   parseContestRules,
-  tiersInPlayFor,
   toContestRulesValues,
 } from '../contest-rules-form';
 import {
@@ -38,7 +36,6 @@ import {
 import { membersWillSeeRules } from '../members-will-see';
 import { sportEventsQueryOptions } from '../sport-events-query';
 import { useActiveContestTemplatesQuery } from '../use-active-contest-templates-query';
-import { useEventRoundLabels } from '../use-bracket-round-label';
 import { useSquaresGameChoices } from '../use-squares-game-choices';
 import {
   type CreatableSelectionType,
@@ -102,10 +99,9 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   // A contest type chosen in one sport league's section names it, `?sportLeague=<id>` (#1716): the
   // template starts on that league's soonest event.
   const requestedSportLeagueId = searchParams.get('sportLeague');
-  // An event page's start (#1008) also names the edition, `?event=<id>`, and a later-round
-  // bracket's first round, `?startRound=<n>`: chosen once, with the template.
+  // An event page's start (#1008) also names the edition, `?event=<id>`: chosen once, with the
+  // template.
   const requestedEventId = searchParams.get('event');
-  const requestedStartRound = searchParams.get('startRound');
   const requestedEventChosen = useRef(false);
 
   const eventsQuery = useQuery(sportEventsQueryOptions(sport, auth.isAuthenticated));
@@ -156,11 +152,6 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
       : []),
     [eventsQuery.data, requestedSportLeagueId, requestedTemplate],
   );
-  // A knockout under way takes only a second-chance bracket: the API's rounds say which.
-  const roundName = useEventRoundLabels(selectionType === SelectionType.BRACKET ? selectedEvent?.id ?? '' : '');
-  const bracketStartRounds = selectionType === SelectionType.BRACKET && selectedEvent
-    ? bracketStartRoundOptions(bracketStartRoundsOf(selectedEvent), roundName)
-    : [];
   // A squares contest's games: read once a squares contest's event is chosen.
   const [now] = useState(() => new Date());
   const squaresGames = useSquaresGameChoices(selectionType === SelectionType.SQUARES ? selectedEvent : null, now);
@@ -196,26 +187,19 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   // The event's salary cap, which every budget contest on it plays under; null until it is priced.
   const salaryCap = selectedEvent?.pricing?.salaryCap ?? null;
   const isBudgetUnavailable = selectedEvent !== null && salaryCap === null;
-  // Each format's presets: the templates whose rules are that format's, and for a bracket only the
-  // ones the chosen event can start at (#802): a full bracket before the first game, a second
-  // chance once it is under way.
+  // Each format's presets: the templates whose rules are that format's.
   const presetsFor = useCallback(
     (format: CreatableSelectionType) => (templatesQuery.data ?? []).flatMap((template) => {
       const { configuration } = template;
       return template.selectionType === format && configuration.selectionType === format
-        && (selectedEvent === null ? configuration.selectionType !== SelectionType.BRACKET : canEventStartRules(configuration, selectedEvent))
         ? [{ ...template, configuration }]
         : [];
     }),
-    [selectedEvent, templatesQuery.data],
+    [templatesQuery.data],
   );
   const presets = useMemo(() => presetsFor(selectionType), [presetsFor, selectionType]);
   const parsedRules = parseContestRules(values, selectionType, tierCount, participant);
-  // A full bracket typed by hand cannot start on a knockout under way: a later round must be chosen.
-  const rulesError = parsedRules.error
-    ?? (bracketStartRounds.length && !bracketStartRounds.some((option) => String(option.roundNumber) === values.startsAtRound)
-      ? 'Choose the round the bracket starts at.'
-      : null);
+  const rulesError = parsedRules.error;
   const parsedScoring = scoringSettingsUi.parse(values);
 
   // A preset's rules and, when it presets them, its scoring definition and settings. Without a
@@ -276,14 +260,11 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     });
   }, [form, setFormValues]);
 
-  // A contest-ready event takes the full bracket; a knockout under way starts its second-chance
-  // bracket at the first round it offers.
   const chooseEvent = useCallback((event: SportEventDto) => {
     const { scoringDefinitions } = eventSportDefinition(event);
     const current = form.getValues('scoringDefinitionId');
     setFormValues({
       sportEventId: event.id,
-      startsAtRound: event.contestEligible ? '1' : '2',
       // The chosen scoring stays while the event offers it; otherwise the event's first.
       scoringDefinitionId: scoringDefinitions.includes(current) ? current : scoringDefinitions[0],
     });
@@ -385,12 +366,11 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
       selectionType: requestedTemplate.selectionType,
       selectedTemplateId: preset.id,
       ...presetValues(preset.configuration),
-      ...(requestedStartRound && requestedTemplate.selectionType === SelectionType.BRACKET ? { startsAtRound: requestedStartRound } : {}),
     });
-  }, [eventsQuery.data, presetValues, presetsFor, presetsKey, requestedEvents, requestedStartRound, requestedTemplate, requestedTemplateSport, selectedEvent, setFormValues, sport, templatesQuery.data]);
+  }, [eventsQuery.data, presetValues, presetsFor, presetsKey, requestedEvents, requestedTemplate, requestedTemplateSport, selectedEvent, setFormValues, sport, templatesQuery.data]);
 
-  // A preset the chosen event cannot start, such as a full bracket once the event is under way,
-  // gives way to the format's default among the presets it can (#802), or to Custom.
+  // A preset the chosen event does not offer gives way to the format's default among the presets
+  // it does (#802), or to Custom.
   useEffect(() => {
     const templateId = form.getValues('selectedTemplateId');
     const offered = presetsFor(form.getValues('selectionType'));
@@ -413,7 +393,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
       && String(preset.configuration.picksPerTier) === picksPerTier) {
       return;
     }
-    const countedScores = defaultCountedScoresFor(picksPerTier, tiersInPlayFor(form.getValues('tiersUsed'), tierCount));
+    const countedScores = defaultCountedScoresFor(picksPerTier, tierCount);
     if (countedScores !== null) {
       setFormValues({ countedScores });
     }
@@ -431,11 +411,10 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
 
   // The sentence members read about the contest: its rules, how picks score, and its entries.
   const memberRules = parsedRules.configuration
-    ? membersWillSeeRules(parsedRules.configuration, parsedScoring.scoring, { participant, roundName, salaryCap, tierCount })
+    ? membersWillSeeRules(parsedRules.configuration, parsedScoring.scoring, { participant, salaryCap, tierCount })
     : null;
 
   return {
-    bracketStartRounds,
     chooseEvent,
     contestEvents,
     eventsQuery,

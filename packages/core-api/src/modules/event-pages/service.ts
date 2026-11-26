@@ -9,7 +9,6 @@ import type { EventPageRepository } from '@poolmaster/shared/db';
 import {
   ContestOpening,
   EventPageOfferState,
-  SelectionType,
   type EventPage,
   type EventPageNextSlot,
   type EventPageOffer,
@@ -28,10 +27,9 @@ export class EventPageNotFoundError extends Error {
   }
 }
 
-/** An offer as the page shows it: with its next Season slot, whether it opens now, and a bracket's starting round. */
+/** An offer as the page shows it: with its next Season slot and whether it opens now. */
 export interface EventPageOfferView {
   offer: EventPageOffer;
-  startsAtRound: number | null;
   state: EventPageOfferState;
   nextSlot: EventPageNextSlot;
   /** When the setup's cutoff on the slot's event falls, after which this offer no longer shows as it does now. */
@@ -55,15 +53,6 @@ export interface EventPageServiceDeps {
    */
   openings: () => ContestOpeningAsk;
   logger?: EventPageLogger;
-}
-
-/** The round a bracket offer starts at: its own, else its template's; null for any other setup. */
-function offerStartsAtRound(offer: EventPageOffer): number | null {
-  const rules = offer.template.configJson;
-  if (rules.selectionType !== SelectionType.BRACKET) {
-    return null;
-  }
-  return offer.bracketStartRound ?? rules.startsAtRound;
 }
 
 export class EventPageService {
@@ -142,13 +131,12 @@ export class EventPageService {
 
 /** The offer with its slot definition's first Season slot not past the contest's cutoff, or null when none is left. */
 async function showOffer(offer: EventPageOffer, slots: readonly EventPageNextSlot[], askOpening: ContestOpeningAsk): Promise<EventPageOfferView | null> {
-  const startsAtRound = offerStartsAtRound(offer);
-  const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType, startsAtRound };
+  const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType };
   for (const nextSlot of slots) {
     const { opening, closesAt } = await askOpening(nextSlot.sportEventId, setup);
     if (opening !== ContestOpening.CLOSED && closesAt !== null) {
       const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
-      return { offer, startsAtRound, state, nextSlot, closesAt };
+      return { offer, state, nextSlot, closesAt };
     }
   }
   return null;
