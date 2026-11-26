@@ -24,6 +24,7 @@ export * from './sport-catalog.dto';
 export * from './golf-scores.dto';
 export * from './race-results.dto';
 export * from './bracket.dto';
+export * from './slot-tiebreaker.dto';
 export * from './squares.dto';
 export * from './cups.dto';
 export * from './championship.dto';

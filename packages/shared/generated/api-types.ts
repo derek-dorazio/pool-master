@@ -2503,6 +2503,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/slots/tiebreakers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a sport event's slot tiebreaker games
+         * @description Each slot the event covers, with its tiebreaker game (#2048): the one Game whose combined score every contest covering the slot guesses, chosen by the rule (the latest scheduled start, ties to the lower Game id) or by a root admin, and every Game played in the slot with whether it can be chosen now. A fixed number of reads however many slots and Games. 404 EVENT_NOT_FOUND. Root admin only.
+         */
+        get: operations["listEventSlotTiebreakers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiebreaker-game": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose a slot's tiebreaker game
+         * @description A root admin chooses which of the slot's Games every contest covering it guesses the combined score of (#2048), on a synced or a test event alike. The choice and who made it are kept and logged, and the rule leaves it alone until it starts; a cancelled or moved game is replaced by the rule's choice with a finding. Choosing the game already chosen records the choice. 404 EVENT_NOT_FOUND, and SEASON_SLOT_NOT_FOUND for a slot the event does not cover. 422 TIEBREAKER_GAME_NOT_IN_SLOT for a Game played elsewhere, TIEBREAKER_GAME_NOT_ELIGIBLE for one cancelled, moved or with no start. 409 TIEBREAKER_GAME_STARTED once the slot's game, or the one asked for, has started. Root admin only.
+         */
+        put: operations["chooseEventSlotTiebreakerGame"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}": {
         parameters: {
             query?: never;
@@ -21297,6 +21337,208 @@ export interface components {
                 invalid: number;
             };
         };
+        /** @description One of a slot's Games. */
+        SlotTiebreakerGameDto: {
+            /**
+             * Format: uuid
+             * @description The Game: what a root admin chooses.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+             */
+            sportEventRoundMatchId: string;
+            /** @description 1 for a single game; a series' games in the order they are played. */
+            gameNumber: number;
+            /**
+             * Format: date-time
+             * @description When the Game starts; null until the schedule gives it a time.
+             */
+            scheduledDate: string | null;
+            /**
+             * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
+            moved: boolean;
+            /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
+            choosable: boolean;
+        };
+        /** @description One slot's tiebreaker game and the Games it could be. */
+        SportEventSlotTiebreakerDto: {
+            /**
+             * Format: uuid
+             * @description The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id).
+             */
+            seasonSlotId: string;
+            /**
+             * Format: uuid
+             * @description The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
+             */
+            tiebreakerGameId: string | null;
+            /**
+             * Format: date-time
+             * @description When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.
+             */
+            chosenAt: string | null;
+            /**
+             * Format: uuid
+             * @description The root admin who chose it; null while the rule chose it, or once that account is gone.
+             */
+            chosenByUserId: string | null;
+            /** @description Whether it can be changed: no game is chosen yet, or the chosen one has not started. */
+            editable: boolean;
+            /** @description Every Game played in the slot, by match and game number. */
+            games: {
+                /**
+                 * Format: uuid
+                 * @description The Game: what a root admin chooses.
+                 */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+                 */
+                sportEventRoundMatchId: string;
+                /** @description 1 for a single game; a series' games in the order they are played. */
+                gameNumber: number;
+                /**
+                 * Format: date-time
+                 * @description When the Game starts; null until the schedule gives it a time.
+                 */
+                scheduledDate: string | null;
+                /**
+                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
+                moved: boolean;
+                /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
+                choosable: boolean;
+            }[];
+        };
+        SportEventSlotTiebreakersResponse: {
+            /** @description Each slot the event covers; empty for an event with none. */
+            slots: {
+                /**
+                 * Format: uuid
+                 * @description The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id).
+                 */
+                seasonSlotId: string;
+                /**
+                 * Format: uuid
+                 * @description The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
+                 */
+                tiebreakerGameId: string | null;
+                /**
+                 * Format: date-time
+                 * @description When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.
+                 */
+                chosenAt: string | null;
+                /**
+                 * Format: uuid
+                 * @description The root admin who chose it; null while the rule chose it, or once that account is gone.
+                 */
+                chosenByUserId: string | null;
+                /** @description Whether it can be changed: no game is chosen yet, or the chosen one has not started. */
+                editable: boolean;
+                /** @description Every Game played in the slot, by match and game number. */
+                games: {
+                    /**
+                     * Format: uuid
+                     * @description The Game: what a root admin chooses.
+                     */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+                     */
+                    sportEventRoundMatchId: string;
+                    /** @description 1 for a single game; a series' games in the order they are played. */
+                    gameNumber: number;
+                    /**
+                     * Format: date-time
+                     * @description When the Game starts; null until the schedule gives it a time.
+                     */
+                    scheduledDate: string | null;
+                    /**
+                     * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
+                    moved: boolean;
+                    /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
+                    choosable: boolean;
+                }[];
+            }[];
+        };
+        ChooseSlotTiebreakerGameRequest: {
+            /**
+             * Format: uuid
+             * @description One of the slot's Games (SlotTiebreakerGameDto.id) that is `choosable`.
+             */
+            gameId: string;
+        };
+        SportEventSlotTiebreakerResponse: {
+            /** @description One slot's tiebreaker game and the Games it could be. */
+            slot: {
+                /**
+                 * Format: uuid
+                 * @description The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id).
+                 */
+                seasonSlotId: string;
+                /**
+                 * Format: uuid
+                 * @description The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
+                 */
+                tiebreakerGameId: string | null;
+                /**
+                 * Format: date-time
+                 * @description When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.
+                 */
+                chosenAt: string | null;
+                /**
+                 * Format: uuid
+                 * @description The root admin who chose it; null while the rule chose it, or once that account is gone.
+                 */
+                chosenByUserId: string | null;
+                /** @description Whether it can be changed: no game is chosen yet, or the chosen one has not started. */
+                editable: boolean;
+                /** @description Every Game played in the slot, by match and game number. */
+                games: {
+                    /**
+                     * Format: uuid
+                     * @description The Game: what a root admin chooses.
+                     */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+                     */
+                    sportEventRoundMatchId: string;
+                    /** @description 1 for a single game; a series' games in the order they are played. */
+                    gameNumber: number;
+                    /**
+                     * Format: date-time
+                     * @description When the Game starts; null until the schedule gives it a time.
+                     */
+                    scheduledDate: string | null;
+                    /**
+                     * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
+                    moved: boolean;
+                    /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
+                    choosable: boolean;
+                }[];
+            };
+        };
         /** @description A claimed box of the grid. A box not listed is empty. */
         SquaresBoxDto: {
             /** @description The row position, 0 at the top. Rows are the away team's. */
@@ -26460,7 +26702,7 @@ export interface components {
              * @description The job's handler. Its kind follows from it.
              * @enum {string}
              */
-            type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS";
+            type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
             /**
              * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
              * @enum {string}
@@ -26584,7 +26826,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS";
+                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -26680,7 +26922,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS";
+                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -26774,7 +27016,7 @@ export interface components {
              * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
              * @enum {string}
              */
-            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED";
+            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED";
             /**
              * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
              * @enum {string}
@@ -26894,7 +27136,7 @@ export interface components {
                  * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -26969,7 +27211,7 @@ export interface components {
                  * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -35412,6 +35654,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventBracketResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listEventSlotTiebreakers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventSlotTiebreakersResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    chooseEventSlotTiebreakerGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChooseSlotTiebreakerGameRequest"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventSlotTiebreakerResponse"];
                 };
             };
             /** @description Standard API error envelope. */

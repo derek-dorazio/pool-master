@@ -772,7 +772,7 @@ export class PredictionService {
       seedOf: knockoutSeeds(field),
       withdrawn: withdrawnRowIds(field, matches),
       games,
-      tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),
+      tiebreakerGame: engine.tiebreakerGame({ games }),
     };
   }
 

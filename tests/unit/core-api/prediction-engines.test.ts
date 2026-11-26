@@ -4,7 +4,7 @@
  * (#721), whose later games offer the entry's own picked winners and which needs a tiebreaker.
  */
 import { expect } from '@jest/globals';
-import { MatchSide, PickEmMode, PickOutcome, PredictedResult, SelectionType, UpsetBonusRule, type ContestScoringSettings } from '@poolmaster/shared/domain';
+import { MatchSide, PickEmMode, PickOutcome, PredictedResult, SelectionType, SlotKind, UpsetBonusRule, type ContestScoringSettings } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../../packages/core-api/src/modules/contests/entry-window';
 import { bracketPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/bracket';
 import { pickEmPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/pick-em';
@@ -143,12 +143,16 @@ describe('pick\'em engine — resolvePicks, scorePicks and the tiebreaker', () =
     expect(pickEmPredictionEngine.scorePicks({ configuration: undefined, games, predictions: [], seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN, scoring: null })).toBeNull();
   });
 
-  it('takes the week\'s last game by kickoff as its tiebreaker game', () => {
-    const start = new Date('2026-09-10T20:00:00.000Z');
+  it('takes the game its slot names as the tiebreaker game, not the week\'s last kickoff', () => {
     const [first, second] = games;
-    const late = { ...expectDefined(first), scheduledDate: new Date('2026-09-14T00:15:00.000Z') };
-    const early = { ...expectDefined(second), scheduledDate: null };
-    expect(pickEmPredictionEngine.tiebreakerGame({ games: [late, early], eventStart: start })?.id).toBe(late.id);
+    const slot = { ...expectDefined(first).slot, tiebreakerMatchId: expectDefined(second).id };
+    const late = { ...expectDefined(first), slot, scheduledDate: new Date('2026-09-14T00:15:00.000Z') };
+    const named = { ...expectDefined(second), slot, scheduledDate: new Date('2026-09-13T17:00:00.000Z') };
+    expect(pickEmPredictionEngine.tiebreakerGame({ games: [late, named] })?.id).toBe(named.id);
+  });
+
+  it('has no tiebreaker game while its slot names none', () => {
+    expect(pickEmPredictionEngine.tiebreakerGame({ games: games.map((game) => ({ ...game, slot: { ...game.slot, tiebreakerMatchId: null } })) })).toBeNull();
   });
 });
 
@@ -166,7 +170,21 @@ describe('bracket engine', () => {
   it('serves BRACKET from the registry, locking every pick at the event\'s start, with the final as its tiebreaker game', () => {
     expect(getPredictionEngine(SelectionType.BRACKET)).toBe(bracketPredictionEngine);
     expect(bracketPredictionEngine.pickWindow).toBe(PickWindow.UNTIL_EVENT_START);
-    expect(bracketPredictionEngine.tiebreakerGame({ games: eightTeamBracket(), eventStart: new Date() })?.id).toBe(GAME_IDS.at(-1));
+  });
+
+  it('takes the game the FINAL slot names as its tiebreaker game, and none while it names none', () => {
+    const bracket = eightTeamBracket().map((game) => ({ ...game, slot: { ...game.slot, tiebreakerMatchId: null } }));
+    expect(bracketPredictionEngine.tiebreakerGame({ games: bracket })).toBeNull();
+    const final = expectDefined(bracket.find((game) => game.slot.slotKind === SlotKind.FINAL));
+    const named = bracket.map((game) => (game.slot.slotKind === SlotKind.FINAL ? { ...game, slot: { ...game.slot, tiebreakerMatchId: final.id } } : game));
+    expect(bracketPredictionEngine.tiebreakerGame({ games: named })?.id).toBe(final.id);
+  });
+
+  it('never takes an earlier slot\'s tiebreaker game as the bracket\'s', () => {
+    const bracket = eightTeamBracket().map((game) => ({ ...game, slot: { ...game.slot, tiebreakerMatchId: null } }));
+    const semi = expectDefined(bracket.find((game) => game.slot.slotKind === SlotKind.SEMIFINAL));
+    const named = bracket.map((game) => (game.slot.seasonSlotId === semi.slot.seasonSlotId ? { ...game, slot: { ...game.slot, tiebreakerMatchId: semi.id } } : game));
+    expect(bracketPredictionEngine.tiebreakerGame({ games: named })).toBeNull();
   });
 
   it('accepts a pick only without a confidence value', () => {

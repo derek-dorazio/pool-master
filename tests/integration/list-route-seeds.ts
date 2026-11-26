@@ -14,6 +14,7 @@ import { freshEventEdition, fixtureSeasonId } from '../support/event-edition';
 import { sportLeagueRowDefaults } from '../support/league-profiles';
 import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
+import { applySlotTiebreakerRule } from './slot-tiebreakers';
 import { oneEventSlotId } from '../support/test-slots';
 import { createMatchRow } from '../support/match-rows';
 
@@ -110,7 +111,7 @@ export async function seedTiers(sportEventId: string, field: readonly { id: stri
 /**
  * An NFL week of `games` games an hour apart from `startDate`, each between two teams of its own,
  * so no two weeks share a team, each match holding its Game 1 mapped to a provider game id as
- * the sync leaves it (#2007). With `played`, the first that many games are final, the home team
+ * the sync leaves it (#2007), and its last kickoff the slot's tiebreaker game (#2048). With `played`, the first that many games are final, the home team
  * winning 20-17.
  */
 export async function seedFootballWeek({ games, startDate, status, played = 0 }: { games: number; startDate: Date; status: SportEventStatus; played?: number }) {
@@ -161,5 +162,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
     });
     matches.push(match);
   }
+  // The week's last kickoff is its tiebreaker game, as the rule the sync's bracket load queues names it (#2048).
+  await applySlotTiebreakerRule(event.id);
   return { event, games: matches };
 }

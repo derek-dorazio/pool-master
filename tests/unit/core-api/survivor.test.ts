@@ -373,7 +373,7 @@ describe('survivorPredictionEngine', () => {
 
   it('takes no confidence value and has no tiebreaker game', () => {
     expect(survivorPredictionEngine.acceptsConfidence({ configuration: undefined, confidence: 1, gameCount: 2 })).toBe(false);
-    expect(survivorPredictionEngine.tiebreakerGame({ games, eventStart: T0 })).toBeNull();
+    expect(survivorPredictionEngine.tiebreakerGame({ games })).toBeNull();
   });
 });
 

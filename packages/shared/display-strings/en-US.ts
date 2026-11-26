@@ -324,6 +324,7 @@ export const enUS = {
       GAME_UNKNOWN: 'Webhook for an unknown game',
       GAME_ID_REISSUED: 'Game id re-issued',
       GAME_MOVED: 'Game moved to another event',
+      TIEBREAKER_GAME_REPLACED: 'Tiebreaker game chosen again',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',
@@ -767,6 +768,7 @@ export const enUS = {
       ACTIVATE_EVENT_CONTESTS: 'Contests go live',
       FOLLOW_POSTPONED_EVENT_CONTESTS: 'Postponed event contests',
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'Mapped participant findings',
+      REFRESH_SLOT_TIEBREAKERS: 'Tiebreaker games',
     },
     BackgroundJobKind: {
       SYNC: 'Sync',
@@ -1206,6 +1208,9 @@ export const enUS = {
     TEST_PARTICIPANT_NOT_ON_TEST_SLOT: 'A test participant can only join the field of a test event.',
     TEST_SLOT_ENDS_BEFORE_START: 'A test slot must end after it starts.',
     TEST_SLOT_LABEL_TAKEN: 'This Season already has a test slot with that label for that slot.',
+    TIEBREAKER_GAME_NOT_ELIGIBLE: 'That game cannot be the tiebreaker: it is cancelled, moved or has no start time yet.',
+    TIEBREAKER_GAME_NOT_IN_SLOT: 'That game is not played in this slot.',
+    TIEBREAKER_GAME_STARTED: 'The tiebreaker game has started, so it can no longer be changed.',
     TIER_MISSING: 'A participant has no tier yet.',
     TIER_NOT_FOUND: 'That tier is not in this contest.',
     TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS: 'Removing these tiers leaves participants without one. Choose a tier to move them to.',
