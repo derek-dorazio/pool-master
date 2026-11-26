@@ -229,6 +229,8 @@ describe('Survivor contest leaderboard', () => {
     primeMocks(playoffSurvivorLeaderboardFixture(), playoffSurvivorContestFixture());
     renderLeaderboard();
 
+    // The round names come with the event's rounds, a read of their own that can land after the board's.
+    await screen.findByRole('columnheader', { name: /Super Bowl/ });
     expect(await headers()).toEqual(['Entry', 'Status', 'Weeks', 'Super Bowl', 'Conference ChampionshipLive']);
     expect(screen.getByTestId('survivor-leaderboard-standing-entry-2')).toHaveTextContent('Out · Conference Championship');
     expect(screen.getByTestId('survivor-leaderboard-week-playoffs-round-1-entry-1')).toHaveTextContent('Bills');
