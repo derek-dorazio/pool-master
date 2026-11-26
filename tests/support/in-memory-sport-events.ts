@@ -352,8 +352,9 @@ export class InMemorySportEvents {
   }
 
   /**
-   * The event's one slot (#2006): the slot it was made on, else a test slot of its Season given to
-   * it now (an event a test added straight to the store has none). Throws for an event of several.
+   * The event's one slot (#2006): the slot it was made on, else a slot of its Season the sync keeps,
+   * given to it now (an event a test added straight to the store has none), so it stays no test
+   * event. Throws for an event of several.
    */
   eventSlotOf(sportEventId: string, overrides: Partial<SportLeagueSeasonSlot> = {}): SportLeagueSeasonSlot {
     const slots = this.slotsByEvent.get(sportEventId) ?? [];
@@ -362,7 +363,7 @@ export class InMemorySportEvents {
     if (slots.length === 1) return slots[0];
     const event = this.events.find((row) => row.id === sportEventId);
     if (!event) throw new Error(`unknown sport event ${sportEventId}`);
-    const id = this.addTestSlot({ id: event.sportLeagueId, currentSeasonId: event.sportLeagueSeasonId }, event.startDate, overrides);
+    const id = this.addTestSlot({ id: event.sportLeagueId, currentSeasonId: event.sportLeagueSeasonId }, event.startDate, { isTestData: false, label: null, ...overrides });
     const slot = this.seasonSlots.find((candidate) => candidate.id === id) as SportLeagueSeasonSlot;
     this.slotsByEvent.set(sportEventId, [slot]);
     return slot;
@@ -379,13 +380,13 @@ export class InMemorySportEvents {
 
   /**
    * Gives an event one slot per round, each of the kind given in order (a bracket: its FINAL last),
-   * and a round in each. Answers the slots' ids.
+   * slots the sync keeps unless `isTestData` says otherwise. Answers the slots' ids, for `addRounds`.
    */
   addRoundSlots(sportEventId: string, slots: ReadonlyArray<Partial<SportLeagueSeasonSlot> & { slotKind: SlotKind }>): string[] {
     const event = this.events.find((row) => row.id === sportEventId);
     if (!event) throw new Error(`unknown sport event ${sportEventId}`);
     const added = slots.map((overrides) => {
-      const id = this.addTestSlot({ id: event.sportLeagueId, currentSeasonId: event.sportLeagueSeasonId }, event.startDate, overrides);
+      const id = this.addTestSlot({ id: event.sportLeagueId, currentSeasonId: event.sportLeagueSeasonId }, event.startDate, { isTestData: false, label: null, ...overrides });
       return this.seasonSlots.find((candidate) => candidate.id === id) as SportLeagueSeasonSlot;
     });
     this.slotsByEvent.set(sportEventId, [...(this.slotsByEvent.get(sportEventId) ?? []), ...added]);
@@ -666,7 +667,11 @@ export class InMemorySportEvents {
       createMany: async (rounds) => {
         for (const round of rounds) {
           // A round is played in one of its own event's slots: the composite key, raised as a throw.
-          const slot = (this.slotsByEvent.get(round.sportEventId) ?? []).find((candidate) => candidate.id === round.seasonSlotId);
+          const slot = (this.slotsByEvent.get(round.sportEventId) ?? []).find((candidate) => candidate.id === round.seasonSlotId)
+            // A test that takes an event's slots away keeps its rounds' slot playable.
+            ?? (this.roundRows.some((row) => row.sportEventId === round.sportEventId && row.slot.seasonSlotId === round.seasonSlotId)
+              ? this.seasonSlots.find((candidate) => candidate.id === round.seasonSlotId)
+              : undefined);
           if (!slot) throw new Error(`Season slot ${round.seasonSlotId} is not one of sport event ${round.sportEventId}'s slots.`);
           this.roundRows.push(stamp({ id: this.id('round'), sportEventId: round.sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null, slot: roundSlotOf(slot) }));
         }

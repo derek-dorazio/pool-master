@@ -11,6 +11,7 @@ import {
   weekTiebreakerGame,
   type GamePick,
 } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-picks';
+import { weekRoundSlot } from '../../support/round-slots';
 
 const T0 = new Date('2026-09-01T00:00:00.000Z');
 const SUNDAY = new Date('2026-09-13T17:00:00.000Z');
@@ -21,6 +22,7 @@ function game(matchNumber: number, overrides: Partial<SportEventRoundMatch> = {}
     id: `game-${matchNumber}`,
     sportEventId: 'week-1',
     roundNumber: 1,
+    slot: weekRoundSlot(),
     matchNumber,
     homeSportEventParticipantId: `home-${matchNumber}`,
     awaySportEventParticipantId: `away-${matchNumber}`,

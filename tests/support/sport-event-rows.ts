@@ -20,8 +20,8 @@ export async function createSportEventRow(events: SportEventRepository, input: S
 }
 
 /**
- * One event's rounds, all played in its one slot (#2006): the event's own, else a test slot linked
- * to it now (an event a test made below the API has none).
+ * One event's rounds, all played in its one slot (#2006): the event's own, else a slot the sync
+ * keeps, linked to it now (an event a test made below the API has none), so it stays no test event.
  */
 export async function createRoundRows(
   prisma: Parameters<typeof linkTestSlot>[0],
@@ -32,7 +32,7 @@ export async function createRoundRows(
   const slots = await prisma.sportEventSlot.findMany({ where: { sportEventId: event.id }, select: { sportLeagueSeasonCompetitionSlotId: true } });
   if (slots.length > 1) throw new Error(`Sport event ${event.id} has ${String(slots.length)} slots; createRoundRows places rounds in one.`);
   // poolmaster-allow-position: the event's one slot
-  const seasonSlotId = slots.length === 1 ? slots[0].sportLeagueSeasonCompetitionSlotId : await linkTestSlot(prisma, event);
+  const seasonSlotId = slots.length === 1 ? slots[0].sportLeagueSeasonCompetitionSlotId : await linkTestSlot(prisma, event, false);
   await rounds.createMany(schedule.map((round) => ({ sportEventId: event.id, seasonSlotId, ...round })));
 }
 

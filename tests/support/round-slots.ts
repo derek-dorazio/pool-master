@@ -3,11 +3,18 @@
  * games by hand. Each kind (and week) is its own Season slot, so rounds of different kinds read
  * as played in different slots. Test code only.
  */
+import { createHash } from 'node:crypto';
 import { SlotKind, SlotPairing, type SportEventRoundSlot } from '@poolmaster/shared/domain';
+
+/** A Season slot id for a name, the same each run: a UUID, as the wire's slot id is. */
+function slotIdOf(name: string): string {
+  const hex = createHash('sha256').update(name).digest('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
 
 export function roundSlot(slotKind: SlotKind, overrides: Partial<SportEventRoundSlot> = {}): SportEventRoundSlot {
   return {
-    seasonSlotId: `season-slot-${slotKind}-${String(overrides.weekNumber ?? 0)}`,
+    seasonSlotId: slotIdOf(`${slotKind}-${String(overrides.weekNumber ?? 0)}`),
     name: null,
     slotKind,
     weekNumber: null,
@@ -30,4 +37,29 @@ export function bracketRoundSlots(rounds: number, overrides: Partial<SportEventR
   const kinds = [SlotKind.PLAY_IN, SlotKind.ROUND_OF_64, SlotKind.ROUND_OF_32, SlotKind.ROUND_OF_16, SlotKind.QUARTERFINAL, SlotKind.SEMIFINAL, SlotKind.FINAL];
   if (rounds > kinds.length) throw new Error(`A test bracket has at most ${String(kinds.length)} rounds, not ${String(rounds)}.`);
   return kinds.slice(kinds.length - rounds).map((slotKind) => roundSlot(slotKind, overrides));
+}
+
+/** A round row's `eventSlot`, as a Prisma stub returns it to the round reads (#2006): one TOURNAMENT slot. */
+export function eventSlotRowStub(seasonSlotId = 'season-slot-tournament') {
+  return {
+    seasonSlot: {
+      id: seasonSlotId, sportLeagueCompetitionSlotId: 'definition-tournament', startsAt: null, endsAt: null, status: 'SCHEDULED' as const,
+      seriesFormat: 'SINGLE_GAME' as const, seriesGames: 1, pairing: 'FIXED' as const, isTestData: false, label: null,
+      windowStartsAt: null, windowEndsAt: null, windowStatus: null,
+      definition: { key: 'TOURNAMENT', slotKind: 'TOURNAMENT' as const, weekNumber: null, name: null },
+    },
+  };
+}
+
+/** Round `roundNumber`'s slot when each round is a slot of its own (a bracket's), none of them the FINAL. */
+export function slotOfRound(roundNumber: number): SportEventRoundSlot {
+  return roundSlot(SlotKind.QUARTERFINAL, { seasonSlotId: slotIdOf(`round-${String(roundNumber)}`) });
+}
+
+/** Round `roundNumber`'s own slot named `names[roundNumber - 1]`, the last of `names` the FINAL: a bracket named by its slots. */
+export function namedSlotOfRound(roundNumber: number, names: readonly string[]): SportEventRoundSlot {
+  return roundSlot(roundNumber === names.length ? SlotKind.FINAL : SlotKind.QUARTERFINAL, {
+    seasonSlotId: slotIdOf(`round-${String(roundNumber)}`),
+    name: names[roundNumber - 1] ?? null,
+  });
 }

@@ -17,6 +17,7 @@ import {
   PickOutcome,
   ParticipantStandingStatus,
   SelectionType,
+  SlotKind,
   Sport,
   SportEventStatus,
   SurvivorWeekOutcome,
@@ -39,6 +40,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
+import { roundSlot } from '../../support/round-slots';
 
 const MINUTE = 60_000;
 const ROUND_1_DONE = new Date('2026-04-09T23:10:00.000Z');
@@ -124,8 +126,15 @@ describe('lastFinishedRound', () => {
   });
 });
 
+/** The names of the slots a bracket's rounds are played in, first to final, as the test sets them (#2006). */
+let slotNames: readonly string[] = [];
+
 function game(roundNumber: number, status: MatchStatus, updatedAt: Date, extra: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
-  return { roundNumber, status, updatedAt, scheduledDate: null, ...extra } as SportEventRoundMatch;
+  // Each round in a slot of its own, named by the slot; the last the FINAL.
+  const slot = roundSlot(roundNumber === slotNames.length ? SlotKind.FINAL : SlotKind.QUARTERFINAL, {
+    seasonSlotId: `slot-${String(roundNumber)}`, name: slotNames[roundNumber - 1] ?? null,
+  });
+  return { roundNumber, status, updatedAt, scheduledDate: null, slot, advancesToMatchId: null, ...extra } as SportEventRoundMatch;
 }
 
 describe('lastFinishedMatchRound', () => {
@@ -159,7 +168,6 @@ describe('LiveStandings.queueDue', () => {
   let survivorBoards: Map<string, SurvivorLeaderboardModel>;
   let bracketBoards: Map<string, { entries: BracketLeaderboardEntryRow[] }>;
   let matches: Map<string, SportEventRoundMatch[]>;
-  let roundNames: string[];
   let positions: Map<string, number | null>;
   let failingContestId: string | null;
   let failure: unknown;
@@ -175,7 +183,7 @@ describe('LiveStandings.queueDue', () => {
     survivorBoards = new Map();
     bracketBoards = new Map();
     matches = new Map();
-    roundNames = ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
+    slotNames = ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
     positions = new Map();
     failingContestId = null;
     failure = new Error('leaderboard unavailable');
@@ -235,7 +243,7 @@ describe('LiveStandings.queueDue', () => {
       },
       matches: { findBySportEvent: async (sportEventId) => matches.get(sportEventId) ?? [] },
       configurations: world.configurationRepo(),
-      sportLeagues: { findById: async () => (sportLeagueFound ? ({ name: 'PGA Tour', roundNames }) as unknown as SportLeague : null) },
+      sportLeagues: { findById: async () => (sportLeagueFound ? ({ name: 'PGA Tour' }) as unknown as SportLeague : null) },
       positions: {
         findByContest: async (contestId) => new Map(
           [
@@ -843,7 +851,7 @@ describe('LiveStandings.queueDue', () => {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
     const playoffs = world.addSportEvent({ name: 'NBA Playoffs', sport: 'BASKETBALL', startDate: new Date('2026-04-18T17:00:00.000Z'), status: SportEventStatus.IN_PROGRESS });
     const contest = world.addContest(league.id, { name: 'Playoff Bracket', status: ContestStatus.ACTIVE, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.BRACKET, sportEventIds: [playoffs.id] });
-    roundNames = ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
+    slotNames = ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
     matches.set(playoffs.id, [
       game(1, MatchStatus.COMPLETED, after(done, -2880)),
       game(2, MatchStatus.COMPLETED, done),

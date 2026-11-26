@@ -1,7 +1,7 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { MatchEnding, BracketAdvancement, MatchSide, MatchStatus, ParticipantStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -19,19 +19,23 @@ import { RecordingDomainEvents } from '../../support/recording-domain-events';
 const NOW = new Date('2027-03-01T12:00:00.000Z');
 const TEAMS = ['Duke', 'Vermont', 'Houston', 'Texas'] as const;
 
-function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, picks = NO_PICKS_ON_EVENT }: {
+function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, picks = NO_PICKS_ON_EVENT, pairing = SlotPairing.FIXED }: {
   sport?: Sport;
   status?: SportEventStatus;
   picks?: typeof NO_PICKS_ON_EVENT;
+  /** How the event's slots pair winners into the next round: RESEEDED places them by seed (#2006). */
+  pairing?: SlotPairing;
 } = {}) {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
   const sportLeague = store.addSportLeague(sportRow.id, 'NCAA Men\'s Basketball');
   const event = store.addEvent({ sportLeagueId: sportLeague.id, sport, status, rounds: 2 });
+  // The semifinals and the final, each round in a slot of its own (#2006).
+  const [semifinal, final] = store.addRoundSlots(event.id, [{ slotKind: SlotKind.SEMIFINAL, pairing }, { slotKind: SlotKind.FINAL, pairing }]);
   void store.addRounds(event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-03-20T16:00:00.000Z') },
-  ]);
+  ], (roundNumber) => expectDefined(roundNumber === 1 ? semifinal : final, `round ${String(roundNumber)}'s slot`));
   const [duke, vermont, houston, texas] = TEAMS.map((name, index) => {
     const team = store.addParticipant(sportRow.id, name, { participantType: 'TEAM' });
     return store.addToField(event.id, team.id, { seedNumber: index + 1 });
@@ -104,6 +108,17 @@ describe('SportEventBracketService.loadBracket', () => {
     expect(matches.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
   });
 
+  it('loads a bracket played in one slot with no FINAL kind (a tennis Slam), its final where its links end, and refuses one whose links end twice', async () => {
+    const context = setup();
+    // Both rounds in the event's one TOURNAMENT slot, as a Slam's seven are.
+    const [slam] = context.store.addRoundSlots(context.event.id, [{ slotKind: SlotKind.TOURNAMENT }]);
+    for (const round of context.store.roundRows) round.slot = { ...round.slot, seasonSlotId: expectDefined(slam, 'the Slam slot'), slotKind: SlotKind.TOURNAMENT };
+
+    await expect(context.service.loadBracket(context.event.id, bracketOf(context))).resolves.toHaveLength(3);
+    const twoEnds = bracketOf(context).map((match) => (match.matchNumber === 2 ? { ...match, advancesTo: null } : match));
+    await expect(context.service.loadBracket(context.event.id, twoEnds)).rejects.toMatchObject({ statusCode: 422 });
+  });
+
   it('replaces the bracket already loaded rather than adding to it', async () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
@@ -149,7 +164,8 @@ describe('SportEventBracketService.loadBracket', () => {
 
 describe('findBracketProblems', () => {
   const ids = { duke: 'duke', vermont: 'vermont', houston: 'houston', texas: 'texas' };
-  const context = { roundNumbers: new Set([1, 2]), fieldIds: new Set(Object.values(ids)) };
+  // Round 2 is played in the event's FINAL slot (#2006).
+  const context = { roundNumbers: new Set([1, 2]), finalRoundNumbers: new Set([2]), fieldIds: new Set(Object.values(ids)) };
   const [first, second, final] = fourTeamBracket(ids);
 
   it('finds nothing wrong with a whole bracket, or with one whose later sides wait on their teams', () => {
@@ -171,10 +187,16 @@ describe('findBracketProblems', () => {
     expect(findBracketProblems(week, { ...context, reseeds: true })).toEqual([]);
   });
 
-  it('still asks unlinked games over several rounds, a reseeded bracket, for one final in their last round', () => {
+  it('still asks unlinked games over several rounds, a reseeded bracket, for one final in its FINAL slot\'s round', () => {
     const twoFinals = [{ ...first, advancesTo: null }, { ...second, advancesTo: null, roundNumber: 2 }, { ...final, advancesTo: null }];
 
-    expect(findBracketProblems(twoFinals, { ...context, reseeds: true })).toEqual(['a bracket has one final, the one match in its last round, but this one has 2 in round 2']);
+    expect(findBracketProblems(twoFinals, { ...context, reseeds: true })).toEqual(['a bracket has one final, the one match of its FINAL slot\'s round, but this one has 2']);
+  });
+
+  it('leaves the final and unplaced winners alone when the event\'s slots are not known yet (a data file before its load)', () => {
+    const unplaced = [first, { ...second, advancesTo: null }, final];
+
+    expect(findBracketProblems(unplaced, { ...context, finalRoundNumbers: null })).toEqual([]);
   });
 
   it('still checks the sides of games that link nowhere', () => {
@@ -193,17 +215,19 @@ describe('findBracketProblems', () => {
     ['a winner advancing to a match in the same round', [{ ...first, advancesTo: { matchNumber: 2, side: MatchSide.HOME } }, { ...second, homeSportEventParticipantId: null }, final], 'match 1 advances to match 2, which is not in a later round'],
     ['two winners advancing to one side', [first, { ...second, advancesTo: { matchNumber: 3, side: MatchSide.HOME } }, final], 'two matches advance to match 3 home'],
     ['a fed side that also names a team', [first, second, { ...final, homeSportEventParticipantId: ids.duke }], 'match 3 home names a team, but match 1\'s winner fills it'],
-    ['no final', [first, second, { ...final, advancesTo: { matchNumber: 1, side: MatchSide.HOME } }], 'a bracket has one final, the one match whose winner advances nowhere, but this one has 0'],
-    ['two finals', [first, { ...second, advancesTo: null }, final], 'a bracket has one final, the one match whose winner advances nowhere, but this one has 2'],
+    ['no final', [first, second, { ...final, advancesTo: { matchNumber: 1, side: MatchSide.HOME } }], 'a bracket has one final, the one match of its FINAL slot\'s round, but this one has 0'],
+    ['a winner placed nowhere outside the final\'s round', [first, { ...second, advancesTo: null }, final], 'match 2\'s winner advances nowhere, but it is not the final'],
   ])('reports %s', (_name, matches, problem) => {
     expect(findBracketProblems(matches, context)).toContain(problem);
   });
 
-  it('reports a final that is not in the bracket\'s last round', () => {
-    // Match 1 is the only match whose winner goes nowhere, yet match 3 is played a round later.
+  it('takes no game outside the FINAL slot\'s round for the final, even the only one whose winner goes nowhere', () => {
     const matches = [{ ...first, advancesTo: null }, { ...final, advancesTo: { matchNumber: 9, side: MatchSide.HOME } }];
 
-    expect(findBracketProblems(matches, context)).toContain('the final, match 1, is not in the bracket\'s last round (round 2)');
+    expect(findBracketProblems(matches, context)).toEqual(expect.arrayContaining([
+      'a bracket has one final, the one match of its FINAL slot\'s round, but this one has 0',
+      'match 1\'s winner advances nowhere, but it is not the final',
+    ]));
   });
 });
 
@@ -365,14 +389,16 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     const store = new InMemorySportEvents();
     const sportRow = store.addSport(Sport.FOOTBALL);
     const sportLeague = store.addSportLeague(sportRow.id, 'NFL');
-    Object.assign(sportLeague, {
-      bracketAdvancement: BracketAdvancement.RESEED_BY_SEED,
-      roundNames: ['Wild Card', 'Divisional', 'Conference Championship'],
-    });
     const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 3 });
+    // Its postseason slots reseed, each round in its own (#2006).
+    const slots = store.addRoundSlots(event.id, [
+      { slotKind: SlotKind.QUARTERFINAL, name: 'Wild Card', pairing: SlotPairing.RESEEDED },
+      { slotKind: SlotKind.SEMIFINAL, name: 'Divisional', pairing: SlotPairing.RESEEDED },
+      { slotKind: SlotKind.FINAL, name: 'Conference Championship', pairing: SlotPairing.RESEEDED },
+    ]);
     await store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({
       roundNumber, scheduledDate: new Date(Date.UTC(2027, 0, 7 * roundNumber)),
-    })));
+    })), (roundNumber) => expectDefined(slots[roundNumber - 1], `round ${String(roundNumber)}'s slot`));
     const seeds = Array.from({ length: seedCount }, (_, index) => index + 1).map((seedNumber) => {
       const team = store.addParticipant(sportRow.id, `Seed ${seedNumber}`, { participantType: 'TEAM' });
       return store.addToField(event.id, team.id, { seedNumber });
@@ -505,7 +531,7 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
   it('refuses (409 PLAY_IN_SLOT_ALREADY_PLAYED) once the place has started a bracket match', async () => {
     const { service, store, event, slot, xavier, duke } = withPlayInPlace();
     store.matchRows.push({
-      id: 'match-started', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
+      id: 'match-started', sportEventId: event.id, roundNumber: 1, slot: expectDefined(store.roundRows.find((round) => round.roundNumber === 1)).slot, matchNumber: 1,
       homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true,
       scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
@@ -519,16 +545,16 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
 describe('SportEventBracketService round matchups (reseeded bracket)', () => {
   /**
    * A released bracket whose league reseeds: two unlinked semifinals, so the final's sides wait to
-   * be placed by seed. `reseeds: false` switches the league to a fixed bracket after the load, as
-   * an admin can; `release: false` leaves the event a draft.
+   * be placed by seed. `reseeds: false` reads the event's slots as fixed after the load, as a
+   * bracket whose rounds are linked is; `release: false` leaves the event a draft.
    */
   async function reseededSetup({ reseeds = true, release = true, bracket }: { reseeds?: boolean; release?: boolean; bracket?: (context: ReturnType<typeof setup>) => BracketMatchInput[] } = {}) {
-    const context = setup();
-    const sportLeagues = context.store.sportLeagueRepo();
-    await sportLeagues.update(context.event.sportLeagueId, { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    const context = setup({ pairing: SlotPairing.RESEEDED });
     const unlinked = bracketOf(context).map((match) => ({ ...match, advancesTo: null }));
     await context.service.loadBracket(context.event.id, bracket ? bracket(context) : unlinked);
-    if (!reseeds) await sportLeagues.update(context.event.sportLeagueId, { bracketAdvancement: BracketAdvancement.FIXED });
+    if (!reseeds) {
+      for (const round of context.store.roundRows) round.slot = { ...round.slot, pairing: SlotPairing.FIXED };
+    }
     if (release) context.event.status = SportEventStatus.SCHEDULED;
     return context;
   }
@@ -639,8 +665,7 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
   });
 
   it('writes the rebuild job with a reseeded round\'s matchups', async () => {
-    const context = setup();
-    await context.store.sportLeagueRepo().update(context.event.sportLeagueId, { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    const context = setup({ pairing: SlotPairing.RESEEDED });
     await context.service.loadBracket(context.event.id, bracketOf(context).map((match) => ({ ...match, advancesTo: null })));
     context.event.status = SportEventStatus.SCHEDULED;
     for (const match of context.store.matchRows.filter((row) => row.roundNumber === 1)) {

@@ -167,7 +167,7 @@ describe('Creating one event (#1253)', () => {
     const seasonSlotId = await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'));
 
     const { result: created, statements } = await recordStatements(
-      () => sportEvents.createEvent({ seasonSlotId, name: 'The Batch Classic' }),
+      () => sportEvents.createEvent({ seasonSlotIds: [seasonSlotId], name: 'The Batch Classic' }),
     );
 
     // One insert per table: the default rounds and tiers go in together, not one at a time; and

@@ -10,6 +10,7 @@ import type { GamesPreview, PredictionService } from '../../../packages/core-api
 import type { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import type { LineupPreview } from '../../../packages/core-api/src/modules/selections/types';
 import { callHandler, stubRequest } from '../../support/handler-call';
+import { slotOfRound } from '../../support/round-slots';
 
 const EVENT = '00000000-0000-4000-8000-000000000001';
 const GAME = '00000000-0000-4000-8000-000000000002';
@@ -49,7 +50,7 @@ function gamesPreview(withPick: boolean): GamesPreview {
     gameCount: 1,
     tiebreakerMatchId: GAME,
     games: [{
-      match: { id: GAME, matchNumber: 1, roundNumber: 1, status: MatchStatus.SCHEDULED, isNeutralSite: false, regionLabel: null, homeSpread: null } as SportEventRoundMatch,
+      match: { id: GAME, matchNumber: 1, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, isNeutralSite: false, regionLabel: null, homeSpread: null } as SportEventRoundMatch,
       kickoff: KICKOFF,
       home: team(HOME),
       away: team(AWAY),

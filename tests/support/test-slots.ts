@@ -117,12 +117,14 @@ export async function testSlotIdIn(
   sportLeagueSeasonId: string,
   startsAt: Date,
   endsAt: Date | null = null,
+  /** A slot the sync keeps (false): unlabelled, so its event is no test event. A test slot by default. */
+  isTestData = true,
 ): Promise<string> {
   const { definitionId, seasonCompetitionId } = await testSlotPlaceIn(prisma, sportLeagueId, sportLeagueSeasonId);
   return (await prisma.sportLeagueSeasonCompetitionSlot.create({
     data: {
       sportLeagueId, sportLeagueSeasonId, sportLeagueSeasonCompetitionId: seasonCompetitionId, sportLeagueCompetitionSlotId: definitionId,
-      startsAt, endsAt, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: uniqueTestSlotLabel(),
+      startsAt, endsAt, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData, label: isTestData ? uniqueTestSlotLabel() : null,
     },
     select: { id: true },
   })).id;
@@ -135,9 +137,11 @@ export async function testSlotIdIn(
 export async function linkTestSlot(
   prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot' | 'sportEventSlot' | 'sportLeagueSeason'>,
   event: { id: string; sportLeagueSeasonId: string; startDate: Date },
+  /** False links a slot the sync keeps instead, leaving the event no test event. */
+  isTestData = true,
 ): Promise<string> {
   const { sportLeagueId } = await prisma.sportLeagueSeason.findUniqueOrThrow({ where: { id: event.sportLeagueSeasonId }, select: { sportLeagueId: true } });
-  const slotId = await testSlotIdIn(prisma, sportLeagueId, event.sportLeagueSeasonId, event.startDate);
+  const slotId = await testSlotIdIn(prisma, sportLeagueId, event.sportLeagueSeasonId, event.startDate, null, isTestData);
   await prisma.sportEventSlot.create({
     data: { sportEventId: event.id, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId: slotId },
     select: { id: true },
@@ -162,13 +166,14 @@ export async function deleteTestSportLeagues(
 
 /**
  * The event's one SportEventSlot row (#2006), the slot a round written straight to the database is
- * played in: the event's own, else a test slot linked now. Throws for an event of several slots.
+ * played in: the event's own, else a slot the sync keeps, linked now, so the event stays as it
+ * was (no test event). Throws for an event of several slots.
  */
 export async function oneEventSlotId(prisma: Parameters<typeof linkTestSlot>[0] & Pick<PrismaClient, 'sportEvent'>, sportEventId: string): Promise<string> {
   const find = () => prisma.sportEventSlot.findMany({ where: { sportEventId }, select: { id: true } });
   let slots = await find();
   if (slots.length === 0) {
-    await linkTestSlot(prisma, await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { id: true, sportLeagueSeasonId: true, startDate: true } }));
+    await linkTestSlot(prisma, await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { id: true, sportLeagueSeasonId: true, startDate: true } }), false);
     slots = await find();
   }
   if (slots.length !== 1) throw new Error(`Sport event ${sportEventId} has ${String(slots.length)} slots, not one.`);

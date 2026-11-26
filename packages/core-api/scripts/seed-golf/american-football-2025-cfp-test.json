@@ -111,7 +111,7 @@
       "events": [
         {
           "key": "cfp-2025-26",
-          "slotKey": "FINAL",
+          "roundSlotKeys": ["ROUND_OF_16", "QUARTERFINAL", "SEMIFINAL", "FINAL"],
           "name": "College Football Playoff",
           "startDate": "2025-12-19",
           "endDate": "2026-01-19",

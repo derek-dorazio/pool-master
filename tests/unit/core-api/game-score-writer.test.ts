@@ -4,6 +4,8 @@ import type { MatchLiveScoreWrite } from '@poolmaster/shared/db';
 import { writeGameScores, type GameScoreWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-score-writer';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
 import { bracketMatches } from '../../support/bracket-fixtures';
+import { bracketRoundSlots } from '../../support/round-slots';
+import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 
 // A provider's final for a linked match is written through the admin's result path (#1496).
@@ -11,7 +13,7 @@ import { fakeLogger } from '../../support/fake-logger';
 
 const EVENT_ID = 'event-1';
 /** A league that plays single games in every round. */
-const EVENT = { id: EVENT_ID, rounds: null, seriesGamesByRound: new Map() };
+const EVENT = { id: EVENT_ID, rounds: null };
 
 function linked(match: SportEventRoundMatch, externalGameId: string | null, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
   return { ...match, externalGameId, ...overrides };
@@ -372,15 +374,16 @@ describe('writeGameScores', () => {
   });
 
   describe('a best-of series (one match whose score is games won)', () => {
-    /** A league whose two playoff rounds are both best of seven. */
-    const SEVENS = { id: EVENT_ID, rounds: 2, seriesGamesByRound: new Map([[1, 7], [2, 7]]) };
+    const SEVENS = { id: EVENT_ID, rounds: 2 };
 
-    function series(): SportEventRoundMatch[] {
+    /** A two-round playoff, each round's best-of length its slot's (#2006): both best of seven unless given. */
+    function series(lengths: readonly [number, number] = [7, 7]): SportEventRoundMatch[] {
+      const slots = bracketRoundSlots(2).map((slot, index) => ({ ...slot, seriesGames: lengths[index] ?? 1 }));
       return bracketMatches(EVENT_ID, [
         { matchNumber: 1, round: 1, home: 'sep-KC', away: 'sep-BUF' },
         { matchNumber: 2, round: 1, home: 'sep-PHI', away: 'sep-DAL' },
         { matchNumber: 3, round: 2, home: null, away: null },
-      ]).map((match) => linked(match, null));
+      ], (roundNumber) => expectDefined(slots[roundNumber - 1], `round ${roundNumber}'s slot`)).map((match) => linked(match, null));
     }
 
     it('counts each final game between the series\' two teams as a win, from the match\'s sides, and records the series 4-1 once a side has four', async () => {
@@ -455,20 +458,20 @@ describe('writeGameScores', () => {
     });
 
     it('counts a level game settled by a shoot-out as the shoot-out winner\'s, so a best-of-three takes its result at two wins', async () => {
-      const { deps, recordResult } = writer(series());
+      const { deps, recordResult } = writer(series([3, 1]));
       const shootout = { ...game('s2', 'BUF', 'KC', 1, 1), homeShootoutScore: 3, awayShootoutScore: 5 };
 
-      await writeGameScores(deps, { id: EVENT_ID, rounds: 2, seriesGamesByRound: new Map([[1, 3], [2, 1]]) }, [game('s1', 'KC', 'BUF', 2, 0), shootout]);
+      await writeGameScores(deps, SEVENS, [game('s1', 'KC', 'BUF', 2, 0), shootout]);
 
       expect(recordResult).toHaveBeenCalledWith(EVENT_ID, 1, { winnerSide: MatchSide.HOME, homeScore: 2, awayScore: 0 });
     });
 
     it('leaves alone a series whose feed has more decided games than the series is long, or whose two teams two matches share', async () => {
-      const matches = series();
+      const matches = series([3, 3]);
       matches[2] = { ...matches[2], homeSportEventParticipantId: 'sep-DAL', awaySportEventParticipantId: 'sep-PHI' };
       const { deps, recordResult, applyLiveScores, logger } = writer(matches);
 
-      await writeGameScores(deps, { id: EVENT_ID, rounds: 2, seriesGamesByRound: new Map([[1, 3], [2, 3]]) }, [
+      await writeGameScores(deps, SEVENS, [
         game('s1', 'KC', 'BUF', 2, 0),
         game('s2', 'BUF', 'KC', 2, 0),
         game('s3', 'KC', 'BUF', 1, 0),
@@ -501,13 +504,12 @@ describe('writeGameScores', () => {
       );
     });
 
-    it('plays single games in a round the league names no length for, lining the lengths up with the final', async () => {
-      const matches = series();
+    it('plays single games in a round whose slot is played in single games, and a series in the final\'s best-of-seven slot', async () => {
+      const matches = series([1, 7]);
       matches[2] = { ...matches[2], homeSportEventParticipantId: 'sep-KC', awaySportEventParticipantId: 'sep-PHI' };
       const { deps, recordResult, linkGames } = writer(matches);
 
-      // One length for two rounds: the final is a best of seven, the first round single games.
-      await writeGameScores(deps, { id: EVENT_ID, rounds: null, seriesGamesByRound: new Map([[1, 7]]) }, [
+      await writeGameScores(deps, SEVENS, [
         game('r1', 'KC', 'BUF', 20, 17),
         ...['f1', 'f2', 'f3', 'f4'].map((id) => game(id, 'PHI', 'KC', 3, 1)),
       ]);

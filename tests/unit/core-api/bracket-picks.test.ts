@@ -163,10 +163,10 @@ describe('findBracketProblem', () => {
     expect(findBracketProblem([], EIGHT_SEEDS)).toBe('it has no games');
   });
 
-  it('refuses a last round of two games, which has no single final', () => {
+  it('refuses a bracket with no game in its FINAL slot, so its last round of two games is no final (#2006)', () => {
     const noFinal = eightTeamBracket().filter((match) => match.roundNumber < 3);
 
-    expect(findBracketProblem(noFinal, EIGHT_SEEDS)).toBe('its last round has 2 games, not one final');
+    expect(findBracketProblem(noFinal, EIGHT_SEEDS)).toBe('its final has 0 games, not one');
   });
 
   it('refuses a first-round game with a team still to be decided', () => {

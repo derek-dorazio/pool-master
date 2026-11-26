@@ -28,6 +28,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { mockFn } from '../../support/mock-fn';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
+import { slotOfRound } from '../../support/round-slots';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
@@ -614,7 +615,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
     contests.matches = {
       findBySportEvent: jest.fn().mockResolvedValue([
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff } as SportEventRoundMatch,
+        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff } as SportEventRoundMatch,
       ]),
     };
     contests.contests.transitionStatuses = guardedMove(written, (ids, transition) => {
@@ -1067,7 +1068,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
 
   it('keeps every contest live when a game of the event was already under way before the postponement', async () => {
     const deps = liveContests([LIVE], {
-      games: [{ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START } as SportEventRoundMatch],
+      games: [{ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START } as SportEventRoundMatch],
     });
 
     await follow(deps, postponedEvents(NEW_START));
@@ -1078,8 +1079,8 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
   it('still reopens when the event\'s games are scheduled or postponed themselves, none of them begun', async () => {
     const deps = liveContests([LIVE], {
       games: [
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: NEW_START } as SportEventRoundMatch,
-        { id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.POSTPONED, scheduledDate: NEW_START } as SportEventRoundMatch,
+        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: NEW_START } as SportEventRoundMatch,
+        { id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.POSTPONED, scheduledDate: NEW_START } as SportEventRoundMatch,
       ],
     });
 

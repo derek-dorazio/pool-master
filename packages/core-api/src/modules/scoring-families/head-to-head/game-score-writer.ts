@@ -79,7 +79,8 @@ export async function writeGameScores(
   const sportEventId = event.id;
   const loaded = await deps.matches.findBySportEvent(sportEventId);
   await fillPlayInPlaces(deps, sportEventId, loaded, games);
-  const seriesLengthOf = (match: SportEventRoundMatch): number => seriesGamesOf(event, match.roundNumber);
+  // A match is played over its slot's best-of length (#2006).
+  const seriesLengthOf = (match: SportEventRoundMatch): number => match.slot.seriesGames;
   const seriesMatches = loaded.filter((match): match is SidedMatch => seriesLengthOf(match) > 1 && hasBothSides(match));
   const linkedGameIds = new Set(loaded.flatMap((match) => (match.externalGameId === null ? [] : [match.externalGameId])));
   const unlinkedGames = games.filter((game) => !linkedGameIds.has(game.externalGameId));
@@ -429,9 +430,3 @@ function hasResult(match: SportEventRoundMatch, result: MatchResultFromGame): bo
     && match.awayShootoutScore === (result.awayShootoutScore ?? null);
 }
 
-/** How many games a match of the round is played over: its slot's best-of length (#2006). */
-function seriesGamesOf(event: LiveScoreTargetEvent, roundNumber: number): number {
-  const seriesGames = event.seriesGamesByRound.get(roundNumber);
-  if (seriesGames === undefined) throw new Error(`Sport event ${event.id} has no round ${roundNumber}.`);
-  return seriesGames;
-}

@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { MatchEnding, MatchSide, MatchStatus, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, SlotPairing, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   findReseededPlaceGaps,
   findRoundMatchupProblems,
@@ -9,12 +9,15 @@ import {
   type RoundMatchup,
 } from '../../../packages/core-api/src/modules/events/bracket-reseed';
 import { findBracketProblems, type BracketMatchInput } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
+import { bracketRoundSlots } from '../../support/round-slots';
 
 // The pure rules of a reseeded bracket (#722), on an NFL-shaped playoff: seven seeds in each
 // conference, the 1 seed on a bye, Wild Card games that link nowhere, a Divisional round placed by
 // seed, and conference championships and a Super Bowl fed by links.
 
 /** Field row ids are the team's conference and seed: "AFC-1" is the AFC's 1 seed. */
+/** The NFL's postseason slots, every one RESEEDED, the Super Bowl its FINAL (#2006). */
+const NFL_ROUND_SLOTS = bracketRoundSlots(4, { pairing: SlotPairing.RESEEDED });
 const seedOf = new Map(['AFC', 'NFC'].flatMap((conference) => [1, 2, 3, 4, 5, 6, 7].map((seed) => [`${conference}-${seed}`, seed] as const)));
 
 interface MatchSpec {
@@ -46,6 +49,7 @@ function nflPlayoff(): SportEventRoundMatch[] {
     id: `m${spec.matchNumber}`,
     sportEventId: 'super-bowl-lxi',
     roundNumber: spec.round,
+    slot: NFL_ROUND_SLOTS[spec.round - 1],
     matchNumber: spec.matchNumber,
     homeSportEventParticipantId: spec.home,
     awaySportEventParticipantId: spec.away,
@@ -228,17 +232,17 @@ describe('findBracketProblems on a league that reseeds', () => {
     regionLabel: match.regionLabel,
   });
   const matches = nflPlayoff().map(asInput);
-  const context = { roundNumbers: new Set([1, 2, 3, 4]), fieldIds: new Set(seedOf.keys()) };
+  const context = { roundNumbers: new Set([1, 2, 3, 4]), finalRoundNumbers: new Set([4]), fieldIds: new Set(seedOf.keys()) };
 
   it('accepts Wild Card games that link nowhere when the league reseeds, and refuses them when it does not', () => {
     expect(findBracketProblems(matches, { ...context, reseeds: true })).toEqual([]);
     expect(findBracketProblems(matches, context)).not.toEqual([]);
   });
 
-  it('still asks a reseeded bracket for one final, the one match in its last round', () => {
+  it('still asks a reseeded bracket for one final, the one match of its FINAL slot\'s round', () => {
     const twoFinals = matches.map((match) => (match.matchNumber === 12 ? { ...match, roundNumber: 4, advancesTo: null } : match));
 
-    expect(findBracketProblems(twoFinals, { ...context, reseeds: true })).toContain('a bracket has one final, the one match in its last round, but this one has 2 in round 4');
+    expect(findBracketProblems(twoFinals, { ...context, reseeds: true })).toContain('a bracket has one final, the one match of its FINAL slot\'s round, but this one has 2');
   });
 });
 
