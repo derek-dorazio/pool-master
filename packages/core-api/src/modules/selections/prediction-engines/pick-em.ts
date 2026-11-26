@@ -4,7 +4,7 @@
  * pick locks, and is revealed, at its own game's kickoff; game-picks.ts holds the scoring.
  */
 
-import { PickEmMode, SelectionType, isTeamChoice, type ContestSelectionConfig } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, isTeamChoice, type ContestSelectionConfig, teamOnMatchSide, MatchSide } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
 import { scoreGamePicks, weekTiebreakerGame, type GamePickScoring } from '../../scoring-families/head-to-head/game-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
@@ -34,8 +34,8 @@ export const pickEmPredictionEngine: PredictionEngine = {
 
   resolvePicks({ games, predictions }) {
     const sides = new Map(games.map((game) => [game.id, {
-      home: game.homeSportEventParticipantId,
-      away: game.awaySportEventParticipantId,
+      home: teamOnMatchSide(game, MatchSide.HOME),
+      away: teamOnMatchSide(game, MatchSide.AWAY),
     }]));
     // A tie pick stands on any of the week's games; the service takes one only where the sport offers it.
     const stands = (prediction: (typeof predictions)[number]) => {

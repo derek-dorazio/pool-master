@@ -75,10 +75,6 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     expect('tie' in enUS.sport[definition.sport]).toBe(sportPlaysMatches(definition.sport));
   });
 
-  it('says a shoot-out word exactly when it settles level knockout matches by a shoot-out', () => {
-    expect(sportVocabulary(definition).shootout !== undefined).toBe(definition.shootout);
-  });
-
   it('has a name and every sport word filled in, its own or the generic one', () => {
     const { participant, event, sportLeague, round, eliminated, withdrawn, eventStart } = sportVocabulary(definition);
     for (const word of [
@@ -341,8 +337,7 @@ describe('soccer', () => {
     expect(sportPlaysMatches(Sport.SOCCER)).toBe(true);
   });
 
-  it('settles a knockout match level after extra time by a shoot-out, labelled pens, and calls overtime extra time', () => {
-    expect(soccer.shootout).toBe(true);
+  it('labels a shoot-out pens, and calls overtime extra time', () => {
     expect(sportVocabulary(soccer).shootout).toBe('pens');
     expect(sportVocabulary(soccer).overtime).toBe('extra time');
   });
@@ -374,7 +369,7 @@ describe('tennis', () => {
     expect(tennis.name).toBe('Tennis');
     expect(tennis.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(tennis.matchPeriodLayout).toBeUndefined();
-    expect(tennis.shootout).toBe(false);
+    expect(sportVocabulary(tennis).shootout).toBeUndefined();
     expect(sportPlaysMatches(Sport.TENNIS)).toBe(true);
   });
 

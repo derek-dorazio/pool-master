@@ -122,6 +122,8 @@ function game(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRound
     ...overrides,
     // As the server's mapper reads it from the status.
     isUnplayed: overrides.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides.status),
+    // The server's fact: decided once COMPLETED.
+    isFinal: overrides.isFinal ?? overrides.status === MatchStatus.COMPLETED,
   };
 }
 

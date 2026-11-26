@@ -24,6 +24,7 @@ import type {
   ContestRepository,
   ParticipantRepository,
   SportLeagueRepository,
+  MatchSideWrite,
   SportEventRoundMatchPatch,
   SportEventRoundMatchRepository,
   SportEventRoundMatchWrite,
@@ -43,7 +44,11 @@ import {
   type MatchPlace,
   MatchPlaceMap,
   matchPlaceOf,
+  HomeAway,
   MatchSide,
+  sideNumberOfMatchSide,
+  sideOfParticipant,
+  sideParticipantId,
   type Participant,
   ParticipantStatus,
   finalRoundNumbers,
@@ -56,6 +61,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { roundLabels } from '@poolmaster/shared/display-strings';
 import { SportEventError } from './errors';
+import { homeSpreadOf } from '../../mappers/sport-event-matches.mapper';
 import type { JobsForWrite } from '../background-jobs/background-job-queue';
 import { DomainEventType, type DomainEvents } from '../domain-events';
 import { findReseededPlaceGaps, findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
@@ -77,13 +83,58 @@ export interface BracketMatchInput extends MatchPlace {
   regionLabel?: string | null;
 }
 
-/** One match edit; a value left out keeps what is stored. */
-export type BracketMatchEdit = SportEventRoundMatchPatch;
+/** One match edit, home and away as the API names them (home is side 2, #2046); a value left out keeps what is stored. */
+export interface BracketMatchEdit {
+  homeSportEventParticipantId?: string | null;
+  awaySportEventParticipantId?: string | null;
+  isNeutralSite?: boolean;
+  scheduledDate?: Date | null;
+  /** The spread from the home side; side 1 holds its opposite. */
+  homeSpread?: number | null;
+  /** Where each side plays Game 1, by side number: the sync's only change to an existing match's sides. */
+  gameOneHomeAway?: readonly { sideNumber: number; homeAway: HomeAway }[];
+}
 
 const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
 
 function sideOf(match: Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>, side: MatchSide): string | null {
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
+}
+
+/** A stored match's team on the side the API calls `side`. */
+function storedSideOf(match: Pick<SportEventRoundMatch, 'id' | 'sides'>, side: MatchSide): string | null {
+  return sideParticipantId(match, sideNumberOfMatchSide(side));
+}
+
+/** Whether a link fills the side of `matchId` the API calls `side`. */
+function isFedSide(bracket: readonly SportEventRoundMatch[], matchId: string, side: MatchSide): boolean {
+  return bracket.some((other) => other.advancesToMatchId === matchId && other.advancesToSideNumber === sideNumberOfMatchSide(side));
+}
+
+/**
+ * A match being created, on its sides (#2046): the home team on side 2 and the away team on side 1,
+ * where each plays Game 1 (NONE at a neutral site).
+ */
+function sidesOfInput(match: Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId' | 'isNeutralSite'>): MatchSideWrite[] {
+  return SIDES.map((side) => ({
+    sideNumber: sideNumberOfMatchSide(side),
+    sportEventParticipantId: sideOf(match, side),
+    homeAway: match.isNeutralSite ? HomeAway.NONE : side === MatchSide.HOME ? HomeAway.HOME : HomeAway.AWAY,
+  })).sort((left, right) => left.sideNumber - right.sideNumber);
+}
+
+/** An edit's home and away, as the stored match's patch by side. */
+function toPatch({ homeSportEventParticipantId, awaySportEventParticipantId, homeSpread, ...edit }: BracketMatchEdit): SportEventRoundMatchPatch {
+  const sides = [
+    ...(homeSportEventParticipantId === undefined ? [] : [{ sideNumber: sideNumberOfMatchSide(MatchSide.HOME), sportEventParticipantId: homeSportEventParticipantId }]),
+    ...(awaySportEventParticipantId === undefined ? [] : [{ sideNumber: sideNumberOfMatchSide(MatchSide.AWAY), sportEventParticipantId: awaySportEventParticipantId }]),
+  ];
+  return {
+    ...edit,
+    ...(sides.length > 0 && { sides }),
+    // Side 1, the away side, holds the spread: the home side's opposite.
+    ...(homeSpread !== undefined && { spread: homeSpread === null ? null : 0 - homeSpread }),
+  };
 }
 
 /** "round 2 match 1 home": a side of a match, as the problems name it. */
@@ -247,12 +298,16 @@ export class SportEventBracketService {
 
     const newId = this.deps.newId ?? randomUUID;
     const idByPlace = new MatchPlaceMap(matches.map((match) => [match, newId()] as const));
-    const writes: SportEventRoundMatchWrite[] = matches.map(({ advancesTo, regionLabel, ...match }) => ({
-      ...match,
-      regionLabel: regionLabel ?? null,
+    const writes: SportEventRoundMatchWrite[] = matches.map((match) => ({
       id: idByPlace.get(match) as string,
-      advancesToMatchId: advancesTo ? idByPlace.get(advancesTo) as string : null,
-      advancesToSide: advancesTo?.side ?? null,
+      roundNumber: match.roundNumber,
+      matchNumber: match.matchNumber,
+      sides: sidesOfInput(match),
+      isNeutralSite: match.isNeutralSite,
+      scheduledDate: match.scheduledDate,
+      regionLabel: match.regionLabel ?? null,
+      advancesToMatchId: match.advancesTo ? idByPlace.get(match.advancesTo) as string : null,
+      advancesToSideNumber: match.advancesTo ? sideNumberOfMatchSide(match.advancesTo.side) : null,
     }));
     const rebuild = await this.rebuild(sportEventId);
     await this.deps.matches.replaceBracket(sportEventId, writes, rebuild.jobs);
@@ -285,13 +340,13 @@ export class SportEventBracketService {
         throw new SportEventError(`${describeMatchPlace(place, { sentenceStart: true })} cannot be changed: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
       }
     }
-    const changesSpread = edit.homeSpread !== undefined && edit.homeSpread !== match.homeSpread;
+    const changesSpread = edit.homeSpread !== undefined && edit.homeSpread !== homeSpreadOf(match);
     if (changesSpread && event.status !== SportEventStatus.DRAFT) {
       this.assertSpreadKept(event, match, edit.homeSpread);
       await this.assertSpreadUnpicked(event, match);
     }
     const rebuild = await this.rebuild(sportEventId);
-    await this.deps.matches.update(match.id, edit, rebuild.jobs);
+    await this.deps.matches.update(match.id, toPatch(edit), rebuild.jobs);
     rebuild.queued();
     // A squares grid closes at its game's start (#1170).
     if (edit.scheduledDate !== undefined && edit.scheduledDate?.getTime() !== match.scheduledDate?.getTime()) {
@@ -325,17 +380,14 @@ export class SportEventBracketService {
     const rounds = await this.deps.rounds.findBySportEvent(event.id);
     const reseeds = reseedsOf(rounds);
     const placedLater = reseeds ? reseededRounds(bracket) : new Set<number>();
-    const fed = new Set(bracket
-      .filter((match) => match.advancesToMatchId !== null && match.advancesToSide !== null)
-      .map((match) => `${match.advancesToMatchId}/${match.advancesToSide}`));
     const named = new Set<string>();
     let emptySides = 0;
     for (const match of bracket) {
       for (const side of SIDES) {
-        const sportEventParticipantId = sideOf(match, side);
+        const sportEventParticipantId = storedSideOf(match, side);
         if (sportEventParticipantId !== null) {
           named.add(sportEventParticipantId);
-        } else if (!fed.has(`${match.id}/${side}`) && !placedLater.has(match.roundNumber)) {
+        } else if (!isFedSide(bracket, match.id, side) && !placedLater.has(match.roundNumber)) {
           emptySides += 1;
         }
       }
@@ -400,8 +452,10 @@ export class SportEventBracketService {
     const rebuild = await this.rebuild(sportEventId);
     await this.deps.matches.placeSides(matchups.map((matchup) => ({
       id: idByNumber.get(matchup.matchNumber) as string,
-      homeSportEventParticipantId: matchup.homeSportEventParticipantId,
-      awaySportEventParticipantId: matchup.awaySportEventParticipantId,
+      sides: [
+        { sideNumber: sideNumberOfMatchSide(MatchSide.HOME), sportEventParticipantId: matchup.homeSportEventParticipantId },
+        { sideNumber: sideNumberOfMatchSide(MatchSide.AWAY), sportEventParticipantId: matchup.awaySportEventParticipantId },
+      ],
     })), rebuild.jobs);
     rebuild.queued();
     this.deps.logger?.info({ sportEventId, roundNumber, matches: matchups.length }, 'Placed a reseeded round');
@@ -489,7 +543,7 @@ export class SportEventBracketService {
     }
     const played = (await this.deps.matches.findBySportEvent(sportEventId)).some((match) => (
       !isMatchUnplayed(match.status)
-      && (match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id)
+      && sideOfParticipant(match, entry.id) !== null
     ));
     if (played) {
       throw new SportEventError(
@@ -514,8 +568,8 @@ export class SportEventBracketService {
   ): Promise<string[]> {
     const field = new Set((await this.deps.field.findBySportEvent(match.sportEventId)).map((entry) => entry.id));
     const after = {
-      homeSportEventParticipantId: edit.homeSportEventParticipantId === undefined ? match.homeSportEventParticipantId : edit.homeSportEventParticipantId,
-      awaySportEventParticipantId: edit.awaySportEventParticipantId === undefined ? match.awaySportEventParticipantId : edit.awaySportEventParticipantId,
+      homeSportEventParticipantId: edit.homeSportEventParticipantId === undefined ? storedSideOf(match, MatchSide.HOME) : edit.homeSportEventParticipantId,
+      awaySportEventParticipantId: edit.awaySportEventParticipantId === undefined ? storedSideOf(match, MatchSide.AWAY) : edit.awaySportEventParticipantId,
     };
     const problems: string[] = [];
     if (after.homeSportEventParticipantId !== null && after.homeSportEventParticipantId === after.awaySportEventParticipantId) {
@@ -523,16 +577,15 @@ export class SportEventBracketService {
     }
     for (const side of SIDES) {
       const sportEventParticipantId = sideOf(after, side);
-      if (sportEventParticipantId === null || sportEventParticipantId === sideOf(match, side)) continue;
+      if (sportEventParticipantId === null || sportEventParticipantId === storedSideOf(match, side)) continue;
       if (!field.has(sportEventParticipantId)) {
         problems.push(`the ${side.toLowerCase()} side names ${sportEventParticipantId}, which is not on the event's field`);
         continue;
       }
-      if (bracket.some((other) => other.advancesToMatchId === match.id && other.advancesToSide === side)) {
+      if (isFedSide(bracket, match.id, side)) {
         problems.push(`the ${side.toLowerCase()} side is filled by an earlier match's winner`);
       }
-      const elsewhere = bracket.find((other) => other.id !== match.id
-        && (other.homeSportEventParticipantId === sportEventParticipantId || other.awaySportEventParticipantId === sportEventParticipantId));
+      const elsewhere = bracket.find((other) => other.id !== match.id && sideOfParticipant(other, sportEventParticipantId) !== null);
       if (elsewhere) {
         problems.push(`the ${side.toLowerCase()} side names a team already in ${describeMatchPlace(elsewhere)}`);
       }

@@ -61,7 +61,11 @@
     "isSecondChanceBracket": "#2172: no second-chance bracket",
     "formatBracketStartLabel": "#2172: no bracket start choice",
     "tiersUsed": "#2172: a tiered entry picks from every tier of the event",
-    "getTiersInPlay": "#2172: the event's tier count is the tiers in play"
+    "getTiersInPlay": "#2172: the event's tier count is the tiers in play",
+    "sportEventMatchPeriodScore": "#2046 (10e): Game side result period scores",
+    "savePeriodScore": "#2046 (10e): saveGamePeriodScores, one Game's side periods",
+    "applyLiveScores": "#2046 (10e): applyStatuses and the Game side results",
+    "PrismaMatchSide": "#2046 (10e): side numbers on match sides"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -123,5 +127,9 @@
   "isSecondChanceBracket": 0,
   "formatBracketStartLabel": 0,
   "tiersUsed": 0,
-  "getTiersInPlay": 0
+  "getTiersInPlay": 0,
+  "sportEventMatchPeriodScore": 0,
+  "savePeriodScore": 0,
+  "applyLiveScores": 0,
+  "PrismaMatchSide": 0
 }

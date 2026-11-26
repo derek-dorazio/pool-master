@@ -10,7 +10,7 @@ import type {
   SportEventRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted } from '@poolmaster/shared/domain';
+import { MatchStatus, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -81,10 +81,10 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       const games = (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED);
       const openingRound = Math.min(...games.map((match) => match.roundNumber));
       return games.filter((match) => (options?.openingRoundOnly !== true || match.roundNumber === openingRound)
-        && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length;
+        && match.sides.some((side) => side.sportEventParticipantId === null)).length;
     },
     countGamesWithoutSpread: async (sportEventId) =>
-      (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED && match.homeSpread === null).length,
+      (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED && matchSpread(match) === null).length,
     findBracketProblem: async (sportEventId) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
       return findBracketProblem(contestBracketGames(games), knockoutSeeds(entries));

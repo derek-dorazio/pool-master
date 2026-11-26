@@ -1,3 +1,4 @@
+import { withHomeAway, homeAwayOf, legacyMatch } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import { matchPlaceOf, MatchEnding, MatchSide, MatchStatus, SlotPairing, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
@@ -46,7 +47,7 @@ function nflPlayoff(): SportEventRoundMatch[] {
     { matchNumber: 12, round: 3, home: null, away: null, region: 'NFC', advancesTo: { matchNumber: 13, side: MatchSide.AWAY } },
     { matchNumber: 13, round: 4, home: null, away: null, region: null },
   ];
-  return specs.map((spec) => ({
+  return specs.map((spec) => (legacyMatch({
     id: `m${spec.matchNumber}`,
     sportEventId: 'super-bowl-lxi',
     roundNumber: spec.round,
@@ -71,14 +72,14 @@ function nflPlayoff(): SportEventRoundMatch[] {
     periodScores: [],
     createdAt: new Date('2027-01-01T00:00:00.000Z'),
     updatedAt: new Date('2027-01-01T00:00:00.000Z'),
-  }));
+  })));
 }
 
 /** The bracket after Wild Card weekend, each match won by the side named. */
 function afterWildCard(winners: ReadonlyMap<number, MatchSide>): SportEventRoundMatch[] {
   return nflPlayoff().map((match) => {
     const winnerSide = winners.get(match.matchNumber);
-    return winnerSide === undefined ? match : { ...match, status: MatchStatus.COMPLETED, winnerSide };
+    return winnerSide === undefined ? match : withHomeAway(match, { status: MatchStatus.COMPLETED, winnerSide });
   });
 }
 
@@ -116,7 +117,7 @@ describe('roundPlacementBlocker', () => {
 
   it('blocks placing a round once one of its games has a quarter score, though its status is still scheduled', () => {
     const scored = afterWildCard(UPSET_WEEKEND).map((match) => (match.matchNumber === 9
-      ? { ...match, periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }] }
+      ? withHomeAway(match, { periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }] })
       : match));
 
     expect(roundPlacementBlocker(scored, 2)).toMatchObject({ code: 'BRACKET_ROUND_ALREADY_PLAYED' });
@@ -138,7 +139,7 @@ describe('proposeRoundMatchups', () => {
 
   it('gives the bye team the away side when that is the side it holds', () => {
     const bracket = afterWildCard(UPSET_WEEKEND).map((match) => (match.matchNumber === 7
-      ? { ...match, homeSportEventParticipantId: null, awaySportEventParticipantId: 'AFC-1' }
+      ? withHomeAway(match, { homeSportEventParticipantId: null, awaySportEventParticipantId: 'AFC-1' })
       : match));
 
     expect(proposeRoundMatchups(bracket, 2, seedOf).matchups[0]).toEqual(pair(7, 'AFC-7', 'AFC-1'));
@@ -157,7 +158,7 @@ describe('proposeRoundMatchups', () => {
 describe('an NFL bracket whose conference championships are reseeded too', () => {
   // The Divisional games link nowhere, so the best seed left hosts each conference championship.
   const unlinkedDivisional = (): SportEventRoundMatch[] => nflPlayoff().map((match) => (match.roundNumber === 2
-    ? { ...match, advancesToMatchId: null, advancesToSide: null }
+    ? withHomeAway(match, { advancesToMatchId: null, advancesToSide: null })
     : match));
 
   it('names both the Divisional round and the conference championships as reseeded', () => {
@@ -175,8 +176,8 @@ describe('an NFL bracket whose conference championships are reseeded too', () =>
         10: ['NFC-2', 'NFC-3', MatchSide.HOME],
       };
       const row = placed[match.matchNumber];
-      if (row) return { ...match, homeSportEventParticipantId: row[0], awaySportEventParticipantId: row[1], status: MatchStatus.COMPLETED, winnerSide: row[2] };
-      return match.roundNumber === 1 ? { ...match, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME } : match;
+      if (row) return withHomeAway(match, { homeSportEventParticipantId: row[0], awaySportEventParticipantId: row[1], status: MatchStatus.COMPLETED, winnerSide: row[2] });
+      return match.roundNumber === 1 ? withHomeAway(match, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME }) : match;
     });
 
     expect(proposeRoundMatchups(bracket, 3, seedOf)).toEqual({
@@ -224,11 +225,11 @@ describe('findBracketProblems on a league that reseeds', () => {
   const asInput = (match: SportEventRoundMatch, _index: number, all: readonly SportEventRoundMatch[]): BracketMatchInput => ({
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
-    homeSportEventParticipantId: match.homeSportEventParticipantId,
-    awaySportEventParticipantId: match.awaySportEventParticipantId,
+    homeSportEventParticipantId: homeAwayOf(match).homeSportEventParticipantId,
+    awaySportEventParticipantId: homeAwayOf(match).awaySportEventParticipantId,
     isNeutralSite: match.isNeutralSite,
     scheduledDate: null,
-    advancesTo: match.advancesToMatchId === null ? null : { ...matchPlaceOf(expectDefined(all.find((next) => next.id === match.advancesToMatchId), 'the next match')), side: match.advancesToSide ?? MatchSide.HOME },
+    advancesTo: match.advancesToMatchId === null ? null : { ...matchPlaceOf(expectDefined(all.find((next) => next.id === match.advancesToMatchId), 'the next match')), side: homeAwayOf(match).advancesToSide ?? MatchSide.HOME },
     regionLabel: match.regionLabel,
   });
   const matches = nflPlayoff().map(asInput);
@@ -252,13 +253,13 @@ describe('findReseededPlaceGaps', () => {
   });
 
   it('names the conference whose bye team was left out: one place more than the winners to come', () => {
-    const noBye = nflPlayoff().map((match) => (match.matchNumber === 7 ? { ...match, homeSportEventParticipantId: null } : match));
+    const noBye = nflPlayoff().map((match) => (match.matchNumber === 7 ? withHomeAway(match, { homeSportEventParticipantId: null }) : match));
 
     expect(findReseededPlaceGaps(noBye)).toEqual([{ roundNumber: 2, regionLabel: 'AFC', openPlaces: 4, winnersToCome: 3 }]);
   });
 
   it('checks every reseeded round in order, here the Divisional round and the conference championships', () => {
-    const unlinkedDivisional = nflPlayoff().map((match) => (match.roundNumber === 2 ? { ...match, advancesToMatchId: null, advancesToSide: null } : match));
+    const unlinkedDivisional = nflPlayoff().map((match) => (match.roundNumber === 2 ? withHomeAway(match, { advancesToMatchId: null, advancesToSide: null }) : match));
 
     expect(findReseededPlaceGaps(unlinkedDivisional)).toEqual([]);
     expect(findReseededPlaceGaps(unlinkedDivisional.filter((match) => match.matchNumber !== 12))).toEqual([
@@ -268,7 +269,7 @@ describe('findReseededPlaceGaps', () => {
 
   it('counts a side as open when the match linking into it names no side', () => {
     const sideless = nflPlayoff().map((match) => (match.matchNumber === 1
-      ? { ...match, roundNumber: 2, regionLabel: 'NFC', advancesToMatchId: 'm8', advancesToSide: null }
+      ? withHomeAway(match, { roundNumber: 2, regionLabel: 'NFC', advancesToMatchId: 'm8', advancesToSide: null })
       : match));
 
     expect(findReseededPlaceGaps(sideless)).toEqual([{ roundNumber: 2, regionLabel: 'AFC', openPlaces: 3, winnersToCome: 2 }]);
@@ -308,7 +309,7 @@ describe('proposeRoundMatchups — edge cases', () => {
     const placed = proposeRoundMatchups(bracket, 2, seedOf).matchups;
     const saved = bracket.map((match) => {
       const matchup = placed.find((candidate) => candidate.matchNumber === match.matchNumber);
-      return matchup ? { ...match, homeSportEventParticipantId: matchup.homeSportEventParticipantId, awaySportEventParticipantId: matchup.awaySportEventParticipantId } : match;
+      return matchup ? withHomeAway(match, { homeSportEventParticipantId: matchup.homeSportEventParticipantId, awaySportEventParticipantId: matchup.awaySportEventParticipantId }) : match;
     });
 
     expect(proposeRoundMatchups(saved, 2, seedOf)).toEqual({ matchups: placed, problems: [] });
@@ -317,8 +318,8 @@ describe('proposeRoundMatchups — edge cases', () => {
   it('keeps a Wild Card winner its link already placed in the round', () => {
     // The AFC 3 v 6 game links into match 8 home, where the 3 seed already stands.
     const bracket = afterWildCard(UPSET_WEEKEND).map((match) => (match.matchNumber === 2
-      ? { ...match, advancesToMatchId: 'm8', advancesToSide: MatchSide.HOME }
-      : match.matchNumber === 8 ? { ...match, homeSportEventParticipantId: 'AFC-3' } : match));
+      ? withHomeAway(match, { advancesToMatchId: 'm8', advancesToSide: MatchSide.HOME })
+      : match.matchNumber === 8 ? withHomeAway(match, { homeSportEventParticipantId: 'AFC-3' }) : match));
 
     const { matchups, problems } = proposeRoundMatchups(bracket.filter((match) => match.regionLabel === 'AFC' && match.roundNumber <= 2), 2, seedOf);
 
@@ -338,9 +339,9 @@ describe('proposeRoundMatchups — edge cases', () => {
     // worst seeds left hold different matches, and the middle pair has nowhere to go.
     const bracket = afterWildCard(new Map([[1, MatchSide.HOME], [2, MatchSide.HOME], [3, MatchSide.HOME]]))
       .filter((match) => match.regionLabel === 'AFC' && match.roundNumber <= 2)
-      .map((match) => (match.matchNumber === 3 ? { ...match, awaySportEventParticipantId: 'AFC-6', homeSportEventParticipantId: 'AFC-4' }
-        : match.matchNumber === 2 ? { ...match, homeSportEventParticipantId: 'AFC-3', awaySportEventParticipantId: 'AFC-7' }
-          : match.matchNumber === 8 ? { ...match, homeSportEventParticipantId: 'AFC-5' } : match))
+      .map((match) => (match.matchNumber === 3 ? withHomeAway(match, { awaySportEventParticipantId: 'AFC-6', homeSportEventParticipantId: 'AFC-4' })
+        : match.matchNumber === 2 ? withHomeAway(match, { homeSportEventParticipantId: 'AFC-3', awaySportEventParticipantId: 'AFC-7' })
+          : match.matchNumber === 8 ? withHomeAway(match, { homeSportEventParticipantId: 'AFC-5' }) : match))
       .filter((match) => match.matchNumber !== 1);
 
     expect(proposeRoundMatchups(bracket, 2, seedOf)).toEqual({

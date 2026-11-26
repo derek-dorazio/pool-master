@@ -1,3 +1,4 @@
+import { legacyMatch } from '../../support/match-sides';
 import type { ContestRepository, ContestStatusTransition } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
@@ -615,7 +616,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
     contests.matches = {
       findBySportEvent: jest.fn().mockResolvedValue([
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff } as SportEventRoundMatch,
+        legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff }),
       ]),
     };
     contests.contests.transitionStatuses = guardedMove(written, (ids, transition) => {
@@ -630,6 +631,37 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
     expect(written).toEqual([startedEmailsJob('contest-at-start'), contestRebuildJob('contest-at-start')]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves a squares contest open while its game is still to kick off, starting only the contests that close at the event\'s start', async () => {
+    const kickoff = new Date(STARTED_EVENT_START.getTime() + 60 * 60_000);
+    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
+    const atStart = buildContest({ ...STARTED_CONTEST, id: 'contest-at-start' });
+    const squares = buildContest({
+      ...STARTED_CONTEST,
+      id: 'contest-squares',
+      leagueId: 'league-2',
+      selectionType: SelectionType.SQUARES,
+      squaresGameMatchId: 'game-1',
+    });
+    const written: unknown[] = [];
+    const contests = contestDeps();
+    contests.contests.findBySportEvent = jest.fn().mockResolvedValue([atStart, squares]);
+    contests.configurations = fakeContestConfigurationRepo({
+      findByContests: jest.fn().mockResolvedValue([{ contestId: squares.id, configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 } }]),
+    });
+    contests.matches = {
+      findBySportEvent: jest.fn().mockResolvedValue([
+        legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: kickoff }),
+      ]),
+    };
+    contests.contests.transitionStatuses = guardedMove(written, (ids) => [...ids]);
+    const service = lifecycleService(contests, sportEvents, fakeLogger(), startedJobs());
+
+    expect(await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), new Date(kickoff.getTime() - 60_000))).toBe(1);
+
+    expect(contests.contests.transitionStatuses).toHaveBeenCalledTimes(1);
+    expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-at-start'], expect.objectContaining({ startsAt: STARTED_EVENT_START }));
   });
 
   it('writes no contest-started email job when the contest is already active, and wakes the runner only for the status change\'s own follow-ups', async () => {
@@ -1064,7 +1096,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
 
   it('keeps every contest live when a game of the event was already under way before the postponement', async () => {
     const deps = liveContests([LIVE], {
-      games: [{ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START } as SportEventRoundMatch],
+      games: [legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START })],
     });
 
     await follow(deps, postponedEvents(NEW_START));
@@ -1075,8 +1107,8 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
   it('still reopens when the event\'s games are scheduled or postponed themselves, none of them begun', async () => {
     const deps = liveContests([LIVE], {
       games: [
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: NEW_START } as SportEventRoundMatch,
-        { id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.POSTPONED, scheduledDate: NEW_START } as SportEventRoundMatch,
+        legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: NEW_START }),
+        legacyMatch({ id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.POSTPONED, scheduledDate: NEW_START }),
       ],
     });
 

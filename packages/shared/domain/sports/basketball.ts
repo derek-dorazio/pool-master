@@ -21,7 +21,6 @@ export const basketballSportDefinition: SportDefinition = {
   defaultRounds: 6,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  shootout: false,
   // Quarters, as the NBA, the WNBA and women's college basketball play; men's college basketball
   // plays halves (its sport league's `matchPeriodLayout`).
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,

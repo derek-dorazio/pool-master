@@ -33,7 +33,7 @@ import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, t
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { withCurrentSeason } from '../support/event-edition';
-import { removeTestDefinition, TEST_DEFINITION_KEY, withTestDefinition } from '../support/test-slots';
+import { LEVEL_TEST_DEFINITION_KEY, removeTestDefinition, TEST_DEFINITION_KEY, withTestDefinition } from '../support/test-slots';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { enterSeedRound, EVERY_GAME_PLAYED, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
@@ -69,6 +69,8 @@ interface PlayoffLeague {
   file: string;
   league: string;
   event: string;
+  /** A week whose games can end level (#2046): a file event the league has no definition for goes on a test definition that can. */
+  endsLevel?: true;
 }
 
 const LEAGUES: readonly PlayoffLeague[] = [
@@ -157,10 +159,11 @@ async function loadCopy(row: PlayoffLeague, tag: string, season: number, without
   const db = getFunctionalPrisma();
   if (!originalSeasons.has(sportLeague.id)) originalSeasons.set(sportLeague.id, sportLeague.currentSeasonId);
   await withCurrentSeason(db, sportLeague.id, season);
+  const testKey = row.endsLevel ? LEVEL_TEST_DEFINITION_KEY : TEST_DEFINITION_KEY;
   for (const event of file.sportLeagues[0].events.filter((each) => each.slotKey === undefined)) {
-    await withTestDefinition(db, sportLeague.id);
+    await withTestDefinition(db, sportLeague.id, testKey);
     testDefinitionLeagueIds.add(sportLeague.id);
-    event.slotKey = TEST_DEFINITION_KEY;
+    event.slotKey = testKey;
   }
   await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const eventId = expectDefined(expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId: sportLeague.id } })).data).events
@@ -189,7 +192,10 @@ async function playedResults(row: PlayoffLeague, tag: string) {
   }
   const rounds = Math.max(...matches.map((match) => match.roundNumber));
   const final = expectDefined(matches.find((match) => match.roundNumber === rounds), 'the final');
-  return { winners, losers, rounds, gameCount: matches.length, finalTotal: (final.homeScore ?? 0) + (final.awayScore ?? 0) };
+  // A series loaded from a test data file has its result but none of its Games (#2046), so its
+  // final has no score until the file gives each Game (#2184).
+  const finalTotal = final.homeScore === null || final.awayScore === null ? null : final.homeScore + final.awayScore;
+  return { winners, losers, rounds, gameCount: matches.length, finalTotal };
 }
 
 type Team = NonNullable<GamePicksResponse['games'][number]['predictedHome']>;
@@ -258,7 +264,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
           expect((await submitGamePicks({ client: entrant.client, path: path(entrant.entryId) })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
           return filled;
         };
-        await fill(perfect, (roundNumber, sides) => expectDefined(sides.find((team) => won(roundNumber, team.sportEventParticipantId)), `round ${roundNumber}'s winner`), played.finalTotal);
+        await fill(perfect, (roundNumber, sides) => expectDefined(sides.find((team) => won(roundNumber, team.sportEventParticipantId)), `round ${roundNumber}'s winner`), played.finalTotal ?? 0);
         const rivalBracket = await fill(rival, (_roundNumber, sides) => [...sides].sort((left, right) => seedOfRow(left.sportEventParticipantId) - seedOfRow(right.sportEventParticipantId))[0], 0);
 
         await playOut(eventId, seed, played.rounds);
@@ -389,7 +395,7 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
 
 const SOCCER_WEEKS: readonly PlayoffLeague[] = [
   { sport: Sport.SOCCER, file: 'soccer-2025-premier-league-weeks-test.json', league: 'Premier League', event: 'Premier League Matchweek 1' },
-  { sport: Sport.SOCCER, file: 'soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', league: 'FIFA Women\'s World Cup', event: 'FIFA Women\'s World Cup Matchday 1' },
+  { sport: Sport.SOCCER, file: 'soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', league: 'FIFA Women\'s World Cup', event: 'FIFA Women\'s World Cup Matchday 1', endsLevel: true },
 ];
 
 /** A week of the seed loaded unplayed, a league of two on it, and the real result of each of its games by team name. */

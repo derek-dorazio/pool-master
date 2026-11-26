@@ -11,14 +11,14 @@ import { registerSchema } from './schema-registry';
 export const BRACKET_MATCHES_MAX = 127;
 
 export const MatchStatusDtoSchema = z.enum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.');
-export const MatchSideDtoSchema = z.enum(MatchSide).describe('One side of a match. On a neutral site HOME is the upper line of the bracket.');
+export const MatchSideDtoSchema = z.enum(MatchSide).describe('One side of a match: HOME is side 2 and AWAY side 1, the sides the sync placed the home and away teams on. On a neutral site HOME is the upper line of the bracket.');
 export const MatchEndingDtoSchema = z.enum(MatchEnding).describe('How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.');
 
 export const SportEventMatchPeriodScoreDtoSchema = z.object({
-  periodNumber: z.number().int().min(1).describe('1 for the first period (quarter, in American football); never the last, whose score is the match\'s final result.'),
-  homeScore: z.number().int().min(0).describe('The home side\'s score at the end of the period, earlier periods included, as the scoreboard shows it.'),
+  periodNumber: z.number().int().min(1).describe('1 for the first period (quarter, in American football).'),
+  homeScore: z.number().int().min(0).describe('The home side\'s score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period\'s own points.'),
   awayScore: z.number().int().min(0).describe('The away side\'s score at the end of the period, earlier periods included.'),
-}).describe('Both sides\' score at the end of one period of a game (#772).');
+}).describe('Both sides\' running score at the end of one period of play of a game (#772, #2046), summed by the server.');
 export type SportEventMatchPeriodScoreDto = z.infer<typeof SportEventMatchPeriodScoreDtoSchema>;
 
 export const SportEventRoundSlotDtoSchema = z.object({
@@ -40,6 +40,7 @@ export const SportEventRoundMatchDtoSchema = z.object({
   isNeutralSite: z.boolean().describe('True when neither side is at home: screens then say "vs" rather than "@".'),
   scheduledDate: z.iso.datetime().nullable().describe('Tip-off or kickoff; null until it is announced.'),
   status: MatchStatusDtoSchema,
+  isFinal: z.boolean().describe('True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server\'s own fact, so a client never re-derives it from the status.'),
   isUnplayed: z.boolean().describe('True while the match is still to be played: scheduled, or postponed to be played later. The server\'s own `isMatchUnplayed`, so a client never re-derives it from the status.'),
   winnerSide: MatchSideDtoSchema.nullable().describe('Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.'),
   homeScore: z.number().int().nullable().describe('The home side\'s score; in a series, games won.'),
@@ -47,13 +48,13 @@ export const SportEventRoundMatchDtoSchema = z.object({
   homeShootoutScore: z.number().int().nullable().describe('The home side\'s kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side\'s when there was none. Not part of the match score.'),
   awayShootoutScore: z.number().int().nullable().describe('The away side\'s kicks scored in the shoot-out; null with the home side\'s.'),
   ending: MatchEndingDtoSchema.describe('How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.'),
-  resultSource: z.enum(MatchResultSource).nullable().describe('Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.'),
+  resultSource: z.enum(MatchResultSource).nullable().describe('Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.'),
   completedAt: z.iso.datetime().nullable().describe('When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.'),
   advancesToMatchId: z.uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
   regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),
   homeSpread: z.number().nullable().describe('The points spread from the home team\'s side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick\'em contest scored against the spread reads it.'),
-  periodScores: z.array(SportEventMatchPeriodScoreDtoSchema).describe('The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.'),
+  periodScores: z.array(SportEventMatchPeriodScoreDtoSchema).describe('Game 1\'s running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.'),
 }).describe('One game or match of an event, which in a bracket is also a slot naming where its winner goes.');
 export type SportEventRoundMatchDto = z.infer<typeof SportEventRoundMatchDtoSchema>;
 

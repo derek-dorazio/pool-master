@@ -4,6 +4,7 @@
  * (C6, C7). The contest world is in memory; the email service is the real one over an in-memory
  * outbox, so the tests assert on the emails recorded.
  */
+import { legacyMatch } from '../../support/match-sides';
 import {
   ContestEntryStatus,
   ContestStatus,
@@ -242,7 +243,7 @@ describe('ContestNotices', () => {
         selectionType: SelectionType.PICK_EM,
         configJson: { selectionType: SelectionType.PICK_EM, mode: 'STRAIGHT_UP', againstTheSpread: false },
       });
-      matches = [1, 2].map((matchNumber) => ({ id: `game-${String(matchNumber)}`, sportEventId: week.id, matchNumber }) as SportEventRoundMatch);
+      matches = [1, 2].map((matchNumber) => legacyMatch({ id: `game-${String(matchNumber)}`, sportEventId: week.id, matchNumber }));
       const entrant = member(league.id, 'Sam');
       const drafting = member(league.id, 'Dana');
       const onlooker = member(league.id, 'Nora');
@@ -292,7 +293,7 @@ describe('ContestNotices', () => {
 
     it('reads the event\'s matches, sport league and tiers once each, and never the event it was handed', async () => {
       const event = world.addSportEvent({ startDate: STARTS_AT });
-      matches = [1, 2].map((matchNumber) => ({ id: `game-${String(matchNumber)}`, sportEventId: event.id, matchNumber }) as SportEventRoundMatch);
+      matches = [1, 2].map((matchNumber) => legacyMatch({ id: `game-${String(matchNumber)}`, sportEventId: event.id, matchNumber }));
       const league = world.addLeague();
       member(league.id, 'Nora');
       const contest = world.addContest(league.id, { sportEventIds: [event.id] });

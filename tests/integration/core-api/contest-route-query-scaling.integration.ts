@@ -51,6 +51,8 @@ import { DAY, HOUR, get, okBody, seedEventWithField, seedFootballWeek, seedLeagu
 import { expectConstantQueries } from '../query-scaling';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 import { oneEventSlotId } from '../../support/test-slots';
+import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
+import { createMatchRow, rowSideTeam } from '../../support/match-rows';
 
 // No mocks.
 
@@ -365,7 +367,8 @@ async function seedPredictionContest(selectionType: PredictionType, { entries, w
         saves: picked.map((game) => ({
           sportEventRoundMatchId: game.id,
           predictedResult: PredictedResult.TEAM,
-          sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
+          sportEventParticipantId: expectDefined(rowSideTeam(game, HOME_SIDE)),
+          sideNumber: HOME_SIDE,
           confidence: null,
         })),
         clearedMatchIds: [],
@@ -399,17 +402,16 @@ async function seedBracketContest(entries: number) {
   });
   const [first, second] = semifinals.map((game) => expectDefined(game));
   await Promise.all([first, second].map((game, index) => prisma.sportEventParticipant.update({
-    where: { id: expectDefined(game.homeSportEventParticipantId) }, data: { seedNumber: index + 1 },
+    where: { id: expectDefined(rowSideTeam(game, HOME_SIDE)) }, data: { seedNumber: index + 1 },
   })));
   const finalRound = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 2, scheduledDate: new Date(Date.now() + DAY) } });
-  const final = await prisma.sportEventRoundMatch.create({
-    data: {
-      sportEventId: event.id, sportEventRoundId: finalRound.id, matchNumber: 3, isNeutralSite: true,
-      homeSportEventParticipantId: first.homeSportEventParticipantId, awaySportEventParticipantId: second.homeSportEventParticipantId,
-    },
+  // The first semifinal's winner fills the final's side 2, the second's its side 1.
+  const final = await createMatchRow(prisma, {
+    sportEventId: event.id, sportEventRoundId: finalRound.id, sportEventSlotId: finalRound.sportEventSlotId, matchNumber: 3, isNeutralSite: true,
+    teams: [rowSideTeam(second, HOME_SIDE), rowSideTeam(first, HOME_SIDE)],
   });
-  await prisma.sportEventRoundMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSide: 'HOME' } });
-  await prisma.sportEventRoundMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSide: 'AWAY' } });
+  await prisma.sportEventRoundMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSideNumber: HOME_SIDE } });
+  await prisma.sportEventRoundMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSideNumber: AWAY_SIDE } });
   await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 2 } });
   const contest = await prisma.contest.create({
     data: {
@@ -443,7 +445,8 @@ async function seedBracketContest(entries: number) {
       saves: [first, second, final].map((game) => ({
         sportEventRoundMatchId: game.id,
         predictedResult: PredictedResult.TEAM,
-        sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
+        sportEventParticipantId: expectDefined(rowSideTeam(game, HOME_SIDE)),
+        sideNumber: HOME_SIDE,
         confidence: null,
       })),
       clearedMatchIds: [],

@@ -17,12 +17,12 @@
  * A random draw closes entries early (#601): once it has dealt, nobody may enter, leave or
  * change an entry, or the deal would no longer be the one every entry was given.
  */
-import type { Contest, ContestRules, ContestSelectionConfig, MatchStatus } from '@poolmaster/shared/domain';
-import { ContestStatus, isMatchUnplayed, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished } from '@poolmaster/shared/domain';
+import type { Contest, ContestRules, ContestSelectionConfig, SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { ContestStatus, isMatchUnplayed, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
 
 export type EventTiming = { status: SportEventStatus; startDate: Date };
 /** A game's timing: its status, its kickoff, and any period scores, which only a game under way has (#772). */
-type MatchTiming = { status: MatchStatus; scheduledDate: Date | null; periodScores?: readonly { periodNumber: number }[] };
+type MatchTiming = Pick<SportEventRoundMatch, 'status' | 'scheduledDate' | 'games'>;
 type RoundMatchTiming = MatchTiming & { id: string; roundNumber: number };
 
 /**
@@ -44,7 +44,7 @@ const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
 
 /** Whether a game has moved on from being still to play (scheduled, or postponed before it began), by its status or by a period score entered for it. */
 export function hasGameMovedOn(game: MatchTiming): boolean {
-  return !isMatchUnplayed(game.status) || (game.periodScores?.length ?? 0) > 0;
+  return !isMatchUnplayed(game.status) || hasPeriodScores(game);
 }
 
 /**

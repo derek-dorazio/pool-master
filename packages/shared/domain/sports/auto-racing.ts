@@ -16,6 +16,5 @@ export const autoRacingSportDefinition: SportDefinition = {
   defaultRounds: 1,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
-  shootout: false,
   // A race weekend run as several numbered races would read "Race 2".
 };

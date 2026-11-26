@@ -978,8 +978,9 @@ export class ContestManagementService {
     for (const each of sportEvents) {
       this.assertScoringFitsEvent(each, scoring);
       // Knockout round points score how far a team went (#715): a regular-season week's games form
-      // no bracket, so there is no round to reach.
-      if (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS') {
+      // no bracket, so there is no round to reach. A bracket makes the same check below, in its own
+      // words, since its entry picks every game.
+      if (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rules.selectionType !== SelectionType.BRACKET) {
         await this.assertEventIsKnockout(each.id);
       }
     }

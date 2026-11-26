@@ -62,6 +62,8 @@ describe('the round slot migration', () => {
       // The table as it was before the migration: rounds had no slot.
       await tx.$executeRawUnsafe('ALTER TABLE "sport_event_rounds" DROP CONSTRAINT "sport_event_rounds_event_slot_fkey"');
       await tx.$executeRawUnsafe('ALTER TABLE "sport_event_rounds" ALTER COLUMN "sport_event_slot_id" DROP NOT NULL');
+      // The match column the migration clears, which the later match sides migration replaced.
+      await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "advances_to_side" TEXT');
       const rounds = [
         ...[1, 2, 3, 4].map((roundNumber) => ({ sportEventId: oneSlot.id, roundNumber })),
         ...[1, 2, 3, 4].map((roundNumber) => ({ sportEventId: bracket.id, roundNumber })),

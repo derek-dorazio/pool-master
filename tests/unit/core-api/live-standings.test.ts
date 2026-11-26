@@ -5,6 +5,7 @@
  * the email service is the real one over an in-memory outbox, so the tests assert on the emails
  * recorded.
  */
+import { legacyMatch } from '../../support/match-sides';
 import { sportPlay } from '../../support/sport-play';
 import type { StandingsEmailPosition } from '@poolmaster/shared/db';
 import {
@@ -133,7 +134,7 @@ function game(roundNumber: number, status: MatchStatus, updatedAt: Date, extra: 
   const slot = roundSlot(roundNumber === slotNames.length ? SlotKind.FINAL : SlotKind.QUARTERFINAL, {
     seasonSlotId: `slot-${String(roundNumber)}`, name: slotNames[roundNumber - 1] ?? null,
   });
-  return { roundNumber, status, updatedAt, scheduledDate: null, slot, advancesToMatchId: null, ...extra } as SportEventRoundMatch;
+  return legacyMatch({ id: `game-${String(roundNumber)}`, roundNumber, status, updatedAt, scheduledDate: null, slot, advancesToMatchId: null, ...extra });
 }
 
 describe('lastFinishedMatchRound', () => {

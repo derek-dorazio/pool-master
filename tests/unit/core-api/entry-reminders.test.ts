@@ -3,6 +3,7 @@
  * sweep never sends one twice. The contest world is in memory; the email service is the real one
  * over an in-memory outbox, so the tests assert on the emails recorded.
  */
+import { legacyMatch } from '../../support/match-sides';
 import type { ContestEntrySeasonPrediction } from '@poolmaster/shared/db';
 import {
   ContestEntryStatus,
@@ -344,13 +345,13 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.PICK_EM,
       configJson: { selectionType: SelectionType.PICK_EM, mode: 'STRAIGHT_UP', againstTheSpread: false },
     });
-    matches = [1, 2, 3].map((matchNumber) => ({
+    matches = [1, 2, 3].map((matchNumber) => legacyMatch({
       id: `game-${String(matchNumber)}`,
       sportEventId: week.id,
       roundNumber: 1, slot: slotOfRound(1),
       matchNumber,
       status: matchNumber === 3 ? MatchStatus.CANCELLED : MatchStatus.SCHEDULED,
-    }) as SportEventRoundMatch);
+    }));
     const dana = member(league.id, 'Dana');
     const entry = await enter(contest.id, dana.squad.id);
     predictions = [pick(entry.id, week.id, 'game-1', 'bears')];
@@ -387,7 +388,7 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.SURVIVOR,
       sportEventIds: [week1.id, week2.id],
     });
-    matches = [{
+    matches = [legacyMatch({
       id: 'week1-game',
       sportEventId: week1.id,
       roundNumber: 1, slot: slotOfRound(1),
@@ -396,13 +397,13 @@ describe('EntryReminders.queueDue', () => {
       homeSportEventParticipantId: 'field-bears',
       awaySportEventParticipantId: 'field-lions',
       scheduledDate: week1.startDate,
-    } as SportEventRoundMatch, {
+    }), legacyMatch({
       id: 'week2-game',
       sportEventId: week2.id,
       roundNumber: 1, slot: slotOfRound(1),
       status: MatchStatus.SCHEDULED,
       scheduledDate: CLOSES_AT,
-    } as SportEventRoundMatch];
+    })];
     const standing = member(league.id, 'Sam');
     const beaten = member(league.id, 'Lou');
     const missed = member(league.id, 'Mo');
@@ -444,7 +445,7 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.SQUARES,
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 100 },
     });
-    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
+    matches = [legacyMatch({ id: 'big-game', sportEventId: week.id, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT })];
     const holder = member(league.id, 'Sam');
     member(league.id, 'Nora');
     const holding = await enter(contest.id, holder.squad.id);
@@ -475,7 +476,7 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.SQUARES,
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
     });
-    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
+    matches = [legacyMatch({ id: 'big-game', sportEventId: week.id, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT })];
     const holder = member(league.id, 'Sam');
     const nora = member(league.id, 'Nora');
     const holding = await enter(contest.id, holder.squad.id);

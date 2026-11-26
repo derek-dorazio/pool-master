@@ -57,11 +57,15 @@ import {
   type SurvivorContestRules,
   type SurvivorWeekOutcome,
   hasSportEventStarted,
+  teamOnMatchSide,
+  MatchSide,
+  sideNumberOfMatchSide,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
   ContestEntryMatchPredictionChange,
   ContestEntryMatchPredictionRepository,
+  ContestEntryMatchPredictionSidedWrite,
   ContestEntryMatchPredictionWrite,
   ContestEntryRepository,
   ContestRepository,
@@ -239,7 +243,7 @@ const OPENED_CONTEST = { status: ContestStatus.OPEN, drawnAt: undefined } as con
 /** A change to a week's picks, with the picks that stand after it, which its status is judged on. */
 interface WeekChange {
   after: readonly WeekPrediction[];
-  saves: readonly ContestEntryMatchPredictionWrite[];
+  saves: readonly ContestEntryMatchPredictionSidedWrite[];
   clearedMatchIds: readonly string[];
   tiebreakerValue?: number | null;
 }
@@ -286,6 +290,21 @@ interface WeekContext extends WeekSetup {
 }
 
 /**
+ * A pick with the number of the side it picks (#2046): the side its game's predicted sides put its
+ * team on, which in a bracket's later game the entry's earlier picks decide. A tie pick picks no side.
+ */
+function withPickedSide(pick: ContestEntryMatchPredictionWrite, sides: ReadonlyMap<string, PredictedSides>): ContestEntryMatchPredictionSidedWrite {
+  if (!isTeamChoice(pick)) return { ...pick, sideNumber: null };
+  const predicted = sides.get(pick.sportEventRoundMatchId);
+  const side = predicted?.home === pick.sportEventParticipantId ? MatchSide.HOME
+    : predicted?.away === pick.sportEventParticipantId ? MatchSide.AWAY
+      : null;
+  // A saved pick whose team its game does not offer is refused before it is written.
+  if (side === null) throw new Error(`Game ${pick.sportEventRoundMatchId} does not offer team ${pick.sportEventParticipantId}.`);
+  return { ...pick, sideNumber: sideNumberOfMatchSide(side) };
+}
+
+/**
  * One game as a pick screen draws it, for a saved entry's week and a setup's preview alike: when
  * it kicks off, its real and predicted sides (a bracket's from the picks before it), and whether
  * its pick is closed for the contest given, an opened one for a preview.
@@ -298,12 +317,14 @@ function gameRow(
   sides: PredictedSides | undefined,
   now: Date,
 ): Omit<GamePreview, 'pick'> {
-  const shownSides = sides ?? { home: match.homeSportEventParticipantId, away: match.awaySportEventParticipantId };
+  const home = teamOnMatchSide(match, MatchSide.HOME);
+  const away = teamOnMatchSide(match, MatchSide.AWAY);
+  const shownSides = sides ?? { home, away };
   return {
     match,
     kickoff: match.scheduledDate ?? setup.sportEvent.startDate,
-    home: team(match.homeSportEventParticipantId),
-    away: team(match.awaySportEventParticipantId),
+    home: team(home),
+    away: team(away),
     predictedHome: team(shownSides.home),
     predictedAway: team(shownSides.away),
     locked: !areMatchPicksOpen(setup.engine.pickWindow, contest, setup.window, match, setup.openingRound, now),
@@ -394,7 +415,7 @@ export class PredictionService {
       }
       return {
         after: resolved.kept,
-        saves: input.picks,
+        saves: input.picks.map((pick) => withPickedSide(pick, resolved.sides)),
         clearedMatchIds: resolved.stranded.map((pick) => pick.sportEventRoundMatchId),
         tiebreakerValue: input.tiebreakerValue,
       };

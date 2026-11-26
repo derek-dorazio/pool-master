@@ -50,6 +50,8 @@ import {
   mapGolfRoundScorePreviewToDto,
   mapRaceResultPreviewToDto,
   mapSportEventRoundMatchToDto,
+  toMatchResultInput,
+  toPeriodScoreInput,
   mapSportEventParticipantToDto,
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
@@ -402,7 +404,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<{ Params: { eventId: string } & MatchPlace; Body: RecordSportEventRoundMatchResultRequest }>,
     ): Promise<SportEventBracketResponse> => {
       await sportEvents.requireTestEvent(request.params.eventId);
-      const matches = await matchResults.recordResult(request.params.eventId, matchPlaceOf(request.params), request.body);
+      const matches = await matchResults.recordResult(request.params.eventId, matchPlaceOf(request.params), toMatchResultInput(request.body));
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
@@ -411,7 +413,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     ): Promise<SportEventBracketResponse> => {
       const { eventId, periodNumber } = request.params;
       await sportEvents.requireTestEvent(eventId);
-      const matches = await matchResults.recordPeriodScore(eventId, matchPlaceOf(request.params), periodNumber, request.body);
+      const matches = await matchResults.recordPeriodScore(eventId, matchPlaceOf(request.params), periodNumber, toPeriodScoreInput(request.body));
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 

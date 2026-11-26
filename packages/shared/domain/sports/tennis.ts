@@ -23,7 +23,6 @@ export const tennisSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // A tennis match always has a winner: no level score to settle.
-  shootout: false,
   // A Slam's seven rounds read First round to Fourth round, then Quarterfinals, Semifinals,
   // Final; a 64 draw's six the same, with no Fourth round.
 };

@@ -18,7 +18,7 @@
  * - **The score** is the weeks survived: entries out in the same week tie, and entries still
  *   standing at the end with the same lives left share the win.
  */
-import { MatchSide, MatchStatus, SurvivorWeekOutcome, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { MatchStatus, SurvivorWeekOutcome, winnerParticipantId, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 
 /** One week of the entry's season, as its read sees it. */
 export interface SurvivorWeek {
@@ -69,9 +69,7 @@ export function survivorPickOutcome(
   // A pick on a game no longer in the week (moved away before release) has nothing to lose.
   if (!game || game.status === MatchStatus.CANCELLED) return SurvivorWeekOutcome.SURVIVED;
   if (game.status !== MatchStatus.COMPLETED) return SurvivorWeekOutcome.PENDING;
-  const winner = game.winnerSide === MatchSide.HOME
-    ? game.homeSportEventParticipantId
-    : game.winnerSide === MatchSide.AWAY ? game.awaySportEventParticipantId : null;
+  const winner = winnerParticipantId(game);
   return winner === pick.sportEventParticipantId ? SurvivorWeekOutcome.SURVIVED : SurvivorWeekOutcome.ELIMINATED;
 }
 
