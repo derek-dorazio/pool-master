@@ -1,4 +1,4 @@
-import { countParticipants, eventSportDefinition, sportVocabulary } from '@poolmaster/shared/domain';
+import { sportWord } from '@poolmaster/shared/display-strings';
 import type { SportEventDto } from '@/lib/api';
 
 const HOUR_MS = 60 * 60_000;
@@ -42,8 +42,8 @@ export function getContestReadinessChecks(
   const isReleased = !event.readinessReasons.includes('EVENT_NOT_RELEASED');
   const hasField = !event.readinessReasons.includes('FIELD_NOT_LOADED');
   const hasStarted = event.readinessReasons.includes('EVENT_STARTED');
-  const { participant } = sportVocabulary(eventSportDefinition(event));
-  const golfers = countParticipants(event.participantCount, participant);
+  // The field's size is the API's count of its rows (#2047); the word is the sport's own.
+  const golfers = `${String(event.participantCount)} ${sportWord(event.sport, 'participant', { count: event.participantCount })}`;
   const tiers = `${event.tierCount} tier${event.tierCount === 1 ? '' : 's'}`;
 
   return [
@@ -56,7 +56,7 @@ export function getContestReadinessChecks(
       id: 'field',
       isMet: hasField,
       label: !hasField
-        ? `No ${participant.many} loaded yet`
+        ? `No ${sportWord(event.sport, 'participant', { count: 0 })} loaded yet`
         : event.tierCount > 0 ? `${golfers} in ${tiers}` : golfers,
     },
     {

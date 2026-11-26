@@ -51,4 +51,9 @@ describe('contest readiness', () => {
     const ready = getContestReadinessChecks(buildSportEvent({ tierCount: 0 }), NOW);
     expect(ready.find((check) => check.id === 'field')).toMatchObject({ isMet: true, label: '89 golfers' });
   });
+
+  it('counts the field the API counted in the sport\'s own word, one team in the singular', () => {
+    const basketball = getContestReadinessChecks(buildSportEvent({ sport: 'BASKETBALL', participantCount: 1, tierCount: 0 }), NOW);
+    expect(basketball.find((check) => check.id === 'field')).toMatchObject({ isMet: true, label: '1 team' });
+  });
 });
