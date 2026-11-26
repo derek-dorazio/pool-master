@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { eventRoundsResponse, TOURNAMENT_ROUND_SLOTS } from './test/round-slots';
 import { Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '@/test/sport-play';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -24,6 +25,7 @@ const {
   getEventBracketMock,
   getEventMock,
   getLeagueMock,
+  listEventRoundsMock,
   mockLogger,
   refreshTokenMock,
 } = vi.hoisted(() => {
@@ -45,6 +47,7 @@ const {
     getEventBracketMock: vi.fn(),
     getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
+    listEventRoundsMock: vi.fn(),
     mockLogger: logger,
     refreshTokenMock: vi.fn(),
   };
@@ -57,6 +60,7 @@ bindApiMocks({
   getEvent: getEventMock,
   getEventBracket: getEventBracketMock,
   getLeague: getLeagueMock,
+  listEventRounds: listEventRoundsMock,
   refreshToken: refreshTokenMock,
 });
 
@@ -341,6 +345,7 @@ function primeMocks(opts?: {
 }) {
   getContestMock.mockReset();
   getContestLeaderboardMock.mockReset();
+  listEventRoundsMock.mockReset();
   getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE', opts?.myEntryIds));
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
@@ -422,6 +427,8 @@ describe('ContestLeaderboardPage', () => {
       match(9, 2, 'sep-1', 'sep-3', { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 74 }),
       match(2, 1, 'sep-4', 'sep-2', { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 90, awayScore: 60 }),
     ] } });
+    // The tournament's rounds are named by their slots.
+    listEventRoundsMock.mockResolvedValue(eventRoundsResponse('event-1', TOURNAMENT_ROUND_SLOTS));
   }
 
   it('shows a team-picks board\'s Status as In or Out with the round it went out in, its upset bonus as +N, and its latest game under its name', async () => {
@@ -431,12 +438,12 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     // With no sport league to name them, the rounds take basketball's own names.
-    expect(await screen.findByText('Out · Second Round')).toBeInTheDocument();
+    expect(await screen.findByText('Out · Round of 32')).toBeInTheDocument();
     expect(screen.getByTestId('contest-leaderboard-pick-status-entry-1-pick-2')).toHaveTextContent('In');
     expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent('Upset');
     expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-2')).toHaveTextContent('+3');
     expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-1')).toHaveTextContent('—');
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona 70–\u206074');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Round of 32: lost to Arizona 70–\u206074');
   });
 
   /** The team-picks board with a second entry, Rival, holding the same picks. */
@@ -453,7 +460,7 @@ describe('ContestLeaderboardPage', () => {
 
     renderLeaderboard();
 
-    expect(await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona');
+    expect(await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Round of 32: lost to Arizona');
     expect(screen.getByTestId('contest-leaderboard-stats-entry-1')).toBeChecked();
 
     fireEvent.click(screen.getByTestId('contest-leaderboard-stats-entry-1'));
@@ -474,7 +481,7 @@ describe('ContestLeaderboardPage', () => {
 
     fireEvent.click(screen.getByTestId('contest-leaderboard-stats-entry-2'));
 
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-rival-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-rival-pick-1-stats')).toHaveTextContent('Round of 32: lost to Arizona');
   });
 
   it('turns on every opened entry\'s stats from Show all stats, then off again from Hide all stats', async () => {
@@ -520,7 +527,7 @@ describe('ContestLeaderboardPage', () => {
 
     const callout = screen.getByTestId('contest-leaderboard-pick-wins-entry-1-pick-1-peek-callout');
     expect(callout).toHaveTextContent('First Roundbeat Gonzaga 81–\u206076');
-    expect(callout).toHaveTextContent('Second Roundlost to Arizona 70–\u206074');
+    expect(callout).toHaveTextContent('Round of 32lost to Arizona 70–\u206074');
   });
 
   it('tints a hovered pick row\'s pinned cells too, over their opaque background', async () => {
@@ -890,7 +897,7 @@ describe('ContestLeaderboardPage', () => {
     expect(buildLeaderboardView).toHaveBeenCalledWith(
       expect.objectContaining({ contestId: 'contest-1', scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' }),
       undefined,
-      { isLive: true },
+      expect.objectContaining({ isLive: true }),
     );
     buildLeaderboardView.mockRestore();
   });

@@ -233,7 +233,7 @@ describe('Preview contest entry', () => {
   });
 
   it('draws a bracket setup on the bracket board from its starting round', async () => {
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sl-nfl', name: 'NFL', roundNames: [] } } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sl-nfl', name: 'NFL' } } });
     previewGamePicksMock.mockResolvedValue({ data: gamesPreview({ selectionType: 'BRACKET', mode: null, againstTheSpread: false }) });
     renderAction({
       configuration: { selectionType: 'BRACKET', startsAtRound: 1 },

@@ -107,7 +107,7 @@ function primeMocks({ contest = bracketContestFixture(), gamePicks = gamePicksFi
   getContestEntryMock.mockImplementation(({ path }: { path: { entryId: string } }) => Promise.resolve({ data: bracketEntryFixture(path.entryId) }));
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
   getEventMock.mockResolvedValue({ data: { event: { id: 'event-1', sport: 'BASKETBALL', sportLeagueId: 'sport-league-1', startDate: '2099-03-19T16:00:00.000Z' } } });
-  getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sport-league-1', name: 'NCAA Men', roundNames: [] } } });
+  getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sport-league-1', name: 'NCAA Men' } } });
 }
 
 const team = (matchNumber: number, sportEventParticipantId: string) =>
