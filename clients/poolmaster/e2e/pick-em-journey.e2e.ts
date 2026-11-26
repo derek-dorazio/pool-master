@@ -27,7 +27,10 @@ const WEEKS: ReadonlyArray<{ start: string; away: string; home: string }> = [
   { start: '2099-09-20T17:00:00.000Z', away: 'Cowboys', home: 'Eagles' },
 ];
 
-/** Two tiers of one team each: an NFL event starts on seven, more than a two-team field fills. */
+/**
+ * Two tiers of one team each: the NFL tiers by seed ranges (#2160), so the 1 seed is tier 1 and the
+ * 2 seed, in the range of seeds 2 to 4, tier 2. An NFL event starts on more tiers than two teams fill.
+ */
 const TWO_TIERS = [
   { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
   { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
@@ -176,7 +179,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
         rows: teams.map((name, seed) => ({ playerName: teamName(run, name), seedNumber: seed + 1 })),
       });
       await postJson(api, headers, `/api/v1/events/${event.id}/tiers`, { tiers: TWO_TIERS }, 'put');
-      await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, { tierSize: 1 });
+      await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, {});
       await postJson(api, headers, `/api/v1/events/${event.id}/prices/auto-assign`, STANDARD_PRICING);
 
       const { participants } = await (await expectOk(api.get(`/api/v1/events/${event.id}/participants`, { headers }), 'read the field')).json() as {
