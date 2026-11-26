@@ -2,17 +2,10 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
 import { SeasonSlotStatusOrder, SlotKindOrder, type SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import {
-  DataGrid,
-  DetailEditModal,
-  formatDateTimeDisplay,
-  SectionCard,
-  Text,
-  useDisplayPreferences,
-  type Fact,
-} from '@/features/shared/ui';
+import { DataGrid, SectionCard, Text } from '@/features/shared/ui';
 import type { SportLeagueSeasonSlotDto } from '@/lib/api';
 import { useEventPage } from './event-page-context';
+import { EventSlotDialog } from './event-slot-dialog';
 
 const columnHelper = createColumnHelper<SportLeagueSeasonSlotDto>();
 
@@ -51,7 +44,7 @@ const slotColumns = [
 
 /**
  * The Event page's Slots tab (#2004): the Season slots the event covers, in play order, which its
- * dates come from. ⤢ opens one to read; nothing here edits a slot.
+ * dates come from. ⤢ opens one to read, and to choose its tiebreaker game (#2048).
  */
 export function EventSlotsTab() {
   const { event } = useEventPage();
@@ -71,34 +64,7 @@ export function EventSlotsTab() {
         tableTestId="root-admin-event-slots-table"
         urlKey="slots"
       />
-      {openSlot ? <EventSlotDialog onClose={() => setOpenSlotId(null)} slot={openSlot} /> : null}
+      {openSlot ? <EventSlotDialog eventId={event.id} onClose={() => setOpenSlotId(null)} slot={openSlot} /> : null}
     </SectionCard>
-  );
-}
-
-/** One slot to read, with no Edit: the sync owns a synced slot, and a test slot is fixed once made. */
-function EventSlotDialog({ onClose, slot }: { onClose: () => void; slot: SportLeagueSeasonSlotDto }) {
-  const preferences = useDisplayPreferences();
-  const testId = 'root-admin-event-slot-dialog';
-  const facts: Fact[] = [
-    { id: 'slot', label: 'Slot', value: slotLabel(slot), testId: `${testId}-slot` },
-    { id: 'kind', label: 'Kind', value: enumLabel('SlotKind', slot.slotKind), testId: `${testId}-kind` },
-    { id: 'starts', label: 'Starts', value: formatDateTimeDisplay(slot.startsAt, preferences, 'Not known yet'), testId: `${testId}-starts` },
-    { id: 'ends', label: 'Ends', value: formatDateTimeDisplay(slot.endsAt, preferences, 'Not known yet'), testId: `${testId}-ends` },
-    { id: 'status', label: 'Status', value: enumLabel('SeasonSlotStatus', slot.status), testId: `${testId}-status` },
-    { id: 'series', label: 'Series', value: `${enumLabel('SeriesFormat', slot.seriesFormat)} · ${String(slot.seriesGames)}`, testId: `${testId}-series` },
-    { id: 'pairing', label: 'Pairing', value: enumLabel('SlotPairing', slot.pairing), testId: `${testId}-pairing` },
-    { id: 'test', label: 'Test label', value: slot.label ?? 'Synced slot', testId: `${testId}-label` },
-  ];
-  return (
-    <DetailEditModal
-      facts={facts}
-      mode="view"
-      onCancel={onClose}
-      onOpenChange={(open) => (open ? undefined : onClose())}
-      open
-      testId={testId}
-      title={slotLabel(slot)}
-    />
   );
 }

@@ -499,6 +499,8 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
       // Ordered as the job types are declared.
       { type: 'SETTLE_GAME_CONTESTS', payload: { sportEventId: eventId, sportEventRoundMatchId: gameId, completedAt: expect.any(String) } },
       { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: eventId } },
+      // A decided game runs its event's slots' tiebreaker rule again (#2048).
+      { type: 'REFRESH_SLOT_TIEBREAKERS', payload: { sportEventId: eventId } },
     ]);
 
     const { statements: jobStatements } = await recordStatements(() => drainBackgroundJobs());

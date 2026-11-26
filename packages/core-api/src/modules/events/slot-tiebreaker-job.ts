@@ -14,10 +14,9 @@ import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 export const RefreshSlotTiebreakersJobPayloadSchema = z.object({
   sportEventId: z.string().min(1),
 });
-export type RefreshSlotTiebreakersJobPayload = z.infer<typeof RefreshSlotTiebreakersJobPayloadSchema>;
 
 /** The job running the rule for the event's slots, due at once. */
-export function refreshSlotTiebreakersJob(jobs: Pick<BackgroundJobQueue, 'request'>, sportEventId: string): BackgroundJobRequest {
+function refreshSlotTiebreakersJob(jobs: Pick<BackgroundJobQueue, 'request'>, sportEventId: string): BackgroundJobRequest {
   return jobs.request(BackgroundJobType.REFRESH_SLOT_TIEBREAKERS, { sportEventId }, {
     dedupeKey: `${BackgroundJobType.REFRESH_SLOT_TIEBREAKERS}:${sportEventId}`,
   });

@@ -173,11 +173,11 @@ export async function writeGameScores(
     const score = gameScoreOf(feed, match, sidesOf, teamsOf, stored, now);
     return score === null ? [] : [{ id: gameId, ...score }];
   });
-  // A move takes a Game out of its event's slot, so that event's slots choose their tiebreaker games again.
-  const moves = combineJobsForWrite(...await Promise.all([...placement.movedFromEventIds]
-    .map((movedFromEventId) => deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_GAMES_CHANGED, sportEventId: movedFromEventId }))));
-  await deps.games.applySync({ providerCode, created: placement.created, mapped: placement.mapped, moved: placement.moved, scores }, moves.jobs);
-  moves.queued();
+  // A Game made in a slot, or moved out of one, changes the games its event's slots choose their tiebreaker games from.
+  const gamesChanged = combineJobsForWrite(...await Promise.all([...placement.gamesChangedEventIds]
+    .map((changedEventId) => deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_GAMES_CHANGED, sportEventId: changedEventId }))));
+  await deps.games.applySync({ providerCode, created: placement.created, mapped: placement.mapped, moved: placement.moved, scores }, gamesChanged.jobs);
+  gamesChanged.queued();
 
   const series = seriesStandings(deps, sportEventId, placed, placement.overLength, storedGames, scores);
   const finals: FinalResult[] = [
@@ -280,8 +280,8 @@ interface GamePlacement {
   created: SportEventRoundMatchGameCreate[];
   mapped: { sportEventRoundMatchGameId: string; externalId: string }[];
   moved: { id: string; movedToGameId: string }[];
-  /** The events the moved Games were played in: their slots choose their tiebreaker games again (#2048). */
-  movedFromEventIds: Set<string>;
+  /** The events a Game was made in or moved out of: their slots choose their tiebreaker games again (#2048). */
+  gamesChangedEventIds: Set<string>;
   findings: LiveScoreGameFinding[];
   ambiguous: GameScoreUpdate[];
   /** Each series' games numbered past its length, by match: the feed and the bracket disagree. */
@@ -304,7 +304,7 @@ function placeUnmappedGames(
   teamsOf: ReadonlyMap<string, string>,
   sportEventId: string,
 ): GamePlacement {
-  const placement: GamePlacement = { placed: [], created: [], mapped: [], moved: [], movedFromEventIds: new Set(), findings: [], ambiguous: [], overLength: new Map() };
+  const placement: GamePlacement = { placed: [], created: [], mapped: [], moved: [], gamesChangedEventIds: new Set(), findings: [], ambiguous: [], overLength: new Map() };
   if (games.length === 0) return placement;
   const matchesByTeams = groupByTeams(matches, (match) => [sidesOf.get(match.homeSportEventParticipantId), sidesOf.get(match.awaySportEventParticipantId)]);
   const gamesByTeams = groupByTeams(games, (game) => [teamsOf.get(game.homeTeamExternalId), teamsOf.get(game.awayTeamExternalId)]);
@@ -334,13 +334,14 @@ function placeUnmappedGames(
       const gameId = stored?.game.id ?? randomUUID();
       if (stored === undefined) {
         placement.created.push({ id: gameId, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: slotOfMatch(match, storedGames), gameNumber });
+        placement.gamesChangedEventIds.add(sportEventId);
       }
       placement.mapped.push({ sportEventRoundMatchGameId: gameId, externalId: feed.providerGameId });
       placement.placed.push({ feed, gameId, gameNumber, match, stored: stored?.game ?? null });
       const movedFrom = elsewhere.get(feed.providerGameId);
       if (movedFrom !== undefined) {
         placement.moved.push({ id: movedFrom.id, movedToGameId: gameId });
-        placement.movedFromEventIds.add(movedFrom.sportEventId);
+        placement.gamesChangedEventIds.add(movedFrom.sportEventId);
         placement.findings.push({ kind: ProviderSyncFindingKind.GAME_MOVED, providerValue: feed.providerGameId });
       } else if (stored?.externalId != null) {
         placement.findings.push({ kind: ProviderSyncFindingKind.GAME_ID_REISSUED, providerValue: feed.providerGameId });

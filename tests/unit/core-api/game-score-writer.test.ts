@@ -475,7 +475,7 @@ describe('writeGameScores', () => {
       ], (roundNumber) => expectDefined(slots[roundNumber - 1], `round ${roundNumber}'s slot`)).map((match) => linked(match, null));
     }
 
-    it('holds each game of a series at its own Game, counts each final game as a win from the match\'s sides, and records the series 4-1 once a side has four', async () => {
+    it('holds each game of a series at its own Game, written with the job running the tiebreaker rule again, counts each final game as a win from the match\'s sides, and records the series 4-1 once a side has four', async () => {
       const { deps, recordResult, applySync, applyLiveScores } = writer(series());
 
       const result = await writeGameScores(deps, SEVENS, [
@@ -486,8 +486,10 @@ describe('writeGameScores', () => {
         nth(5, game('s5', 'KC', 'BUF', 110, 102)),
       ]);
 
-      const [[sync]] = applySync.mock.calls;
+      const [[sync, jobs]] = applySync.mock.calls;
       expect(sync.created.map((each) => [each.sportEventRoundMatchId, each.gameNumber, each.sportEventSlotId])).toEqual([2, 3, 4, 5].map((number) => ['m1', number, 'event-slot-1']));
+      // The new Games join the slot's, so the event's slots choose their tiebreaker games again, with the write.
+      expect(jobs?.map((job) => [job.type, job.payload])).toEqual([[BackgroundJobType.REFRESH_SLOT_TIEBREAKERS, { sportEventId: EVENT_ID }]]);
       expect(mappedOf(applySync)).toEqual([['m1-g1', 's1'], ...sync.created.map((each, index) => [each.id, `s${index + 2}`])]);
       expect(sync.scores.map((each) => [each.status, each.winnerSide, each.homeScore, each.awayScore])).toEqual([
         [MatchStatus.COMPLETED, MatchSide.HOME, 100, 90],
