@@ -196,7 +196,7 @@ describe('Preview contest entry', () => {
     });
     openPreview();
 
-    const billsChoice = await screen.findByTestId('pick-em-game-1-team-sep-bills');
+    const billsChoice = await screen.findByTestId('pick-em-game-1-1-team-sep-bills');
     expect(billsChoice).toHaveTextContent('+3.5');
     expect(screen.getByRole('heading', { name: 'Week 12 Pick\'em' })).toBeInTheDocument();
     fireEvent.click(billsChoice);

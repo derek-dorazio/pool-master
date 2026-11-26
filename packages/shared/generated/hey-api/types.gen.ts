@@ -7434,7 +7434,7 @@ export type SportEventRoundMatchDto = {
         weekNumber: number | null;
     };
     /**
-     * Unique within the event: the bracket slot and the display order.
+     * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
      */
     matchNumber: number;
     /**
@@ -7533,7 +7533,7 @@ export type SportEventRoundMatchDto = {
  */
 export type SportEventBracketResponse = {
     /**
-     * Every match of the event in match-number order; empty until the bracket is loaded.
+     * Every match of the event in round order, then match-number order within each round; empty until the bracket is loaded.
      */
     matches: Array<{
         id: string;
@@ -7564,7 +7564,7 @@ export type SportEventBracketResponse = {
             weekNumber: number | null;
         };
         /**
-         * Unique within the event: the bracket slot and the display order.
+         * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
          */
         matchNumber: number;
         /**
@@ -7695,7 +7695,7 @@ export type SportEventRoundMatchResponse = {
             weekNumber: number | null;
         };
         /**
-         * Unique within the event: the bracket slot and the display order.
+         * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
          */
         matchNumber: number;
         /**
@@ -7796,13 +7796,13 @@ export type SportEventRoundMatchResponse = {
 export type LoadSportEventBracketRequest = {
     matches: Array<{
         /**
-         * Unique within the bracket: the slot and the display order.
-         */
-        matchNumber: number;
-        /**
          * A round the event has.
          */
         roundNumber: number;
+        /**
+         * Unique within its round (#2161): the match's place in the round and its display order.
+         */
+        matchNumber: number;
         /**
          * A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
          */
@@ -7818,7 +7818,11 @@ export type LoadSportEventBracketRequest = {
          */
         advancesTo: {
             /**
-             * A match of this bracket in a later round.
+             * A later round of this bracket.
+             */
+            roundNumber: number;
+            /**
+             * A match of that round.
              */
             matchNumber: number;
             /**
@@ -7915,7 +7919,7 @@ export type RecordSportEventMatchPeriodScoreRequest = {
  */
 export type RoundMatchupDto = {
     /**
-     * A match of the round.
+     * A match of the round, numbered within it.
      */
     matchNumber: number;
     /**
@@ -7937,7 +7941,7 @@ export type SportEventRoundMatchupsResponse = {
      */
     matches: Array<{
         /**
-         * A match of the round.
+         * A match of the round, numbered within it.
          */
         matchNumber: number;
         /**
@@ -7960,7 +7964,7 @@ export type SetSportEventRoundMatchupsRequest = {
      */
     matches: Array<{
         /**
-         * A match of the round.
+         * A match of the round, numbered within it.
          */
         matchNumber: number;
         /**
@@ -17641,6 +17645,9 @@ export type GamePicksResponse = {
      */
     games: Array<{
         sportEventRoundMatchId: string;
+        /**
+         * The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together.
+         */
         matchNumber: number;
         roundNumber: number;
         /**
@@ -18008,6 +18015,9 @@ export type GamePickPreviewResponse = {
      */
     games: Array<{
         sportEventRoundMatchId: string;
+        /**
+         * The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together.
+         */
         matchNumber: number;
         roundNumber: number;
         /**
@@ -23289,7 +23299,7 @@ export type SquaresBoardResponse = {
             weekNumber: number | null;
         };
         /**
-         * Unique within the event: the bracket slot and the display order.
+         * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
          */
         matchNumber: number;
         /**
@@ -37176,10 +37186,11 @@ export type UpdateEventBracketMatchData = {
     body: UpdateSportEventRoundMatchRequest;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}';
 };
 
 export type UpdateEventBracketMatchErrors = {
@@ -37224,10 +37235,11 @@ export type RecordEventMatchResultData = {
     body: RecordSportEventRoundMatchResultRequest;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/result';
 };
 
 export type RecordEventMatchResultErrors = {
@@ -37272,11 +37284,12 @@ export type RecordEventMatchPeriodScoreData = {
     body: RecordSportEventMatchPeriodScoreRequest;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
         periodNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/periods/{periodNumber}';
 };
 
 export type RecordEventMatchPeriodScoreErrors = {
@@ -37321,10 +37334,11 @@ export type CancelEventMatchData = {
     body?: never;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/cancel';
 };
 
 export type CancelEventMatchErrors = {

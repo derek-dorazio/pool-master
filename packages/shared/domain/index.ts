@@ -20,6 +20,7 @@ export * from './providers';
 export * from './provider-settings';
 export * from './provider-sync-findings';
 export * from './sport-catalog-types';
+export * from './match-place';
 export * from './bracket-final';
 export * from './sport-rows';
 export * from './tournament-format';

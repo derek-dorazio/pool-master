@@ -2324,11 +2324,11 @@ model SportEventRoundMatch {
   periodScores    SportEventMatchPeriodScore[]
   squaresGames    ContestSquaresGame[]
 
-  @@unique([sportEventId, matchNumber])
+  // A match is numbered within its round (#2161): each round has its own match 1.
+  @@unique([sportEventRoundId, matchNumber])
   @@unique([sportEventId, externalGameId])
   // Two matches cannot feed the same side of the next one.
   @@unique([advancesToMatchId, advancesToSide])
-  @@index([sportEventRoundId])
   @@index([homeSportEventParticipantId])
   @@index([awaySportEventParticipantId])
   @@map("sport_event_round_matches")

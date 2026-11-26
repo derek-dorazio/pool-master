@@ -110,9 +110,9 @@ const MATCHES = [
     id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', isNeutralSite: false,
     status: 'COMPLETED', isUnplayed: false, winnerSide: 'AWAY', homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, resultSource: 'PROVIDER',
   }),
-  match({ id: 'm-3', matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: 'sep-1' }),
+  match({ id: 'm-3', matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: 'sep-1' }),
   match({
-    id: 'm-4', matchNumber: 4, roundNumber: 2, homeSportEventParticipantId: 'sep-2', awaySportEventParticipantId: 'sep-4',
+    id: 'm-4', matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: 'sep-2', awaySportEventParticipantId: 'sep-4',
     status: 'COMPLETED', isUnplayed: false, homeScore: 70, awayScore: 70, resultSource: 'PROVIDER',
   }),
 ];
@@ -141,8 +141,8 @@ function renderPage() {
   );
 }
 
-async function openMatch(matchNumber: number) {
-  const row = await screen.findByTestId(`root-admin-event-match-${String(matchNumber)}`);
+async function openMatch(roundNumber: number, matchNumber: number) {
+  const row = await screen.findByTestId(`root-admin-event-match-${String(roundNumber)}-${String(matchNumber)}`);
   await userEvent.click(within(row).getByTestId('data-grid-row-opens-dialog'));
   return screen.findByTestId('root-admin-event-match-dialog');
 }
@@ -157,18 +157,18 @@ describe('The Event page\'s Matches grid', () => {
     seed();
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-event-match-1')).toHaveTextContent('(1) Duke vs (16) Vermont');
-    expect(screen.getByTestId('root-admin-event-match-2')).toHaveTextContent('(15) Texas @ Houston');
-    expect(screen.getByTestId('root-admin-event-match-3')).toHaveTextContent('(1) Duke vs TBD');
+    expect(await screen.findByTestId('root-admin-event-match-1-1')).toHaveTextContent('(1) Duke vs (16) Vermont');
+    expect(screen.getByTestId('root-admin-event-match-1-2')).toHaveTextContent('(15) Texas @ Houston');
+    expect(screen.getByTestId('root-admin-event-match-2-1')).toHaveTextContent('(1) Duke vs TBD');
   });
 
   it('shows each score home first, with the shoot-out after it, and nothing for a match not yet scored', async () => {
     seed();
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-event-match-1')).toHaveTextContent('80–61');
-    expect(screen.getByTestId('root-admin-event-match-2')).toHaveTextContent('1–1 (3–4 shoot-out)');
-    expect(screen.getByTestId('root-admin-event-match-3')).not.toHaveTextContent('–');
+    expect(await screen.findByTestId('root-admin-event-match-1-1')).toHaveTextContent('80–61');
+    expect(screen.getByTestId('root-admin-event-match-1-2')).toHaveTextContent('1–1 (3–4 shoot-out)');
+    expect(screen.getByTestId('root-admin-event-match-2-1')).not.toHaveTextContent('–');
   });
 
   it('says the matches could not load when the bracket read fails', async () => {
@@ -183,7 +183,7 @@ describe('The Event page\'s Matches grid', () => {
     seed();
     renderPage();
 
-    const dialog = await openMatch(1);
+    const dialog = await openMatch(1, 1);
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-score')).toHaveTextContent('80–61');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('(1) Duke');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-source')).toHaveTextContent('Feed');
@@ -195,7 +195,7 @@ describe('The Event page\'s Matches grid', () => {
     seed();
     renderPage();
 
-    const dialog = await openMatch(2);
+    const dialog = await openMatch(1, 2);
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('(15) Texas');
   });
 
@@ -203,7 +203,7 @@ describe('The Event page\'s Matches grid', () => {
     seed();
     renderPage();
 
-    const dialog = await openMatch(4);
+    const dialog = await openMatch(2, 2);
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('Tie');
   });
 
@@ -211,7 +211,7 @@ describe('The Event page\'s Matches grid', () => {
     seed();
     renderPage();
 
-    const dialog = await openMatch(3);
+    const dialog = await openMatch(2, 1);
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-starts')).toHaveTextContent('Not announced');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-score')).toHaveTextContent('None yet');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('Not decided');
@@ -225,7 +225,7 @@ describe('The Event page\'s Matches grid', () => {
     rebuildEventLeaderboardsMock.mockResolvedValue({ data: { queued: true } });
     renderPage();
 
-    const dialog = await openMatch(1);
+    const dialog = await openMatch(1, 1);
     await userEvent.click(within(dialog).getByTestId('root-admin-event-match-dialog-settle-again'));
     await userEvent.click(await screen.findByTestId('root-admin-event-match-dialog-settle-again-confirm'));
     await waitFor(() => expect(rebuildEventLeaderboardsMock).toHaveBeenCalledTimes(1));

@@ -6,9 +6,14 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
+  compareMatchPlaces,
   eventPlaysMatches,
+  isAtPlace,
   isProviderSyncedEvent,
   isMatchUnplayed,
+  type MatchPlace,
+  MatchPlaceMap,
+  matchPlaceOf,
   SportEventStatus,
   type SportEvent,
   type SportEventRoundMatch,
@@ -23,7 +28,7 @@ import type { SportEventRoundService } from './sport-event-round-service';
 /** What one slate sync did to the event's games, and why when it did nothing. */
 export type ProviderGameSlateOutcome =
   | { outcome: 'LOADED'; sportEventId: string; matchCount: number }
-  | { outcome: 'MATCHES_UPDATED'; sportEventId: string; matchNumbers: number[] }
+  | { outcome: 'MATCHES_UPDATED'; sportEventId: string; matches: MatchPlace[] }
   | { outcome: 'UNCHANGED'; sportEventId: string }
   | { outcome: 'SKIPPED'; reason: 'NO_EVENT' | 'NOT_SYNCED' | 'PLAYS_NO_GAMES' | 'FINISHED' | 'TEAMS_NOT_IN_FIELD' };
 
@@ -201,8 +206,8 @@ export class ProviderGameSlateService {
    * provider lists with both teams, once the round before is played: the server's reseed proposes
    * the pairing, and it is set when the provider pairs the same teams. Returns the matches placed.
    */
-  private async placeReseededRounds(event: SportEvent, stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): Promise<number[]> {
-    const placed: number[] = [];
+  private async placeReseededRounds(event: SportEvent, stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): Promise<MatchPlace[]> {
+    const placed: MatchPlace[] = [];
     for (const roundNumber of [...reseededRounds(stored)].sort((left, right) => left - right)) {
       const round = stored.filter((match) => match.roundNumber === roundNumber);
       const games = slate.filter((game) => game.roundNumber === roundNumber);
@@ -218,7 +223,7 @@ export class ProviderGameSlateService {
         continue;
       }
       await this.deps.bracket.setRoundMatchups(event.id, roundNumber, proposal);
-      placed.push(...proposal.map((matchup) => matchup.matchNumber));
+      placed.push(...proposal.map((matchup) => ({ roundNumber, matchNumber: matchup.matchNumber })));
       this.deps.logger?.info({ sportEventId: event.id, roundNumber }, 'Placed a synced event\'s reseeded round from its provider\'s games');
     }
     return placed;
@@ -233,11 +238,11 @@ export class ProviderGameSlateService {
     draft: boolean,
     stored: readonly SportEventRoundMatch[],
     slate: readonly BracketMatchInput[],
-    placed: readonly number[],
+    placed: readonly MatchPlace[],
   ): Promise<ProviderGameSlateOutcome> {
     const storedByPair = new Map(stored.map((match) => [pairKey(match), match]));
-    const updated: number[] = [...placed];
-    const swapped: number[] = [];
+    const updated: MatchPlace[] = [...placed];
+    const swapped: MatchPlace[] = [];
     const unmatched: string[] = [];
     for (const game of slate) {
       const match = storedByPair.get(pairKey(game));
@@ -247,7 +252,7 @@ export class ProviderGameSlateService {
       }
       const isSwapped = match.homeSportEventParticipantId !== game.homeSportEventParticipantId;
       const movesKickoff = isMatchUnplayed(match.status) && game.scheduledDate !== null && !sameTime(match.scheduledDate, game.scheduledDate);
-      if (isSwapped && !draft) swapped.push(match.matchNumber);
+      if (isSwapped && !draft) swapped.push(matchPlaceOf(match));
       const patch = {
         ...(movesKickoff && { scheduledDate: game.scheduledDate }),
         ...(isSwapped && draft && {
@@ -257,18 +262,18 @@ export class ProviderGameSlateService {
         }),
       };
       if (Object.keys(patch).length === 0) continue;
-      await this.deps.bracket.updateMatch(event.id, match.matchNumber, patch);
-      if (!updated.includes(match.matchNumber)) updated.push(match.matchNumber);
+      await this.deps.bracket.updateMatch(event.id, matchPlaceOf(match), patch);
+      if (!updated.some((place) => isAtPlace(match, place))) updated.push(matchPlaceOf(match));
     }
     if (unmatched.length > 0 || swapped.length > 0) {
       this.deps.logger?.warn(
-        { sportEventId: event.id, ...(unmatched.length > 0 && { unmatchedPairings: unmatched }), ...(swapped.length > 0 && { swappedMatchNumbers: swapped }) },
+        { sportEventId: event.id, ...(unmatched.length > 0 && { unmatchedPairings: unmatched }), ...(swapped.length > 0 && { swappedMatches: swapped }) },
         'A released synced event\'s provider changed games its matches hold fixed; an admin decides',
       );
     }
     if (updated.length === 0) return { outcome: 'UNCHANGED', sportEventId: event.id };
-    this.deps.logger?.info({ sportEventId: event.id, matchNumbers: updated }, 'Kept a synced event\'s matches current with its provider\'s games');
-    return { outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: updated.sort((left, right) => left - right) };
+    this.deps.logger?.info({ sportEventId: event.id, matches: updated }, 'Kept a synced event\'s matches current with its provider\'s games');
+    return { outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: updated.sort(compareMatchPlaces) };
   }
 }
 
@@ -280,12 +285,18 @@ function skipReason(event: SportEvent | null): Extract<ProviderGameSlateOutcome,
   return null;
 }
 
-/** The provider's games as the event's matches, in round and kickoff order. */
+/** The provider's games as the event's matches, in round and kickoff order, numbered within each round (#2161). */
 function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExternalId: string) => string): BracketMatchInput[] {
+  const numbered = new Map<number, number>();
   return [...games]
     .sort(byRoundThenKickoff)
-    .map((game, index) => ({
-      matchNumber: index + 1,
+    .map((game) => {
+      const matchNumber = (numbered.get(game.roundNumber) ?? 0) + 1;
+      numbered.set(game.roundNumber, matchNumber);
+      return { game, matchNumber };
+    })
+    .map(({ game, matchNumber }) => ({
+      matchNumber,
       roundNumber: game.roundNumber,
       homeSportEventParticipantId: fieldRowOf(game.homeTeamExternalId),
       awaySportEventParticipantId: fieldRowOf(game.awayTeamExternalId),
@@ -299,20 +310,21 @@ function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExter
  * Each match whose two feeders come from different regions, with the regions in it: an NCAA
  * national semifinal, which the provider's bracket pairs by a guess an admin checks (#1728).
  */
-function crossRegionPairings(bracket: readonly BracketMatchInput[]): Array<{ matchNumber: number; regions: string[] }> {
-  const regionsByMatch = new Map<number, string[]>();
+function crossRegionPairings(bracket: readonly BracketMatchInput[]): Array<MatchPlace & { regions: string[] }> {
+  const regionsByMatch = new Map<BracketMatchInput, string[]>();
   for (const match of bracket) {
-    if (match.advancesTo === null || match.regionLabel === undefined || match.regionLabel === null) continue;
-    const target = bracket.find((candidate) => candidate.matchNumber === match.advancesTo?.matchNumber);
-    if (target === undefined || target.regionLabel === match.regionLabel) continue;
-    const regions = regionsByMatch.get(target.matchNumber) ?? [];
-    if (!regions.includes(match.regionLabel)) regions.push(match.regionLabel);
-    regionsByMatch.set(target.matchNumber, regions);
+    const { advancesTo, regionLabel } = match;
+    if (advancesTo === null || regionLabel === undefined || regionLabel === null) continue;
+    const target = bracket.find((candidate) => isAtPlace(candidate, advancesTo));
+    if (target === undefined || target.regionLabel === regionLabel) continue;
+    const regions = regionsByMatch.get(target) ?? [];
+    if (!regions.includes(regionLabel)) regions.push(regionLabel);
+    regionsByMatch.set(target, regions);
   }
   return [...regionsByMatch]
     .filter(([, regions]) => regions.length > 1)
-    .map(([matchNumber, regions]) => ({ matchNumber, regions }))
-    .sort((left, right) => left.matchNumber - right.matchNumber);
+    .map(([target, regions]) => ({ ...matchPlaceOf(target), regions }))
+    .sort(compareMatchPlaces);
 }
 
 /** The provider's bracket as the event's, each named side its team's field row. */
@@ -347,18 +359,20 @@ function sameTime(left: Date | null, right: Date | null): boolean {
 /** Whether the stored bracket has the provider's shape and teams, match by match, kickoffs aside. */
 function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly BracketMatchInput[]): boolean {
   if (stored.length !== bracket.length) return false;
-  const numberById = new Map(stored.map((match) => [match.id, match.matchNumber]));
-  const storedByNumber = new Map(stored.map((match) => [match.matchNumber, match]));
+  const storedById = new Map(stored.map((match) => [match.id, match]));
+  const storedByPlace = new MatchPlaceMap(stored.map((match) => [match, match] as const));
   return bracket.every((slot) => {
-    const match = storedByNumber.get(slot.matchNumber);
+    const match = storedByPlace.get(slot);
     if (match === undefined) return false;
-    const advancesTo = match.advancesToMatchId === null ? null : `${String(numberById.get(match.advancesToMatchId))}/${String(match.advancesToSide)}`;
-    return match.roundNumber === slot.roundNumber
+    const next = match.advancesToMatchId === null ? undefined : storedById.get(match.advancesToMatchId);
+    const advancesAlike = slot.advancesTo === null
+      ? match.advancesToMatchId === null
+      : next !== undefined && isAtPlace(next, slot.advancesTo) && match.advancesToSide === slot.advancesTo.side;
+    return advancesAlike
       && match.homeSportEventParticipantId === slot.homeSportEventParticipantId
       && match.awaySportEventParticipantId === slot.awaySportEventParticipantId
       && match.isNeutralSite === slot.isNeutralSite
-      && match.regionLabel === (slot.regionLabel ?? null)
-      && advancesTo === (slot.advancesTo === null ? null : `${String(slot.advancesTo.matchNumber)}/${slot.advancesTo.side}`);
+      && match.regionLabel === (slot.regionLabel ?? null);
   });
 }
 

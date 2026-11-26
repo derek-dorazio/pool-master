@@ -1719,9 +1719,9 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     getEventBracketMock.mockResolvedValue({
       data: {
         matches: [
-          game({ id: 'game-div', roundNumber: 2, matchNumber: 9, status: 'COMPLETED', scheduledDate: '2099-01-17T21:00:00.000Z', homeScore: 31, awayScore: 17 }),
-          game({ id: 'game-afc', roundNumber: 3, matchNumber: 11, scheduledDate: '2099-01-25T20:00:00.000Z', homeSportEventParticipantId: 'field-chiefs', awaySportEventParticipantId: 'field-bills' }),
-          game({ id: 'game-sb', roundNumber: 4, matchNumber: 13, isNeutralSite: true, scheduledDate: '2099-02-07T23:30:00.000Z', advancesToMatchId: null, advancesToSide: null }),
+          game({ id: 'game-div', roundNumber: 2, matchNumber: 1, status: 'COMPLETED', scheduledDate: '2099-01-17T21:00:00.000Z', homeScore: 31, awayScore: 17 }),
+          game({ id: 'game-afc', roundNumber: 3, matchNumber: 1, scheduledDate: '2099-01-25T20:00:00.000Z', homeSportEventParticipantId: 'field-chiefs', awaySportEventParticipantId: 'field-bills' }),
+          game({ id: 'game-sb', roundNumber: 4, matchNumber: 1, isNeutralSite: true, scheduledDate: '2099-02-07T23:30:00.000Z', advancesToMatchId: null, advancesToSide: null }),
         ],
       },
     });

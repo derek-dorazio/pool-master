@@ -56,7 +56,7 @@ export type GamePickDto = z.infer<typeof GamePickDtoSchema>;
 
 export const GamePickGameDtoSchema = z.object({
   sportEventRoundMatchId: z.uuid(),
-  matchNumber: z.number().int(),
+  matchNumber: z.number().int().describe('The game\'s number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together.'),
   roundNumber: z.number().int(),
   slot: SportEventRoundSlotDtoSchema.describe('The slot the game\'s round is played in: the round\'s label.'),
   isFinal: z.boolean().describe('Whether the game is the event\'s final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket\'s links end at. Never the last round by number.'),

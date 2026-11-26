@@ -8,7 +8,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MatchSide, MatchStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchSide, MatchStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
@@ -396,24 +396,25 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     expect(rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     const nameOf = new Map([...(await fieldOf(event.id)).entries()].map(([name, row]) => [row.id, name]));
     const { matches } = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data);
-    const byNumber = new Map(matches.map((match) => [match.matchNumber, match]));
-    const sides = (matchNumber: number) => {
-      const match = expectDefined(byNumber.get(matchNumber));
+    const at = (roundNumber: number, matchNumber: number) =>
+      expectDefined(matches.find((match) => isAtPlace(match, { roundNumber, matchNumber })));
+    const sides = ([roundNumber, matchNumber]: readonly [number, number]) => {
+      const match = at(roundNumber, matchNumber);
       return [match.homeSportEventParticipantId, match.awaySportEventParticipantId].map((id) => (id === null ? null : nameOf.get(id)));
     };
 
     expect(matches.every((match) => match.status === MatchStatus.COMPLETED)).toBe(true);
     // Each conference's 1 seed meets its lowest seed left, as the 2025 season's Divisional round did.
-    expect([7, 8, 9, 10].map(sides)).toEqual([
+    expect(([[2, 1], [2, 2], [2, 3], [2, 4]] as const).map(sides)).toEqual([
       ['Denver Broncos', 'Buffalo Bills'],
       ['New England Patriots', 'Houston Texans'],
       ['Seattle Seahawks', 'San Francisco 49ers'],
       ['Chicago Bears', 'Los Angeles Rams'],
     ]);
     // A second reseed places the conference championships: the better seed left hosts.
-    expect([11, 12].map(sides)).toEqual([['Denver Broncos', 'New England Patriots'], ['Seattle Seahawks', 'Los Angeles Rams']]);
-    expect(sides(13)).toEqual(['New England Patriots', 'Seattle Seahawks']);
-    expect(byNumber.get(13)).toMatchObject({ winnerSide: MatchSide.AWAY, homeScore: 13, awayScore: 29, isNeutralSite: true });
+    expect(([[3, 1], [3, 2]] as const).map(sides)).toEqual([['Denver Broncos', 'New England Patriots'], ['Seattle Seahawks', 'Los Angeles Rams']]);
+    expect(sides([4, 1])).toEqual(['New England Patriots', 'Seattle Seahawks']);
+    expect(at(4, 1)).toMatchObject({ winnerSide: MatchSide.AWAY, homeScore: 13, awayScore: 29, isNeutralSite: true });
 
     expect(changes(await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED }))).toEqual([]);
   });

@@ -108,8 +108,8 @@ function savedBody(call = 0) {
   return request.body;
 }
 
-const team = (matchNumber: number, sportEventParticipantId: string) =>
-  screen.getByTestId(`pick-em-game-${matchNumber}-team-${sportEventParticipantId}`);
+const team = (roundNumber: number, matchNumber: number, sportEventParticipantId: string) =>
+  screen.getByTestId(`pick-em-game-${roundNumber}-${matchNumber}-team-${sportEventParticipantId}`);
 
 describe('Pick\'em contest entry page', () => {
   afterEach(() => {
@@ -154,8 +154,8 @@ describe('Pick\'em contest entry page', () => {
       path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'week-1' },
     }));
     const games = within(screen.getByTestId('pick-em-games')).getAllByRole('listitem').map((item) => item.getAttribute('data-testid'));
-    expect(games).toEqual(['pick-em-game-2', 'pick-em-game-3', 'pick-em-game-1']);
-    const sunday = within(screen.getByTestId('pick-em-game-2')).getAllByRole('button').map((button) => button.textContent);
+    expect(games).toEqual(['pick-em-game-1-2', 'pick-em-game-1-3', 'pick-em-game-1-1']);
+    const sunday = within(screen.getByTestId('pick-em-game-1-2')).getAllByRole('button').map((button) => button.textContent);
     expect(sunday).toEqual(['Bills', 'Chiefs']);
     expect(screen.getByTestId('pick-em-progress')).toHaveTextContent('Picked0 of 3Points0 ptsMax3 pts');
     expect(getSelectionStateMock).not.toHaveBeenCalled();
@@ -179,21 +179,21 @@ describe('Pick\'em contest entry page', () => {
     });
     renderPickEmEntry();
 
-    const sunday = within(await screen.findByTestId('pick-em-game-2')).getAllByRole('button').map((button) => button.textContent);
+    const sunday = within(await screen.findByTestId('pick-em-game-1-2')).getAllByRole('button').map((button) => button.textContent);
     expect(sunday).toEqual(['Bills', 'Tie', 'Chiefs']);
-    fireEvent.click(screen.getByTestId('pick-em-game-2-tie'));
+    fireEvent.click(screen.getByTestId('pick-em-game-1-2-tie'));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({ picks: [{ sportEventRoundMatchId: 'match-2', predictedResult: 'TIE', sportEventParticipantId: null }] });
-    await waitFor(() => expect(screen.getByTestId('pick-em-game-2-tie')).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() => expect(screen.getByTestId('pick-em-game-1-2-tie')).toHaveAttribute('aria-pressed', 'true'));
   });
 
   it('offers no tie choice when the sport allows no tie picks', async () => {
     primeMocks();
     renderPickEmEntry();
 
-    await screen.findByTestId('pick-em-game-2');
-    expect(screen.queryByTestId('pick-em-game-2-tie')).not.toBeInTheDocument();
+    await screen.findByTestId('pick-em-game-1-2');
+    expect(screen.queryByTestId('pick-em-game-1-2-tie')).not.toBeInTheDocument();
   });
 
   it('saves a tapped team as the game\'s pick and shows the week the server answers with', async () => {
@@ -203,11 +203,11 @@ describe('Pick\'em contest entry page', () => {
     });
     renderPickEmEntry();
 
-    fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`));
+    fireEvent.click(await screen.findByTestId(`pick-em-game-1-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({ picks: [{ sportEventRoundMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId }] });
-    await waitFor(() => expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() => expect(team(1, 2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
     expect(screen.getByTestId('pick-em-picked-count')).toHaveTextContent('1 of 3');
   });
 
@@ -222,7 +222,7 @@ describe('Pick\'em contest entry page', () => {
     submitGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ games: picked, tiebreakerValue: 44, status: 'SUBMITTED' }) });
     renderPickEmEntry();
 
-    expect(within(await screen.findByTestId('pick-em-game-1')).getByText('Tiebreaker game')).toBeInTheDocument();
+    expect(within(await screen.findByTestId('pick-em-game-1-1')).getByText('Tiebreaker game')).toBeInTheDocument();
     expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('Enter your tiebreaker to submit.');
     expect(screen.getByTestId('pick-em-submit')).toBeDisabled();
 
@@ -318,7 +318,7 @@ describe('Pick\'em contest entry page', () => {
     renderPickEmEntry();
 
     expect(await screen.findByTestId('pick-em-finish-status')).toHaveTextContent('Rank every pick from 1 to 3: 1 still to rank.');
-    fireEvent.change(screen.getByTestId('pick-em-game-2-confidence'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('pick-em-game-1-2-confidence'), { target: { value: '3' } });
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({
@@ -335,7 +335,7 @@ describe('Pick\'em contest entry page', () => {
     saveGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ mode: 'CONFIDENCE', games: ranked }) });
     renderPickEmEntry();
 
-    fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.bills.sportEventParticipantId}`));
+    fireEvent.click(await screen.findByTestId(`pick-em-game-1-2-team-${NFL_TEAMS.bills.sportEventParticipantId}`));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({
@@ -352,12 +352,12 @@ describe('Pick\'em contest entry page', () => {
     primeMocks({ week: pickEmWeekFixture({ games: underWay, status: 'SUBMITTED', tiebreakerValue: 44, points: 1, maxPossiblePoints: 3 }) });
     renderPickEmEntry();
 
-    const sunday = await screen.findByTestId('pick-em-game-2');
-    expect(within(sunday).getByTestId('pick-em-game-2-locked')).toHaveTextContent('Locked');
-    expect(within(sunday).getByTestId('pick-em-game-2-outcome')).toHaveTextContent('1 pt');
+    const sunday = await screen.findByTestId('pick-em-game-1-2');
+    expect(within(sunday).getByTestId('pick-em-game-1-2-locked')).toHaveTextContent('Locked');
+    expect(within(sunday).getByTestId('pick-em-game-1-2-outcome')).toHaveTextContent('1 pt');
     expect(within(sunday).queryAllByRole('button')).toHaveLength(0);
-    expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
-    expect(within(screen.getByTestId('pick-em-game-1')).getAllByRole('button').length).toBeGreaterThan(0);
+    expect(team(1, 2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
+    expect(within(screen.getByTestId('pick-em-game-1-1')).getAllByRole('button').length).toBeGreaterThan(0);
     expect(screen.getByTestId('pick-em-points')).toHaveTextContent('1 pt');
     expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent('Submitted · each pick locks at its kickoff');
     expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('✓ Submitted · each pick locks at its kickoff');
@@ -369,11 +369,11 @@ describe('Pick\'em contest entry page', () => {
     primeMocks({ week: pickEmWeekFixture({ games: postponed }) });
     renderPickEmEntry();
 
-    const game = await screen.findByTestId('pick-em-game-2');
-    expect(within(game).getByTestId('pick-em-game-2-schedule')).toHaveTextContent('Postponed');
-    expect(within(game).queryByTestId('pick-em-game-2-locked')).not.toBeInTheDocument();
+    const game = await screen.findByTestId('pick-em-game-1-2');
+    expect(within(game).getByTestId('pick-em-game-1-2-schedule')).toHaveTextContent('Postponed');
+    expect(within(game).queryByTestId('pick-em-game-1-2-locked')).not.toBeInTheDocument();
     expect(within(game).getAllByRole('button').length).toBeGreaterThan(0);
-    expect(screen.queryByTestId('pick-em-game-1-schedule')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pick-em-game-1-1-schedule')).not.toBeInTheDocument();
   });
 
   it('shows each team\'s spread beside it in a pool scored against the spread, "PK" for a pick\'em game, and marks a game on the spread a push', async () => {
@@ -386,11 +386,11 @@ describe('Pick\'em contest entry page', () => {
     renderPickEmEntry();
 
     await screen.findByTestId('pick-em-games');
-    expect(screen.getByTestId(`pick-em-game-2-spread-${NFL_TEAMS.chiefs.sportEventParticipantId}`)).toHaveTextContent('-3');
-    expect(screen.getByTestId(`pick-em-game-2-spread-${NFL_TEAMS.bills.sportEventParticipantId}`)).toHaveTextContent('+3');
-    expect(screen.getByTestId(`pick-em-game-3-spread-${NFL_TEAMS.cowboys.sportEventParticipantId}`)).toHaveTextContent('-6.5');
-    expect(screen.getByTestId(`pick-em-game-1-spread-${NFL_TEAMS.packers.sportEventParticipantId}`)).toHaveTextContent('PK');
-    expect(screen.getByTestId('pick-em-game-2-outcome')).toHaveTextContent('Push');
+    expect(screen.getByTestId(`pick-em-game-1-2-spread-${NFL_TEAMS.chiefs.sportEventParticipantId}`)).toHaveTextContent('-3');
+    expect(screen.getByTestId(`pick-em-game-1-2-spread-${NFL_TEAMS.bills.sportEventParticipantId}`)).toHaveTextContent('+3');
+    expect(screen.getByTestId(`pick-em-game-1-3-spread-${NFL_TEAMS.cowboys.sportEventParticipantId}`)).toHaveTextContent('-6.5');
+    expect(screen.getByTestId(`pick-em-game-1-1-spread-${NFL_TEAMS.packers.sportEventParticipantId}`)).toHaveTextContent('PK');
+    expect(screen.getByTestId('pick-em-game-1-2-outcome')).toHaveTextContent('Push');
   });
 
   it('shows no spreads in a pool picked straight up, even when the games have them', async () => {
@@ -398,7 +398,7 @@ describe('Pick\'em contest entry page', () => {
     renderPickEmEntry();
 
     await screen.findByTestId('pick-em-games');
-    expect(screen.queryByTestId(`pick-em-game-2-spread-${NFL_TEAMS.chiefs.sportEventParticipantId}`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`pick-em-game-1-2-spread-${NFL_TEAMS.chiefs.sportEventParticipantId}`)).not.toBeInTheDocument();
   });
 
   it('locks a draft week once its first game kicks off and says it scores nothing, with no picks or submit left to make', async () => {
@@ -420,10 +420,10 @@ describe('Pick\'em contest entry page', () => {
     renderPickEmEntry('entry-2');
 
     await screen.findByTestId('pick-em-games');
-    expect(team(2, NFL_TEAMS.bills.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
-    expect(screen.getByTestId('pick-em-game-3-hidden')).toHaveTextContent('This pick is shown at kickoff.');
-    expect(screen.getByTestId('pick-em-game-1-hidden')).toBeInTheDocument();
-    expect(screen.queryByTestId('pick-em-game-2-hidden')).not.toBeInTheDocument();
+    expect(team(1, 2, NFL_TEAMS.bills.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
+    expect(screen.getByTestId('pick-em-game-1-3-hidden')).toHaveTextContent('This pick is shown at kickoff.');
+    expect(screen.getByTestId('pick-em-game-1-1-hidden')).toBeInTheDocument();
+    expect(screen.queryByTestId('pick-em-game-1-2-hidden')).not.toBeInTheDocument();
     expect(screen.queryByTestId('pick-em-submit-panel')).not.toBeInTheDocument();
     expect(screen.queryByTestId('pick-em-not-submitted-warning')).not.toBeInTheDocument();
   });
@@ -449,7 +449,7 @@ describe('Pick\'em contest entry page', () => {
     saveGamePicksMock.mockResolvedValue({ error: { error: { code: 'PREDICTION_GAME_STARTED', message: 'Game started.' } } });
     renderPickEmEntry();
 
-    fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.bills.sportEventParticipantId}`));
+    fireEvent.click(await screen.findByTestId(`pick-em-game-1-2-team-${NFL_TEAMS.bills.sportEventParticipantId}`));
 
     expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('That game has started, so its pick is locked.');
     await waitFor(() => expect(getGamePicksMock).toHaveBeenCalledTimes(2));
@@ -476,10 +476,10 @@ describe('Survivor contest entry page', () => {
     renderPickEmEntry();
 
     expect(await screen.findByTestId('contest-entry-builder-heading')).toHaveTextContent('Pick a winner');
-    const bills = team(2, NFL_TEAMS.bills.sportEventParticipantId);
+    const bills = team(1, 2, NFL_TEAMS.bills.sportEventParticipantId);
     expect(bills).toBeDisabled();
     expect(bills).toHaveTextContent('Used · Week 1');
-    expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toBeEnabled();
+    expect(team(1, 2, NFL_TEAMS.chiefs.sportEventParticipantId)).toBeEnabled();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
     expect(screen.getByTestId('survivor-status')).toHaveTextContent('In');
     expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('Pick one team to submit.');
@@ -495,7 +495,7 @@ describe('Survivor contest entry page', () => {
     });
     renderPickEmEntry();
 
-    fireEvent.click(await screen.findByTestId(`pick-em-game-3-team-${NFL_TEAMS.eagles.sportEventParticipantId}`));
+    fireEvent.click(await screen.findByTestId(`pick-em-game-1-3-team-${NFL_TEAMS.eagles.sportEventParticipantId}`));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({ picks: [{ sportEventRoundMatchId: 'match-3', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.eagles.sportEventParticipantId }] });
@@ -509,7 +509,7 @@ describe('Survivor contest entry page', () => {
 
     expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent(/^Out in week 1$/);
     expect(screen.getByTestId('survivor-status')).toHaveTextContent('Out');
-    expect(screen.getByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`).tagName).not.toBe('BUTTON');
+    expect(screen.getByTestId(`pick-em-game-1-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`).tagName).not.toBe('BUTTON');
     expect(screen.queryByTestId('pick-em-submit')).not.toBeInTheDocument();
   });
 
@@ -518,7 +518,7 @@ describe('Survivor contest entry page', () => {
     saveGamePicksMock.mockResolvedValue({ error: { error: { code: 'PREDICTION_TEAM_ALREADY_USED', message: 'Team already used.' } } });
     renderPickEmEntry();
 
-    fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`));
+    fireEvent.click(await screen.findByTestId(`pick-em-game-1-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`));
 
     expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('You picked that team in another week or round. Each team can be picked once.');
   });
@@ -548,11 +548,12 @@ describe('Playoff survivor entry page', () => {
     const switcher = await screen.findByTestId('survivor-round-switcher');
     expect(within(switcher).getAllByRole('option').map((option) => option.textContent)).toEqual(['Conference Championship', 'Super Bowl']);
     expect(switcher).toHaveValue('2');
-    const bills = team(2, NFL_TEAMS.bills.sportEventParticipantId);
+    const bills = team(2, 1, NFL_TEAMS.bills.sportEventParticipantId);
     expect(bills).toBeDisabled();
     expect(bills).toHaveTextContent('Used · Conference Championship');
-    expect(team(2, NFL_TEAMS.eagles.sportEventParticipantId)).toBeEnabled();
-    expect(screen.queryByTestId('pick-em-game-1')).not.toBeInTheDocument();
+    expect(team(2, 1, NFL_TEAMS.eagles.sportEventParticipantId)).toBeEnabled();
+    expect(screen.queryByTestId('pick-em-game-1-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pick-em-game-2-1')).toBeInTheDocument();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
     expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent('No pick yet · pick a team before this round\'s first game');
   });
@@ -563,8 +564,8 @@ describe('Playoff survivor entry page', () => {
 
     fireEvent.change(await screen.findByTestId('survivor-round-switcher'), { target: { value: '1' } });
 
-    expect(await screen.findByTestId('pick-em-game-1')).toBeInTheDocument();
-    expect(screen.queryByTestId('pick-em-game-2')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('pick-em-game-1-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('pick-em-game-2-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('Bills');
     expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Picks');
   });

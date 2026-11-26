@@ -142,15 +142,16 @@ describe('BalldontlieAdapter (NHL)', () => {
         [8, 'West', team(16), team(15)],
       ]);
       // Washington (111 points) hosts the East final over Toronto (108); Winnipeg (116) the Stanley Cup Final.
-      expect(detail?.bracket?.filter((match) => match.roundNumber > 1).map((match) => [match.matchNumber, match.regionLabel])).toEqual([
-        [9, 'East'], [10, 'East'], [11, 'West'], [12, 'West'], [13, 'East'], [14, 'West'], [15, null],
+      expect(detail?.bracket?.filter((match) => match.roundNumber > 1).map((match) => [match.roundNumber, match.matchNumber, match.regionLabel])).toEqual([
+        [2, 1, 'East'], [2, 2, 'East'], [2, 3, 'West'], [2, 4, 'West'], [3, 1, 'East'], [3, 2, 'West'], [4, 1, null],
       ]);
-      const byNumber = new Map(detail?.bracket?.map((match) => [match.matchNumber, match]));
-      expect([9, 10, 13, 14].map((matchNumber) => byNumber.get(matchNumber)?.advancesTo)).toEqual([
-        { matchNumber: 13, side: MatchSide.AWAY },
-        { matchNumber: 13, side: MatchSide.HOME },
-        { matchNumber: 15, side: MatchSide.AWAY },
-        { matchNumber: 15, side: MatchSide.HOME },
+      const at = (roundNumber: number, matchNumber: number) =>
+        detail?.bracket?.find((match) => match.roundNumber === roundNumber && match.matchNumber === matchNumber);
+      expect([at(2, 1), at(2, 2), at(3, 1), at(3, 2)].map((match) => match?.advancesTo)).toEqual([
+        { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY },
+        { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME },
+        { roundNumber: 4, matchNumber: 1, side: MatchSide.AWAY },
+        { roundNumber: 4, matchNumber: 1, side: MatchSide.HOME },
       ]);
       expect(detail?.games).toHaveLength(15);
     });

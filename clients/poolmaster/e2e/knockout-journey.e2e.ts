@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import type { MatchPlace } from '@poolmaster/shared/domain';
 import {
   adminSignIn,
   logOut,
@@ -55,7 +56,7 @@ type Side = 'HOME' | 'AWAY';
 
 /**
  * The bracket as it was played, by seed (null for a side an earlier series fills). The higher
- * seed is at home. Match 4's away side, the 7 seed, is left open when the bracket loads, so the
+ * seed is at home. Round 1's match 4's away side, the 7 seed, is left open when the bracket loads, so the
  * admin completes it on the bracket tab before release.
  */
 const BRACKET: ReadonlyArray<{
@@ -63,18 +64,18 @@ const BRACKET: ReadonlyArray<{
   roundNumber: number;
   home: number | null;
   away: number | null;
-  advancesTo: { matchNumber: number; side: Side } | null;
+  advancesTo: { roundNumber: number; matchNumber: number; side: Side } | null;
   winner: Side;
 }> = [
-  { matchNumber: 1, roundNumber: 1, home: 1, away: 8, advancesTo: { matchNumber: 5, side: 'HOME' }, winner: 'HOME' },
-  { matchNumber: 2, roundNumber: 1, home: 4, away: 5, advancesTo: { matchNumber: 5, side: 'AWAY' }, winner: 'HOME' },
-  { matchNumber: 3, roundNumber: 1, home: 3, away: 6, advancesTo: { matchNumber: 6, side: 'AWAY' }, winner: 'AWAY' },
-  { matchNumber: 4, roundNumber: 1, home: 2, away: 7, advancesTo: { matchNumber: 6, side: 'HOME' }, winner: 'HOME' },
-  { matchNumber: 5, roundNumber: 2, home: null, away: null, advancesTo: { matchNumber: 7, side: 'AWAY' }, winner: 'AWAY' },
-  { matchNumber: 6, roundNumber: 2, home: null, away: null, advancesTo: { matchNumber: 7, side: 'HOME' }, winner: 'HOME' },
-  { matchNumber: 7, roundNumber: 3, home: null, away: null, advancesTo: null, winner: 'HOME' },
+  { matchNumber: 1, roundNumber: 1, home: 1, away: 8, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' }, winner: 'HOME' },
+  { matchNumber: 2, roundNumber: 1, home: 4, away: 5, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'AWAY' }, winner: 'HOME' },
+  { matchNumber: 3, roundNumber: 1, home: 3, away: 6, advancesTo: { roundNumber: 2, matchNumber: 2, side: 'AWAY' }, winner: 'AWAY' },
+  { matchNumber: 4, roundNumber: 1, home: 2, away: 7, advancesTo: { roundNumber: 2, matchNumber: 2, side: 'HOME' }, winner: 'HOME' },
+  { matchNumber: 1, roundNumber: 2, home: null, away: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: 'AWAY' }, winner: 'AWAY' },
+  { matchNumber: 2, roundNumber: 2, home: null, away: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: 'HOME' }, winner: 'HOME' },
+  { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, winner: 'HOME' },
 ];
-const OPEN_PAIRING = { matchNumber: 4, side: 'AWAY' as Side, seed: 7 };
+const OPEN_PAIRING = { roundNumber: 1, matchNumber: 4, side: 'AWAY' as Side, seed: 7 };
 const ROUND_COUNT = 3;
 
 /** The commissioner's scoring: a win is 1 in the first round, 2 in the semifinals, 4 in the final. */
@@ -281,7 +282,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
           matchNumber: match.matchNumber,
           roundNumber: match.roundNumber,
           homeSportEventParticipantId: entryOfSeed(match.home),
-          awaySportEventParticipantId: match.matchNumber === OPEN_PAIRING.matchNumber && OPEN_PAIRING.side === 'AWAY'
+          awaySportEventParticipantId: match.roundNumber === OPEN_PAIRING.roundNumber && match.matchNumber === OPEN_PAIRING.matchNumber && OPEN_PAIRING.side === 'AWAY'
             ? null
             : entryOfSeed(match.away),
           isNeutralSite: false,
@@ -296,13 +297,13 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   await test.step('the open pairing is completed through the API, as the test-data loader completes one; the bracket then names both teams', async () => {
     // A head-to-head event's results come only from the feed (#2074): the root admin has no
     // bracket editor, so a test event's bracket is written through the API, as the loader does.
-    const { matchNumber, side, seed } = OPEN_PAIRING;
-    const response = await page.request.patch(`/api/v1/events/${eventId}/bracket/matches/${matchNumber}`, {
+    const { roundNumber, matchNumber, side, seed } = OPEN_PAIRING;
+    const response = await page.request.patch(`/api/v1/events/${eventId}/bracket/rounds/${roundNumber}/matches/${matchNumber}`, {
       headers: { 'x-csrf-token': await readCsrfToken(page) },
       data: side === 'HOME' ? { homeSportEventParticipantId: fieldEntryIds[seed - 1] } : { awaySportEventParticipantId: fieldEntryIds[seed - 1] },
     });
-    expect(response.ok(), `PATCH match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
-    expect(await pairingOf(page, eventId, matchNumber)).toEqual({ home: fieldEntryIds[1], away: fieldEntryIds[6] });
+    expect(response.ok(), `PATCH round ${roundNumber} match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
+    expect(await pairingOf(page, eventId, OPEN_PAIRING)).toEqual({ home: fieldEntryIds[1], away: fieldEntryIds[6] });
   });
 
   await test.step('release the tournament for contests', async () => {
@@ -467,11 +468,11 @@ test('act 4: the root admin starts the playoffs and names each series\' winner t
 
   await test.step('name the four first-round winners; each moves on to its semifinal', async () => {
     for (const match of BRACKET.filter((candidate) => candidate.roundNumber === 1)) {
-      await recordWinner(page, state.eventId, match.matchNumber, match.winner);
+      await recordWinner(page, state.eventId, match, match.winner);
     }
     // The semifinals as they were played: the Lynx host the Mercury, the Aces host the Fever.
-    expect(await pairingOf(page, state.eventId, 5)).toEqual({ home: state.fieldEntryIds[0], away: state.fieldEntryIds[3] });
-    expect(await pairingOf(page, state.eventId, 6)).toEqual({ home: state.fieldEntryIds[1], away: state.fieldEntryIds[5] });
+    expect(await pairingOf(page, state.eventId, { roundNumber: 2, matchNumber: 1 })).toEqual({ home: state.fieldEntryIds[0], away: state.fieldEntryIds[3] });
+    expect(await pairingOf(page, state.eventId, { roundNumber: 2, matchNumber: 2 })).toEqual({ home: state.fieldEntryIds[1], away: state.fieldEntryIds[5] });
   });
 
   await test.step(`after the first round the entry has ${EXPECTED_TOTAL_AFTER_ROUND_1}, the Fever's upset of the 3 seed among it, and the Storm is out`, async () => {
@@ -498,9 +499,9 @@ test('act 4: the root admin starts the playoffs and names each series\' winner t
 
   await test.step('name the semifinal and final winners: the Mercury upset the Lynx, and the Aces win it all', async () => {
     for (const match of BRACKET.filter((candidate) => candidate.roundNumber > 1)) {
-      await recordWinner(page, state.eventId, match.matchNumber, match.winner);
+      await recordWinner(page, state.eventId, match, match.winner);
     }
-    expect(await pairingOf(page, state.eventId, 7)).toEqual({ home: state.fieldEntryIds[1], away: state.fieldEntryIds[3] });
+    expect(await pairingOf(page, state.eventId, { roundNumber: 3, matchNumber: 1 })).toEqual({ home: state.fieldEntryIds[1], away: state.fieldEntryIds[3] });
   });
 
   await test.step('complete the tournament, which settles the contest', async () => {
@@ -590,20 +591,20 @@ function pointsBySeed(read: KnockoutLeaderboardRead, fieldEntryIds: readonly str
  * a head-to-head event's results come only from the feed, so the root admin has no winner buttons
  * (#2074).
  */
-async function recordWinner(page: Page, eventId: string, matchNumber: number, winner: Side) {
-  const response = await page.request.put(`/api/v1/events/${eventId}/bracket/matches/${matchNumber}/result`, {
+async function recordWinner(page: Page, eventId: string, { roundNumber, matchNumber }: MatchPlace, winner: Side) {
+  const response = await page.request.put(`/api/v1/events/${eventId}/bracket/rounds/${roundNumber}/matches/${matchNumber}/result`, {
     headers: { 'x-csrf-token': await readCsrfToken(page) },
     data: { winnerSide: winner, homeScore: null, awayScore: null },
   });
-  expect(response.ok(), `PUT the result of match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
+  expect(response.ok(), `PUT the result of round ${roundNumber} match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
 }
 
 /** The field rows on both sides of one match, as the event's bracket read gives them. */
-async function pairingOf(page: Page, eventId: string, matchNumber: number): Promise<{ home: string | null; away: string | null }> {
+async function pairingOf(page: Page, eventId: string, place: MatchPlace): Promise<{ home: string | null; away: string | null }> {
   const response = await page.request.get(`/api/v1/events/${eventId}/bracket`);
   expect(response.ok(), `GET the bracket answered ${response.status()}`).toBe(true);
-  const { matches } = (await response.json()) as { matches: { matchNumber: number; homeSportEventParticipantId: string | null; awaySportEventParticipantId: string | null }[] };
-  const match = matches.find((candidate) => candidate.matchNumber === matchNumber);
+  const { matches } = (await response.json()) as { matches: (MatchPlace & { homeSportEventParticipantId: string | null; awaySportEventParticipantId: string | null })[] };
+  const match = matches.find((candidate) => candidate.roundNumber === place.roundNumber && candidate.matchNumber === place.matchNumber);
   return { home: match?.homeSportEventParticipantId ?? null, away: match?.awaySportEventParticipantId ?? null };
 }
 

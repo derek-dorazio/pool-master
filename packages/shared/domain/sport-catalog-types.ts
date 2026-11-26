@@ -229,7 +229,7 @@ export interface SportEventRoundMatch extends DomainEntity {
   roundNumber: number;
   /** The slot its round is played in (#2006): what the round is called, and whether it is the FINAL. */
   slot: SportEventRoundSlot;
-  /** Unique within the event: the bracket slot and the display order. */
+  /** Unique within its round (#2161): the match's place in the round and its display order. */
   matchNumber: number;
   homeSportEventParticipantId: string | null;
   awaySportEventParticipantId: string | null;

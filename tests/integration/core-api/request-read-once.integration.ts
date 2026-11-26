@@ -486,7 +486,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
 
     const { response, statements } = await measureRequest({
       method: 'PUT',
-      url: `/api/v1/events/${eventId}/bracket/matches/1/result`,
+      url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`,
       headers: admin.headers,
       payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 },
     });
@@ -519,7 +519,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     const one = await squaresContestUnderWay({ gameFinished: false });
     const three = await squaresContestUnderWay({ gameFinished: false, contests: 3 });
     const result = (eventId: string, headers: InjectOptions['headers']): InjectOptions => ({
-      method: 'PUT', url: `/api/v1/events/${eventId}/bracket/matches/1/result`, headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 },
+      method: 'PUT', url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`, headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 },
     });
 
     const withOne = await measureRequest(result(one.eventId, one.admin.headers));
@@ -538,7 +538,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     const failing = failSecondContestCompletionOnce(second);
 
     try {
-      await measureRequest({ method: 'PUT', url: `/api/v1/events/${eventId}/bracket/matches/1/result`, headers: admin.headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 } });
+      await measureRequest({ method: 'PUT', url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`, headers: admin.headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 } });
       await drainBackgroundJobs();
 
       await expect(getPrisma().backgroundJob.findFirst({ where: { type: 'SETTLE_GAME_CONTESTS' }, select: { status: true, attempts: true, lastError: true } }))

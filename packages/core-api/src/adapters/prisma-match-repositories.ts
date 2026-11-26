@@ -41,7 +41,7 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
     const rows = await this.prisma.sportEventRoundMatch.findMany({
       where: { sportEventId: { in: [...sportEventIds] } },
       include: MATCH_INCLUDE,
-      orderBy: [{ sportEventId: 'asc' }, { matchNumber: 'asc' }],
+      orderBy: [{ sportEventId: 'asc' }, { sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }],
     });
     return rows.map(toSportEventRoundMatch);
   }

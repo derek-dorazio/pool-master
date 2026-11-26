@@ -43,7 +43,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { eventPlaysMatches, findSportRow, MatchSide, MatchStatus, type ProviderCode, ScoringFamily, type Sport, SportEventStatus, type SportLeagueDefinition, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
+import { describeMatchPlace, eventPlaysMatches, findSportRow, isAtPlace, MatchPlaceMap, matchPlaceOf, MatchSide, MatchStatus, type ProviderCode, ScoringFamily, type MatchPlace, type Sport, SportEventStatus, type SportLeagueDefinition, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -95,7 +95,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
 import {
-  dueResultMatchNumbers,
+  dueResultMatches,
   golferRoundScore,
   seedDateOffsetDays,
   selectTestSeedEvents,
@@ -204,9 +204,9 @@ async function standardPricing(client: Client): Promise<{ platformPricingProfile
   return { platformPricingProfileId: id, request: { profileName: name, salaryCap, unit, topSharePercent, floorSharePercent, steepness } };
 }
 
-/** "matches 3, 7": match numbers as a run's detail names them. */
-function matchList(numbers: readonly number[]): string {
-  return `match${numbers.length === 1 ? '' : 'es'} ${names(numbers.map(String))}`;
+/** "round 1 match 3, round 2 match 1": matches as a run's detail names them, each by its round and number. */
+function matchList(places: readonly MatchPlace[]): string {
+  return names(places.map((place) => describeMatchPlace(place)));
 }
 
 /** The field row a stored match names on one side. */
@@ -237,7 +237,7 @@ function filledPlayInPlaces(
     if (entry.isPlayInPlace !== true || (participantId && onField.has(participantId))) continue;
     for (const match of event.matches ?? []) {
       const side = match.home === entry.player ? MatchSide.HOME : match.away === entry.player ? MatchSide.AWAY : null;
-      const storedMatch = side === null ? undefined : storedBracket.find((candidate) => candidate.matchNumber === match.matchNumber);
+      const storedMatch = side === null ? undefined : storedBracket.find((candidate) => isAtPlace(candidate, match));
       const rowId = side === null || !storedMatch ? null : storedSide(storedMatch, side);
       const row = storedField.find((candidate) => candidate.id === rowId);
       if (row && !listed.has(row.participantId)) filled.set(entry.player, row);
@@ -247,11 +247,11 @@ function filledPlayInPlaces(
 }
 
 /**
- * What the file would change on an event's bracket. Before release (`locked` false) any
- * difference in a match's round, sides, site, time, link or region, or a match only one side has, means
- * loading the bracket whole again. After release pairings are locked, so only each match's site
- * and time are changed, as one edit per match. A match only one side has, or a changed round,
- * link, region or named side, is then a conflict. Results fill the later sides, so only the sides the
+ * What the file would change on an event's bracket, each match found by its round and number. Before
+ * release (`locked` false) any difference in a match's sides, site, time, link or region, or a match
+ * only one side has, means loading the bracket whole again. After release pairings are locked, so
+ * only each match's site and time are changed, as one edit per match. A match only one side has, or
+ * a changed link, region or named side, is then a conflict. Results fill the later sides, so only the sides the
  * file names are compared, and a filled play-in place (`filled`) matches its pairing.
  */
 function bracketChanges(
@@ -260,13 +260,13 @@ function bracketChanges(
   storedField: readonly StoredFieldRow[],
   storedBracket: readonly StoredMatch[],
   { locked, filled }: { locked: boolean; filled: ReadonlyMap<string, StoredFieldRow> },
-): { changes: string[]; conflicts: string[]; edits: Array<{ matchNumber: number; edit: UpdateSportEventRoundMatchRequest }> } {
-  const byNumber = new Map(storedBracket.map((match) => [match.matchNumber, match]));
-  const numberById = new Map(storedBracket.map((match) => [match.id, match.matchNumber]));
+): { changes: string[]; conflicts: string[]; edits: Array<{ place: MatchPlace; edit: UpdateSportEventRoundMatchRequest }> } {
+  const byPlace = new MatchPlaceMap(storedBracket.map((match) => [match, match] as const));
+  const placeById = new Map(storedBracket.map((match) => [match.id, matchPlaceOf(match)]));
   const participantOfRow = new Map(storedField.map((row) => [row.id, row.participantId]));
-  const fileNumbers = new Set(matches.map((match) => match.matchNumber));
-  const missing = matches.filter((match) => !byNumber.has(match.matchNumber)).map((match) => match.matchNumber);
-  const extra = storedBracket.filter((match) => !fileNumbers.has(match.matchNumber)).map((match) => match.matchNumber);
+  const filePlaces = new MatchPlaceMap(matches.map((match) => [match, true] as const));
+  const missing = matches.filter((match) => !byPlace.has(match)).map(matchPlaceOf);
+  const extra = storedBracket.filter((match) => !filePlaces.has(match)).map(matchPlaceOf);
   const timeMoved = (match: SportDataMatch, stored: StoredMatch): boolean => match.scheduledAt !== undefined
     && (stored.scheduledDate === null || Date.parse(stored.scheduledDate) !== Date.parse(match.scheduledAt));
   const sameSide = (key: string | null, rowId: string | null): boolean => {
@@ -276,45 +276,45 @@ function bracketChanges(
     return participantId !== null && rowId !== null && participantOfRow.get(rowId) === participantId;
   };
   const sameLink = (match: SportDataMatch, stored: StoredMatch): boolean => {
-    const advancesTo = stored.advancesToMatchId === null ? null : numberById.get(stored.advancesToMatchId) ?? null;
-    return advancesTo === (match.advancesTo?.matchNumber ?? null) && stored.advancesToSide === (match.advancesTo?.side ?? null)
+    const advancesTo = stored.advancesToMatchId === null ? null : placeById.get(stored.advancesToMatchId) ?? null;
+    const sameNext = advancesTo === null || match.advancesTo === null ? advancesTo === match.advancesTo : isAtPlace(advancesTo, match.advancesTo);
+    return sameNext && stored.advancesToSide === (match.advancesTo?.side ?? null)
       && stored.regionLabel === (match.regionLabel ?? null);
   };
 
   if (locked) {
     const repaired = matches.filter((match) => {
-      const stored = byNumber.get(match.matchNumber);
-      return stored !== undefined && (stored.roundNumber !== match.roundNumber || !sameLink(match, stored)
+      const stored = byPlace.get(match);
+      return stored !== undefined && (!sameLink(match, stored)
         || (match.home !== null && !sameSide(match.home, stored.homeSportEventParticipantId))
         || (match.away !== null && !sameSide(match.away, stored.awaySportEventParticipantId)));
-    }).map((match) => match.matchNumber);
+    }).map(matchPlaceOf);
     const conflicts = [
       ...(missing.length > 0 ? [`${matchList(missing)} not on the site`] : []),
       ...(extra.length > 0 ? [`${matchList(extra)} not in the file`] : []),
-      ...(repaired.length > 0 ? [`pairing, round, link or region of ${matchList(repaired)} differs`] : []),
+      ...(repaired.length > 0 ? [`pairing, link or region of ${matchList(repaired)} differs`] : []),
     ];
     const edits = matches.flatMap((match) => {
-      const stored = byNumber.get(match.matchNumber);
+      const stored = byPlace.get(match);
       if (!stored) return [];
       const edit: UpdateSportEventRoundMatchRequest = {};
       if (stored.isNeutralSite !== match.isNeutralSite) edit.isNeutralSite = match.isNeutralSite;
       if (match.scheduledAt !== undefined && timeMoved(match, stored)) edit.scheduledDate = new Date(match.scheduledAt).toISOString();
-      return Object.keys(edit).length > 0 ? [{ matchNumber: match.matchNumber, edit }] : [];
+      return Object.keys(edit).length > 0 ? [{ place: matchPlaceOf(match), edit }] : [];
     });
-    return { changes: edits.length > 0 ? [`time or site of ${matchList(edits.map((entry) => entry.matchNumber))}`] : [], conflicts, edits };
+    return { changes: edits.length > 0 ? [`time or site of ${matchList(edits.map((entry) => entry.place))}`] : [], conflicts, edits };
   }
 
   if (storedBracket.length === 0) return { changes: [`${matches.length} matches`], conflicts: [], edits: [] };
   const changed = matches.filter((match) => {
-    const stored = byNumber.get(match.matchNumber);
+    const stored = byPlace.get(match);
     if (!stored) return false;
-    return stored.roundNumber !== match.roundNumber
-      || !sameSide(match.home, stored.homeSportEventParticipantId)
+    return !sameSide(match.home, stored.homeSportEventParticipantId)
       || !sameSide(match.away, stored.awaySportEventParticipantId)
       || stored.isNeutralSite !== match.isNeutralSite
       || timeMoved(match, stored)
       || !sameLink(match, stored);
-  }).map((match) => match.matchNumber);
+  }).map(matchPlaceOf);
   const changes = [
     ...(changed.length > 0 ? [`${matchList(changed)} changed`] : []),
     ...(missing.length > 0 ? [`${matchList(missing)} added`] : []),
@@ -846,8 +846,8 @@ class Loader {
     if (fieldPlan && writesField) await this.writeField(client, stored.id, league, event, participantIds, storedField);
     if (bracketPlan && bracketPlan.conflicts.length === 0 && bracketPlan.changes.length > 0) {
       if (bracketLocked) {
-        for (const { matchNumber, edit } of bracketPlan.edits) {
-          await must(updateEventBracketMatch({ client, path: { eventId: stored.id, matchNumber }, body: edit }), `Update match ${matchNumber} of ${event.name}`);
+        for (const { place, edit } of bracketPlan.edits) {
+          await must(updateEventBracketMatch({ client, path: { eventId: stored.id, ...place }, body: edit }), `Update ${describeMatchPlace(place)} of ${event.name}`);
         }
       } else {
         await this.writeBracket(client, stored.id, event, participantIds, storedBracket);
@@ -869,12 +869,12 @@ class Loader {
 
   /**
    * Loads the file's bracket whole, each side's player key turned into its field row; a match
-   * time the file leaves out keeps the one stored for that match number.
+   * time the file leaves out keeps the one stored for that match's round and number.
    */
   private async writeBracket(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>, storedBracket: readonly StoredMatch[]): Promise<void> {
     const { participants: rows } = await must(listEventParticipants({ client, path: { eventId } }), `Read the field of ${event.name}`);
     const rowByParticipant = new Map(rows.map((row) => [row.participantId, row.id]));
-    const storedTime = new Map(storedBracket.map((match) => [match.matchNumber, match.scheduledDate]));
+    const storedTime = new MatchPlaceMap(storedBracket.map((match) => [match, match.scheduledDate] as const));
     const rowOf = (key: string | null): string | null => {
       if (key === null) return null;
       const participantId = found(participantIds.get(key) ?? undefined, `${event.name}: the participant id for ${key}`);
@@ -886,7 +886,7 @@ class Loader {
       homeSportEventParticipantId: rowOf(match.home),
       awaySportEventParticipantId: rowOf(match.away),
       isNeutralSite: match.isNeutralSite,
-      scheduledDate: match.scheduledAt === undefined ? storedTime.get(match.matchNumber) ?? null : new Date(match.scheduledAt).toISOString(),
+      scheduledDate: match.scheduledAt === undefined ? storedTime.get(match) ?? null : new Date(match.scheduledAt).toISOString(),
       advancesTo: match.advancesTo,
       regionLabel: match.regionLabel ?? null,
     }));
@@ -1042,7 +1042,7 @@ async function fillPlayInPlacesFor(client: Client, eventId: string, event: Sport
  */
 async function cancelPostponedGamesFor(client: Client, eventId: string, event: SportDataEvent): Promise<void> {
   for (const match of (event.matches ?? []).filter((candidate) => candidate.cancelled === true)) {
-    await must(cancelEventMatch({ client, path: { eventId, matchNumber: match.matchNumber } }), `Cancel the postponed match ${match.matchNumber} of ${event.name}`);
+    await must(cancelEventMatch({ client, path: { eventId, ...matchPlaceOf(match) } }), `Cancel the postponed ${describeMatchPlace(match)} of ${event.name}`);
   }
 }
 
@@ -1059,14 +1059,16 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
   const matches = event.matches ?? [];
   if (!matches.some((match) => match.result !== undefined)) return 0;
   const stored = await must(getEventBracket({ client, path: { eventId } }), `Read the bracket of ${event.name}`);
-  const due = new Set(dueResultMatchNumbers(matches, stored.matches, through, eventStart));
+  const dueMatches = dueResultMatches(matches, stored.matches, through, eventStart);
+  const due = new MatchPlaceMap(dueMatches.map((place) => [place, true] as const));
   const rounds = [...new Set(matches.map((match) => match.roundNumber))].sort((left, right) => left - right);
-  const linked = new Set(matches.flatMap((match) => (match.advancesTo ? [`${match.advancesTo.matchNumber}/${match.advancesTo.side}`] : [])));
+  const links = matches.flatMap((match) => (match.advancesTo ? [match.advancesTo] : []));
+  const linked = (match: SportDataMatch, side: MatchSide) => links.some((link) => link.side === side && isAtPlace(link, match));
   for (const roundNumber of rounds) {
     const round = matches.filter((match) => match.roundNumber === roundNumber);
-    const waitsOnReseed = round.some((match) => (match.home === null && !linked.has(`${match.matchNumber}/${MatchSide.HOME}`))
-      || (match.away === null && !linked.has(`${match.matchNumber}/${MatchSide.AWAY}`)));
-    const results = round.flatMap((match) => (match.result && due.has(match.matchNumber) ? [{ matchNumber: match.matchNumber, result: match.result, periodScores: match.periodScores ?? [] }] : []));
+    const waitsOnReseed = round.some((match) => (match.home === null && !linked(match, MatchSide.HOME))
+      || (match.away === null && !linked(match, MatchSide.AWAY)));
+    const results = round.flatMap((match) => (match.result && due.has(match) ? [{ place: matchPlaceOf(match), result: match.result, periodScores: match.periodScores ?? [] }] : []));
     if (results.length === 0) continue;
     const unplaced = stored.matches.some((match) => match.roundNumber === roundNumber
       && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null));
@@ -1074,9 +1076,9 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
       const proposal = await must(proposeEventRoundMatchups({ client, path: { eventId, roundNumber } }), `Propose round ${roundNumber} of ${event.name}`);
       await must(setEventRoundMatchups({ client, path: { eventId, roundNumber }, body: { matches: proposal.matches } }), `Place round ${roundNumber} of ${event.name}`);
     }
-    for (const { matchNumber, result, periodScores } of results) {
+    for (const { place, result, periodScores } of results) {
       for (const { periodNumber, ...score } of periodScores) {
-        await must(recordEventMatchPeriodScore({ client, path: { eventId, matchNumber, periodNumber }, body: score }), `Enter the score at the end of period ${periodNumber} of match ${matchNumber} of ${event.name}`);
+        await must(recordEventMatchPeriodScore({ client, path: { eventId, ...place, periodNumber }, body: score }), `Enter the score at the end of period ${periodNumber} of ${describeMatchPlace(place)} of ${event.name}`);
       }
       const body = {
         winnerSide: result.winner,
@@ -1086,10 +1088,10 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
         awayShootoutScore: result.awayShootoutScore ?? null,
         ending: result.ending,
       };
-      await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
+      await must(recordEventMatchResult({ client, path: { eventId, ...place }, body }), `Enter the result of ${describeMatchPlace(place)} of ${event.name}`);
     }
   }
-  return due.size;
+  return dueMatches.length;
 }
 
 /**
@@ -1123,9 +1125,9 @@ export async function catchUpTestEvents(
       let everyResultIn = true;
       if (playsMatches) {
         const bracket = await must(getEventBracket({ client, path: { eventId: stored.id } }), `Read the bracket of ${stored.name}`);
-        const due = dueResultMatchNumbers(fileEvent.matches ?? [], bracket.matches, through, eventStart);
-        const decided = new Set([...due, ...bracket.matches.filter((match) => match.status !== MatchStatus.SCHEDULED).map((match) => match.matchNumber)]);
-        everyResultIn = (fileEvent.matches ?? []).every((match) => match.result === undefined || decided.has(match.matchNumber));
+        const due = dueResultMatches(fileEvent.matches ?? [], bracket.matches, through, eventStart);
+        const decided = new MatchPlaceMap([...due, ...bracket.matches.filter((match) => match.status !== MatchStatus.SCHEDULED)].map((match) => [match, true] as const));
+        everyResultIn = (fileEvent.matches ?? []).every((match) => match.result === undefined || decided.has(match));
         if (due.length > 0) {
           if (apply) await enterBracketResultsFor(client, stored.id, { ...fileEvent, name: stored.name }, through, eventStart);
           details.push(`${due.length} ${due.length === 1 ? 'result' : 'results'} entered`);

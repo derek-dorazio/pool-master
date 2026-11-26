@@ -435,14 +435,15 @@ describe('results', () => {
 });
 
 describe('bracket', () => {
-  const matchParams = { eventId: EVENT_ID, matchNumber: 4 };
+  const matchParams = { eventId: EVENT_ID, roundNumber: 2, matchNumber: 4 };
+  const place = { roundNumber: 2, matchNumber: 4 };
 
   it('loads a bracket with each game\'s date read from the body, an unscheduled game\'s as none', async () => {
     const { services, handlers } = fakes();
 
-    await callHandler(handlers.loadEventBracket, stubRequest({ params, body: { matches: [{ matchNumber: 1, scheduledDate: ISO }, { matchNumber: 2, scheduledDate: null }] } }));
+    await callHandler(handlers.loadEventBracket, stubRequest({ params, body: { matches: [{ roundNumber: 1, matchNumber: 1, scheduledDate: ISO }, { roundNumber: 2, matchNumber: 1, scheduledDate: null }] } }));
 
-    expect(services.bracket.loadBracket).toHaveBeenCalledWith(EVENT_ID, [{ matchNumber: 1, scheduledDate: AT }, { matchNumber: 2, scheduledDate: null }]);
+    expect(services.bracket.loadBracket).toHaveBeenCalledWith(EVENT_ID, [{ roundNumber: 1, matchNumber: 1, scheduledDate: AT }, { roundNumber: 2, matchNumber: 1, scheduledDate: null }]);
   });
 
   it('edits a game, its date cleared, set or left alone', async () => {
@@ -453,9 +454,9 @@ describe('bracket', () => {
     await callHandler(handlers.updateEventBracketMatch, stubRequest({ params: matchParams, body: { isNeutralSite: true } }));
 
     expect(services.bracket.updateMatch.mock.calls).toEqual([
-      [EVENT_ID, 4, { scheduledDate: null }],
-      [EVENT_ID, 4, { scheduledDate: AT }],
-      [EVENT_ID, 4, { isNeutralSite: true }],
+      [EVENT_ID, place, { scheduledDate: null }],
+      [EVENT_ID, place, { scheduledDate: AT }],
+      [EVENT_ID, place, { isNeutralSite: true }],
     ]);
     expect(edited.body).toMatchObject({ match: { id: 'm1', scheduledDate: null } });
   });
@@ -471,9 +472,9 @@ describe('bracket', () => {
     ] as const) {
       expect((await callHandler(handler, request)).body).toEqual({ matches: [] });
     }
-    expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, 4, 2, { homeScore: 7, awayScore: 3 });
-    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, 4, { homeScore: 70, awayScore: 65 });
-    expect(services.matchResults.cancelMatch).toHaveBeenCalledWith(EVENT_ID, 4);
+    expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, place, 2, { homeScore: 7, awayScore: 3 });
+    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, place, { homeScore: 70, awayScore: 65 });
+    expect(services.matchResults.cancelMatch).toHaveBeenCalledWith(EVENT_ID, place);
   });
 
   it('proposes and sets a round\'s matchups', async () => {
@@ -500,7 +501,7 @@ describe('bracket', () => {
 });
 
 describe('admin result writes on a test event only (#2074)', () => {
-  const matchParams = { eventId: EVENT_ID, matchNumber: 4 };
+  const matchParams = { eventId: EVENT_ID, roundNumber: 2, matchNumber: 4 };
   const roundParams = { eventId: EVENT_ID, roundNumber: 2 };
 
   it('refuses every kept result write on an event covering no test slot before it writes anything, and checks the event before each', async () => {

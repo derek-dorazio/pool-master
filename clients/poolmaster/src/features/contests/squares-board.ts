@@ -129,7 +129,7 @@ export function squaresGameChoices(games: readonly SportEventRoundMatchDto[], no
       && (game.scheduledDate === null || Date.parse(game.scheduledDate) > now.getTime()))
     .sort((left, right) => Number(left.advancesToMatchId !== null) - Number(right.advancesToMatchId !== null)
       || kickoff(left) - kickoff(right)
-      || left.matchNumber - right.matchNumber);
+      || left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber);
 }
 
 /** A side's points in each period and in all, for the score-by-quarter table (#1758). */

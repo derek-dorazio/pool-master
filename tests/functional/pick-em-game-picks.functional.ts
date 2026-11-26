@@ -23,6 +23,7 @@ import {
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
+  isAtPlace,
   MatchSide,
   MatchStatus,
   PickEmMode,
@@ -144,17 +145,17 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       path: { eventId },
       body: {
         matches: [
-          { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: firstKickoff.toISOString(), advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
-          { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: secondKickoff.toISOString(), advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
-          { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+          { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: firstKickoff.toISOString(), advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
+          { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: secondKickoff.toISOString(), advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
+          { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
         ],
       },
     });
     expect(loaded.response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     // The final is called off, so it is not one of the week's games.
-    await db.sportEventRoundMatch.updateMany({ where: { sportEventId: eventId, matchNumber: 3 }, data: { status: MatchStatus.CANCELLED } });
-    const games = await db.sportEventRoundMatch.findMany({ where: { sportEventId: eventId }, orderBy: { matchNumber: 'asc' } });
+    await db.sportEventRoundMatch.updateMany({ where: { sportEventId: eventId, sportEventRound: { roundNumber: 2 }, matchNumber: 1 }, data: { status: MatchStatus.CANCELLED } });
+    const games = await db.sportEventRoundMatch.findMany({ where: { sportEventId: eventId }, orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }] });
     const [game1, game2] = [expectDefined(games[0]), expectDefined(games[1])];
 
     // --- A confidence pick'em contest, opened and entered by two teams -------------------------
@@ -267,7 +268,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     );
     const swapped = expectDefined((await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [pick(game2, 'home', 1)] } })).data);
     expect(swapped.status).toBe(ContestEntryStatus.SUBMITTED);
-    expect(swapped.games.find((game) => game.matchNumber === 2)?.pick?.sportEventParticipantId).toBe(game2.homeSportEventParticipantId);
+    expect(swapped.games.find((game) => isAtPlace(game, { roundNumber: 1, matchNumber: 2 }))?.pick?.sportEventParticipantId).toBe(game2.homeSportEventParticipantId);
 
     // The member's team was still in draft at the first kickoff: its week no longer counts or changes.
     expectFunctionalError(

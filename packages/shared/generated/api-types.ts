@@ -2493,7 +2493,7 @@ export interface paths {
         get: operations["getEventBracket"];
         /**
          * Load a sport event's bracket
-         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. 409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats, a round is not the event's, a side names a field row the event lacks or one already named, a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. 409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats within a round, a round is not the event's, a side names a field row the event lacks or one already named, a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         put: operations["loadEventBracket"];
         post?: never;
@@ -2503,7 +2503,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2518,12 +2518,12 @@ export interface paths {
         head?: never;
         /**
          * Edit one match of a sport event's bracket
-         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
+         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a round and match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
          */
         patch: operations["updateEventBracketMatch"];
         trace?: never;
     };
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/result": {
         parameters: {
             query?: never;
             header?: never;
@@ -2543,7 +2543,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/periods/{periodNumber}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2563,7 +2563,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/cancel": {
         parameters: {
             query?: never;
             header?: never;
@@ -9399,7 +9399,7 @@ export interface components {
                 /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                 weekNumber: number | null;
             };
-            /** @description Unique within the event: the bracket slot and the display order. */
+            /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
             matchNumber: number;
             /**
              * Format: uuid
@@ -9479,7 +9479,7 @@ export interface components {
         };
         /** @description An event's bracket. */
         SportEventBracketResponse: {
-            /** @description Every match of the event in match-number order; empty until the bracket is loaded. */
+            /** @description Every match of the event in round order, then match-number order within each round; empty until the bracket is loaded. */
             matches: {
                 /** Format: uuid */
                 id: string;
@@ -9504,7 +9504,7 @@ export interface components {
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
                 };
-                /** @description Unique within the event: the bracket slot and the display order. */
+                /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
                 /**
                  * Format: uuid
@@ -9610,7 +9610,7 @@ export interface components {
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
                 };
-                /** @description Unique within the event: the bracket slot and the display order. */
+                /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
                 /**
                  * Format: uuid
@@ -9692,10 +9692,10 @@ export interface components {
         /** @description The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side. */
         LoadSportEventBracketRequest: {
             matches: {
-                /** @description Unique within the bracket: the slot and the display order. */
-                matchNumber: number;
                 /** @description A round the event has. */
                 roundNumber: number;
+                /** @description Unique within its round (#2161): the match's place in the round and its display order. */
+                matchNumber: number;
                 /**
                  * Format: uuid
                  * @description A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
@@ -9711,7 +9711,9 @@ export interface components {
                 scheduledDate: string | null;
                 /** @description Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed. */
                 advancesTo: {
-                    /** @description A match of this bracket in a later round. */
+                    /** @description A later round of this bracket. */
+                    roundNumber: number;
+                    /** @description A match of that round. */
                     matchNumber: number;
                     /**
                      * @description The side of that match the winner fills, which must not name a team.
@@ -9782,7 +9784,7 @@ export interface components {
         };
         /** @description Both sides of one match of a reseeded round. */
         RoundMatchupDto: {
-            /** @description A match of the round. */
+            /** @description A match of the round, numbered within it. */
             matchNumber: number;
             /**
              * Format: uuid
@@ -9799,7 +9801,7 @@ export interface components {
         SportEventRoundMatchupsResponse: {
             /** @description One per match of the round, in match-number order. */
             matches: {
-                /** @description A match of the round. */
+                /** @description A match of the round, numbered within it. */
                 matchNumber: number;
                 /**
                  * Format: uuid
@@ -9817,7 +9819,7 @@ export interface components {
         SetSportEventRoundMatchupsRequest: {
             /** @description Every match of the round, once each. */
             matches: {
-                /** @description A match of the round. */
+                /** @description A match of the round, numbered within it. */
                 matchNumber: number;
                 /**
                  * Format: uuid
@@ -17433,6 +17435,7 @@ export interface components {
             games: {
                 /** Format: uuid */
                 sportEventRoundMatchId: string;
+                /** @description The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together. */
                 matchNumber: number;
                 roundNumber: number;
                 /** @description The slot the game's round is played in: the round's label. */
@@ -17715,6 +17718,7 @@ export interface components {
             games: {
                 /** Format: uuid */
                 sportEventRoundMatchId: string;
+                /** @description The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together. */
                 matchNumber: number;
                 roundNumber: number;
                 /** @description The slot the game's round is played in: the round's label. */
@@ -21411,7 +21415,7 @@ export interface components {
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
                 };
-                /** @description Unique within the event: the bracket slot and the display order. */
+                /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
                 /**
                  * Format: uuid
@@ -35513,6 +35517,7 @@ export interface operations {
             header?: never;
             path: {
                 eventId: string;
+                roundNumber: number;
                 matchNumber: number;
             };
             cookie?: never;
@@ -35594,6 +35599,7 @@ export interface operations {
             header?: never;
             path: {
                 eventId: string;
+                roundNumber: number;
                 matchNumber: number;
             };
             cookie?: never;
@@ -35675,6 +35681,7 @@ export interface operations {
             header?: never;
             path: {
                 eventId: string;
+                roundNumber: number;
                 matchNumber: number;
                 periodNumber: number;
             };
@@ -35757,6 +35764,7 @@ export interface operations {
             header?: never;
             path: {
                 eventId: string;
+                roundNumber: number;
                 matchNumber: number;
             };
             cookie?: never;

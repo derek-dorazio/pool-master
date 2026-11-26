@@ -333,15 +333,15 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
   // Each later round: half the games of the round before, the region kept through the Elite Eight.
   const rounds: ProviderBracketMatch[][] = [firstRound];
   let previous = firstRound;
-  let nextNumber = firstRound.length + 1;
   while (previous.length > 1) {
     const round: ProviderBracketMatch[] = [];
     for (let index = 0; index + 1 < previous.length; index += 2) {
       const left = previous[index];
       const right = previous[index + 1];
+      // Numbered within its round (#2161), in the draw's order.
+      const next = { roundNumber: left.roundNumber + 1, matchNumber: index / 2 + 1 };
       round.push({
-        matchNumber: nextNumber,
-        roundNumber: left.roundNumber + 1,
+        ...next,
         homeTeamExternalId: null,
         awayTeamExternalId: null,
         isNeutralSite: true,
@@ -349,9 +349,8 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
         advancesTo: null,
         regionLabel: left.regionLabel === right.regionLabel ? left.regionLabel : null,
       });
-      left.advancesTo = { matchNumber: nextNumber, side: MatchSide.HOME };
-      right.advancesTo = { matchNumber: nextNumber, side: MatchSide.AWAY };
-      nextNumber += 1;
+      left.advancesTo = { ...next, side: MatchSide.HOME };
+      right.advancesTo = { ...next, side: MatchSide.AWAY };
     }
     rounds.push(round);
     previous = round;

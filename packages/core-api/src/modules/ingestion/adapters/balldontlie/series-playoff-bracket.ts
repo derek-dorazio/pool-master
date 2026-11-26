@@ -16,7 +16,7 @@
  * better seed (the first half where they tie, as in the final), groups in the league's order.
  */
 
-import { MatchSide } from '@poolmaster/shared/domain';
+import { MatchPlaceMap, MatchSide } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../core/provider-interface';
 import { BracketShapeKind, playoffSeries, type DivisionBracketConference, type PlayoffGame, type PlayoffSeries, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 import { participantFeedId } from './participant-feed-id';
@@ -163,7 +163,6 @@ function byeBracket(leagues: ReadonlyArray<{ name: string; label: string }>,
   teams: readonly PlayoffTeam[],
 ): ProviderBracketMatch[] | null {
   const team = (each: PlayoffTeam) => participantFeedId(each.id);
-  const count = leagues.length;
   const match = (matchNumber: number, roundNumber: number, regionLabel: string | null, fill: Partial<ProviderBracketMatch> = {}): ProviderBracketMatch => ({
     matchNumber, roundNumber, homeTeamExternalId: null, awayTeamExternalId: null, isNeutralSite: false, scheduledAt: null, advancesTo: null, regionLabel, ...fill,
   });
@@ -177,23 +176,24 @@ function byeBracket(leagues: ReadonlyArray<{ name: string; label: string }>,
     const bye = (seed: number) => teams.find((each) => metadataText(each, 'league') === name && ranks.get(each.id) === seed);
     const [fourFive, threeSix, first, second] = [headedBy(4), headedBy(3), bye(1), bye(2)];
     if (inLeague.length !== 2 || fourFive === undefined || threeSix === undefined || first === undefined || second === undefined) return null;
+    // Each match numbered within its round (#2161), the leagues in order.
     const firstRoundNumber = 2 * index + 1;
-    const divisionNumber = 2 * count + 2 * index + 1;
-    const championshipNumber = 4 * count + index + 1;
+    const divisionNumber = 2 * index + 1;
+    const championshipNumber = index + 1;
     rounds[0].push(
-      match(firstRoundNumber, 1, label, { homeTeamExternalId: team(fourFive.top), awayTeamExternalId: team(fourFive.bottom), scheduledAt: new Date(fourFive.series.games[0].start), advancesTo: { matchNumber: divisionNumber, side: MatchSide.AWAY } }),
-      match(firstRoundNumber + 1, 1, label, { homeTeamExternalId: team(threeSix.top), awayTeamExternalId: team(threeSix.bottom), scheduledAt: new Date(threeSix.series.games[0].start), advancesTo: { matchNumber: divisionNumber + 1, side: MatchSide.AWAY } }),
+      match(firstRoundNumber, 1, label, { homeTeamExternalId: team(fourFive.top), awayTeamExternalId: team(fourFive.bottom), scheduledAt: new Date(fourFive.series.games[0].start), advancesTo: { roundNumber: 2, matchNumber: divisionNumber, side: MatchSide.AWAY } }),
+      match(firstRoundNumber + 1, 1, label, { homeTeamExternalId: team(threeSix.top), awayTeamExternalId: team(threeSix.bottom), scheduledAt: new Date(threeSix.series.games[0].start), advancesTo: { roundNumber: 2, matchNumber: divisionNumber + 1, side: MatchSide.AWAY } }),
     );
     rounds[1].push(
-      match(divisionNumber, 2, label, { homeTeamExternalId: team(first), advancesTo: { matchNumber: championshipNumber, side: MatchSide.HOME } }),
-      match(divisionNumber + 1, 2, label, { homeTeamExternalId: team(second), advancesTo: { matchNumber: championshipNumber, side: MatchSide.AWAY } }),
+      match(divisionNumber, 2, label, { homeTeamExternalId: team(first), advancesTo: { roundNumber: 3, matchNumber: championshipNumber, side: MatchSide.HOME } }),
+      match(divisionNumber + 1, 2, label, { homeTeamExternalId: team(second), advancesTo: { roundNumber: 3, matchNumber: championshipNumber, side: MatchSide.AWAY } }),
     );
     // The first league's champion (the AL's) is home in the World Series. That side is display
     // only: home field there goes to the better record, which is not modelled, and nothing in a
     // series is neutral or scored by side.
-    rounds[2].push(match(championshipNumber, 3, label, { advancesTo: { matchNumber: 5 * count + 1, side: index === 0 ? MatchSide.HOME : MatchSide.AWAY } }));
+    rounds[2].push(match(championshipNumber, 3, label, { advancesTo: { roundNumber: 4, matchNumber: 1, side: index === 0 ? MatchSide.HOME : MatchSide.AWAY } }));
   }
-  return [...rounds.flat(), match(5 * count + 1, 4, null)];
+  return [...rounds.flat(), match(1, 4, null)];
 }
 
 /** The first round's matches numbered in order, each two consecutive ones' winners meeting next, to the final. */
@@ -222,12 +222,12 @@ function linkBracket(slots: readonly FirstRoundSlot[]): ProviderBracketMatch[] {
       // home court there goes to the better record, which is not modelled, and a side is display
       // only, since nothing in a series is neutral or scored by side.
       const homeIsLeft = left.bestSeed <= right.bestSeed;
-      const matchNumber = bracket.length + 1;
-      left.match.advancesTo = { matchNumber, side: homeIsLeft ? MatchSide.HOME : MatchSide.AWAY };
-      right.match.advancesTo = { matchNumber, side: homeIsLeft ? MatchSide.AWAY : MatchSide.HOME };
+      // Numbered within its round (#2161), in the draw's order.
+      const next = { roundNumber: left.match.roundNumber + 1, matchNumber: index / 2 + 1 };
+      left.match.advancesTo = { ...next, side: homeIsLeft ? MatchSide.HOME : MatchSide.AWAY };
+      right.match.advancesTo = { ...next, side: homeIsLeft ? MatchSide.AWAY : MatchSide.HOME };
       const match: ProviderBracketMatch = {
-        matchNumber,
-        roundNumber: left.match.roundNumber + 1,
+        ...next,
         homeTeamExternalId: null,
         awayTeamExternalId: null,
         isNeutralSite: false,
@@ -269,11 +269,11 @@ export function toPlayoffSeriesGames(games: readonly PlayoffGame[], bracket: rea
 
 /** The side a first-round team would take in a round's match, following the links; null off the bracket. */
 function bracketSides(bracket: readonly ProviderBracketMatch[]): (roundNumber: number, teamExternalId: string) => MatchSide | null {
-  const byNumber = new Map(bracket.map((match) => [match.matchNumber, match]));
+  const byPlace = new MatchPlaceMap(bracket.map((match) => [match, match] as const));
   return (roundNumber, teamExternalId) => {
     let match = bracket.find((each) => each.roundNumber === 1 && (each.homeTeamExternalId === teamExternalId || each.awayTeamExternalId === teamExternalId));
     while (match?.advancesTo) {
-      const next = byNumber.get(match.advancesTo.matchNumber);
+      const next = byPlace.get(match.advancesTo);
       if (next?.roundNumber === roundNumber) return match.advancesTo.side;
       match = next;
     }

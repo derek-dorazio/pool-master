@@ -158,7 +158,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-08T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 5,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -184,7 +185,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-09T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 5,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -208,7 +210,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-08T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 6,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "result": {
@@ -232,7 +235,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-09T17:30:00Z",
               "advancesTo": {
-                "matchNumber": 6,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -249,14 +253,15 @@
               ]
             },
             {
-              "matchNumber": 5,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 7,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -273,14 +278,15 @@
               ]
             },
             {
-              "matchNumber": 6,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-16T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 7,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -297,7 +303,7 @@
               ]
             },
             {
-              "matchNumber": 7,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,

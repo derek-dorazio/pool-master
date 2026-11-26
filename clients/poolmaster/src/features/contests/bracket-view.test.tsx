@@ -25,8 +25,8 @@ describe('BracketView on a phone', () => {
     expect(screen.getByTestId('bracket-board')).toHaveAttribute('data-layout', 'phone');
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['South', 'East', 'West', 'Midwest', 'Final Four']);
     expect(screen.getByRole('tab', { name: 'South' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByTestId('bracket-game-57')).toBeInTheDocument();
-    expect(screen.queryByTestId('bracket-game-58')).not.toBeInTheDocument();
+    expect(screen.getByTestId('bracket-game-4-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('bracket-game-4-2')).not.toBeInTheDocument();
   });
 
   it('opens a region at the round being played, two rounds and the region\'s winner, with the round before as a link back', () => {
@@ -88,13 +88,13 @@ describe('BracketView on a phone', () => {
 
     const middle = screen.getByTestId('bracket-middle');
     expect(screen.queryByTestId('bracket-round-nav')).not.toBeInTheDocument();
-    expect(within(middle).getByTestId('bracket-game-61')).toHaveTextContent('Auburn');
-    expect(within(middle).getByTestId('bracket-game-62')).toHaveTextContent('Kentucky');
-    expect(within(middle).getByTestId('bracket-game-63')).toBeInTheDocument();
+    expect(within(middle).getByTestId('bracket-game-5-1')).toHaveTextContent('Auburn');
+    expect(within(middle).getByTestId('bracket-game-5-2')).toHaveTextContent('Kentucky');
+    expect(within(middle).getByTestId('bracket-game-6-1')).toBeInTheDocument();
     expect(within(middle).getByTestId('bracket-champion')).toHaveTextContent('Your champion');
     expect(within(middle).getByTestId('bracket-champion-name')).toHaveTextContent('Auburn');
     expect(within(middle).getByTestId('bracket-view-tiebreaker')).toHaveTextContent('Tiebreaker: 148 total points in the final.');
-    const [semifinalOne, final, semifinalTwo] = ['bracket-game-61', 'bracket-game-63', 'bracket-game-62'].map((id) => screen.getByTestId(id));
+    const [semifinalOne, final, semifinalTwo] = ['bracket-game-5-1', 'bracket-game-6-1', 'bracket-game-5-2'].map((id) => screen.getByTestId(id));
     expect(semifinalOne.compareDocumentPosition(final) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(final.compareDocumentPosition(semifinalTwo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -118,9 +118,9 @@ describe('BracketView on a phone', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId(`bracket-game-1-team-${TEAMS.vermont.sportEventParticipantId}`));
+    fireEvent.click(screen.getByTestId(`bracket-game-1-1-team-${TEAMS.vermont.sportEventParticipantId}`));
     expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ matchNumber: 1 }), TEAMS.vermont);
-    expect(screen.getByTestId('bracket-game-5-open-home')).toHaveTextContent('Elite Eight winner');
+    expect(screen.getByTestId('bracket-game-2-1-open-home')).toHaveTextContent('Elite Eight winner');
   });
 
   it('holds every pick while one is saving', () => {
@@ -132,7 +132,7 @@ describe('BracketView on a phone', () => {
       />,
     );
 
-    expect(screen.getByTestId(`bracket-game-1-team-${TEAMS.duke.sportEventParticipantId}`)).toBeDisabled();
+    expect(screen.getByTestId(`bracket-game-1-1-team-${TEAMS.duke.sportEventParticipantId}`)).toBeDisabled();
   });
 
   it('draws a bracket with no regions as its middle alone, with no tabs', () => {

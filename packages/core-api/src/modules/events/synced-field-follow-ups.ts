@@ -17,7 +17,7 @@ const dateOrNull = (iso: string | null): Date | null => (iso === null ? null : n
 /** How many of the event's games one slate sync loaded or changed. */
 function gamesChanged(slate: ProviderGameSlateOutcome | null): number {
   if (slate?.outcome === 'LOADED') return slate.matchCount;
-  if (slate?.outcome === 'MATCHES_UPDATED') return slate.matchNumbers.length;
+  if (slate?.outcome === 'MATCHES_UPDATED') return slate.matches.length;
   return 0;
 }
 

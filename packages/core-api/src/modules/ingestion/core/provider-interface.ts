@@ -202,16 +202,16 @@ export interface SportEventDetail extends SportEvent {
   bracket?: ProviderBracketMatch[];
 }
 
-/** One match of a provider's fixed-shape bracket, numbered and linked as the event's bracket is. */
+/** One match of a provider's fixed-shape bracket, numbered within its round and linked as the event's bracket is (#2161). */
 export interface ProviderBracketMatch {
-  matchNumber: number;
   roundNumber: number;
+  matchNumber: number;
   homeTeamExternalId: string | null;
   awayTeamExternalId: string | null;
   isNeutralSite: boolean;
   scheduledAt: Date | null;
   /** The match and side its winner goes to; null for the final, and for a match before a reseed. */
-  advancesTo: { matchNumber: number; side: MatchSide } | null;
+  advancesTo: { roundNumber: number; matchNumber: number; side: MatchSide } | null;
   regionLabel: string | null;
 }
 

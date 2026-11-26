@@ -17657,7 +17657,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Unique within the event: the bracket slot and the display order."
+            "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
           },
           "homeSportEventParticipantId": {
             "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
@@ -17953,7 +17953,7 @@
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "Unique within the event: the bracket slot and the display order."
+                  "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
                 },
                 "homeSportEventParticipantId": {
                   "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
@@ -18173,7 +18173,7 @@
               "additionalProperties": false,
               "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
             },
-            "description": "Every match of the event in match-number order; empty until the bracket is loaded."
+            "description": "Every match of the event in round order, then match-number order within each round; empty until the bracket is loaded."
           }
         },
         "required": [
@@ -18256,7 +18256,7 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Unique within the event: the bracket slot and the display order."
+                "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
               },
               "homeSportEventParticipantId": {
                 "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
@@ -18493,17 +18493,17 @@
             "items": {
               "type": "object",
               "properties": {
-                "matchNumber": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 9007199254740991,
-                  "description": "Unique within the bracket: the slot and the display order."
-                },
                 "roundNumber": {
                   "type": "integer",
                   "minimum": 1,
                   "maximum": 9007199254740991,
                   "description": "A round the event has."
+                },
+                "matchNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "Unique within its round (#2161): the match's place in the round and its display order."
                 },
                 "homeSportEventParticipantId": {
                   "description": "A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).",
@@ -18538,11 +18538,17 @@
                     "null"
                   ],
                   "properties": {
+                    "roundNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "A later round of this bracket."
+                    },
                     "matchNumber": {
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991,
-                      "description": "A match of this bracket in a later round."
+                      "description": "A match of that round."
                     },
                     "side": {
                       "type": "string",
@@ -18554,6 +18560,7 @@
                     }
                   },
                   "required": [
+                    "roundNumber",
                     "matchNumber",
                     "side"
                   ],
@@ -18570,8 +18577,8 @@
                 }
               },
               "required": [
-                "matchNumber",
                 "roundNumber",
+                "matchNumber",
                 "homeSportEventParticipantId",
                 "awaySportEventParticipantId",
                 "isNeutralSite",
@@ -18748,7 +18755,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991,
-            "description": "A match of the round."
+            "description": "A match of the round, numbered within it."
           },
           "homeSportEventParticipantId": {
             "type": "string",
@@ -18781,7 +18788,7 @@
                   "type": "integer",
                   "minimum": 1,
                   "maximum": 9007199254740991,
-                  "description": "A match of the round."
+                  "description": "A match of the round, numbered within it."
                 },
                 "homeSportEventParticipantId": {
                   "type": "string",
@@ -18825,7 +18832,7 @@
                   "type": "integer",
                   "minimum": 1,
                   "maximum": 9007199254740991,
-                  "description": "A match of the round."
+                  "description": "A match of the round, numbered within it."
                 },
                 "homeSportEventParticipantId": {
                   "type": "string",
@@ -41143,7 +41150,8 @@
                 "matchNumber": {
                   "type": "integer",
                   "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
+                  "maximum": 9007199254740991,
+                  "description": "The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together."
                 },
                 "roundNumber": {
                   "type": "integer",
@@ -42054,7 +42062,8 @@
                 "matchNumber": {
                   "type": "integer",
                   "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
+                  "maximum": 9007199254740991,
+                  "description": "The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together."
                 },
                 "roundNumber": {
                   "type": "integer",
@@ -53144,7 +53153,7 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Unique within the event: the bracket slot and the display order."
+                "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
               },
               "homeSportEventParticipantId": {
                 "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
@@ -87553,7 +87562,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. 409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats, a round is not the event's, a side names a field row the event lacks or one already named, a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. 409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats within a round, a round is not the event's, a side names a field row the event lacks or one already named, a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -87649,14 +87658,14 @@
         }
       }
     },
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}": {
       "patch": {
         "operationId": "updateEventBracketMatch",
         "summary": "Edit one match of a sport event's bracket",
         "tags": [
           "Events"
         ],
-        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.",
+        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a round and match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -87675,6 +87684,15 @@
             },
             "in": "path",
             "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
             "required": true
           },
           {
@@ -87761,7 +87779,7 @@
         }
       }
     },
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/result": {
       "put": {
         "operationId": "recordEventMatchResult",
         "summary": "Enter a match's result",
@@ -87787,6 +87805,15 @@
             },
             "in": "path",
             "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
             "required": true
           },
           {
@@ -87873,7 +87900,7 @@
         }
       }
     },
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/periods/{periodNumber}": {
       "put": {
         "operationId": "recordEventMatchPeriodScore",
         "summary": "Enter a game's score at the end of a period",
@@ -87899,6 +87926,15 @@
             },
             "in": "path",
             "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
             "required": true
           },
           {
@@ -87994,7 +88030,7 @@
         }
       }
     },
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel": {
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/cancel": {
       "post": {
         "operationId": "cancelEventMatch",
         "summary": "Cancel a game",
@@ -88010,6 +88046,15 @@
             },
             "in": "path",
             "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
             "required": true
           },
           {
