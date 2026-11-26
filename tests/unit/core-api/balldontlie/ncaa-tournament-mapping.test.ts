@@ -148,9 +148,9 @@ describe('NCAA men\'s basketball teams', () => {
 describe('NCAA men\'s tournament game scores', () => {
   it('gives each game from the round of 64 on whose teams are decided, leaving out the First Four and an unknown state', () => {
     expect(toNcaaGameScoreUpdates(NCAA_MEN, bracket2026)).toEqual([
-      { externalGameId: '401900101', homeTeamExternalId: '57', awayTeamExternalId: '2390', state: ProviderGameState.FINAL, homeScore: 81, awayScore: 58 },
-      { externalGameId: '401900102', homeTeamExternalId: '194', awayTeamExternalId: '2628', state: ProviderGameState.IN_PROGRESS, homeScore: 44, awayScore: 47 },
-      { externalGameId: '401900103', homeTeamExternalId: '150', awayTeamExternalId: '2561', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { providerGameId: '401900101', homeTeamExternalId: '57', awayTeamExternalId: '2390', state: ProviderGameState.FINAL, homeScore: 81, awayScore: 58 },
+      { providerGameId: '401900102', homeTeamExternalId: '194', awayTeamExternalId: '2628', state: ProviderGameState.IN_PROGRESS, homeScore: 44, awayScore: 47 },
+      { providerGameId: '401900103', homeTeamExternalId: '150', awayTeamExternalId: '2561', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
     ]);
     expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, unknown2026])).toEqual([]);
   });
@@ -158,7 +158,7 @@ describe('NCAA men\'s tournament game scores', () => {
   it('names the First Four winner in its round of 64 game, the team that fills that side\'s play-in place', () => {
     const texasInRoundOf64: NcaaBracketGame = { ...duke2025, status_state: CompetitionStatusState.SCHEDULED, away_team: { ...firstFour2025.home_team, score: null } };
     expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, texasInRoundOf64])).toEqual([{
-      externalGameId: '401856490',
+      providerGameId: '401856490',
       homeTeamExternalId: '150',
       awayTeamExternalId: '251',
       state: ProviderGameState.SCHEDULED,
@@ -246,7 +246,7 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
   });
 
   it('gives game scores from round 1 on, leaving out the round 0 First Four', () => {
-    expect(toNcaaGameScoreUpdates(NCAA_WOMEN, womens2025).map((game) => [game.externalGameId, game.homeTeamExternalId, game.awayTeamExternalId, game.homeScore, game.awayScore])).toEqual([
+    expect(toNcaaGameScoreUpdates(NCAA_WOMEN, womens2025).map((game) => [game.providerGameId, game.homeTeamExternalId, game.awayTeamExternalId, game.homeScore, game.awayScore])).toEqual([
       ['401856710', '41', '2636', 88, 50],
       ['401856711', '150', '2655', 74, 61],
       ['401856772', '41', '2579', 72, 66],

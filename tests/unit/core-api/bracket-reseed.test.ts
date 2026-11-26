@@ -66,7 +66,6 @@ function nflPlayoff(): SportEventRoundMatch[] {
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region,
     homeSpread: null,
-    externalGameId: null,
     resultSource: null,
     completedAt: null,
     periodScores: [],

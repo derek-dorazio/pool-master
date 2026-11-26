@@ -172,7 +172,7 @@ export function toWorldCupGameScoreUpdates(matches: readonly FifaMatch[]): GameS
     // A final with no score is passed on as one, and skipped there.
     const started = hasStarted(state);
     return [{
-      externalGameId: String(required(match.id, FIFA_WC_MATCHES_PATH, 'a match with both teams', 'id')),
+      providerGameId: String(required(match.id, FIFA_WC_MATCHES_PATH, 'a match with both teams', 'id')),
       homeTeamExternalId: participantFeedId(required(match.home_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'home team id')),
       awayTeamExternalId: participantFeedId(required(match.away_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'away team id')),
       state,
@@ -202,7 +202,7 @@ export function toWorldCupScheduledGames(knockout: readonly FifaMatch[]): Provid
     const away = decided(match.away_team);
     if (!home || !away || match.id === undefined) return [];
     return [{
-      externalGameId: String(match.id),
+      games: [{ providerGameId: String(match.id), gameNumber: 1 }],
       roundNumber: rounds.of(match),
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),

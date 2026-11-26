@@ -305,6 +305,9 @@ export const enUS = {
       SLOT_OUTSIDE_SEASON: 'Games outside the Season',
       GAMES_UNPLACED: 'Games in no slot',
       SLOT_DATES_NEEDED: 'Slot dates needed',
+      GAME_UNKNOWN: 'Webhook for an unknown game',
+      GAME_ID_REISSUED: 'Game id re-issued',
+      GAME_MOVED: 'Game moved to another event',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

@@ -114,6 +114,7 @@ import {
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaSportEventRoundMatchGameRepository,
   PrismaSportLeagueRepository,
   PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
@@ -486,6 +487,9 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     prefix: '/api/v1/provider-webhooks',
     notifications: new ProviderNotificationService({
       sportEvents: new PrismaSportEventRepository(prisma),
+      games: new PrismaSportEventRoundMatchGameRepository(prisma),
+      sportLeagues: new PrismaSportLeagueRepository(prisma),
+      findings: integrationSyncFindings(prisma, providerSettings),
       jobs: backgroundJobs.queue,
     }),
     webhooks: providerWebhooks,

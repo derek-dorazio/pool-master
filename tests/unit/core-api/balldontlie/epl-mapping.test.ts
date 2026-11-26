@@ -132,12 +132,12 @@ describe('Premier League teams', () => {
 describe('Premier League match scores', () => {
   it('gives every match\'s teams, state and score, a draw as level scores, leaving out an unknown state', () => {
     expect(toEplGameScoreUpdates([...matchweek11, ...matchweek12])).toEqual([
-      { externalGameId: '900111', homeTeamExternalId: '12', awayTeamExternalId: '9', state: ProviderGameState.FINAL, homeScore: 2, awayScore: 1 },
-      { externalGameId: '900112', homeTeamExternalId: '1', awayTeamExternalId: '6', state: ProviderGameState.FINAL, homeScore: 1, awayScore: 1 },
-      { externalGameId: '900113', homeTeamExternalId: '11', awayTeamExternalId: '8', state: ProviderGameState.IN_PROGRESS, homeScore: 1, awayScore: 0 },
-      { externalGameId: '900114', homeTeamExternalId: '4', awayTeamExternalId: '10', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
-      { externalGameId: '900115', homeTeamExternalId: '2', awayTeamExternalId: '17', state: ProviderGameState.POSTPONED, homeScore: null, awayScore: null },
-      { externalGameId: '900121', homeTeamExternalId: '1', awayTeamExternalId: '12', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { providerGameId: '900111', homeTeamExternalId: '12', awayTeamExternalId: '9', state: ProviderGameState.FINAL, homeScore: 2, awayScore: 1 },
+      { providerGameId: '900112', homeTeamExternalId: '1', awayTeamExternalId: '6', state: ProviderGameState.FINAL, homeScore: 1, awayScore: 1 },
+      { providerGameId: '900113', homeTeamExternalId: '11', awayTeamExternalId: '8', state: ProviderGameState.IN_PROGRESS, homeScore: 1, awayScore: 0 },
+      { providerGameId: '900114', homeTeamExternalId: '4', awayTeamExternalId: '10', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { providerGameId: '900115', homeTeamExternalId: '2', awayTeamExternalId: '17', state: ProviderGameState.POSTPONED, homeScore: null, awayScore: null },
+      { providerGameId: '900121', homeTeamExternalId: '1', awayTeamExternalId: '12', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
     ]);
   });
 

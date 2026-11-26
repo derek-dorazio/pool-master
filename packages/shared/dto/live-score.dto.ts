@@ -53,7 +53,8 @@ export type GolfRoundUpdate = z.infer<typeof GolfRoundUpdateSchema>;
  * lists the teams the other way round from the match still scores the right side.
  */
 export const GameScoreUpdateSchema = z.object({
-  externalGameId: z.string().min(1).describe('Provider-side game identifier; the match linked to it takes its result.'),
+  providerGameId: z.string().min(1).describe('Provider-side game identifier; the Game mapped to it takes its score (#2007).'),
+  gameNumber: z.number().int().min(1).optional().describe('The game\'s number in its best-of series, in the order the provider plays them (#2007); left out for a single game, which is its match\'s Game 1.'),
   homeTeamExternalId: z.string().min(1).describe('Provider-side identifier of the team the provider lists at home.'),
   awayTeamExternalId: z.string().min(1).describe('Provider-side identifier of the team the provider lists away.'),
   state: z.enum(ProviderGameState),

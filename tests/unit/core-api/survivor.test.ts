@@ -220,7 +220,7 @@ function game(id: string, overrides: Partial<SportEventRoundMatch> = {}): SportE
     id, sportEventId: 'week', roundNumber: 1, slot: weekRoundSlot(), matchNumber: 1,
     homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`,
     isNeutralSite: false, scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null,
-    homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [],
+    homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
     createdAt: T0, updatedAt: T0, ...overrides,
   };
 }

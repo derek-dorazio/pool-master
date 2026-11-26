@@ -141,7 +141,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       );
       expect(detail?.games).toHaveLength(4);
       expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '25', awayTeamExternalId: '27', isNeutralSite: false });
-      expect(detail?.games?.[0].externalGameId).toMatch(/^\d+$/);
+      expect(detail?.games?.[0].games[0]?.providerGameId).toMatch(/^\d+$/);
       expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
       const teamsInGames = detail?.games?.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]);
       expect(teamsInGames?.slice().sort()).toEqual(detail?.participants.map((team) => team.externalId).sort());
@@ -156,7 +156,7 @@ describe('BalldontlieAdapter (NFL)', () => {
 
       expect(detail).toMatchObject({ name: 'NFL Playoffs', status: 'IN_PROGRESS', participantCount: 14, rounds: 4 });
       expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.metadata.seed])).toEqual([['17', 1], ['3', 2]]);
-      expect(detail?.games?.map((game) => [game.externalGameId, game.roundNumber])).toEqual([['403601', 1], ['403602', 1], ['403603', 2]]);
+      expect(detail?.games?.map((game) => [game.games[0]?.providerGameId, game.roundNumber])).toEqual([['403601', 1], ['403602', 1], ['403603', 2]]);
       expect(detail?.bracket).toHaveLength(13);
       expect(detail?.bracket?.[2]).toMatchObject({ matchNumber: 3, homeTeamExternalId: '13', awayTeamExternalId: '18', scheduledAt: new Date('2027-01-16T21:30:00.000Z') });
       expect(requestLine(harness.api)).toEqual([
@@ -176,7 +176,7 @@ describe('BalldontlieAdapter (NFL)', () => {
 
       expect(detail).toMatchObject({ participantCount: 5 });
       expect(detail?.participants.map((team) => team.externalId)).not.toContain('901');
-      expect(detail?.games?.map((game) => game.externalGameId)).toEqual(['403601', '403602', '403603']);
+      expect(detail?.games?.map((game) => game.games[0]?.providerGameId)).toEqual(['403601', '403602', '403603']);
       expect(detail?.bracket).toBeUndefined();
     });
 
@@ -213,7 +213,7 @@ describe('BalldontlieAdapter (NFL)', () => {
     const result = await harness.adapter.getLiveScores('nfl-2026-week-12');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'nfl-2026-week-12' });
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.state]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.state]) : []).toEqual([
       ['401201', ProviderGameState.FINAL],
       ['401202', ProviderGameState.IN_PROGRESS],
       ['401203', ProviderGameState.SCHEDULED],

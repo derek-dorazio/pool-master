@@ -108,8 +108,9 @@ export async function seedTiers(sportEventId: string, field: readonly { id: stri
 
 /**
  * An NFL week of `games` games an hour apart from `startDate`, each between two teams of its own,
- * so no two weeks share a team. With `played`, the first that many games are final, the home
- * team winning 20-17.
+ * so no two weeks share a team, each match holding its Game 1 mapped to a provider game id as
+ * the sync leaves it (#2007). With `played`, the first that many games are final, the home team
+ * winning 20-17.
  */
 export async function seedFootballWeek({ games, startDate, status, played = 0 }: { games: number; startDate: Date; status: SportEventStatus; played?: number }) {
   const prisma = getPrisma();
@@ -137,6 +138,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   });
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: startDate } });
   const matches = [];
+  const provider = await prisma.provider.findUniqueOrThrow({ where: { code: 'BALLDONTLIE' }, select: { id: true } });
   for (let matchNumber = 1; matchNumber <= games; matchNumber += 1) {
     const team = async (side: string) => {
       const participant = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${side} ${suffix} ${matchNumber}`, participantType: 'TEAM' } });
@@ -144,7 +146,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
     };
     const [home, away] = await Promise.all([team('Home'), team('Away')]);
     const final = matchNumber <= played;
-    matches.push(await prisma.sportEventRoundMatch.create({
+    const match = await prisma.sportEventRoundMatch.create({
       data: {
         sportEventId: event.id,
         sportEventRoundId: round.id,
@@ -155,7 +157,19 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
         scheduledDate: new Date(startDate.getTime() + (matchNumber - 1) * HOUR),
         ...(final ? { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17 } : {}),
       },
-    }));
+    });
+    await prisma.sportEventRoundMatchGame.create({
+      data: {
+        sportEventId: event.id,
+        sportEventRoundMatchId: match.id,
+        sportEventSlotId: round.sportEventSlotId,
+        gameNumber: 1,
+        scheduledDate: match.scheduledDate,
+        ...(final ? { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17 } : {}),
+        providerMappings: { create: { providerId: provider.id, externalId: `${suffix}-${String(matchNumber)}` } },
+      },
+    });
+    matches.push(match);
   }
   return { event, games: matches };
 }

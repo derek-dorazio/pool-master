@@ -172,7 +172,7 @@ export function toNflScheduledGames(games: readonly NflGame[]): ProviderSchedule
 
 function toNflScheduledGame(game: NflGame): ProviderScheduledGame {
   return {
-    externalGameId: String(required(game.id, game.id, 'id')),
+    games: [{ providerGameId: String(required(game.id, game.id, 'id')), gameNumber: 1 }],
     roundNumber: 1,
     homeTeamExternalId: participantFeedId(required(required(game.home_team, game.id, 'home_team').id, game.id, 'home_team.id')),
     awayTeamExternalId: participantFeedId(required(required(game.visitor_team, game.id, 'visitor_team').id, game.id, 'visitor_team.id')),
@@ -294,7 +294,7 @@ export function toGameScoreUpdates(games: readonly NflGame[]): GameScoreUpdate[]
     // A final with no score is passed on as one, and skipped there.
     const started = hasStarted(state);
     return [{
-      externalGameId: String(required(game.id, game.id, 'id')),
+      providerGameId: String(required(game.id, game.id, 'id')),
       homeTeamExternalId: participantFeedId(home),
       awayTeamExternalId: participantFeedId(visitor),
       state,

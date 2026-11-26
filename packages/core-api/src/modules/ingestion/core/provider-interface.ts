@@ -216,16 +216,27 @@ export interface ProviderBracketMatch {
 }
 
 /**
- * One game of an event as its provider schedules it (ADR 0011, #1728): the provider's game id,
- * the round it is in, both teams by the provider's external id, and its kickoff.
+ * One match of an event as its provider schedules it (ADR 0011, #1728): the provider's games of
+ * it, the round it is in, both teams by the provider's external id, and its kickoff.
  */
 export interface ProviderScheduledGame {
-  externalGameId: string;
+  /**
+   * The provider's games of the match, each with its number (#2007): one for a single game, and
+   * a best-of series' games scheduled so far, Game 1 first. The schedule sync maps each to its Game.
+   */
+  games: ProviderScheduledGameId[];
   roundNumber: number;
   homeTeamExternalId: string;
   awayTeamExternalId: string;
   scheduledAt: Date | null;
   isNeutralSite: boolean;
+}
+
+/** A provider's id for one game of a match, with the game's number in it. */
+export interface ProviderScheduledGameId {
+  providerGameId: string;
+  /** 1 for a single game and a series' first; a series' games in the order they are played. */
+  gameNumber: number;
 }
 
 export interface ProviderParticipant {

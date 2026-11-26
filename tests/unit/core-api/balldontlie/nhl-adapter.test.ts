@@ -190,7 +190,7 @@ describe('BalldontlieAdapter (NHL)', () => {
     const result = await harness.adapter.getLiveScores('nhl-2025-postseason');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'nhl-2025-postseason' });
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
       ['2025030111', '3', ProviderGameState.FINAL, 3, 2],
       ['2025030121', '11', ProviderGameState.IN_PROGRESS, 1, 1],
       ['2025030131', '15', ProviderGameState.SCHEDULED, null, null],
@@ -206,7 +206,7 @@ describe('BalldontlieAdapter (NHL)', () => {
     const result = await harness.adapter.getLiveScores('nhl-2025-postseason');
 
     expect(detail).toMatchObject({ externalId: 'nhl-2025-postseason', status: 'IN_PROGRESS', participantCount: 8, startDate: new Date('2026-04-18T00:00:00Z') });
-    expect(result.category === 'GAME' ? result.games.map((game) => game.externalGameId) : []).toEqual(['2025030111', '2025030121', '2025030131']);
+    expect(result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []).toEqual(['2025030111', '2025030121', '2025030131']);
   });
 
   it('reads every page of a postseason\'s games, so the writer counts every game of each series', async () => {

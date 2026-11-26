@@ -63,6 +63,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
   const service = new ProviderGameSlateService({
     sportEvents: store.sportEventRepo(),
     matches: store.matchRepo(),
+    games: store.gameRepo(),
     field: store.fieldRepo(),
     mappings: store.mappingRepo(),
     bracket,
@@ -75,7 +76,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
 }
 
 function game(id: string, home: string, away: string, hoursAfterKickoff: number): ProviderScheduledGame {
-  return { externalGameId: id, roundNumber: 1, homeTeamExternalId: `team-${home}`, awayTeamExternalId: `team-${away}`, scheduledAt: new Date(KICKOFF.getTime() + hoursAfterKickoff * HOUR), isNeutralSite: false };
+  return { games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: `team-${home}`, awayTeamExternalId: `team-${away}`, scheduledAt: new Date(KICKOFF.getTime() + hoursAfterKickoff * HOUR), isNeutralSite: false };
 }
 
 const WEEK = [game('g2', 'Packers', 'Vikings', 3), game('g1', 'Bears', 'Lions', 0)];
@@ -320,6 +321,7 @@ describe('ProviderGameSlateService', () => {
       const service = new ProviderGameSlateService({
         sportEvents: store.sportEventRepo(),
         matches: store.matchRepo(),
+        games: store.gameRepo(),
         field: store.fieldRepo(),
         mappings: store.mappingRepo(),
         bracket,
@@ -366,7 +368,7 @@ describe('ProviderGameSlateService', () => {
       slot(1, 3, null, null, { regionLabel: null, isNeutralSite: true }),
     ];
     const playoffGame = (id: string, roundNumber: number, home: number, away: number, hoursAfterKickoff = 0): ProviderScheduledGame => ({
-      externalGameId: id,
+      games: [{ providerGameId: id, gameNumber: 1 }],
       roundNumber,
       homeTeamExternalId: team(home),
       awayTeamExternalId: team(away),

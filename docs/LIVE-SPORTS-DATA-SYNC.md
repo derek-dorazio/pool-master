@@ -392,11 +392,16 @@ provider league's `typicalGameMinutes`). A draft never released is never overdue
 `"{ts}.{raw body}"` (5 minute tolerance; bad or missing → 403), drops unsubscribed leagues and
 event types with a 200, and hands the rest to `ProviderNotificationService.receive`. It queues
 one `PROVIDER_EVENT_SYNC` per in-progress event the notification is about, 60 seconds out, deduped
-on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. A game notification names
-its provider league by its event type (`nfl.game.ended`), and is about the in-progress event
-whose match holds the game, or, while none does, every in-progress event mapped under that
-provider league (#2004); nothing is read off the event's id. The job runs the normal
-scores sync. **The delivery is a trigger, never a record**: nothing in its body is written.
+on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. A game notification is
+routed by its game id alone (#2007): the one Game whose provider mapping
+(`sport_event_round_match_game_provider_mappings`) holds that id, and the in-progress event that
+Game is in. There is no prefix match and no fan-out to a league's other events. An id no Game is
+mapped to queues nothing and raises a `GAME_UNKNOWN` finding (WARNING) on each league synced from
+the provider league its event type names (`nfl.game.ended`); the sync maps Games as it loads the
+event's slate, so the next sync usually closes it. The notification time goes on the Game
+(`last_provider_notification_at`); a golf notification's goes on its event. The job runs the
+normal scores sync. **The delivery is a trigger, never a record**: only the notification time is
+written.
 
 Subscribed types are the events `GAME_EVENTS_BY_SET` and `GOLF_EVENT_PHASES` name, by each enabled league row's
 webhook event set: `game.started`, `game.period_ended` (`game.halftime` for soccer, `GAME_HALVES`)
@@ -474,11 +479,23 @@ The family is the event's sport league's (`scoringFamilyForEvent`). Finish posit
 | Category | Writer | Writes |
 |---|---|---|
 | `GOLF` | `GolfScoreService` | Rounds and standings. Stroke play only. |
-| `GAME` | `writeGameScores` | `sport_event_round_matches`: links `external_game_id`, live scores, finals through `MatchResultService.recordResult` (`result_source = PROVIDER`). Postponed games are marked `POSTPONED`. |
+| `GAME` | `writeGameScores` | `sport_event_round_match_games`: maps each provider game id to its Game and keeps the Game's own score and status; `sport_event_round_matches`: live scores and finals of single-game matches, and a series' result, through `MatchResultService.recordResult` (`result_source = PROVIDER`). Postponed games are marked `POSTPONED`. |
 
-**GAME linking.** A single-game round links the game to the one open match between its two
-teams; two candidates link nothing until a later sync. A best-of series links no game: the
-writer counts each final game's winner and records the result once a side has more than half.
+**Games** (#2007). Every match has its Games: a single game has Game 1, and a best-of series is
+one match whose Games are numbered in the order they start. A provider's game id lives on the
+Game's provider mapping, never on the match.
+
+**GAME mapping.** A game id no Game holds is mapped to Game *n* of the one open match between its
+two teams, *n* being the game's number in its series (1 for a single game); a series Game the
+match does not have yet is created. Two candidate matches map nothing until a later sync
+(`liveScore.game.ambiguous`). A series' result is recorded once a side has won more than half of
+its stored Games, never at Game 1. Two cases raise a WARNING finding and keep going:
+
+- `GAME_ID_REISSUED`: the provider sends a new id for a game a Game already holds (same teams and
+  game number); the mapping moves to the new id.
+- `GAME_MOVED`: a mapped id turns up in another event's slate (a game moved to another week). The
+  old Game is kept, with whatever points at it, and marked moved; the target event's Game takes
+  the mapping. Voiding the picks on the old Game is #2016's.
 A First Four winner first fills its play-in place. **The feed is the only writer** (#2074): a
 provider final overwrites whatever the match holds, a result written by hand before included,
 and every result's `resultSource` is `PROVIDER`. A level knockout game takes its winner from the

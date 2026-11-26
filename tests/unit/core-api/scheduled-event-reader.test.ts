@@ -8,7 +8,7 @@ import { fakeLogger } from '../../support/fake-logger';
 
 const NOW = new Date('2026-11-09T12:00:00.000Z');
 
-type LiveRelations = { roundSchedule?: unknown[]; matches?: unknown[] };
+type LiveRelations = { roundSchedule?: unknown[]; matches?: unknown[]; gameNotifiedAt?: Date | null };
 
 type MappingWhere = { some: { provider: { code: string | { in: string[] } } } };
 
@@ -17,16 +17,20 @@ function reader(providerIds: string[], live: LiveRelations = {}) {
   const findMany = jest.fn(({ where, select }: { where: { providerMappings: MappingWhere }; select: Record<string, unknown> }) => {
     const code = where.providerMappings.some.provider.code;
     return Promise.resolve((typeof code === 'string' ? [code] : code.in).map((each) => ({
+      id: `event-${each}`,
       providerMappings: [{ externalId: `${each}-ext`, provider: { code: each }, sportLeagueProviderMapping: { providerLeague: { code: 'pga' } } }],
       ...('lastProviderNotificationAt' in select && { lastProviderNotificationAt: null }),
       ...('roundSchedule' in select && { roundSchedule: live.roundSchedule ?? [] }),
       ...('matches' in select && { matches: live.matches ?? [] }),
     })));
   });
+  // The latest notification each event's Games heard, one row per event asked about.
+  const groupBy = jest.fn(({ where }: { where: { sportEventId: { in: string[] } } }) => Promise.resolve(where.sportEventId.in
+    .map((sportEventId) => ({ sportEventId, _max: { lastProviderNotificationAt: live.gameNotifiedAt ?? null } }))));
   const logger = fakeLogger();
   const registry = { all: () => providerIds.map((providerId) => ({ providerId })) };
-  const read = createScheduledEventReader({ prisma: { sportEvent: { findMany } } as never, registry: registry as never, logger });
-  return { read, findMany, logger };
+  const read = createScheduledEventReader({ prisma: { sportEvent: { findMany }, sportEventRoundMatchGame: { groupBy } } as never, registry: registry as never, logger });
+  return { read, findMany, groupBy, logger };
 }
 
 describe('createScheduledEventReader', () => {
@@ -91,8 +95,8 @@ describe('createScheduledEventReader', () => {
     expect(findMany).not.toHaveBeenCalled();
   });
 
-  it('asks once, across every provider, for every event in progress with a field for the scores feed, with its provider league and when its provider last notified about it', async () => {
-    const { read, findMany } = reader(['balldontlie']);
+  it('asks once, across every provider, for every event in progress with a field for the scores feed, with its provider league, and once for when a provider last notified about any of their Games', async () => {
+    const { read, findMany, groupBy } = reader(['balldontlie']);
 
     await expect(read.listLiveScoreEvents({ sport: Sport.FOOTBALL, now: NOW })).resolves.toEqual([
       { providerId: 'balldontlie', externalId: 'BALLDONTLIE-ext', providerLeagueCode: 'pga', lastProviderNotificationAt: null, playedInRounds: false, playUnderwaySince: null },
@@ -107,6 +111,17 @@ describe('createScheduledEventReader', () => {
         sportEventParticipants: { some: {} },
       },
     }));
+    expect(groupBy.mock.calls).toEqual([[{ by: ['sportEventId'], where: { sportEventId: { in: ['event-BALLDONTLIE'] } }, _max: { lastProviderNotificationAt: true } }]]);
+  });
+
+  it('reads an event played in matches as last notified when the latest of its Games was, and golf from the event itself, asking golf nothing of Games', async () => {
+    const heard = new Date('2026-11-09T11:58:00.000Z');
+    const football = reader(['balldontlie'], { gameNotifiedAt: heard });
+    await expect(football.read.listLiveScoreEvents({ sport: Sport.FOOTBALL, now: NOW })).resolves.toEqual([expect.objectContaining({ lastProviderNotificationAt: heard })]);
+
+    const golf = reader(['balldontlie'], { gameNotifiedAt: heard });
+    await expect(golf.read.listLiveScoreEvents({ sport: Sport.GOLF, now: NOW })).resolves.toEqual([expect.objectContaining({ lastProviderNotificationAt: null })]);
+    expect(golf.groupBy).not.toHaveBeenCalled();
   });
 
   describe('when play is under way in an event in progress (#1499)', () => {

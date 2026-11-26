@@ -2,18 +2,25 @@
  * Prisma adapter for the match port (#698): an event's bracket. Loading a bracket replaces every
  * match of the event in one transaction; the links between matches use ids the caller chose, so
  * the whole bracket is written in one insert and its foreign keys are checked once at its end.
+ * Each match is written with its Game 1 (#2007), in the round's slot.
+ *
+ * The Game port (#2007) is here too: an event's Games with one provider's ids for them, and what
+ * a score sync writes to them.
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   MatchLiveScoreWrite,
   MatchResultApply,
+  ProviderMappedGame,
+  SportEventRoundMatchGameRepository,
+  SportEventRoundMatchGameSync,
   SportEventRoundMatchPatch,
   SportEventRoundMatchRepository,
   SportEventRoundMatchWrite,
 } from '@poolmaster/shared/db';
 import { MatchSide, MatchStatus, UNPLAYED_MATCH_STATUSES } from '@poolmaster/shared/domain';
-import type { BackgroundJobRequest, SportEventRoundMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, ProviderCode, SportEventRoundMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
 import { ROUND_EVENT_SLOT_SELECT, toRoundSlot } from './season-slot-select';
 import { rewriteStandings } from './prisma-standing-rewrite';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
@@ -49,19 +56,23 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
   async replaceBracket(sportEventId: string, matches: readonly SportEventRoundMatchWrite[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     const rounds = await this.prisma.sportEventRound.findMany({
       where: { sportEventId },
-      select: { id: true, roundNumber: true },
+      select: { id: true, roundNumber: true, sportEventSlotId: true },
     });
-    const roundIdByNumber = new Map(rounds.map((round) => [round.roundNumber, round.id]));
+    const roundByNumber = new Map(rounds.map((round) => [round.roundNumber, round]));
     const data = matches.map(({ roundNumber, ...match }) => {
-      const sportEventRoundId = roundIdByNumber.get(roundNumber);
-      if (sportEventRoundId === undefined) {
+      const round = roundByNumber.get(roundNumber);
+      if (round === undefined) {
         throw new Error(`Sport event ${sportEventId} has no round ${roundNumber}`);
       }
-      return { ...match, sportEventId, sportEventRoundId };
+      return { ...match, sportEventId, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId };
     });
     await this.prisma.$transaction([
       this.prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId } }),
-      this.prisma.sportEventRoundMatch.createMany({ data }),
+      this.prisma.sportEventRoundMatch.createMany({ data: data.map(({ sportEventSlotId: _slotId, ...match }) => match) }),
+      // Every match has its Game 1 from the start, played in its round's slot.
+      this.prisma.sportEventRoundMatchGame.createMany({
+        data: data.map(({ id, sportEventSlotId, scheduledDate }) => ({ sportEventId, sportEventRoundMatchId: id, sportEventSlotId, gameNumber: 1, scheduledDate })),
+      }),
       ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
   }
@@ -89,14 +100,6 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
       await save(tx);
       await insertBackgroundJobs(tx, jobs);
     });
-  }
-
-  async linkGames(links: readonly { id: string; externalGameId: string }[]): Promise<void> {
-    if (links.length === 0) return;
-    await this.prisma.$transaction(
-      // poolmaster-allow-query-in-loop: the games one sync linked (per-row values, one transaction)
-      links.map(({ id, externalGameId }) => this.prisma.sportEventRoundMatch.update({ where: { id }, data: { externalGameId } })),
-    );
   }
 
   async applyLiveScores(scores: readonly MatchLiveScoreWrite[]): Promise<void> {
@@ -149,3 +152,65 @@ export function toSportEventRoundMatch(
   };
 }
 
+
+/** What a Game is read with: its provider ids at one provider. */
+function gameInclude(providerCode: ProviderCode) {
+  return { providerMappings: { where: { provider: { code: providerCode } }, select: { externalId: true } } } satisfies Prisma.SportEventRoundMatchGameInclude;
+}
+
+function toProviderMappedGame({ providerMappings, ...game }: Prisma.SportEventRoundMatchGameGetPayload<{ include: ReturnType<typeof gameInclude> }>): ProviderMappedGame {
+  // A Game has at most one id at a provider (sportEventRoundMatchGameId, providerId is unique).
+  return { game, externalId: providerMappings[0]?.externalId ?? null };
+}
+
+export class PrismaSportEventRoundMatchGameRepository implements SportEventRoundMatchGameRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findBySportEvent(sportEventId: string, providerCode: ProviderCode): Promise<ProviderMappedGame[]> {
+    const rows = await this.prisma.sportEventRoundMatchGame.findMany({
+      where: { sportEventId },
+      include: gameInclude(providerCode),
+      orderBy: [{ sportEventRoundMatchId: 'asc' }, { gameNumber: 'asc' }],
+    });
+    return rows.map(toProviderMappedGame);
+  }
+
+  async findByProviderExternalIds(providerCode: ProviderCode, externalIds: readonly string[]): Promise<ProviderMappedGame[]> {
+    if (externalIds.length === 0) return [];
+    const rows = await this.prisma.sportEventRoundMatchGame.findMany({
+      where: { providerMappings: { some: { provider: { code: providerCode }, externalId: { in: [...externalIds] } } } },
+      include: gameInclude(providerCode),
+    });
+    return rows.map(toProviderMappedGame);
+  }
+
+  async applySync({ providerCode, created, mapped, moved, scores }: SportEventRoundMatchGameSync): Promise<void> {
+    if (created.length === 0 && mapped.length === 0 && moved.length === 0 && scores.length === 0) return;
+    const provider = mapped.length === 0 ? null : await this.prisma.provider.findUniqueOrThrow({ where: { code: providerCode }, select: { id: true } });
+    await this.prisma.$transaction([
+      ...(created.length === 0 ? [] : [this.prisma.sportEventRoundMatchGame.createMany({ data: [...created] })]),
+      ...(provider === null ? [] : [
+        // A mapped id leaves the Game it was on (a moved game), and the Game's old id leaves it (a re-issued one).
+        this.prisma.sportEventRoundMatchGameProviderMapping.deleteMany({
+          where: {
+            providerId: provider.id,
+            OR: [
+              { externalId: { in: mapped.map((each) => each.externalId) } },
+              { sportEventRoundMatchGameId: { in: mapped.map((each) => each.sportEventRoundMatchGameId) } },
+            ],
+          },
+        }),
+        this.prisma.sportEventRoundMatchGameProviderMapping.createMany({ data: mapped.map((each) => ({ ...each, providerId: provider.id })) }),
+      ]),
+      // poolmaster-allow-query-in-loop: the Games one sync found moved (per-row values, one transaction)
+      ...moved.map(({ id, movedToGameId }) => this.prisma.sportEventRoundMatchGame.update({ where: { id }, data: { movedToGameId } })),
+      // poolmaster-allow-query-in-loop: the Games one sync scored (per-row values, one transaction)
+      ...scores.map(({ id, ...values }) => this.prisma.sportEventRoundMatchGame.update({ where: { id }, data: values })),
+    ]);
+  }
+
+  async recordProviderNotification(gameIds: readonly string[], receivedAt: Date): Promise<void> {
+    if (gameIds.length === 0) return;
+    await this.prisma.sportEventRoundMatchGame.updateMany({ where: { id: { in: [...gameIds] } }, data: { lastProviderNotificationAt: receivedAt } });
+  }
+}

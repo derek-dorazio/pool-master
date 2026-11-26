@@ -204,7 +204,7 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
     const result = await harness.adapter.getLiveScores('ncaab-2026-tournament');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'ncaab-2026-tournament' });
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.state]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.state]) : []).toEqual([
       ['401900101', ProviderGameState.FINAL],
       ['401900102', ProviderGameState.IN_PROGRESS],
       ['401900103', ProviderGameState.SCHEDULED],
@@ -218,7 +218,7 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
     const result = await harness.adapter.getLiveScores('ncaaw-2025-tournament');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'ncaaw-2025-tournament' });
-    expect(result.category === 'GAME' ? result.games.map((game) => game.externalGameId) : []).toEqual(['401856710', '401856711', '401856772']);
+    expect(result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []).toEqual(['401856710', '401856711', '401856772']);
     expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
   });
 

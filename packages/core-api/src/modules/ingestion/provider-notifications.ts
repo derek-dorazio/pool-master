@@ -12,13 +12,19 @@
  * only then). Play ending queues a second, reconciling sync a while later, for the corrections a
  * provider makes after the final whistle. And every notification records when it arrived on the
  * events it is about, so the scheduler can tell when an event in play has gone quiet.
+ *
+ * A game's notification routes by its game id alone (#2007): the id's Game provider mapping names
+ * the one Game, and so the one event, it is about. Its arrival is recorded on that Game. An id no
+ * Game is mapped to queues nothing and is a GAME_UNKNOWN finding on the league the provider sent
+ * it for; nothing is synced on a guess.
  */
 
 import { createHash } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderNotifiedEvent, SportEventRepository } from '@poolmaster/shared/db';
-import { BackgroundJobType, type Sport } from '@poolmaster/shared/domain';
+import type { ProviderNotifiedEvent, SportEventRepository, SportEventRoundMatchGameRepository, SportLeagueRepository } from '@poolmaster/shared/db';
+import { BackgroundJobType, ProviderSyncFindingKind, ProviderSyncFindingSeverity, requireProviderCodeOfSourceId, type Sport } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { ProviderSyncFindingService } from './findings/provider-sync-finding-service';
 import { WEBHOOK_START } from '../../core/job-start';
 
 /** Where in play a notification falls: play starting, under way, or ended. */
@@ -33,8 +39,8 @@ export type ProviderNotification = {
   phase: ProviderNotificationPhase;
 } & (
   /**
-   * A game's notification: the events the provider has an id for in its league `providerLeagueCode`
-   * (#2004) may hold it.
+   * A game's notification: the Game its id is mapped to is the one it is about (#2007). The
+   * provider's league `providerLeagueCode` names the league an unknown id is raised on.
    */
   | { subject: 'GAME'; gameId: string; providerLeagueCode: string }
   /** An event's own notification, such as a golf round starting. */
@@ -62,6 +68,10 @@ export interface ProviderNotificationOutcome {
 
 export interface ProviderNotificationServiceDependencies {
   sportEvents: Pick<SportEventRepository, 'findLiveNotifiedEvents' | 'recordProviderNotification'>;
+  games: Pick<SportEventRoundMatchGameRepository, 'findByProviderExternalIds' | 'recordProviderNotification'>;
+  /** The synced leagues, to raise an unknown game's finding on the league the provider sent it for. */
+  sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
+  findings: Pick<ProviderSyncFindingService, 'raiseOfSource'>;
   jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
   /** How long a sync waits for the rest of a burst; PROVIDER_NOTIFICATION_COALESCE_MS by default. */
   coalesceMs?: number;
@@ -85,20 +95,13 @@ export class ProviderNotificationService {
   }
 
   /**
-   * Queues one sync for each linked, in-progress event the notification is about. A game's
-   * notification syncs the event whose match is linked to that game; while no match is, it syncs
-   * every in-progress event of the game's league, since a game an event holds is linked only by
-   * that event's sync, and a playoff series links none. A notification about nothing linked
-   * queues nothing.
+   * Queues one sync for each linked, in-progress event the notification is about: an event's own
+   * notification syncs that event, and a game's the event of the Game its id is mapped to. A
+   * notification about nothing linked queues nothing.
    */
   async receive(notification: ProviderNotification): Promise<ProviderNotificationOutcome> {
     const now = this.deps.now?.() ?? new Date();
     const events = await this.notifiedEvents(notification, now);
-    await this.deps.sportEvents.recordProviderNotification({
-      providerId: notification.providerId,
-      externalIds: events.map((event) => event.externalId),
-      receivedAt: now,
-    });
     const after = (ms: number) => new Date(now.getTime() + ms);
     // poolmaster-allow-direct-job: a provider's webhook starts the syncs of the events it names
     const syncs = events.map((event) => this.deps.jobs.request(
@@ -134,17 +137,41 @@ export class ProviderNotificationService {
     const { providerId, sport } = notification;
     const startedBy = notification.phase === 'START' ? { startedBy: now } : {};
     if (notification.subject === 'EVENT') {
-      return this.deps.sportEvents.findLiveNotifiedEvents({ providerId, sport, externalId: notification.eventId, ...startedBy });
+      const events = await this.deps.sportEvents.findLiveNotifiedEvents({ providerId, sport, externalId: notification.eventId, ...startedBy });
+      await this.deps.sportEvents.recordProviderNotification({ providerId, externalIds: events.map((event) => event.externalId), receivedAt: now });
+      return events;
     }
-    const candidates = await this.deps.sportEvents.findLiveNotifiedEvents({
-      providerId,
-      sport,
-      providerLeagueCode: notification.providerLeagueCode,
-      gameId: notification.gameId,
-      ...startedBy,
-    });
-    const holding = candidates.filter((event) => event.holdsGame);
-    return holding.length > 0 ? holding : candidates;
+    const games = await this.deps.games.findByProviderExternalIds(requireProviderCodeOfSourceId(providerId), [notification.gameId]);
+    if (games.length === 0) {
+      await this.raiseUnknownGame(notification);
+      return [];
+    }
+    await this.deps.games.recordProviderNotification(games.map(({ game }) => game.id), now);
+    return this.deps.sportEvents.findLiveNotifiedEvents({ providerId, sport, sportEventIds: [...new Set(games.map(({ game }) => game.sportEventId))], ...startedBy });
+  }
+
+  /**
+   * A GAME_UNKNOWN finding on each league synced from the provider's league the notification names.
+   * The notification is answered either way: a finding that fails to raise is logged.
+   */
+  private async raiseUnknownGame(notification: Extract<ProviderNotification, { subject: 'GAME' }>): Promise<void> {
+    try {
+      const leagues = (await this.deps.sportLeagues.findEventSynced()).filter((league) => league.selectedProviderMapping?.providerId === notification.providerId
+        && league.selectedProviderMapping.providerLeagueCode === notification.providerLeagueCode);
+      await this.deps.findings.raiseOfSource(notification.providerId, leagues.map((league) => ({
+        kind: ProviderSyncFindingKind.GAME_UNKNOWN,
+        severity: ProviderSyncFindingSeverity.WARNING,
+        sportLeagueId: league.id,
+        sportEventId: null,
+        providerValue: notification.gameId,
+        providerValueName: null,
+      })));
+    } catch (err) {
+      this.deps.logger?.error(
+        { action: 'ingestion.syncFinding.raiseFailed', err, providerId: notification.providerId, gameId: notification.gameId },
+        'Raising an unknown game\'s finding failed; the notification was answered',
+      );
+    }
   }
 }
 

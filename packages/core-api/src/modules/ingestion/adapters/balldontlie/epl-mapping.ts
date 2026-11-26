@@ -135,7 +135,7 @@ export function toEplFieldParticipants(matches: readonly SoccerMatch[], teams: r
  */
 export function toEplScheduledGames(matches: readonly SoccerMatch[]): ProviderScheduledGame[] {
   return matches.map((match) => ({
-    externalGameId: String(required(match.id, EPL_MATCHES_PATH, 'a match', 'id')),
+    games: [{ providerGameId: String(required(match.id, EPL_MATCHES_PATH, 'a match', 'id')), gameNumber: 1 }],
     roundNumber: 1,
     homeTeamExternalId: participantFeedId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
     awayTeamExternalId: participantFeedId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
@@ -155,7 +155,7 @@ export function toEplGameScoreUpdates(matches: readonly SoccerMatch[]): GameScor
     // A final with no score is passed on as one, and skipped there.
     const started = hasStarted(state);
     return [{
-      externalGameId: String(required(match.id, EPL_MATCHES_PATH, 'a match', 'id')),
+      providerGameId: String(required(match.id, EPL_MATCHES_PATH, 'a match', 'id')),
       homeTeamExternalId: participantFeedId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
       awayTeamExternalId: participantFeedId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
       state,

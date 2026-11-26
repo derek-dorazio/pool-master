@@ -799,7 +799,7 @@ describe('MatchResultService on a reseeded bracket', () => {
       id: `m${key}`, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [],
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     });
     const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];
@@ -891,7 +891,7 @@ describe('MatchResultService on a bracket numbered within each round (#2161)', (
       id, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [],
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     });
     // Round 1 is one play-in game; the 1 and 2 seeds' byes meet in round 2's match 1.

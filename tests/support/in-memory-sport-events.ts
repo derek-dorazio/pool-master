@@ -24,6 +24,7 @@ import type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
+  SportEventRoundMatchGameRepository,
   SportEventRoundMatchRepository,
   SportEventRepository,
   SportLeagueSeasonRepository,
@@ -52,6 +53,7 @@ import type {
   SportConfig,
   SportEvent,
   SportEventRoundMatch,
+  SportEventRoundMatchGame,
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
@@ -254,6 +256,9 @@ export class InMemorySportEvents {
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
   raceResultRows: SportEventParticipantRaceResult[] = [];
   matchRows: SportEventRoundMatch[] = [];
+  /** Each match's Games (#2007), with each one's provider ids. */
+  gameRows: SportEventRoundMatchGame[] = [];
+  gameMappings: Array<{ sportEventRoundMatchGameId: string; providerCode: string; externalId: string }> = [];
   /** Each provider notification recorded against events (#1499). */
   readonly providerNotifications: ProviderNotificationReceipt[] = [];
   /** The jobs each status move or edit wrote with it (#1448, #1464). */
@@ -617,15 +622,12 @@ export class InMemorySportEvents {
             && row.autoLifecycleEnabled && row.startDate <= query.startedBy))
           && ('externalId' in query
             ? this.externalIdAt(row.id, query.providerId) === query.externalId
-            // An event's mapping sits under its league's selected provider mapping, whose provider league names it.
-            : this.sportLeagues.find((league) => league.id === row.sportLeagueId)?.selectedProviderMapping?.providerLeagueCode === query.providerLeagueCode))
+            : query.sportEventIds.includes(row.id)))
         .map((row) => ({
           sportEventId: row.id,
           sport: row.sport,
           providerId: query.providerId,
           externalId: this.externalIdAt(row.id, query.providerId) as string,
-          holdsGame: query.gameId !== undefined
-            && this.matchRows.some((match) => match.sportEventId === row.id && match.externalGameId === query.gameId),
           inProgress: row.status === 'IN_PROGRESS',
         })),
       recordProviderNotification: async (receipt) => {
@@ -1026,6 +1028,41 @@ export class InMemorySportEvents {
     return { standing: { ...standing }, golf: { ...golf } };
   }
 
+  gameRepo(): SportEventRoundMatchGameRepository {
+    const mapped = (game: SportEventRoundMatchGame, providerCode: string) => ({
+      game: { ...game },
+      externalId: this.gameMappings.find((mapping) => mapping.sportEventRoundMatchGameId === game.id && mapping.providerCode === providerCode)?.externalId ?? null,
+    });
+    return {
+      findBySportEvent: async (sportEventId, providerCode) => this.gameRows
+        .filter((game) => game.sportEventId === sportEventId)
+        .sort((left, right) => left.sportEventRoundMatchId.localeCompare(right.sportEventRoundMatchId) || left.gameNumber - right.gameNumber)
+        .map((game) => mapped(game, providerCode)),
+      findByProviderExternalIds: async (providerCode, externalIds) => this.gameRows
+        .filter((game) => this.gameMappings.some((mapping) => mapping.sportEventRoundMatchGameId === game.id && mapping.providerCode === providerCode && externalIds.includes(mapping.externalId)))
+        .map((game) => mapped(game, providerCode)),
+      applySync: async ({ providerCode, created, mapped: maps, moved, scores }) => {
+        this.gameRows.push(...created.map((game) => stamp({
+          ...game, scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
+        })));
+        const ids = new Set(maps.map((each) => each.externalId));
+        const games = new Set(maps.map((each) => each.sportEventRoundMatchGameId));
+        this.gameMappings = [
+          ...this.gameMappings.filter((mapping) => mapping.providerCode !== providerCode || (!ids.has(mapping.externalId) && !games.has(mapping.sportEventRoundMatchGameId))),
+          ...maps.map((each) => ({ ...each, providerCode })),
+        ];
+        for (const { id, ...values } of [...moved, ...scores]) {
+          const row = this.gameRows.find((game) => game.id === id);
+          if (!row) throw new Error('unknown game');
+          Object.assign(row, values);
+        }
+      },
+      recordProviderNotification: async (gameIds, receivedAt) => {
+        for (const row of this.gameRows) if (gameIds.includes(row.id)) row.lastProviderNotificationAt = receivedAt;
+      },
+    };
+  }
+
   matchRepo(): SportEventRoundMatchRepository {
     const findBySportEvents = async (sportEventIds: readonly string[]) => this.matchRows
       .filter((row) => sportEventIds.includes(row.sportEventId))
@@ -1052,6 +1089,17 @@ export class InMemorySportEvents {
           return round;
         };
         for (const match of matches) roundOf(match.roundNumber);
+        // As the Prisma adapter does: the event's Games go with its matches, and each match has its Game 1.
+        const goneGames = new Set(this.gameRows.filter((game) => game.sportEventId === sportEventId).map((game) => game.id));
+        this.gameMappings = this.gameMappings.filter((mapping) => !goneGames.has(mapping.sportEventRoundMatchGameId));
+        this.gameRows = [
+          ...this.gameRows.filter((game) => game.sportEventId !== sportEventId),
+          ...matches.map((match) => stamp({
+            id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${match.roundNumber}`, gameNumber: 1,
+            scheduledDate: match.scheduledDate, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, completedAt: null,
+            movedToGameId: null, lastProviderNotificationAt: null,
+          })),
+        ];
         this.matchRows = [
           ...this.matchRows.filter((row) => row.sportEventId !== sportEventId),
           ...matches.map((match) => stamp({
@@ -1059,7 +1107,6 @@ export class InMemorySportEvents {
             sportEventId,
             slot: roundOf(match.roundNumber).slot,
             homeSpread: null,
-            externalGameId: null,
             resultSource: null,
             completedAt: null,
             periodScores: [],
@@ -1071,13 +1118,6 @@ export class InMemorySportEvents {
             awayShootoutScore: null, ending: MatchEnding.PLAYED,
           })),
         ];
-      },
-      linkGames: async (links) => {
-        for (const { id, externalGameId } of links) {
-          const row = this.matchRows.find((match) => match.id === id);
-          if (!row) throw new Error('unknown match');
-          row.externalGameId = externalGameId;
-        }
       },
       applyLiveScores: async (scores) => {
         for (const { id, ...values } of scores) {

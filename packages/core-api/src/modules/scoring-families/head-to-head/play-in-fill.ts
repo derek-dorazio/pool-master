@@ -11,7 +11,7 @@
  * A place already filled is no longer a play-in place, so it is never filled twice. A game no
  * place fits, or two places fit, is left for the admin, as is a team the provider's mappings do
  * not name. Once the place is filled, both sides of its match are teams the provider names, so
- * the game links and scores like any other, in the same sync.
+ * the game is placed and scores like any other, in the same sync.
  */
 import { requireProviderCodeOfSourceId, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
@@ -36,19 +36,20 @@ interface PlayInWinnerGame {
 }
 
 /**
- * Fills the play-in place each unlinked game of a play-in winner fits. Reads nothing when the
- * batch holds no such game.
+ * Fills the play-in place each game of a play-in winner fits that no Game is mapped to yet
+ * (`mappedGameIds`, the provider's game ids the event's Games hold). Reads nothing when the batch
+ * holds no such game.
  */
 export async function fillPlayInPlaces(
   deps: PlayInFillDeps,
   sportEventId: string,
   matches: readonly SportEventRoundMatch[],
   games: readonly GameScoreUpdate[],
+  mappedGameIds: ReadonlySet<string>,
 ): Promise<void> {
-  const linkedGameIds = new Set(matches.flatMap((match) => (match.externalGameId === null ? [] : [match.externalGameId])));
   const winnerGames = games.flatMap((game): PlayInWinnerGame[] => {
     const winnerExternalId = game.playInWinnerTeamExternalId;
-    if (winnerExternalId === undefined || linkedGameIds.has(game.externalGameId)) return [];
+    if (winnerExternalId === undefined || mappedGameIds.has(game.providerGameId)) return [];
     const opponentExternalId = winnerExternalId === game.homeTeamExternalId ? game.awayTeamExternalId : game.homeTeamExternalId;
     return [{ game, winnerExternalId, opponentExternalId }];
   });
@@ -62,7 +63,7 @@ export async function fillPlayInPlaces(
   const rowOfParticipant = new Map(field.map((row) => [row.participantId, row.id]));
 
   for (const { game, winnerExternalId, opponentExternalId } of winnerGames) {
-    const data = { sportEventId, externalGameId: game.externalGameId, winnerExternalId, opponentExternalId };
+    const data = { sportEventId, providerGameId: game.providerGameId, winnerExternalId, opponentExternalId };
     const winnerParticipantId = participantOf.get(winnerExternalId);
     const opponentParticipantId = participantOf.get(opponentExternalId);
     const opponentRowId = opponentParticipantId === undefined ? undefined : rowOfParticipant.get(opponentParticipantId);

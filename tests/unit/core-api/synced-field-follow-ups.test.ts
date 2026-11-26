@@ -14,7 +14,7 @@ const PAYLOAD: SyncEventGamesAndTiersJobPayload = {
   sportEventId: 'sport-event-1',
   providerId: 'balldontlie',
   externalId: 'week-2',
-  games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF, isNeutralSite: false }],
+  games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF, isNeutralSite: false }],
 };
 
 const UNCHANGED_VALUATION = {
@@ -46,7 +46,7 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
     expect(providerGames.afterFieldLoad).toHaveBeenCalledWith({
       providerId: 'balldontlie',
       externalId: 'week-2',
-      games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: new Date(KICKOFF), isNeutralSite: false }],
+      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: new Date(KICKOFF), isNeutralSite: false }],
     });
     expect(valuation.afterFieldLoad).toHaveBeenCalledWith({ providerId: 'balldontlie', externalId: 'week-2' });
   });

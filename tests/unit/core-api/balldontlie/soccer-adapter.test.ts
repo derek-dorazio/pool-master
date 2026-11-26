@@ -146,7 +146,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
       ]);
       expect(detail?.games).toHaveLength(5);
       expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '12', awayTeamExternalId: '9', isNeutralSite: false });
-      expect(detail?.games?.[0].externalGameId).toMatch(/^\d+$/);
+      expect(detail?.games?.[0].games[0]?.providerGameId).toMatch(/^\d+$/);
       expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
       expect(requestLine(harness.api)).toEqual(['/epl/v2/matches?season=2026&per_page=100', '/epl/v2/teams?season=2026']);
     });
@@ -179,7 +179,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
     const result = await harness.adapter.getLiveScores('epl-2026-matchweek-11');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'epl-2026-matchweek-11' });
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.state]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.state]) : []).toEqual([
       ['900111', ProviderGameState.FINAL],
       ['900112', ProviderGameState.FINAL],
       ['900113', ProviderGameState.IN_PROGRESS],
@@ -287,7 +287,7 @@ describe('BalldontlieAdapter (soccer: the FIFA World Cup)', () => {
     const result = await harness.adapter.getLiveScores('fifa-wc-2022-knockout');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'fifa-wc-2022-knockout' });
-    expect(result.category === 'GAME' ? result.games.find((game) => game.externalGameId === '2264') : undefined)
+    expect(result.category === 'GAME' ? result.games.find((game) => game.providerGameId === '2264') : undefined)
       .toMatchObject({ homeScore: 3, awayScore: 3, homeShootoutScore: 4, awayShootoutScore: 2 });
   });
 });
