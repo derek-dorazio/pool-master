@@ -466,6 +466,19 @@ Season's slot) never need context to tell apart.
   column that picks one is `platform…ProfileId` (`PlatformTierProfile` and
   `SportLeague.platformPlatformTierProfileId`). A profile is defined once, at platform level, and
   shared; nothing sets it per sport.
+- **A profile or definition row describes itself** (Derek, 2026-11-26). Every `Platform…Profile`
+  row and every definition row a league picks or owns (a cup definition, a contest template's
+  family) has a unique, stable `code` and a required `description`: plain English for agents
+  and root admins saying what the row is and why it exists. It is not translated and not shown
+  to commissioners or members. What commissioners and members read about it (its name, a line
+  of description, a (?) explainer) is display strings keyed by that code
+  (`ux-rules.md` §16 *Display Strings*), so screen copy follows from the code and needs no
+  column. The agent that adds the row seeds those strings in English in the same change, written
+  for the reader on screen: what the row does for their league or contest, in plain words, not
+  the agent description restated. A row a root admin adds on screen gets its strings in the next
+  change that seeds them; until then the screen shows the root-admin name. A proper name inside
+  that copy stays data on the row (a NAMED cup's `properName`). A reference-data test checks that
+  every seeded row has a description and every code has its display strings.
 - **A row of settings that is copied into something when it is created is named
   `…Template`** (`ContestConfigTemplate`); the copy belongs to its target, so a later change
   to the template never rewrites what was copied. A copy kept on the target row (a Season
