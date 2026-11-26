@@ -27,7 +27,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { get, okBody } from '../list-route-seeds';
-import { expectConstantQueries } from '../query-scaling';
+import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 
@@ -304,6 +304,45 @@ describe('profile lists cost the same statements for 2 profiles as for 20', () =
       seed: (rows) => seedProfiles('pricing', rows),
       call: ({ rootAdmin }) => get('/api/v1/pricing-profiles/', rootAdmin),
       rowsShown: (response) => okBody(response, PlatformPricingProfileListResponseSchema).platformPricingProfiles.filter((profile) => profile.sportLeagueCount === 1 && profile.name.startsWith('Scaling pricing')).length,
+    });
+  });
+});
+
+describe('one profile costs the same statements whatever rows it holds', () => {
+  /** A ranges tier profile of `rows` ranges, one value each and the last open-ended, and a root admin to read it. */
+  async function seedRangesProfile(rows: number) {
+    const { sources, ...write } = rangesWrite(`Scaling ranges ${randomUUID().slice(0, 8)}`, {
+      ranges: Array.from({ length: rows }, (_, index) => ({ tierNumber: index + 1, fromValue: index + 1, toValue: index === rows - 1 ? null : index + 1 })),
+    });
+    const profile = await getPrisma().platformTierProfile.create({
+      data: { code: write.code, name: write.name, type: write.type, sources: sourceRows(sources), ranges: { create: write.ranges } },
+    });
+    return { profileId: profile.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+  }
+
+  it('GET one tier profile with its sources and ranges: the same statements for 2 ranges as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/tier-profiles/{profileId}',
+      seed: seedRangesProfile,
+      call: ({ profileId, rootAdmin }) => get(`/api/v1/tier-profiles/${profileId}`, rootAdmin),
+      rowsShown: (response) => {
+        const { platformTierProfile } = okBody(response, PlatformTierProfileResponseSchema);
+        return platformTierProfile.type === TierProfileType.RANGES ? platformTierProfile.ranges.length : 0;
+      },
+    });
+  });
+
+  it('GET one pricing profile: its league count, the profile and its sources in three statements, the sources a list no longer than the order sources', async () => {
+    const { sources, ...write } = pricingWrite(`Fixed pricing ${randomUUID().slice(0, 8)}`);
+    const profile = await getPrisma().platformPricingProfile.create({ data: { ...write, sources: sourceRows(sources) } });
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+
+    await expectFixedQueries({
+      route: 'GET /api/v1/pricing-profiles/{profileId}',
+      fixedBy: 'the order sources, each listed at most once',
+      call: () => get(`/api/v1/pricing-profiles/${profile.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, PlatformPricingProfileResponseSchema).platformPricingProfile.sources.length,
+      statements: 3,
     });
   });
 });

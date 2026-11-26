@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
-import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { useController, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import {
   explicitOrderValues,
   PlatformTierProfileLastTier,
@@ -14,7 +14,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { clearsSaveError } from './clears-save-error';
 import type { ProfileEditorProps } from './profile-dialog';
 import { ProfileFormModal } from './profile-form-modal';
-import { ProfileSourcesField } from './profile-sources-field';
 import { formValuesOf, LAST_TIER_MAX_BLANK, NEW_RANGE, requestOf, tierProfileResolver, type TierProfileFormValues } from './tier-profile-form';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 
@@ -55,6 +54,7 @@ export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTie
   const isRanges = type === TierProfileType.RANGES;
   const isCapped = form.watch('lastTier') === PlatformTierProfileLastTier.CAPPED;
   const clearError = clearsSaveError(save);
+  const sources = useController({ control: form.control, name: 'sources' });
   // The save sends a cap only for a capped last tier, so the one equal-groups refusal this form
   // can meet is a capped last tier left without its most, and it shows under that field.
   const capRefused = !isRanges && hasErrorCode(save.error, 'PLATFORM_TIER_PROFILE_INVALID');
@@ -66,34 +66,12 @@ export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTie
       fieldRefusal={isRanges ? undefined : 'PLATFORM_TIER_PROFILE_INVALID'}
       form={form}
       formValues={formValuesOf(profile)}
+      identity={{ errors, onEdit: clearError, register: (field) => form.register(field, { onChange: clearError }), sources: sources.field }}
+      kind="tier"
       save={save}
-      saveTestId="root-admin-tier-profile-editor-save"
-      testId="root-admin-tier-profile-dialog"
       newTitle="New tier profile"
     >
-      <div className="space-y-4">
-        <FormField error={errors.code?.message} id="tier-profile-code" label="Code">
-          <Input data-testid="root-admin-tier-profile-editor-code" id="tier-profile-code" {...form.register('code', { onChange: clearError })} />
-        </FormField>
-        <FormField error={errors.name?.message} id="tier-profile-name" label="Name">
-          <Input data-testid="root-admin-tier-profile-editor-name" id="tier-profile-name" {...form.register('name', { onChange: clearError })} />
-        </FormField>
-        <Controller
-          control={form.control}
-          name="sources"
-          render={({ field }) => (
-            <ProfileSourcesField
-              error={errors.sources?.message}
-              id="tier-profile-sources"
-              onChange={(sources) => {
-                clearError();
-                field.onChange(sources);
-              }}
-              testId="root-admin-tier-profile-editor-sources"
-              value={field.value}
-            />
-          )}
-        />
+      <>
         <FormField id="tier-profile-type" label="Tiers by">
           <Select data-testid="root-admin-tier-profile-editor-type" id="tier-profile-type" {...form.register('type', { onChange: clearError })}>
             {explicitOrderValues(TierProfileTypeOrder).map((option) => (
@@ -171,7 +149,7 @@ export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTie
         </div>
         </>
         )}
-      </div>
+      </>
     </ProfileFormModal>
   );
 }

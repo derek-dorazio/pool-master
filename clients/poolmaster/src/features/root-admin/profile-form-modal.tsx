@@ -4,12 +4,14 @@ import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import { hasErrorCode } from '@/lib/errors';
 import { DetailEditModal, type MutationActionWorkflowResult } from '@/features/shared/ui';
 import type { ProfileEditorProps } from './profile-dialog';
+import { ProfileIdentityFields, type ProfileIdentityFieldsProps } from './profile-identity-fields';
 
 /**
  * A tier or pricing profile's one dialog (#1849) on the shared `DetailEditModal`: the view with
  * Close and Edit, then the form with Cancel and Save, a failed save's reason inside it, and the
  * dialog kept open on a refusal. Edit starts the form from the profile as it is now, and leaving
- * the form forgets a failed attempt, so the next Edit starts clean.
+ * the form forgets a failed attempt, so the next Edit starts clean. The form opens with the code,
+ * name and sources every profile has, then the profile's own fields.
  */
 export function ProfileFormModal<TValues extends FieldValues, TSaved, TProfile extends { name: string }>({
   children,
@@ -18,10 +20,10 @@ export function ProfileFormModal<TValues extends FieldValues, TSaved, TProfile e
   fieldRefusal,
   form,
   formValues,
+  identity,
+  kind,
   save,
-  saveTestId,
   newTitle,
-  testId,
 }: {
   children: ReactNode;
   dialog: ProfileEditorProps<TProfile>;
@@ -31,11 +33,13 @@ export function ProfileFormModal<TValues extends FieldValues, TSaved, TProfile e
   form: UseFormReturn<TValues>;
   /** The form's values for the profile as it is now, which Edit starts from. */
   formValues: DefaultValues<TValues>;
+  /** The code, name and sources fields, wired to the form. */
+  identity: Omit<ProfileIdentityFieldsProps, 'kind'>;
+  /** Which profile, which names the dialog's test ids and its fields'. */
+  kind: ProfileIdentityFieldsProps['kind'];
   save: MutationActionWorkflowResult<TSaved, TValues>;
-  saveTestId: string;
   /** The title of a new profile's form; an existing one's dialog is titled by its name. */
   newTitle: string;
-  testId: string;
 }) {
   const cancelEdit = () => {
     save.reset();
@@ -67,12 +71,15 @@ export function ProfileFormModal<TValues extends FieldValues, TSaved, TProfile e
       open
       pendingLabel="Saving..."
       saveLabel="Save"
-      saveTestId={saveTestId}
-      testId={testId}
+      saveTestId={`root-admin-${kind}-profile-editor-save`}
+      testId={`root-admin-${kind}-profile-dialog`}
       title={title}
       viewContent={dialog.viewContent}
     >
-      {children}
+      <div className="space-y-4">
+        <ProfileIdentityFields {...identity} kind={kind} />
+        {children}
+      </div>
     </DetailEditModal>
   );
 }
