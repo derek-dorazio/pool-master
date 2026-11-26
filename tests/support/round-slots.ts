@@ -20,6 +20,7 @@ export function roundSlot(slotKind: SlotKind, overrides: Partial<SportEventRound
     weekNumber: null,
     seriesGames: 1,
     pairing: SlotPairing.FIXED,
+    canEndTied: false,
     tiebreakerMatchId: null,
     ...overrides,
   };
@@ -47,7 +48,7 @@ export function eventSlotRowStub(seasonSlotId = 'season-slot-tournament') {
       id: seasonSlotId, sportLeagueCompetitionSlotId: 'definition-tournament', startsAt: null, endsAt: null, status: 'SCHEDULED' as const,
       seriesFormat: 'SINGLE_GAME' as const, seriesGames: 1, pairing: 'FIXED' as const, isTestData: false, label: null,
       windowStartsAt: null, windowEndsAt: null, windowStatus: null,
-      definition: { key: 'TOURNAMENT', slotKind: 'TOURNAMENT' as const, weekNumber: null, name: null },
+      definition: { key: 'TOURNAMENT', slotKind: 'TOURNAMENT' as const, weekNumber: null, name: null, canEndTied: false },
     },
     tiebreakerGame: null,
   };

@@ -336,7 +336,7 @@ earliest one.
 
 | Event status | Effect |
 |---|---|
-| `DRAFT` | When the provider's pairings or bracket differ (or none is stored), they replace the stored ones through `loadBracket`. Otherwise matches are kept and take the provider's kickoff and home/away. |
+| `DRAFT` | When the provider's pairings or bracket differ (or none is stored), they replace the stored ones through `loadBracket`. Otherwise matches are kept and take the provider's kickoff, and where each side plays Game 1. |
 | Released, not finished | Pairings stay fixed. Unstarted matches take moved kickoffs. A reseeded round is placed by the server's own reseed when the provider pairs the same teams. Anything else is logged for an admin. |
 | `COMPLETED`, `CANCELLED` | Nothing. |
 
@@ -479,11 +479,19 @@ The family is the event's sport league's (`scoringFamilyForEvent`). Finish posit
 | Category | Writer | Writes |
 |---|---|---|
 | `GOLF` | `GolfScoreService` | Rounds and standings. Stroke play only. |
-| `GAME` | `writeGameScores` | `sport_event_round_match_games`: maps each provider game id to its Game and keeps the Game's own score and status; `sport_event_round_matches`: live scores and finals of single-game matches, and a series' result, through `MatchResultService.recordResult` (`result_source = PROVIDER`). Postponed games are marked `POSTPONED`. |
+| `GAME` | `writeGameScores` | `sport_event_round_match_games`: maps each provider game id to its Game and keeps the Game's status; `sport_event_round_match_game_side_results`: each side's score in that Game and where it played; `sport_event_round_matches` and `sport_event_round_match_sides`: a match's status and each side's outcome, written for a final of a single game or a series through `MatchResultService.recordResult`. Postponed games are marked `POSTPONED`. |
 
 **Games** (#2007). Every match has its Games: a single game has Game 1, and a best-of series is
 one match whose Games are numbered in the order they start. A provider's game id lives on the
 Game's provider mapping, never on the match.
+
+**Sides** (#2046). A match has two numbered sides. The sync that creates a match puts the
+provider's away team on side 1 and its home team on side 2, and a side keeps its team from then
+on: a provider listing the two teams the other way round later changes only where each side
+plays that Game (`home_away` on the Game's side result), which is how a series' home court
+alternates. Each Game holds each side's score and its periods as each period's own points (a
+shoot-out is one `SHOOTOUT` period, never part of the score); the match's score is read from its
+Games, never stored on the match.
 
 **GAME mapping.** A game id no Game holds is mapped to Game *n* of the one open match between its
 two teams, *n* being the game's number in its series (1 for a single game); a series Game the
@@ -498,8 +506,9 @@ its stored Games, never at Game 1. Two cases raise a WARNING finding and keep go
   the mapping. Voiding the picks on the old Game is #2016's.
 A First Four winner first fills its play-in place. **The feed is the only writer** (#2074): a
 provider final overwrites whatever the match holds, a result written by hand before included,
-and every result's `resultSource` is `PROVIDER`. A level knockout game takes its winner from the
-shoot-out.
+and the API shows every result's `resultSource` as `PROVIDER` (a cancelled match's too); nothing
+stores it. A level knockout game takes its winner from the shoot-out wherever its slot's games
+cannot end level.
 
 **Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
 `SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as

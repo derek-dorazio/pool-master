@@ -3,9 +3,10 @@
  * the root admin's counts, the dates a body's ISO strings become, what each write answers with,
  * and the status each provider sync refusal is sent with.
  */
+import { legacyMatch, homeAwayResult, homeAwayPeriod } from '../../support/match-sides';
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
-import { Sport, SportEventStatus, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus, type SportEvent, type SportEventOverview, MatchSide } from '@poolmaster/shared/domain';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
@@ -112,7 +113,7 @@ function fakes() {
     bracket: {
       listBracket: fn([]),
       loadBracket: fn([]),
-      updateMatch: fn({ id: 'm1', scheduledDate: null, periodScores: [], slot: weekRoundSlot() }),
+      updateMatch: fn(legacyMatch({ id: 'm1', slot: weekRoundSlot() })),
       proposeRoundMatchups: fn([{ matchNumber: 1 }]),
       setRoundMatchups: fn([]),
       fillPlayInSlot: fn(undefined),
@@ -467,14 +468,15 @@ describe('bracket', () => {
     const periodParams = { ...matchParams, periodNumber: 2 };
 
     for (const [handler, request] of [
-      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { homeScore: 70, awayScore: 65 } })],
+      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 65 } })],
       [handlers.recordEventMatchPeriodScore, stubRequest({ params: periodParams, body: { homeScore: 7, awayScore: 3 } })],
       [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
     ] as const) {
       expect((await callHandler(handler, request)).body).toEqual({ matches: [] });
     }
-    expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, place, 2, { homeScore: 7, awayScore: 3 });
-    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, place, { homeScore: 70, awayScore: 65 });
+    // The request's home and away reach the service as side 2 and side 1 (#2046).
+    expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, place, 2, homeAwayPeriod({ homeScore: 7, awayScore: 3 }));
+    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, place, homeAwayResult({ winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 65 }));
     expect(services.matchResults.cancelMatch).toHaveBeenCalledWith(EVENT_ID, place);
   });
 

@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, MatchStatus, ProviderSyncFindingKind, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, HomeAway, MatchStatus, ProviderSyncFindingKind, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
@@ -64,8 +64,12 @@ async function week() {
   const ids = [randomUUID(), randomUUID(), randomUUID()];
   const kickoffs = [SUNDAY_EARLY, SUNDAY_LATE, MONDAY_NIGHT];
   await matches.replaceBracket(event.id, ids.map((id, index) => ({
-    id, roundNumber: 1, matchNumber: index + 1, homeSportEventParticipantId: row(index * 2), awaySportEventParticipantId: row(index * 2 + 1),
-    isNeutralSite: false, scheduledDate: kickoffs[index] ?? null, advancesToMatchId: null, advancesToSide: null, regionLabel: null,
+    id, roundNumber: 1, matchNumber: index + 1,
+    sides: [
+      { sideNumber: 1, sportEventParticipantId: row(index * 2 + 1), homeAway: HomeAway.AWAY },
+      { sideNumber: 2, sportEventParticipantId: row(index * 2), homeAway: HomeAway.HOME },
+    ],
+    isNeutralSite: false, scheduledDate: kickoffs[index] ?? null, advancesToMatchId: null, advancesToSideNumber: null, regionLabel: null,
   })));
   const games = await prisma.sportEventRoundMatchGame.findMany({ where: { sportEventId: event.id }, select: { id: true, sportEventRoundMatchId: true } });
   const gameOf = (index: number) => expectDefined(games.find((game) => game.sportEventRoundMatchId === ids[index]), 'game').id;
@@ -92,14 +96,14 @@ async function storedTiebreaker(sportEventSlotId: string): Promise<string | null
 }
 
 describe('SlotTiebreakerService.refresh', () => {
-  it('chooses the week\'s last kickoff, writing it with the jobs that rebuild the boards and run the rule again', async () => {
+  it('chooses the week\'s last kickoff, writing it with the job that rebuilds the boards and no second run of the rule', async () => {
     const { event, gameOf, slot } = await week();
 
     expect(await service(SUNDAY_EARLY).refresh(event.id)).toEqual({ changedCount: 1, replacedCount: 0 });
 
     expect(await storedTiebreaker(slot.id)).toBe(gameOf(2));
     const jobs = await getPrisma().backgroundJob.findMany({ where: { sportEventId: event.id }, select: { type: true } });
-    expect(jobs.map((job) => job.type).sort()).toEqual([BackgroundJobType.REBUILD_LEADERBOARDS, BackgroundJobType.REFRESH_SLOT_TIEBREAKERS]);
+    expect(jobs.map((job) => job.type)).toEqual([BackgroundJobType.REBUILD_LEADERBOARDS]);
   });
 
   it('reads an event\'s slots and Games in a fixed number of statements, and changes nothing when the rule\'s game is already chosen', async () => {

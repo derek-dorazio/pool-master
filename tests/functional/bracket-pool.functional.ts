@@ -241,7 +241,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         })),
         later(2, 1), later(2, 2), later(2, 3), later(2, 4),
         later(3, 1), later(3, 2),
-        later(4, 1, true),
+        // The final is scheduled, so the rule names it the slot's tiebreaker game (#2048).
+        { ...later(4, 1, true), scheduledDate: '2099-04-06T01:00:00.000Z' },
       ],
     });
 
@@ -467,7 +468,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         wildCard(1, 2, 7), wildCard(2, 3, 6), wildCard(3, 4, 5),
         { matchNumber: 1, roundNumber: 2, home: 1, away: null, advancesTo: { ...at(3, 1), side: MatchSide.HOME }, regionLabel: 'AFC' },
         { matchNumber: 2, roundNumber: 2, home: null, away: null, advancesTo: { ...at(3, 1), side: MatchSide.AWAY }, regionLabel: 'AFC' },
-        { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, regionLabel: 'AFC' },
+        // The conference final is scheduled, so the rule names it the FINAL slot's tiebreaker game (#2048).
+        { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, regionLabel: 'AFC', scheduledDate: '2099-03-29T23:00:00.000Z' },
       ],
     });
     const { commissioner, league, bob } = await leagueOfThree('Reseed');

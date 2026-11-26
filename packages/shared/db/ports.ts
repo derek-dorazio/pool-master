@@ -800,6 +800,13 @@ export type ContestEntryMatchPredictionWrite = PredictedChoice & {
   confidence: number | null;
 };
 
+/**
+ * One game's pick as the change writes it: with the number of the match side it picks (#2046),
+ * the side its team plays or, in a bracket's later game, the side the entry's earlier picks put
+ * the team on; null for a tie pick.
+ */
+export type ContestEntryMatchPredictionSidedWrite = ContestEntryMatchPredictionWrite & { sideNumber: number | null };
+
 /** An entry's picks and its row for one event, as a change reads them under the entry's lock (#1268). */
 export interface LockedPredictionWeek {
   /** Its picks on the event's games, in game order. */
@@ -810,7 +817,7 @@ export interface LockedPredictionWeek {
 
 /** What one change writes to an entry's picks for one event's games. */
 export interface ContestEntryMatchPredictionChange {
-  saves: readonly ContestEntryMatchPredictionWrite[];
+  saves: readonly ContestEntryMatchPredictionSidedWrite[];
   /** Games whose pick is removed. */
   clearedMatchIds: readonly string[];
   /** The entry's status for the event after the change, when it changes: `submittedAt` is `at` for SUBMITTED, cleared for DRAFT. */

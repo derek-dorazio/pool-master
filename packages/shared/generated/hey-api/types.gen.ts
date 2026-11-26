@@ -7374,7 +7374,7 @@ export type ContestConfigTemplateResponse = {
 export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 
 /**
- * One side of a match. On a neutral site HOME is the upper line of the bracket.
+ * One side of a match: HOME is side 2 and AWAY side 1, the sides the sync placed the home and away teams on. On a neutral site HOME is the upper line of the bracket.
  */
 export type MatchSideDto = 'HOME' | 'AWAY';
 
@@ -7384,15 +7384,15 @@ export type MatchSideDto = 'HOME' | 'AWAY';
 export type MatchEndingDto = 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
 
 /**
- * Both sides' score at the end of one period of a game (#772).
+ * Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server.
  */
 export type SportEventMatchPeriodScoreDto = {
     /**
-     * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+     * 1 for the first period (quarter, in American football).
      */
     periodNumber: number;
     /**
-     * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+     * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points.
      */
     homeScore: number;
     /**
@@ -7479,6 +7479,10 @@ export type SportEventRoundMatchDto = {
      */
     status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
+     * True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status.
+     */
+    isFinal: boolean;
+    /**
      * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
      */
     isUnplayed: boolean;
@@ -7507,7 +7511,7 @@ export type SportEventRoundMatchDto = {
      */
     ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
     /**
-     * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+     * Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
      */
     resultSource: 'PROVIDER' | null;
     /**
@@ -7531,15 +7535,15 @@ export type SportEventRoundMatchDto = {
      */
     homeSpread: number | null;
     /**
-     * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+     * Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
      */
     periodScores: Array<{
         /**
-         * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+         * 1 for the first period (quarter, in American football).
          */
         periodNumber: number;
         /**
-         * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+         * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points.
          */
         homeScore: number;
         /**
@@ -7609,6 +7613,10 @@ export type SportEventBracketResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status.
+         */
+        isFinal: boolean;
+        /**
          * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
          */
         isUnplayed: boolean;
@@ -7637,7 +7645,7 @@ export type SportEventBracketResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+         * Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
          */
         resultSource: 'PROVIDER' | null;
         /**
@@ -7661,15 +7669,15 @@ export type SportEventBracketResponse = {
          */
         homeSpread: number | null;
         /**
-         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+         * Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
          */
         periodScores: Array<{
             /**
-             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+             * 1 for the first period (quarter, in American football).
              */
             periodNumber: number;
             /**
-             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points.
              */
             homeScore: number;
             /**
@@ -7740,6 +7748,10 @@ export type SportEventRoundMatchResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status.
+         */
+        isFinal: boolean;
+        /**
          * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
          */
         isUnplayed: boolean;
@@ -7768,7 +7780,7 @@ export type SportEventRoundMatchResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+         * Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
          */
         resultSource: 'PROVIDER' | null;
         /**
@@ -7792,15 +7804,15 @@ export type SportEventRoundMatchResponse = {
          */
         homeSpread: number | null;
         /**
-         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+         * Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
          */
         periodScores: Array<{
             /**
-             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+             * 1 for the first period (quarter, in American football).
              */
             periodNumber: number;
             /**
-             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points.
              */
             homeScore: number;
             /**
@@ -12313,7 +12325,7 @@ export type SportEventDto = {
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
-     * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
+     * Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one.
      */
     shootout: boolean;
     /**
@@ -12775,7 +12787,7 @@ export type SportEventListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
+         * Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one.
          */
         shootout: boolean;
         /**
@@ -13212,7 +13224,7 @@ export type SportEventResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
+         * Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one.
          */
         shootout: boolean;
         /**
@@ -23570,6 +23582,10 @@ export type SquaresBoardResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status.
+         */
+        isFinal: boolean;
+        /**
          * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
          */
         isUnplayed: boolean;
@@ -23598,7 +23614,7 @@ export type SquaresBoardResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+         * Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
          */
         resultSource: 'PROVIDER' | null;
         /**
@@ -23622,15 +23638,15 @@ export type SquaresBoardResponse = {
          */
         homeSpread: number | null;
         /**
-         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+         * Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
          */
         periodScores: Array<{
             /**
-             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+             * 1 for the first period (quarter, in American football).
              */
             periodNumber: number;
             /**
-             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points.
              */
             homeScore: number;
             /**

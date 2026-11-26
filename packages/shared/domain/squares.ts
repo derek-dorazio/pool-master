@@ -1,4 +1,5 @@
-import { MatchStatus } from './enums';
+import { MatchSide, MatchStatus, PeriodKind } from './enums';
+import { gameNumbered, gameScoreOf, runningPeriodScores, sideNumberOfMatchSide } from './match-sides';
 import { SQUARES_GRID_SIZE } from './contest-rules';
 import type { SportEventRoundMatch } from './sport-catalog-types';
 
@@ -56,18 +57,25 @@ export interface ContestSquaresWinner extends SquaresWinner {
 }
 
 /**
- * The game's scoring moments entered so far: each period's end but the last, as the admin entered
- * it, then the final score once the game is completed. Nothing is added up (design Q3.1).
+ * The game's scoring moments entered so far: the running score at each period's end but the last
+ * (`runningPeriodScores`, the one sum), then the final score once the game is completed. Rows are
+ * side 1's digits and columns side 2's, the home team's where the sync placed the teams, until
+ * #2019 names them by side.
  */
 export function squaresScoringMoments(
-  game: Pick<SportEventRoundMatch, 'status' | 'homeScore' | 'awayScore' | 'periodScores'>,
+  game: Pick<SportEventRoundMatch, 'status' | 'games'>,
   periodCount: number,
 ): SquaresScoringMoment[] {
-  const moments: SquaresScoringMoment[] = game.periodScores
-    .filter((score) => score.periodNumber < periodCount)
-    .map(({ periodNumber, homeScore, awayScore }) => ({ periodNumber, homeScore, awayScore }));
-  if (game.status === MatchStatus.COMPLETED && game.homeScore !== null && game.awayScore !== null) {
-    moments.push({ periodNumber: periodCount, homeScore: game.homeScore, awayScore: game.awayScore });
+  const gameOne = gameNumbered(game, 1);
+  if (gameOne === null) return [];
+  const side = (totals: ReadonlyMap<number, number>, sideNumber: number) => totals.get(sideNumber) ?? 0;
+  const moments: SquaresScoringMoment[] = runningPeriodScores(gameOne)
+    .filter((period) => period.kind === PeriodKind.REGULAR && period.periodNumber < periodCount)
+    .map(({ periodNumber, totals }) => ({ periodNumber, homeScore: side(totals, sideNumberOfMatchSide(MatchSide.HOME)), awayScore: side(totals, sideNumberOfMatchSide(MatchSide.AWAY)) }));
+  const homeScore = gameScoreOf(gameOne, sideNumberOfMatchSide(MatchSide.HOME));
+  const awayScore = gameScoreOf(gameOne, sideNumberOfMatchSide(MatchSide.AWAY));
+  if (game.status === MatchStatus.COMPLETED && homeScore !== null && awayScore !== null) {
+    moments.push({ periodNumber: periodCount, homeScore, awayScore });
   }
   return moments.sort((left, right) => left.periodNumber - right.periodNumber);
 }

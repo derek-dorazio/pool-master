@@ -6,7 +6,7 @@
  * Scaffolding only: no assertions and no route reads here.
  */
 import { randomUUID } from 'crypto';
-import { MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { Response } from 'light-my-request';
 import type { z } from 'zod';
 import { createTestUser, getApp, getPrisma, type TestUserResult } from './helpers';
@@ -16,6 +16,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 import { applySlotTiebreakerRule } from './slot-tiebreakers';
 import { oneEventSlotId } from '../support/test-slots';
+import { createMatchRow } from '../support/match-rows';
 
 export const DAY = 24 * 60 * 60 * 1000;
 export const HOUR = 60 * 60 * 1000;
@@ -147,28 +148,17 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
     };
     const [home, away] = await Promise.all([team('Home'), team('Away')]);
     const final = matchNumber <= played;
-    const match = await prisma.sportEventRoundMatch.create({
-      data: {
-        sportEventId: event.id,
-        sportEventRoundId: round.id,
-        matchNumber,
-        homeSportEventParticipantId: home.id,
-        awaySportEventParticipantId: away.id,
-        isNeutralSite: false,
-        scheduledDate: new Date(startDate.getTime() + (matchNumber - 1) * HOUR),
-        ...(final ? { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17 } : {}),
-      },
-    });
-    await prisma.sportEventRoundMatchGame.create({
-      data: {
-        sportEventId: event.id,
-        sportEventRoundMatchId: match.id,
-        sportEventSlotId: round.sportEventSlotId,
-        gameNumber: 1,
-        scheduledDate: match.scheduledDate,
-        ...(final ? { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17 } : {}),
-        providerMappings: { create: { providerId: provider.id, externalId: `${suffix}-${String(matchNumber)}` } },
-      },
+    // The away team on side 1 and the home team on side 2, as the sync writes them.
+    const match = await createMatchRow(prisma, {
+      sportEventId: event.id,
+      sportEventRoundId: round.id,
+      sportEventSlotId: round.sportEventSlotId,
+      matchNumber,
+      teams: [away.id, home.id],
+      isNeutralSite: false,
+      scheduledDate: new Date(startDate.getTime() + (matchNumber - 1) * HOUR),
+      ...(final ? { result: { winnerSideNumber: 2, scores: [17, 20] } } : {}),
+      providerMapping: { providerId: provider.id, externalId: `${suffix}-${String(matchNumber)}` },
     });
     matches.push(match);
   }

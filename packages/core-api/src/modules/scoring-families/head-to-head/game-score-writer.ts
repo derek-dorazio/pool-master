@@ -33,8 +33,12 @@
  *
  * A best-of series (#1545: the NBA's best of seven, its round's slot `seriesGames`) is one match
  * with a Game for each game played. Its score is games won, counted from its Games as this sync
- * leaves them: the series takes its result once a side has won more than half of its games, and
- * until then the wins so far are its live score.
+ * leaves them: the series takes its result once a side has won more than half of its games.
+ *
+ * Each Game holds each side's score and where it played that game (#2046): HOME or AWAY as the
+ * provider lists its teams, or NONE at a neutral site. The match's sides never move: a game the
+ * provider lists the other way round only changes `homeAway`. The match's own status follows its
+ * Games while it is played (in progress, back to scheduled, postponed); its score is its Games'.
  *
  * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
  * with that winner (`play-in-fill.ts`), so the game is placed at the place's match in the same sync.
@@ -45,9 +49,15 @@ import {
   describeMatchPlace,
   matchPlaceOf,
   requireProviderCodeOfSourceId,
-  MatchSide,
+  HomeAway,
   MatchStatus,
+  gameNumbered,
+  gameScoreOf as storedGameScoreOf,
+  gameWinnerSideNumber,
+  homeAwayOf,
   isMatchUnplayed,
+  shootoutScoreOf,
+  winningSide,
   ProviderGameState,
   ProviderSyncFindingKind,
   seriesWinsNeeded,
@@ -57,7 +67,8 @@ import {
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  MatchLiveScoreWrite,
+  GameSideScoreWrite,
+  MatchStatusWrite,
   ParticipantProviderMappingRepository,
   ProviderMappedGame,
   SportEventRoundMatchGameCreate,
@@ -77,7 +88,7 @@ import { fillPlayInPlaces, type PlayInFillDeps } from './play-in-fill';
 
 export interface GameScoreWriterDeps {
   providerId: string;
-  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'applyLiveScores'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'applyStatuses'>;
   games: Pick<SportEventRoundMatchGameRepository, 'findBySportEvent' | 'findByProviderExternalIds' | 'applySync'>;
   eventParticipants: Pick<SportEventParticipantRepository, 'findByIds' | 'findBySportEvent'>;
   playIns: PlayInFillDeps['playIns'];
@@ -89,14 +100,13 @@ export interface GameScoreWriterDeps {
   logger?: FastifyBaseLogger;
 }
 
-/** A final game's result, from the match's side. */
+/** One side's score in a provider game, where it played, and its shoot-out kicks. */
+type FeedSideScore = GameSideScoreWrite & { score: number; homeAway: HomeAway };
+
+/** A game's result on the match's sides: the side that won, or null when level and undecided. */
 interface MatchResultFromGame {
-  winnerSide: MatchSide | null;
-  homeScore: number;
-  awayScore: number;
-  /** Both or neither (left out is neither): a level game's shoot-out, from the match's side. */
-  homeShootoutScore?: number;
-  awayShootoutScore?: number;
+  winnerSideNumber: number | null;
+  sides: readonly FeedSideScore[];
 }
 
 /** A provider game placed at its Game: the Game's id, its number and its match. */
@@ -169,24 +179,30 @@ export async function writeGameScores(
   ];
 
   const now = deps.now?.() ?? new Date();
-  const scores = placed.flatMap(({ feed, gameId, match, stored }) => {
+  const scored = placed.flatMap(({ feed, gameId, match, stored }) => {
     const score = gameScoreOf(feed, match, sidesOf, teamsOf, stored, now);
-    return score === null ? [] : [{ id: gameId, ...score }];
+    if (score === null) return [];
+    const { winnerSideNumber, ...write } = score;
+    return [{ write: { id: gameId, ...write }, winnerSideNumber }];
   });
+  const scores = scored.map((each) => each.write);
   // A Game made in a slot, or moved out of one, changes the games its event's slots choose their tiebreaker games from.
   const gamesChanged = combineJobsForWrite(...await Promise.all([...placement.gamesChangedEventIds]
     .map((changedEventId) => deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_GAMES_CHANGED, sportEventId: changedEventId }))));
   await deps.games.applySync({ providerCode, created: placement.created, mapped: placement.mapped, moved: placement.moved, scores }, gamesChanged.jobs);
   gamesChanged.queued();
 
-  const series = seriesStandings(deps, sportEventId, placed, placement.overLength, storedGames, scores);
+  const series = seriesStandings(deps, sportEventId, placed, placement.overLength, storedGames, scored);
   const finals: FinalResult[] = [
     ...placed.flatMap(({ feed, match }) => (match.slot.seriesGames === 1 && feed.state === ProviderGameState.FINAL
       ? [{ match, externalId: feed.providerGameId, resultOn: (current: SportEventRoundMatch) => resultFromGame(feed, current, sidesOf, teamsOf) }]
       : [])),
     ...series.flatMap((each) => {
-      if (each.winnerSide === null) return [];
-      const result: MatchResultFromGame = { winnerSide: each.winnerSide, homeScore: each.homeWins, awayScore: each.awayWins };
+      if (each.winnerSideNumber === null) return [];
+      const result: MatchResultFromGame = {
+        winnerSideNumber: each.winnerSideNumber,
+        sides: [...each.wins].map(([sideNumber, wins]) => ({ sideNumber, score: wins, shootoutScore: null, homeAway: HomeAway.NONE })),
+      };
       return [{ match: each.match, externalId: each.externalId, resultOn: () => result }];
     }),
   ].sort((left, right) => compareMatchPlaces(left.match, right.match));
@@ -205,13 +221,7 @@ export async function writeGameScores(
       );
       continue;
     }
-    const before = {
-      winnerSide: match.winnerSide,
-      homeScore: match.homeScore,
-      awayScore: match.awayScore,
-      homeShootoutScore: match.homeShootoutScore,
-      awayShootoutScore: match.awayShootoutScore,
-    };
+    const before = { winnerSideNumber: winningSide(match)?.sideNumber ?? null, sides: resultSidesOf(match, result) };
     const row = { id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: describeMatchPlace(match, { sentenceStart: true }), before, after: { ...result } };
     if (hasResult(match, result)) {
       rows.push({ ...row, disposition: 'UNCHANGED' });
@@ -219,7 +229,10 @@ export async function writeGameScores(
     }
     try {
       // One at a time: the bracket each result writes is the one the next is read against.
-      const bracket = await deps.results.recordResult(sportEventId, matchPlaceOf(match), result);
+      const bracket = await deps.results.recordResult(sportEventId, matchPlaceOf(match), {
+        winnerSideNumber: result.winnerSideNumber,
+        sides: result.sides.map(({ sideNumber, score, shootoutScore }) => ({ sideNumber, score, shootoutScore })),
+      });
       for (const each of bracket) rewritten.set(each.id, each);
       rows.push({ ...row, disposition: 'UPDATED' });
     } catch (error) {
@@ -231,30 +244,31 @@ export async function writeGameScores(
     }
   }
 
-  const liveScores = [
-    ...placed.flatMap(({ feed, match: placedMatch }) => {
+  const scoredGameIds = new Set(scores.map((score) => score.id));
+  const liveStatuses = [
+    ...placed.flatMap(({ feed, gameId, match: placedMatch }) => {
       if (placedMatch.slot.seriesGames !== 1 || feed.state === ProviderGameState.FINAL) return [];
       const match = rewritten.get(placedMatch.id) ?? placedMatch;
-      return [{ match, externalId: feed.providerGameId, score: liveScoreOf(feed, match, sidesOf, teamsOf) }];
+      return [{ match, externalId: feed.providerGameId, status: liveStatusOf(feed, match, sidesOf, teamsOf), gameScored: scoredGameIds.has(gameId) }];
     }),
     ...series.flatMap((each) => {
-      if (each.winnerSide !== null) return [];
+      if (each.winnerSideNumber !== null) return [];
       const match = rewritten.get(each.match.id) ?? each.match;
-      return [{ match, externalId: each.externalId, score: seriesLiveScoreOf(each, match) }];
+      return [{ match, externalId: each.externalId, status: seriesLiveStatusOf(each, match), gameScored: each.gameIds.some((id) => scoredGameIds.has(id)) }];
     }),
   ];
-  const live: MatchLiveScoreWrite[] = [];
-  for (const { match, externalId, score } of liveScores) {
-    if (score === null) continue;
-    const before = { status: match.status, homeScore: match.homeScore, awayScore: match.awayScore };
-    const unchanged = before.status === score.status && before.homeScore === score.homeScore && before.awayScore === score.awayScore;
-    if (!unchanged) live.push({ id: match.id, ...score });
+  const live: MatchStatusWrite[] = [];
+  for (const { match, externalId, status, gameScored } of liveStatuses) {
+    if (status === null && !gameScored) continue;
+    const statusChanges = status !== null && status !== match.status;
+    if (statusChanges) live.push({ id: match.id, status });
+    // The live score is the Game's, written with the sync's Games above.
     rows.push({
       id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: describeMatchPlace(match, { sentenceStart: true }),
-      before, after: { ...score }, disposition: unchanged ? 'UNCHANGED' : 'UPDATED',
+      before: { status: match.status }, after: { status: status ?? match.status }, disposition: statusChanges || gameScored ? 'UPDATED' : 'UNCHANGED',
     });
   }
-  await deps.matches.applyLiveScores(live);
+  await deps.matches.applyStatuses(live);
 
   const persisted = rows.filter((row) => row.disposition === 'UPDATED').length;
   return {
@@ -306,7 +320,10 @@ function placeUnmappedGames(
 ): GamePlacement {
   const placement: GamePlacement = { placed: [], created: [], mapped: [], moved: [], gamesChangedEventIds: new Set(), findings: [], ambiguous: [], overLength: new Map() };
   if (games.length === 0) return placement;
-  const matchesByTeams = groupByTeams(matches, (match) => [sidesOf.get(match.homeSportEventParticipantId), sidesOf.get(match.awaySportEventParticipantId)]);
+  const matchesByTeams = groupByTeams(matches, (match) => {
+    const [first, second] = match.sides.map((side) => (side.sportEventParticipantId === null ? undefined : sidesOf.get(side.sportEventParticipantId)));
+    return [first, second];
+  });
   const gamesByTeams = groupByTeams(games, (game) => [teamsOf.get(game.homeTeamExternalId), teamsOf.get(game.awayTeamExternalId)]);
   const storedByPlace = new Map(storedGames.map((each) => [gamePlaceKey(each.game.sportEventRoundMatchId, each.game.gameNumber), each]));
   for (const [teams, fitting] of gamesByTeams) {
@@ -362,16 +379,25 @@ function slotOfMatch(match: SportEventRoundMatch, storedGames: readonly Provider
   return game.game.sportEventSlotId;
 }
 
-/** A best-of series this batch scored: its Games' wins from the match's sides, and its winner once decided. */
+/** A best-of series this batch scored: each side's Games won, and its winner once decided. */
 interface SeriesStanding {
   match: SportEventRoundMatch;
   externalId: string;
-  homeWins: number;
-  awayWins: number;
+  /** Games won, by side number. */
+  wins: ReadonlyMap<number, number>;
   /** The side that has won more than half of the series' games, or null while it is still on. */
-  winnerSide: MatchSide | null;
+  winnerSideNumber: number | null;
   /** Whether any of its games has started. */
   started: boolean;
+  /** The series' Games this batch placed a game at. */
+  gameIds: readonly string[];
+}
+
+/** A Game's status and winner, as stored or as this sync writes it. */
+interface GameState {
+  id: string;
+  status: MatchStatus;
+  winnerSideNumber: number | null;
 }
 
 /**
@@ -386,37 +412,59 @@ function seriesStandings(
   placed: readonly PlacedGame[],
   overLength: ReadonlyMap<string, readonly GameScoreUpdate[]>,
   storedGames: readonly ProviderMappedGame[],
-  scores: readonly SportEventRoundMatchGameScoreWrite[],
+  scored: readonly ScoredGameWrite[],
 ): SeriesStanding[] {
   const seriesMatches = new Map(placed.filter(({ match }) => match.slot.seriesGames > 1).map(({ match }) => [match.id, match]));
-  const scoreOf = new Map(scores.map((score) => [score.id, score]));
-  const gamesOf = new Map<string, { id: string; status: MatchStatus; winnerSide: MatchSide | null }[]>();
-  const add = (matchId: string, game: { id: string; status: MatchStatus; winnerSide: MatchSide | null }) => {
+  const scoreOf = new Map(scored.map(({ write, winnerSideNumber }): [string, GameState] => [write.id, { id: write.id, status: write.status, winnerSideNumber }]));
+  const gamesOf = new Map<string, GameState[]>();
+  const add = (matchId: string, game: GameState) => {
     gamesOf.set(matchId, [...(gamesOf.get(matchId) ?? []).filter((each) => each.id !== game.id), scoreOf.get(game.id) ?? game]);
   };
-  for (const { game } of storedGames) if (seriesMatches.has(game.sportEventRoundMatchId)) add(game.sportEventRoundMatchId, game);
-  for (const each of placed) if (seriesMatches.has(each.match.id) && each.stored === null) add(each.match.id, { id: each.gameId, status: MatchStatus.SCHEDULED, winnerSide: null });
+  for (const { game } of storedGames) {
+    if (seriesMatches.has(game.sportEventRoundMatchId)) add(game.sportEventRoundMatchId, { id: game.id, status: game.status, winnerSideNumber: gameWinnerSideNumber(game) });
+  }
+  for (const each of placed) if (seriesMatches.has(each.match.id) && each.stored === null) add(each.match.id, { id: each.gameId, status: MatchStatus.SCHEDULED, winnerSideNumber: null });
   return [...seriesMatches.values()].flatMap((match) => {
     const length = match.slot.seriesGames;
     const seriesGames = gamesOf.get(match.id) ?? [];
-    const winners = seriesGames.flatMap((game) => (game.status === MatchStatus.COMPLETED && game.winnerSide !== null ? [game.winnerSide] : []));
-    const externalId = [...placed.filter((each) => each.match.id === match.id).map((each) => each.feed), ...(overLength.get(match.id) ?? [])]
+    const winners = seriesGames.flatMap((game) => (game.status === MatchStatus.COMPLETED && game.winnerSideNumber !== null ? [game.winnerSideNumber] : []));
+    const placedHere = placed.filter((each) => each.match.id === match.id);
+    const externalId = [...placedHere.map((each) => each.feed), ...(overLength.get(match.id) ?? [])]
       .map((feed) => feed.providerGameId).join(',');
-    const homeWins = winners.filter((side) => side === MatchSide.HOME).length;
-    const awayWins = winners.length - homeWins;
+    const wins = new Map(match.sides.map(({ sideNumber }) => [sideNumber, winners.filter((winner) => winner === sideNumber).length]));
     const needed = seriesWinsNeeded(length);
     // A game counted after the series was won (5-0 in a best of seven) is as wrong as one too many.
-    if (overLength.has(match.id) || winners.length > length || Math.max(homeWins, awayWins) > needed) {
+    if (overLength.has(match.id) || winners.length > length || Math.max(...wins.values()) > needed) {
       deps.logger?.warn(
         { action: 'liveScore.series.tooManyGames', data: { sportEventId, ...matchPlaceOf(match), providerGameIds: externalId, length } },
         'Skipped a series whose feed has more decided games than the series can have',
       );
       return [];
     }
-    const winnerSide = homeWins >= needed ? MatchSide.HOME : awayWins >= needed ? MatchSide.AWAY : null;
+    const winnerSideNumber = [...wins].find(([, won]) => won >= needed)?.[0] ?? null;
     const started = seriesGames.some((game) => game.status === MatchStatus.IN_PROGRESS || game.status === MatchStatus.COMPLETED);
-    return [{ match, externalId, homeWins, awayWins, winnerSide, started }];
+    return [{ match, externalId, wins, winnerSideNumber, started, gameIds: placedHere.map((each) => each.gameId) }];
   });
+}
+
+/** A side's score in a played game, and its shoot-out. */
+interface ScoredSide {
+  sideNumber: number;
+  score: number;
+  shootoutScore: number | null;
+}
+
+/** A Game's score as this sync writes it, with the side that won it: null until it is final, or when level. */
+interface ScoredGameWrite {
+  write: SportEventRoundMatchGameScoreWrite;
+  winnerSideNumber: number | null;
+}
+
+/** The side number with the higher score, or on a level score the higher shoot-out; null when level. */
+function winnerOfScores(first: ScoredSide, second: ScoredSide): number | null {
+  if (first.score !== second.score) return first.score > second.score ? first.sideNumber : second.sideNumber;
+  if (first.shootoutScore === null || second.shootoutScore === null || first.shootoutScore === second.shootoutScore) return null;
+  return first.shootoutScore > second.shootoutScore ? first.sideNumber : second.sideNumber;
 }
 
 /** Items by their two teams, in either order; an item with a team not known is left out. */
@@ -432,27 +480,25 @@ function groupByTeams<T>(items: readonly T[], teamsOf: (item: T) => readonly [st
 }
 
 /**
- * The live score a series puts on its match while no side has won it: the wins so far once a game
- * has started, or none while no game has. Null when there is nothing to write, as for a game.
+ * The status a series puts on its match while no side has won it: in progress once a game has
+ * started, scheduled again while none has. Null when there is nothing to write.
  */
-function seriesLiveScoreOf(series: SeriesStanding, match: SportEventRoundMatch): Omit<MatchLiveScoreWrite, 'id'> | null {
+function seriesLiveStatusOf(series: SeriesStanding, match: SportEventRoundMatch): MatchStatusWrite['status'] | null {
   if (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS) return null;
-  if (!series.started) {
-    return match.status === MatchStatus.IN_PROGRESS ? { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null } : null;
-  }
-  return { status: MatchStatus.IN_PROGRESS, homeScore: series.homeWins, awayScore: series.awayWins };
+  if (!series.started) return match.status === MatchStatus.IN_PROGRESS ? MatchStatus.SCHEDULED : null;
+  return MatchStatus.IN_PROGRESS;
 }
 
 /** A match with both sides known. */
-type SidedMatch = SportEventRoundMatch & { homeSportEventParticipantId: string; awaySportEventParticipantId: string };
+type SidedMatch = SportEventRoundMatch;
 
 function hasBothSides(match: SportEventRoundMatch): match is SidedMatch {
-  return match.homeSportEventParticipantId !== null && match.awaySportEventParticipantId !== null;
+  return match.sides.length > 0 && match.sides.every((side) => side.sportEventParticipantId !== null);
 }
 
 /** The participant behind each match side, by event-participant id. */
 async function participantsOfSides(deps: GameScoreWriterDeps, matches: readonly SportEventRoundMatch[]): Promise<Map<string, string>> {
-  const ids = [...new Set(matches.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId].filter((id) => id !== null)))];
+  const ids = [...new Set(matches.flatMap((match) => match.sides.flatMap((side) => (side.sportEventParticipantId === null ? [] : [side.sportEventParticipantId]))))];
   if (ids.length === 0) return new Map();
   const rows = await deps.eventParticipants.findByIds(ids);
   return new Map(rows.map((row) => [row.id, row.participantId]));
@@ -467,10 +513,11 @@ async function participantsOfTeams(deps: GameScoreWriterDeps, sportEventId: stri
 }
 
 /**
- * The game's result from the match's side, or null when its teams are not the match's two (a side
- * still to be decided, an unmapped team, or a link to the wrong game). Level scores with a
+ * The game's result on the match's sides, or null when its teams are not the match's two (a side
+ * still to be decided, an unmapped team, or a link to the wrong game). The provider's home team's
+ * side played at HOME and the other AWAY, or both NONE at a neutral site. Level scores with a
  * shoot-out go to the shoot-out's winner; level scores without one are a tie, which only a game
- * that forms no bracket accepts.
+ * that can end level accepts.
  */
 function resultFromGame(
   game: GameScoreUpdate,
@@ -479,39 +526,25 @@ function resultFromGame(
   teamsOf: ReadonlyMap<string, string>,
 ): MatchResultFromGame | null {
   if (game.homeScore === null || game.awayScore === null) return null;
-  const matchHome = match.homeSportEventParticipantId === null ? undefined : sidesOf.get(match.homeSportEventParticipantId);
-  const matchAway = match.awaySportEventParticipantId === null ? undefined : sidesOf.get(match.awaySportEventParticipantId);
   const gameHome = teamsOf.get(game.homeTeamExternalId);
   const gameAway = teamsOf.get(game.awayTeamExternalId);
-  if (matchHome === undefined || matchAway === undefined || gameHome === undefined || gameAway === undefined) return null;
-
-  const gameShootout = game.homeShootoutScore === undefined || game.homeShootoutScore === null
+  const teamOf = (side: SportEventRoundMatch['sides'][number]) => (side.sportEventParticipantId === null ? undefined : sidesOf.get(side.sportEventParticipantId));
+  const homeSide = match.sides.find((side) => gameHome !== undefined && teamOf(side) === gameHome);
+  const awaySide = match.sides.find((side) => gameAway !== undefined && teamOf(side) === gameAway);
+  if (homeSide === undefined || awaySide === undefined || homeSide.sideNumber === awaySide.sideNumber) return null;
+  const shootout = game.homeShootoutScore === undefined || game.homeShootoutScore === null
     || game.awayShootoutScore === undefined || game.awayShootoutScore === null
     ? null
-    : [game.homeShootoutScore, game.awayShootoutScore] as const;
-  let homeScore: number;
-  let awayScore: number;
-  let shootout: readonly [number, number] | null;
-  if (gameHome === matchHome && gameAway === matchAway) {
-    [homeScore, awayScore] = [game.homeScore, game.awayScore];
-    shootout = gameShootout;
-  } else if (gameHome === matchAway && gameAway === matchHome) {
-    [homeScore, awayScore] = [game.awayScore, game.homeScore];
-    shootout = gameShootout && [gameShootout[1], gameShootout[0]];
-  } else {
-    return null;
-  }
+    : { home: game.homeShootoutScore, away: game.awayShootoutScore };
   // A shoot-out decides only a level game; a provider's shoot-out beside a decided score is ignored.
-  if (homeScore === awayScore && shootout) {
-    const [homeShootoutScore, awayShootoutScore] = shootout;
-    return { winnerSide: sideAhead(homeShootoutScore, awayShootoutScore), homeScore, awayScore, homeShootoutScore, awayShootoutScore };
-  }
-  return { winnerSide: sideAhead(homeScore, awayScore), homeScore, awayScore };
-}
-
-/** The side with more, or null when level. */
-function sideAhead(home: number, away: number): MatchSide | null {
-  return home > away ? MatchSide.HOME : away > home ? MatchSide.AWAY : null;
+  const level = game.homeScore === game.awayScore;
+  const home: ScoredSide = { sideNumber: homeSide.sideNumber, score: game.homeScore, shootoutScore: level && shootout ? shootout.home : null };
+  const away: ScoredSide = { sideNumber: awaySide.sideNumber, score: game.awayScore, shootoutScore: level && shootout ? shootout.away : null };
+  const sides: FeedSideScore[] = [
+    { ...home, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.HOME },
+    { ...away, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.AWAY },
+  ].sort((left, right) => left.sideNumber - right.sideNumber);
+  return { winnerSideNumber: winnerOfScores(home, away), sides };
 }
 
 const SCORED_STATES: ReadonlySet<ProviderGameState> = new Set([ProviderGameState.FINAL, ProviderGameState.IN_PROGRESS]);
@@ -526,10 +559,11 @@ const GAME_STATUS_BY_STATE: Readonly<Record<ProviderGameState, MatchStatus>> = {
 };
 
 /**
- * The provider's score of the game as its Game holds it, from the match's sides: a played game's
- * score (and its winner once final), none for one not under way. Null when there is nothing to
- * write: the Game already holds it, or a played game has no score or teams that are not the
- * match's.
+ * The provider's score of the game as its Game holds it, on the match's sides: a played game's
+ * score, where each side played and its shoot-out; none for one not under way. Null when there is
+ * nothing to write: the Game already holds it, a played game has no score or teams that are not
+ * the match's, or the Game is a single game's that the result writes (a final, or a match decided
+ * or cancelled). A final Game carries the side that won it, for its series.
  */
 function gameScoreOf(
   game: GameScoreUpdate,
@@ -538,56 +572,76 @@ function gameScoreOf(
   teamsOf: ReadonlyMap<string, string>,
   stored: SportEventRoundMatchGame | null,
   now: Date,
-): Omit<SportEventRoundMatchGameScoreWrite, 'id'> | null {
+): Omit<SportEventRoundMatchGameScoreWrite, 'id'> & Pick<ScoredGameWrite, 'winnerSideNumber'> | null {
   const status = GAME_STATUS_BY_STATE[game.state];
+  // A single game's Game 1 is its match: its final score is the result's to write (recordResult),
+  // and a match with a result, or cancelled, takes no live score.
+  if (match.slot.seriesGames === 1 && (status === MatchStatus.COMPLETED || (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS))) return null;
   const played = status === MatchStatus.IN_PROGRESS || status === MatchStatus.COMPLETED;
   const score = played ? resultFromGame(game, match, sidesOf, teamsOf) : null;
   if (played && score === null) return null;
-  const write = {
-    status,
-    winnerSide: status === MatchStatus.COMPLETED ? score?.winnerSide ?? null : null,
-    homeScore: score?.homeScore ?? null,
-    awayScore: score?.awayScore ?? null,
-  };
-  const unchanged = stored !== null && stored.status === write.status && stored.winnerSide === write.winnerSide
-    && stored.homeScore === write.homeScore && stored.awayScore === write.awayScore;
+  // A game not under way keeps where its sides play, and has no score.
+  const sides = score?.sides ?? match.sides.map(({ sideNumber }) => ({
+    sideNumber, score: null, shootoutScore: null, homeAway: stored === null ? defaultHomeAway(match, sideNumber) : homeAwayOf(stored, sideNumber),
+  }));
+  const unchanged = stored !== null && stored.status === status && sides.every((side) => storedGameScoreOf(stored, side.sideNumber) === side.score
+    && shootoutScoreOf(stored, side.sideNumber) === side.shootoutScore && homeAwayOf(stored, side.sideNumber) === side.homeAway);
   if (unchanged) return null;
-  return { ...write, completedAt: status === MatchStatus.COMPLETED ? now : null };
+  const completed = status === MatchStatus.COMPLETED;
+  return { sportEventRoundMatchId: match.id, status, sides, completedAt: completed ? now : null, winnerSideNumber: completed && score !== null ? score.winnerSideNumber : null };
+}
+
+/** Where a side plays a new Game of its match before the provider says: as it played Game 1. */
+function defaultHomeAway(match: SportEventRoundMatch, sideNumber: number): HomeAway {
+  const gameOne = gameNumbered(match, 1);
+  return gameOne === null ? HomeAway.NONE : homeAwayOf(gameOne, sideNumber);
 }
 
 /**
- * The live score a game puts on a match that has no result: its score from the match's sides
- * while it is played, or none once the provider says it has not started. A game the provider
- * postpones is POSTPONED (#1791), its live score taken off, and scheduled again once the provider
- * says so. Null when there is
- * nothing to write: the match has a result or was cancelled, a live game has no score yet or
- * teams that are not the match's, or a game not under way meets a match already in its state.
+ * The status a game puts on a match that has no result: in progress while it is played, scheduled
+ * again once the provider says it has not started, POSTPONED (#1791) when the provider postpones
+ * it, and scheduled again once the provider says so. Null when there is nothing to write: the
+ * match has a result or was cancelled, a live game has no score yet or teams that are not the
+ * match's, or a game not under way meets a match already in its state.
  */
-function liveScoreOf(
+function liveStatusOf(
   game: GameScoreUpdate,
   match: SportEventRoundMatch,
   sidesOf: ReadonlyMap<string, string>,
   teamsOf: ReadonlyMap<string, string>,
-): Omit<MatchLiveScoreWrite, 'id'> | null {
+): MatchStatusWrite['status'] | null {
   if (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS) return null;
-  if (game.state === ProviderGameState.POSTPONED) {
-    return match.status === MatchStatus.POSTPONED ? null : { status: MatchStatus.POSTPONED, homeScore: null, awayScore: null };
-  }
+  if (game.state === ProviderGameState.POSTPONED) return match.status === MatchStatus.POSTPONED ? null : MatchStatus.POSTPONED;
   if (game.state !== ProviderGameState.IN_PROGRESS) {
     const backToScheduled = match.status === MatchStatus.IN_PROGRESS
       || (match.status === MatchStatus.POSTPONED && game.state === ProviderGameState.SCHEDULED);
-    return backToScheduled ? { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null } : null;
+    return backToScheduled ? MatchStatus.SCHEDULED : null;
   }
-  const score = resultFromGame(game, match, sidesOf, teamsOf);
-  return score === null ? null : { status: MatchStatus.IN_PROGRESS, homeScore: score.homeScore, awayScore: score.awayScore };
+  if (resultFromGame(game, match, sidesOf, teamsOf) === null) return null;
+  return match.status === MatchStatus.IN_PROGRESS ? null : MatchStatus.IN_PROGRESS;
+}
+
+/** Each side's score and shoot-out in the match as stored, for the sides a result names. */
+function resultSidesOf(match: SportEventRoundMatch, result: MatchResultFromGame): { sideNumber: number; score: number | null; shootoutScore: number | null }[] {
+  const gameOne = gameNumbered(match, 1);
+  return result.sides.map(({ sideNumber }) => ({
+    sideNumber,
+    score: match.slot.seriesGames === 1 ? (gameOne === null ? null : storedGameScoreOf(gameOne, sideNumber)) : seriesWinsOf(match, sideNumber),
+    shootoutScore: match.slot.seriesGames === 1 && gameOne !== null ? shootoutScoreOf(gameOne, sideNumber) : null,
+  }));
+}
+
+/** A series side's Games won, as stored. */
+function seriesWinsOf(match: SportEventRoundMatch, sideNumber: number): number {
+  return match.games.filter((game) => gameWinnerSideNumber(game) === sideNumber).length;
 }
 
 /** Whether the match already holds this result, so a repeated sync writes nothing. */
 function hasResult(match: SportEventRoundMatch, result: MatchResultFromGame): boolean {
-  return match.status === MatchStatus.COMPLETED
-    && match.winnerSide === result.winnerSide
-    && match.homeScore === result.homeScore
-    && match.awayScore === result.awayScore
-    && match.homeShootoutScore === (result.homeShootoutScore ?? null)
-    && match.awayShootoutScore === (result.awayShootoutScore ?? null);
+  if (match.status !== MatchStatus.COMPLETED || (winningSide(match)?.sideNumber ?? null) !== result.winnerSideNumber) return false;
+  const stored = resultSidesOf(match, result);
+  return result.sides.every((side) => {
+    const before = stored.find((each) => each.sideNumber === side.sideNumber);
+    return before?.score === side.score && (match.slot.seriesGames !== 1 || before.shootoutScore === side.shootoutScore);
+  });
 }

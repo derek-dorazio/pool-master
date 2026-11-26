@@ -10,12 +10,12 @@ export const SEASON_SLOT_SELECT = {
   id: true, sportLeagueCompetitionSlotId: true, startsAt: true, endsAt: true, status: true,
   seriesFormat: true, seriesGames: true, pairing: true, isTestData: true, label: true,
   windowStartsAt: true, windowEndsAt: true, windowStatus: true,
-  definition: { select: { key: true, slotKind: true, weekNumber: true, name: true } },
+  definition: { select: { key: true, slotKind: true, weekNumber: true, name: true, canEndTied: true } },
 } as const satisfies Prisma.SportLeagueSeasonCompetitionSlotSelect;
 
 export type SeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof SEASON_SLOT_SELECT }>;
 
-export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
+export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition: { canEndTied: _canEndTied, ...definition }, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
   return {
     ...slot,
     ...definition,
@@ -44,5 +44,5 @@ export const ROUND_EVENT_SLOT_SELECT = {
 /** The slot a round is played in, as `SportEventRound.slot` and `SportEventRoundMatch.slot` carry it. */
 export function toRoundSlot(eventSlot: Prisma.SportEventSlotGetPayload<typeof ROUND_EVENT_SLOT_SELECT>): SportEventRoundSlot {
   const { id, name, slotKind, weekNumber, seriesGames, pairing } = toSeasonSlot(eventSlot.seasonSlot);
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: eventSlot.seasonSlot.definition.canEndTied, tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
 }

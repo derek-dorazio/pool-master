@@ -9,7 +9,7 @@
  * needs one.
  */
 import { randomUUID } from 'crypto';
-import { MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   ParticipantListResponseSchema,
   SportEventBracketResponseSchema,
@@ -39,6 +39,8 @@ import { eventRoundSlots, fixtureSeasonId } from '../../support/event-edition';
 import { linkTestSlot } from '../../support/test-slots';
 import { sportPlay } from '../../support/sport-play';
 import { oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
+import { HOME_SIDE } from '../../support/match-sides';
 
 // No mocks.
 
@@ -176,19 +178,16 @@ async function seedReseededRound(matchups: number) {
     // The better seeds host and win: game N is seed N + 1 against seed 2 x games - N.
     const [home, away] = await Promise.all([team(game + 1), team(firstRoundGames * 2 - game)]);
     matchNumber += 1;
-    await prisma.sportEventRoundMatch.create({
-      data: {
-        sportEventId: event.id, sportEventRoundId: wildCard.id, matchNumber, isNeutralSite: false,
-        homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
-        status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17,
-      },
+    await createMatchRow(prisma, {
+      sportEventId: event.id, sportEventRoundId: wildCard.id, sportEventSlotId: wildCard.sportEventSlotId, matchNumber, isNeutralSite: false,
+      teams: [away.id, home.id], result: { winnerSideNumber: HOME_SIDE, scores: [17, 20] },
     });
   }
   for (let game = 0; game < matchups; game += 1) {
     matchNumber += 1;
-    await prisma.sportEventRoundMatch.create({ data: { sportEventId: event.id, sportEventRoundId: divisional.id, matchNumber, isNeutralSite: false } });
+    await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: divisional.id, sportEventSlotId: divisional.sportEventSlotId, matchNumber, teams: [null, null], isNeutralSite: false });
   }
-  await prisma.sportEventRoundMatch.create({ data: { sportEventId: event.id, sportEventRoundId: final.id, matchNumber: matchNumber + 1, isNeutralSite: true } });
+  await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: final.id, sportEventSlotId: final.sportEventSlotId, matchNumber: matchNumber + 1, teams: [null, null], isNeutralSite: true });
   return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 

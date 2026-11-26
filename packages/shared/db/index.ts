@@ -42,6 +42,7 @@ export type {
   ContestEntryMatchPredictionSaveResult,
   ContestEntrySeasonPrediction,
   ContestEntryMatchPredictionWrite,
+  ContestEntryMatchPredictionSidedWrite,
   ContestEntryTotals,
   ContestEntryWithSquad,
   LockedPredictionWeek,
@@ -98,10 +99,14 @@ export type {
 } from './race-ports';
 export type {
   BracketStandingWrite,
+  GamePeriodScoresWrite,
+  GameSideScoreWrite,
   MatchResultApply,
-  MatchLiveScoreWrite,
   MatchResultWrite,
   MatchSideFill,
+  MatchSideTeam,
+  MatchSideWrite,
+  MatchStatusWrite,
   ProviderMappedGame,
   SportEventRoundMatchGameCreate,
   SportEventRoundMatchGameRepository,

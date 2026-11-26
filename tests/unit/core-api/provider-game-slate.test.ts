@@ -1,7 +1,9 @@
+import { expectDefined } from '../../support/expect-defined';
+import { withHomeAway, homeAwayOf } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { compareMatchPlaces, isAtPlace, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, isAtPlace, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status, HomeAway } from '@poolmaster/shared/domain';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
@@ -71,7 +73,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
     logger,
   });
   const matchesNow = async () => (await store.matchRepo().findBySportEvent(event.id))
-    .map((match) => [match.matchNumber, match.homeSportEventParticipantId, match.awaySportEventParticipantId, match.scheduledDate?.toISOString() ?? null]);
+    .map((match) => [match.matchNumber, homeAwayOf(match).homeSportEventParticipantId, homeAwayOf(match).awaySportEventParticipantId, match.scheduledDate?.toISOString() ?? null]);
   return { store, event, field, bracket, service, logger, matchesNow };
 }
 
@@ -80,6 +82,13 @@ function game(id: string, home: string, away: string, hoursAfterKickoff: number)
 }
 
 const WEEK = [game('g2', 'Packers', 'Vikings', 3), game('g1', 'Bears', 'Lions', 0)];
+
+
+/** Where each side of the match numbered `matchNumber` plays its Game 1, as `[side number, HOME | AWAY | NONE]`. */
+function gameOneHomeAway(store: InMemorySportEvents, matchNumber: number) {
+  const match = expectDefined(store.matchRows.find((row) => row.matchNumber === matchNumber));
+  return expectDefined(match.games.find((each) => each.gameNumber === 1)).sideResults.map((result) => [result.sideNumber, result.homeAway]);
+}
 
 describe('ProviderGameSlateService', () => {
   it('loads a synced draft week\'s games as its matches in kickoff order, each side from the field', async () => {
@@ -120,7 +129,7 @@ describe('ProviderGameSlateService', () => {
   it('moves only the kickoff on a draft whose pairings are unchanged, keeping every match and the admin\'s spreads', async () => {
     const { service, event, store, matchesNow, field } = setup();
     await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
-    store.matchRows = store.matchRows.map((match) => ({ ...match, homeSpread: match.matchNumber === 1 ? -3.5 : 6.5 }));
+    store.matchRows = store.matchRows.map((match) => (withHomeAway(match, { homeSpread: match.matchNumber === 1 ? -3.5 : 6.5 })));
     const idsBefore = store.matchRows.map((match) => match.id);
 
     // The Packers game's kickoff firms up an hour earlier, so it now sorts first.
@@ -128,29 +137,31 @@ describe('ProviderGameSlateService', () => {
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
 
     expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
-    expect(store.matchRows.map((match) => match.homeSpread)).toEqual([-3.5, 6.5]);
+    expect(store.matchRows.map((match) => homeAwayOf(match).homeSpread)).toEqual([-3.5, 6.5]);
     expect(await matchesNow()).toEqual([
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
       [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() - HOUR).toISOString()],
     ]);
   });
 
-  it('swaps a draft match\'s sides when the provider swaps home and away, turning the admin\'s spread around with them', async () => {
+  it('keeps a draft match\'s sides and the admin\'s spread when the provider swaps home and away, changing only where each side plays Game 1', async () => {
     const { service, event, store, matchesNow, field } = setup();
     await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
-    store.matchRows = store.matchRows.map((match) => ({ ...match, homeSpread: match.matchNumber === 1 ? -3.5 : null }));
+    store.matchRows = store.matchRows.map((match) => (withHomeAway(match, { homeSpread: match.matchNumber === 1 ? -3.5 : null })));
 
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Lions', 'Bears', 0), WEEK[0]] }))
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
 
+    // The Bears stay on side 2 and the Lions on side 1 (#2046): the Lions now play Game 1 at home.
     expect(await matchesNow()).toEqual([
-      [1, field.Lions, field.Bears, KICKOFF.toISOString()],
+      [1, field.Bears, field.Lions, KICKOFF.toISOString()],
       [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 3 * HOUR).toISOString()],
     ]);
-    expect(store.matchRows.map((match) => match.homeSpread)).toEqual([3.5, null]);
+    expect(gameOneHomeAway(store, 1)).toEqual([[1, HomeAway.HOME], [2, HomeAway.AWAY]]);
+    expect(store.matchRows.map((match) => homeAwayOf(match).homeSpread)).toEqual([-3.5, null]);
   });
 
-  it('keeps a released match\'s sides when the provider swaps home and away, moving its kickoff and logging the swap for an admin', async () => {
+  it('keeps a released match\'s sides when the provider swaps home and away, moving its kickoff and where each side plays Game 1', async () => {
     const { service, event, store, matchesNow, field, logger } = setup();
     await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
@@ -159,8 +170,8 @@ describe('ProviderGameSlateService', () => {
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
 
     expect((await matchesNow())[0]).toEqual([1, field.Bears, field.Lions, new Date(KICKOFF.getTime() + HOUR).toISOString()]);
-    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: event.id, swappedMatches: [{ roundNumber: 1, matchNumber: 1 }] }), expect.any(String));
-    expect(logger.warn).not.toHaveBeenCalledWith(expect.objectContaining({ unmatchedPairings: expect.anything() }), expect.any(String));
+    expect(gameOneHomeAway(store, 1)).toEqual([[1, HomeAway.HOME], [2, HomeAway.AWAY]]);
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   it('replaces a draft\'s games, an admin\'s included, when the provider\'s pairings change', async () => {
@@ -333,13 +344,13 @@ describe('ProviderGameSlateService', () => {
       const sides = () => store.matchRows
         .slice()
         .sort(compareMatchPlaces)
-        .map((match) => [match.roundNumber, match.matchNumber, match.homeSportEventParticipantId, match.awaySportEventParticipantId]);
+        .map((match) => [match.roundNumber, match.matchNumber, homeAwayOf(match).homeSportEventParticipantId, homeAwayOf(match).awaySportEventParticipantId]);
       /** Round 1 played: the 2 and 4 seeds win at home, the 6 seed wins away. */
       const playWildCard = () => {
         const winners = new Map([[1, MatchSide.HOME], [2, MatchSide.AWAY], [3, MatchSide.HOME]]);
         store.matchRows = store.matchRows.map((match) => {
           const winnerSide = match.roundNumber === 1 ? winners.get(match.matchNumber) : undefined;
-          return winnerSide === undefined ? match : { ...match, status: MatchStatus.COMPLETED, winnerSide, homeScore: 20, awayScore: 17 };
+          return winnerSide === undefined ? match : withHomeAway(match, { status: MatchStatus.COMPLETED, winnerSide, homeScore: 20, awayScore: 17 });
         });
       };
       const roundDates = async () => (await store.roundRepo().findBySportEvent(event.id))
@@ -388,7 +399,7 @@ describe('ProviderGameSlateService', () => {
       ]);
       const at = (roundNumber: number, matchNumber: number) => store.matchRows.find((match) => isAtPlace(match, { roundNumber, matchNumber }));
       expect(at(2, 1)?.advancesToMatchId).toBe(at(3, 1)?.id);
-      expect(at(2, 2)?.advancesToSide).toBe(MatchSide.AWAY);
+      expect(homeAwayOf(expectDefined(at(2, 2))).advancesToSide).toBe(MatchSide.AWAY);
       expect(at(3, 1)).toMatchObject({ isNeutralSite: true, regionLabel: null });
       expect(at(1, 1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });

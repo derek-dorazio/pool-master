@@ -40,6 +40,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -65,12 +66,19 @@ const TIER_KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
  * the game holds.
  */
 const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
+  // A result clears the Game's shoot-out scores before it writes its own (#2046).
+  ['DELETE sport_event_round_match_game_side_result_period_scores', 1],
   ['INSERT background_jobs', 1],
   ['INSERT sport_event_participant_standings', 1],
   ['SELECT contests', 1],
-  ['SELECT sport_event_match_period_scores', 1],
   ['SELECT sport_event_participant_standings', 1],
   ['SELECT sport_event_provider_mappings', 1],
+  // The match is read with its sides, Games, side results and their periods (#2046); the writer
+  // reads the sides and side results it writes once more, and the outcome its sides again.
+  ['SELECT sport_event_round_match_game_side_result_period_scores', 1],
+  ['SELECT sport_event_round_match_game_side_results', 2],
+  ['SELECT sport_event_round_match_games', 1],
+  ['SELECT sport_event_round_match_sides', 3],
   ['SELECT sport_event_round_matches', 1],
   ['SELECT sport_event_rounds', 1],
   // The slot definitions the event plays, read with it (#2010), and the slot the game's round is
@@ -88,6 +96,10 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
   ['SELECT sports', 1], // a sport is read through its event's Season and league since #2042 (#2089)
+  // The match, its Game 1, each side's outcome and each side's score (#2046).
+  ['UPDATE sport_event_round_match_game_side_results', 2],
+  ['UPDATE sport_event_round_match_games', 1],
+  ['UPDATE sport_event_round_match_sides', 2],
   ['UPDATE sport_event_round_matches', 1],
 ];
 
@@ -403,25 +415,16 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
   }));
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
-  const game = await prisma.sportEventRoundMatch.create({
-    data: {
-      sportEventId: event.id,
-      sportEventRoundId: round.id,
-      matchNumber: 1,
-      isNeutralSite: true,
-      homeSportEventParticipantId: home.id,
-      awaySportEventParticipantId: away.id,
-      ...(options.gameFinished
-        ? { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 27, awayScore: 31 }
-        : { status: 'IN_PROGRESS' }),
-      periodScores: {
-        create: [
-          { periodNumber: 1, homeScore: 7, awayScore: 0 },
-          { periodNumber: 2, homeScore: 14, awayScore: 10 },
-          { periodNumber: 3, homeScore: 21, awayScore: 24 },
-        ],
-      },
-    },
+  // The away team on side 1 and the home team on side 2, each period its own points.
+  const game = await createMatchRow(prisma, {
+    sportEventId: event.id,
+    sportEventRoundId: round.id,
+    sportEventSlotId: round.sportEventSlotId,
+    matchNumber: 1,
+    isNeutralSite: true,
+    teams: [away.id, home.id],
+    ...(options.gameFinished ? { result: { winnerSideNumber: 1, scores: [31, 27] } } : { inProgress: true }),
+    periods: [[0, 7], [10, 7], [14, 7]],
   });
   // Each contest is a squares pool on the same game, with one entry holding a row of boxes.
   const contestIds: string[] = [];

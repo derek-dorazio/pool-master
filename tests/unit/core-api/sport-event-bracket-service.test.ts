@@ -1,7 +1,8 @@
+import { legacyMatch, homeAwayOf, withHomeAway } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { isAtPlace, MatchEnding, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -102,7 +103,7 @@ describe('SportEventBracketService.loadBracket', () => {
 
     const matches = await context.service.loadBracket(context.event.id, bracketOf(context));
 
-    expect(matches.map((match) => [match.matchNumber, match.roundNumber, match.advancesToMatchId, match.advancesToSide])).toEqual([
+    expect(matches.map((match) => [match.matchNumber, match.roundNumber, match.advancesToMatchId, homeAwayOf(match).advancesToSide])).toEqual([
       [1, 1, 'match-3', MatchSide.HOME],
       [2, 1, 'match-3', MatchSide.AWAY],
       [1, 2, null, null],
@@ -242,7 +243,8 @@ describe('SportEventBracketService.updateMatch', () => {
 
     const match = await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { scheduledDate: tipOff, isNeutralSite: false });
 
-    expect(match).toMatchObject({ scheduledDate: tipOff, isNeutralSite: false, homeSportEventParticipantId: context.duke.id });
+    expect(match).toMatchObject({ scheduledDate: tipOff, isNeutralSite: false });
+    expect(homeAwayOf(match).homeSportEventParticipantId).toBe(context.duke.id);
   });
 
   it('has the reminder sweep look again at the event\'s contests when a game\'s time moves, but not when the time stays (#1170)', async () => {
@@ -274,7 +276,7 @@ describe('SportEventBracketService.updateMatch', () => {
 
     const match = await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { awaySportEventParticipantId: context.texas.id });
 
-    expect(match.awaySportEventParticipantId).toBe(context.texas.id);
+    expect(homeAwayOf(match).awaySportEventParticipantId).toBe(context.texas.id);
   });
 
   it.each([
@@ -296,8 +298,8 @@ describe('SportEventBracketService.updateMatch', () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
 
-    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3.5 })).resolves.toMatchObject({ homeSpread: -3.5 });
-    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: null })).resolves.toMatchObject({ homeSpread: null });
+    expect(homeAwayOf(await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3.5 })).homeSpread).toBe(-3.5);
+    expect(homeAwayOf(await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: null })).homeSpread).toBe(null);
   });
 
   it('changes a game\'s spread after release while no entry has picked the game', async () => {
@@ -305,7 +307,7 @@ describe('SportEventBracketService.updateMatch', () => {
     await context.service.loadBracket(context.event.id, bracketOf(context));
     context.store.events[0].status = SportEventStatus.SCHEDULED;
 
-    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: 7 })).resolves.toMatchObject({ homeSpread: 7 });
+    expect(homeAwayOf(await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: 7 })).homeSpread).toBe(7);
   });
 
   it('refuses (422 MATCH_SPREAD_REQUIRED) clearing a game\'s spread after release, even with no picks, keeping the spread', async () => {
@@ -316,7 +318,7 @@ describe('SportEventBracketService.updateMatch', () => {
 
     await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: null }))
       .rejects.toMatchObject({ code: 'MATCH_SPREAD_REQUIRED', statusCode: 422 });
-    expect(context.store.matchRows.find((row) => isAtPlace(row, { roundNumber: 1, matchNumber: 1 }))?.homeSpread).toBe(-3);
+    expect(homeAwayOf(expectDefined(context.store.matchRows.find((row) => isAtPlace(row, { roundNumber: 1, matchNumber: 1 })))).homeSpread).toBe(-3);
   });
 
   it('refuses (409 MATCH_SPREAD_LOCKED) a spread change after release on a game with picks, keeping the spread, but still moves its time', async () => {
@@ -328,8 +330,8 @@ describe('SportEventBracketService.updateMatch', () => {
     await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -4 }))
       .rejects.toMatchObject({ code: 'MATCH_SPREAD_LOCKED', statusCode: 409 });
     const tipOff = new Date('2027-03-18T19:10:00.000Z');
-    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3, scheduledDate: tipOff }))
-      .resolves.toMatchObject({ homeSpread: -3, scheduledDate: tipOff });
+    const moved = await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3, scheduledDate: tipOff });
+    expect([homeAwayOf(moved).homeSpread, moved.scheduledDate]).toEqual([-3, tipOff]);
   });
 
   it('refuses (404 BRACKET_MATCH_NOT_FOUND) a match number the bracket lacks', async () => {
@@ -532,12 +534,10 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
 
   it('refuses (409 PLAY_IN_SLOT_ALREADY_PLAYED) once the place has started a bracket match', async () => {
     const { service, store, event, slot, xavier, duke } = withPlayInPlace();
-    store.matchRows.push({
+    store.matchRows.push(legacyMatch({
       id: 'match-started', sportEventId: event.id, roundNumber: 1, slot: expectDefined(store.roundRows.find((round) => round.roundNumber === 1)).slot, matchNumber: 1,
-      homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true,
-      scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
-    });
+      homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true, status: MatchStatus.IN_PROGRESS,
+    }));
 
     await expect(service.fillPlayInSlot(event.id, slot.id, xavier.id))
       .rejects.toMatchObject({ code: 'PLAY_IN_SLOT_ALREADY_PLAYED', statusCode: 409 });
@@ -564,7 +564,7 @@ describe('SportEventBracketService round matchups (reseeded bracket)', () => {
   /** Every match of the round won by its home side. */
   function finishRound(context: ReturnType<typeof setup>, roundNumber: number): void {
     for (const match of context.store.matchRows.filter((row) => row.roundNumber === roundNumber)) {
-      Object.assign(match, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
+      Object.assign(match, withHomeAway(match, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME }));
     }
   }
 
@@ -576,7 +576,7 @@ describe('SportEventBracketService round matchups (reseeded bracket)', () => {
     expect(proposal).toEqual([{ matchNumber: 1, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.houston.id }]);
 
     const bracket = await context.service.setRoundMatchups(context.event.id, 2, proposal);
-    expect(expectDefined(bracket.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 })))).toMatchObject({
+    expect(homeAwayOf(expectDefined(bracket.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 }))))).toMatchObject({
       homeSportEventParticipantId: context.duke.id,
       awaySportEventParticipantId: context.houston.id,
     });
@@ -633,7 +633,7 @@ describe('SportEventBracketService round matchups (reseeded bracket)', () => {
     await expect(context.service.setRoundMatchups(context.event.id, 2, [
       { matchNumber: 1, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.vermont.id },
     ])).rejects.toMatchObject({ code: 'BRACKET_INVALID', statusCode: 422 });
-    expect(expectDefined(context.store.matchRows.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 })))).toMatchObject({
+    expect(homeAwayOf(expectDefined(context.store.matchRows.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 }))))).toMatchObject({
       homeSportEventParticipantId: null,
       awaySportEventParticipantId: null,
     });
@@ -673,7 +673,7 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
     await context.service.loadBracket(context.event.id, bracketOf(context).map((match) => ({ ...match, advancesTo: null })));
     context.event.status = SportEventStatus.SCHEDULED;
     for (const match of context.store.matchRows.filter((row) => row.roundNumber === 1)) {
-      Object.assign(match, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
+      Object.assign(match, withHomeAway(match, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME }));
     }
     const proposal = await context.service.proposeRoundMatchups(context.event.id, 2);
     const before = mark(context);

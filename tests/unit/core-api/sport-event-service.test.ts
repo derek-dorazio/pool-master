@@ -1,7 +1,7 @@
 import { SlotTiebreakerService } from '../../../packages/core-api/src/modules/events/slot-tiebreaker-service';
 import { expect, jest } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
-import { BackgroundJobType, SlotKind, SlotWindowStatus, Sport, SportEventStatus, type SportEvent, type SportLeague } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SlotKind, SlotWindowStatus, Sport, SportEventStatus, type SportEvent, type SportLeague, HomeAway } from '@poolmaster/shared/domain';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
@@ -816,8 +816,9 @@ describe('SportEventService.releaseEvent (#431)', () => {
     const event = await draftWithField(store, 2, 2, { sport: Sport.BASKETBALL, sportLeagueId: sportLeague.id });
     const [home, away] = store.field;
     await store.matchRepo().replaceBracket(event.id, [{
-      id: 'final', roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
-      isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null,
+      id: 'final', roundNumber: 1, matchNumber: 1,
+      sides: [{ sideNumber: 1, sportEventParticipantId: away.id, homeAway: HomeAway.NONE }, { sideNumber: 2, sportEventParticipantId: home.id, homeAway: HomeAway.NONE }],
+      isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSideNumber: null, regionLabel: null,
     }]);
 
     await expect(service.releaseEvent(event.id)).resolves.toMatchObject({ event: { status: SportEventStatus.SCHEDULED } });

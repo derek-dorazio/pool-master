@@ -8,8 +8,8 @@
  *   team pick on it is wrong (an NFL tie scores 0).
  * - **A tie pick** (#792), in a sport that offers one (soccer's draw), is correct when the game ends
  *   level and wrong when either team wins. It is worth what a team pick is.
- * - **Against the spread** (#720) a correct pick names the team that covers: the home team's
- *   score plus its spread beats the away team's. A game that lands exactly on the spread is a
+ * - **Against the spread** (#720) a correct pick names the team that covers: side 1's score plus
+ *   its spread (the spread is side 1's, #2046) beats side 2's. A game that lands exactly on the spread is a
  *   push, and every pick on it earns nothing, as does a game completed without its scores, which
  *   cannot be measured against the spread. A game ended early (#825: a retirement, walkover or
  *   default) has no real final score, so its winner covers whatever the score and spread.
@@ -24,8 +24,12 @@
  */
 import {
   MatchEnding,
-  MatchSide,
   MatchStatus,
+  endedTied,
+  matchScoreOf,
+  matchSpread,
+  opposingSideOf,
+  winnerParticipantId,
   PickEmMode,
   PickOutcome,
   PredictedResult,
@@ -48,10 +52,9 @@ export type GamePick = PredictedChoice & {
  * game ended level. Its one caller asks only of a completed game.
  */
 function pickCameTrue(game: SportEventRoundMatch, pick: GamePick): boolean {
-  if (pick.predictedResult === PredictedResult.TIE) return game.winnerSide === null;
-  if (game.winnerSide === null) return false;
-  const winner = game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
-  return winner === pick.sportEventParticipantId;
+  if (pick.predictedResult === PredictedResult.TIE) return endedTied(game);
+  const winner = winnerParticipantId(game);
+  return winner !== null && winner === pick.sportEventParticipantId;
 }
 
 /** How a pick'em pool scores its picks: weighted by its mode, and against the spread or straight up. */
@@ -67,13 +70,18 @@ export interface GamePickScoring {
  */
 function coverOf(game: SportEventRoundMatch): string | null | undefined {
   if (game.status !== MatchStatus.COMPLETED) return undefined;
-  if (game.ending !== MatchEnding.PLAYED && game.winnerSide !== null) {
-    return game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
-  }
-  if (game.homeScore === null || game.awayScore === null || game.homeSpread === null) return null;
-  const margin = game.homeScore + game.homeSpread - game.awayScore;
+  const winner = winnerParticipantId(game);
+  if (game.ending !== MatchEnding.PLAYED && winner !== null) return winner;
+  const spread = matchSpread(game);
+  const spreadSide = game.sides.find((side) => side.spread !== null);
+  if (spread === null || spreadSide === undefined) return null;
+  const otherSide = opposingSideOf(game, spreadSide.sideNumber);
+  const score = matchScoreOf(game, spreadSide.sideNumber);
+  const otherScore = matchScoreOf(game, otherSide.sideNumber);
+  if (score === null || otherScore === null) return null;
+  const margin = score + spread - otherScore;
   if (margin === 0) return null;
-  return margin > 0 ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
+  return margin > 0 ? spreadSide.sportEventParticipantId : otherSide.sportEventParticipantId;
 }
 
 /** What a pick is worth when it is correct: 1 straight up, its confidence value in a confidence pool. */
@@ -137,8 +145,7 @@ export function slotTiebreakerGame<Match extends Pick<SportEventRoundMatch, 'id'
 
 /** A played game's combined score, both teams together: what a tiebreaker guesses. Null until it completes. */
 export function gameTotalPoints(game: SportEventRoundMatch | null): number | null {
-  if (game?.status !== MatchStatus.COMPLETED || game.homeScore === null || game.awayScore === null) {
-    return null;
-  }
-  return game.homeScore + game.awayScore;
+  if (game?.status !== MatchStatus.COMPLETED) return null;
+  const scores = game.sides.map((side) => matchScoreOf(game, side.sideNumber));
+  return scores.length === 0 || scores.some((score) => score === null) ? null : scores.reduce<number>((total, score) => total + (score ?? 0), 0);
 }

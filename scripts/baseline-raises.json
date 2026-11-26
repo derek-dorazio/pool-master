@@ -240,6 +240,30 @@
       "key": "own:packages/shared/dto/slot-tiebreaker.dto.ts",
       "now": 2,
       "reason": "#2048: the two slot tiebreaker response schemas are exported for their functional and query-scaling tests, as other DTO files' response schemas are"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportEventMatchPeriodScore",
+      "now": 0,
+      "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "savePeriodScore",
+      "now": 0,
+      "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "applyLiveScores",
+      "now": 0,
+      "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PrismaMatchSide",
+      "now": 0,
+      "reason": "retired by #2046"
     }
   ]
 }

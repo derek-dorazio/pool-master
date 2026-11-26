@@ -22,7 +22,7 @@ const WEEK = seasonSlotFixture({ id: 'week-18', key: 'WEEK_18', slotKind: 'WEEK'
 
 function match(overrides: Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>): SportEventRoundMatchDto {
   return {
-    sportEventId: 'evt-1', roundNumber: 1, slot: roundSlot(SlotKind.WEEK, null, 18), isNeutralSite: false, scheduledDate: null, status: 'SCHEDULED', isUnplayed: true,
+    sportEventId: 'evt-1', roundNumber: 1, slot: roundSlot(SlotKind.WEEK, null, 18), isNeutralSite: false, scheduledDate: null, status: 'SCHEDULED', isUnplayed: true, isFinal: false,
     winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: null,
     completedAt: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], ...overrides,
   };

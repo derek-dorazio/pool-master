@@ -3,6 +3,7 @@
  * from its own picks, which picks stand once an earlier one changes, how the picks score against
  * the results, and how entries level on points are ranked by their tiebreaker.
  */
+import { withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   MatchSide,
@@ -142,8 +143,8 @@ describe('resolveBracketPicks — a reseeded round, as the NFL plays its Divisio
     const placed = withResults(nflPlayoff(), new Map([
       [1, { winner: HOME }], [2, { winner: HOME }], [3, { winner: HOME }],
       [4, { winner: HOME }], [5, { winner: HOME }], [6, { winner: HOME }],
-    ])).map((match) => (match.matchNumber === 7 ? { ...match, awaySportEventParticipantId: 'AFC-4' }
-      : match.matchNumber === 8 ? { ...match, homeSportEventParticipantId: 'AFC-2', awaySportEventParticipantId: 'AFC-3' }
+    ])).map((match) => (match.matchNumber === 7 ? withHomeAway(match, { awaySportEventParticipantId: 'AFC-4' })
+      : match.matchNumber === 8 ? withHomeAway(match, { homeSportEventParticipantId: 'AFC-2', awaySportEventParticipantId: 'AFC-3' })
         : match));
     const resolved = resolveBracketPicks(placed, wildCard, NFL_SEEDS);
 
@@ -170,7 +171,7 @@ describe('findBracketProblem', () => {
   });
 
   it('refuses a first-round game with a team still to be decided', () => {
-    const bracket = eightTeamBracket().map((match) => (match.matchNumber === 3 ? { ...match, awaySportEventParticipantId: null } : match));
+    const bracket = eightTeamBracket().map((match) => (match.matchNumber === 3 ? withHomeAway(match, { awaySportEventParticipantId: null }) : match));
 
     expect(findBracketProblem(bracket, EIGHT_SEEDS)).toBe('game 3 of round 1 has a team that no pick can decide');
   });
@@ -392,8 +393,8 @@ describe('a second-chance bracket, started at a later round once the results dec
   // Round 1 played: T1, T2 and T3 won and T5 upset T4; the results placed round 2 as T1-T5 and T2-T3.
   const afterRoundOne = withResults(eightTeamBracket(), new Map([
     [1, { winner: HOME }], [2, { winner: AWAY }], [3, { winner: HOME }], [4, { winner: HOME }],
-  ])).map((match) => (match.matchNumber === 5 ? { ...match, homeSportEventParticipantId: 'T1', awaySportEventParticipantId: 'T5' }
-    : match.matchNumber === 6 ? { ...match, homeSportEventParticipantId: 'T2', awaySportEventParticipantId: 'T3' }
+  ])).map((match) => (match.matchNumber === 5 ? withHomeAway(match, { homeSportEventParticipantId: 'T1', awaySportEventParticipantId: 'T5' })
+    : match.matchNumber === 6 ? withHomeAway(match, { homeSportEventParticipantId: 'T2', awaySportEventParticipantId: 'T3' })
       : match));
   const fromRoundTwo = contestBracketGames(afterRoundOne, 2);
 
@@ -461,7 +462,7 @@ describe('a second-chance bracket, started at a later round once the results dec
       [4, { winner: AWAY }], [5, { winner: HOME }], [6, { winner: HOME }],
     ])).map((match) => {
       const sides = placed.get(match.matchNumber);
-      return sides ? { ...match, homeSportEventParticipantId: sides[0], awaySportEventParticipantId: sides[1] } : match;
+      return sides ? withHomeAway(match, { homeSportEventParticipantId: sides[0], awaySportEventParticipantId: sides[1] }) : match;
     });
     const divisionalOn = contestBracketGames(afterWildCard, 2);
 
@@ -496,7 +497,7 @@ describe('a second-chance bracket, started at a later round once the results dec
 describe('a team withdrawn after the draw and replaced in its first-round game (#704)', () => {
   const NO_BONUS: KnockoutRoundPointsSettings = { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.NONE } };
   // T8 withdrew before game 1, and LL took its place against T1.
-  const replaced = eightTeamBracket().map((match) => (match.matchNumber === 1 ? { ...match, awaySportEventParticipantId: 'LL' } : match));
+  const replaced = eightTeamBracket().map((match) => (match.matchNumber === 1 ? withHomeAway(match, { awaySportEventParticipantId: 'LL' }) : match));
   const withdrawn = new Set(['T8']);
   const picks = [pick(1, 'T8'), pick(2, 'T4'), pick(5, 'T8'), pick(7, 'T8')];
 
@@ -526,7 +527,7 @@ describe('a team withdrawn after the draw and replaced in its first-round game (
 
   it('carries a withdrawn team the entry picked into a reseeded round, so its later picks stand rather than being stranded and cleared', () => {
     // AFC-7 withdrew before Wild Card game 1, and LL took its place against AFC-2.
-    const reseeded = nflPlayoff().map((match) => (match.matchNumber === 1 ? { ...match, awaySportEventParticipantId: 'LL' } : match));
+    const reseeded = nflPlayoff().map((match) => (match.matchNumber === 1 ? withHomeAway(match, { awaySportEventParticipantId: 'LL' }) : match));
     const wildCard = [pick(1, 'AFC-7'), pick(2, 'AFC-3'), pick(3, 'AFC-5'), pick(4, 'NFC-2'), pick(5, 'NFC-3'), pick(6, 'NFC-4'), pick(7, 'AFC-7')];
 
     const resolved = resolveBracketPicks(reseeded, wildCard, NFL_SEEDS, new Set(['AFC-7']));
@@ -539,7 +540,7 @@ describe('a team withdrawn after the draw and replaced in its first-round game (
 
 describe('withdrawnRowIds — which field rows count as withdrawn after the draw (#704)', () => {
   // T8 withdrew, and LL took its place in game 1.
-  const bracket = eightTeamBracket().map((match) => (match.matchNumber === 1 ? { ...match, awaySportEventParticipantId: 'LL' } : match));
+  const bracket = eightTeamBracket().map((match) => (match.matchNumber === 1 ? withHomeAway(match, { awaySportEventParticipantId: 'LL' }) : match));
 
   it('counts a row inactive as WITHDRAWN that no game names any more, the one a replacement took the place of', () => {
     expect(withdrawnRowIds([{ id: 'T8', isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN }], bracket)).toEqual(new Set(['T8']));
