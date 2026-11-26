@@ -13,6 +13,7 @@ import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
+import { AWAY_SIDE, HOME_SIDE, bracketLoadMatch, teamOn, type BracketReadMatch } from './helpers/match-sides';
 
 /**
  * #749 — the knockout journey, on the 2025 WNBA playoffs as they were played (series results
@@ -54,7 +55,8 @@ const TEAMS: ReadonlyArray<{ name: string; seed: number }> = [
 const SEED_NUMBER: readonly number[] = [1, 2, 5, 6, 9, 10, 13, 14];
 const TIER_OF_SEED: readonly number[] = [1, 1, 2, 2, 3, 3, 4, 4];
 
-type Side = 'HOME' | 'AWAY';
+/** A match's side by its number: the home team on side 2, the away team on side 1, as a synced game has them. */
+type Side = typeof HOME_SIDE | typeof AWAY_SIDE;
 
 /**
  * The bracket as it was played, by seed (null for a side an earlier series fills). The higher
@@ -66,18 +68,18 @@ const BRACKET: ReadonlyArray<{
   roundNumber: number;
   home: number | null;
   away: number | null;
-  advancesTo: { roundNumber: number; matchNumber: number; side: Side } | null;
+  advancesTo: { roundNumber: number; matchNumber: number; sideNumber: Side } | null;
   winner: Side;
 }> = [
-  { matchNumber: 1, roundNumber: 1, home: 1, away: 8, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' }, winner: 'HOME' },
-  { matchNumber: 2, roundNumber: 1, home: 4, away: 5, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'AWAY' }, winner: 'HOME' },
-  { matchNumber: 3, roundNumber: 1, home: 3, away: 6, advancesTo: { roundNumber: 2, matchNumber: 2, side: 'AWAY' }, winner: 'AWAY' },
-  { matchNumber: 4, roundNumber: 1, home: 2, away: 7, advancesTo: { roundNumber: 2, matchNumber: 2, side: 'HOME' }, winner: 'HOME' },
-  { matchNumber: 1, roundNumber: 2, home: null, away: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: 'AWAY' }, winner: 'AWAY' },
-  { matchNumber: 2, roundNumber: 2, home: null, away: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: 'HOME' }, winner: 'HOME' },
-  { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, winner: 'HOME' },
+  { matchNumber: 1, roundNumber: 1, home: 1, away: 8, advancesTo: { roundNumber: 2, matchNumber: 1, sideNumber: HOME_SIDE }, winner: HOME_SIDE },
+  { matchNumber: 2, roundNumber: 1, home: 4, away: 5, advancesTo: { roundNumber: 2, matchNumber: 1, sideNumber: AWAY_SIDE }, winner: HOME_SIDE },
+  { matchNumber: 3, roundNumber: 1, home: 3, away: 6, advancesTo: { roundNumber: 2, matchNumber: 2, sideNumber: AWAY_SIDE }, winner: AWAY_SIDE },
+  { matchNumber: 4, roundNumber: 1, home: 2, away: 7, advancesTo: { roundNumber: 2, matchNumber: 2, sideNumber: HOME_SIDE }, winner: HOME_SIDE },
+  { matchNumber: 1, roundNumber: 2, home: null, away: null, advancesTo: { roundNumber: 3, matchNumber: 1, sideNumber: AWAY_SIDE }, winner: AWAY_SIDE },
+  { matchNumber: 2, roundNumber: 2, home: null, away: null, advancesTo: { roundNumber: 3, matchNumber: 1, sideNumber: HOME_SIDE }, winner: HOME_SIDE },
+  { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, winner: HOME_SIDE },
 ];
-const OPEN_PAIRING = { roundNumber: 1, matchNumber: 4, side: 'AWAY' as Side, seed: 7 };
+const OPEN_PAIRING = { roundNumber: 1, matchNumber: 4, side: AWAY_SIDE as Side, seed: 7 };
 const ROUND_COUNT = 3;
 
 /** The commissioner's scoring: a win is 1 in the first round, 2 in the semifinals, 4 in the final. */
@@ -280,17 +282,18 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     const response = await page.request.put(`/api/v1/events/${eventId}/bracket`, {
       headers: { 'x-csrf-token': await readCsrfToken(page) },
       data: {
-        matches: BRACKET.map((match) => ({
-          matchNumber: match.matchNumber,
-          roundNumber: match.roundNumber,
-          homeSportEventParticipantId: entryOfSeed(match.home),
-          awaySportEventParticipantId: match.roundNumber === OPEN_PAIRING.roundNumber && match.matchNumber === OPEN_PAIRING.matchNumber && OPEN_PAIRING.side === 'AWAY'
-            ? null
-            : entryOfSeed(match.away),
-          isNeutralSite: false,
-          scheduledDate: null,
-          advancesTo: match.advancesTo,
-        })),
+        matches: BRACKET.map((match) => {
+          const isOpen = match.roundNumber === OPEN_PAIRING.roundNumber && match.matchNumber === OPEN_PAIRING.matchNumber;
+          return bracketLoadMatch({
+            matchNumber: match.matchNumber,
+            roundNumber: match.roundNumber,
+            home: isOpen && OPEN_PAIRING.side === HOME_SIDE ? null : entryOfSeed(match.home),
+            away: isOpen && OPEN_PAIRING.side === AWAY_SIDE ? null : entryOfSeed(match.away),
+            isNeutralSite: false,
+            scheduledDate: null,
+            advancesTo: match.advancesTo,
+          });
+        }),
       },
     });
     expect(response.ok(), `PUT the bracket answered ${response.status()} ${await response.text()}`).toBe(true);
@@ -300,9 +303,17 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     // A head-to-head event's results come only from the feed (#2074): the root admin has no
     // bracket editor, so a test event's bracket is written through the API, as the loader does.
     const { roundNumber, matchNumber, side, seed } = OPEN_PAIRING;
+    // An edit names both sides: the open one gets its team, the other keeps the one it has.
+    const before = await pairingOf(page, eventId, OPEN_PAIRING);
+    const other = side === HOME_SIDE ? AWAY_SIDE : HOME_SIDE;
     const response = await page.request.patch(`/api/v1/events/${eventId}/bracket/rounds/${roundNumber}/matches/${matchNumber}`, {
       headers: { 'x-csrf-token': await readCsrfToken(page) },
-      data: side === 'HOME' ? { homeSportEventParticipantId: fieldEntryIds[seed - 1] } : { awaySportEventParticipantId: fieldEntryIds[seed - 1] },
+      data: {
+        sides: [
+          { sideNumber: side, sportEventParticipantId: fieldEntryIds[seed - 1] },
+          { sideNumber: other, sportEventParticipantId: other === HOME_SIDE ? before.home : before.away },
+        ],
+      },
     });
     expect(response.ok(), `PATCH round ${roundNumber} match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
     expect(await pairingOf(page, eventId, OPEN_PAIRING)).toEqual({ home: fieldEntryIds[1], away: fieldEntryIds[6] });
@@ -596,7 +607,7 @@ function pointsBySeed(read: KnockoutLeaderboardRead, fieldEntryIds: readonly str
 async function recordWinner(page: Page, eventId: string, { roundNumber, matchNumber }: MatchPlace, winner: Side) {
   const response = await page.request.put(`/api/v1/events/${eventId}/bracket/rounds/${roundNumber}/matches/${matchNumber}/result`, {
     headers: { 'x-csrf-token': await readCsrfToken(page) },
-    data: { winnerSide: winner, homeScore: null, awayScore: null },
+    data: { winnerSideNumber: winner, sides: [{ sideNumber: AWAY_SIDE, score: null }, { sideNumber: HOME_SIDE, score: null }] },
   });
   expect(response.ok(), `PUT the result of round ${roundNumber} match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
 }
@@ -605,9 +616,9 @@ async function recordWinner(page: Page, eventId: string, { roundNumber, matchNum
 async function pairingOf(page: Page, eventId: string, place: MatchPlace): Promise<{ home: string | null; away: string | null }> {
   const response = await page.request.get(`/api/v1/events/${eventId}/bracket`);
   expect(response.ok(), `GET the bracket answered ${response.status()}`).toBe(true);
-  const { matches } = (await response.json()) as { matches: (MatchPlace & { homeSportEventParticipantId: string | null; awaySportEventParticipantId: string | null })[] };
+  const { matches } = (await response.json()) as { matches: BracketReadMatch[] };
   const match = matches.find((candidate) => candidate.roundNumber === place.roundNumber && candidate.matchNumber === place.matchNumber);
-  return { home: match?.homeSportEventParticipantId ?? null, away: match?.awaySportEventParticipantId ?? null };
+  return { home: teamOn(match, HOME_SIDE), away: teamOn(match, AWAY_SIDE) };
 }
 
 async function moveTournamentTo(page: Page, eventId: string, status: 'IN_PROGRESS' | 'COMPLETED') {

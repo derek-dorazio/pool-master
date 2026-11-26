@@ -34,7 +34,6 @@ import type {
 import {
   ContestStatus,
   LeagueMembershipStatus,
-  MatchSide,
   MatchStatus,
   SelectionType,
   SQUARES_GRID_SIZE,
@@ -48,7 +47,7 @@ import {
   type SportEventRoundMatch,
   type SquaresWinner,
   matchParticipantIds,
-  teamOnMatchSide,
+  sideParticipantId,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 import { hasMatchStarted } from '../contests/entry-window';
@@ -125,8 +124,10 @@ export interface SquaresBoard {
   /** The periods the game is played in, its slot's (#2047): its scoring moments are each period's end. */
   periods: SlotPeriods;
   game: SportEventRoundMatch;
-  homeTeamName: string | null;
-  awayTeamName: string | null;
+  /** Side 1's team name, down the side. */
+  rowTeamName: string | null;
+  /** Side 2's team name, across the top. */
+  columnTeamName: string | null;
   claimsOpen: boolean;
   drawOpen: boolean;
   boxes: SquaresBox[];
@@ -375,8 +376,8 @@ export class SquaresService {
       maxSquaresPerEntry: context.maxSquaresPerEntry,
       periods: context.periods,
       game,
-      homeTeamName: teams.home,
-      awayTeamName: teams.away,
+      rowTeamName: teams.row,
+      columnTeamName: teams.column,
       claimsOpen: this.areClaimsOpen(context),
       drawOpen: draw === null && isDrawOpen(context),
       boxes: squares.map((square) => ({
@@ -399,15 +400,14 @@ export class SquaresService {
     };
   }
 
-  /** The game's two teams' names, from their two field rows alone (#1201). */
-  private async findTeamNames(game: SportEventRoundMatch): Promise<{ home: string | null; away: string | null }> {
+  /** The game's two teams' names, side 1's down the side and side 2's across the top, from their two field rows alone (#1201). */
+  private async findTeamNames(game: SportEventRoundMatch): Promise<{ row: string | null; column: string | null }> {
     const field = await this.deps.field.findByIds(matchParticipantIds(game));
-    const rowOf = (side: MatchSide) => field.find((row) => row.id === teamOnMatchSide(game, side));
-    const home = rowOf(MatchSide.HOME);
-    const away = rowOf(MatchSide.AWAY);
-    const participants = await this.deps.participants.findByIds([home, away].flatMap((row) => row ? [row.participantId] : []));
+    const fieldRowOn = (sideNumber: number) => field.find((row) => row.id === sideParticipantId(game, sideNumber));
+    const [row, column] = [fieldRowOn(1), fieldRowOn(2)];
+    const participants = await this.deps.participants.findByIds([row, column].flatMap((each) => each ? [each.participantId] : []));
     const nameOf = (participantId?: string) => participants.find((participant) => participant.id === participantId)?.name ?? null;
-    return { home: nameOf(home?.participantId), away: nameOf(away?.participantId) };
+    return { row: nameOf(row?.participantId), column: nameOf(column?.participantId) };
   }
 
   /**

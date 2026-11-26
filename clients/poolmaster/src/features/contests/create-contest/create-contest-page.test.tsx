@@ -11,6 +11,7 @@ import { FormatIllustration } from '@/features/contest-types/illustrations';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CreateContestPage } from './create-contest-page';
 import { eventRoundsResponse, roundSlot, TOURNAMENT_ROUND_SLOTS } from '../test/round-slots';
+import { homeAwayMatchFixture, type HomeAwayMatchFixture } from '../test/match-fixtures';
 import type { SportEventRoundSlotDto } from '@/lib/api';
 import { WEEK_SLOT_ID, openingsUnderWay, sportSlotId, templateSlotFixture, withEventOpenings } from '../test/contest-admin-fixtures';
 
@@ -1522,20 +1523,9 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     rounds: 4,
     sportLeagueId: 'nfl',
   };
-  const game = (overrides: Record<string, unknown>) => ({
+  const game = (overrides: HomeAwayMatchFixture) => homeAwayMatchFixture({
     sportEventId: 'nfl-playoffs',
-    homeSportEventParticipantId: null,
-    awaySportEventParticipantId: null,
-    isNeutralSite: false,
-    status: 'SCHEDULED',
-    winnerSide: null,
-    homeScore: null,
-    awayScore: null,
-    advancesToMatchId: 'game-sb',
-    advancesToSide: 'HOME',
-    regionLabel: null,
-    homeSpread: null,
-    periodScores: [],
+    advancesTo: { matchId: 'game-sb', sideNumber: 2 },
     ...overrides,
   });
 
@@ -1559,8 +1549,8 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       data: {
         matches: [
           game({ id: 'game-div', roundNumber: 2, matchNumber: 1, status: 'COMPLETED', scheduledDate: '2099-01-17T21:00:00.000Z', homeScore: 31, awayScore: 17 }),
-          game({ id: 'game-afc', roundNumber: 3, matchNumber: 1, scheduledDate: '2099-01-25T20:00:00.000Z', homeSportEventParticipantId: 'field-chiefs', awaySportEventParticipantId: 'field-bills' }),
-          game({ id: 'game-sb', roundNumber: 4, matchNumber: 1, isNeutralSite: true, scheduledDate: '2099-02-07T23:30:00.000Z', advancesToMatchId: null, advancesToSide: null }),
+          game({ id: 'game-afc', roundNumber: 3, matchNumber: 1, scheduledDate: '2099-01-25T20:00:00.000Z', home: 'field-chiefs', away: 'field-bills' }),
+          game({ id: 'game-sb', roundNumber: 4, matchNumber: 1, isNeutralSite: true, scheduledDate: '2099-02-07T23:30:00.000Z', advancesTo: null }),
         ],
       },
     });

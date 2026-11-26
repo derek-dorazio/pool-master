@@ -24,8 +24,7 @@
  * A test seed (a file with RESULTS) adds the made-up parts: its dates move forward by whole
  * weeks so the first event starts at least a week after the run, and each event that is
  * still a draft gets odds, tiers, prices and stored scores and is released for contests (a
- * bracket's play-in places then take their winners and a week's postponed games are cancelled
- * before its results go in; a race's finishing order goes in after release, as the admin's
+ * week's postponed games are cancelled before its results go in; a race's finishing order goes in after release, as the admin's
  * official result). A
  * draft that an earlier run stopped part-way through is finished the same way.
  *
@@ -41,7 +40,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { describeMatchPlace, eventPlaysMatches, findSportRow, isAtPlace, MatchPlaceMap, matchPlaceOf, MatchSide, MatchStatus, type ProviderCode, ScoringFamily, type MatchPlace, type Sport, SportEventStatus, type SportLeagueDefinition, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
+import { describeMatchPlace, eventPlaysMatches, findSportRow, isAtPlace, MatchPlaceMap, matchPlaceOf, MatchStatus, type ProviderCode, ScoringFamily, type MatchPlace, type Sport, SportEventStatus, type SportLeagueDefinition, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -234,18 +233,19 @@ function bracketChanges(
     return participantId !== null && rowId !== null && participantOfRow.get(rowId) === participantId;
   };
   const sameLink = (match: SportDataMatch, stored: StoredMatch): boolean => {
-    const advancesTo = stored.advancesToMatchId === null ? null : placeById.get(stored.advancesToMatchId) ?? null;
+    const advancesTo = stored.advancesTo === null ? null : placeById.get(stored.advancesTo.matchId) ?? null;
     const sameNext = advancesTo === null || match.advancesTo === null ? advancesTo === match.advancesTo : isAtPlace(advancesTo, match.advancesTo);
-    return sameNext && stored.advancesToSide === (match.advancesTo?.side ?? null)
+    return sameNext && (stored.advancesTo?.sideNumber ?? null) === (match.advancesTo?.sideNumber ?? null)
       && stored.regionLabel === (match.regionLabel ?? null);
   };
+  /** The team on a stored match's side. */
+  const storedRow = (stored: StoredMatch, sideNumber: number): string | null => stored.sides.find((side) => side.sideNumber === sideNumber)?.sportEventParticipantId ?? null;
 
   if (locked) {
     const repaired = matches.filter((match) => {
       const stored = byPlace.get(match);
       return stored !== undefined && (!sameLink(match, stored)
-        || (match.home !== null && !sameSide(match.home, stored.homeSportEventParticipantId))
-        || (match.away !== null && !sameSide(match.away, stored.awaySportEventParticipantId)));
+        || match.sides.some((side) => side.player !== null && !sameSide(side.player, storedRow(stored, side.sideNumber))));
     }).map(matchPlaceOf);
     const conflicts = [
       ...(missing.length > 0 ? [`${matchList(missing)} not on the site`] : []),
@@ -267,8 +267,7 @@ function bracketChanges(
   const changed = matches.filter((match) => {
     const stored = byPlace.get(match);
     if (!stored) return false;
-    return !sameSide(match.home, stored.homeSportEventParticipantId)
-      || !sameSide(match.away, stored.awaySportEventParticipantId)
+    return match.sides.some((side) => !sameSide(side.player, storedRow(stored, side.sideNumber)))
       || stored.isNeutralSite !== match.isNeutralSite
       || timeMoved(match, stored)
       || !sameLink(match, stored);
@@ -826,8 +825,7 @@ class Loader {
     const body: BracketMatchWrite[] = (event.matches ?? []).map((match) => ({
       matchNumber: match.matchNumber,
       roundNumber: match.roundNumber,
-      homeSportEventParticipantId: rowOf(match.home),
-      awaySportEventParticipantId: rowOf(match.away),
+      sides: match.sides.map(({ sideNumber, player, homeAway }) => ({ sideNumber, sportEventParticipantId: rowOf(player), homeAway })),
       isNeutralSite: match.isNeutralSite,
       scheduledDate: match.scheduledAt === undefined ? storedTime.get(match) ?? null : new Date(match.scheduledAt).toISOString(),
       advancesTo: match.advancesTo,
@@ -988,29 +986,25 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
   const due = new MatchPlaceMap(dueMatches.map((place) => [place, true] as const));
   const rounds = [...new Set(matches.map((match) => match.roundNumber))].sort((left, right) => left - right);
   const links = matches.flatMap((match) => (match.advancesTo ? [match.advancesTo] : []));
-  const linked = (match: SportDataMatch, side: MatchSide) => links.some((link) => link.side === side && isAtPlace(link, match));
+  const linked = (match: SportDataMatch, sideNumber: number) => links.some((link) => link.sideNumber === sideNumber && isAtPlace(link, match));
   for (const roundNumber of rounds) {
     const round = matches.filter((match) => match.roundNumber === roundNumber);
-    const waitsOnReseed = round.some((match) => (match.home === null && !linked(match, MatchSide.HOME))
-      || (match.away === null && !linked(match, MatchSide.AWAY)));
+    const waitsOnReseed = round.some((match) => match.sides.some((side) => side.player === null && !linked(match, side.sideNumber)));
     const results = round.flatMap((match) => (match.result && due.has(match) ? [{ place: matchPlaceOf(match), result: match.result, periodScores: match.periodScores ?? [] }] : []));
     if (results.length === 0) continue;
     const unplaced = stored.matches.some((match) => match.roundNumber === roundNumber
-      && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null));
+      && match.sides.some((side) => side.sportEventParticipantId === null));
     if (waitsOnReseed && unplaced) {
       const proposal = await must(proposeEventRoundMatchups({ client, path: { eventId, roundNumber } }), `Propose round ${roundNumber} of ${event.name}`);
       await must(setEventRoundMatchups({ client, path: { eventId, roundNumber }, body: { matches: proposal.matches } }), `Place round ${roundNumber} of ${event.name}`);
     }
     for (const { place, result, periodScores } of results) {
-      for (const { periodNumber, ...score } of periodScores) {
-        await must(recordEventMatchPeriodScore({ client, path: { eventId, ...place, periodNumber }, body: score }), `Enter the score at the end of period ${periodNumber} of ${describeMatchPlace(place)} of ${event.name}`);
+      for (const { periodNumber, sides } of periodScores) {
+        await must(recordEventMatchPeriodScore({ client, path: { eventId, ...place, periodNumber }, body: { sides } }), `Enter the score at the end of period ${periodNumber} of ${describeMatchPlace(place)} of ${event.name}`);
       }
       const body = {
-        winnerSide: result.winner,
-        homeScore: result.homeScore,
-        awayScore: result.awayScore,
-        homeShootoutScore: result.homeShootoutScore ?? null,
-        awayShootoutScore: result.awayShootoutScore ?? null,
+        winnerSideNumber: result.winnerSideNumber,
+        sides: result.sides.map((side) => ({ ...side, shootoutScore: side.shootoutScore ?? null })),
         ending: result.ending,
       };
       await must(recordEventMatchResult({ client, path: { eventId, ...place }, body }), `Enter the result of ${describeMatchPlace(place)} of ${event.name}`);

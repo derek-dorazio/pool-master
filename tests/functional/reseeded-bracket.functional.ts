@@ -28,6 +28,8 @@ import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
+import { bracketMatch, dtoSideTeam, matchup, matchupTeams, resultBody } from '../support/match-requests';
 
 // A reseeded bracket end to end over HTTP (#722), shaped like one NFL conference: seven seeds, the
 // 1 seed on a bye, Wild Card games that link nowhere, a Divisional round the admin places by seed,
@@ -116,12 +118,13 @@ describe('SDK Functional: Reseeded bracket', () => {
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const seedRow = (seed: number) => expectDefined(field.find((row) => row.participant.name === `Seed ${seed} ${RUN}`)).id;
     const seedOf = (rowId: string | null) => (rowId === null ? null : expectDefined(field.find((row) => row.id === rowId)).seedNumber);
-    const sidesOf = (matches: readonly (MatchPlace & { homeSportEventParticipantId: string | null; awaySportEventParticipantId: string | null })[], place: MatchPlace) => {
+    /** The seeds on a match's home side (side 2) and away side (side 1). */
+    const sidesOf = (matches: readonly SportEventRoundMatchDto[], place: MatchPlace) => {
       const match = expectDefined(matches.find((candidate) => isAtPlace(candidate, place)));
-      return [seedOf(match.homeSportEventParticipantId), seedOf(match.awaySportEventParticipantId)];
+      return [seedOf(dtoSideTeam(match, 2)), seedOf(dtoSideTeam(match, 1))];
     };
 
-    const wildCard = (matchNumber: number, home: number, away: number) => ({
+    const wildCard = (matchNumber: number, home: number, away: number) => bracketMatch({
       matchNumber, roundNumber: 1, homeSportEventParticipantId: seedRow(home), awaySportEventParticipantId: seedRow(away),
       isNeutralSite: false, scheduledDate: null, advancesTo: null, regionLabel: 'AFC',
     });
@@ -134,9 +137,9 @@ describe('SDK Functional: Reseeded bracket', () => {
           wildCard(2, 3, 6),
           wildCard(3, 4, 5),
           // Each round numbers its games from 1 (#2161).
-          { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: seedRow(1), awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME }, regionLabel: 'AFC' },
-          { matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY }, regionLabel: 'AFC' },
-          { matchNumber: 1, roundNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: null, regionLabel: 'AFC' },
+          bracketMatch({ matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: seedRow(1), awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME }, regionLabel: 'AFC' }),
+          bracketMatch({ matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY }, regionLabel: 'AFC' }),
+          bracketMatch({ matchNumber: 1, roundNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: null, regionLabel: 'AFC' }),
         ],
       },
     });
@@ -154,15 +157,15 @@ describe('SDK Functional: Reseeded bracket', () => {
     expectFunctionalError(await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 3 } }), { status: 422, code: 'BRACKET_NOT_RESEEDED' });
 
     // --- Wild Card weekend: the 7 upsets the 2, the 3 and the 5 win -------------------------------
-    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } });
-    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
-    const weekend = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 3 }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
+    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 }) });
+    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 }) });
+    const weekend = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 3 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 }) });
     // No winner moves on by itself: each still waits to be placed.
     expect([sidesOf(expectDefined(weekend.data).matches, { roundNumber: 2, matchNumber: 1 }), sidesOf(expectDefined(weekend.data).matches, { roundNumber: 2, matchNumber: 2 })]).toEqual([[1, null], [null, null]]);
 
     // --- The reseed: the 1 hosts the 7, the 3 hosts the 5 ----------------------------------------
     const proposal = expectMatchesSchema(SportEventRoundMatchupsResponseSchema, (await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } })).data).matches;
-    expect(proposal.map((matchup) => [matchup.matchNumber, seedOf(matchup.homeSportEventParticipantId), seedOf(matchup.awaySportEventParticipantId)])).toEqual([
+    expect(proposal.map(matchupTeams).map((teams) => [teams.matchNumber, seedOf(teams.homeSportEventParticipantId ?? null), seedOf(teams.awaySportEventParticipantId ?? null)])).toEqual([
       [1, 1, 7],
       [2, 3, 5],
     ]);
@@ -171,8 +174,8 @@ describe('SDK Functional: Reseeded bracket', () => {
         client: a,
         path: { eventId, roundNumber: 2 },
         body: { matches: [
-          { matchNumber: 1, homeSportEventParticipantId: seedRow(3), awaySportEventParticipantId: seedRow(7) },
-          { matchNumber: 2, homeSportEventParticipantId: seedRow(1), awaySportEventParticipantId: seedRow(5) },
+          matchup({ matchNumber: 1, homeSportEventParticipantId: seedRow(3), awaySportEventParticipantId: seedRow(7) }),
+          matchup({ matchNumber: 2, homeSportEventParticipantId: seedRow(1), awaySportEventParticipantId: seedRow(5) }),
         ] },
       }),
       { status: 422, code: 'BRACKET_INVALID' },
@@ -182,14 +185,14 @@ describe('SDK Functional: Reseeded bracket', () => {
     expect([sidesOf(placedMatches, { roundNumber: 2, matchNumber: 1 }), sidesOf(placedMatches, { roundNumber: 2, matchNumber: 2 })]).toEqual([[1, 7], [3, 5]]);
 
     // The 6 had won after all: it takes the 3's place.
-    const corrected = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 10, awayScore: 13 } });
+    const corrected = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 10, awayScore: 13 }) });
     expect(sidesOf(expectDefined(corrected.data).matches, { roundNumber: 2, matchNumber: 2 })).toEqual([6, 5]);
 
     // --- The Divisional round is played, which locks Wild Card weekend and the reseed -------------
-    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 14 } });
-    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 16, awayScore: 19 } });
+    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 14 }) });
+    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 2 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 16, awayScore: 19 }) });
     expectFunctionalError(
-      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } }),
+      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 }) }),
       { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
     expectFunctionalError(
@@ -200,7 +203,7 @@ describe('SDK Functional: Reseeded bracket', () => {
     // --- The conference final, fed by links ------------------------------------------------------
     const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
     expect(sidesOf(bracket, { roundNumber: 3, matchNumber: 1 })).toEqual([1, 5]);
-    const final = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 3, matchNumber: 1 }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
+    const final = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 3, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 }) });
     expect(expectDefined(final.data).matches.find((match) => isAtPlace(match, { roundNumber: 3, matchNumber: 1 }))?.status).toBe(MatchStatus.COMPLETED);
 
     const standings = await getFunctionalPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: eventId } } });

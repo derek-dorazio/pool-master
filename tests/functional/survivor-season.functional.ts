@@ -53,6 +53,7 @@ import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { bracketMatch, dtoSideTeam, resultBody } from '../support/match-requests';
 
 // A two-week survivor season end to end over HTTP (#719). An admin releases two weeks, each four
 // unlinked basketball games between the same eight teams. A commissioner runs a survivor contest
@@ -132,7 +133,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     client: a,
     path: { eventId },
     body: {
-      matches: [0, 1, 2, 3].map((index) => ({
+      matches: [0, 1, 2, 3].map((index) => bracketMatch({
         matchNumber: index + 1,
         roundNumber: 1,
         homeSportEventParticipantId: rowOf(expectDefined(TEAMS[index * 2])),
@@ -153,14 +154,14 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const pick = (matchNumber: number, side: Side) => ({
     sportEventRoundMatchId: game(matchNumber).id,
     predictedResult: PredictedResult.TEAM,
-    sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
+    sportEventParticipantId: expectDefined(dtoSideTeam(game(matchNumber), side === 'home' ? 2 : 1)),
   });
   /** The admin enters game `matchNumber`'s result: `side` wins it. */
   const result = async (matchNumber: number, side: Side) => {
     const recorded = await recordEventMatchResult({
       client: a,
       path: { eventId, roundNumber: 1, matchNumber },
-      body: side === 'home' ? { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60 } : { winnerSide: MatchSide.AWAY, homeScore: 60, awayScore: 70 },
+      body: resultBody(side === 'home' ? { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60 } : { winnerSide: MatchSide.AWAY, homeScore: 60, awayScore: 70 }),
     });
     expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
   };

@@ -1,6 +1,6 @@
 import { sportPlay } from '@/test/sport-play';
 import { describe, expect, it } from 'vitest';
-import { MatchStatus, ScoringFamily, Sport, sportLeagueDefinitionOf } from '@poolmaster/shared/domain';
+import { ScoringFamily, Sport, sportLeagueDefinitionOf } from '@poolmaster/shared/domain';
 import type {
   ContestEntryStandingDto,
   ContestLeaderboardResponse,
@@ -12,6 +12,7 @@ import { getScoringFamilyUi } from './registry';
 import { formatKnockoutStatus, headToHeadUi } from './head-to-head';
 import type { LeaderboardContext } from './types';
 import { TOURNAMENT_ROUND_SLOTS } from '../test/round-slots';
+import { homeAwayMatchFixture, type HomeAwayMatchFixture } from '../test/match-fixtures';
 
 const basketball = sportLeagueDefinitionOf(Sport.BASKETBALL, sportPlay(Sport.BASKETBALL));
 
@@ -94,35 +95,17 @@ function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderbo
   };
 }
 
-function game(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoundMatchDto, 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
-  return {
+function game(overrides: HomeAwayMatchFixture & Pick<SportEventRoundMatchDto, 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
+  return homeAwayMatchFixture({
     id: `match-${String(overrides.roundNumber)}-${String(overrides.matchNumber)}`,
     sportEventId: 'event-1',
     slot: TOURNAMENT_ROUND_SLOTS[overrides.roundNumber - 1] ?? TOURNAMENT_ROUND_SLOTS[0],
-    homeSportEventParticipantId: 'sep-1',
-    awaySportEventParticipantId: 'sep-2',
+    home: 'sep-1',
+    away: 'sep-2',
     isNeutralSite: true,
     scheduledDate: '2026-03-28T22:09:00.000Z',
-    status: 'SCHEDULED',
-    winnerSide: null,
-    homeScore: null,
-    awayScore: null,
-    homeShootoutScore: null,
-    awayShootoutScore: null,
-    ending: 'PLAYED',
-    resultSource: null,
-    completedAt: null,
-    advancesToMatchId: null,
-    advancesToSide: null,
-    regionLabel: null,
-    homeSpread: null,
-    periodScores: [],
     ...overrides,
-    // As the server's mapper reads it from the status.
-    isUnplayed: overrides.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides.status),
-    // The server's fact: decided once COMPLETED.
-    isFinal: overrides.isFinal ?? overrides.status === MatchStatus.COMPLETED,
-  };
+  });
 }
 
 const ROUND_NAMES = ['First Round', 'Round of 32', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
@@ -141,7 +124,7 @@ const arizona = team({ id: 'sep-3', seedNumber: 2, participant: { ...team().part
 /** Vermont (sep-1) beat Gonzaga in the first round, then lost to Arizona in the second, Vermont at home both times. */
 const vermontOutInRoundOfThirtyTwo = [
   game({ matchNumber: 1, roundNumber: 1, status: 'COMPLETED', winnerSide: 'HOME', homeScore: 81, awayScore: 76 }),
-  game({ matchNumber: 1, roundNumber: 2, awaySportEventParticipantId: 'sep-3', status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 74 }),
+  game({ matchNumber: 1, roundNumber: 2, away: 'sep-3', status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 74 }),
 ];
 
 describe('head-to-head leaderboard', () => {
@@ -216,7 +199,7 @@ describe('head-to-head leaderboard', () => {
   it('ends a team still in with its next game, its opponent and when it starts', () => {
     const games = [
       ...vermontOutInRoundOfThirtyTwo.slice(0, 1),
-      game({ matchNumber: 1, roundNumber: 2, awaySportEventParticipantId: 'sep-3' }),
+      game({ matchNumber: 1, roundNumber: 2, away: 'sep-3' }),
     ];
     const board = headToHeadUi.leaderboard({ ...bracketLeaderboard([plainWin]), participants: [team(), gonzaga, arizona] }, basketball, context(games));
 
@@ -226,7 +209,7 @@ describe('head-to-head leaderboard', () => {
   });
 
   it('says a team still in is playing now while its next game is live, and names an opponent not decided yet as TBD', () => {
-    const games = [game({ matchNumber: 1, roundNumber: 2, awaySportEventParticipantId: null, status: 'IN_PROGRESS' })];
+    const games = [game({ matchNumber: 1, roundNumber: 2, away: null, status: 'IN_PROGRESS' })];
     const board = headToHeadUi.leaderboard({ ...bracketLeaderboard([plainWin]), participants: [team()] }, basketball, context(games));
 
     expect(board.pickDetail('entry-1', plainWin, team()).detailCells[0]?.peek?.facts).toEqual([

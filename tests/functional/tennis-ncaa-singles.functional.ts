@@ -17,6 +17,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
+import { withHomeAwayRead } from '../support/match-requests';
 
 // The 2025 NCAA Division I men's and women's singles championships over HTTP (#704 slice 4): the
 // test seed loads each 64-player draw into its NCAA sport league, six rounds named as the NCAA
@@ -62,7 +63,7 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
     draw.name = eventName(league.name);
     for (const player of league.players) player.key = expectDefined(tagged(player.key));
     for (const entry of draw.field) entry.player = expectDefined(tagged(entry.player));
-    for (const match of draw.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+    for (const match of draw.matches ?? []) match.sides = match.sides.map((side) => ({ ...side, player: tagged(side.player) }));
   }
   return file;
 }
@@ -112,7 +113,7 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
       expect(field.map((row) => row.seedNumber).filter((seed) => seed !== null).sort((left, right) => left - right))
         .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9]);
 
-      const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches;
+      const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches.map(withHomeAwayRead);
       expect(bracket).toHaveLength(63);
       expect(bracket.every((match) => match.status === 'COMPLETED')).toBe(true);
       // Each quarter of the draw is a region through the quarterfinals; the semifinals and final carry none.
@@ -136,7 +137,7 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
 
     // The women's Round of 16 walkover: Welker through without a ball struck, so no score.
     const { event: women } = await findDraw(admin, file, 1);
-    const womenBracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: women.id } })).data).matches;
+    const womenBracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: women.id } })).data).matches.map(withHomeAwayRead);
     expect(womenBracket.filter((match) => match.ending !== 'PLAYED').map((match) => [match.roundNumber, match.ending, match.homeScore, match.awayScore]))
       .toEqual([[3, 'WALKOVER', null, null]]);
 

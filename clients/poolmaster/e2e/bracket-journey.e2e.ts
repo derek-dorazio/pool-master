@@ -7,6 +7,7 @@ import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
+import { AWAY_SIDE, HOME_SIDE, bracketLoadMatch } from './helpers/match-sides';
 
 /**
  * #721 — the bracket pool journey: the root admin sets up a released four-team basketball
@@ -180,9 +181,9 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
 
     await postJson(api, headers, `/api/v1/events/${eventId}/bracket`, {
       matches: [
-        { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Duke'], awaySportEventParticipantId: fieldRowIds['Texas'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' } },
-        { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Houston'], awaySportEventParticipantId: fieldRowIds['Vermont'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'AWAY' } },
-        { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+        bracketLoadMatch({ matchNumber: 1, roundNumber: 1, home: fieldRowIds['Duke'], away: fieldRowIds['Texas'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, sideNumber: HOME_SIDE } }),
+        bracketLoadMatch({ matchNumber: 2, roundNumber: 1, home: fieldRowIds['Houston'], away: fieldRowIds['Vermont'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, sideNumber: AWAY_SIDE } }),
+        bracketLoadMatch({ matchNumber: 1, roundNumber: 2, home: null, away: null, isNeutralSite: true, scheduledDate: null, advancesTo: null }),
       ],
     }, 'put');
     const released = await postJson<{ event: { status: string } }>(api, headers, `/api/v1/events/${eventId}/release`, undefined);

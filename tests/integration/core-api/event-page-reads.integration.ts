@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 import {
   AutoReleaseCheckOutcome,
   ContestStatus,
+  MatchSide,
   MatchStatus,
   ParticipantRoundStatus,
   ReleaseCheckKey,
@@ -21,6 +22,7 @@ import {
   SportEventRoundListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
+import { resultBody } from '../../support/match-requests';
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, withoutJsonBodyHeaders, type TestUserResult } from '../helpers';
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
@@ -208,7 +210,7 @@ describe('a match records when its result came in', () => {
     // The admin result routes write only on a test event (#2074).
     await linkTestSlot(getPrisma(), await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } }));
     const rootAdmin = await createTestUser({ isRootAdmin: true });
-    const result = { winnerSide: 'HOME', homeScore: 24, awayScore: 10 };
+    const result = resultBody({ winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 });
 
     const beforeRecord = okBody(await get(`/api/v1/events/${event.id}/bracket`, rootAdmin), SportEventBracketResponseSchema).matches[0];
     const recorded = await send('PUT', `/api/v1/events/${event.id}/bracket/rounds/1/matches/1/result`, rootAdmin, result);

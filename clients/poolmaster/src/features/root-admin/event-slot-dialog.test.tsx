@@ -1,10 +1,11 @@
-import { MatchEnding, SlotKind } from '@poolmaster/shared/domain';
+import { SlotKind } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SportEventRoundMatchDto, SportEventSlotTiebreakerDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
+import { homeAwayMatchFixture } from '@/features/contests/test/match-fixtures';
 import { roundSlot } from '@/features/contests/test/round-slots';
 import { EventSlotDialog } from './event-slot-dialog';
 import { fieldEntryFixture, participantFixture, seasonSlotFixture } from './sport-test-fixtures';
@@ -20,12 +21,8 @@ const { chooseMock, listTiebreakersMock, mockLogger } = vi.hoisted(() => {
 
 const WEEK = seasonSlotFixture({ id: 'week-18', key: 'WEEK_18', slotKind: 'WEEK', weekNumber: 18, seriesGames: 1, label: null, isTestData: false });
 
-function match(overrides: Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>): SportEventRoundMatchDto {
-  return {
-    sportEventId: 'evt-1', roundNumber: 1, slot: roundSlot(SlotKind.WEEK, null, 18), isNeutralSite: false, scheduledDate: null, status: 'SCHEDULED', isUnplayed: true, isFinal: false,
-    winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: null,
-    completedAt: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], ...overrides,
-  };
+function match(overrides: Pick<SportEventRoundMatchDto, 'id' | 'matchNumber'> & { home: string; away: string }): SportEventRoundMatchDto {
+  return homeAwayMatchFixture({ sportEventId: 'evt-1', roundNumber: 1, slot: roundSlot(SlotKind.WEEK, null, 18), ...overrides });
 }
 
 const team = (id: string, name: string) => fieldEntryFixture({ id, participantId: `p-${id}`, participant: participantFixture({ id: `p-${id}`, name }) });
@@ -36,8 +33,8 @@ bindApiMocks({
   getEventBracket: vi.fn(() => ({
     data: {
       matches: [
-        match({ id: 'm-1', matchNumber: 1, homeSportEventParticipantId: 'owls', awaySportEventParticipantId: 'hawks' }),
-        match({ id: 'm-2', matchNumber: 2, homeSportEventParticipantId: 'crows', awaySportEventParticipantId: 'doves' }),
+        match({ id: 'm-1', matchNumber: 1, home: 'owls', away: 'hawks' }),
+        match({ id: 'm-2', matchNumber: 2, home: 'crows', away: 'doves' }),
       ],
     },
   })),

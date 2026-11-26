@@ -57,6 +57,7 @@ import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { bracketMatch, dtoSideTeam, resultBody } from '../support/match-requests';
 
 // A two-week confidence pick'em season end to end over HTTP (#717). An admin releases two weeks,
 // each an eight-team basketball event whose four first-round games are the week (its later
@@ -142,7 +143,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
 
   // Round 1's games 1-4: Duke-Vermont, Houston-Texas, Purdue-Akron, Baylor-Colgate; round 2's games 1 and 2, then round 3's final.
   // The week's picks are on round 1's games, so the helpers below name a game by its number in round 1.
-  const firstRound = [0, 1, 2, 3].map((index) => ({
+  const firstRound = [0, 1, 2, 3].map((index) => (bracketMatch({
     matchNumber: index + 1,
     roundNumber: 1,
     homeSportEventParticipantId: rowOf(expectDefined(TEAMS[index * 2])),
@@ -150,16 +151,16 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     isNeutralSite: true,
     scheduledDate: kickoffs[index] ?? null,
     advancesTo: { roundNumber: 2, matchNumber: 1 + Math.floor(index / 2), side: index % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY },
-  }));
+  })));
   const loaded = await loadEventBracket({
     client: a,
     path: { eventId },
     body: {
       matches: [
         ...firstRound,
-        { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME } },
-        { matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY } },
-        { matchNumber: 1, roundNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+        bracketMatch({ matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME } }),
+        bracketMatch({ matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY } }),
+        bracketMatch({ matchNumber: 1, roundNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null }),
       ],
     },
   });
@@ -175,14 +176,14 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const pick = (matchNumber: number, side: Side, confidence: number) => ({
     sportEventRoundMatchId: game(matchNumber).id,
     predictedResult: PredictedResult.TEAM,
-    sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
+    sportEventParticipantId: expectDefined(dtoSideTeam(game(matchNumber), side === 'home' ? 2 : 1)),
     confidence,
   });
   /** The admin enters game `matchNumber`'s result: `side` wins it, by `winnerScore` to `loserScore`. */
   const result = async (matchNumber: number, side: Side, winnerScore = 70, loserScore = 60) => {
     const winnerSide = side === 'home' ? MatchSide.HOME : MatchSide.AWAY;
     const [homeScore, awayScore] = side === 'home' ? [winnerScore, loserScore] : [loserScore, winnerScore];
-    const recorded = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber }, body: { winnerSide, homeScore, awayScore } });
+    const recorded = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber }, body: resultBody({ winnerSide, homeScore, awayScore }) });
     expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
   };
   return { eventId, gameId: (matchNumber: number) => game(matchNumber).id, pick, result };

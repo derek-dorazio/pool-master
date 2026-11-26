@@ -690,7 +690,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Enter a match\'s result',
-      description: `${TEST_EVENT_ONLY} ` + 'Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team\'s event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. '
+      description: `${TEST_EVENT_ONLY} ` + 'Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team\'s event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSideNumber with each side\'s score level. '
         + 'Re-sending a match\'s result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. '
         + 'A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner\'s is the higher; they are kept apart from the match score. '
         + 'A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner\'s score may be the lower, and a WALKOVER has no scores; its winner wins in full. '

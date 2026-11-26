@@ -830,1128 +830,2262 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "ncaam-tennis-jay-friend",
-              "away": "ncaam-tennis-joaquin-guilleme",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-joaquin-guilleme",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-jay-friend",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "ncaam-tennis-oscar-lacides",
-              "away": "ncaam-tennis-keegan-rice",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-keegan-rice",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-oscar-lacides",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "ncaam-tennis-petar-jovanovic",
-              "away": "ncaam-tennis-preston-stearns",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-preston-stearns",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-petar-jovanovic",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "ncaam-tennis-ian-mayew",
-              "away": "ncaam-tennis-sebastian-gorzny",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-sebastian-gorzny",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-ian-mayew",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "ncaam-tennis-kenta-miyoshi",
-              "away": "ncaam-tennis-dominique-rolland",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-dominique-rolland",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-kenta-miyoshi",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "ncaam-tennis-edward-winter",
-              "away": "ncaam-tennis-melchior-delloye",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-melchior-delloye",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-edward-winter",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "ncaam-tennis-jeremy-jin",
-              "away": "ncaam-tennis-trevor-svajda",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-trevor-svajda",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-jeremy-jin",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "ncaam-tennis-vignesh-gogineni",
-              "away": "ncaam-tennis-amirkhamza-nasridinov",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-amirkhamza-nasridinov",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-vignesh-gogineni",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 1,
-              "home": "ncaam-tennis-matthew-forbes",
-              "away": "ncaam-tennis-pablo-martinez-gomez",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-pablo-martinez-gomez",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-matthew-forbes",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 1,
-              "home": "ncaam-tennis-cosme-rolland-de-ravel",
-              "away": "ncaam-tennis-alexander-frusina",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-alexander-frusina",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-cosme-rolland-de-ravel",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 1,
-              "home": "ncaam-tennis-jack-loutit",
-              "away": "ncaam-tennis-illia-maksymchuk",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-illia-maksymchuk",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-jack-loutit",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 1,
-              "home": "ncaam-tennis-sebastian-dominko",
-              "away": "ncaam-tennis-max-dahlin",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-max-dahlin",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-sebastian-dominko",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 1,
-              "home": "ncaam-tennis-devin-badenhorst",
-              "away": "ncaam-tennis-tiago-silva",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-tiago-silva",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-devin-badenhorst",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 1,
-              "home": "ncaam-tennis-matic-kriznik",
-              "away": "ncaam-tennis-dk-suresh",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-dk-suresh",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-matic-kriznik",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "ncaam-tennis-jack-anthrop",
-              "away": "ncaam-tennis-filip-gustafsson",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-filip-gustafsson",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-jack-anthrop",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "ncaam-tennis-spencer-johnson",
-              "away": "ncaam-tennis-martin-borisiouk",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-martin-borisiouk",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-spencer-johnson",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 17,
               "roundNumber": 1,
-              "home": "ncaam-tennis-luca-pow",
-              "away": "ncaam-tennis-sam-landau",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-sam-landau",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-luca-pow",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 18,
               "roundNumber": 1,
-              "home": "ncaam-tennis-peter-benjamin-privara",
-              "away": "ncaam-tennis-jakub-vrba",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-jakub-vrba",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-peter-benjamin-privara",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 19,
               "roundNumber": 1,
-              "home": "ncaam-tennis-soham-purohit",
-              "away": "ncaam-tennis-bryan-hernandez-cortes",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-bryan-hernandez-cortes",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-soham-purohit",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 20,
               "roundNumber": 1,
-              "home": "ncaam-tennis-luis-carlos-alvarez-valdes",
-              "away": "ncaam-tennis-dylan-dietrich",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-dylan-dietrich",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-luis-carlos-alvarez-valdes",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 21,
               "roundNumber": 1,
-              "home": "ncaam-tennis-lucca-liu",
-              "away": "ncaam-tennis-niels-ratiu",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-niels-ratiu",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-lucca-liu",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 22,
               "roundNumber": 1,
-              "home": "ncaam-tennis-sasha-rozin",
-              "away": "ncaam-tennis-paul-inchauspe",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-paul-inchauspe",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-sasha-rozin",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 23,
               "roundNumber": 1,
-              "home": "ncaam-tennis-rudy-quan",
-              "away": "ncaam-tennis-william-jansen",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-william-jansen",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-rudy-quan",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 24,
               "roundNumber": 1,
-              "home": "ncaam-tennis-antonio-prat",
-              "away": "ncaam-tennis-aidan-kim",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-aidan-kim",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-antonio-prat",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 25,
               "roundNumber": 1,
-              "home": "ncaam-tennis-ilia-snitari",
-              "away": "ncaam-tennis-shu-matsuoka",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-shu-matsuoka",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-ilia-snitari",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 26,
               "roundNumber": 1,
-              "home": "ncaam-tennis-luis-felipe-miguel",
-              "away": "ncaam-tennis-eli-stephenson",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-eli-stephenson",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-luis-felipe-miguel",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 27,
               "roundNumber": 1,
-              "home": "ncaam-tennis-roan-jones",
-              "away": "ncaam-tennis-paul-barbier-gazeu",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-paul-barbier-gazeu",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-roan-jones",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 28,
               "roundNumber": 1,
-              "home": "ncaam-tennis-jangjun-kim",
-              "away": "ncaam-tennis-ozan-baris",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-ozan-baris",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-jangjun-kim",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 29,
               "roundNumber": 1,
-              "home": "ncaam-tennis-hugo-car",
-              "away": "ncaam-tennis-michael-zheng",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-michael-zheng",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-hugo-car",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 30,
               "roundNumber": 1,
-              "home": "ncaam-tennis-sebastian-eriksson",
-              "away": "ncaam-tennis-connor-henry-van-schalkwyk",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-connor-henry-van-schalkwyk",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-sebastian-eriksson",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 31,
               "roundNumber": 1,
-              "home": "ncaam-tennis-fryderyk-lechno-wasiutynski",
-              "away": "ncaam-tennis-benito-sanchez-martinez",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-benito-sanchez-martinez",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-fryderyk-lechno-wasiutynski",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 32,
               "roundNumber": 1,
-              "home": "ncaam-tennis-romain-gales",
-              "away": "ncaam-tennis-duncan-chan",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennis-duncan-chan",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennis-romain-gales",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 6,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             }
           ]
@@ -2747,1129 +3881,2263 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-valerie-glozman",
-              "away": "ncaaw-tennis-na-dong",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-na-dong",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-valerie-glozman",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-julia-garcia-ruiz",
-              "away": "ncaaw-tennis-gabriella-broadfoot",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-gabriella-broadfoot",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-julia-garcia-ruiz",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-tatum-evans",
-              "away": "ncaaw-tennis-mia-kupres",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-mia-kupres",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-tatum-evans",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-mayu-crossley",
-              "away": "ncaaw-tennis-berta-passola-folch",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-berta-passola-folch",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-mayu-crossley",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-ashton-bowers",
-              "away": "ncaaw-tennis-reece-carter",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-reece-carter",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-ashton-bowers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-irina-balus",
-              "away": "ncaaw-tennis-eugenia-zozaya-menendez",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-eugenia-zozaya-menendez",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-irina-balus",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-mia-yamakita",
-              "away": "ncaaw-tennis-darya-schwartzman",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-darya-schwartzman",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-mia-yamakita",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-kyoka-kubo",
-              "away": "ncaaw-tennis-kristina-paskauskas",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-kristina-paskauskas",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-kyoka-kubo",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-savannah-dada-mascoll",
-              "away": "ncaaw-tennis-naomi-xu",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-naomi-xu",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-savannah-dada-mascoll",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-ria-bhakta",
-              "away": "ncaaw-tennis-xinyi-nong",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-xinyi-nong",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-ria-bhakta",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-anastasiia-gureva",
-              "away": "ncaaw-tennis-bianca-molnar",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-bianca-molnar",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-anastasiia-gureva",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-emma-charney",
-              "away": "ncaaw-tennis-alice-ferlito",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-alice-ferlito",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-emma-charney",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-teah-chavez",
-              "away": "ncaaw-tennis-valeria-ray",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-valeria-ray",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-teah-chavez",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-lavinia-tanasie",
-              "away": "ncaaw-tennis-emily-welker",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-emily-welker",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-lavinia-tanasie",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-annabelle-xu",
-              "away": "ncaaw-tennis-stephanie-yakoff",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-stephanie-yakoff",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-annabelle-xu",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-theadora-rabman",
-              "away": "ncaaw-tennis-lily-jones",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-lily-jones",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-theadora-rabman",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 17,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-nao-nishino",
-              "away": "ncaaw-tennis-mia-slama",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-mia-slama",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-nao-nishino",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 18,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-alyssa-ahn",
-              "away": "ncaaw-tennis-gabia-paskauskas",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-gabia-paskauskas",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-alyssa-ahn",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 19,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-jana-hossam-salah",
-              "away": "ncaaw-tennis-greta-greco-lucchina",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-greta-greco-lucchina",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-jana-hossam-salah",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 20,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-ange-oby-kajuru",
-              "away": "ncaaw-tennis-aysegul-mert",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-aysegul-mert",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-ange-oby-kajuru",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 21,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-serafima-shastova",
-              "away": "ncaaw-tennis-erika-matsuda",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-erika-matsuda",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-serafima-shastova",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 22,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-carolina-gomez-alonso",
-              "away": "ncaaw-tennis-vivian-yang",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-vivian-yang",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-carolina-gomez-alonso",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 23,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-zuzanna-kubacha",
-              "away": "ncaaw-tennis-liv-hovde",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-liv-hovde",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-zuzanna-kubacha",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 24,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-emma-kamper",
-              "away": "ncaaw-tennis-piper-charney",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-piper-charney",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-emma-kamper",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 25,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-violeta-martinez",
-              "away": "ncaaw-tennis-sophie-llewellyn",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-sophie-llewellyn",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-violeta-martinez",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 26,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-bridget-stammel",
-              "away": "ncaaw-tennis-reese-brantmeier",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-reese-brantmeier",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-bridget-stammel",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 27,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-krisha-mahendran",
-              "away": "ncaaw-tennis-ava-esposito",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-ava-esposito",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-krisha-mahendran",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 28,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-anastasiia-lopata",
-              "away": "ncaaw-tennis-anastasiia-grechkina",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-anastasiia-grechkina",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-anastasiia-lopata",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 29,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-mao-mushika",
-              "away": "ncaaw-tennis-ni-xi",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-ni-xi",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-mao-mushika",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 30,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-esha-velaga",
-              "away": "ncaaw-tennis-luciana-perry",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-luciana-perry",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-esha-velaga",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 31,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-louise-wikander",
-              "away": "ncaaw-tennis-eva-shaw",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-eva-shaw",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-louise-wikander",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 32,
               "roundNumber": 1,
-              "home": "ncaaw-tennis-anna-zyryanova",
-              "away": "ncaaw-tennis-carmen-andreea-herea",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennis-carmen-andreea-herea",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tennis-anna-zyryanova",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": null,
-                "awayScore": null,
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": null
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": null
+                  }
+                ],
                 "ending": "WALKOVER"
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Top quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Second quarter",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Third quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Bottom quarter",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 6,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             }
           ]

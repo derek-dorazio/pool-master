@@ -169,177 +169,359 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "copa-argentina",
-              "away": "copa-ecuador",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "copa-ecuador",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "copa-argentina",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-05T01:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 1,
-                "homeShootoutScore": 4,
-                "awayShootoutScore": 2
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1,
+                    "shootoutScore": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1,
+                    "shootoutScore": 4
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "copa-venezuela",
-              "away": "copa-canada",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "copa-canada",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "copa-venezuela",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-06T01:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 1,
-                "homeShootoutScore": 3,
-                "awayShootoutScore": 4
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1,
+                    "shootoutScore": 4
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1,
+                    "shootoutScore": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "copa-uruguay",
-              "away": "copa-brazil",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "copa-brazil",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "copa-uruguay",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-07T01:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 0,
-                "awayScore": 0,
-                "homeShootoutScore": 4,
-                "awayShootoutScore": 2
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0,
+                    "shootoutScore": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0,
+                    "shootoutScore": 4
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "copa-colombia",
-              "away": "copa-panama",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "copa-panama",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "copa-colombia",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-06T22:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 5,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 5
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 3,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 3
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-10T00:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-11T00:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 1
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-15T01:22:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             }

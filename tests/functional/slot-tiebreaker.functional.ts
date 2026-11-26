@@ -17,6 +17,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { deleteTestSportLeagues } from '../support/test-slots';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
+import { bracketMatch } from '../support/match-requests';
 
 // A root admin chooses a slot's tiebreaker game over HTTP (#2048): the choice is kept with who
 // made it and when, a game that has started is refused, and the Slots tab's read names every Game
@@ -75,7 +76,7 @@ describe('SDK Functional: a slot\'s tiebreaker game', () => {
       client: a,
       path: { eventId },
       body: {
-        matches: [0, 1].map((index) => ({
+        matches: [0, 1].map((index) => (bracketMatch({
           matchNumber: index + 1,
           roundNumber: 1,
           homeSportEventParticipantId: rowOf(expectDefined(TEAMS[index * 2])),
@@ -83,7 +84,7 @@ describe('SDK Functional: a slot\'s tiebreaker game', () => {
           isNeutralSite: false,
           scheduledDate: expectDefined(kickoffs[index]),
           advancesTo: null,
-        })),
+        }))),
       },
     });
     const matches = expectDefined(loaded.data, JSON.stringify(loaded.error)).matches;

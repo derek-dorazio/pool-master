@@ -7,6 +7,7 @@ import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './helpers/test-event';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
+import { bracketLoadMatch } from './helpers/match-sides';
 
 /**
  * #711 — the squares pool journey: the root admin releases an American football event of one game
@@ -174,7 +175,7 @@ test('act 1: the root admin releases an American football event of one game betw
     };
     const { matches } = await postJson<{ matches: Array<{ id: string }> }>(api, headers, `/api/v1/events/${event.id}/bracket`, {
       matches: [
-        { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf(TEAMS.home), awaySportEventParticipantId: rowOf(TEAMS.away), isNeutralSite: true, scheduledDate: KICKOFF, advancesTo: null },
+        bracketLoadMatch({ matchNumber: 1, roundNumber: 1, home: rowOf(TEAMS.home), away: rowOf(TEAMS.away), isNeutralSite: true, scheduledDate: KICKOFF, advancesTo: null }),
       ],
     }, 'put');
     journey.gameId = matches[0]?.id;

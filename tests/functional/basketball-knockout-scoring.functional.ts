@@ -45,6 +45,7 @@ import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { bracketMatch, resultBody, withHomeAwayRead } from '../support/match-requests';
 
 // Knockout scoring end to end over HTTP (#699): an admin releases a four-team, two-round bracket, a
 // commissioner runs a contest scored by knockout round points (1 for a first-round win, 2 for the
@@ -147,9 +148,9 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       path: { eventId },
       body: {
         matches: [
-          { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
-          { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
-          { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+          bracketMatch({ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } }),
+          bracketMatch({ matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } }),
+          bracketMatch({ matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null }),
         ],
       },
     });
@@ -157,7 +158,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     expect(expectMatchesSchema(SportEventBracketResponseSchema, loaded.data).matches).toHaveLength(3);
     // A draft takes no results: its pairings can still change.
     expectFunctionalError(
-      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null } }),
+      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null }) }),
       { status: 409, code: 'SPORT_EVENT_NOT_RELEASED' },
     );
     const released = await releaseEvent({ client: a, path: { eventId } });
@@ -219,17 +220,17 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // --- The tournament tips off and the results go in ------------------------------------------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
     expectFunctionalError(
-      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null } }),
+      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null }) }),
       { status: 422, code: 'MATCH_SIDES_NOT_SET' },
     );
     expectFunctionalError(
-      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: 60, awayScore: 70 } }),
+      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 60, awayScore: 70 }) }),
       { status: 422, code: 'MATCH_RESULT_INVALID' },
     );
     // Duke beats Texas; Vermont, a 15 seed, beats Houston, a 2.
-    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: 82, awayScore: 60 } });
-    const afterFirstRound = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 71 } });
-    const final = expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, afterFirstRound.data).matches.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 })));
+    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 82, awayScore: 60 }) });
+    const afterFirstRound = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 71 }) });
+    const final = withHomeAwayRead(expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, afterFirstRound.data).matches.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 }))));
     expect([nameOf(expectDefined(final.homeSportEventParticipantId)), nameOf(expectDefined(final.awaySportEventParticipantId))]).toEqual(['Duke', 'Vermont']);
 
     // After the first round: Duke 1, Vermont 1 + (15 - 2) = 14, Houston and Texas 0; the best two count.
@@ -240,7 +241,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     expect(await totalsOf()).toEqual({ [entryId]: 15 });
 
     // Vermont beats Duke in the final: 2 + (15 - 1) = 16 more.
-    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 1 }, body: { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 72 } });
+    await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 2, matchNumber: 1 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 72 }) });
     const board = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('KNOCKOUT_ROUND_POINTS');
     // The contest has its upset bonus on, so a member's board knows to show the Upset column.
@@ -257,11 +258,11 @@ describe('SDK Functional: Basketball knockout scoring', () => {
 
     // The final is decided, so a first-round winner can no longer change; its score still can.
     expectFunctionalError(
-      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 71, awayScore: 66 } }),
+      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 71, awayScore: 66 }) }),
       { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
-    const corrected = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 73 } });
-    expect(expectDefined(corrected.data).matches.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 2 }))).toMatchObject({ status: MatchStatus.COMPLETED, awayScore: 73 });
+    const corrected = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 73 }) });
+    expect(withHomeAwayRead(expectDefined(expectDefined(corrected.data).matches.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 2 }))))).toMatchObject({ status: MatchStatus.COMPLETED, awayScore: 73 });
 
     // --- Settled ------------------------------------------------------------------------------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');

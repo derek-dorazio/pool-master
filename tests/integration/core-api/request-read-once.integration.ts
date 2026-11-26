@@ -2,7 +2,7 @@ import { expect, jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { BackgroundJobType, ContestStatus, PeriodUnit, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, MatchSide, PeriodUnit, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type {
   ContestResponse,
   LeagueContextResponse,
@@ -36,6 +36,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
+import { resultBody } from '../../support/match-requests';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
@@ -494,7 +495,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
       method: 'PUT',
       url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`,
       headers: admin.headers,
-      payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 },
+      payload: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 27, awayScore: 31 }),
     });
 
     expect(response.statusCode).toBe(200);
@@ -527,7 +528,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     const one = await squaresContestUnderWay({ gameFinished: false });
     const three = await squaresContestUnderWay({ gameFinished: false, contests: 3 });
     const result = (eventId: string, headers: InjectOptions['headers']): InjectOptions => ({
-      method: 'PUT', url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`, headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 },
+      method: 'PUT', url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`, headers, payload: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 27, awayScore: 31 }),
     });
 
     const withOne = await measureRequest(result(one.eventId, one.admin.headers));
@@ -546,7 +547,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     const failing = failSecondContestCompletionOnce(second);
 
     try {
-      await measureRequest({ method: 'PUT', url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`, headers: admin.headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 } });
+      await measureRequest({ method: 'PUT', url: `/api/v1/events/${eventId}/bracket/rounds/1/matches/1/result`, headers: admin.headers, payload: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 27, awayScore: 31 }) });
       await drainBackgroundJobs();
 
       await expect(getPrisma().backgroundJob.findFirst({ where: { type: 'SETTLE_GAME_CONTESTS' }, select: { status: true, attempts: true, lastError: true } }))

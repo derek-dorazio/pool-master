@@ -2,19 +2,27 @@
  * Matches with sides and Games (#2046), built from the home-and-away shape tests have always
  * written: home is side 2 and away side 1, as the sync and the API name them. Test code only.
  *
- * `legacyMatch` builds a domain match from the old row's fields; `homeAwayOf` reads one back the
- * way the API's DTO still does (`mapSportEventRoundMatchToDto`), so an assertion can name home and
- * away; `withHomeAway` changes some of those fields on a built match.
+ * `legacyMatch` builds a domain match from the old row's fields; `homeAwayOf` reads one back in
+ * those fields, so an assertion on a service can name home and away; `withHomeAway` changes some
+ * of those fields on a built match. The API answers on sides (#2184): `sideOfDto` reads a DTO.
  */
 import {
+  gameNumbered,
   HomeAway,
   MatchEnding,
   MatchSide,
   MatchSideOutcome,
   MatchStatus,
+  matchScoreOf,
+  matchSideOfSideNumber,
+  matchSpread,
   PeriodKind,
+  runningPeriodScores,
+  shootoutScoreOf,
+  sideParticipantId,
   SlotKind,
   sideNumberOfMatchSide,
+  winningSide,
   type SportEventRoundMatch,
   type SportEventRoundMatchGame,
   type SportEventRoundMatchGameSideResult,
@@ -22,9 +30,9 @@ import {
   matchCompletedAt,
   matchIsNeutralSite,
 } from '@poolmaster/shared/domain';
-import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
-import { mapSportEventRoundMatchToDto } from '../../packages/core-api/src/mappers/sport-event-matches.mapper';
+import type { SportEventRoundMatchDto, SportEventRoundMatchSideDto } from '@poolmaster/shared/dto/bracket.dto';
 import type { MatchResultInput, PeriodScoreInput } from '../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
+import type { BracketMatchEdit, BracketMatchInput } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { roundSlot } from './round-slots';
 
 const T0 = new Date('2026-01-01T00:00:00.000Z');
@@ -157,14 +165,54 @@ function gamesOf(
   return [game(1, single ? match.status : MatchStatus.SCHEDULED, single ? match.completedAt : null, scoreOf, periodsOf)];
 }
 
-/** A match's home-and-away fields as the API still reads them (#2046 part b moves the API to sides). */
-export function homeAwayOf(match: SportEventRoundMatch): SportEventRoundMatchDto {
-  return mapSportEventRoundMatchToDto(match);
+/** A built match read back in the old home-and-away fields, for assertions on a service. */
+export interface HomeAwayView extends Required<Omit<HomeAwayFields, 'resultSource'>> {
+  status: MatchStatus;
+}
+
+/** A domain match with its home-and-away fields beside it: home is side 2 and away side 1, as the sync places them. */
+export function homeAwayOf(match: SportEventRoundMatch): SportEventRoundMatch & HomeAwayView {
+  return { ...match, ...homeAwayFieldsOf(match) };
+}
+
+function homeAwayFieldsOf(match: SportEventRoundMatch): HomeAwayView {
+  const gameOne = gameNumbered(match, 1);
+  const spread = matchSpread(match);
+  const winner = winningSide(match);
+  return {
+    status: match.status,
+    isNeutralSite: matchIsNeutralSite(match),
+    completedAt: matchCompletedAt(match),
+    homeSportEventParticipantId: sideParticipantId(match, HOME_SIDE),
+    awaySportEventParticipantId: sideParticipantId(match, AWAY_SIDE),
+    winnerSide: winner === null ? null : matchSideOfSideNumber(winner.sideNumber),
+    homeScore: matchScoreOf(match, HOME_SIDE),
+    awayScore: matchScoreOf(match, AWAY_SIDE),
+    homeShootoutScore: gameOne === null ? null : shootoutScoreOf(gameOne, HOME_SIDE),
+    awayShootoutScore: gameOne === null ? null : shootoutScoreOf(gameOne, AWAY_SIDE),
+    homeSpread: spread === null ? null : 0 - spread,
+    advancesToSide: match.advancesToSideNumber === null ? null : matchSideOfSideNumber(match.advancesToSideNumber),
+    periodScores: gameOne === null ? [] : runningPeriodScores(gameOne)
+      .filter((period) => period.kind === PeriodKind.REGULAR)
+      .map(({ periodNumber, totals }) => ({ periodNumber, homeScore: totals.get(HOME_SIDE) ?? 0, awayScore: totals.get(AWAY_SIDE) ?? 0 })),
+  };
+}
+
+/** One side of a match DTO by its number. */
+export function sideOfDto(match: Pick<SportEventRoundMatchDto, 'id' | 'sides'>, sideNumber: number): SportEventRoundMatchSideDto {
+  const side = match.sides.find((each) => each.sideNumber === sideNumber);
+  if (side === undefined) throw new Error(`Match ${match.id} has no side ${String(sideNumber)}`);
+  return side;
+}
+
+/** The team on a match DTO's side, or null while it is undecided. */
+export function dtoTeamOn(match: Pick<SportEventRoundMatchDto, 'id' | 'sides'>, sideNumber: number): string | null {
+  return sideOfDto(match, sideNumber).sportEventParticipantId;
 }
 
 /** The match with some of its home-and-away fields changed; its Games are rebuilt only when a score field or the status is named. */
 export function withHomeAway(match: SportEventRoundMatch, fields: HomeAwayFields & Partial<Omit<SportEventRoundMatch, 'sides' | 'games'>>): SportEventRoundMatch {
-  const view = homeAwayOf(match);
+  const view = homeAwayFieldsOf(match);
   // A single game's Game 1 takes the match's status, as a result writes it.
   const rebuildsGames = ['homeScore', 'awayScore', 'homeShootoutScore', 'awayShootoutScore', 'periodScores', 'status', 'isNeutralSite', 'completedAt'].some((key) => key in fields);
   const { games } = match;
@@ -221,4 +269,49 @@ export function homeAwayPeriod({ homeScore, awayScore }: { homeScore: number; aw
 export function placeTeam(match: SportEventRoundMatch, side: MatchSide, sportEventParticipantId: string | null): void {
   const sideNumber = sideNumberOfMatchSide(side);
   match.sides = match.sides.map((each) => (each.sideNumber === sideNumber ? { ...each, sportEventParticipantId } : each));
+}
+
+/** A bracket load's match in the home-and-away shape, as the bracket service takes it on sides. */
+export interface HomeAwayBracketInput {
+  roundNumber: number;
+  matchNumber: number;
+  homeSportEventParticipantId: string | null;
+  awaySportEventParticipantId: string | null;
+  isNeutralSite: boolean;
+  scheduledDate: Date | null;
+  advancesTo: { roundNumber: number; matchNumber: number; side: MatchSide } | null;
+  regionLabel?: string | null;
+}
+
+/** A bracket service input on sides: away on side 1, home on side 2, each playing Game 1 where the site says. */
+export function bracketInput({ homeSportEventParticipantId, awaySportEventParticipantId, advancesTo, ...match }: HomeAwayBracketInput): BracketMatchInput {
+  return {
+    ...match,
+    sides: [
+      { sideNumber: AWAY_SIDE, sportEventParticipantId: awaySportEventParticipantId, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.AWAY },
+      { sideNumber: HOME_SIDE, sportEventParticipantId: homeSportEventParticipantId, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.HOME },
+    ],
+    advancesTo: advancesTo === null ? null : { roundNumber: advancesTo.roundNumber, matchNumber: advancesTo.matchNumber, sideNumber: sideNumberOfMatchSide(advancesTo.side) },
+  };
+}
+
+/** A match edit in the home-and-away shape. */
+export interface HomeAwayEditInput extends Omit<BracketMatchEdit, 'sides' | 'spread'> {
+  homeSportEventParticipantId?: string | null;
+  awaySportEventParticipantId?: string | null;
+  /** The spread from the home side; side 1, the away side, holds its opposite. */
+  homeSpread?: number | null;
+}
+
+/** A match edit as the bracket service takes it, by side number. */
+export function editInput({ homeSportEventParticipantId, awaySportEventParticipantId, homeSpread, ...edit }: HomeAwayEditInput): BracketMatchEdit {
+  const sides = [
+    ...(awaySportEventParticipantId === undefined ? [] : [{ sideNumber: AWAY_SIDE, sportEventParticipantId: awaySportEventParticipantId }]),
+    ...(homeSportEventParticipantId === undefined ? [] : [{ sideNumber: HOME_SIDE, sportEventParticipantId: homeSportEventParticipantId }]),
+  ];
+  return {
+    ...edit,
+    ...(sides.length > 0 && { sides }),
+    ...(homeSpread !== undefined && { spread: homeSpread === null ? null : 0 - homeSpread }),
+  };
 }

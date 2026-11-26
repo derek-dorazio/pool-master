@@ -35,6 +35,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
+import { bracketMatch, matchup, periodBody, resultBody, withHomeAwayRead } from '../support/match-requests';
 
 // American football end to end over HTTP (#702): the NFL playoffs test seed loads into the seeded
 // NFL sport league, played out, with its Divisional round placed by the reseed. A commissioner
@@ -93,7 +94,7 @@ describe('SDK Functional: American football', () => {
     playoffs.name = `NFL Playoffs ${RUN}`;
     for (const player of file.sportLeagues[0].players) player.key = expectDefined(tagged(player.key));
     for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
-    for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+    for (const match of playoffs.matches ?? []) match.sides = match.sides.map((side) => ({ ...side, player: tagged(side.player) }));
     // The loader makes the event in the NFL's current Season; another suite may have moved it.
     await inCurrentSeason((await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { name: 'NFL', displayOrder: { not: null } }, select: { id: true } })).id, 2026);
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
@@ -118,8 +119,8 @@ describe('SDK Functional: American football', () => {
     await getFunctionalPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'SCHEDULED' } });
 
     // --- The Super Bowl's quarter scores (#772): Seattle, the away side, 3-0, 9-0 and 12-0 --------
-    const superBowlOf = async () => expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches
-      .find((match) => match.roundNumber === 4 && match.matchNumber === 1));
+    const superBowlOf = async () => withHomeAwayRead(expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches
+      .find((match) => match.roundNumber === 4 && match.matchNumber === 1)));
     const superBowl = await superBowlOf();
     expect([superBowl.awaySportEventParticipantId, superBowl.awayScore, superBowl.homeScore]).toEqual([rowOf('Seattle Seahawks'), 29, 13]);
     const asLoaded = [
@@ -132,13 +133,13 @@ describe('SDK Functional: American football', () => {
     const superBowlPlace = { roundNumber: 4, matchNumber: 1 };
     const superBowlQuarter = (periodNumber: number) => ({ eventId: event.id, ...superBowlPlace, periodNumber });
     // A score below the half's, past the final score, or for the last quarter is refused; a member may not enter one.
-    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: { homeScore: 0, awayScore: 6 } })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
-    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: { homeScore: 14, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
-    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(4), body: { homeScore: 0, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_INVALID');
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: periodBody({ homeScore: 0, awayScore: 6 }) })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: periodBody({ homeScore: 14, awayScore: 12 }) })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(4), body: periodBody({ homeScore: 0, awayScore: 12 }) })).error?.error.code).toBe('MATCH_PERIOD_INVALID');
     const outsider = await buildRegisteredUser({ displayName: 'Scoreboard Stranger' });
-    expect((await recordEventMatchPeriodScore({ client: outsider.client, path: superBowlQuarter(1), body: { homeScore: 0, awayScore: 3 } })).response?.status).toBe(403);
+    expect((await recordEventMatchPeriodScore({ client: outsider.client, path: superBowlQuarter(1), body: periodBody({ homeScore: 0, awayScore: 3 }) })).response?.status).toBe(403);
     // Entered again, the half's score reads as before.
-    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: periodBody({ homeScore: 0, awayScore: 9 }) })).response?.status).toBe(200);
     expect((await superBowlOf()).periodScores).toEqual(asLoaded);
 
     // Results come only from the feed (#2074): the routes that cleared a result or a quarter's score,
@@ -181,12 +182,12 @@ describe('SDK Functional: American football', () => {
     const seahawks = rowOf('Seattle Seahawks');
     const matchPath = { eventId: event.id, ...superBowlPlace };
     const refused = await Promise.all([
-      loadEventBracket({ client: a, path: { eventId: event.id }, body: { matches: [{ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: null }] } }),
+      loadEventBracket({ client: a, path: { eventId: event.id }, body: { matches: [bracketMatch({ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: null })] } }),
       updateEventBracketMatch({ client: a, path: matchPath, body: { isNeutralSite: true } }),
-      recordEventMatchResult({ client: a, path: matchPath, body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29 } }),
-      recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } }),
+      recordEventMatchResult({ client: a, path: matchPath, body: resultBody({ winnerSide: 'AWAY', homeScore: 13, awayScore: 29 }) }),
+      recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: periodBody({ homeScore: 0, awayScore: 9 }) }),
       cancelEventMatch({ client: a, path: matchPath }),
-      setEventRoundMatchups({ client: a, path: { eventId: event.id, roundNumber: 2 }, body: { matches: [{ matchNumber: 1, homeSportEventParticipantId: seahawks, awaySportEventParticipantId: rowOf('Los Angeles Rams') }] } }),
+      setEventRoundMatchups({ client: a, path: { eventId: event.id, roundNumber: 2 }, body: { matches: [matchup({ matchNumber: 1, homeSportEventParticipantId: seahawks, awaySportEventParticipantId: rowOf('Los Angeles Rams') })] } }),
       applyEventGolfRoundScores({ client: a, path: { eventId: event.id, roundNumber: 1 }, body: { rows: [{ participantId: ANY_UUID, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }] } }),
       updateEventParticipantGolfRoundScore({ client: a, path: { eventId: event.id, roundNumber: 1, sportEventParticipantId: seahawks }, body: { strokes: 70 } }),
       applyEventRaceResults({ client: a, path: { eventId: event.id }, body: { isOfficial: true, rows: [{ participantId: ANY_UUID, resultStatus: 'FINISHED', finishPosition: 1, startPosition: null, riderName: null }] } }),
@@ -194,7 +195,7 @@ describe('SDK Functional: American football', () => {
     expect(refused.map((reply) => [reply.response?.status, reply.error?.error.code])).toEqual(refused.map(() => [409, 'SPORT_EVENT_NOT_TEST_DATA']));
     expect(await superBowlOf()).toMatchObject({ isNeutralSite: superBowl.isNeutralSite, status: superBowl.status, periodScores: asLoaded });
     await moveLinks((link) => link.sportLeagueSeasonCompetitionSlotId);
-    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: periodBody({ homeScore: 0, awayScore: 9 }) })).response?.status).toBe(200);
 
     // --- A contest from the NFL's default template ----------------------------------------------
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Playoff Commissioner', leagueName: `Gridiron ${RUN}` });

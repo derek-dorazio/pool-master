@@ -343,8 +343,8 @@ describe('EntryReceipts', () => {
     function drawnBoard(contestId: string, boxes: Array<{ rowIndex: number; columnIndex: number; contestEntryId: string }>): DrawnSquaresBoard {
       return {
         contest: expectDefinedContest(contestId),
-        homeTeamName: 'Chiefs',
-        awayTeamName: 'Eagles',
+        rowTeamName: 'Eagles',
+        columnTeamName: 'Chiefs',
         boxes: boxes.map((box) => ({ ...box, entryName: '' })),
         digits: {
           contestId,
@@ -428,7 +428,7 @@ describe('EntryReceipts', () => {
 
     it('names the row and column sides Away and Home while the game\'s teams are not known', async () => {
       const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.FOOTBALL, startDate: KICKOFF });
-      const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), homeTeamName: null, awayTeamName: null };
+      const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), rowTeamName: null, columnTeamName: null };
 
       await drawn(board);
 

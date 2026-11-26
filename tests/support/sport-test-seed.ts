@@ -15,7 +15,7 @@ import {
   recordEventMatchResult,
   setEventRoundMatchups,
 } from '@poolmaster/shared/generated/hey-api';
-import { describeMatchPlace, isAtPlace, type MatchPlace, matchPlaceOf, MatchSide } from '@poolmaster/shared/domain';
+import { describeMatchPlace, isAtPlace, type MatchPlace, matchPlaceOf } from '@poolmaster/shared/domain';
 import {
   parseSportDataFile,
   type SportDataEvent,
@@ -53,8 +53,7 @@ export function oneEventOf(fileName: string, leagueName: string, eventName: stri
     event.name = `${event.name} ${tag}`;
     for (const entry of event.field) entry.player = tagged(entry.player);
     for (const match of event.matches ?? []) {
-      match.home = match.home === null ? null : tagged(match.home);
-      match.away = match.away === null ? null : tagged(match.away);
+      match.sides = match.sides.map((side) => ({ ...side, player: side.player === null ? null : tagged(side.player) }));
       if (options.withoutResults === true) {
         delete match.result;
         delete match.periodScores;
@@ -107,24 +106,17 @@ export async function placeSeedRound(client: Client, eventId: string, played: Sp
 export async function enterSeedRound(client: Client, eventId: string, played: SportDataEvent, roundNumber: number): Promise<void> {
   for (const match of (played.matches ?? []).filter((candidate) => candidate.roundNumber === roundNumber)) {
     const result = expectDefined(match.result, `${describeMatchPlace(match)}'s result`);
-    for (const { periodNumber, ...score } of match.periodScores ?? []) {
-      await recordEventMatchPeriodScore({ client, path: { eventId, ...matchPlaceOf(match), periodNumber }, body: score });
+    for (const { periodNumber, sides } of match.periodScores ?? []) {
+      await recordEventMatchPeriodScore({ client, path: { eventId, ...matchPlaceOf(match), periodNumber }, body: { sides } });
     }
     await recordEventMatchResult({
       client,
       path: { eventId, ...matchPlaceOf(match) },
-      body: {
-        winnerSide: result.winner,
-        homeScore: result.homeScore,
-        awayScore: result.awayScore,
-        homeShootoutScore: result.homeShootoutScore ?? null,
-        awayShootoutScore: result.awayShootoutScore ?? null,
-      },
+      body: { winnerSideNumber: result.winnerSideNumber, sides: result.sides.map((side) => ({ ...side, shootoutScore: side.shootoutScore ?? null })) },
     });
   }
 }
 
-function waitsOnReseed(match: SportDataMatch, linked: ReadonlyArray<MatchPlace & { side: MatchSide }>): boolean {
-  const fed = (side: MatchSide) => linked.some((link) => link.side === side && isAtPlace(link, match));
-  return (match.home === null && !fed(MatchSide.HOME)) || (match.away === null && !fed(MatchSide.AWAY));
+function waitsOnReseed(match: SportDataMatch, linked: ReadonlyArray<MatchPlace & { sideNumber: number }>): boolean {
+  return match.sides.some((side) => side.player === null && !linked.some((link) => link.sideNumber === side.sideNumber && isAtPlace(link, match)));
 }

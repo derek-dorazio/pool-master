@@ -17480,14 +17480,6 @@
         ],
         "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
       },
-      "MatchSideDto": {
-        "type": "string",
-        "enum": [
-          "HOME",
-          "AWAY"
-        ],
-        "description": "One side of a match: HOME is side 2 and AWAY side 1, the sides the sync placed the home and away teams on. On a neutral site HOME is the upper line of the bracket."
-      },
       "MatchEndingDto": {
         "type": "string",
         "enum": [
@@ -17498,35 +17490,408 @@
         ],
         "description": "How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way."
       },
-      "SportEventMatchPeriodScoreDto": {
+      "MatchSideOutcomeDto": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "WON",
+          "LOST",
+          "TIED"
+        ],
+        "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+      },
+      "HomeAwayDto": {
+        "type": "string",
+        "enum": [
+          "HOME",
+          "AWAY",
+          "NONE"
+        ],
+        "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+      },
+      "SportEventRoundMatchSideDto": {
         "type": "object",
         "properties": {
+          "sideNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2,
+            "description": "The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway."
+          },
+          "sportEventParticipantId": {
+            "description": "The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "WON",
+              "LOST",
+              "TIED"
+            ],
+            "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+          },
+          "score": {
+            "description": "The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "spread": {
+            "description": "The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "sideNumber",
+          "sportEventParticipantId",
+          "outcome",
+          "score",
+          "spread"
+        ],
+        "additionalProperties": false,
+        "description": "One side of a match (#2046)."
+      },
+      "GamePeriodScoreDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REGULAR",
+              "OVERTIME",
+              "SHOOTOUT"
+            ],
+            "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+          },
           "periodNumber": {
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991,
-            "description": "1 for the first period (quarter, in American football)."
+            "description": "1 for the first period of its kind."
           },
-          "homeScore": {
+          "score": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991,
-            "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
-          },
-          "awayScore": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "The away side's score at the end of the period, earlier periods included."
+            "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
           }
         },
         "required": [
+          "kind",
           "periodNumber",
-          "homeScore",
-          "awayScore"
+          "score"
         ],
         "additionalProperties": false,
-        "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
+        "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+      },
+      "GameSideResultDto": {
+        "type": "object",
+        "properties": {
+          "sideNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2,
+            "description": "The match side the result is for."
+          },
+          "score": {
+            "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "homeAway": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "AWAY",
+              "NONE"
+            ],
+            "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+          },
+          "shootoutScore": {
+            "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "periodScores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "REGULAR",
+                    "OVERTIME",
+                    "SHOOTOUT"
+                  ],
+                  "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                },
+                "periodNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "1 for the first period of its kind."
+                },
+                "score": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                }
+              },
+              "required": [
+                "kind",
+                "periodNumber",
+                "score"
+              ],
+              "additionalProperties": false,
+              "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+            },
+            "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+          }
+        },
+        "required": [
+          "sideNumber",
+          "score",
+          "homeAway",
+          "shootoutScore",
+          "periodScores"
+        ],
+        "additionalProperties": false,
+        "description": "One side's result in one game of a match (#2046)."
+      },
+      "SportEventRoundMatchGameDto": {
+        "type": "object",
+        "properties": {
+          "gameNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "1 for a single game; a best-of series numbers its games in the order they are played."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "POSTPONED"
+            ],
+            "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+          },
+          "isFinal": {
+            "type": "boolean",
+            "description": "True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status."
+          },
+          "scheduledDate": {
+            "description": "The game's start; null until it is announced.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "sideResults": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sideNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2,
+                  "description": "The match side the result is for."
+                },
+                "score": {
+                  "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "homeAway": {
+                  "type": "string",
+                  "enum": [
+                    "HOME",
+                    "AWAY",
+                    "NONE"
+                  ],
+                  "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+                },
+                "shootoutScore": {
+                  "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "periodScores": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "REGULAR",
+                          "OVERTIME",
+                          "SHOOTOUT"
+                        ],
+                        "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                      },
+                      "periodNumber": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "1 for the first period of its kind."
+                      },
+                      "score": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "periodNumber",
+                      "score"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+                  },
+                  "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+                }
+              },
+              "required": [
+                "sideNumber",
+                "score",
+                "homeAway",
+                "shootoutScore",
+                "periodScores"
+              ],
+              "additionalProperties": false,
+              "description": "One side's result in one game of a match (#2046)."
+            },
+            "description": "Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in."
+          }
+        },
+        "required": [
+          "gameNumber",
+          "status",
+          "isFinal",
+          "scheduledDate",
+          "sideResults"
+        ],
+        "additionalProperties": false,
+        "description": "One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played."
+      },
+      "MatchAdvancementDto": {
+        "type": "object",
+        "properties": {
+          "matchId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The match the winner moves on to."
+          },
+          "sideNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2,
+            "description": "The side of that match the winner fills."
+          }
+        },
+        "required": [
+          "matchId",
+          "sideNumber"
+        ],
+        "additionalProperties": false,
+        "description": "Where a match's winner moves on to."
+      },
+      "MatchSideTeamDto": {
+        "type": "object",
+        "properties": {
+          "sideNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2,
+            "description": "The side: 1 or 2."
+          },
+          "sportEventParticipantId": {
+            "description": "A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "sideNumber",
+          "sportEventParticipantId"
+        ],
+        "additionalProperties": false,
+        "description": "The team on one side of a match."
+      },
+      "MatchSideResultRequest": {
+        "type": "object",
+        "properties": {
+          "sideNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2,
+            "description": "The side: 1 or 2."
+          },
+          "score": {
+            "description": "The side's score (games won, for a series), or null with the other side's null too.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "shootoutScore": {
+            "description": "The side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the other side's for none.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "sideNumber",
+          "score"
+        ],
+        "additionalProperties": false,
+        "description": "One side's result in a match."
       },
       "SlotPeriodsDto": {
         "type": "object",
@@ -17743,25 +18108,9 @@
             "maximum": 9007199254740991,
             "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
           },
-          "homeSportEventParticipantId": {
-            "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "awaySportEventParticipantId": {
-            "description": "The field row on the away side; null until it is decided.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
           "isNeutralSite": {
             "type": "boolean",
-            "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+            "description": "True when neither side is at home: screens then say \"vs\" rather than \"at\"."
           },
           "scheduledDate": {
             "description": "Tip-off or kickoff; null until it is announced.",
@@ -17790,54 +18139,6 @@
             "type": "boolean",
             "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
           },
-          "winnerSide": {
-            "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "HOME",
-              "AWAY",
-              null
-            ]
-          },
-          "homeScore": {
-            "description": "The home side's score; in a series, games won.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "awayScore": {
-            "description": "The away side's score; in a series, games won.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "homeShootoutScore": {
-            "description": "The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "awayShootoutScore": {
-            "description": "The away side's kicks scored in the shoot-out; null with the home side's.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
           "ending": {
             "type": "string",
             "enum": [
@@ -17848,17 +18149,6 @@
             ],
             "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
           },
-          "resultSource": {
-            "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "PROVIDER",
-              null
-            ]
-          },
           "completedAt": {
             "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
             "type": [
@@ -17867,25 +18157,30 @@
             ],
             "format": "date-time"
           },
-          "advancesToMatchId": {
-            "description": "The match the winner moves on to; null for the final.",
+          "advancesTo": {
+            "description": "Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.",
             "type": [
-              "string",
+              "object",
               "null"
             ],
-            "format": "uuid"
-          },
-          "advancesToSide": {
-            "description": "The side of that match the winner fills; null for the final.",
-            "type": [
-              "string",
-              "null"
+            "properties": {
+              "matchId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The match the winner moves on to."
+              },
+              "sideNumber": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2,
+                "description": "The side of that match the winner fills."
+              }
+            },
+            "required": [
+              "matchId",
+              "sideNumber"
             ],
-            "enum": [
-              "HOME",
-              "AWAY",
-              null
-            ]
+            "additionalProperties": false
           },
           "regionLabel": {
             "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region.",
@@ -17894,46 +18189,198 @@
               "null"
             ]
           },
-          "homeSpread": {
-            "description": "The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.",
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "periodScores": {
+          "sides": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "periodNumber": {
+                "sideNumber": {
                   "type": "integer",
                   "minimum": 1,
-                  "maximum": 9007199254740991,
-                  "description": "1 for the first period (quarter, in American football)."
+                  "maximum": 2,
+                  "description": "The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway."
                 },
-                "homeScore": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991,
-                  "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                "sportEventParticipantId": {
+                  "description": "The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
                 },
-                "awayScore": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991,
-                  "description": "The away side's score at the end of the period, earlier periods included."
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "PENDING",
+                    "WON",
+                    "LOST",
+                    "TIED"
+                  ],
+                  "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+                },
+                "score": {
+                  "description": "The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "spread": {
+                  "description": "The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
                 }
               },
               "required": [
-                "periodNumber",
-                "homeScore",
-                "awayScore"
+                "sideNumber",
+                "sportEventParticipantId",
+                "outcome",
+                "score",
+                "spread"
               ],
               "additionalProperties": false,
-              "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
+              "description": "One side of a match (#2046)."
             },
-            "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+            "description": "Side 1 then side 2. The winner is the side whose outcome is WON."
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "gameNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "1 for a single game; a best-of series numbers its games in the order they are played."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED",
+                    "POSTPONED"
+                  ],
+                  "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                },
+                "isFinal": {
+                  "type": "boolean",
+                  "description": "True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status."
+                },
+                "scheduledDate": {
+                  "description": "The game's start; null until it is announced.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "sideResults": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sideNumber": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2,
+                        "description": "The match side the result is for."
+                      },
+                      "score": {
+                        "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "homeAway": {
+                        "type": "string",
+                        "enum": [
+                          "HOME",
+                          "AWAY",
+                          "NONE"
+                        ],
+                        "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+                      },
+                      "shootoutScore": {
+                        "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "periodScores": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "REGULAR",
+                                "OVERTIME",
+                                "SHOOTOUT"
+                              ],
+                              "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                            },
+                            "periodNumber": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "1 for the first period of its kind."
+                            },
+                            "score": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "periodNumber",
+                            "score"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+                        },
+                        "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+                      }
+                    },
+                    "required": [
+                      "sideNumber",
+                      "score",
+                      "homeAway",
+                      "shootoutScore",
+                      "periodScores"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One side's result in one game of a match (#2046)."
+                  },
+                  "description": "Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in."
+                }
+              },
+              "required": [
+                "gameNumber",
+                "status",
+                "isFinal",
+                "scheduledDate",
+                "sideResults"
+              ],
+              "additionalProperties": false,
+              "description": "One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played."
+            },
+            "description": "The match's games in game-number order: a single game has its game 1 from the moment the match is loaded."
           }
         },
         "required": [
@@ -17942,26 +18389,17 @@
           "roundNumber",
           "slot",
           "matchNumber",
-          "homeSportEventParticipantId",
-          "awaySportEventParticipantId",
           "isNeutralSite",
           "scheduledDate",
           "status",
           "isFinal",
           "isUnplayed",
-          "winnerSide",
-          "homeScore",
-          "awayScore",
-          "homeShootoutScore",
-          "awayShootoutScore",
           "ending",
-          "resultSource",
           "completedAt",
-          "advancesToMatchId",
-          "advancesToSide",
+          "advancesTo",
           "regionLabel",
-          "homeSpread",
-          "periodScores"
+          "sides",
+          "games"
         ],
         "additionalProperties": false,
         "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
@@ -18076,25 +18514,9 @@
                   "maximum": 9007199254740991,
                   "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
                 },
-                "homeSportEventParticipantId": {
-                  "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid"
-                },
-                "awaySportEventParticipantId": {
-                  "description": "The field row on the away side; null until it is decided.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid"
-                },
                 "isNeutralSite": {
                   "type": "boolean",
-                  "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+                  "description": "True when neither side is at home: screens then say \"vs\" rather than \"at\"."
                 },
                 "scheduledDate": {
                   "description": "Tip-off or kickoff; null until it is announced.",
@@ -18123,54 +18545,6 @@
                   "type": "boolean",
                   "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
                 },
-                "winnerSide": {
-                  "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "HOME",
-                    "AWAY",
-                    null
-                  ]
-                },
-                "homeScore": {
-                  "description": "The home side's score; in a series, games won.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "awayScore": {
-                  "description": "The away side's score; in a series, games won.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "homeShootoutScore": {
-                  "description": "The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "awayShootoutScore": {
-                  "description": "The away side's kicks scored in the shoot-out; null with the home side's.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
                 "ending": {
                   "type": "string",
                   "enum": [
@@ -18181,17 +18555,6 @@
                   ],
                   "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
                 },
-                "resultSource": {
-                  "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "PROVIDER",
-                    null
-                  ]
-                },
                 "completedAt": {
                   "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
                   "type": [
@@ -18200,25 +18563,30 @@
                   ],
                   "format": "date-time"
                 },
-                "advancesToMatchId": {
-                  "description": "The match the winner moves on to; null for the final.",
+                "advancesTo": {
+                  "description": "Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.",
                   "type": [
-                    "string",
+                    "object",
                     "null"
                   ],
-                  "format": "uuid"
-                },
-                "advancesToSide": {
-                  "description": "The side of that match the winner fills; null for the final.",
-                  "type": [
-                    "string",
-                    "null"
+                  "properties": {
+                    "matchId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The match the winner moves on to."
+                    },
+                    "sideNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 2,
+                      "description": "The side of that match the winner fills."
+                    }
+                  },
+                  "required": [
+                    "matchId",
+                    "sideNumber"
                   ],
-                  "enum": [
-                    "HOME",
-                    "AWAY",
-                    null
-                  ]
+                  "additionalProperties": false
                 },
                 "regionLabel": {
                   "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region.",
@@ -18227,46 +18595,198 @@
                     "null"
                   ]
                 },
-                "homeSpread": {
-                  "description": "The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.",
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "periodScores": {
+                "sides": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "periodNumber": {
+                      "sideNumber": {
                         "type": "integer",
                         "minimum": 1,
-                        "maximum": 9007199254740991,
-                        "description": "1 for the first period (quarter, in American football)."
+                        "maximum": 2,
+                        "description": "The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway."
                       },
-                      "homeScore": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991,
-                        "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                      "sportEventParticipantId": {
+                        "description": "The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uuid"
                       },
-                      "awayScore": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991,
-                        "description": "The away side's score at the end of the period, earlier periods included."
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "PENDING",
+                          "WON",
+                          "LOST",
+                          "TIED"
+                        ],
+                        "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+                      },
+                      "score": {
+                        "description": "The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "spread": {
+                        "description": "The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
                       }
                     },
                     "required": [
-                      "periodNumber",
-                      "homeScore",
-                      "awayScore"
+                      "sideNumber",
+                      "sportEventParticipantId",
+                      "outcome",
+                      "score",
+                      "spread"
                     ],
                     "additionalProperties": false,
-                    "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
+                    "description": "One side of a match (#2046)."
                   },
-                  "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+                  "description": "Side 1 then side 2. The winner is the side whose outcome is WON."
+                },
+                "games": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "gameNumber": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "1 for a single game; a best-of series numbers its games in the order they are played."
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "SCHEDULED",
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "CANCELLED",
+                          "POSTPONED"
+                        ],
+                        "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                      },
+                      "isFinal": {
+                        "type": "boolean",
+                        "description": "True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status."
+                      },
+                      "scheduledDate": {
+                        "description": "The game's start; null until it is announced.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "sideResults": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "sideNumber": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 2,
+                              "description": "The match side the result is for."
+                            },
+                            "score": {
+                              "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "homeAway": {
+                              "type": "string",
+                              "enum": [
+                                "HOME",
+                                "AWAY",
+                                "NONE"
+                              ],
+                              "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+                            },
+                            "shootoutScore": {
+                              "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "periodScores": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "REGULAR",
+                                      "OVERTIME",
+                                      "SHOOTOUT"
+                                    ],
+                                    "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                                  },
+                                  "periodNumber": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991,
+                                    "description": "1 for the first period of its kind."
+                                  },
+                                  "score": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991,
+                                    "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "periodNumber",
+                                  "score"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+                              },
+                              "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+                            }
+                          },
+                          "required": [
+                            "sideNumber",
+                            "score",
+                            "homeAway",
+                            "shootoutScore",
+                            "periodScores"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One side's result in one game of a match (#2046)."
+                        },
+                        "description": "Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in."
+                      }
+                    },
+                    "required": [
+                      "gameNumber",
+                      "status",
+                      "isFinal",
+                      "scheduledDate",
+                      "sideResults"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played."
+                  },
+                  "description": "The match's games in game-number order: a single game has its game 1 from the moment the match is loaded."
                 }
               },
               "required": [
@@ -18275,26 +18795,17 @@
                 "roundNumber",
                 "slot",
                 "matchNumber",
-                "homeSportEventParticipantId",
-                "awaySportEventParticipantId",
                 "isNeutralSite",
                 "scheduledDate",
                 "status",
                 "isFinal",
                 "isUnplayed",
-                "winnerSide",
-                "homeScore",
-                "awayScore",
-                "homeShootoutScore",
-                "awayShootoutScore",
                 "ending",
-                "resultSource",
                 "completedAt",
-                "advancesToMatchId",
-                "advancesToSide",
+                "advancesTo",
                 "regionLabel",
-                "homeSpread",
-                "periodScores"
+                "sides",
+                "games"
               ],
               "additionalProperties": false,
               "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
@@ -18416,25 +18927,9 @@
                 "maximum": 9007199254740991,
                 "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
               },
-              "homeSportEventParticipantId": {
-                "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "uuid"
-              },
-              "awaySportEventParticipantId": {
-                "description": "The field row on the away side; null until it is decided.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "uuid"
-              },
               "isNeutralSite": {
                 "type": "boolean",
-                "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+                "description": "True when neither side is at home: screens then say \"vs\" rather than \"at\"."
               },
               "scheduledDate": {
                 "description": "Tip-off or kickoff; null until it is announced.",
@@ -18463,54 +18958,6 @@
                 "type": "boolean",
                 "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
               },
-              "winnerSide": {
-                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "HOME",
-                  "AWAY",
-                  null
-                ]
-              },
-              "homeScore": {
-                "description": "The home side's score; in a series, games won.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "awayScore": {
-                "description": "The away side's score; in a series, games won.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "homeShootoutScore": {
-                "description": "The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "awayShootoutScore": {
-                "description": "The away side's kicks scored in the shoot-out; null with the home side's.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
               "ending": {
                 "type": "string",
                 "enum": [
@@ -18521,17 +18968,6 @@
                 ],
                 "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
               },
-              "resultSource": {
-                "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "PROVIDER",
-                  null
-                ]
-              },
               "completedAt": {
                 "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
                 "type": [
@@ -18540,25 +18976,30 @@
                 ],
                 "format": "date-time"
               },
-              "advancesToMatchId": {
-                "description": "The match the winner moves on to; null for the final.",
+              "advancesTo": {
+                "description": "Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.",
                 "type": [
-                  "string",
+                  "object",
                   "null"
                 ],
-                "format": "uuid"
-              },
-              "advancesToSide": {
-                "description": "The side of that match the winner fills; null for the final.",
-                "type": [
-                  "string",
-                  "null"
+                "properties": {
+                  "matchId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The match the winner moves on to."
+                  },
+                  "sideNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2,
+                    "description": "The side of that match the winner fills."
+                  }
+                },
+                "required": [
+                  "matchId",
+                  "sideNumber"
                 ],
-                "enum": [
-                  "HOME",
-                  "AWAY",
-                  null
-                ]
+                "additionalProperties": false
               },
               "regionLabel": {
                 "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region.",
@@ -18567,46 +19008,198 @@
                   "null"
                 ]
               },
-              "homeSpread": {
-                "description": "The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.",
-                "type": [
-                  "number",
-                  "null"
-                ]
-              },
-              "periodScores": {
+              "sides": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
-                    "periodNumber": {
+                    "sideNumber": {
                       "type": "integer",
                       "minimum": 1,
-                      "maximum": 9007199254740991,
-                      "description": "1 for the first period (quarter, in American football)."
+                      "maximum": 2,
+                      "description": "The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway."
                     },
-                    "homeScore": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                    "sportEventParticipantId": {
+                      "description": "The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
                     },
-                    "awayScore": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "The away side's score at the end of the period, earlier periods included."
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "WON",
+                        "LOST",
+                        "TIED"
+                      ],
+                      "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+                    },
+                    "score": {
+                      "description": "The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "spread": {
+                      "description": "The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "periodNumber",
-                    "homeScore",
-                    "awayScore"
+                    "sideNumber",
+                    "sportEventParticipantId",
+                    "outcome",
+                    "score",
+                    "spread"
                   ],
                   "additionalProperties": false,
-                  "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
+                  "description": "One side of a match (#2046)."
                 },
-                "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+                "description": "Side 1 then side 2. The winner is the side whose outcome is WON."
+              },
+              "games": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "gameNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "1 for a single game; a best-of series numbers its games in the order they are played."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "CANCELLED",
+                        "POSTPONED"
+                      ],
+                      "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                    },
+                    "isFinal": {
+                      "type": "boolean",
+                      "description": "True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status."
+                    },
+                    "scheduledDate": {
+                      "description": "The game's start; null until it is announced.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "sideResults": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sideNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2,
+                            "description": "The match side the result is for."
+                          },
+                          "score": {
+                            "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "homeAway": {
+                            "type": "string",
+                            "enum": [
+                              "HOME",
+                              "AWAY",
+                              "NONE"
+                            ],
+                            "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+                          },
+                          "shootoutScore": {
+                            "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "periodScores": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "REGULAR",
+                                    "OVERTIME",
+                                    "SHOOTOUT"
+                                  ],
+                                  "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                                },
+                                "periodNumber": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                  "description": "1 for the first period of its kind."
+                                },
+                                "score": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "periodNumber",
+                                "score"
+                              ],
+                              "additionalProperties": false,
+                              "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+                            },
+                            "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+                          }
+                        },
+                        "required": [
+                          "sideNumber",
+                          "score",
+                          "homeAway",
+                          "shootoutScore",
+                          "periodScores"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One side's result in one game of a match (#2046)."
+                      },
+                      "description": "Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in."
+                    }
+                  },
+                  "required": [
+                    "gameNumber",
+                    "status",
+                    "isFinal",
+                    "scheduledDate",
+                    "sideResults"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played."
+                },
+                "description": "The match's games in game-number order: a single game has its game 1 from the moment the match is loaded."
               }
             },
             "required": [
@@ -18615,26 +19208,17 @@
               "roundNumber",
               "slot",
               "matchNumber",
-              "homeSportEventParticipantId",
-              "awaySportEventParticipantId",
               "isNeutralSite",
               "scheduledDate",
               "status",
               "isFinal",
               "isUnplayed",
-              "winnerSide",
-              "homeScore",
-              "awayScore",
-              "homeShootoutScore",
-              "awayShootoutScore",
               "ending",
-              "resultSource",
               "completedAt",
-              "advancesToMatchId",
-              "advancesToSide",
+              "advancesTo",
               "regionLabel",
-              "homeSpread",
-              "periodScores"
+              "sides",
+              "games"
             ],
             "additionalProperties": false,
             "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
@@ -18668,21 +19252,43 @@
                   "maximum": 9007199254740991,
                   "description": "Unique within its round (#2161): the match's place in the round and its display order."
                 },
-                "homeSportEventParticipantId": {
-                  "description": "A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid"
-                },
-                "awaySportEventParticipantId": {
-                  "description": "A field row of the event, or null as for the home side.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid"
+                "sides": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sideNumber": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2,
+                        "description": "The side: 1 or 2."
+                      },
+                      "sportEventParticipantId": {
+                        "description": "A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uuid"
+                      },
+                      "homeAway": {
+                        "type": "string",
+                        "enum": [
+                          "HOME",
+                          "AWAY",
+                          "NONE"
+                        ],
+                        "description": "Where the side plays game 1: NONE for both sides at a neutral site, else one HOME and one AWAY."
+                      }
+                    },
+                    "required": [
+                      "sideNumber",
+                      "sportEventParticipantId",
+                      "homeAway"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "description": "Side 1 and side 2, once each. A synced game has its away team on side 1 and its home team on side 2."
                 },
                 "isNeutralSite": {
                   "type": "boolean"
@@ -18713,19 +19319,17 @@
                       "maximum": 9007199254740991,
                       "description": "A match of that round."
                     },
-                    "side": {
-                      "type": "string",
-                      "enum": [
-                        "HOME",
-                        "AWAY"
-                      ],
+                    "sideNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 2,
                       "description": "The side of that match the winner fills, which must not name a team."
                     }
                   },
                   "required": [
                     "roundNumber",
                     "matchNumber",
-                    "side"
+                    "sideNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -18742,8 +19346,7 @@
               "required": [
                 "roundNumber",
                 "matchNumber",
-                "homeSportEventParticipantId",
-                "awaySportEventParticipantId",
+                "sides",
                 "isNeutralSite",
                 "scheduledDate",
                 "advancesTo"
@@ -18762,21 +19365,34 @@
       "UpdateSportEventRoundMatchRequest": {
         "type": "object",
         "properties": {
-          "homeSportEventParticipantId": {
-            "description": "Omitted keeps it; null empties the side. Only until the event is released.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "awaySportEventParticipantId": {
-            "description": "Omitted keeps it; null empties the side. Only until the event is released.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
+          "sides": {
+            "description": "Both sides' teams; omitted keeps them, and a null team empties its side. Only until the event is released.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sideNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2,
+                  "description": "The side: 1 or 2."
+                },
+                "sportEventParticipantId": {
+                  "description": "A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                }
+              },
+              "required": [
+                "sideNumber",
+                "sportEventParticipantId"
+              ],
+              "additionalProperties": false,
+              "description": "The team on one side of a match."
+            }
           },
           "isNeutralSite": {
             "type": "boolean"
@@ -18789,8 +19405,8 @@
             ],
             "format": "date-time"
           },
-          "homeSpread": {
-            "description": "The points spread from the home team's side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.",
+          "spread": {
+            "description": "The points spread on side 1, in half points (-3.5: side 1 favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.",
             "type": [
               "number",
               "null"
@@ -18806,53 +19422,53 @@
       "RecordSportEventRoundMatchResultRequest": {
         "type": "object",
         "properties": {
-          "winnerSide": {
+          "winnerSideNumber": {
             "description": "The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.",
             "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "HOME",
-              "AWAY",
-              null
-            ]
-          },
-          "homeScore": {
-            "description": "The home side's score (games won, for a series), or null with the away score null too.",
-            "type": [
               "integer",
               "null"
             ],
-            "minimum": 0,
-            "maximum": 9007199254740991
+            "minimum": 1,
+            "maximum": 2
           },
-          "awayScore": {
-            "description": "The away side's score, or null with the home score null too.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "homeShootoutScore": {
-            "description": "The home side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side's for none.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "awayShootoutScore": {
-            "description": "The away side's kicks scored in a shoot-out; omitted or null with the home side's.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0,
-            "maximum": 9007199254740991
+          "sides": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sideNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2,
+                  "description": "The side: 1 or 2."
+                },
+                "score": {
+                  "description": "The side's score (games won, for a series), or null with the other side's null too.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "shootoutScore": {
+                  "description": "The side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the other side's for none.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "sideNumber",
+                "score"
+              ],
+              "additionalProperties": false,
+              "description": "One side's result in a match."
+            },
+            "description": "Side 1 and side 2, once each: both scores or neither."
           },
           "ending": {
             "description": "How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner's may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.",
@@ -18866,9 +19482,8 @@
           }
         },
         "required": [
-          "winnerSide",
-          "homeScore",
-          "awayScore"
+          "winnerSideNumber",
+          "sides"
         ],
         "additionalProperties": false,
         "description": "A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores."
@@ -18876,22 +19491,35 @@
       "RecordSportEventMatchPeriodScoreRequest": {
         "type": "object",
         "properties": {
-          "homeScore": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "The home side's score at the end of the period, earlier periods included."
-          },
-          "awayScore": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "The away side's score at the end of the period, earlier periods included."
+          "sides": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sideNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2,
+                  "description": "The side: 1 or 2."
+                },
+                "score": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "The side's score at the end of the period, earlier periods included."
+                }
+              },
+              "required": [
+                "sideNumber",
+                "score"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Side 1 and side 2, once each."
           }
         },
         "required": [
-          "homeScore",
-          "awayScore"
+          "sides"
         ],
         "additionalProperties": false,
         "description": "Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score."
@@ -18905,21 +19533,35 @@
             "maximum": 9007199254740991,
             "description": "A match of the round, numbered within it."
           },
-          "homeSportEventParticipantId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The field row on the home side."
-          },
-          "awaySportEventParticipantId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The field row on the away side."
+          "sides": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sideNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2,
+                  "description": "The side: 1 or 2. The better seed hosts, on side 2."
+                },
+                "sportEventParticipantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The field row on the side."
+                }
+              },
+              "required": [
+                "sideNumber",
+                "sportEventParticipantId"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Side 1 and side 2, once each."
           }
         },
         "required": [
           "matchNumber",
-          "homeSportEventParticipantId",
-          "awaySportEventParticipantId"
+          "sides"
         ],
         "additionalProperties": false,
         "description": "Both sides of one match of a reseeded round."
@@ -18938,21 +19580,35 @@
                   "maximum": 9007199254740991,
                   "description": "A match of the round, numbered within it."
                 },
-                "homeSportEventParticipantId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The field row on the home side."
-                },
-                "awaySportEventParticipantId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The field row on the away side."
+                "sides": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sideNumber": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2,
+                        "description": "The side: 1 or 2. The better seed hosts, on side 2."
+                      },
+                      "sportEventParticipantId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The field row on the side."
+                      }
+                    },
+                    "required": [
+                      "sideNumber",
+                      "sportEventParticipantId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "description": "Side 1 and side 2, once each."
                 }
               },
               "required": [
                 "matchNumber",
-                "homeSportEventParticipantId",
-                "awaySportEventParticipantId"
+                "sides"
               ],
               "additionalProperties": false,
               "description": "Both sides of one match of a reseeded round."
@@ -18982,21 +19638,35 @@
                   "maximum": 9007199254740991,
                   "description": "A match of the round, numbered within it."
                 },
-                "homeSportEventParticipantId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The field row on the home side."
-                },
-                "awaySportEventParticipantId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The field row on the away side."
+                "sides": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sideNumber": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2,
+                        "description": "The side: 1 or 2. The better seed hosts, on side 2."
+                      },
+                      "sportEventParticipantId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The field row on the side."
+                      }
+                    },
+                    "required": [
+                      "sideNumber",
+                      "sportEventParticipantId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "description": "Side 1 and side 2, once each."
                 }
               },
               "required": [
                 "matchNumber",
-                "homeSportEventParticipantId",
-                "awaySportEventParticipantId"
+                "sides"
               ],
               "additionalProperties": false,
               "description": "Both sides of one match of a reseeded round."
@@ -28452,10 +29122,6 @@
             ],
             "description": "How the event is scored. Read through the sport league."
           },
-          "shootout": {
-            "type": "boolean",
-            "description": "Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one."
-          },
           "isTestData": {
             "type": "boolean",
             "description": "Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
@@ -29009,7 +29675,6 @@
           "sportLeagueId",
           "participantType",
           "scoringFamily",
-          "shootout",
           "isTestData",
           "slots",
           "autoLifecycleEnabled",
@@ -29523,10 +30188,6 @@
                     "HEAD_TO_HEAD"
                   ],
                   "description": "How the event is scored. Read through the sport league."
-                },
-                "shootout": {
-                  "type": "boolean",
-                  "description": "Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one."
                 },
                 "isTestData": {
                   "type": "boolean",
@@ -30081,7 +30742,6 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
-                "shootout",
                 "isTestData",
                 "slots",
                 "autoLifecycleEnabled",
@@ -30549,10 +31209,6 @@
                   "HEAD_TO_HEAD"
                 ],
                 "description": "How the event is scored. Read through the sport league."
-              },
-              "shootout": {
-                "type": "boolean",
-                "description": "Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one."
               },
               "isTestData": {
                 "type": "boolean",
@@ -31107,7 +31763,6 @@
               "sportLeagueId",
               "participantType",
               "scoringFamily",
-              "shootout",
               "isTestData",
               "slots",
               "autoLifecycleEnabled",
@@ -53379,13 +54034,13 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9,
-            "description": "The row position, 0 at the top. Rows are the away team's."
+            "description": "The row position, 0 at the top. Rows are side 1's."
           },
           "columnIndex": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9,
-            "description": "The column position, 0 at the left. Columns are the home team's."
+            "description": "The column position, 0 at the left. Columns are side 2's."
           },
           "contestEntryId": {
             "type": "string",
@@ -53418,7 +54073,7 @@
               "minimum": 0,
               "maximum": 9
             },
-            "description": "The away team's last digit at each row position, top first."
+            "description": "Side 1's last digit at each row position, top first."
           },
           "columnDigits": {
             "minItems": 10,
@@ -53429,7 +54084,7 @@
               "minimum": 0,
               "maximum": 9
             },
-            "description": "The home team's last digit at each column position, left first."
+            "description": "Side 2's last digit at each column position, left first."
           },
           "drawnAt": {
             "type": "string",
@@ -53454,27 +54109,29 @@
             "maximum": 9007199254740991,
             "description": "The scoring moment: 1 to the game's period count, the last being the final score, overtime included."
           },
-          "homeScore": {
+          "rowScore": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "description": "Side 1's score at that moment, whose last digit picks the row."
           },
-          "awayScore": {
+          "columnScore": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "description": "Side 2's score at that moment, whose last digit picks the column."
           },
           "rowIndex": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9,
-            "description": "The winning box's row: where the away score's last digit is."
+            "description": "The winning box's row: where side 1's last digit is."
           },
           "columnIndex": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9,
-            "description": "The winning box's column: where the home score's last digit is."
+            "description": "The winning box's column: where side 2's last digit is."
           },
           "contestEntryId": {
             "description": "The entry holding the winning box; null when nobody claimed it (\"No winner\").",
@@ -53494,8 +54151,8 @@
         },
         "required": [
           "periodNumber",
-          "homeScore",
-          "awayScore",
+          "rowScore",
+          "columnScore",
           "rowIndex",
           "columnIndex",
           "contestEntryId",
@@ -53705,25 +54362,9 @@
                 "maximum": 9007199254740991,
                 "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
               },
-              "homeSportEventParticipantId": {
-                "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "uuid"
-              },
-              "awaySportEventParticipantId": {
-                "description": "The field row on the away side; null until it is decided.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "uuid"
-              },
               "isNeutralSite": {
                 "type": "boolean",
-                "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+                "description": "True when neither side is at home: screens then say \"vs\" rather than \"at\"."
               },
               "scheduledDate": {
                 "description": "Tip-off or kickoff; null until it is announced.",
@@ -53752,54 +54393,6 @@
                 "type": "boolean",
                 "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
               },
-              "winnerSide": {
-                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "HOME",
-                  "AWAY",
-                  null
-                ]
-              },
-              "homeScore": {
-                "description": "The home side's score; in a series, games won.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "awayScore": {
-                "description": "The away side's score; in a series, games won.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "homeShootoutScore": {
-                "description": "The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "awayShootoutScore": {
-                "description": "The away side's kicks scored in the shoot-out; null with the home side's.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
               "ending": {
                 "type": "string",
                 "enum": [
@@ -53810,17 +54403,6 @@
                 ],
                 "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
               },
-              "resultSource": {
-                "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "PROVIDER",
-                  null
-                ]
-              },
               "completedAt": {
                 "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
                 "type": [
@@ -53829,25 +54411,30 @@
                 ],
                 "format": "date-time"
               },
-              "advancesToMatchId": {
-                "description": "The match the winner moves on to; null for the final.",
+              "advancesTo": {
+                "description": "Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.",
                 "type": [
-                  "string",
+                  "object",
                   "null"
                 ],
-                "format": "uuid"
-              },
-              "advancesToSide": {
-                "description": "The side of that match the winner fills; null for the final.",
-                "type": [
-                  "string",
-                  "null"
+                "properties": {
+                  "matchId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The match the winner moves on to."
+                  },
+                  "sideNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2,
+                    "description": "The side of that match the winner fills."
+                  }
+                },
+                "required": [
+                  "matchId",
+                  "sideNumber"
                 ],
-                "enum": [
-                  "HOME",
-                  "AWAY",
-                  null
-                ]
+                "additionalProperties": false
               },
               "regionLabel": {
                 "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region.",
@@ -53856,46 +54443,198 @@
                   "null"
                 ]
               },
-              "homeSpread": {
-                "description": "The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.",
-                "type": [
-                  "number",
-                  "null"
-                ]
-              },
-              "periodScores": {
+              "sides": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
-                    "periodNumber": {
+                    "sideNumber": {
                       "type": "integer",
                       "minimum": 1,
-                      "maximum": 9007199254740991,
-                      "description": "1 for the first period (quarter, in American football)."
+                      "maximum": 2,
+                      "description": "The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway."
                     },
-                    "homeScore": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                    "sportEventParticipantId": {
+                      "description": "The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
                     },
-                    "awayScore": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "The away side's score at the end of the period, earlier periods included."
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "WON",
+                        "LOST",
+                        "TIED"
+                      ],
+                      "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+                    },
+                    "score": {
+                      "description": "The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "spread": {
+                      "description": "The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "periodNumber",
-                    "homeScore",
-                    "awayScore"
+                    "sideNumber",
+                    "sportEventParticipantId",
+                    "outcome",
+                    "score",
+                    "spread"
                   ],
                   "additionalProperties": false,
-                  "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
+                  "description": "One side of a match (#2046)."
                 },
-                "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+                "description": "Side 1 then side 2. The winner is the side whose outcome is WON."
+              },
+              "games": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "gameNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "1 for a single game; a best-of series numbers its games in the order they are played."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "CANCELLED",
+                        "POSTPONED"
+                      ],
+                      "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                    },
+                    "isFinal": {
+                      "type": "boolean",
+                      "description": "True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status."
+                    },
+                    "scheduledDate": {
+                      "description": "The game's start; null until it is announced.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "sideResults": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sideNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2,
+                            "description": "The match side the result is for."
+                          },
+                          "score": {
+                            "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "homeAway": {
+                            "type": "string",
+                            "enum": [
+                              "HOME",
+                              "AWAY",
+                              "NONE"
+                            ],
+                            "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+                          },
+                          "shootoutScore": {
+                            "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "periodScores": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "REGULAR",
+                                    "OVERTIME",
+                                    "SHOOTOUT"
+                                  ],
+                                  "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                                },
+                                "periodNumber": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                  "description": "1 for the first period of its kind."
+                                },
+                                "score": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "periodNumber",
+                                "score"
+                              ],
+                              "additionalProperties": false,
+                              "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+                            },
+                            "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+                          }
+                        },
+                        "required": [
+                          "sideNumber",
+                          "score",
+                          "homeAway",
+                          "shootoutScore",
+                          "periodScores"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One side's result in one game of a match (#2046)."
+                      },
+                      "description": "Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in."
+                    }
+                  },
+                  "required": [
+                    "gameNumber",
+                    "status",
+                    "isFinal",
+                    "scheduledDate",
+                    "sideResults"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played."
+                },
+                "description": "The match's games in game-number order: a single game has its game 1 from the moment the match is loaded."
               }
             },
             "required": [
@@ -53904,39 +54643,30 @@
               "roundNumber",
               "slot",
               "matchNumber",
-              "homeSportEventParticipantId",
-              "awaySportEventParticipantId",
               "isNeutralSite",
               "scheduledDate",
               "status",
               "isFinal",
               "isUnplayed",
-              "winnerSide",
-              "homeScore",
-              "awayScore",
-              "homeShootoutScore",
-              "awayShootoutScore",
               "ending",
-              "resultSource",
               "completedAt",
-              "advancesToMatchId",
-              "advancesToSide",
+              "advancesTo",
               "regionLabel",
-              "homeSpread",
-              "periodScores"
+              "sides",
+              "games"
             ],
             "additionalProperties": false,
             "description": "The game the contest is played on, with its score at the end of each period and its final result."
           },
-          "homeTeamName": {
-            "description": "The home team, across the top; null until it is known.",
+          "rowTeamName": {
+            "description": "Side 1's team, down the side; null until it is known.",
             "type": [
               "string",
               "null"
             ]
           },
-          "awayTeamName": {
-            "description": "The away team, down the side; null until it is known.",
+          "columnTeamName": {
+            "description": "Side 2's team, across the top; null until it is known.",
             "type": [
               "string",
               "null"
@@ -53959,13 +54689,13 @@
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9,
-                  "description": "The row position, 0 at the top. Rows are the away team's."
+                  "description": "The row position, 0 at the top. Rows are side 1's."
                 },
                 "columnIndex": {
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9,
-                  "description": "The column position, 0 at the left. Columns are the home team's."
+                  "description": "The column position, 0 at the left. Columns are side 2's."
                 },
                 "contestEntryId": {
                   "type": "string",
@@ -54004,7 +54734,7 @@
                   "minimum": 0,
                   "maximum": 9
                 },
-                "description": "The away team's last digit at each row position, top first."
+                "description": "Side 1's last digit at each row position, top first."
               },
               "columnDigits": {
                 "minItems": 10,
@@ -54015,7 +54745,7 @@
                   "minimum": 0,
                   "maximum": 9
                 },
-                "description": "The home team's last digit at each column position, left first."
+                "description": "Side 2's last digit at each column position, left first."
               },
               "drawnAt": {
                 "type": "string",
@@ -54041,27 +54771,29 @@
                   "maximum": 9007199254740991,
                   "description": "The scoring moment: 1 to the game's period count, the last being the final score, overtime included."
                 },
-                "homeScore": {
+                "rowScore": {
                   "type": "integer",
                   "minimum": 0,
-                  "maximum": 9007199254740991
+                  "maximum": 9007199254740991,
+                  "description": "Side 1's score at that moment, whose last digit picks the row."
                 },
-                "awayScore": {
+                "columnScore": {
                   "type": "integer",
                   "minimum": 0,
-                  "maximum": 9007199254740991
+                  "maximum": 9007199254740991,
+                  "description": "Side 2's score at that moment, whose last digit picks the column."
                 },
                 "rowIndex": {
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9,
-                  "description": "The winning box's row: where the away score's last digit is."
+                  "description": "The winning box's row: where side 1's last digit is."
                 },
                 "columnIndex": {
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9,
-                  "description": "The winning box's column: where the home score's last digit is."
+                  "description": "The winning box's column: where side 2's last digit is."
                 },
                 "contestEntryId": {
                   "description": "The entry holding the winning box; null when nobody claimed it (\"No winner\").",
@@ -54081,8 +54813,8 @@
               },
               "required": [
                 "periodNumber",
-                "homeScore",
-                "awayScore",
+                "rowScore",
+                "columnScore",
                 "rowIndex",
                 "columnIndex",
                 "contestEntryId",
@@ -54150,8 +54882,8 @@
           "maxSquaresPerEntry",
           "periods",
           "game",
-          "homeTeamName",
-          "awayTeamName",
+          "rowTeamName",
+          "columnTeamName",
           "claimsOpen",
           "drawOpen",
           "boxes",
@@ -88559,7 +89291,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSideNumber with each side's score level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
