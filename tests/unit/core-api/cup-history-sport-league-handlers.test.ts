@@ -4,7 +4,7 @@
  * not own reaches the global error handler unchanged.
  */
 import { expect } from '@jest/globals';
-import { ContestStatus, CupStatus, PlanFeature, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, CupStatus, PlanFeature, ProviderCode, Sport, FieldOrderBasis } from '@poolmaster/shared/domain';
 import type { SportLeagueListResponse } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import { createCupHandlers } from '../../../packages/core-api/src/modules/cups/handler';
@@ -249,7 +249,7 @@ describe('sport league handlers', () => {
     now: () => AT,
   });
   const pageLeague = {
-    id: 'sl1', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null,
+    id: 'sl1', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null, tierSources: [FieldOrderBasis.ODDS],
   };
   const known = <T>(sportLeagueId: string, facts: T) => Promise.resolve(sportLeagueId === 'sl1' ? facts : null);
   const page = new SportLeaguePageService({

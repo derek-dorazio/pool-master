@@ -205,7 +205,8 @@ const EVENT_SYNC_KINDS: readonly ProviderSyncKind[] = [ProviderSyncKind.FIELD, P
  * One event's overview (#1889), by the League page's rules: its field and scores syncs from its
  * own latest runs (all OFF for an event no provider syncs, such as one an admin made in a synced
  * league), its health from those runs, its issues and release as its League page row has them,
- * and the value its active field is ordered by for tiers and prices (`fieldOrderDecision`).
+ * and the value its active field is ordered by for tiers (`fieldOrderDecision` over its tier
+ * profile's sources, which its pricing profile's start with too).
  */
 export function buildSportEventOverview(
   facts: SportEventPageFacts,
@@ -223,7 +224,7 @@ export function buildSportEventOverview(
     ? [{ id: event.id, name: event.name, checkedAt: check.checkedAt, failedChecks: check.failedChecks }]
     : [];
   const active = facts.field.filter((row) => row.isActive);
-  const decision = active.length === 0 ? null : fieldOrderDecision(active);
+  const decision = active.length === 0 ? null : fieldOrderDecision(active, league.tierSources);
   return {
     syncHealth: syncHealthOf({
       isActive: syncLeague.isActive,
@@ -236,6 +237,7 @@ export function buildSportEventOverview(
     ...sportEventReleaseOf(event, league),
     tierOrderBasis: decision?.basis ?? null,
     tierOrderCoversField: decision?.coversField ?? true,
+    tierOrderSources: [...league.tierSources],
     fieldFeed: facts.field.map((row) => ({
       sportEventParticipantId: row.id,
       feedId: row.mapping?.externalId ?? null,

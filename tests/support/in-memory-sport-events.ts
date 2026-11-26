@@ -40,7 +40,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -67,6 +67,8 @@ import type {
   PlatformPricingProfile,
   PlatformTierProfile,
   SportLeagueSeasonSlot,
+  EqualGroupsLayout,
+  TierRange,
 } from '@poolmaster/shared/domain';
 import { sportRowKeys } from './sport-rows';
 
@@ -106,13 +108,16 @@ export function providerMappingOf(ref: ProviderEventRef): SportEventProviderMapp
   return { providerCode, providerName: TEST_PROVIDER_ROWS[providerCode].name, externalId: ref.externalId };
 }
 
+/** Every source, odds first: the order every seeded profile but the NFL's lists (#2160). */
+export const ODDS_FIRST: readonly FieldOrderBasis[] = [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING];
+
 export class InMemorySportEvents {
   private sequence = 0;
   sports: SportConfig[] = [];
   sportLeagues: SportLeague[] = [];
   /** The profiles sport leagues name (#1844): golf's six tiers of ten, and Standard pricing. */
-  platformTierProfiles: PlatformTierProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, code: 'TIERS_6_OF_10', name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING' as const, lastTierMax: null })];
-  platformPricingProfiles: PlatformPricingProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
+  platformTierProfiles: PlatformTierProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, code: 'TIERS_6_OF_10', name: '6 tiers of 10', sources: [...ODDS_FIRST], type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING' as const, lastTierMax: null })];
+  platformPricingProfiles: PlatformPricingProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', sources: [...ODDS_FIRST], salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
   events: SportEvent[] = [];
@@ -834,16 +839,31 @@ export class InMemorySportEvents {
   }
 
   /** A sport league of its own naming a new tier profile of this layout (#1844), for events to sit in. */
-  addLeagueWithPlatformTierProfile(layout: Pick<PlatformTierProfile, 'tierCount' | 'tierSize'> & Partial<Pick<PlatformTierProfile, 'lastTier' | 'lastTierMax'>>): SportLeague {
-    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `TIERS_${layout.tierCount}_OF_${layout.tierSize}`, name: `${layout.tierCount} tiers of ${layout.tierSize}`, lastTier: 'ALL_REMAINING' as const, lastTierMax: null, ...layout });
+  addLeagueWithPlatformTierProfile(
+    layout: Pick<EqualGroupsLayout, 'tierCount' | 'tierSize'> & Partial<Pick<EqualGroupsLayout, 'lastTier' | 'lastTierMax'>>,
+    sources: readonly FieldOrderBasis[] = ODDS_FIRST,
+  ): SportLeague {
+    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `TIERS_${layout.tierCount}_OF_${layout.tierSize}`, name: `${layout.tierCount} tiers of ${layout.tierSize}`, sources: [...sources], type: TierProfileType.EQUAL_GROUPS, lastTier: 'ALL_REMAINING' as const, lastTierMax: null, ...layout });
     this.platformTierProfiles.push(profile);
     return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformTierProfileId: profile.id });
   }
 
+  /**
+   * A sport league of its own naming a new RANGES tier profile (#2160) and a pricing profile with
+   * Standard's values and the same sources, so the league's two profiles start with one source.
+   */
+  addLeagueWithRangesTierProfile(ranges: TierRange[], sources: readonly FieldOrderBasis[]): SportLeague {
+    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `RANGES_${ranges.length}`, name: `${ranges.length} ranges`, sources: [...sources], type: TierProfileType.RANGES, ranges });
+    this.platformTierProfiles.push(profile);
+    const pricingId = this.id('pricing-profile');
+    this.platformPricingProfiles.push(stamp({ id: pricingId, code: pricingId.toUpperCase().replaceAll('-', '_'), name: `Standard by ${sources[0]}`, sources: [...sources], salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 }));
+    return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformTierProfileId: profile.id, platformPricingProfileId: pricingId });
+  }
+
   /** A sport league of its own naming a new pricing profile with these values (#1844). */
-  addLeagueWithPlatformPricingProfile(values: BudgetPricingProfile): SportLeague {
+  addLeagueWithPlatformPricingProfile(values: BudgetPricingProfile, sources: readonly FieldOrderBasis[] = ODDS_FIRST): SportLeague {
     const id = this.id('pricing-profile');
-    const profile: PlatformPricingProfile = stamp({ id, code: id.toUpperCase().replaceAll('-', '_'), ...values });
+    const profile: PlatformPricingProfile = stamp({ id, code: id.toUpperCase().replaceAll('-', '_'), sources: [...sources], ...values });
     this.platformPricingProfiles.push(profile);
     return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformPricingProfileId: profile.id });
   }

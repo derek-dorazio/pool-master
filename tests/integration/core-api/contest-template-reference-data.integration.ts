@@ -48,6 +48,35 @@ async function knockoutDefinitions(sportLeagueName: string): Promise<Array<[stri
 // included, against the rules contest creation holds them to. No mocks.
 
 // Only a sport with a scoring definition can host a contest, so only it is owed presets.
+/**
+ * The tiered templates with no budget twin yet (#2160), by league URL segment and key. #2164, the
+ * contest template data pass, twins them. Shrink-only: the data change that adds a league's budget
+ * twins removes its keys here, and nothing is ever added.
+ */
+const TIERED_TEMPLATES_WITHOUT_BUDGET_TWIN: string[] = [
+  'atp/atp-tiered-best-four-doubling',
+  'atp/atp-tiered-seeds-only-doubling',
+  'copa-america/copa-america-tiered-doubling',
+  'copa-america/copa-america-tiered-doubling-upset-bonus',
+  'f1/formula-1-tiered-points',
+  'lpga/golf-tiered-pick-12',
+  'lpga/golf-tiered-top-four-tiers',
+  'ncaamf/cfp-tiered-doubling',
+  'ncaamf/cfp-tiered-doubling-upset-bonus',
+  'ncaamt/ncaa-men-tennis-tiered-best-four-doubling',
+  'ncaawh/ncaa-women-hockey-tiered-doubling',
+  'ncaawh/ncaa-women-hockey-tiered-doubling-upset-bonus',
+  'ncaawt/ncaa-women-tennis-tiered-best-four-doubling',
+  'nwsl/nwsl-tiered-doubling',
+  'nwsl/nwsl-tiered-doubling-upset-bonus',
+  'pga/golf-tiered-pick-12',
+  'pga/golf-tiered-top-four-tiers',
+  'wnba/wnba-tiered-doubling',
+  'wnba/wnba-tiered-doubling-upset-bonus',
+  'wta/wta-tiered-best-four-doubling',
+  'wta/wta-tiered-seeds-only-doubling',
+];
+
 const SCORED_SPORTS = SUPPORTED_SPORTS.filter((sport) => getSportDefinition(sport).scoringDefinitions.length > 0);
 
 beforeAll(async () => {
@@ -689,7 +718,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
 
 // The NFL's knockout presets (#702): four playoff rounds, so the doubling stops at 8.
 describe('The seeded NFL league and its knockout templates', () => {
-  it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default', async () => {
+  it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus random draw, and one pick-3 tiered and one pick-3 budget template (#2160), all on round values 1, 2, 4, 8 and each format\'s plain one its default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { sportLeague: { sport: { sport: Sport.FOOTBALL } }, templateKey: { startsWith: 'nfl-' }, contestFormat: ContestFormat.ROSTER },
       include: { sportLeague: true },
@@ -700,12 +729,10 @@ describe('The seeded NFL league and its knockout templates', () => {
     // The NFL reseeds: every postseason slot it plays is RESEEDED (#2006).
     expect(new Set((await knockoutDefinitions('NFL')).map(([, , pairing]) => pairing))).toEqual(new Set(['RESEEDED']));
     expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault])).toEqual([
-      ['nfl-budget-doubling', SelectionType.BUDGET_PICK, true],
-      ['nfl-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false],
+      ['nfl-budget-pick-3', SelectionType.BUDGET_PICK, true],
       ['nfl-random-draw-doubling', SelectionType.RANDOM_DRAW, true],
       ['nfl-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false],
-      ['nfl-tiered-doubling', SelectionType.TIERED, true],
-      ['nfl-tiered-doubling-upset-bonus', SelectionType.TIERED, false],
+      ['nfl-tiered-pick-3', SelectionType.TIERED, true],
     ]);
     for (const template of templates) {
       expect(ContestRulesWithEntryLimitSchema.parse(template.configJson).scoring).toEqual({
@@ -804,7 +831,10 @@ describe('Every seeded contest template, whatever its sport', () => {
   async function activeTemplates() {
     return getPrisma().contestConfigTemplate.findMany({
       where: { active: true },
-      include: { sportLeague: { include: { platformTierProfile: true, sport: true } } },
+      include: {
+        sportLeague: { include: { platformTierProfile: { include: { _count: { select: { ranges: true } } } }, sport: true } },
+        slots: { select: { sportLeagueCompetitionSlotId: true } },
+      },
       orderBy: [{ sportLeague: { sport: { sport: 'asc' } } }, { templateKey: 'asc' }],
     });
   }
@@ -856,7 +886,8 @@ describe('Every seeded contest template, whatever its sport', () => {
         switch (rules.selectionType) {
           case SelectionType.TIERED:
             return getTieredRosterSize(
-              getTiersInPlay(template.sportLeague.platformTierProfile.tierCount, rules.tiersUsed),
+              // A RANGES profile has one tier per range and no tier count (#2160).
+              getTiersInPlay(template.sportLeague.platformTierProfile.tierCount ?? template.sportLeague.platformTierProfile._count.ranges, rules.tiersUsed),
               rules.picksPerTier,
             );
           case SelectionType.BUDGET_PICK:
@@ -884,6 +915,51 @@ describe('Every seeded contest template, whatever its sport', () => {
     });
 
     expect(problems).toEqual([]);
+  });
+
+  it('gives every tiered template a budget twin in its league, over the same slots with the same roster size, counted scores and scoring, but the shrink-only list of those not yet twinned', async () => {
+    const templates = await activeTemplates();
+    const rulesOf = (template: (typeof templates)[number]) => ContestRulesWithEntryLimitSchema.parse(template.configJson);
+    const slotsOf = (template: (typeof templates)[number]) => template.slots.map((slot) => slot.sportLeagueCompetitionSlotId).sort().join(',');
+
+    const untwinned = templates.flatMap((template) => {
+      const rules = rulesOf(template);
+      if (rules.selectionType !== SelectionType.TIERED) return [];
+      const profile = template.sportLeague.platformTierProfile;
+      const held = getTieredRosterSize(getTiersInPlay(profile.tierCount ?? profile._count.ranges, rules.tiersUsed), rules.picksPerTier);
+      const twinned = templates.some((other) => {
+        if (other.sportLeagueId !== template.sportLeagueId || slotsOf(other) !== slotsOf(template)) return false;
+        const budget = rulesOf(other);
+        return budget.selectionType === SelectionType.BUDGET_PICK
+          && budget.rosterSize === held
+          && budget.countedScores === rules.countedScores
+          && JSON.stringify(budget.scoring) === JSON.stringify(rules.scoring);
+      });
+      return twinned ? [] : [`${template.sportLeague.urlSegment}/${template.templateKey}`];
+    }).sort();
+
+    // The list only shrinks: a new tiered template comes with its budget twin, and one twinned
+    // later leaves the list in the same change.
+    expect(untwinned).toEqual(TIERED_TEMPLATES_WITHOUT_BUDGET_TWIN);
+  });
+
+  it('starts every sport league\'s tier and pricing profiles with the same source, so tiers and prices agree on who is best (#2160)', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({
+      select: {
+        name: true,
+        platformTierProfile: { select: { code: true, sources: { orderBy: { orderIndex: 'asc' }, take: 1, select: { basis: true } } } },
+        platformPricingProfile: { select: { code: true, sources: { orderBy: { orderIndex: 'asc' }, take: 1, select: { basis: true } } } },
+      },
+    });
+
+    const disagreeing = leagues.flatMap(({ name, platformTierProfile: tiers, platformPricingProfile: prices }) => {
+      const tierFirst = tiers.sources.at(0)?.basis;
+      const priceFirst = prices.sources.at(0)?.basis;
+      return tierFirst !== undefined && tierFirst === priceFirst ? [] : [`${name}: ${tiers.code} starts with ${tierFirst ?? 'nothing'}, ${prices.code} with ${priceFirst ?? 'nothing'}`];
+    });
+
+    expect(leagues.length).toBeGreaterThan(30);
+    expect(disagreeing).toEqual([]);
   });
 
   // Roster presets only: a pick'em contest (#716) is set up without a template, so its selection
@@ -988,8 +1064,8 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
     await expect(knockoutDefinitions('NCAA Men\'s Football')).resolves.toEqual([
       ['First Round', 'ROUND_OF_16', 'FIXED'], [null, 'QUARTERFINAL', 'FIXED'], [null, 'SEMIFINAL', 'FIXED'], ['National Championship', 'FINAL', 'FIXED'],
     ]);
-    // The NFL keeps football's seven tiers of two.
-    expect(platformTierProfileCodes.get(nfl?.platformTierProfileId ?? '')).toBe('TIERS_7_OF_2');
+    // The NFL keeps its playoff-seeds tier profile.
+    expect(platformTierProfileCodes.get(nfl?.platformTierProfileId ?? '')).toBe('PLAYOFF_SEEDS_1_4_REST');
   });
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default, picking one team from each of six tiers', async () => {
@@ -1209,7 +1285,8 @@ describe('Seeded template coverage (#2010)', () => {
       'nfl-survivor': [TemplateCoverageMode.FROM_SLOT, [LeaguePhase.REGULAR]],
       'nfl-playoff-survivor': [TemplateCoverageMode.FROM_SLOT, [LeaguePhase.POSTSEASON]],
       'nfl-bracket-doubling': [TemplateCoverageMode.ALL_LISTED, [LeaguePhase.POSTSEASON]],
-      'nfl-tiered-doubling': [TemplateCoverageMode.ALL_LISTED, [LeaguePhase.POSTSEASON]],
+      'nfl-tiered-pick-3': [TemplateCoverageMode.ALL_LISTED, [LeaguePhase.POSTSEASON]],
+      'nfl-budget-pick-3': [TemplateCoverageMode.ALL_LISTED, [LeaguePhase.POSTSEASON]],
       'nfl-squares': [TemplateCoverageMode.ONE_SLOT, [LeaguePhase.POSTSEASON, LeaguePhase.REGULAR]],
     });
   });

@@ -153,6 +153,7 @@ export function mapSportEventOverviewToDto(overview: SportEventOverview): SportE
     releaseAtKind: overview.releaseAtKind,
     tierOrderBasis: overview.tierOrderBasis,
     tierOrderCoversField: overview.tierOrderCoversField,
+    tierOrderSources: overview.tierOrderSources,
     fieldFeed: overview.fieldFeed.map((row) => ({
       sportEventParticipantId: row.sportEventParticipantId,
       feedId: row.feedId,

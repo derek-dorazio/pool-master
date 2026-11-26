@@ -1,7 +1,7 @@
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
 import type { SportLeagueSeasonRepository } from '@poolmaster/shared/db';
-import { ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import type { Participant, SportLeague, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
@@ -81,8 +81,8 @@ function buildService(overrides: {
   mappings?: Parameters<typeof fakeParticipantProviderMappingRepo>[0];
   providers?: SportDataProviderLookup;
   seasons?: Partial<Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot'>>;
-  platformTierProfiles?: { findById: jest.Mock };
-  platformPricingProfiles?: { findById: jest.Mock };
+  platformTierProfiles?: { findById: jest.Mock; findBySportLeague?: jest.Mock };
+  platformPricingProfiles?: { findById: jest.Mock; findBySportLeague?: jest.Mock };
 } = {}) {
   const deps = {
     sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), findAll: jest.fn().mockResolvedValue([GOLF, BASKETBALL]), ...overrides.sports }),
@@ -97,8 +97,16 @@ function buildService(overrides: {
     seasons: { createTestSlot: jest.fn(), findSlot: jest.fn().mockResolvedValue(null), ...overrides.seasons },
     mappings: fakeParticipantProviderMappingRepo(overrides.mappings),
     providers: overrides.providers ?? registeredProviders({}),
-    platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
-    platformPricingProfiles: overrides.platformPricingProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: 'Standard' })) },
+    platformTierProfiles: {
+      findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10', sources: [FieldOrderBasis.ODDS] })),
+      findBySportLeague: jest.fn().mockResolvedValue({ id: 'tier-profile-1', name: '6 tiers of 10', sources: [FieldOrderBasis.ODDS] }),
+      ...overrides.platformTierProfiles,
+    },
+    platformPricingProfiles: {
+      findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: 'Standard', sources: [FieldOrderBasis.ODDS] })),
+      findBySportLeague: jest.fn().mockResolvedValue({ id: 'pricing-profile-1', name: 'Standard', sources: [FieldOrderBasis.ODDS] }),
+      ...overrides.platformPricingProfiles,
+    },
   };
   return { service: new SportLeagueService(deps), deps };
 }
@@ -144,11 +152,42 @@ describe('SportLeagueService — tier and pricing profiles', () => {
     expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });
 
-  it('moves a sport league to another tier profile without looking up a pricing profile it was not sent', async () => {
+  it('moves a sport league to another tier profile, checking it against the pricing profile the league already names rather than one it was not sent', async () => {
     const { service, deps } = buildService();
 
     await expect(service.updateSportLeague('sl-pga', { platformTierProfileId: 'tier-profile-2' })).resolves.toMatchObject({ platformTierProfileId: 'tier-profile-2' });
     expect(deps.platformPricingProfiles.findById).not.toHaveBeenCalled();
+    expect(deps.platformPricingProfiles.findBySportLeague).toHaveBeenCalledWith('sl-pga');
+  });
+
+  it('refuses (422 PROFILE_FIRST_SOURCES_DIFFER) a tier profile that starts with seed for a league whose pricing profile starts with odds, updating nothing', async () => {
+    const { service, deps } = buildService({
+      platformTierProfiles: { findById: jest.fn().mockResolvedValue({ id: 'seed-ranges', name: 'Playoff seeds', sources: [FieldOrderBasis.SEED, FieldOrderBasis.ODDS] }) },
+    });
+
+    await expect(service.updateSportLeague('sl-pga', { platformTierProfileId: 'seed-ranges' }))
+      .rejects.toMatchObject({ code: 'PROFILE_FIRST_SOURCES_DIFFER', statusCode: 422 });
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
+  });
+
+  it('accepts a tier and a pricing profile sent together that both start with seed, though the league\'s current pricing profile starts with odds', async () => {
+    const seedFirst = [FieldOrderBasis.SEED, FieldOrderBasis.ODDS];
+    const { service, deps } = buildService({
+      platformTierProfiles: { findById: jest.fn().mockResolvedValue({ id: 'seed-ranges', name: 'Playoff seeds', sources: seedFirst }) },
+      platformPricingProfiles: { findById: jest.fn().mockResolvedValue({ id: 'standard-by-seed', name: 'Standard by seed', sources: seedFirst }) },
+    });
+
+    await expect(service.updateSportLeague('sl-pga', { platformTierProfileId: 'seed-ranges', platformPricingProfileId: 'standard-by-seed' })).resolves.toBeDefined();
+    expect(deps.sportLeagues.update).toHaveBeenCalled();
+  });
+
+  it('reads no profile when the update names neither', async () => {
+    const { service, deps } = buildService();
+
+    await service.updateSportLeague('sl-pga', { autoReleaseDaysBeforeStart: 3 });
+
+    expect(deps.platformTierProfiles.findBySportLeague).not.toHaveBeenCalled();
+    expect(deps.platformPricingProfiles.findBySportLeague).not.toHaveBeenCalled();
   });
 });
 

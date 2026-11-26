@@ -10,6 +10,7 @@ import type {
   BackgroundJobRequest,
   EventPricingConfig,
   EventTierConfig,
+  FieldOrderBasis,
   PlatformPricingProfile,
   ProviderEventRef,
   OverdueEventFacts,
@@ -37,7 +38,7 @@ import type {
   SportEventTier,
   SportLeague,
   SportLeaguePosition,
-  TierLayoutValues,
+  TierProfileValues,
   PlatformTierProfile,
   ValuationSource,
   SportLeaguePhaseDefinition,
@@ -619,6 +620,8 @@ export interface SportLeaguePageLeague {
   isActive: boolean;
   syncProviderId: string | null;
   autoReleaseDaysBeforeStart: number | null;
+  /** The values its tier profile orders a field by, first deciding (#2160). */
+  tierSources: FieldOrderBasis[];
 }
 
 /** A sync run as the League page reads it. */
@@ -733,7 +736,7 @@ export interface SportLeaguePageReader {
 }
 
 /** A profile write: its code, name and values. */
-export type PlatformTierProfileWrite = Pick<PlatformTierProfile, 'code' | 'name'> & TierLayoutValues;
+export type PlatformTierProfileWrite = Pick<PlatformTierProfile, 'code' | 'name'> & TierProfileValues;
 export type PlatformPricingProfileWrite = Omit<PlatformPricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
 
 /** Which of a profile's unique keys another profile of the kind already holds. */
@@ -753,6 +756,12 @@ export interface ProfileRepository<TProfile, TWrite> {
   countSportLeagues(): Promise<Map<string, number>>;
   /** How many sport leagues name this one profile. */
   countSportLeaguesNaming(id: string): Promise<number>;
+  /**
+   * The first source of the other kind's profile of each sport league that names this one (#2160):
+   * for a tier profile, its leagues' pricing profiles' first sources, and the other way round. A
+   * league's two profiles must start with the same source, so a changed first source is checked here.
+   */
+  findPairedFirstSources(id: string): Promise<FieldOrderBasis[]>;
   /**
    * The new profile, or which unique index refused it: `'codeTaken'` or `'nameTaken'` when another
    * profile of the kind has the code or the name.

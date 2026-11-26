@@ -84,8 +84,8 @@ export interface SportLeagueServiceDeps {
   /** Which providers can sync a sport league's events (ADR 0011). */
   providers: SportDataProviderLookup;
   /** The profiles a sport league names one of each (#1844). */
-  platformTierProfiles: Pick<PlatformTierProfileRepository, 'findById'>;
-  platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findById'>;
+  platformTierProfiles: Pick<PlatformTierProfileRepository, 'findById' | 'findBySportLeague'>;
+  platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findById' | 'findBySportLeague'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -178,7 +178,9 @@ export class SportLeagueService {
    * running here.
    *
    * `platformTierProfileId` and `platformPricingProfileId` pick the league's profiles (#1844): 404
-   * PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist. An event
+   * PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist,
+   * 422 PROFILE_FIRST_SOURCES_DIFFER when the two profiles the league would have start with
+   * different sources (#2160). An event
    * already made keeps its tiers; its next auto-tiering and a never-priced field's next pricing
    * read the new profile.
    */
@@ -188,7 +190,7 @@ export class SportLeagueService {
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
     await this.assertEventSyncFits(sportLeague, updates);
-    await this.assertProfilesExist(updates);
+    await this.assertProfilesFit(sportLeagueId, updates);
     const updated = await this.deps.sportLeagues.update(sportLeagueId, {
       name: updates.name,
       isActive: updates.isActive,
@@ -264,17 +266,36 @@ export class SportLeagueService {
     this.deps.logger?.info({ action: 'sportLeagueService.deleteSportLeague.success', data: { sportLeagueId } }, 'Deleted sport league');
   }
 
-  /** 404 PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for a named profile that does not exist. */
-  private async assertProfilesExist(ids: Partial<SportLeagueProfileIds>): Promise<void> {
+  /**
+   * 404 PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for a named profile
+   * that does not exist; 422 PROFILE_FIRST_SOURCES_DIFFER when the league's tier and pricing
+   * profiles, as they would be after the update, start with different sources (#2160).
+   */
+  private async assertProfilesFit(sportLeagueId: string, ids: Partial<SportLeagueProfileIds>): Promise<void> {
+    if (ids.platformTierProfileId === undefined && ids.platformPricingProfileId === undefined) return;
     const [platformTierProfile, platformPricingProfile] = await Promise.all([
-      ids.platformTierProfileId === undefined ? undefined : this.deps.platformTierProfiles.findById(ids.platformTierProfileId),
-      ids.platformPricingProfileId === undefined ? undefined : this.deps.platformPricingProfiles.findById(ids.platformPricingProfileId),
+      ids.platformTierProfileId === undefined
+        ? this.deps.platformTierProfiles.findBySportLeague(sportLeagueId)
+        : this.deps.platformTierProfiles.findById(ids.platformTierProfileId),
+      ids.platformPricingProfileId === undefined
+        ? this.deps.platformPricingProfiles.findBySportLeague(sportLeagueId)
+        : this.deps.platformPricingProfiles.findById(ids.platformPricingProfileId),
     ]);
     if (platformTierProfile === null) {
       throw new SportCatalogError(`Tier profile ${ids.platformTierProfileId} was not found.`, 'PLATFORM_TIER_PROFILE_NOT_FOUND', 404);
     }
     if (platformPricingProfile === null) {
       throw new SportCatalogError(`Pricing profile ${ids.platformPricingProfileId} was not found.`, 'PLATFORM_PRICING_PROFILE_NOT_FOUND', 404);
+    }
+    const [tierFirst] = platformTierProfile.sources;
+    const [pricingFirst] = platformPricingProfile.sources;
+    if (tierFirst !== pricingFirst) {
+      this.deps.logger?.warn({ sportLeagueId, platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id, tierFirst, pricingFirst }, 'Refused sport league profiles that start with different sources');
+      throw new SportCatalogError(
+        `Tier profile ${platformTierProfile.name} starts with ${tierFirst} and pricing profile ${platformPricingProfile.name} starts with ${pricingFirst}. A league's two profiles start with the same source.`,
+        'PROFILE_FIRST_SOURCES_DIFFER',
+        422,
+      );
     }
   }
 

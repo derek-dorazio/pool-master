@@ -32,8 +32,12 @@ import {
   eventPricingOf,
   findBudgetPricingProblem,
   FieldOrderBasis,
+  fieldOrderValue,
   orderField,
+  placeInRanges,
   placeInTiers,
+  tierCountOf,
+  TierProfileType,
   priceFieldOnBudgetCurve,
   SportEventStatus,
   ValuationSource,
@@ -153,7 +157,7 @@ export class SportEventTierService {
     if (!profile) {
       throw new SportEventError(`Tier profile ${sportLeague.platformTierProfileId} of sport league ${sportLeague.id} was not found.`, 'PLATFORM_TIER_PROFILE_NOT_FOUND', 404);
     }
-    const { tierCount } = profile;
+    const tierCount = tierCountOf(profile);
     const tiersByEvent = new Map(sportEventIds.map((sportEventId) => [
       sportEventId,
       Array.from({ length: tierCount }, (_, index) => ({
@@ -240,6 +244,13 @@ export class SportEventTierService {
    */
   async autoAssignTiers(input: { sportEventId: string; tierSize?: number }): Promise<SportEventTierGroup[]> {
     const event = await this.requireEditableEvent(input.sportEventId);
+    if (input.tierSize !== undefined && (await this.requirePlatformTierProfile(event)).type === TierProfileType.RANGES) {
+      throw new SportEventError(
+        `Sport event ${event.id}'s league lays its tiers out by ranges, which have no tier size.`,
+        'TIER_SIZE_NOT_FOR_RANGES',
+        422,
+      );
+    }
     await this.placeFieldInTiers(event, input.tierSize);
     return this.getEffectiveTiersForSportEvent(input.sportEventId);
   }
@@ -251,23 +262,21 @@ export class SportEventTierService {
       this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no tiers yet');
       return;
     }
-    const [order, profile] = await Promise.all([
-      this.orderedActiveField(event.id),
-      this.requirePlatformTierProfile(event),
-    ]);
+    const profile = await this.requirePlatformTierProfile(event);
+    const order = await this.orderedActiveField(event.id, profile.sources);
     if (order === 'NO_FIELD') {
       this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no active field participants');
       return;
     }
-    const { ordered, source } = requireFieldOrder(order, event.id);
-    const { placements, tierConfig, spread } = tierPlacements(profile, tiers, ordered, source, tierSize);
+    const { ordered, source, firstSource } = requireFieldOrder(order, event.id);
+    const { placements, tierConfig, spread } = tierPlacements(profile, tiers, ordered, firstSource, source, tierSize);
     await this.deps.valuations.assignEventTiers({ sportEventId: event.id, tierConfig, assignments: placements });
     this.deps.logger?.info(
       {
         sportEventId: event.id,
         source,
         profileName: tierConfig.profileName,
-        tierSize: spread === 'EVEN' ? null : tierConfig.tierSize,
+        tierSize: tierConfig.type === TierProfileType.EQUAL_GROUPS && spread !== 'EVEN' ? tierConfig.tierSize : null,
         spread,
         tierCount: tiers.length,
         assignedCount: placements.filter((placement) => placement.sportEventTierId !== null).length,
@@ -377,12 +386,13 @@ export class SportEventTierService {
    */
   async autoAssignPrices(input: { sportEventId: string; pricingConfig: EventPricingConfig }): Promise<ParticipantValuationView[]> {
     const { sportEventId, pricingConfig } = input;
-    await this.requireEditableEvent(sportEventId);
+    const event = await this.requireEditableEvent(sportEventId);
     const problem = findBudgetPricingProblem(pricingConfig);
     if (problem) {
       throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
     }
-    const order = await this.orderedActiveField(sportEventId);
+    const { sources } = await this.requirePlatformPricingProfile(event);
+    const order = await this.orderedActiveField(sportEventId, sources);
     if (order === 'NO_FIELD') {
       this.deps.logger?.warn({ sportEventId }, 'Cannot auto-assign prices — the event has no active field participants');
       return [];
@@ -421,24 +431,31 @@ export class SportEventTierService {
     if (!areTiersAndPricesEditable(event)) {
       return { outcome: 'SKIPPED', reason: 'LOCKED' };
     }
-    const [platformTierProfile, pricingConfig] = await Promise.all([
+    const [platformTierProfile, platformPricingProfile] = await Promise.all([
       this.requirePlatformTierProfile(event),
-      event.pricingConfig ?? this.requirePlatformPricingProfile(event).then(eventPricingOf),
+      this.requirePlatformPricingProfile(event),
     ]);
+    const pricingConfig = event.pricingConfig ?? eventPricingOf(platformPricingProfile);
     // Checked before anything is written, so a bad profile never leaves tiers made and prices not.
     const problem = findBudgetPricingProblem(pricingConfig);
     if (problem) {
       throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
     }
-    const [order, tiers, valuations] = await Promise.all([
-      this.orderedActiveField(event.id),
+    // Tiers follow the tier profile's sources and prices the pricing profile's. Both start with
+    // the same source (a league's two profiles must), so the two orders agree on who is best.
+    const [tierOrder, priceOrder, tiers, valuations] = await Promise.all([
+      this.orderedActiveField(event.id, platformTierProfile.sources),
+      this.orderedActiveField(event.id, platformPricingProfile.sources),
       this.deps.tiers.findBySportEvent(event.id),
       this.deps.valuations.findBySportEvent(event.id),
     ]);
-    if (order === 'NO_FIELD' || order === 'NO_ORDER') {
-      return { outcome: 'SKIPPED', reason: order };
+    if (tierOrder === 'NO_FIELD' || tierOrder === 'NO_ORDER') {
+      return { outcome: 'SKIPPED', reason: tierOrder };
     }
-    const { ordered, source, basis } = order;
+    if (priceOrder === 'NO_FIELD' || priceOrder === 'NO_ORDER') {
+      return { outcome: 'SKIPPED', reason: priceOrder };
+    }
+    const { ordered, source, basis } = tierOrder;
     const stored = new Map(valuations.map((valuation) => [valuation.sportEventParticipantId, valuation]));
 
     let tiersResult: SyncedTiers;
@@ -448,7 +465,7 @@ export class SportEventTierService {
     } else if (tiers.length === 0) {
       tiersResult = { result: 'NO_TIERS' };
     } else {
-      const { placements, tierConfig } = tierPlacements(platformTierProfile, tiers, ordered, source);
+      const { placements, tierConfig } = tierPlacements(platformTierProfile, tiers, ordered, tierOrder.firstSource, source);
       const unchanged = sameTierConfig(event.tierConfig, tierConfig) && placements.every((placement) => {
         const current = stored.get(placement.sportEventParticipantId);
         return (current?.sportEventTierId ?? null) === placement.sportEventTierId
@@ -463,13 +480,13 @@ export class SportEventTierService {
     if (valuations.some((valuation) => valuation.priceAssignedSource === ValuationSource.MANUAL)) {
       pricesResult = { result: 'KEPT_AS_EDITED', unpriced: ordered.filter((entry) => (stored.get(entry.id)?.price ?? null) === null).length };
     } else {
-      const assignments = pricePlacements(ordered, source, pricingConfig);
+      const assignments = pricePlacements(priceOrder.ordered, priceOrder.source, pricingConfig);
       const unchanged = event.pricingConfig !== undefined && assignments.every((assignment) => {
         const current = stored.get(assignment.sportEventParticipantId);
         return current?.price === assignment.price && current.priceAssignedSource === assignment.source;
       });
       if (!unchanged) await this.deps.valuations.assignEventPrices({ sportEventId: event.id, pricingConfig, assignments });
-      pricesResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis, pricedCount: assignments.length, profileName: pricingConfig.profileName };
+      pricesResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis: priceOrder.basis, pricedCount: assignments.length, profileName: pricingConfig.profileName };
     }
 
     this.deps.logger?.info(
@@ -482,9 +499,9 @@ export class SportEventTierService {
   /**
    * The event's active field in its one order (#1807), the order tiers and prices are both filled
    * in, and the source the value that decided it records. NO_FIELD with no active participant;
-   * NO_ORDER when none has odds, a seed or a rank (#2040): such a field has no order.
+   * NO_ORDER when none has any of `sources`, the profile's list (#2040, #2160): such a field has no order.
    */
-  private async orderedActiveField(sportEventId: string): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
+  private async orderedActiveField(sportEventId: string, sources: readonly FieldOrderBasis[]): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
     const active = (await this.deps.field.findBySportEvent(sportEventId))
       .filter((entry) => entry.isActive)
       // A full tie keeps this order, so the result never depends on how the rows were read.
@@ -499,10 +516,10 @@ export class SportEventTierService {
       ranking: entry.ranking,
       // Every field row names a participant (a foreign key), so a missing name only ties.
       name: nameOf.get(entry.participantId) ?? '',
-    })));
+    })), sources);
     if (order === null) return 'NO_ORDER';
     const { ordered, decision } = order;
-    return { ordered: ordered.map((row) => row.entry), source: SOURCE_BY_BASIS[decision.basis], basis: decision.basis };
+    return { ordered: ordered.map((row) => row.entry), source: SOURCE_BY_BASIS[decision.basis], basis: decision.basis, firstSource: sources[0] };
   }
 
   /** The event's sport league's tier profile; every league names one, so a missing one is a broken reference. */
@@ -547,13 +564,15 @@ interface FieldOrder {
   ordered: SportEventParticipant[];
   source: ValuationSource;
   basis: FieldOrderBasis;
+  /** The profile's first source: the values a RANGES layout's ranges are in (#2160). */
+  firstSource: FieldOrderBasis;
 }
 
-/** The field's order for an auto-assign button: 409 FIELD_HAS_NO_ORDER when no participant has odds, a seed or a rank (#2040). */
+/** The field's order for an auto-assign button: 409 FIELD_HAS_NO_ORDER when no participant has any of the profile's sources (#2040). */
 function requireFieldOrder(order: FieldOrder | 'NO_ORDER', sportEventId: string): FieldOrder {
   if (order === 'NO_ORDER') {
     throw new SportEventError(
-      `Sport event ${sportEventId}'s field has no odds, seeds or ranks to put it in order, so it cannot be tiered or priced automatically.`,
+      `Sport event ${sportEventId}'s field has none of the values its profile orders by, so it cannot be tiered or priced automatically.`,
       'FIELD_HAS_NO_ORDER',
       409,
     );
@@ -562,17 +581,22 @@ function requireFieldOrder(order: FieldOrder | 'NO_ORDER', sportEventId: string)
 }
 
 /**
- * Each ordered field row's tier by the tier profile (`placeInTiers`), or none beyond a capped last
- * tier, and the layout as the event records it.
+ * Each ordered field row's tier by the tier profile, and the layout as the event records it.
+ * EQUAL_GROUPS (`placeInTiers`) fills the tiers in order, none beyond a capped last tier; RANGES
+ * (`placeInRanges`) puts each row in the tier whose range holds its value of the profile's first
+ * source, so ties stay together, and a row with no such value, or one in no range, is in no tier.
  */
 function tierPlacements(
   profile: PlatformTierProfile,
   tiers: readonly SportEventTier[],
   ordered: readonly SportEventParticipant[],
+  firstSource: FieldOrderBasis,
   source: ValuationSource,
   requestedTierSize?: number,
 ): { placements: TierAssignment[]; tierConfig: EventTierConfig; spread: TierSpread } {
-  const { tierIndexes, spread } = placeInTiers(profile, tiers.length, ordered.length, requestedTierSize);
+  const { tierIndexes, spread } = profile.type === TierProfileType.RANGES
+    ? { tierIndexes: placeInRanges(profile.ranges, tiers.length, ordered.map((entry) => fieldOrderValue({ ...entry, name: '' }, firstSource))), spread: 'FIXED_SIZE' as const }
+    : placeInTiers(profile, tiers.length, ordered.length, requestedTierSize);
   return {
     placements: ordered.map((entry, index) => {
       const tierIndex = tierIndexes[index];
@@ -583,21 +607,30 @@ function tierPlacements(
         source,
       };
     }),
-    tierConfig: {
-      profileName: profile.name,
-      tierCount: profile.tierCount,
-      tierSize: requestedTierSize ?? profile.tierSize,
-      lastTier: profile.lastTier,
-      lastTierMax: profile.lastTierMax,
-    },
+    tierConfig: profile.type === TierProfileType.RANGES
+      ? { type: TierProfileType.RANGES, profileName: profile.name, ranges: profile.ranges.map(({ tierNumber, fromValue, toValue }) => ({ tierNumber, fromValue, toValue })) }
+      : {
+        type: TierProfileType.EQUAL_GROUPS,
+        profileName: profile.name,
+        tierCount: profile.tierCount,
+        tierSize: requestedTierSize ?? profile.tierSize,
+        lastTier: profile.lastTier,
+        lastTierMax: profile.lastTierMax,
+      },
     spread,
   };
 }
 
 /** Whether the event already records this layout, so a re-run that places the same writes nothing. */
 function sameTierConfig(stored: EventTierConfig | undefined, next: EventTierConfig): boolean {
-  return stored !== undefined
-    && stored.profileName === next.profileName
+  if (stored === undefined || stored.type !== next.type || stored.profileName !== next.profileName) return false;
+  if (stored.type === TierProfileType.RANGES && next.type === TierProfileType.RANGES) {
+    return stored.ranges.length === next.ranges.length && stored.ranges.every((range, index) => {
+      const other = next.ranges[index];
+      return range.tierNumber === other.tierNumber && range.fromValue === other.fromValue && range.toValue === other.toValue;
+    });
+  }
+  return stored.type === TierProfileType.EQUAL_GROUPS && next.type === TierProfileType.EQUAL_GROUPS
     && stored.tierCount === next.tierCount
     && stored.tierSize === next.tierSize
     && stored.lastTier === next.lastTier

@@ -2,21 +2,28 @@
  * Tier and pricing profile mapper (#1844): a profile, with how many sport leagues name it.
  */
 import type { PlatformPricingProfileDto, PlatformTierProfileDto } from '@poolmaster/shared/dto';
-import type { PlatformPricingProfile, PlatformTierProfile } from '@poolmaster/shared/domain';
+import { TierProfileType, type PlatformPricingProfile, type PlatformTierProfile } from '@poolmaster/shared/domain';
 
 export function toPlatformTierProfileDto(profile: PlatformTierProfile, sportLeagueCount: number): PlatformTierProfileDto {
-  return {
+  const saved = {
     id: profile.id,
     code: profile.code,
     name: profile.name,
-    tierCount: profile.tierCount,
-    tierSize: profile.tierSize,
-    lastTier: profile.lastTier,
-    lastTierMax: profile.lastTierMax,
+    sources: [...profile.sources],
     sportLeagueCount,
     createdAt: profile.createdAt.toISOString(),
     updatedAt: profile.updatedAt.toISOString(),
   };
+  return profile.type === TierProfileType.RANGES
+    ? { ...saved, type: TierProfileType.RANGES, ranges: profile.ranges.map(({ tierNumber, fromValue, toValue }) => ({ tierNumber, fromValue, toValue })) }
+    : {
+      ...saved,
+      type: TierProfileType.EQUAL_GROUPS,
+      tierCount: profile.tierCount,
+      tierSize: profile.tierSize,
+      lastTier: profile.lastTier,
+      lastTierMax: profile.lastTierMax,
+    };
 }
 
 export function toPlatformPricingProfileDto(profile: PlatformPricingProfile, sportLeagueCount: number): PlatformPricingProfileDto {
@@ -29,6 +36,7 @@ export function toPlatformPricingProfileDto(profile: PlatformPricingProfile, spo
     topSharePercent: profile.topSharePercent,
     floorSharePercent: profile.floorSharePercent,
     steepness: profile.steepness,
+    sources: [...profile.sources],
     sportLeagueCount,
     createdAt: profile.createdAt.toISOString(),
     updatedAt: profile.updatedAt.toISOString(),

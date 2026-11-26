@@ -29,6 +29,7 @@ const at = (iso: string) => new Date(iso);
 const SYNCED_TO_BALLDONTLIE = { providerLeague: { provider: { code: 'BALLDONTLIE' } } };
 const LEAGUE_ROW = {
   id: 'tour', isActive: true, selectedProviderMapping: SYNCED_TO_BALLDONTLIE, autoReleaseDaysBeforeStart: 7, sport: { sport: Sport.GOLF },
+  platformTierProfile: { sources: [{ basis: 'ODDS' }, { basis: 'SEED' }] },
 };
 
 function runRow(kind: ProviderSyncKind, overrides: Record<string, unknown> = {}) {
@@ -65,7 +66,7 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
 
     const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
 
-    expect(facts).toEqual({ league: { id: 'tour', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7 }, latestRuns: [] });
+    expect(facts).toEqual({ league: { id: 'tour', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, tierSources: ['ODDS', 'SEED'] }, latestRuns: [] });
     expect(prisma.providerSyncRun.findMany).not.toHaveBeenCalled();
   });
 

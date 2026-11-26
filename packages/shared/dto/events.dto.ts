@@ -285,7 +285,7 @@ export const ReplaceSportEventTiersRequestSchema = z.object({
 export type ReplaceSportEventTiersRequest = z.infer<typeof ReplaceSportEventTiersRequestSchema>;
 
 export const AutoAssignSportEventTiersRequestSchema = z.object({
-  tierSize: z.number().int().min(1).optional().describe('Participants per tier but the last, instead of the sport league\'s tier profile\'s; the last tier takes the rest, or up to the profile\'s cap. Omitted: an event with its profile\'s tier count gets the profile\'s tier size (10 for golf\'s six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).'),
+  tierSize: z.number().int().min(1).optional().describe('Participants per tier but the last, instead of the sport league\'s tier profile\'s; the last tier takes the rest, or up to the profile\'s cap. Omitted: an event with its profile\'s tier count gets the profile\'s tier size (10 for golf\'s six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5). 422 TIER_SIZE_NOT_FOR_RANGES when the league\'s tier profile is RANGES: its ranges place the field, so a tier size has nothing to set.'),
 }).describe('Fills the event\'s tiers from the active field, in the order auto-assigned prices use too (#1807): odds, then seed, then rank, decided for the whole field by the first value every participant has, then name.');
 export type AutoAssignSportEventTiersRequest = z.infer<typeof AutoAssignSportEventTiersRequestSchema>;
 

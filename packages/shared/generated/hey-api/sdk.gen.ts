@@ -1675,7 +1675,7 @@ export const replaceEventTiers = <ThrowOnError extends boolean = false>(options:
 /**
  * Fill a sport event's tiers from its active field
  *
- * Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.
+ * Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's tier profile lists: a field is never ordered by name. 422 TIER_SIZE_NOT_FOR_RANGES when a tier size is sent for a league whose tier profile is RANGES.
  */
 export const autoAssignEventTiers = <ThrowOnError extends boolean = false>(options: Options<AutoAssignEventTiersData, ThrowOnError>): RequestResult<AutoAssignEventTiersResponses, AutoAssignEventTiersErrors, ThrowOnError> => (options.client ?? client).post<AutoAssignEventTiersResponses, AutoAssignEventTiersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1705,7 +1705,7 @@ export const replaceEventTierAssignments = <ThrowOnError extends boolean = false
 /**
  * Price a sport event's seeded field
  *
- * Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.
+ * Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name.
  */
 export const autoAssignEventPrices = <ThrowOnError extends boolean = false>(options: Options<AutoAssignEventPricesData, ThrowOnError>): RequestResult<AutoAssignEventPricesResponses, AutoAssignEventPricesErrors, ThrowOnError> => (options.client ?? client).post<AutoAssignEventPricesResponses, AutoAssignEventPricesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1971,7 +1971,7 @@ export const getSportLeague = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Update a sport league
  *
- * The current Season is never set here: the daily recompute sets it (#2003). syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.
+ * The current Season is never set here: the daily recompute sets it (#2003). syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). 422 PROFILE_FIRST_SOURCES_DIFFER when the league's tier and pricing profiles, as the update leaves them, start with different sources (#2160). Root admin only.
  */
 export const updateSportLeague = <ThrowOnError extends boolean = false>(options: Options<UpdateSportLeagueData, ThrowOnError>): RequestResult<UpdateSportLeagueResponses, UpdateSportLeagueErrors, ThrowOnError> => (options.client ?? client).patch<UpdateSportLeagueResponses, UpdateSportLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2182,7 +2182,7 @@ export const getPlatformTierProfile = <ThrowOnError extends boolean = false>(opt
 /**
  * Update a tier profile
  *
- * Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+ * Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create, 422 PROFILE_FIRST_SOURCES_DIFFER when the first source would differ from the first source of the pricing profile a sport league naming it has. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const updatePlatformTierProfile = <ThrowOnError extends boolean = false>(options: Options<UpdatePlatformTierProfileData, ThrowOnError>): RequestResult<UpdatePlatformTierProfileResponses, UpdatePlatformTierProfileErrors, ThrowOnError> => (options.client ?? client).put<UpdatePlatformTierProfileResponses, UpdatePlatformTierProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2245,7 +2245,7 @@ export const getPlatformPricingProfile = <ThrowOnError extends boolean = false>(
 /**
  * Update a pricing profile
  *
- * Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+ * Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create, 422 PROFILE_FIRST_SOURCES_DIFFER when the first source would differ from the first source of the tier profile a sport league naming it has. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const updatePlatformPricingProfile = <ThrowOnError extends boolean = false>(options: Options<UpdatePlatformPricingProfileData, ThrowOnError>): RequestResult<UpdatePlatformPricingProfileResponses, UpdatePlatformPricingProfileErrors, ThrowOnError> => (options.client ?? client).put<UpdatePlatformPricingProfileResponses, UpdatePlatformPricingProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

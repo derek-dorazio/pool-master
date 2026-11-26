@@ -12,6 +12,7 @@ import {
   platformPricingProfilesFixture,
   sportLeagueFixture,
   sportEventFixture,
+  sportEventOverviewFixture,
   tierFixture,
   valuationFixture,
 } from './sport-test-fixtures';
@@ -143,7 +144,7 @@ function renderPage() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/manage/sports/golf/events/evt-1/field']}>
         <Routes>
-          <Route element={<EventTabOutlet />} path="/manage/sports/:sport/events/:eventId">
+          <Route element={<EventTabOutlet overview={sportEventOverviewFixture()} />} path="/manage/sports/:sport/events/:eventId">
             <Route element={<EventFieldTab />} path="field" />
           </Route>
         </Routes>

@@ -65,6 +65,7 @@ const EVENT_OVERVIEW: SportEventOverview = {
   releaseAtKind: 'PLANNED',
   tierOrderBasis: 'ODDS',
   tierOrderCoversField: true,
+  tierOrderSources: ['ODDS', 'SEED', 'RANKING'],
   fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: AT }],
   eventPagePath: '/play/golf/the-masters',
 };
@@ -329,6 +330,7 @@ describe('the event overview', () => {
         releaseAtKind: 'PLANNED',
         tierOrderBasis: 'ODDS',
         tierOrderCoversField: true,
+        tierOrderSources: ['ODDS', 'SEED', 'RANKING'],
         fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: ISO }],
         eventPagePath: '/play/golf/the-masters',
       },
