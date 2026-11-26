@@ -206,7 +206,7 @@ export function splitMiddle(middle: Pick<BracketGroup, 'rounds'>): {
 } {
   // The final is the game the API marks as the final (#2006), never the last round's.
   const finalRound = middle.rounds.find((round) => round.games.length === 1 && round.games.every(({ game }) => isFinalGame(game))) ?? null;
-  const final = finalRound?.games[0] ?? null;
+  const final = finalRound?.games.find(({ game }) => isFinalGame(game)) ?? null;
   const before = middle.rounds.filter((round) => round !== finalRound);
   const half = (round: BracketDrawnRound, side: 'left' | 'right'): BracketDrawnRound => {
     const cut = Math.ceil(round.games.length / 2);

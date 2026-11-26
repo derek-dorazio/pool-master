@@ -1,7 +1,5 @@
 {
   "$comment": "Shrink-only per-file counts for poolmaster/no-positional-pick (#2115; rules/domain-model-conventions-rules.md \u00a717). Each entry is code a league-model slice rewrites to read the model's field: the bracket's final and regions (#2006), the default squares game (#2050), the contest's event in picks (#2016), the playoff bracket's first round and final (#2052) and a series' game 1 (#2007). Lower an entry when its hits go; rules:check:baseline-ratchet refuses a raise.",
-  "clients/poolmaster/src/features/contests/bracket-middle.tsx": 1,
-  "clients/poolmaster/src/features/contests/bracket-view-model.ts": 6,
   "clients/poolmaster/src/features/contests/create-contest/use-create-contest-form.ts": 1,
   "packages/core-api/src/adapters/prisma-contest-entry-match-prediction-repository.ts": 1,
   "packages/core-api/src/modules/contest-entry-picks/service.ts": 1,
