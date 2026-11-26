@@ -509,7 +509,9 @@ administration area (root admin included), reusing the same shared components.
     covering a slot the chosen event plays. Every sport league has exactly one
     default for each format (selection type), so setup never starts blank; a
     variation is added only where there is something to vary (an upset bonus,
-    a second-chance bracket), never for its own sake. A league starts on the
+    where the field has seeds), never for its own sake. Which formats and
+    variations to offer a league is guidance, not a rule: the recommendations
+    and their reasons are `docs/CONTEST-TEMPLATE-GUIDELINES.md`. A league starts on the
     format whose default sorts first. The seeded-template integration test
     checks all of it. The same names and descriptions are the contest types
     menu (#803): the public How to Play page shows each way to play once, as an

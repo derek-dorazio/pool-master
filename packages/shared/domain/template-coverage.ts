@@ -6,6 +6,7 @@
  */
 import { MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
 import type { ContestTemplateSlot } from './contest-management-types';
+import type { ContestScoringSettings } from './contest-scoring';
 import { compareSlotDefinitions, compareSlotPlaces } from './sport-league-structure';
 
 /** Why a template's listed slots are refused (#2010, #2153). */
@@ -19,6 +20,11 @@ export const TemplateCoverageProblem = {
   ALL_LISTED_SPANS_EVENTS: 'ALL_LISTED_SPANS_EVENTS',
   /** A bracket lists a slot where a side need not advance: a field, or a week of a season's games. */
   BRACKET_OUTSIDE_KNOCKOUT: 'BRACKET_OUTSIDE_KNOCKOUT',
+  /**
+   * A template scored by knockout round points that covers all its listed bracket rounds gives
+   * other than one round value for each (#2177): a round with no value would score nothing.
+   */
+  ROUND_VALUES_MISMATCH: 'ROUND_VALUES_MISMATCH',
 } as const;
 export type TemplateCoverageProblem = (typeof TemplateCoverageProblem)[keyof typeof TemplateCoverageProblem];
 
@@ -32,12 +38,40 @@ function isBracketSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat
 }
 
 /**
+ * Whether a listed slot is one round of a bracket (#2177): slots govern rounds, so each knockout
+ * slot is a round, and the FINAL slot's round is the final. The third-place play-off is a match
+ * beside the bracket, no round of it; a TOURNAMENT slot is an event of its own, whose rounds its
+ * slot does not show.
+ */
+function isBracketRoundSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>): boolean {
+  return isBracketSlot(slot) && slot.slotKind !== SlotKind.THIRD_PLACE && slot.slotKind !== SlotKind.TOURNAMENT;
+}
+
+/**
+ * The bracket rounds a template's scoring must give a value for, in play order, or null when its
+ * slots do not show them: a template covering all its listed slots, none a TOURNAMENT, scores
+ * every listed bracket round (#2177). One that covers a slot at a time, or a tournament, plays
+ * whatever rounds its event has.
+ */
+function templateBracketRounds<Slot extends Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>>(
+  template: { coverageMode: TemplateCoverageMode },
+  slots: readonly Slot[],
+): Slot[] | null {
+  if (template.coverageMode !== TemplateCoverageMode.ALL_LISTED || slots.some((slot) => slot.slotKind === SlotKind.TOURNAMENT)) {
+    return null;
+  }
+  return slots.filter(isBracketRoundSlot);
+}
+
+/**
  * The first problem with a template's listed slots, or null when they are fine. ALL_LISTED and
  * FROM_SLOT list slots of one competition (a ONE_SLOT contest covers one slot, so never crosses); ALL_LISTED covers one event's slots, so a TOURNAMENT slot (an event of
- * its own) is listed alone; a bracket lists only slots where one side always advances.
+ * its own) is listed alone; a bracket lists only slots where one side always advances; and
+ * knockout round points give one value for each bracket round the slots list
+ * (`templateBracketRounds`).
  */
 export function templateCoverageProblem(
-  template: { coverageMode: TemplateCoverageMode; selectionType: SelectionType },
+  template: { coverageMode: TemplateCoverageMode; selectionType: SelectionType; configJson: { scoring?: ContestScoringSettings } },
   slots: readonly Pick<ContestTemplateSlot, 'sportLeagueCompetitionId' | 'slotKind' | 'matchFormat'>[],
 ): TemplateCoverageProblem | null {
   if (template.coverageMode !== TemplateCoverageMode.ONE_SLOT && new Set(slots.map((slot) => slot.sportLeagueCompetitionId)).size > 1) {
@@ -51,6 +85,11 @@ export function templateCoverageProblem(
   }
   if (template.selectionType === SelectionType.BRACKET && !slots.every(isBracketSlot)) {
     return TemplateCoverageProblem.BRACKET_OUTSIDE_KNOCKOUT;
+  }
+  const scoring = template.configJson.scoring;
+  const rounds = templateBracketRounds(template, slots);
+  if (scoring?.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rounds !== null && scoring.config.roundValues.length !== rounds.length) {
+    return TemplateCoverageProblem.ROUND_VALUES_MISMATCH;
   }
   return null;
 }

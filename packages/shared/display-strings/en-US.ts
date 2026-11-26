@@ -905,6 +905,7 @@ export const enUS = {
     CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT: 'Pick slots from this sport league only.',
     CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS: 'Covering all of its slots needs one event\'s slots.',
     CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT: 'A bracket can cover knockout slots only.',
+    CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH: 'Give one round value for each round the slots cover.',
     CONTEST_DELETE_STATUS_INVALID: 'A contest can only be deleted while it is being set up.',
     CONTEST_DRAW_ALREADY_RUN: 'This contest has already been drawn. The draw is final.',
     CONTEST_DRAW_ENTRIES_CHANGED: 'Someone entered or left while the draw was running, so nothing was dealt. Run the draw again.',
