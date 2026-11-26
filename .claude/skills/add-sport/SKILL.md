@@ -77,6 +77,11 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      field pool never spans events (ADR 0014).
    A new selection type is separate work through the selection-engine registry, not part of
    adding a sport.
+   Which of these a league should offer, and how many variations of each, is a judgement, not a
+   rule: start from the recommendations in `docs/CONTEST-TEMPLATE-GUIDELINES.md` (the 12-team
+   cut for tiered and budget, the random draw and bracket variations by whether the field has
+   seeds, where squares fit, Clutch Card and Margin Card), and say in the PR where the league
+   departs from them. For Clutch Card on a new sport, ask the owner first.
 4. **Results source.** A new provider follows `rules/architecture-rules.md` §3 *Provider and
    Adapter Registry Discipline*.
 5. **Vocabulary.** Check `rules/domain-model-concepts.md` §2 *Vocabulary* so product terms
