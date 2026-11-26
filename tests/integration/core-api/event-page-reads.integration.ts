@@ -186,7 +186,7 @@ describe('an event\'s rounds read where each round stands', () => {
   it('groups a week\'s games by round and status, with the latest completion time of each group', async () => {
     const { event, games } = await seedFootballWeek({ games: 3, startDate: new Date('2026-11-01T18:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, played: 2 });
     const completedAt = new Date('2026-11-01T21:30:00.000Z');
-    await getPrisma().sportEventRoundMatch.updateMany({ where: { id: { in: games.slice(0, 2).map((game) => game.id) } }, data: { completedAt } });
+    await getPrisma().sportEventRoundMatchGame.updateMany({ where: { sportEventRoundMatchId: { in: games.slice(0, 2).map((game) => game.id) } }, data: { completedAt } });
 
     const facts = await new PrismaSportEventRoundRepository(getAppPrisma()).findResultFacts(event.id);
 

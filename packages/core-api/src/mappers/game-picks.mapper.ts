@@ -4,7 +4,7 @@
  */
 
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
-import { finalRoundsOfMatches, matchSpread, PredictedResult, type PredictedChoice, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { finalRoundsOfMatches, matchIsNeutralSite, matchSpread, PredictedResult, type PredictedChoice, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   GAME_PICKS_TIEBREAKER_MAX,
   type GamePickGameDto,
@@ -39,7 +39,7 @@ function toGamePickGameDto(game: GamePickGame, finalRounds: ReadonlySet<number>)
     isFinal: finalRounds.has(match.roundNumber),
     kickoff: game.kickoff.toISOString(),
     status: match.status,
-    isNeutralSite: match.isNeutralSite,
+    isNeutralSite: matchIsNeutralSite(match),
     regionLabel: match.regionLabel,
     homeSpread: homeSpreadOf(match),
     home: game.home,
@@ -123,7 +123,7 @@ function toGamePickPreviewGameDto(game: GamePreview, finalRounds: ReadonlySet<nu
     isFinal: finalRounds.has(match.roundNumber),
     kickoff: game.kickoff.toISOString(),
     status: match.status,
-    isNeutralSite: match.isNeutralSite,
+    isNeutralSite: matchIsNeutralSite(match),
     regionLabel: match.regionLabel,
     homeSpread: homeSpreadOf(match),
     home: game.home,

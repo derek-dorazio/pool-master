@@ -48,7 +48,7 @@ const MAPPED_GAME: ProviderMappedGame = {
   externalId: '424095',
   game: {
     id: 'game-1', sportEventId: LIVE_EVENT_ID, sportEventRoundMatchId: 'match-1', sportEventSlotId: 'event-slot-1', gameNumber: 1,
-    scheduledDate: null, status: MatchStatus.IN_PROGRESS, completedAt: null,
+    scheduledDate: null, isNeutralSite: false, status: MatchStatus.IN_PROGRESS, completedAt: null,
     movedToGameId: null, lastProviderNotificationAt: null, createdAt: NOW, updatedAt: NOW,
     sideResults: [
       { sportEventRoundMatchSideId: 'match-1-s1', sideNumber: 1, score: 3, homeAway: HomeAway.AWAY, periodScores: [] },

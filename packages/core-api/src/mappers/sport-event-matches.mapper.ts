@@ -5,6 +5,8 @@
 import {
   MatchStatus,
   isMatchUnplayed,
+  matchCompletedAt,
+  matchIsNeutralSite,
   matchScoreOf,
   runningPeriodScores,
   shootoutScoreOf,
@@ -25,13 +27,13 @@ export function mapSportEventRoundMatchToDto(match: SportEventRoundMatch): Sport
     roundNumber: match.roundNumber,
     slot: mapRoundSlotToDto(match.slot),
     matchNumber: match.matchNumber,
-    isNeutralSite: match.isNeutralSite,
+    isNeutralSite: matchIsNeutralSite(match),
     scheduledDate: match.scheduledDate?.toISOString() ?? null,
     status: match.status,
     isFinal: match.status === MatchStatus.COMPLETED,
     isUnplayed: isMatchUnplayed(match.status),
     ending: match.ending,
-    completedAt: match.completedAt?.toISOString() ?? null,
+    completedAt: matchCompletedAt(match)?.toISOString() ?? null,
     advancesTo: match.advancesToMatchId === null || match.advancesToSideNumber === null
       ? null
       : { matchId: match.advancesToMatchId, sideNumber: match.advancesToSideNumber },

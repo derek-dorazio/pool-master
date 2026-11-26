@@ -28,6 +28,7 @@ import {
   type SportEventRoundMatch,
   isSportEventStatusFinished,
   requireProviderCodeOfSourceId,
+  matchIsNeutralSite,
 } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 import { reseededRounds, roundPlacementBlocker } from './bracket-reseed';
@@ -169,7 +170,7 @@ export class ProviderGameSlateService {
         if (target !== undefined && target.externalId !== null) continue;
         const id = target?.game.id ?? randomUUID();
         if (target === undefined) {
-          created.push({ id, sportEventId: event.id, sportEventRoundMatchId: match.id, sportEventSlotId: gameOne.game.sportEventSlotId, gameNumber });
+          created.push({ id, sportEventId: event.id, sportEventRoundMatchId: match.id, sportEventSlotId: gameOne.game.sportEventSlotId, gameNumber, isNeutralSite: gameOne.game.isNeutralSite });
         }
         mapped.push({ sportEventRoundMatchGameId: id, externalId: providerGameId });
       }
@@ -442,7 +443,7 @@ function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly 
       : next !== undefined && isAtPlace(next, slot.advancesTo) && match.advancesToSideNumber === slot.advancesTo.sideNumber;
     return advancesAlike
       && slot.sides.every((side) => sideParticipantId(match, side.sideNumber) === side.sportEventParticipantId)
-      && match.isNeutralSite === slot.isNeutralSite
+      && matchIsNeutralSite(match) === slot.isNeutralSite
       && match.regionLabel === (slot.regionLabel ?? null);
   });
 }

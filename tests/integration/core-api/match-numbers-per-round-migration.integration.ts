@@ -82,9 +82,10 @@ describe('the match numbers per round migration', () => {
       await tx.$executeRawUnsafe('DROP INDEX "sport_event_round_matches_sport_event_round_id_match_number_key"');
       await tx.$executeRawUnsafe('CREATE INDEX "sport_event_round_matches_sport_event_id_match_number_key" ON "sport_event_round_matches"("sport_event_id", "match_number")');
       await tx.$executeRawUnsafe('CREATE INDEX "sport_event_round_matches_sport_event_round_id_idx" ON "sport_event_round_matches"("sport_event_round_id")');
-      // The column a match advanced into a side by, which the later match sides migration (#2046) replaced with a side number.
+      // The column a match advanced into a side by, which the later match sides migration (#2046)
+      // replaced with a side number, and where it was played, which a later one (#2047) moved onto its Games.
       await tx.$executeRawUnsafe('CREATE TYPE "PrismaMatchSide" AS ENUM (\'HOME\', \'AWAY\')');
-      await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" DROP CONSTRAINT "sport_event_round_matches_advances_to_side_number_check", ADD COLUMN "advances_to_side" "PrismaMatchSide"');
+      await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" DROP CONSTRAINT "sport_event_round_matches_advances_to_side_number_check", ADD COLUMN "advances_to_side" "PrismaMatchSide", ADD COLUMN "is_neutral_site" BOOLEAN NOT NULL DEFAULT false');
       for (const row of rows) {
         // poolmaster-allow-query-in-loop: ten fixture matches, inserted as the old table held them
         await tx.$executeRaw`INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "advances_to_match_id", "advances_to_side", "is_neutral_site", "updated_at")
@@ -124,7 +125,7 @@ describe('a match\'s number, unique within its round', () => {
     const { eventId, roundIds } = await eventWithRounds('Two Match Ones', 2);
     const [first, second] = roundIds;
     const matchOne = (sportEventRoundId: string | undefined) => prisma.sportEventRoundMatch.create({
-      data: { sportEventId: eventId, sportEventRoundId: sportEventRoundId ?? '', matchNumber: 1, isNeutralSite: false },
+      data: { sportEventId: eventId, sportEventRoundId: sportEventRoundId ?? '', matchNumber: 1 },
     });
 
     await matchOne(first);

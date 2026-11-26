@@ -74,10 +74,8 @@ export async function createMatchRow(prisma: PrismaClient, input: MatchRowCreate
       sportEventId,
       sportEventRoundId,
       matchNumber,
-      isNeutralSite,
       scheduledDate,
       status,
-      completedAt,
     },
   });
   const sides = await prisma.sportEventRoundMatchSide.createManyAndReturn({
@@ -90,6 +88,7 @@ export async function createMatchRow(prisma: PrismaClient, input: MatchRowCreate
       sportEventSlotId,
       gameNumber: 1,
       scheduledDate,
+      isNeutralSite,
       status,
       completedAt,
       ...(providerMapping ? { providerMappings: { create: providerMapping } } : {}),

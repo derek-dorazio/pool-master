@@ -63,6 +63,7 @@ import {
   seriesWinsNeeded,
   type SportEventRoundMatch,
   type SportEventRoundMatchGame,
+  matchIsNeutralSite,
 } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
@@ -347,7 +348,7 @@ function placeUnmappedGames(
       }
       const gameId = stored?.game.id ?? randomUUID();
       if (stored === undefined) {
-        placement.created.push({ id: gameId, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: slotOfMatch(match, storedGames), gameNumber });
+        placement.created.push({ id: gameId, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: slotOfMatch(match, storedGames), gameNumber, isNeutralSite: matchIsNeutralSite(match) });
         placement.gamesChangedEventIds.add(sportEventId);
       }
       placement.mapped.push({ sportEventRoundMatchGameId: gameId, externalId: feed.providerGameId });
@@ -538,8 +539,8 @@ function resultFromGame(
   const home: ScoredSide = { sideNumber: homeSide.sideNumber, score: game.homeScore, shootoutScore: level && shootout ? shootout.home : null };
   const away: ScoredSide = { sideNumber: awaySide.sideNumber, score: game.awayScore, shootoutScore: level && shootout ? shootout.away : null };
   const sides: FeedSideScore[] = [
-    { ...home, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.HOME },
-    { ...away, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.AWAY },
+    { ...home, homeAway: matchIsNeutralSite(match) ? HomeAway.NONE : HomeAway.HOME },
+    { ...away, homeAway: matchIsNeutralSite(match) ? HomeAway.NONE : HomeAway.AWAY },
   ].sort((left, right) => left.sideNumber - right.sideNumber);
   return { winnerSideNumber: winnerOfScores(home, away), sides };
 }

@@ -32,6 +32,7 @@ import {
   type User,
   matchSpread,
   sideOfParticipant,
+  matchIsNeutralSite,
 } from '@poolmaster/shared/domain';
 import {
   emailRecipientOf,
@@ -321,7 +322,7 @@ function teamSpread(match: SportEventRoundMatch, team: GamePickTeam): number | n
 function describeMatchup(game: GamePickGame): string {
   const away = game.predictedAway ?? game.away;
   const home = game.predictedHome ?? game.home;
-  return `${away?.name ?? 'To be decided'} ${game.match.isNeutralSite ? 'vs' : 'at'} ${home?.name ?? 'To be decided'}`;
+  return `${away?.name ?? 'To be decided'} ${matchIsNeutralSite(game.match) ? 'vs' : 'at'} ${home?.name ?? 'To be decided'}`;
 }
 
 /** "45 total points (Bills at Chiefs)": the guess of its game's total score, in the sport's unit. */

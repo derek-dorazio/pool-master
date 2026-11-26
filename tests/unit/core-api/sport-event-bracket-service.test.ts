@@ -2,7 +2,7 @@ import { bracketInput, editInput, homeAwayOf, withHomeAway, type HomeAwayBracket
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { HomeAway, isAtPlace, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { HomeAway, isAtPlace, matchIsNeutralSite, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -245,7 +245,7 @@ describe('SportEventBracketService.updateMatch', () => {
 
     const match = await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, editInput({ scheduledDate: tipOff, isNeutralSite: false }));
 
-    expect(match).toMatchObject({ scheduledDate: tipOff, isNeutralSite: false });
+    expect([match.scheduledDate, matchIsNeutralSite(match)]).toEqual([tipOff, false]);
     expect(homeAwayOf(match).homeSportEventParticipantId).toBe(context.duke.id);
   });
 

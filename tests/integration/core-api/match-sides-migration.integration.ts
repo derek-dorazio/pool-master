@@ -56,14 +56,16 @@ const PUT_BACK = [
   'DROP TYPE "PrismaPeriodKind"',
   'CREATE TYPE "PrismaMatchSide" AS ENUM (\'HOME\', \'AWAY\')',
   'CREATE TYPE "PrismaMatchResultSource" AS ENUM (\'PROVIDER\')',
-  // The match's home and away columns, its result and where its winner goes by side name.
+  // The match's home and away columns, its result, where its winner goes by side name, and where
+  // it was played, which a later migration (#2047) moved onto its Games.
   'ALTER TABLE "sport_event_round_matches" DROP CONSTRAINT "sport_event_round_matches_advances_to_side_number_check", DROP CONSTRAINT "sport_event_round_matches_ending_check"',
   'DROP INDEX "sport_event_round_matches_advances_to_match_id_advances_to__key"',
   `ALTER TABLE "sport_event_round_matches" DROP COLUMN "advances_to_side_number",
     ADD COLUMN "advances_to_side" "PrismaMatchSide", ADD COLUMN "home_sport_event_participant_id" UUID, ADD COLUMN "away_sport_event_participant_id" UUID,
     ADD COLUMN "winner_side" "PrismaMatchSide", ADD COLUMN "home_score" INTEGER, ADD COLUMN "away_score" INTEGER,
     ADD COLUMN "home_shootout_score" INTEGER, ADD COLUMN "away_shootout_score" INTEGER, ADD COLUMN "home_spread" DECIMAL(4,1),
-    ADD COLUMN "result_source" "PrismaMatchResultSource"`,
+    ADD COLUMN "result_source" "PrismaMatchResultSource",
+    ADD COLUMN "is_neutral_site" BOOLEAN NOT NULL DEFAULT false`,
   'ALTER TABLE "sport_event_round_matches" ADD CONSTRAINT "sport_event_round_matches_home_sport_event_participant_id_fkey" FOREIGN KEY ("home_sport_event_participant_id") REFERENCES "sport_event_participants"("id")',
   'ALTER TABLE "sport_event_round_matches" ADD CONSTRAINT "sport_event_round_matches_away_sport_event_participant_id_fkey" FOREIGN KEY ("away_sport_event_participant_id") REFERENCES "sport_event_participants"("id")',
   'CREATE INDEX "sport_event_round_matches_home_sport_event_participant_id_idx" ON "sport_event_round_matches"("home_sport_event_participant_id")',

@@ -523,7 +523,10 @@ table set for every variant.
     reads sides by number, never by assuming home or away.
   - **Home/away is per Game, on the Game side result** (`homeAway` `HOME` / `AWAY` / `NONE`),
     because it alternates within a series; a neutral-site Game or a `FIELD` match records
-    `NONE`. **The seed is on the event field row only**, never copied onto a Match side.
+    `NONE`. **The neutral site and the completion time are the Game's** (#2047): a Match keeps
+    neither, and its "vs or at" and its `completedAt` are read from its Games through
+    `matchIsNeutralSite` and `matchCompletedAt`. **The seed is on the event field row only**,
+    never copied onto a Match side.
   - **A Game is one game played** in a Match, and each side's result in that Game is one
     Game side result row (score, position, periods completed, home/away, status). A side's outcome in
     the Match (WON / LOST / TIED / PENDING) is a rollup of its Games.

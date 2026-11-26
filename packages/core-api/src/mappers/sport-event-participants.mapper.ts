@@ -6,6 +6,7 @@
  * the upload card shows.
  */
 
+import { latestParticipantRound } from '@poolmaster/shared/domain';
 import type {
   SportEventParticipantDto,
   SportEventParticipantUploadPreviewResponse,
@@ -45,7 +46,7 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
           status: standing.standing.status,
           asOf: standing.standing.asOf?.toISOString() ?? null,
           // The highest round it has a score in (#2047): read off its rounds, never stored.
-          currentRound: view.rounds.length === 0 ? null : Math.max(...view.rounds.map(({ round }) => round.roundNumber)),
+          currentRound: latestParticipantRound(view.rounds, ({ round }) => round)?.round.roundNumber ?? null,
           golf: standing.golf
             ? {
                 eventScoreToPar: standing.golf.eventScoreToPar,
