@@ -17,26 +17,30 @@ import {
 } from '@poolmaster/shared/domain';
 import { toEntryEventStatus } from './prisma-contest-entry-repository';
 
-type PredictionRow = Awaited<ReturnType<PrismaClient['contestEntryMatchPrediction']['findMany']>>[number];
+/** A pick is read with the team on the match side it picked (#2046). */
+const WITH_SIDE = { side: { select: { sportEventParticipantId: true } } } as const satisfies Prisma.ContestEntryMatchPredictionInclude;
+
+type PredictionRow = Prisma.ContestEntryMatchPredictionGetPayload<{ include: typeof WITH_SIDE }>;
 
 /**
- * What the row predicts: its team, or a tie. The database's check keeps the team named exactly
- * when the result is TEAM, so a team row without one is a broken row.
+ * What the row predicts: the team on its side, or a tie. The database's check keeps the side named
+ * exactly when the result is TEAM, so a team row without a team on its side is a broken row.
  */
 function toChoice(row: PredictionRow): PredictedChoice {
   if (row.predictedResult === PredictedResult.TIE) {
     return { predictedResult: PredictedResult.TIE, sportEventParticipantId: null };
   }
-  if (row.sportEventParticipantId === null) {
+  const team = row.side?.sportEventParticipantId ?? null;
+  if (team === null) {
     throw new Error(`Match prediction ${row.id} is a team pick with no team.`);
   }
-  return { predictedResult: PredictedResult.TEAM, sportEventParticipantId: row.sportEventParticipantId };
+  return { predictedResult: PredictedResult.TEAM, sportEventParticipantId: team };
 }
 
 /** The entry's row for one event, as a change reads and writes it. */
 const WEEK_EVENT = { sportEventId: true, status: true, submittedAt: true, tiebreakerValue: true } as const;
 /** A pick with its game's round and number, so a week's picks can be put in game order without another read. */
-const WITH_MATCH_PLACE = { sportEventRoundMatch: { select: { matchNumber: true, sportEventRound: { select: { roundNumber: true } } } } } as const;
+const WITH_MATCH_PLACE = { ...WITH_SIDE, sportEventRoundMatch: { select: { matchNumber: true, sportEventRound: { select: { roundNumber: true } } } } } as const;
 /** Game order: round first, then the match's number within its round (#2161). */
 const IN_GAME_ORDER = [
   { sportEventRoundMatch: { sportEventRound: { roundNumber: 'asc' } } },
@@ -75,6 +79,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
   async findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]> {
     const rows = await this.prisma.contestEntryMatchPrediction.findMany({
       where: { contestEntryId, sportEventRoundMatch: { sportEventId } },
+      include: WITH_SIDE,
       orderBy: IN_GAME_ORDER,
     });
     return rows.map(toPrediction);
@@ -86,6 +91,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
     }
     const rows = await this.prisma.contestEntryMatchPrediction.findMany({
       where: { contestEntryId: { in: [...contestEntryIds] }, sportEventRoundMatch: { sportEventId } },
+      include: WITH_SIDE,
       orderBy: [{ contestEntryId: 'asc' }, ...IN_GAME_ORDER],
     });
     return rows.map(toPrediction);
@@ -97,7 +103,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
     }
     const rows = await this.prisma.contestEntryMatchPrediction.findMany({
       where: { contestEntryId: { in: [...contestEntryIds] }, sportEventRoundMatch: { sportEventId: { in: [...sportEventIds] } } },
-      include: { sportEventRoundMatch: { select: { sportEventId: true } }, sportEventParticipant: { select: { participantId: true } } },
+      include: { sportEventRoundMatch: { select: { sportEventId: true } }, side: { select: { sportEventParticipantId: true, sportEventParticipant: { select: { participantId: true } } } } },
       orderBy: [{ contestEntryId: 'asc' }, ...IN_GAME_ORDER],
     });
     return rows.map((row): ContestEntrySeasonPrediction => {
@@ -106,10 +112,11 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
       if (prediction.predictedResult === PredictedResult.TIE) {
         return { ...prediction, sportEventId, participantId: null };
       }
-      if (row.sportEventParticipant === null) {
+      const team = row.side?.sportEventParticipant ?? null;
+      if (team === null) {
         throw new Error(`Match prediction ${row.id} is a team pick with no team.`);
       }
-      return { ...prediction, sportEventId, participantId: row.sportEventParticipant.participantId };
+      return { ...prediction, sportEventId, participantId: team.participantId };
     });
   }
 
@@ -149,10 +156,22 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           where: { contestEntryId, sportEventRoundMatchId: { in: [...replacedMatchIds] } },
         });
       }
+      // A team pick names the side its team plays in the game (#2046).
+      const teamPicks = saves.filter((save) => save.sportEventParticipantId !== null);
+      const sides = teamPicks.length === 0 ? [] : await tx.sportEventRoundMatchSide.findMany({
+        where: { OR: teamPicks.map(({ sportEventRoundMatchId, sportEventParticipantId }) => ({ sportEventRoundMatchId, sportEventParticipantId })) },
+        select: { id: true, sportEventRoundMatchId: true, sportEventParticipantId: true },
+      });
+      const sideOf = (sportEventRoundMatchId: string, sportEventParticipantId: string | null): string | null => {
+        if (sportEventParticipantId === null) return null;
+        const side = sides.find((each) => each.sportEventRoundMatchId === sportEventRoundMatchId && each.sportEventParticipantId === sportEventParticipantId);
+        if (side === undefined) throw new Error(`Team ${sportEventParticipantId} plays neither side of match ${sportEventRoundMatchId}.`);
+        return side.id;
+      };
       const created = saves.length > 0
         ? await tx.contestEntryMatchPrediction.createManyAndReturn({
           data: saves.map(({ sportEventRoundMatchId, predictedResult, sportEventParticipantId, confidence }) => ({
-            contestEntryId, sportEventRoundMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at,
+            contestEntryId, sportEventRoundMatchId, predictedResult, sportEventRoundMatchSideId: sideOf(sportEventRoundMatchId, sportEventParticipantId), confidence, pickedAt: at,
           })),
           include: WITH_MATCH_PLACE,
         })

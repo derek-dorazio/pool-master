@@ -18,7 +18,6 @@ export const baseballSportDefinition: SportDefinition = {
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  shootout: false,
   // A four-round postseason reads Wild Card Series, Division Series, League Championship Series,
   // World Series; a shorter one keeps the names counted back from its final.
 };

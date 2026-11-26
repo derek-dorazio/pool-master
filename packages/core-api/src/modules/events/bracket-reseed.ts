@@ -8,9 +8,12 @@
  * in its own region. A side an earlier match's link fills keeps that winner.
  */
 
-import { finalRoundsOfMatches, isMatchUnplayed, MatchSide, MatchStatus, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { finalRoundsOfMatches, isMatchUnplayed, matchSideOfSideNumber, MatchSide, MatchStatus, PeriodKind, sideNumberOfMatchSide, sideParticipantId, winnerParticipantId, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 
-/** Both sides of one match of a reseeded round, as the admin sets them. */
+/**
+ * Both sides of one match of a reseeded round, as the admin sets them: the host on the home side,
+ * side 2 (#2046 part b names them by side).
+ */
 export interface RoundMatchup {
   matchNumber: number;
   homeSportEventParticipantId: string;
@@ -28,12 +31,21 @@ interface EnteringTeam {
 
 const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
 
-function sideOf(match: Pick<SportEventRoundMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>, side: MatchSide): string | null {
-  return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
+function sideOf(match: Pick<SportEventRoundMatch, 'id' | 'sides'>, side: MatchSide): string | null {
+  return sideParticipantId(match, sideNumberOfMatchSide(side));
 }
 
 function winnerOf(match: SportEventRoundMatch): string | null {
-  return match.status === MatchStatus.COMPLETED && match.winnerSide !== null ? sideOf(match, match.winnerSide) : null;
+  return match.status === MatchStatus.COMPLETED ? winnerParticipantId(match) : null;
+}
+
+/** Each side a link fills, as the match it fills and that side. */
+function linkedSides(matches: readonly SportEventRoundMatch[]): { matchId: string; side: MatchSide }[] {
+  return matches.flatMap((match) => (match.advancesToMatchId === null || match.advancesToSideNumber === null ? [] : [{ matchId: match.advancesToMatchId, side: matchSideOfSideNumber(match.advancesToSideNumber) }]));
+}
+
+function isLinked(linked: readonly { matchId: string; side: MatchSide }[], matchId: string, side: MatchSide): boolean {
+  return linked.some((each) => each.matchId === matchId && each.side === side);
 }
 
 /** The rounds whose teams are placed by reseeding: each after a round with a match that links nowhere, short of the final's (#2006). */
@@ -61,9 +73,7 @@ export interface ReseededPlaceGap {
  * reseeded round those are placed later too.
  */
 export function findReseededPlaceGaps(bracket: readonly SportEventRoundMatch[]): ReseededPlaceGap[] {
-  const fedSides = new Set(bracket
-    .filter((match) => match.advancesToMatchId !== null && match.advancesToSide !== null)
-    .map((match) => `${match.advancesToMatchId}/${match.advancesToSide}`));
+  const fedSides = linkedSides(bracket);
   const gaps: ReseededPlaceGap[] = [];
   for (const roundNumber of [...reseededRounds(bracket)].sort((left, right) => left - right)) {
     const round = bracket.filter((match) => match.roundNumber === roundNumber);
@@ -72,7 +82,7 @@ export function findReseededPlaceGaps(bracket: readonly SportEventRoundMatch[]):
     for (const regionLabel of regions) {
       const openPlaces = round
         .filter((match) => match.regionLabel === regionLabel)
-        .flatMap((match) => SIDES.filter((side) => sideOf(match, side) === null && !fedSides.has(`${match.id}/${side}`)))
+        .flatMap((match) => SIDES.filter((side) => sideOf(match, side) === null && !isLinked(fedSides, match.id, side)))
         .length;
       const winnersToCome = unlinkedBefore.filter((match) => match.regionLabel === regionLabel).length;
       if (openPlaces !== winnersToCome) gaps.push({ roundNumber, regionLabel, openPlaces, winnersToCome });
@@ -100,7 +110,7 @@ export function roundPlacementBlocker(bracket: readonly SportEventRoundMatch[], 
   }
   // A game with a quarter score (#772) has started, though its status may still read SCHEDULED.
   const started = bracket.filter((match) => match.roundNumber === roundNumber
-    && (!isMatchUnplayed(match.status) || match.periodScores.length > 0));
+    && (!isMatchUnplayed(match.status) || match.games.some((game) => game.sideResults.some((result) => result.periodScores.some((period) => period.kind !== PeriodKind.SHOOTOUT)))));
   if (started.length > 0) {
     return {
       code: 'BRACKET_ROUND_ALREADY_PLAYED',
@@ -119,15 +129,13 @@ function enteringTeams(bracket: readonly SportEventRoundMatch[], roundNumber: nu
   const previous = bracket.filter((match) => match.roundNumber === roundNumber - 1);
   const round = bracket.filter((match) => match.roundNumber === roundNumber);
   const playedBefore = new Set(previous.flatMap((match) => SIDES.map((side) => sideOf(match, side))).filter((id): id is string => id !== null));
-  const fedSides = new Set(previous
-    .filter((match) => match.advancesToMatchId !== null && match.advancesToSide !== null)
-    .map((match) => `${match.advancesToMatchId}/${match.advancesToSide}`));
+  const fedSides = linkedSides(previous);
   const fixed = new Map<string, EnteringTeam>();
   for (const match of round) {
     for (const side of SIDES) {
       const rowId = sideOf(match, side);
       if (rowId === null) continue;
-      if (fedSides.has(`${match.id}/${side}`) || !playedBefore.has(rowId)) {
+      if (isLinked(fedSides, match.id, side) || !playedBefore.has(rowId)) {
         fixed.set(rowId, { sportEventParticipantId: rowId, seedNumber: seedOf.get(rowId) ?? null, regionLabel: match.regionLabel, fixedAt: { matchNumber: match.matchNumber, side } });
       }
     }

@@ -395,8 +395,8 @@ export const MatchStatusOrder = explicitOrder<MatchStatus>({
 });
 
 /**
- * One side of a match (#698). On a neutral site HOME is the upper line of the bracket; screens
- * say "vs" there and "@" otherwise.
+ * One side of a match as the API still names it (#698): HOME is side 2 and AWAY side 1
+ * (`matchSideNumber`), until the web app reads sides by number (#2046 part b).
  */
 export const MatchSide = {
   HOME: 'HOME',
@@ -407,6 +407,60 @@ export type MatchSide = (typeof MatchSide)[keyof typeof MatchSide];
 export const MatchSideOrder = explicitOrder<MatchSide>({
   [MatchSide.HOME]: 0,
   [MatchSide.AWAY]: 1,
+});
+
+/**
+ * How one side of a match came out (#2046), rolled up from the match's Games by the result writer
+ * alone: PENDING until the match is decided, then WON and LOST, or TIED on both sides of a match
+ * that can end level (`canEndTied`).
+ */
+export const MatchSideOutcome = {
+  PENDING: 'PENDING',
+  WON: 'WON',
+  LOST: 'LOST',
+  TIED: 'TIED',
+} as const;
+export type MatchSideOutcome = (typeof MatchSideOutcome)[keyof typeof MatchSideOutcome];
+/** The order the values are declared in: undecided first. */
+export const MatchSideOutcomeOrder = explicitOrder<MatchSideOutcome>({
+  [MatchSideOutcome.PENDING]: 0,
+  [MatchSideOutcome.WON]: 1,
+  [MatchSideOutcome.LOST]: 2,
+  [MatchSideOutcome.TIED]: 3,
+});
+
+/**
+ * Where one side played one Game (#2046): at home, away, or NONE at a neutral site. Stored per
+ * Game, since home court alternates in a series; screens say "at" or "vs" from it.
+ */
+export const HomeAway = {
+  HOME: 'HOME',
+  AWAY: 'AWAY',
+  NONE: 'NONE',
+} as const;
+export type HomeAway = (typeof HomeAway)[keyof typeof HomeAway];
+/** The order the values are declared in. */
+export const HomeAwayOrder = explicitOrder<HomeAway>({
+  [HomeAway.HOME]: 0,
+  [HomeAway.AWAY]: 1,
+  [HomeAway.NONE]: 2,
+});
+
+/**
+ * What one period score counts (#2046): a period of play, an overtime period, or a shoot-out's
+ * kicks scored (one SHOOTOUT period, never part of the Game's score).
+ */
+export const PeriodKind = {
+  REGULAR: 'REGULAR',
+  OVERTIME: 'OVERTIME',
+  SHOOTOUT: 'SHOOTOUT',
+} as const;
+export type PeriodKind = (typeof PeriodKind)[keyof typeof PeriodKind];
+/** The order they are played in. */
+export const PeriodKindOrder = explicitOrder<PeriodKind>({
+  [PeriodKind.REGULAR]: 0,
+  [PeriodKind.OVERTIME]: 1,
+  [PeriodKind.SHOOTOUT]: 2,
 });
 
 /**
@@ -1290,7 +1344,8 @@ export const RoundStatusOrder = explicitOrder<RoundStatus>({
 /**
  * Who set a match's result (#1496): the provider its game is linked to, the only writer on a
  * synced event (#2074). A test event's results are written by the test-data loader in its place.
- * The column moves onto the Game in #2046, which drops it with PROVIDER its only value.
+ * No column holds it (#2046 dropped it, PROVIDER being its only value): the API answers PROVIDER
+ * for a COMPLETED match until the web app stops reading it (#2046 part b).
  */
 export const MatchResultSource = {
   PROVIDER: 'PROVIDER',

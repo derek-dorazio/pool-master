@@ -8,5 +8,4 @@ export const golfSportDefinition: SportDefinition = {
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
-  shootout: false,
 };

@@ -185,6 +185,8 @@ export interface ContestConfigTemplate extends DomainEntity {
 export interface SportEventSlotDefinition {
   id: string;
   slotKind: SlotKind;
+  /** Whether the slot's games can finish level (#2043); where not, a shoot-out may decide one (#2046). */
+  canEndTied: boolean;
 }
 
 /** One slot definition a contest template covers (#2010), with the facts screens and checks read. */

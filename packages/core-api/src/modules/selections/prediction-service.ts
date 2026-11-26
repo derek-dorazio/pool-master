@@ -57,6 +57,8 @@ import {
   type SurvivorContestRules,
   type SurvivorWeekOutcome,
   hasSportEventStarted,
+  teamOnMatchSide,
+  MatchSide,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
@@ -298,12 +300,14 @@ function gameRow(
   sides: PredictedSides | undefined,
   now: Date,
 ): Omit<GamePreview, 'pick'> {
-  const shownSides = sides ?? { home: match.homeSportEventParticipantId, away: match.awaySportEventParticipantId };
+  const home = teamOnMatchSide(match, MatchSide.HOME);
+  const away = teamOnMatchSide(match, MatchSide.AWAY);
+  const shownSides = sides ?? { home, away };
   return {
     match,
     kickoff: match.scheduledDate ?? setup.sportEvent.startDate,
-    home: team(match.homeSportEventParticipantId),
-    away: team(match.awaySportEventParticipantId),
+    home: team(home),
+    away: team(away),
     predictedHome: team(shownSides.home),
     predictedAway: team(shownSides.away),
     locked: !areMatchPicksOpen(setup.engine.pickWindow, contest, setup.window, match, setup.openingRound, now),
