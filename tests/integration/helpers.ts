@@ -126,6 +126,8 @@ import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestio
 import { ProviderSyncFindingService } from '../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
 import { resolveMappedParticipantFindingsJobHandler } from '../../packages/core-api/src/modules/ingestion/findings/mapped-participant-findings-job';
 import { PrismaSlotNamePatternRepository } from '../../packages/core-api/src/adapters/prisma-slot-name-pattern-repository';
+import { PrismaSlotTiebreakerRepository } from '../../packages/core-api/src/adapters/prisma-slot-tiebreaker-repository';
+import { SlotTiebreakerService } from '../../packages/core-api/src/modules/events/slot-tiebreaker-service';
 import { PrismaProviderSyncFindingRepository } from '../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
 import { PrismaSportLeagueSeasonRepository } from '../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { ParticipantService } from '../../packages/core-api/src/modules/participants/service';
@@ -437,6 +439,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, {
     prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, domainEvents, leaderboards, webhookProviderIds,
+    slotTiebreakers: new SlotTiebreakerService({ slots: new PrismaSlotTiebreakerRepository(prisma), findings: integrationSyncFindings(prisma), domainEvents }),
   });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });

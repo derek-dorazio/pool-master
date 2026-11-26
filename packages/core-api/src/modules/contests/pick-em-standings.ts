@@ -15,7 +15,7 @@ import {
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { rankPredictionStandings, type BracketScore } from '../scoring-families/head-to-head/bracket-picks';
-import { gameTotalPoints, scoreGamePicks, weekTiebreakerGame, type GamePickScoring } from '../scoring-families/head-to-head/game-picks';
+import { gameTotalPoints, scoreGamePicks, slotTiebreakerGame, type GamePickScoring } from '../scoring-families/head-to-head/game-picks';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 
 export type PickEmStandingsReadDeps = Pick<BracketStandingsReadDeps, 'configurations' | 'entries' | 'predictions' | 'matches'>;
@@ -79,7 +79,7 @@ export function pickEmWeekGames(
 ): PickEmWeekGames {
   const eventCancelled = sportEvent.status === SportEventStatus.CANCELLED;
   const games = eventCancelled ? [] : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
-  return { eventCancelled, games, tiebreakerTotalPoints: gameTotalPoints(weekTiebreakerGame(games, sportEvent.startDate)) };
+  return { eventCancelled, games, tiebreakerTotalPoints: gameTotalPoints(slotTiebreakerGame(games)) };
 }
 
 /**

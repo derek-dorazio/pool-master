@@ -214,7 +214,7 @@ async function leagueOfThree(label: string) {
 }
 
 describe('SDK Functional: a bracket pool (#721)', () => {
-  it('fills in a 16-team bracket before tip-off, scores it round by round as max possible points shrink, and settles it with the tiebreaker deciding a tie on points', async () => {
+  it('fills in a 16-team bracket with its tiebreaker before tip-off and before any game has a start time, scores it round by round as max possible points shrink, and settles it with the tiebreaker deciding a tie on points', async () => {
     // --- A released 16-team, four-round knockout -----------------------------------------------
     // Round 1 pairs 1-16, 8-9, 5-12, 4-13, 6-11, 3-14, 7-10 and 2-15; each pair of games feeds one
     // game of the next round, down to the final, round 4's game 1. Each round numbers its games from 1 (#2161).
@@ -235,6 +235,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         })),
         later(2, 1), later(2, 2), later(2, 3), later(2, 4),
         later(3, 1), later(3, 2),
+        // No game has a start yet: the rule still names the final the slot's tiebreaker game (#2048).
         later(4, 1, true),
       ],
     });

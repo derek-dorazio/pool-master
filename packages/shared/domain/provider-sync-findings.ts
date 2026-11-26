@@ -89,6 +89,7 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.GAME_UNKNOWN]: [],
   [ProviderSyncFindingKind.GAME_ID_REISSUED]: [],
   [ProviderSyncFindingKind.GAME_MOVED]: [],
+  [ProviderSyncFindingKind.TIEBREAKER_GAME_REPLACED]: [],
 };
 
 /**

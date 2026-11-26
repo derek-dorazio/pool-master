@@ -17,6 +17,7 @@ import {
   SportEventResponseSchema,
   SportEventRoundListResponseSchema,
   SportEventRoundMatchupsResponseSchema,
+  SportEventSlotTiebreakersResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
   SportListResponseSchema,
@@ -305,6 +306,18 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       }),
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/bracket`, rootAdmin),
       rowsShown: (response) => okBody(response, SportEventBracketResponseSchema).matches.length,
+    });
+  });
+
+  it("GET an event's slot tiebreaker games: the same statements for 2 games of the slot as for 20, each Game with its match's kickoff", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/slots/tiebreakers',
+      seed: async (games) => ({
+        ...(await seedFootballWeek({ games, startDate: new Date(Date.now() + 7 * DAY), status: SportEventStatus.SCHEDULED })),
+        rootAdmin: await createTestUser({ isRootAdmin: true }),
+      }),
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/slots/tiebreakers`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventSlotTiebreakersResponseSchema).slots.flatMap((slot) => slot.games).filter((game) => game.choosable).length,
     });
   });
 });

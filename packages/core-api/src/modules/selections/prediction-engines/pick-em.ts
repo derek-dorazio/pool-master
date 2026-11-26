@@ -1,12 +1,12 @@
 /**
  * Pick'em (#716): pick the winner of every game of each week, or a tie where the sport offers one (#792), or the team that covers when the
- * pool is scored against the spread (#720), straight up or ranked by confidence, with a guess of the week's last game's total points as the tiebreaker (#717). Each
+ * pool is scored against the spread (#720), straight up or ranked by confidence, with a guess of the total points of the game the week's slot names as its tiebreaker (#717, #2048). Each
  * pick locks, and is revealed, at its own game's kickoff; game-picks.ts holds the scoring.
  */
 
 import { PickEmMode, SelectionType, isTeamChoice, type ContestSelectionConfig, teamOnMatchSide, MatchSide } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
-import { scoreGamePicks, weekTiebreakerGame, type GamePickScoring } from '../../scoring-families/head-to-head/game-picks';
+import { scoreGamePicks, slotTiebreakerGame, type GamePickScoring } from '../../scoring-families/head-to-head/game-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
 
 /** The contest's pick'em mode, or undefined when its stored rules are not pick'em rules. */
@@ -28,8 +28,8 @@ export const pickEmPredictionEngine: PredictionEngine = {
   readsEarlierWeeks: false,
   takesTiePicks: true,
 
-  tiebreakerGame({ games, eventStart }) {
-    return weekTiebreakerGame(games, eventStart);
+  tiebreakerGame({ games }) {
+    return slotTiebreakerGame(games);
   },
 
   resolvePicks({ games, predictions }) {

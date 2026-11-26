@@ -22,6 +22,7 @@ import {
   withDomainEventTable,
 } from '../../../packages/core-api/src/modules/domain-events/domain-event-table';
 import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
+import { slotTiebreakersRefreshJob } from '../../support/slot-tiebreaker-jobs';
 import { NOBODY_TOLD } from '../../support/domain-events';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
 
@@ -93,6 +94,9 @@ const EVENT_REBUILD = {
   dedupeKey: 'REBUILD_LEADERBOARDS:EVENT:sport-event-1',
 };
 
+/** The job running the event's slots' tiebreaker rule (#2048). */
+const SLOT_TIEBREAKERS_REFRESH = slotTiebreakersRefreshJob('sport-event-1');
+
 describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () => {
   it('is pinned: adding, removing or reordering a follow-up changes this list, so it shows in review', () => {
     const pinned = Object.fromEntries(Object.entries(DOMAIN_EVENT_HANDLERS).map(([type, handlers]) => [type, handlers.map((handler) => handler.key)]));
@@ -108,7 +112,8 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
       ],
       SPORT_EVENT_RESCHEDULED: ['tell-leagues-event-rescheduled'],
       SPORT_EVENT_RESULTS_CHANGED: ['rebuild-leaderboards-for-changed-results'],
-      GAME_DECIDED: ['settle-decided-game-contests', 'rebuild-leaderboards-for-decided-game'],
+      SPORT_EVENT_GAMES_CHANGED: ['refresh-slot-tiebreakers'],
+      GAME_DECIDED: ['settle-decided-game-contests', 'rebuild-leaderboards-for-decided-game', 'refresh-slot-tiebreakers-for-decided-game'],
       CONTEST_ENTRY_EVENT_STATUS_CHANGED: ['rebuild-contest-leaderboards'],
       CONTEST_STATUS_CHANGED: [
         'tell-league-contest-started',
@@ -344,7 +349,7 @@ describe('SPORT_EVENT_RESULTS_CHANGED handlers', () => {
 });
 
 describe('GAME_DECIDED handlers', () => {
-  it('settles the squares contests on the decided game at the moment it was decided, then rebuilds its event\'s boards, whoever decided it', async () => {
+  it('settles the squares contests on the decided game at the moment it was decided, then rebuilds its event\'s boards and runs its slots\' tiebreaker rule, whoever decided it', async () => {
     const { events } = domainEvents();
 
     expect((await events.collect(gameDecided)).jobs).toEqual([
@@ -357,7 +362,17 @@ describe('GAME_DECIDED handlers', () => {
         dedupeKey: 'SETTLE_GAME_CONTESTS:game-1',
       },
       EVENT_REBUILD,
+      SLOT_TIEBREAKERS_REFRESH,
     ]);
+  });
+});
+
+describe('SPORT_EVENT_GAMES_CHANGED handlers', () => {
+  it('runs the event\'s slots\' tiebreaker rule again, one job waiting per event however many writes', async () => {
+    const { events } = domainEvents();
+    const gamesChanged = { type: DomainEventType.SPORT_EVENT_GAMES_CHANGED, sportEventId: 'sport-event-1' } as const;
+
+    expect((await events.collect(gamesChanged)).jobs).toEqual([SLOT_TIEBREAKERS_REFRESH]);
   });
 });
 
@@ -577,8 +592,10 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_RESCHEDULED` | `tell-leagues-event-rescheduled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_RESULTS_CHANGED` | `rebuild-leaderboards-for-changed-results` | `REBUILD_LEADERBOARDS` |',
+      '| `SPORT_EVENT_GAMES_CHANGED` | `refresh-slot-tiebreakers` | `REFRESH_SLOT_TIEBREAKERS` |',
       '| `GAME_DECIDED` | `settle-decided-game-contests` | `SETTLE_GAME_CONTESTS` |',
       '| `GAME_DECIDED` | `rebuild-leaderboards-for-decided-game` | `REBUILD_LEADERBOARDS` |',
+      '| `GAME_DECIDED` | `refresh-slot-tiebreakers-for-decided-game` | `REFRESH_SLOT_TIEBREAKERS` |',
       '| `CONTEST_ENTRY_EVENT_STATUS_CHANGED` | `rebuild-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-started` | `CONTEST_STARTED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-reopened` | `CONTEST_REOPENED_EMAILS` |',
@@ -591,7 +608,7 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
   });
 
   it('says so on purpose for an event type nothing follows', () => {
-    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [], PARTICIPANT_PROVIDER_MAPPED: [] };
+    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], SPORT_EVENT_GAMES_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [], PARTICIPANT_PROVIDER_MAPPED: [] };
 
     expect(renderDomainEventTable(nothingFollows)).toContain('| `SPORT_EVENT_RESCHEDULED` | none | none |');
   });
