@@ -218,7 +218,7 @@ describe('history handlers', () => {
 
 describe('sport league handlers', () => {
   const AT = new Date('2026-01-01T00:00:00.000Z');
-  const sportLeague = { id: 'sl1', sport: Sport.GOLF, roundNames: [], createdAt: AT, updatedAt: AT };
+  const sportLeague = { id: 'sl1', sport: Sport.GOLF, createdAt: AT, updatedAt: AT };
   const participant = {
     id: 'p1', sportLeagueId: 'sl1', ranking: 1, name: 'One', participantType: 'INDIVIDUAL', status: 'ACTIVE', externalIds: {},
     injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT,

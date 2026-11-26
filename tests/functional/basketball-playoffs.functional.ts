@@ -10,6 +10,7 @@ import {
   getEventBracket,
   listContestConfigTemplates,
   listEventParticipants,
+  listEventRounds,
   listEvents,
   listSportLeagues,
   openContest,
@@ -120,7 +121,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
 
     const file = taggedSeed('basketball-2025-nba-playoffs-test.json', () => `NBA Playoffs ${RUN}`);
     const { sportLeague: nba, event } = await loadPlayoffs(admin, file);
-    expect(nba.roundNames).toEqual(['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']);
+    expect(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
 
     // Each play-in place now names the team that won it, keeping its seed, and is no longer a place.
@@ -192,9 +193,9 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const admin = await buildRegisteredUser({ displayName: 'WNBA Director' });
     await promoteToRootAdmin(admin);
 
-    const { sportLeague: wnba, event } = await loadPlayoffs(admin, taggedSeed('basketball-2025-wnba-playoffs-test.json', () => `WNBA Playoffs ${RUN}`));
+    const { event } = await loadPlayoffs(admin, taggedSeed('basketball-2025-wnba-playoffs-test.json', () => `WNBA Playoffs ${RUN}`));
 
-    expect(wnba.roundNames).toEqual(['First Round', 'Semifinals', 'WNBA Finals']);
+    expect(expectDefined((await listEventRounds({ client: admin.client, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 3]);
     const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
     const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches;

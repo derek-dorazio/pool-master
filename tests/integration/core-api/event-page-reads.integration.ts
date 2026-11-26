@@ -26,6 +26,7 @@ import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithT
 import { expectConstantQueries } from '../query-scaling';
 import { expectDefined } from '../../support/expect-defined';
 import { linkTestSlot } from '../../support/test-slots';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // No mocks.
 
@@ -158,7 +159,7 @@ describe('an event\'s rounds read where each round stands', () => {
     const [first, second] = field;
     const rounds = [];
     for (let roundNumber = 1; roundNumber <= 3; roundNumber += 1) {
-      rounds.push(await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) } }));
+      rounds.push(await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) } }));
     }
     const [roundOne, roundTwo] = rounds;
     const finishedAt = new Date('2026-11-02T22:00:00.000Z');

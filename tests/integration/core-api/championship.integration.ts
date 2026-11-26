@@ -14,6 +14,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { fixtureTourSlotId, freshEventEdition, putEventInSlot } from '../../support/event-edition';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -160,7 +161,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
     const week = await contest('Week');
     await contest('Majors', { events: 2 });
     await contest('Live', { status: 'ACTIVE' });
-    const round = (eventId: string, roundNumber: number) => prisma.sportEventRound.create({ data: { sportEventId: eventId, roundNumber, scheduledDate: new Date('2026-04-09T12:00:00.000Z') } });
+    const round = async (eventId: string, roundNumber: number) => prisma.sportEventRound.create({ data: { sportEventId: eventId, sportEventSlotId: await oneEventSlotId(prisma, eventId), roundNumber, scheduledDate: new Date('2026-04-09T12:00:00.000Z') } });
     const game = (eventId: string, matchNumber: number, roundId: string, advancesToMatchId: string | null = null) => prisma.sportEventRoundMatch.create({
       data: { sportEventId: eventId, sportEventRoundId: roundId, matchNumber, isNeutralSite: true, advancesToMatchId, advancesToSide: advancesToMatchId === null ? null : 'HOME' },
     });

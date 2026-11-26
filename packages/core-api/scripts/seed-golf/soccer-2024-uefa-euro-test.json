@@ -155,7 +155,7 @@
       "events": [
         {
           "key": "uefa-euro-2024",
-          "slotKey": "FINAL",
+          "roundSlotKeys": ["ROUND_OF_16", "QUARTERFINAL", "SEMIFINAL", "FINAL"],
           "name": "UEFA Euro",
           "startDate": "2024-06-29",
           "endDate": "2024-07-14",

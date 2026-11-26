@@ -150,14 +150,15 @@ export type UpsetBonus = z.infer<typeof UpsetBonusSchema>;
 /**
  * A knockout contest's settings (#699, plans/knockout-and-pickem-design.md §3.2): `roundValues[0]`
  * is what a round-1 win scores, `roundValues[1]` a round-2 win, and so on, one value per round of
- * the event (contest setup refuses a table of another length). A team placed straight into a later
- * round (a bye) scores nothing for the round it skipped.
+ * the event (contest setup refuses a table of another length). A bye counts as a win (#2170): a
+ * team placed straight into a later round scores the value of each round it skipped once that
+ * round is decided, with no upset bonus.
  */
 export const KnockoutRoundPointsSettingsSchema = z.object({
   roundValues: z.array(z.number().int().min(0))
     .min(1)
     .max(KNOCKOUT_ROUND_VALUES_MAX_ROUNDS)
-    .describe(`Points for a win in each round, round 1 first, one value per round of the event (at most ${KNOCKOUT_ROUND_VALUES_MAX_ROUNDS}). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].`),
+    .describe(`Points for a win in each round, round 1 first, one value per round of the event (at most ${KNOCKOUT_ROUND_VALUES_MAX_ROUNDS}). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.`),
   upsetBonus: UpsetBonusSchema,
 }).describe('Knockout round-points settings: the value of a win in each round and the upset bonus.');
 export type KnockoutRoundPointsSettings = z.infer<typeof KnockoutRoundPointsSettingsSchema>;

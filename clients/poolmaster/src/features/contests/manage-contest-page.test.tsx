@@ -29,6 +29,7 @@ import {
   buildTier,
   openingsUnderWay,
 } from './test/contest-admin-fixtures';
+import { eventRoundsResponse, TOURNAMENT_ROUND_SLOTS } from './test/round-slots';
 
 const deleteContestMock = vi.fn();
 const expandContestMock = vi.fn();
@@ -40,7 +41,7 @@ const getEventMock = vi.fn();
 const previewRosterPicksMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const getSelectionStateMock = vi.fn();
-const getSportLeagueMock = vi.fn();
+const listEventRoundsMock = vi.fn();
 const runContestDrawMock = vi.fn();
 const setContestCupWeightMock = vi.fn();
 const getContestMock = vi.fn();
@@ -60,7 +61,7 @@ bindApiMocks({
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   getSelectionState: getSelectionStateMock,
-  getSportLeague: getSportLeagueMock,
+  listEventRounds: listEventRoundsMock,
   runContestDraw: runContestDrawMock,
   setContestCupWeight: setContestCupWeightMock,
   getContest: getContestMock,
@@ -142,7 +143,7 @@ function primeMocks({
 afterEach(() => {
   for (const mock of [
     deleteContestMock, expandContestMock, getContestExpansionMock, grantContestExpansionMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
-    getSelectionStateMock, getSportLeagueMock, runContestDrawMock, setContestCupWeightMock,
+    getSelectionStateMock, listEventRoundsMock, runContestDrawMock, setContestCupWeightMock,
     getContestMock, listLeagueSquadsMock, openContestMock, previewRosterPicksMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
   ]) {
@@ -980,7 +981,8 @@ function bracketManagedContest(startsAtRound: number) {
 
 function primeBracketMocks(startsAtRound: number, { contest = bracketContest(), event = basketballEvent() } = {}) {
   primeMocks({ contest, event, managedContest: bracketManagedContest(startsAtRound) });
-  getSportLeagueMock.mockResolvedValue(apiSuccess({ sportLeague: { id: event.sportLeagueId, name: 'NCAA Men', roundNames: [] } }));
+  // The tournament's rounds are named by their slots.
+  listEventRoundsMock.mockResolvedValue(eventRoundsResponse(event.id, TOURNAMENT_ROUND_SLOTS));
 }
 
 describe('Commissioner tools › Contests › one second-chance bracket contest', () => {
@@ -1003,8 +1005,8 @@ describe('Commissioner tools › Contests › one second-chance bracket contest'
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     fireEvent.click(await screen.findByTestId('contest-status-card-help'));
-    expect(screen.getByTestId('contest-second-chance-close'))
-      .toHaveTextContent('Entries close at the first game of the Sweet 16.');
+    await waitFor(() => expect(screen.getByTestId('contest-second-chance-close'))
+      .toHaveTextContent('Entries close at the first game of the Sweet 16.'));
     await screen.findByTestId('contest-stat-entries');
     expect(screen.queryByTestId('contest-stat-until-close')).not.toBeInTheDocument();
   });
@@ -1037,9 +1039,9 @@ describe('Commissioner tools › Contests › one bracket contest › Edit', () 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
 
     const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
-    expect(startsAt).toHaveDisplayValue('From the Sweet 16');
+    await waitFor(() => expect(startsAt).toHaveDisplayValue('From the Sweet 16'));
     expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'From the Second Round',
+      'From the Round of 32',
       'From the Sweet 16',
       'From the Elite Eight',
       'From the Final Four',

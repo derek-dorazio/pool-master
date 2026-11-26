@@ -1,5 +1,5 @@
-import { ParticipantRoundStatus, RoundStatus } from '@poolmaster/shared/domain';
-import { dailyRoundSchedule, providerEventRoundSchedule, SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
+import { ParticipantRoundStatus, RoundStatus, SlotKind } from '@poolmaster/shared/domain';
+import { dailyRoundSchedule, providerEventRoundSchedule, roundsInSlots, SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
 
@@ -27,9 +27,11 @@ describe('SportEventRoundService', () => {
     const { store, event, service } = setup();
     const other = store.addEvent();
 
+    const [eventSlot, otherSlot] = [store.eventSlotOf(event.id).id, store.eventSlotOf(other.id).id];
+
     await service.createSchedules([
-      { sportEventId: event.id, rounds: [{ roundNumber: 1, scheduledDate: START, scheduledEndAt: new Date('2026-06-04T20:00:00.000Z') }] },
-      { sportEventId: other.id, rounds: dailyRoundSchedule(2, START) },
+      { sportEventId: event.id, rounds: [{ roundNumber: 1, scheduledDate: START, scheduledEndAt: new Date('2026-06-04T20:00:00.000Z'), seasonSlotId: eventSlot }] },
+      { sportEventId: other.id, rounds: roundsInSlots(dailyRoundSchedule(2, START), [{ id: otherSlot, startsAt: START, endsAt: null }]) },
     ]);
 
     expect(await service.listRounds(event.id)).toEqual([expect.objectContaining({ roundNumber: 1, scheduledEndAt: new Date('2026-06-04T20:00:00.000Z') })]);
@@ -106,13 +108,26 @@ describe('SportEventRoundService.extendTo', () => {
     ]);
   });
 
-  it('schedules from the start date when the event has no rounds, and adds nothing when every round exists', async () => {
+  it('adds the rounds in the event\'s one slot, and nothing when every round exists', async () => {
     const { store, event, service } = setup();
+    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: START }]);
 
     await service.extendTo({ sportEventId: event.id, rounds: 2, startDate: START });
     await service.extendTo({ sportEventId: event.id, rounds: 2, startDate: new Date('2030-01-01T00:00:00.000Z') });
 
-    expect(store.roundRows.map((round) => round.scheduledDate.toISOString().slice(0, 10))).toEqual(['2026-06-04', '2026-06-05']);
+    expect(store.roundRows.map((round) => [round.scheduledDate.toISOString().slice(0, 10), round.slot.seasonSlotId])).toEqual([
+      ['2026-06-04', store.eventSlotOf(event.id).id],
+      ['2026-06-05', store.eventSlotOf(event.id).id],
+    ]);
+  });
+
+  it('refuses more rounds for an event played a round per slot (422 EVENT_ROUNDS_FROM_SLOTS): its slots give its round count', async () => {
+    const { store, event, service } = setup();
+    const [semifinal, final] = store.addRoundSlots(event.id, [{ slotKind: SlotKind.SEMIFINAL }, { slotKind: SlotKind.FINAL }]);
+    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: START }, { roundNumber: 2, scheduledDate: START }], (roundNumber) => (roundNumber === 1 ? semifinal : final));
+
+    await expect(service.extendTo({ sportEventId: event.id, rounds: 3, startDate: START })).rejects.toMatchObject({ code: 'EVENT_ROUNDS_FROM_SLOTS', statusCode: 422 });
+    expect(store.roundRows).toHaveLength(2);
   });
 });
 
@@ -158,5 +173,31 @@ describe('providerEventRoundSchedule — a provider event created with no round 
 
   it('puts the fourth round three days after the start when the provider sends no end date', () => {
     expect(providerEventRoundSchedule(startDate, null).at(-1)).toEqual({ roundNumber: 4, scheduledDate: new Date('2027-04-11T00:00:00.000Z') });
+  });
+});
+
+describe('roundsInSlots', () => {
+  const schedule = dailyRoundSchedule(4, START);
+
+  it('plays every round of the schedule in an event\'s one slot: a golf tournament\'s four in its tournament', () => {
+    expect(roundsInSlots(schedule, [{ id: 'masters', startsAt: START, endsAt: null }]).map((round) => [round.roundNumber, round.seasonSlotId])).toEqual([
+      [1, 'masters'], [2, 'masters'], [3, 'masters'], [4, 'masters'],
+    ]);
+  });
+
+  it('plays a round in each of several slots, in their play order, dated by the slot, else by the schedule\'s start', () => {
+    const final = new Date('2026-06-10T12:00:00.000Z');
+
+    expect(roundsInSlots(schedule, [
+      { id: 'semifinal', startsAt: null, endsAt: null },
+      { id: 'final', startsAt: final, endsAt: null },
+    ])).toEqual([
+      { roundNumber: 1, scheduledDate: START, scheduledEndAt: null, seasonSlotId: 'semifinal' },
+      { roundNumber: 2, scheduledDate: final, scheduledEndAt: null, seasonSlotId: 'final' },
+    ]);
+  });
+
+  it('refuses an event of no slot', () => {
+    expect(() => roundsInSlots(schedule, [])).toThrow('at least one Season slot');
   });
 });

@@ -163,10 +163,10 @@ describe('findBracketProblem', () => {
     expect(findBracketProblem([], EIGHT_SEEDS)).toBe('it has no games');
   });
 
-  it('refuses a last round of two games, which has no single final', () => {
+  it('refuses a bracket with no game in its FINAL slot, so its last round of two games is no final (#2006)', () => {
     const noFinal = eightTeamBracket().filter((match) => match.roundNumber < 3);
 
-    expect(findBracketProblem(noFinal, EIGHT_SEEDS)).toBe('its last round has 2 games, not one final');
+    expect(findBracketProblem(noFinal, EIGHT_SEEDS)).toBe('its final has 0 games, not one');
   });
 
   it('refuses a first-round game with a team still to be decided', () => {
@@ -273,6 +273,29 @@ describe('scoreBracketPicks', () => {
 
     expect(seeds.get('X')).toBe(8);
     expect(score.points).toBe(1 + (8 - 1) * 2);
+  });
+});
+
+describe('scoreBracketPicks — a field with byes', () => {
+  const SETTINGS: KnockoutRoundPointsSettings = { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.NONE } };
+
+  it('scores a pick of a bye team only for the game it was picked to win: the bye itself earns the entry nothing', () => {
+    // Round 1: T4 and T3 win; round 2: T1 (on a bye) beats T4, T3 beats T2 (on a bye).
+    const played = withResults(sixTeamByeBracket(), new Map([
+      [1, { winner: HOME }], [2, { winner: HOME }],
+      [3, { away: 'T4', winner: HOME }], [4, { away: 'T3', winner: AWAY }],
+    ]));
+    const picks = [pick(1, 'T4'), pick(2, 'T3'), pick(3, 'T1'), pick(4, 'T2')];
+
+    const score = scoreBracketPicks(played, picks, EIGHT_SEEDS, SETTINGS);
+
+    expect(Object.fromEntries(score.picks)).toEqual({
+      m1: { outcome: PickOutcome.CORRECT, points: 1 },
+      m2: { outcome: PickOutcome.CORRECT, points: 1 },
+      m3: { outcome: PickOutcome.CORRECT, points: 2 },
+      m4: { outcome: PickOutcome.BUSTED, points: 0 },
+    });
+    expect(score.points).toBe(4);
   });
 });
 

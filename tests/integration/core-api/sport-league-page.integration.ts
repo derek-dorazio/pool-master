@@ -30,6 +30,7 @@ import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -147,10 +148,10 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
     const roundEnd = fromNow(-5 * HOUR_MS);
     await getPrisma().sportEventRound.createMany({
       data: [
-        { sportEventId: late.id, roundNumber: 1, scheduledDate: fromNow(-3 * DAY_MS), scheduledEndAt: fromNow(-2 * DAY_MS) },
-        { sportEventId: late.id, roundNumber: 2, scheduledDate: fromNow(-DAY_MS), scheduledEndAt: roundEnd },
-        { sportEventId: recent.id, roundNumber: 1, scheduledDate: fromNow(-2 * DAY_MS), scheduledEndAt: fromNow(-DAY_MS) },
-        { sportEventId: recent.id, roundNumber: 2, scheduledDate: fromNow(-4 * HOUR_MS), scheduledEndAt: fromNow(-HOUR_MS) },
+        { sportEventId: late.id, sportEventSlotId: await oneEventSlotId(getPrisma(), late.id), roundNumber: 1, scheduledDate: fromNow(-3 * DAY_MS), scheduledEndAt: fromNow(-2 * DAY_MS) },
+        { sportEventId: late.id, sportEventSlotId: await oneEventSlotId(getPrisma(), late.id), roundNumber: 2, scheduledDate: fromNow(-DAY_MS), scheduledEndAt: roundEnd },
+        { sportEventId: recent.id, sportEventSlotId: await oneEventSlotId(getPrisma(), recent.id), roundNumber: 1, scheduledDate: fromNow(-2 * DAY_MS), scheduledEndAt: fromNow(-DAY_MS) },
+        { sportEventId: recent.id, sportEventSlotId: await oneEventSlotId(getPrisma(), recent.id), roundNumber: 2, scheduledDate: fromNow(-4 * HOUR_MS), scheduledEndAt: fromNow(-HOUR_MS) },
       ],
     });
 

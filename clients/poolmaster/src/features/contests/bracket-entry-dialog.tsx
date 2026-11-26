@@ -7,7 +7,6 @@ import { BracketView } from './bracket-view';
 import { drawBracket } from './bracket-view-model';
 import { contestScoreUnit } from './contest-sport';
 import { MineMarker } from './mine-marker';
-import { useBracketRoundLabel } from './use-bracket-round-label';
 import { gamePicksQueryOptions } from './use-game-picks';
 
 export type BracketBoardRow = BracketLeaderboardResponse['entries'][number];
@@ -26,7 +25,6 @@ function describeBracketStanding(row: BracketBoardRow): string {
 /** The entry's bracket, drawn read-only once its picks load. */
 function EntryBracket({ contest, entryId, isMine, sportEventId }: { contest: ContestDto; entryId: string; isMine: boolean; sportEventId: string }) {
   const picksQuery = useQuery(gamePicksQueryOptions(contest, entryId, sportEventId));
-  const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
   if (picksQuery.isError) {
     return (
       <ErrorState
@@ -42,7 +40,7 @@ function EntryBracket({ contest, entryId, isMine, sportEventId }: { contest: Con
   const { games, tiebreakerValue } = picksQuery.data;
   return (
     <BracketView
-      drawing={drawBracket(games, roundLabel)}
+      drawing={drawBracket(games)}
       isOwnEntry={isMine}
       picking={null}
       tiebreaker={describeBracketTiebreaker(tiebreakerValue, contestScoreUnit(contest.sport))}

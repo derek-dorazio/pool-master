@@ -22,6 +22,7 @@ import {
 import { freshEventEdition, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -218,7 +219,7 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
         name: 'Event page squares', startDate: new Date('2030-01-09T18:00:00.000Z'), status: SportEventStatus.IN_PROGRESS,
       },
     });
-    const round = await prisma.sportEventRound.create({ data: { sportEventId: sportEvent.id, roundNumber: 1, scheduledDate: sportEvent.startDate } });
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: sportEvent.id, sportEventSlotId: await oneEventSlotId(prisma, sportEvent.id), roundNumber: 1, scheduledDate: sportEvent.startDate } });
     await prisma.sportEventRoundMatch.create({
       data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false, status: 'COMPLETED', scheduledDate: sportEvent.startDate },
     });

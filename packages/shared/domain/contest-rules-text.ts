@@ -5,6 +5,8 @@
 
 import { enumLabel } from '../display-strings/display-strings';
 import { SURVIVOR_LIVES_DEFAULT, type ContestRules } from './contest-rules';
+import { UpsetBonusRule, type KnockoutRoundPointsSettings } from './contest-scoring';
+import { isPredictionSelectionType } from './contest-validity';
 import { PickEmMode, SelectionType } from './enums';
 import type { SportNoun } from './sports';
 import { getTieredRosterSize, getTiersInPlay } from './tiered-roster';
@@ -185,6 +187,25 @@ export function formatContestRules(
       return describeSurvivorRules(configuration.reuseTeamsOnceAllUsed ?? true, configuration.lives ?? SURVIVOR_LIVES_DEFAULT);
     case SelectionType.SQUARES:
       return describeSquaresRules(configuration.maxSquaresPerEntry);
+  }
+}
+
+/**
+ * How a knockout round-points contest scores, as members read it (#699): the points for a win in
+ * each round, that a bye counts as a win (#2170) where the contest scores the teams an entry
+ * holds, and the upset bonus. A bracket scores the entry's picks, and a bye is never a pick, so
+ * its sentence leaves the bye out.
+ */
+export function describeKnockoutRoundPoints(settings: KnockoutRoundPointsSettings, selectionType: SelectionType) {
+  const perRound = `Points for a win in each round: ${settings.roundValues.join(', ')}.`;
+  const scoring = isPredictionSelectionType(selectionType) ? perRound : `${perRound} A bye counts as a win.`;
+  switch (settings.upsetBonus.rule) {
+    case UpsetBonusRule.NONE:
+      return scoring;
+    case UpsetBonusRule.SEED_DIFFERENCE:
+      return settings.upsetBonus.multiplier === 1
+        ? `${scoring} A win over a better seed adds the seed difference.`
+        : `${scoring} A win over a better seed adds the seed difference times ${settings.upsetBonus.multiplier}.`;
   }
 }
 

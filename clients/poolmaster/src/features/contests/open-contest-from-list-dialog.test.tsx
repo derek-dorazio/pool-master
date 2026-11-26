@@ -8,16 +8,17 @@ import { bindApiMocks } from '@/test/msw-api';
 import { apiSuccess } from '@/features/leagues/test/fixtures';
 import { OpenContestFromListDialog } from './open-contest-from-list-dialog';
 import { buildContest, buildContestSportEvent, buildManagedContest, buildSportEvent } from './test/contest-admin-fixtures';
+import { eventRoundsResponse, TOURNAMENT_ROUND_SLOTS } from './test/round-slots';
 
 const getContestConfigurationMock = vi.fn();
 const getEventMock = vi.fn();
-const getSportLeagueMock = vi.fn();
+const listEventRoundsMock = vi.fn();
 const openContestMock = vi.fn();
 
 bindApiMocks({
   getContestConfiguration: getContestConfigurationMock,
   getEvent: getEventMock,
-  getSportLeague: getSportLeagueMock,
+  listEventRounds: listEventRoundsMock,
   openContest: openContestMock,
 });
 
@@ -36,7 +37,7 @@ function primeEvent(overrides: Partial<SportEventDto> = {}) {
 
 describe('OpenContestFromListDialog', () => {
   afterEach(() => {
-    for (const mock of [getContestConfigurationMock, getEventMock, getSportLeagueMock, openContestMock]) {
+    for (const mock of [getContestConfigurationMock, getEventMock, listEventRoundsMock, openContestMock]) {
       mock.mockReset();
     }
   });
@@ -112,7 +113,8 @@ describe('OpenContestFromListDialog', () => {
         configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET, startsAtRound: 3 },
       }),
     }));
-    getSportLeagueMock.mockResolvedValue(apiSuccess({ sportLeague: { id: 'sport-league-1', name: 'NCAA Men', roundNames: [] } }));
+    // The event's rounds are named by their slots: round 3 is the Sweet 16.
+    listEventRoundsMock.mockResolvedValue(eventRoundsResponse('event-1', TOURNAMENT_ROUND_SLOTS));
     renderDialog(buildContest({
       contestFormat: 'PREDICTION',
       selectionType: SelectionType.BRACKET,

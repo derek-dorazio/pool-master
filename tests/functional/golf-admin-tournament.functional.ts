@@ -445,7 +445,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,
-      body: { seasonSlotId: ANY_UUID, name: 'x' },
+      body: { seasonSlotIds: [ANY_UUID], name: 'x' },
     }), deny);
     expectFunctionalError(await createTestSlot({
       client: c,

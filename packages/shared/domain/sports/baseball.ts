@@ -1,9 +1,5 @@
-import { displayString } from '../../display-strings/display-strings';
 import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
-
-/** What the rounds of an MLB postseason are called, counted back from the World Series. */
-const ROUND_NAMES_FROM_FINAL = ['World Series', 'League Championship Series', 'Division Series', 'Wild Card Series'] as const;
 
 /**
  * Baseball (#789): teams playing a knockout bracket, scored by the head-to-head family from the
@@ -25,9 +21,4 @@ export const baseballSportDefinition: SportDefinition = {
   shootout: false,
   // A four-round postseason reads Wild Card Series, Division Series, League Championship Series,
   // World Series; a shorter one keeps the names counted back from its final.
-  roundLabel: (roundNumber, roundCount, locale) => {
-    const fromFinal = roundCount - roundNumber;
-    const name = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
-  },
 };

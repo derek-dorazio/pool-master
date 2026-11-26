@@ -12,13 +12,13 @@
  * family (#695), read through the response's scoring definition.
  */
 
-import { eventSportDefinition, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
+import { eventSportDefinition, PARTICIPANT_SCORING_DEFINITIONS, type RoundName } from '@poolmaster/shared/domain';
+import { displayString } from '@poolmaster/shared/display-strings';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { ContestLeaderboardResponse } from '@/lib/api';
 import {
   formatCurrentRoundLabel,
   resolveCurrentRound,
-  resolveRoundNumbers,
 } from './contest-leaderboard-rounds';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type {
@@ -79,6 +79,9 @@ export interface LeaderboardView {
   isUnscored: boolean;
 }
 
+/** A round by number, until the event's rounds and their slots load. */
+const numberedRound: RoundName = (roundNumber) => displayString('word.roundNumber', { n: roundNumber });
+
 /**
  * The whole view, in the order the server ranked it — `entries` arrives best-first and is
  * never re-sorted here, because position and its tie-aware `displayPosition` were decided
@@ -87,7 +90,15 @@ export interface LeaderboardView {
 export function buildLeaderboardView(
   response: ContestLeaderboardResponse,
   context?: LeaderboardContext,
-  { isLive = false }: { /** The contest is live (ACTIVE): only then does an unscored board stand level at 0. */ isLive?: boolean } = {},
+  {
+    isLive = false,
+    roundName = numberedRound,
+  }: {
+    /** The contest is live (ACTIVE): only then does an unscored board stand level at 0. */
+    isLive?: boolean;
+    /** What the shown event's rounds are called, by their slots (#2006); numbered until they load. */
+    roundName?: RoundName;
+  } = {},
 ): LeaderboardView {
   // The shown event's definition.
   const sport = eventSportDefinition(response);
@@ -136,11 +147,7 @@ export function buildLeaderboardView(
   return {
     detailColumns: family.detailColumns,
     footnote: family.footnote,
-    currentRoundLabel: formatCurrentRoundLabel(
-      resolveCurrentRound(response.participants),
-      sport,
-      resolveRoundNumbers(response.participants).length,
-    ),
+    currentRoundLabel: formatCurrentRoundLabel(resolveCurrentRound(response.participants), roundName),
     entries,
     isUnscored,
   };

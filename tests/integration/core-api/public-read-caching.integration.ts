@@ -203,7 +203,7 @@ describe('admin saves clear the public reads they change (#1181)', () => {
       method: 'POST',
       url: '/api/v1/events',
       headers: admin.headers,
-      payload: { name: `Cache Open ${randomUUID()}`, seasonSlotId, autoLifecycleEnabled: false },
+      payload: { name: `Cache Open ${randomUUID()}`, seasonSlotIds: [seasonSlotId], autoLifecycleEnabled: false },
     });
 
     expect(response.statusCode).toBe(201);

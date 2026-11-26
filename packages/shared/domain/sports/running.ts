@@ -1,4 +1,3 @@
-import { displayString } from '../../display-strings/display-strings';
 import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
@@ -21,5 +20,4 @@ export const runningSportDefinition: SportDefinition = {
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
   shootout: false,
   // An event run as several numbered races would read "Race 2".
-  roundLabel: (roundNumber, roundCount, locale) => (roundCount > 1 ? displayString('word.raceNumber', { n: roundNumber }, locale) : displayString('word.singleRace', undefined, locale)),
 };

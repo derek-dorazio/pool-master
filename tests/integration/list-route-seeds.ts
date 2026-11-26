@@ -14,6 +14,7 @@ import { freshEventEdition, fixtureSeasonId } from '../support/event-edition';
 import { sportLeagueRowDefaults } from '../support/league-profiles';
 import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
+import { oneEventSlotId } from '../support/test-slots';
 
 export const DAY = 24 * 60 * 60 * 1000;
 export const HOUR = 60 * 60 * 1000;
@@ -134,7 +135,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
       rounds: 1,
     },
   });
-  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: startDate } });
+  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: startDate } });
   const matches = [];
   for (let matchNumber = 1; matchNumber <= games; matchNumber += 1) {
     const team = async (side: string) => {

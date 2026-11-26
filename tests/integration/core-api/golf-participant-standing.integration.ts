@@ -15,18 +15,19 @@ import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/sc
 import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { sportRowKeys } from '../../support/sport-rows';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
 // schedule an admin-created event starts with.
-const fourRoundSchedule = () => ({
-  rounds: 4,
-  roundSchedule: {
-    create: [1, 2, 3, 4].map((roundNumber) => ({
-      roundNumber,
-      scheduledDate: new Date(Date.UTC(2026, 4, 6 + roundNumber, 12)),
-    })),
-  },
-});
+const fourRoundSchedule = () => ({ rounds: 4 });
+
+/** The event's four rounds, a day apart, in its one slot (#2006). */
+async function addFourRounds(prisma: ReturnType<typeof getPrisma>, sportEventId: string): Promise<void> {
+  const sportEventSlotId = await oneEventSlotId(prisma, sportEventId);
+  await prisma.sportEventRound.createMany({
+    data: [1, 2, 3, 4].map((roundNumber) => ({ sportEventId, sportEventSlotId, roundNumber, scheduledDate: new Date(Date.UTC(2026, 4, 6 + roundNumber, 12)) })),
+  });
+}
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -73,6 +74,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
         ...fourRoundSchedule(),
       },
     });
+    await addFourRounds(prisma, event.id);
     await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: 'golf-standing-event-1' });
     const sportEventParticipant = await prisma.sportEventParticipant.create({
       data: {
@@ -176,15 +178,19 @@ describe('Golf live-score persistence', () => {
       create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const createEvent = async (tag: string) => prisma.sportEvent.create({
-      data: {
-        ...(await freshEventEdition(prisma)),
-        name: `Live ${suffix} ${tag}`,
-        startDate: new Date('2026-05-07T12:00:00.000Z'),
-        status: 'IN_PROGRESS',
-        ...fourRoundSchedule(),
-      },
-    });
+    const createEvent = async (tag: string) => {
+      const row = await prisma.sportEvent.create({
+        data: {
+          ...(await freshEventEdition(prisma)),
+          name: `Live ${suffix} ${tag}`,
+          startDate: new Date('2026-05-07T12:00:00.000Z'),
+          status: 'IN_PROGRESS',
+          ...fourRoundSchedule(),
+        },
+      });
+      await addFourRounds(prisma, row.id);
+      return row;
+    };
     const [created, otherEvent] = [await createEvent('a'), await createEvent('b')];
     // Only the named event is the provider's, so scoping to it is observable.
     const event = { ...created, externalId: `live-${suffix}-${created.id}` };

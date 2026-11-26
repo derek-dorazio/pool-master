@@ -27,6 +27,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // The root-admin event tools' batch writes against real Postgres (#1252): each writes a whole
 // field in a fixed number of queries, however big the field, and leaves the rows as the
@@ -62,7 +63,7 @@ async function golfEvent() {
       rounds: 1,
     },
   });
-  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-05-07') } });
+  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: new Date('2026-05-07') } });
   return { sport, sportLeagueId, event, round };
 }
 
@@ -388,7 +389,7 @@ describe('Entering a golf round\'s scores (#1252)', () => {
     const prisma = getPrisma();
     const { event, round, field } = await eventWithField(2);
     const [golferA, golferB] = [expectDefined(field[0]), expectDefined(field[1])];
-    const round2 = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-05-08') } });
+    const round2 = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 2, scheduledDate: new Date('2026-05-08') } });
     for (const golfer of [golferA, golferB]) {
       for (const [scheduled, strokes] of [[round, 70], [round2, 71]] as const) {
         await prisma.sportEventParticipantRound.create({

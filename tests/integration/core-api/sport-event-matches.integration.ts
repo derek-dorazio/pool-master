@@ -71,7 +71,7 @@ async function createBracketEvent() {
     rounds: 2,
     autoLifecycleEnabled: true,
   });
-  await createRoundRows(rounds, event.id, [
+  await createRoundRows(getPrisma(), rounds, event, [
     { roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-03-20T16:00:00.000Z') },
   ]);

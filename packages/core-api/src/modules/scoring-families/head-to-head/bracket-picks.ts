@@ -25,12 +25,13 @@ import {
   MatchSide,
   MatchStatus,
   PickOutcome,
+  finalRoundsOfMatches,
   type KnockoutRoundPointsSettings,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { proposeRoundMatchups, reseededRounds } from '../../events/bracket-reseed';
 import { gameTotalPoints } from './game-picks';
-import { upsetBonusFor } from './score-team';
+import { byeEntries, upsetBonusFor } from './score-team';
 
 /** One bracket pick: the team an entry says wins one game. */
 export interface BracketPick {
@@ -103,7 +104,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
   // The bracket as the entry's picks play it: each game it picked is decided for its team.
   const predicted: SportEventRoundMatch[] = [];
   const keptTeamByMatchId = new Map<string, string>();
-  const teamsBefore = new Set<string>();
+  const byes = byeEntries(bracket);
 
   for (const roundNumber of rounds) {
     const round = bracket
@@ -120,7 +121,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
             ? keptTeamByMatchId.get(feeder.id) ?? null
             // A team the event placed here without playing an earlier round is a bye; any other
             // team on an unlinked side got there by results, which the entry predicts for itself.
-            : team !== null && !teamsBefore.has(team) ? team : null;
+            : team !== null && byes.get(team)?.entersAtRound === roundNumber ? team : null;
         if (side === MatchSide.HOME) placed.home = value;
         else placed.away = value;
       }
@@ -158,10 +159,6 @@ export function resolveBracketPicks<Pick extends BracketPick>(
       predicted.push(pickedWithdrawn
         ? { ...withSides(match, { home: pick.sportEventParticipantId, away: null }), status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME }
         : { ...withSides(match, placed), status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED, winnerSide });
-      for (const side of SIDES) {
-        const team = storedSide(match, side);
-        if (team !== null) teamsBefore.add(team);
-      }
     }
   }
   return { sides, kept, stranded };
@@ -183,10 +180,11 @@ export function findBracketProblem(
     return startsAtRound > 1 ? `it has no games from round ${startsAtRound} on` : 'it has no games';
   }
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
-  // poolmaster-allow-position: round numbers sorted ascending: the highest is the final round
-  const finals = bracket.filter((match) => match.roundNumber === rounds.at(-1));
+  // The final is the game of the final's round (#2006), never the last round's.
+  const finalRounds = finalRoundsOfMatches(bracket);
+  const finals = bracket.filter((match) => finalRounds.has(match.roundNumber));
   if (finals.length !== 1) {
-    return `its last round has ${finals.length} games, not one final`;
+    return `its final has ${finals.length} games, not one`;
   }
   const picks: BracketPick[] = [];
   for (const roundNumber of rounds) {
@@ -282,10 +280,10 @@ export function scoreBracketPicks(
   };
 }
 
-/** The bracket's final, its one game of the last round; null while that round has not one game. */
+/** The bracket's final, its one game of the final's round (#2006); null while that round has not one game. */
 export function bracketFinal(bracket: readonly SportEventRoundMatch[]): SportEventRoundMatch | null {
-  const lastRound = Math.max(...bracket.map((match) => match.roundNumber));
-  const finals = bracket.filter((match) => match.roundNumber === lastRound);
+  const finalRounds = finalRoundsOfMatches(bracket);
+  const finals = bracket.filter((match) => finalRounds.has(match.roundNumber));
   return finals.length === 1 ? finals[0] : null;
 }
 

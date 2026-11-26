@@ -1,4 +1,4 @@
-import { createEvent, createTestSlot, deleteEvent, getEvent, updateEvent } from '@poolmaster/shared/generated/hey-api';
+import { createEvent, createTestSlot, deleteEvent, getEvent, listEventRounds, updateEvent } from '@poolmaster/shared/generated/hey-api';
 import { Sport } from '@poolmaster/shared/domain';
 import { enUS } from '@poolmaster/shared/display-strings';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
@@ -33,8 +33,9 @@ beforeAll(async () => {
 afterAll(async () => {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
-  await db.sportEventSlot.deleteMany({ where: { sportEventId: { in: eventIds } } });
+  // A round is played in one of its event's slots (#2006), so the rounds go first.
   await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
+  await db.sportEventSlot.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
@@ -95,7 +96,7 @@ describe('createTestSlot', () => {
 describe('createEvent on a season slot', () => {
   it('makes a draft test event on a free test slot, with the slot\'s dates and the slot listed', async () => {
     const seasonSlotId = await newTestSlot('2026-08-06T12:00:00.000Z', '2026-08-09T22:00:00.000Z');
-    const made = await createEvent({ client, body: { seasonSlotId, name: `Slot Open ${RUN}` } });
+    const made = await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Slot Open ${RUN}` } });
     expect(made.response?.status).toBe(201);
     const event = expectDefined(made.data).event;
     created.sportEventIds.add(event.id);
@@ -105,9 +106,47 @@ describe('createEvent on a season slot', () => {
     expect(read.slots.map((slot) => slot.id)).toEqual([seasonSlotId]);
   });
 
+  it('plays every round of a one-slot test event in its slot', async () => {
+    const seasonSlotId = await newTestSlot('2026-10-01T12:00:00.000Z', '2026-10-04T22:00:00.000Z');
+    const event = expectDefined((await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `One Slot Open ${RUN}` } })).data).event;
+    created.sportEventIds.add(event.id);
+    const rounds = expectDefined((await listEventRounds({ client, path: { eventId: event.id } })).data).rounds;
+    expect(rounds.length).toBeGreaterThan(1);
+    expect(new Set(rounds.map((round) => round.slot.seasonSlotId))).toEqual(new Set([seasonSlotId]));
+  });
+
+  it('makes a multi-slot test event with one round per slot, in the order the slots are given, dated by each slot', async () => {
+    const firstSlotId = await newTestSlot('2026-10-08T12:00:00.000Z');
+    const secondSlotId = await newTestSlot('2026-10-15T12:00:00.000Z');
+    const made = await createEvent({ client, body: { seasonSlotIds: [firstSlotId, secondSlotId], name: `Two Slot Open ${RUN}` } });
+    expect(made.response?.status).toBe(201);
+    const event = expectDefined(made.data).event;
+    created.sportEventIds.add(event.id);
+    expect(event.slots.map((slot) => slot.id).sort()).toEqual([firstSlotId, secondSlotId].sort());
+    const rounds = expectDefined((await listEventRounds({ client, path: { eventId: event.id } })).data).rounds;
+    expect(rounds.map((round) => [round.roundNumber, round.slot.seasonSlotId])).toEqual([[1, firstSlotId], [2, secondSlotId]]);
+    expect(rounds.map((round) => round.scheduledDate)).toEqual(['2026-10-08T12:00:00.000Z', '2026-10-15T12:00:00.000Z']);
+  });
+
+  it('refuses a rounds-count edit of a multi-slot event with 422 EVENT_ROUNDS_FROM_SLOTS, and the refusal has en-US copy', async () => {
+    const slotIds = [await newTestSlot('2026-10-22T12:00:00.000Z'), await newTestSlot('2026-10-29T12:00:00.000Z')];
+    const event = expectDefined((await createEvent({ client, body: { seasonSlotIds: slotIds, name: `Fixed Rounds Open ${RUN}` } })).data).event;
+    created.sportEventIds.add(event.id);
+    expectFunctionalError(await updateEvent({ client, path: { eventId: event.id }, body: { rounds: 3 } }), { status: 422, code: 'EVENT_ROUNDS_FROM_SLOTS' });
+    expect(enUS.error.EVENT_ROUNDS_FROM_SLOTS).toBeTruthy();
+  });
+
+  it('refuses slots of two Seasons with 422 SEASON_SLOTS_NOT_ONE_SEASON', async () => {
+    const db = getFunctionalPrisma();
+    const currentSlotId = await newTestSlot('2026-11-05T12:00:00.000Z');
+    const pastSlotId = await testSlotIdIn(db, sportLeagueId, await fixtureSeasonId(db, sportLeagueId, 2018), new Date('2018-08-06T12:00:00.000Z'));
+    expectFunctionalError(await createEvent({ client, body: { seasonSlotIds: [currentSlotId, pastSlotId], name: `Two Season Open ${RUN}` } }), { status: 422, code: 'SEASON_SLOTS_NOT_ONE_SEASON' });
+    expect(enUS.error.SEASON_SLOTS_NOT_ONE_SEASON).toBeTruthy();
+  });
+
   it('refuses a date edit of an event whose dates come from its slots with 422 EVENT_DATES_FROM_SLOTS', async () => {
     const seasonSlotId = await newTestSlot('2026-08-13T12:00:00.000Z');
-    const event = expectDefined((await createEvent({ client, body: { seasonSlotId, name: `Dated Open ${RUN}` } })).data).event;
+    const event = expectDefined((await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Dated Open ${RUN}` } })).data).event;
     created.sportEventIds.add(event.id);
     const edit = await updateEvent({ client, path: { eventId: event.id }, body: { startDate: '2026-09-01T12:00:00.000Z' } });
     expectFunctionalError(edit, { status: 422, code: 'EVENT_DATES_FROM_SLOTS' });
@@ -118,7 +157,7 @@ describe('createEvent on a season slot', () => {
     const db = getFunctionalPrisma();
     const seasonSlotId = await testSlotIdIn(db, sportLeagueId, expectDefined((await db.sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId } })).currentSeasonId ?? undefined), new Date('2026-08-20T12:00:00.000Z'));
     await db.sportLeagueSeasonCompetitionSlot.update({ where: { id: seasonSlotId }, data: { isTestData: false, label: null } });
-    expectFunctionalError(await createEvent({ client, body: { seasonSlotId, name: `Synced Open ${RUN}` } }), { status: 422, code: 'SEASON_SLOT_NOT_TEST' });
+    expectFunctionalError(await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Synced Open ${RUN}` } }), { status: 422, code: 'SEASON_SLOT_NOT_TEST' });
     expect(enUS.error.SEASON_SLOT_NOT_TEST).toBe('Events can be made by hand only on a test slot.');
   });
 
@@ -126,23 +165,23 @@ describe('createEvent on a season slot', () => {
     const db = getFunctionalPrisma();
     const pastSeasonId = await fixtureSeasonId(db, sportLeagueId, 2019);
     const seasonSlotId = await testSlotIdIn(db, sportLeagueId, pastSeasonId, new Date('2019-08-06T12:00:00.000Z'));
-    expectFunctionalError(await createEvent({ client, body: { seasonSlotId, name: `Old Open ${RUN}` } }), { status: 422, code: 'SEASON_SLOT_NOT_CURRENT' });
+    expectFunctionalError(await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Old Open ${RUN}` } }), { status: 422, code: 'SEASON_SLOT_NOT_CURRENT' });
     expect(enUS.error.SEASON_SLOT_NOT_CURRENT).toBeTruthy();
   });
 
   it('refuses a test slot that already has an event with 409 SEASON_SLOT_TAKEN', async () => {
     const seasonSlotId = await newTestSlot('2026-08-27T12:00:00.000Z');
-    const first = expectDefined((await createEvent({ client, body: { seasonSlotId, name: `Taken Open ${RUN}` } })).data).event;
+    const first = expectDefined((await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Taken Open ${RUN}` } })).data).event;
     created.sportEventIds.add(first.id);
-    expectFunctionalError(await createEvent({ client, body: { seasonSlotId, name: `Second Open ${RUN}` } }), { status: 409, code: 'SEASON_SLOT_TAKEN' });
+    expectFunctionalError(await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Second Open ${RUN}` } }), { status: 409, code: 'SEASON_SLOT_TAKEN' });
     expect(enUS.error.SEASON_SLOT_TAKEN).toBeTruthy();
   });
 
   it('answers one of two creates racing for the same free slot with 409 SEASON_SLOT_TAKEN, never a 500', async () => {
     const seasonSlotId = await newTestSlot('2026-09-10T12:00:00.000Z');
     const results = await Promise.all([
-      createEvent({ client, body: { seasonSlotId, name: `Race A Open ${RUN}` } }),
-      createEvent({ client, body: { seasonSlotId, name: `Race B Open ${RUN}` } }),
+      createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Race A Open ${RUN}` } }),
+      createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Race B Open ${RUN}` } }),
     ]);
     for (const result of results) if (result.data) created.sportEventIds.add(result.data.event.id);
     expect(results.map((result) => result.response?.status ?? 0).sort((left, right) => left - right)).toEqual([201, 409]);
@@ -151,14 +190,14 @@ describe('createEvent on a season slot', () => {
   });
 
   it('refuses a slot id that names no slot with 404 SEASON_SLOT_NOT_FOUND', async () => {
-    expectFunctionalError(await createEvent({ client, body: { seasonSlotId: ANY_UUID, name: `Nowhere Open ${RUN}` } }), { status: 404, code: 'SEASON_SLOT_NOT_FOUND' });
+    expectFunctionalError(await createEvent({ client, body: { seasonSlotIds: [ANY_UUID], name: `Nowhere Open ${RUN}` } }), { status: 404, code: 'SEASON_SLOT_NOT_FOUND' });
   });
 
   it('frees the test slot when its event is deleted, so another event can be made on it', async () => {
     const seasonSlotId = await newTestSlot('2026-09-03T12:00:00.000Z');
-    const first = expectDefined((await createEvent({ client, body: { seasonSlotId, name: `Freed Open ${RUN}` } })).data).event;
+    const first = expectDefined((await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Freed Open ${RUN}` } })).data).event;
     expect((await deleteEvent({ client, path: { eventId: first.id } })).response?.status).toBe(204);
-    const second = await createEvent({ client, body: { seasonSlotId, name: `Freed Open ${RUN}` } });
+    const second = await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `Freed Open ${RUN}` } });
     expect(second.response?.status).toBe(201);
     created.sportEventIds.add(expectDefined(second.data).event.id);
   });

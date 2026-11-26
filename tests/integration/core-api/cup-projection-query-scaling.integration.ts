@@ -21,6 +21,7 @@ import { cleanupTestData, getApp, getPrisma, setupIntegrationTests, teardownInte
 import { DAY, HOUR, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams, seedTiers } from '../list-route-seeds';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { expectConstantQueries } from '../query-scaling';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // No mocks.
 
@@ -186,7 +187,7 @@ const liveBracketContest: LiveContestSeed = async (seeded, index) => {
   await Promise.all([first, second].map((game, seed) => prisma.sportEventParticipant.update({
     where: { id: expectDefined(game.homeSportEventParticipantId) }, data: { seedNumber: seed + 1 },
   })));
-  const finalRound = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date(Date.now() + DAY) } });
+  const finalRound = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 2, scheduledDate: new Date(Date.now() + DAY) } });
   const final = await prisma.sportEventRoundMatch.create({
     data: {
       sportEventId: event.id, sportEventRoundId: finalRound.id, matchNumber: 3, isNeutralSite: true,

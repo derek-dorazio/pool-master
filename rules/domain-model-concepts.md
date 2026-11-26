@@ -68,7 +68,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
   knockout round points, as a knockout roster pool does.
 - **A knockout roster pick scores per match it wins** (`KNOCKOUT_ROUND_POINTS`, #699): that
   round's value from the contest's table, plus an upset bonus when the contest has one on. A
-  team placed straight into a later round (a bye) scores nothing for the round it skipped.
+  team placed straight into a later round (a bye) counts the bye as a win: it scores the value
+  of each round it skipped once that round is decided, with no upset bonus (#2170).
 - **A match's winner is its own fact** (`winnerSide`), and every scorer reads it, never the
   score. In a sport that settles a level knockout by shoot-out (`SportDefinition.shootout`,
   soccer's penalties), a bracket match level after extra time names its winner by the
@@ -161,14 +162,14 @@ a Team On Screen*.
 
 ### The sport side
 
-> **Being replaced.** Stale against the target model: `SportLeague`'s `roundNames` and `bracketAdvancement`; `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventRoundMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game side results). The target model, which new code is designed toward, is §5
+> **Being replaced.** Stale against the target model: `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventRoundMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game side results). The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
 | `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball, soccer and tennis, and future sports. Who competes and how it is scored are its sport leagues', not the sport's (#2001). Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its display strings (`sport.<SPORT>.<role>`, `rules/ux-rules.md` §16) | `SportLeague` |
-| `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. It says who competes in its events and how they are scored (`participantType`, `scoringFamily`, both required, #2001). A bracket league may name its own rounds (`roundNames`: the NBA's Conference Finals), shown in place of the sport's, and names one tier profile and one pricing profile (`platformTierProfileId`, `platformPricingProfileId`, #1844). Screens call it by its sport's word (a tennis tour) unless it has its own `noun` (#834: the NCAA's tennis championships are leagues; read through `sportLeagueNounOf`) | `League`, the office pool |
+| `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. It says who competes in its events and how they are scored (`participantType`, `scoringFamily`, both required, #2001). A round is named by the slot it is played in (the NBA's Conference Finals, #2006). It names one tier profile and one pricing profile (`platformTierProfileId`, `platformPricingProfileId`, #1844). Screens call it by its sport's word (a tennis tour) unless it has its own `noun` (#834: the NCAA's tennis championships are leagues; read through `sportLeagueNounOf`) | `League`, the office pool |
 | `SportLeaguePosition` | position | One of a sport league's playing positions (#2001): the NFL's QB. Set by migration with each provider's codes for it (`SportLeaguePositionProviderMapping`); only a field-eligible position's players are kept on a Season's roster. `displayOrder` is display only | A field member's finishing place, which the standing tables call `position` |
 | `PlatformTierProfile` | tier profile | A named tier layout, defined once for the platform (#1844): how many tiers a new event starts with, how many participants auto-tiering puts in each tier but the last, and whether the last takes everyone left or at most a cap (anyone beyond is in no tier and can't be picked). A field too small to reach the last tier is spread evenly, a rule fixed in code. Each sport league names one; an event records the layout it was last auto-tiered with (`SportEvent.tierConfig`) | The event's own `SportEventTier` rows, which an admin may still add or delete |
 | `PlatformPricingProfile` | pricing profile | A named set of the five budget pricing values (#1844: Standard, Small). Each sport league names one; a synced field never priced is priced with it, and the event records the values it was priced with (`SportEvent.pricingConfig`) | The event's recorded values, which a later profile edit never moves |
@@ -268,10 +269,10 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
   `isPlayInPlace` before release; only a marked row takes a winner, and its winner
   takes over that field row, ending the mark, keeping its seed, tier, price and picks, and the pairing's
   participant is inactivated. A side with no team is filled by an earlier match's winner; a team with a **bye** is named
-  straight on a later round's match, with no earlier match feeding its side. A sport league whose
-  `bracketAdvancement` is `RESEED_BY_SEED` **reseeds**: a round's winners go to no fixed match, and
-  the admin places them by seed within their region (the NFL's Divisional round). The rule holds
-  while any of the league's events has a bracket loaded, since the bracket's links were drawn for it.
+  straight on a later round's match, with no earlier match feeding its side. A round played in a
+  slot whose `pairing` is `RESEEDED` **reseeds**: the round before's winners go to no fixed match, and
+  the feed or a test's admin places them by seed within their region (the NFL's Divisional round).
+  The pairing is the Season slot's, from its definition (#2006), never the league's.
 - **Active**: `isActive` on a league, squad, user or field member (present in normal views),
   and the contest status `ACTIVE` (its first event has started and it has not settled). Different things.
 

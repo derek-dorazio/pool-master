@@ -9,6 +9,15 @@ import type { FinishedRound } from '../stroke-play/finished-rounds';
 
 const DECIDED_MATCH_STATUSES: readonly MatchStatus[] = [MatchStatus.COMPLETED, MatchStatus.CANCELLED];
 
+/** Whether round `roundNumber` has games and every one of them is decided: its result is in, or it was cancelled. */
+export function isMatchRoundDecided(
+  matches: readonly Pick<SportEventRoundMatch, 'roundNumber' | 'status'>[],
+  roundNumber: number,
+): boolean {
+  const games = matches.filter((match) => match.roundNumber === roundNumber);
+  return games.length > 0 && games.every((match) => DECIDED_MATCH_STATUSES.includes(match.status));
+}
+
 /** The highest round whose every game is decided, from `fromRound` on, or null before any is. */
 export function lastFinishedMatchRound(
   matches: readonly Pick<SportEventRoundMatch, 'roundNumber' | 'status' | 'updatedAt'>[],
@@ -18,8 +27,8 @@ export function lastFinishedMatchRound(
     .filter((roundNumber) => roundNumber >= fromRound)
     .sort((left, right) => right - left);
   for (const roundNumber of roundNumbers) {
-    const games = matches.filter((match) => match.roundNumber === roundNumber);
-    if (games.every((match) => DECIDED_MATCH_STATUSES.includes(match.status))) {
+    if (isMatchRoundDecided(matches, roundNumber)) {
+      const games = matches.filter((match) => match.roundNumber === roundNumber);
       return { roundNumber, finishedAt: new Date(Math.max(...games.map((match) => match.updatedAt.getTime()))) };
     }
   }

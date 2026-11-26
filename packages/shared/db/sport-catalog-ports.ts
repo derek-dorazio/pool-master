@@ -63,7 +63,7 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'bracketAdvancement' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>> & {
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>> & {
   /**
    * The provider league whose sync the sport league takes (#1997): its mapping to it is made when
    * missing and selected, in the same write. Null stops the sync and keeps the mapping.
@@ -329,11 +329,6 @@ export interface SportEventRepository {
   /** Events per sport league, for each id asked about (0 where none). */
   countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
   /**
-   * Whether any event of the sport league, in any year, has a bracket
-   * loaded: at least one match. While one has, the league's bracket rule cannot change (#730).
-   */
-  sportLeagueHasLoadedBracket(sportLeagueId: string): Promise<boolean>;
-  /**
    * Per provider asked about: its `SCHEDULED` or `IN_PROGRESS` events, and when any of its
    * events last changed (null where it has none).
    */
@@ -365,8 +360,8 @@ export interface SportEventRoundSchedule {
   scheduledEndAt?: Date | null;
 }
 
-/** A round to create, on its event. */
-export type SportEventRoundCreate = SportEventRoundSchedule & { sportEventId: string };
+/** A round to create, on its event, in the Season slot of the event it is played in (#2006). */
+export type SportEventRoundCreate = SportEventRoundSchedule & { sportEventId: string; seasonSlotId: string };
 
 export interface SportEventRoundRepository {
   /** Ordered by round number. */
@@ -377,7 +372,10 @@ export interface SportEventRoundRepository {
   createMany(rounds: readonly SportEventRoundCreate[]): Promise<void>;
   /** Reschedules existing rounds, all or none. `scheduledEndAt` left undefined is kept. */
   reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
-  /** The event's round of this number, created (scheduled now) when a score arrives for a round it lacks. */
+  /**
+   * The event's round of this number, created (scheduled now, in the event's one slot) when a score
+   * arrives for a round it lacks. An event with several slots has a round per slot from its create.
+   */
   findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound>;
   /**
    * The results recorded in each of the event's rounds, by round id, grouped by status (#1889): two
@@ -815,6 +813,8 @@ export interface SportLeagueSeasonRepository {
   setCurrentSeasons(changes: ReadonlyArray<{ sportLeagueId: string; currentSeasonId: string | null }>): Promise<void>;
   /** One Season slot with its Season and the event on it, or null for an unknown id (#2004). */
   findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null>;
+  /** Season slots by id, each with its Season and the event on it, in one read; an unknown id is left out (#2006). */
+  findSlotsByIds(seasonSlotIds: readonly string[]): Promise<SeasonSlotWithEvent[]>;
   /**
    * Adds a labelled test slot of a definition to a Season (#2004), copying the definition's series
    * format and pairing, in the Season's phase for the definition's phase. Says why when it adds

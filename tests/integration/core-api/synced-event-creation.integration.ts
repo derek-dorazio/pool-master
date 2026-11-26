@@ -160,7 +160,7 @@ describe('Synced event creation (ADR 0011)', () => {
     await scheduler.runSweep();
     const { sportEvents } = integrationSportEventServices();
     const manual = await sportEvents.createEvent({
-      seasonSlotId: await testSlotId(getPrisma(), synced.id, new Date('2027-08-01T12:00:00Z')),
+      seasonSlotIds: [await testSlotId(getPrisma(), synced.id, new Date('2027-08-01T12:00:00Z'))],
       name: 'Members Cup',
     });
 

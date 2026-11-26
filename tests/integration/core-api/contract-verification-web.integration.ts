@@ -55,6 +55,7 @@ import { randomUUID } from 'node:crypto';
 import { freshEventEdition, fixtureSeasonId } from '../../support/event-edition';
 import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -1003,7 +1004,7 @@ describe('Contract verification (web)', () => {
         rounds: 1,
       },
     });
-    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: event.startDate } });
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
     const [home, away] = await Promise.all(['Contract Home', 'Contract Away'].map(async (name) => {
       const team = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'TEAM'  } });
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });

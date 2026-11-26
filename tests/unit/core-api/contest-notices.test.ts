@@ -27,6 +27,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
+import { namedSlotOfRound } from '../../support/round-slots';
 
 const STARTS_AT = new Date('2026-04-09T11:40:00.000Z');
 /** The tests' clock: a week before STARTS_AT. */
@@ -37,7 +38,7 @@ describe('ContestNotices', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let matches: SportEventRoundMatch[];
-  let roundNames: string[];
+  let slotNames: string[];
   let tierCount: number;
   let final: ContestFinalStandings;
   let logger: ReturnType<typeof fakeLogger>;
@@ -51,7 +52,7 @@ describe('ContestNotices', () => {
     outbox = inMemoryEmailMessages();
     optOuts = inMemoryEmailOptOuts();
     matches = [];
-    roundNames = [];
+    slotNames = [];
     tierCount = 6;
     final = { scoringDefinitionId: null, entries: [] };
     logger = fakeLogger();
@@ -85,7 +86,7 @@ describe('ContestNotices', () => {
       sportLeagues: {
         findById: async (id) => {
           eventReads.push(`sportLeague:${id}`);
-          return { name: 'PGA Tour', roundNames } as unknown as SportLeague;
+          return { name: 'PGA Tour' } as unknown as SportLeague;
         },
       },
       matches: {
@@ -202,11 +203,11 @@ describe('ContestNotices', () => {
         selectionType: SelectionType.BRACKET,
         configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
       });
-      roundNames = ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
+      slotNames = ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
       matches = [2, 3].map((roundNumber) => ({
         id: `game-${String(roundNumber)}`,
         sportEventId: tournament.id,
-        roundNumber,
+        roundNumber, slot: namedSlotOfRound(roundNumber, slotNames),
         status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
         scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : STARTS_AT,
       }) as SportEventRoundMatch);

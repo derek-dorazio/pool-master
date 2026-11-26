@@ -1,19 +1,12 @@
-import { displayString } from '../../display-strings/display-strings';
 import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
-
-/** What the last rounds of a basketball bracket are called, counted back from the final. */
-const ROUND_NAMES_FROM_FINAL = ['National Championship', 'Final Four', 'Elite Eight', 'Sweet 16'] as const;
-/** What the opening rounds are called, before the named ones. */
-const OPENING_ROUND_NAMES = ['First Round', 'Second Round', 'Third Round'] as const;
 
 /**
  * Basketball (#698, plans/knockout-and-pickem-design.md §3.5): teams playing a knockout bracket,
  * scored by the head-to-head family from the bracket's matches. The NCAA Division I men's and
  * women's tournaments are its sport leagues, and the NBA and WNBA playoffs are two more (#706): a
- * series is one match, its scores the games each side won, and those leagues name their own
- * rounds (`SportLeague.roundNames`, read through `eventRoundLabel`), so the names below are
- * March Madness's. The NBA play-in fills the 7 and 8 seeds through play-in places, as the First
+ * series is one match, its scores the games each side won. A round is named by the slot it is
+ * played in (#2006). The NBA play-in fills the 7 and 8 seeds through play-in places, as the First
  * Four does.
  *
  * The March Madness field is 64 bracket places in six rounds: the First Four play-in winners
@@ -35,11 +28,4 @@ export const basketballSportDefinition: SportDefinition = {
   pickEm: { tiePicks: false, againstTheSpread: true },
   // A six-round bracket reads First Round, Second Round, Sweet 16, Elite Eight, Final Four,
   // National Championship; a shorter one keeps the names counted back from its final.
-  roundLabel: (roundNumber, roundCount, locale) => {
-    const fromFinal = roundCount - roundNumber;
-    // A stored round past the count (the count was lowered) has no name from the final: `at` would
-    // read a negative index from the end.
-    const fromFinalName = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return fromFinalName ?? OPENING_ROUND_NAMES.at(roundNumber - 1) ?? displayString('word.roundNumber', { n: roundNumber }, locale);
-  },
 };

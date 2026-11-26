@@ -1,12 +1,5 @@
-import { displayString } from '../../display-strings/display-strings';
 import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
-
-/** The last three rounds of any draw, counted back from the final. */
-const LAST_ROUND_NAMES = ['Final', 'Semifinals', 'Quarterfinals'] as const;
-
-/** The rounds before the quarterfinals, named by number from the first. */
-const EARLY_ROUND_NAMES = ['First round', 'Second round', 'Third round', 'Fourth round'] as const;
 
 /**
  * Tennis (#704): individuals playing a knockout draw, scored by the head-to-head family from the
@@ -33,10 +26,4 @@ export const tennisSportDefinition: SportDefinition = {
   shootout: false,
   // A Slam's seven rounds read First round to Fourth round, then Quarterfinals, Semifinals,
   // Final; a 64 draw's six the same, with no Fourth round.
-  roundLabel: (roundNumber, roundCount, locale) => {
-    const fromFinal = roundCount - roundNumber;
-    if (fromFinal < 0) return displayString('word.roundNumber', { n: roundNumber }, locale);
-    const name = fromFinal < LAST_ROUND_NAMES.length ? LAST_ROUND_NAMES[fromFinal] : EARLY_ROUND_NAMES.at(roundNumber - 1);
-    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
-  },
 };

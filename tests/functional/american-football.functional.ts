@@ -41,7 +41,7 @@ import { sportRowKeys } from '../support/sport-rows';
 // NFL sport league, played out, with its Divisional round placed by the reseed. A commissioner
 // runs a contest from the NFL's default template (one team from each seed line's tier, round
 // values doubling 1, 2, 4, 8), a member picks a lineup, and the settled contest scores each team
-// for the games it won; a bye scores nothing.
+// for the games it won, a bye counting as a win.
 
 const RUN = `nfl-${Date.now()}`;
 const ANY_UUID = '00000000-0000-4000-8000-000000000000';
@@ -76,7 +76,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: American football', () => {
-  it('scores and settles an entry on the played NFL playoffs from the NFL\'s default tiered template, a bye scoring nothing', async () => {
+  it('scores and settles an entry on the played NFL playoffs from the NFL\'s default tiered template, a bye counting as a win', async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.FOOTBALL },
@@ -158,14 +158,23 @@ describe('SDK Functional: American football', () => {
     // because it covers a test slot. Cut loose from its test slot, every kept write is
     // 409 SPORT_EVENT_NOT_TEST_DATA and changes nothing; linked again, the write goes through.
     const db = getFunctionalPrisma();
-    // The season already holds the synced slot beside the test one, so the event is cut loose from
-    // its test slots instead: an event covering no test slot is one the feed scores.
+    // The season already holds the synced slot beside each test one, so the event's slot links are
+    // moved onto those synced slots instead: an event covering no test slot is one the feed scores.
+    // Its rounds stay in the same event slots (#2006), so the links move rather than go.
     const links = await db.sportEventSlot.findMany({
       where: { sportEventId: event.id },
-      select: { sportEventId: true, sportLeagueSeasonId: true, sportLeagueSeasonCompetitionSlotId: true },
+      select: { id: true, sportLeagueSeasonCompetitionSlotId: true, seasonSlot: { select: { sportLeagueSeasonId: true, sportLeagueCompetitionSlotId: true } } },
     });
     expect(links.length).toBeGreaterThan(0);
-    await db.sportEventSlot.deleteMany({ where: { sportEventId: event.id } });
+    const synced = await db.sportLeagueSeasonCompetitionSlot.findMany({
+      where: { isTestData: false, OR: links.map(({ seasonSlot }) => seasonSlot) },
+      select: { id: true, sportLeagueCompetitionSlotId: true },
+    });
+    const syncedOf = new Map(synced.map((slot) => [slot.sportLeagueCompetitionSlotId, slot.id]));
+    const moveLinks = (to: (link: (typeof links)[number]) => string) => db.$transaction(
+      links.map((link) => db.sportEventSlot.update({ where: { id: link.id }, data: { sportLeagueSeasonCompetitionSlotId: to(link) } })),
+    );
+    await moveLinks((link) => expectDefined(syncedOf.get(link.seasonSlot.sportLeagueCompetitionSlotId), 'the synced slot beside the test one'));
     const seahawks = rowOf('Seattle Seahawks');
     const matchPath = { eventId: event.id, matchNumber: 13 };
     const refused = await Promise.all([
@@ -182,7 +191,7 @@ describe('SDK Functional: American football', () => {
     ]);
     expect(refused.map((reply) => [reply.response?.status, reply.error?.error.code])).toEqual(refused.map(() => [409, 'SPORT_EVENT_NOT_TEST_DATA']));
     expect(await superBowlOf()).toMatchObject({ isNeutralSite: superBowl.isNeutralSite, status: superBowl.status, periodScores: asLoaded });
-    await db.sportEventSlot.createMany({ data: links });
+    await moveLinks((link) => link.sportLeagueSeasonCompetitionSlotId);
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
 
     // --- A contest from the NFL's default template ----------------------------------------------
@@ -226,9 +235,9 @@ describe('SDK Functional: American football', () => {
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     const points = Object.fromEntries(board.entries.flatMap((entry) => entry.picks)
       .map((pick) => [expectDefined(field.find((row) => row.id === pick.sportEventParticipantId)).participant.name, pick.knockout?.points]));
-    // The Seahawks' bye scores nothing, then 2 + 4 + 8; the Patriots 1 + 2 + 4; the Rams 1 + 2.
+    // The Seahawks' bye counts as a win, 1, then 2 + 4 + 8; the Patriots 1 + 2 + 4; the Rams 1 + 2.
     expect(points).toEqual({
-      'Seattle Seahawks': 14,
+      'Seattle Seahawks': 15,
       'New England Patriots': 7,
       'Los Angeles Rams': 3,
     });
@@ -236,6 +245,6 @@ describe('SDK Functional: American football', () => {
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
-    expect([settled.totalScore, settled.displayPosition]).toEqual([24, '1']);
+    expect([settled.totalScore, settled.displayPosition]).toEqual([25, '1']);
   });
 });

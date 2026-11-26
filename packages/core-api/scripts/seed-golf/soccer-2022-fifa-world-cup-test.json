@@ -151,7 +151,7 @@
       "events": [
         {
           "key": "fifa-world-cup-2022",
-          "slotKey": "FINAL",
+          "roundSlotKeys": ["ROUND_OF_16", "QUARTERFINAL", "SEMIFINAL", "FINAL"],
           "name": "FIFA World Cup",
           "startDate": "2022-12-03",
           "endDate": "2022-12-18",

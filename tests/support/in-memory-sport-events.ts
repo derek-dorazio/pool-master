@@ -40,7 +40,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
+import { MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -60,6 +60,7 @@ import type {
   SportEventParticipantStanding,
   SportEventParticipantValuation,
   SportEventRound,
+  SportEventRoundSlot,
   SportEventTier,
   SportLeague,
   BudgetPricingProfile,
@@ -72,6 +73,11 @@ import type {
 import { sportRowKeys } from './sport-rows';
 
 const T0 = new Date('2026-01-01T00:00:00.000Z');
+
+/** A round's slot as the round read gives it (#2006). */
+function roundSlotOf({ id, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot): SportEventRoundSlot {
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing };
+}
 
 /** The profiles every in-memory sport league names (#1844); `platformTierProfileRepo` and `platformPricingProfileRepo` serve them. */
 export const IN_MEMORY_PLATFORM_TIER_PROFILE_ID = 'tier-profile-default';
@@ -175,7 +181,7 @@ export class InMemorySportEvents {
   }
 
   /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
-  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
+  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSlotsByIds' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
     const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
     return {
       findSyncSlots: async (sportLeagueSeasonId) => this.seasonSlots
@@ -230,13 +236,11 @@ export class InMemorySportEvents {
           this.slotsByEvent.set(row.sportEventId, [...(this.slotsByEvent.get(row.sportEventId) ?? []), slot]);
         }
       },
-      findSlot: async (id) => {
-        const slot = this.seasonSlots.find((candidate) => candidate.id === id);
-        if (!slot) return null;
-        const owner = [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === id));
-        const { sportLeagueId, sportLeagueSeasonId, ...seasonSlot } = slot;
-        return { slot: seasonSlot, sportLeagueId, sportLeagueSeasonId, sportEventId: owner?.[0] ?? null };
-      },
+      findSlot: async (id) => this.slotWithEvent(id),
+      findSlotsByIds: async (ids) => ids.flatMap((id) => {
+        const found = this.slotWithEvent(id);
+        return found === null ? [] : [found];
+      }),
     };
   }
   picksByEntry = new Map<string, number>();
@@ -274,7 +278,7 @@ export class InMemorySportEvents {
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
     const play = sportPlay(this.sports.find((row) => row.id === sportId)?.sport ?? Sport.GOLF);
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, timeZone: 'UTC', isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, timeZone: 'UTC', isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -343,9 +347,55 @@ export class InMemorySportEvents {
     return this.sportLeagues.find((league) => league.id === sportLeagueId)?.selectedProviderMapping?.providerId;
   }
 
-  /** Gives an event these rounds, through the round repository's one insert. */
-  addRounds(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
-    return this.roundRepo().createMany(rounds.map((round) => ({ sportEventId, ...round })));
+  /** A Season slot with its Season and the event on it, as `findSlot` answers. */
+  private slotWithEvent(id: string) {
+    const slot = this.seasonSlots.find((candidate) => candidate.id === id);
+    if (!slot) return null;
+    const owner = [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === id));
+    const { sportLeagueId, sportLeagueSeasonId, ...seasonSlot } = slot;
+    return { slot: seasonSlot, sportLeagueId, sportLeagueSeasonId, sportEventId: owner?.[0] ?? null };
+  }
+
+  /**
+   * The event's one slot (#2006): the slot it was made on, else a slot of its Season the sync keeps,
+   * given to it now (an event a test added straight to the store has none), so it stays no test
+   * event. Throws for an event of several.
+   */
+  eventSlotOf(sportEventId: string, overrides: Partial<SportLeagueSeasonSlot> = {}): SportLeagueSeasonSlot {
+    const slots = this.slotsByEvent.get(sportEventId) ?? [];
+    if (slots.length > 1) throw new Error(`Sport event ${sportEventId} has ${String(slots.length)} slots; name the round's.`);
+    // poolmaster-allow-position: the event's one slot
+    if (slots.length === 1) return slots[0];
+    const event = this.events.find((row) => row.id === sportEventId);
+    if (!event) throw new Error(`unknown sport event ${sportEventId}`);
+    const id = this.addTestSlot({ id: event.sportLeagueId, currentSeasonId: event.sportLeagueSeasonId }, event.startDate, { isTestData: false, label: null, ...overrides });
+    const slot = this.seasonSlots.find((candidate) => candidate.id === id) as SportLeagueSeasonSlot;
+    this.slotsByEvent.set(sportEventId, [slot]);
+    return slot;
+  }
+
+  /**
+   * Gives an event these rounds, through the round repository's one insert: all in its one slot,
+   * or each in the slot `seasonSlotIdOf` names for it.
+   */
+  addRounds(sportEventId: string, rounds: readonly SportEventRoundSchedule[], seasonSlotIdOf?: (roundNumber: number) => string): Promise<void> {
+    const seasonSlotOf = seasonSlotIdOf ?? (() => this.eventSlotOf(sportEventId).id);
+    return this.roundRepo().createMany(rounds.map((round) => ({ sportEventId, seasonSlotId: seasonSlotOf(round.roundNumber), ...round })));
+  }
+
+  /**
+   * Gives an event one slot per round, each of the kind given in order (a bracket: its FINAL last),
+   * slots the sync keeps unless `isTestData` says otherwise. Answers the slots' ids, for `addRounds`.
+   */
+  addRoundSlots(sportEventId: string, slots: ReadonlyArray<Partial<SportLeagueSeasonSlot> & { slotKind: SlotKind }>): string[] {
+    const event = this.events.find((row) => row.id === sportEventId);
+    if (!event) throw new Error(`unknown sport event ${sportEventId}`);
+    const added = slots.map((overrides) => {
+      const id = this.addTestSlot({ id: event.sportLeagueId, currentSeasonId: event.sportLeagueSeasonId }, event.startDate, { isTestData: false, label: null, ...overrides });
+      return this.seasonSlots.find((candidate) => candidate.id === id) as SportLeagueSeasonSlot;
+    });
+    this.slotsByEvent.set(sportEventId, [...(this.slotsByEvent.get(sportEventId) ?? []), ...added]);
+    return added.map((slot) => slot.id);
   }
 
   /** Gives an event these tiers, through the tier repository's one insert. */
@@ -553,9 +603,6 @@ export class InMemorySportEvents {
       findSlots: async (ids) => new Map(ids.map((id) => [id, [...(this.slotsByEvent.get(id) ?? [])]])),
       isTestEvent: async (id) => (this.events.some((event) => event.id === id) ? (this.slotsByEvent.get(id) ?? []).some((slot) => slot.isTestData) : null),
       countBySportLeagues: async (ids) => count(ids, (id) => this.events.filter((row) => row.sportLeagueId === id).length),
-      sportLeagueHasLoadedBracket: async (sportLeagueId) => this.matchRows.some((match) => (
-        this.events.some((event) => event.id === match.sportEventId && event.sportLeagueId === sportLeagueId)
-      )),
       summarizeByProviders: async (providerIds) => new Map(providerIds.map((providerId) => {
         const events = this.events.filter((row) => this.externalIdAt(row.id, providerId) !== undefined);
         const changed = events.map((row) => row.updatedAt.getTime());
@@ -624,7 +671,14 @@ export class InMemorySportEvents {
       ])),
       createMany: async (rounds) => {
         for (const round of rounds) {
-          this.roundRows.push(stamp({ id: this.id('round'), sportEventId: round.sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null }));
+          // A round is played in one of its own event's slots: the composite key, raised as a throw.
+          const slot = (this.slotsByEvent.get(round.sportEventId) ?? []).find((candidate) => candidate.id === round.seasonSlotId)
+            // A test that takes an event's slots away keeps its rounds' slot playable.
+            ?? (this.roundRows.some((row) => row.sportEventId === round.sportEventId && row.slot.seasonSlotId === round.seasonSlotId)
+              ? this.seasonSlots.find((candidate) => candidate.id === round.seasonSlotId)
+              : undefined);
+          if (!slot) throw new Error(`Season slot ${round.seasonSlotId} is not one of sport event ${round.sportEventId}'s slots.`);
+          this.roundRows.push(stamp({ id: this.id('round'), sportEventId: round.sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null, slot: roundSlotOf(slot) }));
         }
       },
       reschedule: async (sportEventId, rounds) => {
@@ -640,7 +694,7 @@ export class InMemorySportEvents {
       findOrCreate: async (sportEventId, roundNumber) => {
         let row = this.roundRows.find((candidate) => candidate.sportEventId === sportEventId && candidate.roundNumber === roundNumber);
         if (!row) {
-          row = stamp({ id: this.id('round'), sportEventId, roundNumber, scheduledDate: T0, scheduledEndAt: null });
+          row = stamp({ id: this.id('round'), sportEventId, roundNumber, scheduledDate: T0, scheduledEndAt: null, slot: roundSlotOf(this.eventSlotOf(sportEventId)) });
           this.roundRows.push(row);
         }
         return row;
@@ -991,13 +1045,19 @@ export class InMemorySportEvents {
       findBySportEvents,
       replaceBracket: async (sportEventId, matches, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
-        const roundNumbers = new Set(this.roundRows.filter((round) => round.sportEventId === sportEventId).map((round) => round.roundNumber));
-        if (matches.some((match) => !roundNumbers.has(match.roundNumber))) throw new Error('unknown round');
+        const roundsByNumber = new Map(this.roundRows.filter((round) => round.sportEventId === sportEventId).map((round) => [round.roundNumber, round]));
+        const roundOf = (roundNumber: number) => {
+          const round = roundsByNumber.get(roundNumber);
+          if (!round) throw new Error('unknown round');
+          return round;
+        };
+        for (const match of matches) roundOf(match.roundNumber);
         this.matchRows = [
           ...this.matchRows.filter((row) => row.sportEventId !== sportEventId),
           ...matches.map((match) => stamp({
             ...match,
             sportEventId,
+            slot: roundOf(match.roundNumber).slot,
             homeSpread: null,
             externalGameId: null,
             resultSource: null,

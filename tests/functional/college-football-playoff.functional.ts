@@ -10,6 +10,7 @@ import {
   getEventBracket,
   listContestConfigTemplates,
   listEventParticipants,
+  listEventRounds,
   listEvents,
   listSportLeagues,
   openContest,
@@ -32,7 +33,7 @@ import { sportRowKeys } from '../support/sport-rows';
 // game, the top four seeds coming in on byes. A commissioner runs a contest from the league's
 // default template (one team from each of six tiers, round values doubling 1, 2, 4, 8), a member
 // picks a lineup that includes a seed on a bye, and the settled contest scores each team for the
-// games it won.
+// games it won, a bye counting as a win.
 
 const RUN = `cfp-${Date.now()}`;
 const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
@@ -108,7 +109,8 @@ describe('SDK Functional: College Football Playoff', () => {
 
     const file = taggedSeed('american-football-2025-cfp-test.json', `College Football Playoff ${RUN}`);
     const { sportLeague: cfp, event } = await loadPlayoffs(admin, file);
-    expect([cfp.bracketAdvancement, cfp.roundNames]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship']]);
+    // Each round is played in its CFP slot, the National Championship the FINAL.
+    expect(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
 
     // The league's seed-range tiers (#2164): four seeds in each, by seed and not by odds.
@@ -171,10 +173,10 @@ describe('SDK Functional: College Football Playoff', () => {
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     const points = Object.fromEntries(board.entries.flatMap((entry) => entry.picks)
       .map((pick) => [expectDefined(field.find((row) => row.id === pick.sportEventParticipantId)).participant.name, pick.knockout?.points]));
-    // Texas Tech's bye scores nothing and it loses its quarterfinal; Oregon wins two before losing
-    // its semifinal, 1 + 2; Miami loses the final, 1 + 2 + 4.
+    // Texas Tech's bye counts as a win, 1, and it loses its quarterfinal; Oregon wins two before
+    // losing its semifinal, 1 + 2; Miami loses the final, 1 + 2 + 4.
     expect(points).toEqual({
-      'Texas Tech Red Raiders': 0,
+      'Texas Tech Red Raiders': 1,
       'Oregon Ducks': 3,
       'Miami Hurricanes': 7,
     });
@@ -182,6 +184,6 @@ describe('SDK Functional: College Football Playoff', () => {
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
-    expect([settled.totalScore, settled.displayPosition]).toEqual([10, '1']);
+    expect([settled.totalScore, settled.displayPosition]).toEqual([11, '1']);
   });
 });

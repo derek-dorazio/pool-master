@@ -1,7 +1,8 @@
 import { createEvent, createLeague, createTestSlot, listEvents, updateEvent, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import { fixtureSeasonId, withCurrentSeason } from '../support/event-edition';
+import { fixtureSeasonId, keyedSlotDefinitionId, withCurrentSeason, type TestRoundSlot } from '../support/event-edition';
+import { seasonCompetitionFor } from '../support/competitions';
 import { testSlotDefinitionId, uniqueTestSlotLabel } from '../support/test-slots';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
@@ -311,6 +312,12 @@ export interface TestEventBody {
   endDate?: string;
   /** A round count other than its league's default, set by an edit after the create. */
   rounds?: number;
+  /**
+   * One test slot per round (#2006), of a postseason definition made on first use, round 1 first
+   * and a day apart from `startDate`: a bracket whose rounds are named, reseeded or finished by
+   * their slots. Leaves `rounds` to the slots.
+   */
+  roundSlots?: readonly TestRoundSlot[];
   autoLifecycleEnabled?: boolean;
 }
 
@@ -320,8 +327,12 @@ export interface TestEventBody {
  * result; a round count is set by an edit, and the result then carries the edited event.
  */
 export async function createTestEvent({ client, body }: { client: Client; body: TestEventBody }) {
-  const { sportLeagueId, championshipYear, startDate, endDate, rounds, ...event } = body;
+  const { sportLeagueId, championshipYear, startDate, endDate, rounds, roundSlots, ...event } = body;
   const sportLeagueSeasonId = await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  if (roundSlots !== undefined) {
+    const seasonSlotIds = await testRoundSlotIds(client, { sportLeagueId, startDate }, roundSlots);
+    return createEvent({ client, body: { ...event, seasonSlotIds } });
+  }
   const slotDefinitionId = await testSlotDefinitionId(getFunctionalPrisma(), sportLeagueId, sportLeagueSeasonId);
   const slot = await createTestSlot({
     client,
@@ -329,11 +340,49 @@ export async function createTestEvent({ client, body }: { client: Client; body: 
     body: { slotDefinitionId, label: uniqueTestSlotLabel(), startsAt: startDate, ...(endDate !== undefined && { endsAt: endDate }) },
   });
   if (!slot.data) throw new Error(`Could not add a test slot: ${JSON.stringify(slot.error)}`);
-  const created = await createEvent({ client, body: { ...event, seasonSlotId: slot.data.slot.id } });
+  const created = await createEvent({ client, body: { ...event, seasonSlotIds: [slot.data.slot.id] } });
   if (rounds === undefined || !created.data || created.data.event.rounds === rounds) return created;
   const edited = await updateEvent({ client, path: { eventId: created.data.event.id }, body: { rounds } });
   if (!edited.data) throw new Error(`Could not set the test event's rounds: ${JSON.stringify(edited.error)}`);
   return { ...created, data: edited.data };
+}
+
+/**
+ * A postseason slot definition per round (#2006), keyed by its `key` or kind and made on first
+ * use, with its competition in the league's current Season so a test slot can play it, as a
+ * migration gives a league with a bracket. Answers each round's definition id, round 1 first.
+ */
+export async function roundSlotDefinitionIds(sportLeagueId: string, roundSlots: readonly TestRoundSlot[]): Promise<string[]> {
+  const prisma = getFunctionalPrisma();
+  const { currentSeasonId } = await prisma.sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId }, select: { currentSeasonId: true } });
+  if (currentSeasonId === null) throw new Error(`Sport league ${sportLeagueId} has no current Season for its round slots.`);
+  const ids: string[] = [];
+  for (const roundSlot of roundSlots) {
+    const slotDefinitionId = await keyedSlotDefinitionId(prisma, sportLeagueId, roundSlot.key ?? roundSlot.slotKind, { phase: 'POSTSEASON', ...roundSlot });
+    const definition = await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({
+      where: { id: slotDefinitionId },
+      select: { sportLeagueCompetitionId: true, competition: { select: { sportLeaguePhaseId: true } } },
+    });
+    await seasonCompetitionFor(prisma, {
+      sportLeagueId,
+      sportLeagueSeasonId: currentSeasonId,
+      competition: { competitionId: definition.sportLeagueCompetitionId, phaseId: definition.competition.sportLeaguePhaseId },
+    });
+    ids.push(slotDefinitionId);
+  }
+  return ids;
+}
+
+/** A test slot per round through the API, a day apart from `startDate`, round 1 first. */
+async function testRoundSlotIds(client: Client, where: { sportLeagueId: string; startDate: string }, roundSlots: readonly TestRoundSlot[]): Promise<string[]> {
+  const ids: string[] = [];
+  for (const [index, slotDefinitionId] of (await roundSlotDefinitionIds(where.sportLeagueId, roundSlots)).entries()) {
+    const startsAt = new Date(new Date(where.startDate).getTime() + index * 24 * 60 * 60 * 1000).toISOString();
+    const slot = await createTestSlot({ client, path: { sportLeagueId: where.sportLeagueId }, body: { slotDefinitionId, label: uniqueTestSlotLabel(), startsAt } });
+    if (!slot.data) throw new Error(`Could not add round ${index + 1}'s test slot: ${JSON.stringify(slot.error)}`);
+    ids.push(slot.data.slot.id);
+  }
+  return ids;
 }
 
 /** The events of the league's Season named for `championshipYear`, as an admin lists one Season (#2003). */

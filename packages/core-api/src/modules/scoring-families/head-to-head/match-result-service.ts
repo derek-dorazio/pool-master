@@ -41,6 +41,7 @@ import {
   MatchSide,
   MatchStatus,
   ParticipantStandingStatus,
+  finalRoundsOfMatches,
   SportEventStatus,
   compareScores,
   getSportDefinition,
@@ -132,7 +133,8 @@ export function gameStandings(matches: readonly SportEventRoundMatch[], asOf: Da
  * and teams alive in the same round, share a place.
  */
 export function bracketStandings(matches: readonly SportEventRoundMatch[], asOf: Date): BracketStandingWrite[] {
-  const finalRound = Math.max(0, ...matches.map((match) => match.roundNumber));
+  const highestRound = Math.max(0, ...matches.map((match) => match.roundNumber));
+  const finalRounds = finalRoundsOfMatches(matches);
   const progress = new Map<string, { roundReached: number; lostInRound: number | null; champion: boolean }>();
   for (const match of matches) {
     for (const side of [MatchSide.HOME, MatchSide.AWAY]) {
@@ -142,9 +144,9 @@ export function bracketStandings(matches: readonly SportEventRoundMatch[], asOf:
       team.roundReached = Math.max(team.roundReached, match.roundNumber);
       if (match.status === MatchStatus.COMPLETED && match.winnerSide !== null) {
         if (match.winnerSide === side) {
-          // The final is the match in the last round, which sends its winner nowhere. A winner a
-          // reseed has still to place has reached the next round.
-          if (match.advancesToMatchId === null && match.roundNumber === finalRound) team.champion = true;
+          // The final is the match of the final's round (#2006), which sends its winner nowhere. A
+          // winner a reseed has still to place has reached the next round.
+          if (match.advancesToMatchId === null && finalRounds.has(match.roundNumber)) team.champion = true;
           else if (match.advancesToMatchId === null) team.roundReached = Math.max(team.roundReached, match.roundNumber + 1);
         } else {
           team.lostInRound = match.roundNumber;
@@ -158,7 +160,7 @@ export function bracketStandings(matches: readonly SportEventRoundMatch[], asOf:
   const reach = [...progress].map(([sportEventParticipantId, team]) => ({
     sportEventParticipantId,
     team,
-    reach: team.champion ? 2 * finalRound + 2 : team.lostInRound !== null ? 2 * team.lostInRound : 2 * team.roundReached + 1,
+    reach: team.champion ? 2 * highestRound + 2 : team.lostInRound !== null ? 2 * team.lostInRound : 2 * team.roundReached + 1,
   })).sort((left, right) => compareScores('HIGHER_IS_BETTER', left.reach, right.reach));
   const ranks = rankSortedScores(reach.map((row) => row.reach));
   return reach.map(({ sportEventParticipantId, team }, index) => ({

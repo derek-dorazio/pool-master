@@ -4,7 +4,7 @@
  * bracket at once and edits one match at a time; results are entered separately (#699).
  */
 import { z } from 'zod';
-import { MatchEnding, MatchResultSource, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchResultSource, MatchSide, MatchStatus, SlotKind } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 
 /** The most matches one bracket holds: a 128-place draw has 127. */
@@ -21,10 +21,19 @@ export const SportEventMatchPeriodScoreDtoSchema = z.object({
 }).describe('Both sides\' score at the end of one period of a game (#772).');
 export type SportEventMatchPeriodScoreDto = z.infer<typeof SportEventMatchPeriodScoreDtoSchema>;
 
+export const SportEventRoundSlotDtoSchema = z.object({
+  seasonSlotId: z.uuid().describe('The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament\'s four, are named by number rather than by the slot.'),
+  name: z.string().nullable().describe('The slot\'s proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind\'s word.'),
+  slotKind: z.enum(SlotKind).describe('The slot\'s kind. FINAL is the event\'s final: never found by round position.'),
+  weekNumber: z.number().int().nullable().describe('A WEEK slot\'s week ("Week 14"); null for every other kind.'),
+}).describe('The slot a round is played in (#2006): what the round is called, and whether it is the final.');
+export type SportEventRoundSlotDto = z.infer<typeof SportEventRoundSlotDtoSchema>;
+
 export const SportEventRoundMatchDtoSchema = z.object({
   id: z.uuid(),
   sportEventId: z.uuid(),
-  roundNumber: z.number().int().describe('The round the match is played in; its label comes from the sport definition\'s round labels.'),
+  roundNumber: z.number().int().describe('The round the match is played in.'),
+  slot: SportEventRoundSlotDtoSchema.describe('The slot the match\'s round is played in: the round\'s label and whether the match is the final.'),
   matchNumber: z.number().int().describe('Unique within the event: the bracket slot and the display order.'),
   homeSportEventParticipantId: z.uuid().nullable().describe('The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.'),
   awaySportEventParticipantId: z.uuid().nullable().describe('The field row on the away side; null until it is decided.'),
@@ -130,6 +139,7 @@ registerSchema('MatchStatusDto', MatchStatusDtoSchema);
 registerSchema('MatchSideDto', MatchSideDtoSchema);
 registerSchema('MatchEndingDto', MatchEndingDtoSchema);
 registerSchema('SportEventMatchPeriodScoreDto', SportEventMatchPeriodScoreDtoSchema);
+registerSchema('SportEventRoundSlotDto', SportEventRoundSlotDtoSchema);
 registerSchema('SportEventRoundMatchDto', SportEventRoundMatchDtoSchema);
 registerSchema('SportEventBracketResponse', SportEventBracketResponseSchema);
 registerSchema('SportEventRoundMatchResponse', SportEventRoundMatchResponseSchema);
