@@ -353,6 +353,7 @@ describe('survivorPredictionEngine', () => {
       firstRoundNumber: 1,
       weekNumberOfRound: new Map([[1, 3]]),
       firstWeekNumber: 3,
+      outcomeOfRound: new Map(),
     };
     const issues = (predictions: Array<{ sportEventRoundMatchId: string; predictedResult: typeof PredictedResult.TEAM; sportEventParticipantId: string }>, eliminatedInWeek: number | null = null) =>
       survivorPredictionEngine.findWeekIssues({
@@ -917,6 +918,29 @@ describe('A survivor contest with two lives', () => {
       ['Dan', 'T2', 0, 1],
       ['Cara', '4', 0, 1],
     ]);
+  });
+
+  it('marks each pick on the pick screen with its week\'s outcome: survived, a life lost, out, or pending', async () => {
+    const markOn = async (context: ReturnType<typeof setup>, name: string, week: { id: string }) => {
+      const view = await context.predictions.getGamePicks({ contestId: context.contest.id, entryId: `entry-${name.toLowerCase()}`, sportEventId: week.id, actorUserId: context.userOf(name) });
+      return view.games.flatMap((game) => (game.pick === null ? [] : [game.survivorOutcome]));
+    };
+    const twoLivesContest = setup(twoLives);
+    twoLivesContest.playWeek1();
+    twoLivesContest.play(twoLivesContest.gamesByNumber.g3, MatchSide.HOME);
+    twoLivesContest.setNow(later(WEEK_2, 2));
+    // Week 2 is under way and Alice's Chiefs have not played yet.
+    expect(await markOn(twoLivesContest, 'Alice', twoLivesContest.week2)).toEqual([SurvivorWeekOutcome.PENDING]);
+    expect(await markOn(twoLivesContest, 'Alice', twoLivesContest.week1)).toEqual([SurvivorWeekOutcome.SURVIVED]);
+    // Cara lost week 1 with a life to spare: a life lost, not out.
+    expect(await markOn(twoLivesContest, 'Cara', twoLivesContest.week1)).toEqual([SurvivorWeekOutcome.LIFE_LOST]);
+
+    const oneLife = setup();
+    oneLife.playWeek1();
+    oneLife.playWeek2();
+    oneLife.setNow(later(WEEK_2, 26));
+    // With one life, Bob's week 2 loss puts him out.
+    expect(await markOn(oneLife, 'Bob', oneLife.week2)).toEqual([SurvivorWeekOutcome.ELIMINATED]);
   });
 
   it('tells the pick screen the week each used team was picked in, the lost week\'s team included', async () => {

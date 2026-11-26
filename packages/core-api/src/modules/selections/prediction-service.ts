@@ -55,6 +55,7 @@ import {
   type SportEventParticipant,
   survivorLivesOf,
   type SurvivorContestRules,
+  type SurvivorWeekOutcome,
   hasSportEventStarted,
 } from '@poolmaster/shared/domain';
 import type {
@@ -156,6 +157,8 @@ export interface GamePickGame {
   pick: ContestEntryMatchPrediction | null;
   /** How the pick stands against the results; null with no pick shown, or where the type is not scored yet. */
   pickScore: ScoredBracketPick | null;
+  /** A survivor pick's week, as the entry's season decides it (#1992); null with no pick shown, and outside a survivor pool. */
+  survivorOutcome: SurvivorWeekOutcome | null;
 }
 
 export interface GamePicksView {
@@ -207,7 +210,7 @@ export interface PreviewGamesInput {
 }
 
 /** One game of a pick preview, with the trial pick that stands on it. */
-export interface GamePreview extends Omit<GamePickGame, 'revealed' | 'pick' | 'pickScore'> {
+export interface GamePreview extends Omit<GamePickGame, 'revealed' | 'pick' | 'pickScore' | 'survivorOutcome'> {
   pick: WeekPrediction | null;
 }
 
@@ -795,6 +798,7 @@ export class PredictionService {
       firstRoundNumber: first?.roundNumber ?? 1,
       weekNumberOfRound: new Map(ownWeeks.map((week) => [week.roundNumber, week.weekNumber])),
       firstWeekNumber: first?.weekNumber ?? 1,
+      outcomeOfRound: new Map(run.weeks.filter((result) => result.sportEventId === sportEventId).map((result) => [result.roundNumber, result.outcome])),
     };
   }
 
@@ -816,6 +820,9 @@ export class PredictionService {
         revealed,
         pick: shown ? prediction : null,
         pickScore: shown && prediction !== null ? score?.picks.get(match.id) ?? null : null,
+        survivorOutcome: shown && prediction !== null && context.season !== null
+          ? context.season.outcomeOfRound.get(context.season.roundOf.get(match.id) ?? match.roundNumber) ?? null
+          : null,
       };
     });
     const everyPickShown = viewGames.every((game) => ownEntry || game.revealed);

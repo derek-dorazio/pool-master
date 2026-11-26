@@ -41,7 +41,6 @@
   "own:clients/poolmaster/src/features/root-admin/sport-admin-utils.ts": 1,
   "own:clients/poolmaster/src/features/root-admin/sport-league-overview-columns.tsx": 1,
   "own:clients/poolmaster/src/features/root-admin/sync-schedule-rows.ts": 1,
-  "own:clients/poolmaster/src/features/root-admin/system-email-labels.ts": 1,
   "own:clients/poolmaster/src/features/root-admin/use-update-sport-league.ts": 1,
   "own:clients/poolmaster/src/features/shared/ui/data-grid-column-filter.tsx": 1,
   "own:clients/poolmaster/src/features/shared/ui/data-grid-date-spans.ts": 1,

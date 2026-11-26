@@ -2,7 +2,5 @@
   "$comment": "#2107 -- local enums (an enum declaration, or a const object whose every value is an upper-case code) per web production file. Read by poolmaster/no-local-enums (eslint.config.js). Counts only fall, and rules:check:baseline-ratchet refuses a raise unless scripts/baseline-raises.json declares it. Fix: use the shared enum or a field the API adds.",
   "clients/poolmaster/src/features/championships/championship-view.ts": 1,
   "clients/poolmaster/src/features/plans/feature-mark.ts": 1,
-  "clients/poolmaster/src/features/root-admin/event-field-rows.ts": 1,
-  "clients/poolmaster/src/features/root-admin/sport-league-overview-columns.tsx": 1,
-  "clients/poolmaster/src/features/root-admin/system-email-labels.ts": 1
+  "clients/poolmaster/src/features/root-admin/sport-league-overview-columns.tsx": 1
 }

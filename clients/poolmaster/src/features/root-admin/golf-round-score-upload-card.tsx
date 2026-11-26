@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import { applyEventGolfRoundScores, previewEventGolfRoundScores } from '@/lib/api';
 import { BulkUploadPanel, SectionCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
@@ -28,12 +29,6 @@ const CHANGE_TONE: Record<PreviewRow['change'], 'info' | 'success' | 'neutral' |
   SKIPPED: 'warning',
 };
 
-const CHANGE_LABEL: Record<PreviewRow['change'], string> = {
-  CREATE: 'CREATE',
-  UPDATE: 'UPDATE',
-  UNCHANGED: 'UNCHANGED',
-  SKIPPED: 'Not stored (no strokes)',
-};
 
 /**
  * One side of a preview row's change: strokes, to par and status. To par is shown because the
@@ -155,7 +150,7 @@ export function GolfRoundScoreUploadCard({
               change={{
                 before: (entry) => describeValues(entry.before),
                 after: (entry) => describeValues(entry.after),
-                badge: (entry) => <StatusBadge tone={CHANGE_TONE[entry.change]}>{CHANGE_LABEL[entry.change]}</StatusBadge>,
+                badge: (entry) => <StatusBadge tone={CHANGE_TONE[entry.change]}>{enumLabel('GolfRoundScoreChange', entry.change)}</StatusBadge>,
               }}
               describeRow={(entry) => describeRow(entry.row)}
               match={(entry) => entry.participantName || '—'}
