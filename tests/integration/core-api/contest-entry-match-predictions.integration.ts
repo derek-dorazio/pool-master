@@ -77,7 +77,7 @@ async function createWeek(label: string, startDate: Date) {
     rounds: 1,
     autoLifecycleEnabled: true,
   });
-  await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
+  await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: startDate }]);
   const teams = await Promise.all(['Bills', 'Jets', 'Chiefs', 'Raiders', 'Eagles', 'Giants'].map((name) => prisma.participant.create({
     data: { sportLeagueId: sportLeague.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' },
   })));

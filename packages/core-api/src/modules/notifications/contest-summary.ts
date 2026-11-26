@@ -13,18 +13,16 @@ import type {
 import {
   type Contest,
   type ContestSelectionConfig,
-  eventRoundLabel,
   eventSportDefinition,
   formatContestRules,
   formatEntriesPerTeamSentence,
   pluralize,
-  type RoundName,
   SelectionType,
   type SportEvent,
   type SportEventRoundMatch,
-  type SportLeague,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
+import { roundLabels } from '@poolmaster/shared/display-strings';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
@@ -32,7 +30,7 @@ import type { SportEventTierService } from '../events/sport-event-tier-service';
 export interface ContestSummaryDeps {
   configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
-  /** The first event's sport league: its name, and a bracket's round names for a second-chance bracket's starting round. */
+  /** The first event's sport league, for its name. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>;
@@ -97,7 +95,7 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
       rules.selectionType === SelectionType.TIERED ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id)).length : 0,
       sportVocabulary(eventSportDefinition(first)).participant,
       rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
-      rules.selectionType === SelectionType.BRACKET ? roundNameOf(sportLeague, first) : undefined,
+      rules.selectionType === SelectionType.BRACKET ? roundLabels(await deps.matches.findBySportEvent(first.id)) : undefined,
     ),
     entriesPerMember: formatEntriesPerTeamSentence(configuration.maxEntriesPerSquad),
     closesAt,
@@ -131,13 +129,6 @@ export function contestClosesAtGiven(
 ): Date {
   const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
   return (cutoff.kind === ContestCutoffKind.EVENT_START ? first : cutoffTiming(cutoff, first, games)).startDate;
-}
-
-/** A knockout's rounds by name, in its sport league's words where it has them ("Sweet 16"). */
-function roundNameOf(sportLeague: SportLeague | null, sportEvent: SportEvent): RoundName {
-  const roundNames = sportLeague?.roundNames ?? [];
-  const roundCount = sportEvent.rounds ?? eventSportDefinition(sportEvent).defaultRounds;
-  return (roundNumber) => eventRoundLabel(sportEvent, roundNames, roundNumber, roundCount);
 }
 
 /** How the event plays, as E1 lists it: "16 games" or "4 rounds"; null when neither is known. */

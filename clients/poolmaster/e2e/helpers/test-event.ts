@@ -95,7 +95,7 @@ export async function createTestEvent(
 /**
  * Through the API, signed with the admin's token: adds a test slot labelled `slotLabel` from
  * `startsAt` to the league's current Season and creates the event `name` on it. The event takes the
- * slot's dates and its league's round count; `rounds`, when given and different, is then set on it.
+ * slot's dates and puts its rounds in the slot; `rounds`, when given and different, is then set on it.
  */
 export async function createTestEventThroughApi(
   api: APIRequestContext,
@@ -111,7 +111,7 @@ export async function createTestEventThroughApi(
   const eventResponse = await expectOk(
     api.post('/api/v1/events/', {
       headers,
-      data: { seasonSlotId: slot.id, name: input.name, ...(input.autoLifecycleEnabled === undefined ? {} : { autoLifecycleEnabled: input.autoLifecycleEnabled }) },
+      data: { seasonSlotIds: [slot.id], name: input.name, ...(input.autoLifecycleEnabled === undefined ? {} : { autoLifecycleEnabled: input.autoLifecycleEnabled }) },
     }),
     `create test event ${input.name}`,
   );

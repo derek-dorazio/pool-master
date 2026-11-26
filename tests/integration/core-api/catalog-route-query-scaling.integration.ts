@@ -9,7 +9,7 @@
  * needs one.
  */
 import { randomUUID } from 'crypto';
-import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   ParticipantListResponseSchema,
   SportEventBracketResponseSchema,
@@ -34,9 +34,10 @@ import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 import { recordStatements, statementCounts } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
-import { fixtureSeasonId } from '../../support/event-edition';
+import { eventRoundSlots, fixtureSeasonId } from '../../support/event-edition';
 import { linkTestSlot } from '../../support/test-slots';
 import { sportPlay } from '../../support/sport-play';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // No mocks.
 
@@ -128,7 +129,7 @@ async function seedEventRounds(rounds: number) {
   const { event } = await seedEventWithField(2);
   for (let roundNumber = 1; roundNumber <= rounds; roundNumber += 1) {
     await prisma.sportEventRound.create({
-      data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) },
+      data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) },
     });
   }
   return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
@@ -148,7 +149,7 @@ async function seedReseededRound(matchups: number) {
     update: {},
   });
   const sportLeague = await prisma.sportLeague.create({
-    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Reseed League ${suffix}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Reseed League ${suffix}` },
   });
   const startDate = new Date(Date.now() + 7 * DAY);
   const event = await prisma.sportEvent.create({
@@ -157,9 +158,11 @@ async function seedReseededRound(matchups: number) {
       name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
     },
   });
+  // Round 2's slot reseeds, so its games are placed by seed (#2006).
+  const slotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' }, { slotKind: 'FINAL' }]);
   const rounds = [];
-  for (let roundNumber = 1; roundNumber <= 3; roundNumber += 1) {
-    rounds.push(await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(startDate.getTime() + (roundNumber - 1) * 7 * DAY) } }));
+  for (const [index, sportEventSlotId] of slotIds.entries()) {
+    rounds.push(await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId, roundNumber: index + 1, scheduledDate: new Date(startDate.getTime() + index * 7 * DAY) } }));
   }
   const [wildCard, divisional, final] = rounds as [typeof rounds[number], typeof rounds[number], typeof rounds[number]];
   const firstRoundGames = matchups * 2;

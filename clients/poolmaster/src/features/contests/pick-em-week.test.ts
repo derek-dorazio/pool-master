@@ -7,7 +7,6 @@ import {
   describeMatchup,
   firstKickoff,
   isPlayoffSurvivor,
-  isTeamUsed,
   teamUsedInWeek,
   missedWeek,
   roundWeek,
@@ -109,8 +108,6 @@ describe('pick\'em week helpers', () => {
 describe('survivor week helpers', () => {
   it('knows the teams used in another week and the week each was used in, and names the week\'s one pick', () => {
     const week = survivorWeekFixture({ games: week1Games({ 3: { pick: weekPick(NFL_TEAMS.eagles) } }) });
-    expect(isTeamUsed(week, NFL_TEAMS.bills)).toBe(true);
-    expect(isTeamUsed(week, NFL_TEAMS.chiefs)).toBe(false);
     expect(teamUsedInWeek(week, NFL_TEAMS.bills)).toBe(1);
     expect(teamUsedInWeek(week, NFL_TEAMS.chiefs)).toBeNull();
     expect(survivorPickTeam(week)).toEqual(NFL_TEAMS.eagles);
@@ -148,12 +145,12 @@ describe('playoff survivor helpers', () => {
     expect(round2.games.map((game) => game.sportEventRoundMatchId)).toEqual(['match-2', 'match-3']);
     expect(round2.gameCount).toBe(2);
     expect(round2.pickedCount).toBe(0);
-    expect(isTeamUsed(round2, NFL_TEAMS.bills)).toBe(true);
-    expect(isTeamUsed(round2, NFL_TEAMS.bears)).toBe(false);
+    expect(teamUsedInWeek(round2, NFL_TEAMS.bills)).not.toBeNull();
+    expect(teamUsedInWeek(round2, NFL_TEAMS.bears)).toBeNull();
     expect(round2.survivor?.usedTeams).toEqual([{ participantId: NFL_TEAMS.bills.participantId, weekNumber: 1 }]);
 
     const round1 = roundWeek(playoffSurvivorFixture(), 1);
     expect(round1.pickedCount).toBe(1);
-    expect(isTeamUsed(round1, NFL_TEAMS.bills)).toBe(false);
+    expect(teamUsedInWeek(round1, NFL_TEAMS.bills)).toBeNull();
   });
 });

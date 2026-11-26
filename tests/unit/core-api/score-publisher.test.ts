@@ -29,6 +29,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { asPrismaClient } from '../../support/prisma-double';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import type { SportEventParticipantView } from '@poolmaster/shared/db';
+import { eventSlotRowStub } from '../../support/round-slots';
 
 type UnmappedRaise = Parameters<LiveScorePublisherDeps['findings']['raiseUnmappedParticipants']>[0];
 
@@ -81,7 +82,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const prisma = {
         sportEventProviderMapping: buildSportEventStub(),
         sportEventRound: {
-          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]),
+          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1, eventSlot: eventSlotRowStub() }]),
         },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([

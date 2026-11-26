@@ -6,7 +6,7 @@
  * regional rounds. Everything here is derived from the game-pick read; nothing is stored.
  */
 import { PickOutcome } from '@poolmaster/shared/domain';
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, roundLabels } from '@poolmaster/shared/display-strings';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 import type { PickEmGame } from './pick-em-week';
 
@@ -21,23 +21,25 @@ export interface BracketRegionGroup {
 
 export interface BracketRound {
   roundNumber: number;
-  /** The round's name in the sport's or its league's words: "Sweet 16", "Super Bowl". */
+  /** The round's name, its slot's: "Sweet 16", "Super Bowl". */
   label: string;
   regions: BracketRegionGroup[];
 }
 
-/** A round's name from its number and the bracket's round count. */
-export type BracketRoundLabel = (roundNumber: number, roundCount: number) => string;
+/** Whether a game is the bracket's final, as the API says (#2006). */
+export function isFinalGame(game: Pick<BracketGame, 'isFinal'>): boolean {
+  return game.isFinal;
+}
 
-/** The bracket's games by round and region, in the order the bracket lists them. */
-export function buildBracketRounds(games: readonly BracketGame[], roundLabel: BracketRoundLabel): BracketRound[] {
+/** The bracket's games by round and region, in the order the bracket lists them, each round named by its slot. */
+export function buildBracketRounds(games: readonly BracketGame[]): BracketRound[] {
   const ordered = [...games].sort((left, right) => left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber);
-  const roundCount = ordered.at(-1)?.roundNumber ?? 0;
+  const nameOfRound = roundLabels(ordered);
   const rounds = new Map<number, BracketRound>();
   for (const game of ordered) {
     let round = rounds.get(game.roundNumber);
     if (!round) {
-      round = { roundNumber: game.roundNumber, label: roundLabel(game.roundNumber, roundCount), regions: [] };
+      round = { roundNumber: game.roundNumber, label: nameOfRound(game.roundNumber), regions: [] };
       rounds.set(game.roundNumber, round);
     }
     let region = round.regions.find((candidate) => candidate.regionLabel === game.regionLabel);
@@ -101,11 +103,6 @@ export function formatEntryScore(points: number | null): string {
 /** A locked bracket's tiebreaker, under its middle: "Tiebreaker: 148 total points in the final." */
 export function describeBracketTiebreaker(value: number | null, scoreUnit: string): string {
   return value === null ? 'No tiebreaker was saved.' : `Tiebreaker: ${value} total ${scoreUnit} in the final.`;
-}
-
-/** "41 of 63 picked". */
-export function formatPickProgress(pickedCount: number, gameCount: number): string {
-  return `${pickedCount} of ${gameCount} picked`;
 }
 
 /** A tiebreaker as typed: a whole number of total points from 0 to `max`, the most the server takes, or null. */

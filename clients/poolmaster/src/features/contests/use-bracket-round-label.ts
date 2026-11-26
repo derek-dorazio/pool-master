@@ -1,11 +1,10 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { eventRoundLabel, type Sport, type RoundName  } from '@poolmaster/shared/domain';
-import { getSportLeague, type SportEventDto, type SportLeagueDto } from '@/lib/api';
+import { roundLabels } from '@poolmaster/shared/display-strings';
+import type { RoundName } from '@poolmaster/shared/domain';
+import { getSportLeague, listEventRounds, type SportEventRoundDto, type SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import type { BracketRoundLabel } from './bracket-layout';
-import { bracketRoundCount } from './bracket-start-round';
-import { sportEventQueryOptions } from './use-contest-schedule';
 
 /** A sport league's shared read; an empty `sportLeagueId` reads nothing. */
 export function sportLeagueQueryOptions(sportLeagueId: string) {
@@ -26,37 +25,30 @@ export function sportLeagueQueryOptions(sportLeagueId: string) {
 }
 
 /**
- * How a sport league's bracket rounds are named (#706): by the league's own round names where it
- * has them (the NBA's "Conference Finals"), otherwise by its definition's. An empty `sportLeagueId`
- * reads nothing. Until the league loads, and if its read fails, the rounds take the sport's
- * names, which are still correct, only less specific.
+ * An event's rounds, each with the slot it is played in (#2006). One read under the event's key,
+ * so the admin screens and the contest screens share it. An empty `eventId` reads nothing.
  */
-export function useSportLeagueRoundLabel(sport: Sport | null | undefined, sportLeagueId: string): BracketRoundLabel {
-  const sportLeagueQuery = useQuery(sportLeagueQueryOptions(sportLeagueId));
-  const league = sportLeagueQuery.data;
-  const roundNames = league?.roundNames ?? [];
-  // A contest with no sport has no round names to read; its rounds are numbered.
-  return (roundNumber, roundCount) => (sport
-    ? eventRoundLabel({ sport }, roundNames, roundNumber, roundCount)
-    : `Round ${roundNumber}`);
+export function sportEventRoundsQueryOptions(eventId: string) {
+  return {
+    queryKey: QueryKeys.rootAdmin.manageSport.rounds(eventId),
+    queryFn: async (): Promise<SportEventRoundDto[]> => {
+      const response = await listEventRounds({ path: { eventId } });
+      if (!response.data?.rounds) {
+        throwApiError(response.error, 'Event rounds response is missing data.');
+      }
+      return response.data.rounds;
+    },
+    enabled: eventId !== '',
+    retry: false,
+  };
 }
 
 /**
- * How a bracket contest's rounds are named, from its event's sport league (#706). Until the event
- * and its league load, the rounds take the sport's names.
+ * What an event's rounds are called (#2006): each by the slot it is played in ("Sweet 16", "Super
+ * Bowl", "Week 14"), and rounds that share a slot (a golf tournament's) by number. An empty
+ * `eventId` reads nothing; until the rounds load, and if the read fails, rounds read "Round N".
  */
-export function useBracketRoundLabel(sport: Sport | null | undefined, sportEventId: string): BracketRoundLabel {
-  const eventQuery = useQuery(sportEventQueryOptions(sportEventId));
-  return useSportLeagueRoundLabel(sport, eventQuery.data?.sportLeagueId ?? '');
-}
-
-/**
- * A knockout event's rounds by number, named as its bracket screens name them, for choosing and
- * describing where a bracket starts (#721). A null event reads nothing, and its rounds are
- * numbered.
- */
-export function useEventRoundName(event: Pick<SportEventDto, 'rounds' | 'sport' | 'sportLeagueId'> | null): RoundName {
-  const roundLabel = useSportLeagueRoundLabel(event?.sport, event?.sportLeagueId ?? '');
-  const roundCount = event ? bracketRoundCount(event) : 0;
-  return (roundNumber) => roundLabel(roundNumber, roundCount);
+export function useEventRoundLabels(eventId: string): RoundName {
+  const roundsQuery = useQuery(sportEventRoundsQueryOptions(eventId));
+  return useMemo(() => roundLabels(roundsQuery.data ?? []), [roundsQuery.data]);
 }

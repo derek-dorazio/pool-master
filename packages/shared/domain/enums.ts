@@ -431,20 +431,6 @@ export const MatchEndingOrder = explicitOrder<MatchEnding>({
 });
 
 /**
- * How a sport league's bracket winners reach their next match (#722). FIXED: each match names
- * the match and side its winner moves on to (March Madness, the NBA). RESEED_BY_SEED: after a
- * round whose matches name no next match, the admin places the teams left in each region, the
- * best seed hosting the worst (the NFL after Wild Card weekend).
- */
-export const BracketAdvancement = {
-  FIXED: 'FIXED',
-  RESEED_BY_SEED: 'RESEED_BY_SEED',
-} as const;
-export type BracketAdvancement = (typeof BracketAdvancement)[keyof typeof BracketAdvancement];
-/** No natural order: A to Z by its display strings. */
-export const BracketAdvancementOrder = alphabeticalOrder('BracketAdvancement');
-
-/**
  * The periods one game of a sport league is played in (#786): QUARTERS for American football, the
  * NBA, the WNBA and women's college basketball; HALVES for men's college basketball; THREE_PERIODS
  * for hockey (#788). A sport league with none set plays its sport's layout

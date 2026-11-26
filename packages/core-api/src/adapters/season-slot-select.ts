@@ -4,7 +4,7 @@
  * date window (#2012).
  */
 import type { Prisma } from '@prisma/client';
-import type { SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
+import type { SportEventRoundSlot, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 
 export const SEASON_SLOT_SELECT = {
   id: true, sportLeagueCompetitionSlotId: true, startsAt: true, endsAt: true, status: true,
@@ -32,3 +32,14 @@ export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition, windowS
  * form of `isTestEvent`. `some` finds test events and `none` leaves them out.
  */
 export const COVERS_TEST_SLOT = { seasonSlot: { isTestData: true } } as const satisfies Prisma.SportEventSlotWhereInput;
+
+/** A round's slot through its event slot (#2006): the select a round or a match reads it with. */
+export const ROUND_EVENT_SLOT_SELECT = {
+  select: { seasonSlot: { select: SEASON_SLOT_SELECT } },
+} as const satisfies Prisma.SportEventSlotDefaultArgs;
+
+/** The slot a round is played in, as `SportEventRound.slot` and `SportEventRoundMatch.slot` carry it. */
+export function toRoundSlot(eventSlot: { seasonSlot: SeasonSlotRow }): SportEventRoundSlot {
+  const { id, name, slotKind, weekNumber, seriesGames, pairing } = toSeasonSlot(eventSlot.seasonSlot);
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing };
+}

@@ -69,8 +69,6 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     autoReleaseDaysBeforeStart: sportLeague.autoReleaseDaysBeforeStart,
     platformTierProfileId: sportLeague.platformTierProfileId,
     platformPricingProfileId: sportLeague.platformPricingProfileId,
-    bracketAdvancement: sportLeague.bracketAdvancement,
-    roundNames: [...sportLeague.roundNames],
     matchPeriodLayout: sportLeague.matchPeriodLayout,
     squaresFromRound: sportLeague.squaresFromRound,
     noun: sportLeague.noun,

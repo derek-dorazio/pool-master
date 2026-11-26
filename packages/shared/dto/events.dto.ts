@@ -20,6 +20,7 @@ import {
   SportEventStatus,
   ValuationSource,
 } from '@poolmaster/shared/domain';
+import { SportEventRoundSlotDtoSchema } from './bracket.dto';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 import { SportLeagueSeasonSlotDtoSchema, UploadRowResolutionDtoSchema } from './sport-catalog.dto';
@@ -173,12 +174,12 @@ export const SportEventResponseSchema = z.object({
 export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
 
 export const CreateSportEventRequestSchema = z.object({
-  seasonSlotId: z.uuid().describe('The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event\'s league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season; 409 SEASON_SLOT_TAKEN when it already has an event.'),
+  seasonSlotIds: z.array(z.uuid()).min(1).describe('The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league\'s current Season: they decide the event\'s league, Season and dates. One slot plays the league\'s default round count in it; several play one round in each, in play order (a test bracket\'s rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.'),
   name: z.string().min(1),
   venue: z.string().optional(),
   location: z.string().optional(),
   autoLifecycleEnabled: z.boolean().optional(),
-}).describe('A test event, made by hand on a test slot (QA only). Created DRAFT with its league\'s default round count and tiers, and its slot\'s dates; commissioners see it once it is released.');
+}).describe('A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league\'s default round count for one slot), its league\'s tiers, and its slots\' dates; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
 
 /** The par range an admin may set for an event's rounds. Never above 80, so an unplayed round's 80 strokes is never under par. */
@@ -191,7 +192,7 @@ export const UpdateSportEventRequestSchema = z.object({
   location: z.string().nullable().optional().describe('null clears it.'),
   startDate: DateTimeSchema.optional().describe('422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots\'.'),
   endDate: z.iso.datetime().nullable().optional().describe('null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.'),
-  rounds: z.number().int().min(1).optional(),
+  rounds: z.number().int().min(1).optional().describe('Raises an event played in one slot to this many rounds. 422 EVENT_ROUNDS_FROM_SLOTS for an event with several slots, which plays a round in each.'),
   roundsPar: z.number().int().min(ROUNDS_PAR_MIN).max(ROUNDS_PAR_MAX).nullable().optional()
     .describe(`Par for every round, ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}. null clears it, so contest scoring derives each round's par from the field.`),
   autoLifecycleEnabled: z.boolean().optional(),
@@ -211,6 +212,7 @@ export const SportEventRoundDtoSchema = z.object({
   id: z.uuid(),
   sportEventId: z.uuid(),
   roundNumber: z.number().int().describe('1-based; how a score names its round.'),
+  slot: SportEventRoundSlotDtoSchema.describe('The slot the round is played in: its label and whether it is the final.'),
   scheduledDate: DateTimeSchema,
   // A fresh schema rather than DateTimeSchema.nullable(): reusing the instance makes the
   // JSON-schema output an allOf $ref without a type, which the route builder rejects.

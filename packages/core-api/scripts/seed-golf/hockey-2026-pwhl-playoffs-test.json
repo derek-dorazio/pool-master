@@ -63,7 +63,7 @@
       "events": [
         {
           "key": "pwhl-playoffs-2026",
-          "slotKey": "FINAL",
+          "roundSlotKeys": ["SEMIFINAL", "FINAL"],
           "name": "Walter Cup Playoffs",
           "startDate": "2026-04-30",
           "endDate": "2026-05-20",

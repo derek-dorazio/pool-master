@@ -70,6 +70,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId, mapEventToProvider, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
@@ -369,7 +370,7 @@ async function seedSportLeagueOverviews(leagues: number) {
       },
     });
     const upcoming = await event('upcoming', 2026);
-    await prisma.sportEventRound.create({ data: { sportEventId: upcoming.id, roundNumber: 1, scheduledDate: upcoming.startDate } });
+    await prisma.sportEventRound.create({ data: { sportEventId: upcoming.id, sportEventSlotId: await oneEventSlotId(prisma, upcoming.id), roundNumber: 1, scheduledDate: upcoming.startDate } });
     // Its results are overdue: in play, with its one round's scheduled end a day gone (#1865).
     const overdue = await prisma.sportEvent.create({
       data: {
@@ -377,7 +378,7 @@ async function seedSportLeagueOverviews(leagues: number) {
         startDate: new Date(Date.now() - 3 * DAY),
       },
     });
-    await prisma.sportEventRound.create({ data: { sportEventId: overdue.id, roundNumber: 1, scheduledDate: overdue.startDate, scheduledEndAt: new Date(Date.now() - DAY) } });
+    await prisma.sportEventRound.create({ data: { sportEventId: overdue.id, sportEventSlotId: await oneEventSlotId(prisma, overdue.id), roundNumber: 1, scheduledDate: overdue.startDate, scheduledEndAt: new Date(Date.now() - DAY) } });
     await event('held', 2027, {
       status: 'DRAFT', autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'],
     });
@@ -445,7 +446,7 @@ async function seedLeagueEventOverviews(events: number) {
         ...(!overdue && { autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'] }),
       },
     });
-    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: startDate } });
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: startDate } });
     await prisma.sportEventRoundMatch.create({ data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false, scheduledDate: startDate } });
     const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL' } });
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });

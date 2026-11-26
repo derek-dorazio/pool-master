@@ -7348,6 +7348,633 @@ export type ContestConfigTemplateResponse = {
 };
 
 /**
+ * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+ */
+export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+
+/**
+ * One side of a match. On a neutral site HOME is the upper line of the bracket.
+ */
+export type MatchSideDto = 'HOME' | 'AWAY';
+
+/**
+ * How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.
+ */
+export type MatchEndingDto = 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+
+/**
+ * Both sides' score at the end of one period of a game (#772).
+ */
+export type SportEventMatchPeriodScoreDto = {
+    /**
+     * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+     */
+    periodNumber: number;
+    /**
+     * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+     */
+    homeScore: number;
+    /**
+     * The away side's score at the end of the period, earlier periods included.
+     */
+    awayScore: number;
+};
+
+/**
+ * The slot a round is played in (#2006): what the round is called, and whether it is the final.
+ */
+export type SportEventRoundSlotDto = {
+    /**
+     * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+     */
+    seasonSlotId: string;
+    /**
+     * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+     */
+    name: string | null;
+    /**
+     * The slot's kind. FINAL is the event's final: never found by round position.
+     */
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * A WEEK slot's week ("Week 14"); null for every other kind.
+     */
+    weekNumber: number | null;
+};
+
+/**
+ * One game or match of an event, which in a bracket is also a slot naming where its winner goes.
+ */
+export type SportEventRoundMatchDto = {
+    id: string;
+    sportEventId: string;
+    /**
+     * The round the match is played in.
+     */
+    roundNumber: number;
+    /**
+     * The slot the match's round is played in: the round's label and whether the match is the final.
+     */
+    slot: {
+        /**
+         * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+         */
+        seasonSlotId: string;
+        /**
+         * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+         */
+        name: string | null;
+        /**
+         * The slot's kind. FINAL is the event's final: never found by round position.
+         */
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * A WEEK slot's week ("Week 14"); null for every other kind.
+         */
+        weekNumber: number | null;
+    };
+    /**
+     * Unique within the event: the bracket slot and the display order.
+     */
+    matchNumber: number;
+    /**
+     * The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
+     */
+    homeSportEventParticipantId: string | null;
+    /**
+     * The field row on the away side; null until it is decided.
+     */
+    awaySportEventParticipantId: string | null;
+    /**
+     * True when neither side is at home: screens then say "vs" rather than "@".
+     */
+    isNeutralSite: boolean;
+    /**
+     * Tip-off or kickoff; null until it is announced.
+     */
+    scheduledDate: string | null;
+    /**
+     * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+     */
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    /**
+     * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+     */
+    isUnplayed: boolean;
+    /**
+     * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
+     */
+    winnerSide: 'HOME' | 'AWAY' | null;
+    /**
+     * The home side's score; in a series, games won.
+     */
+    homeScore: number | null;
+    /**
+     * The away side's score; in a series, games won.
+     */
+    awayScore: number | null;
+    /**
+     * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
+     */
+    homeShootoutScore: number | null;
+    /**
+     * The away side's kicks scored in the shoot-out; null with the home side's.
+     */
+    awayShootoutScore: number | null;
+    /**
+     * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+     */
+    ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+    /**
+     * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+     */
+    resultSource: 'PROVIDER' | null;
+    /**
+     * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+     */
+    completedAt: string | null;
+    /**
+     * The match the winner moves on to; null for the final.
+     */
+    advancesToMatchId: string | null;
+    /**
+     * The side of that match the winner fills; null for the final.
+     */
+    advancesToSide: 'HOME' | 'AWAY' | null;
+    /**
+     * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+     */
+    regionLabel: string | null;
+    /**
+     * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
+     */
+    homeSpread: number | null;
+    /**
+     * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+     */
+    periodScores: Array<{
+        /**
+         * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+         */
+        periodNumber: number;
+        /**
+         * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+         */
+        homeScore: number;
+        /**
+         * The away side's score at the end of the period, earlier periods included.
+         */
+        awayScore: number;
+    }>;
+};
+
+/**
+ * An event's bracket.
+ */
+export type SportEventBracketResponse = {
+    /**
+     * Every match of the event in match-number order; empty until the bracket is loaded.
+     */
+    matches: Array<{
+        id: string;
+        sportEventId: string;
+        /**
+         * The round the match is played in.
+         */
+        roundNumber: number;
+        /**
+         * The slot the match's round is played in: the round's label and whether the match is the final.
+         */
+        slot: {
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+             */
+            seasonSlotId: string;
+            /**
+             * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+             */
+            name: string | null;
+            /**
+             * The slot's kind. FINAL is the event's final: never found by round position.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * A WEEK slot's week ("Week 14"); null for every other kind.
+             */
+            weekNumber: number | null;
+        };
+        /**
+         * Unique within the event: the bracket slot and the display order.
+         */
+        matchNumber: number;
+        /**
+         * The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
+         */
+        homeSportEventParticipantId: string | null;
+        /**
+         * The field row on the away side; null until it is decided.
+         */
+        awaySportEventParticipantId: string | null;
+        /**
+         * True when neither side is at home: screens then say "vs" rather than "@".
+         */
+        isNeutralSite: boolean;
+        /**
+         * Tip-off or kickoff; null until it is announced.
+         */
+        scheduledDate: string | null;
+        /**
+         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
+         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
+         */
+        winnerSide: 'HOME' | 'AWAY' | null;
+        /**
+         * The home side's score; in a series, games won.
+         */
+        homeScore: number | null;
+        /**
+         * The away side's score; in a series, games won.
+         */
+        awayScore: number | null;
+        /**
+         * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
+         */
+        homeShootoutScore: number | null;
+        /**
+         * The away side's kicks scored in the shoot-out; null with the home side's.
+         */
+        awayShootoutScore: number | null;
+        /**
+         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+         */
+        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+        /**
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+         */
+        resultSource: 'PROVIDER' | null;
+        /**
+         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+         */
+        completedAt: string | null;
+        /**
+         * The match the winner moves on to; null for the final.
+         */
+        advancesToMatchId: string | null;
+        /**
+         * The side of that match the winner fills; null for the final.
+         */
+        advancesToSide: 'HOME' | 'AWAY' | null;
+        /**
+         * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+         */
+        regionLabel: string | null;
+        /**
+         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
+         */
+        homeSpread: number | null;
+        /**
+         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+         */
+        periodScores: Array<{
+            /**
+             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+             */
+            periodNumber: number;
+            /**
+             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+             */
+            homeScore: number;
+            /**
+             * The away side's score at the end of the period, earlier periods included.
+             */
+            awayScore: number;
+        }>;
+    }>;
+};
+
+/**
+ * One match of an event's bracket.
+ */
+export type SportEventRoundMatchResponse = {
+    /**
+     * One game or match of an event, which in a bracket is also a slot naming where its winner goes.
+     */
+    match: {
+        id: string;
+        sportEventId: string;
+        /**
+         * The round the match is played in.
+         */
+        roundNumber: number;
+        /**
+         * The slot the match's round is played in: the round's label and whether the match is the final.
+         */
+        slot: {
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+             */
+            seasonSlotId: string;
+            /**
+             * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+             */
+            name: string | null;
+            /**
+             * The slot's kind. FINAL is the event's final: never found by round position.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * A WEEK slot's week ("Week 14"); null for every other kind.
+             */
+            weekNumber: number | null;
+        };
+        /**
+         * Unique within the event: the bracket slot and the display order.
+         */
+        matchNumber: number;
+        /**
+         * The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
+         */
+        homeSportEventParticipantId: string | null;
+        /**
+         * The field row on the away side; null until it is decided.
+         */
+        awaySportEventParticipantId: string | null;
+        /**
+         * True when neither side is at home: screens then say "vs" rather than "@".
+         */
+        isNeutralSite: boolean;
+        /**
+         * Tip-off or kickoff; null until it is announced.
+         */
+        scheduledDate: string | null;
+        /**
+         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
+         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
+         */
+        winnerSide: 'HOME' | 'AWAY' | null;
+        /**
+         * The home side's score; in a series, games won.
+         */
+        homeScore: number | null;
+        /**
+         * The away side's score; in a series, games won.
+         */
+        awayScore: number | null;
+        /**
+         * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
+         */
+        homeShootoutScore: number | null;
+        /**
+         * The away side's kicks scored in the shoot-out; null with the home side's.
+         */
+        awayShootoutScore: number | null;
+        /**
+         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+         */
+        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+        /**
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+         */
+        resultSource: 'PROVIDER' | null;
+        /**
+         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+         */
+        completedAt: string | null;
+        /**
+         * The match the winner moves on to; null for the final.
+         */
+        advancesToMatchId: string | null;
+        /**
+         * The side of that match the winner fills; null for the final.
+         */
+        advancesToSide: 'HOME' | 'AWAY' | null;
+        /**
+         * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+         */
+        regionLabel: string | null;
+        /**
+         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
+         */
+        homeSpread: number | null;
+        /**
+         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+         */
+        periodScores: Array<{
+            /**
+             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+             */
+            periodNumber: number;
+            /**
+             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+             */
+            homeScore: number;
+            /**
+             * The away side's score at the end of the period, earlier periods included.
+             */
+            awayScore: number;
+        }>;
+    };
+};
+
+/**
+ * The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side.
+ */
+export type LoadSportEventBracketRequest = {
+    matches: Array<{
+        /**
+         * Unique within the bracket: the slot and the display order.
+         */
+        matchNumber: number;
+        /**
+         * A round the event has.
+         */
+        roundNumber: number;
+        /**
+         * A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
+         */
+        homeSportEventParticipantId: string | null;
+        /**
+         * A field row of the event, or null as for the home side.
+         */
+        awaySportEventParticipantId: string | null;
+        isNeutralSite: boolean;
+        scheduledDate: string | null;
+        /**
+         * Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed.
+         */
+        advancesTo: {
+            /**
+             * A match of this bracket in a later round.
+             */
+            matchNumber: number;
+            /**
+             * The side of that match the winner fills, which must not name a team.
+             */
+            side: 'HOME' | 'AWAY';
+        } | null;
+        /**
+         * The region or conference the match is played in; omitted or null for none.
+         */
+        regionLabel?: string | null;
+    }>;
+};
+
+/**
+ * One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.
+ */
+export type UpdateSportEventRoundMatchRequest = {
+    /**
+     * Omitted keeps it; null empties the side. Only until the event is released.
+     */
+    homeSportEventParticipantId?: string | null;
+    /**
+     * Omitted keeps it; null empties the side. Only until the event is released.
+     */
+    awaySportEventParticipantId?: string | null;
+    isNeutralSite?: boolean;
+    /**
+     * Omitted keeps it; null clears it.
+     */
+    scheduledDate?: string | null;
+    /**
+     * The points spread from the home team's side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.
+     */
+    homeSpread?: number | null;
+};
+
+/**
+ * The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated.
+ */
+export type FillPlayInSlotRequest = {
+    /**
+     * The team that won the play-in game: an active participant of the event's sport not yet on the field.
+     */
+    participantId: string;
+};
+
+/**
+ * A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
+ */
+export type RecordSportEventRoundMatchResultRequest = {
+    /**
+     * The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.
+     */
+    winnerSide: 'HOME' | 'AWAY' | null;
+    /**
+     * The home side's score (games won, for a series), or null with the away score null too.
+     */
+    homeScore: number | null;
+    /**
+     * The away side's score, or null with the home score null too.
+     */
+    awayScore: number | null;
+    /**
+     * The home side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side's for none.
+     */
+    homeShootoutScore?: number | null;
+    /**
+     * The away side's kicks scored in a shoot-out; omitted or null with the home side's.
+     */
+    awayShootoutScore?: number | null;
+    /**
+     * How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner's may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.
+     */
+    ending?: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+};
+
+/**
+ * Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score.
+ */
+export type RecordSportEventMatchPeriodScoreRequest = {
+    /**
+     * The home side's score at the end of the period, earlier periods included.
+     */
+    homeScore: number;
+    /**
+     * The away side's score at the end of the period, earlier periods included.
+     */
+    awayScore: number;
+};
+
+/**
+ * Both sides of one match of a reseeded round.
+ */
+export type RoundMatchupDto = {
+    /**
+     * A match of the round.
+     */
+    matchNumber: number;
+    /**
+     * The field row on the home side.
+     */
+    homeSportEventParticipantId: string;
+    /**
+     * The field row on the away side.
+     */
+    awaySportEventParticipantId: string;
+};
+
+/**
+ * The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it.
+ */
+export type SportEventRoundMatchupsResponse = {
+    /**
+     * One per match of the round, in match-number order.
+     */
+    matches: Array<{
+        /**
+         * A match of the round.
+         */
+        matchNumber: number;
+        /**
+         * The field row on the home side.
+         */
+        homeSportEventParticipantId: string;
+        /**
+         * The field row on the away side.
+         */
+        awaySportEventParticipantId: string;
+    }>;
+};
+
+/**
+ * A reseeded round's teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it.
+ */
+export type SetSportEventRoundMatchupsRequest = {
+    /**
+     * Every match of the round, once each.
+     */
+    matches: Array<{
+        /**
+         * A match of the round.
+         */
+        matchNumber: number;
+        /**
+         * The field row on the home side.
+         */
+        homeSportEventParticipantId: string;
+        /**
+         * The field row on the away side.
+         */
+        awaySportEventParticipantId: string;
+    }>;
+};
+
+/**
  * A provider's identifier for a participant — how synced data finds them.
  */
 export type ParticipantProviderMappingDto = {
@@ -8151,14 +8778,6 @@ export type SportLeagueDto = {
      */
     platformPricingProfileId: string;
     /**
-     * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
-     */
-    bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
-    /**
-     * What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request.
-     */
-    roundNames: Array<string>;
-    /**
      * The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
      */
     matchPeriodLayout: 'QUARTERS' | 'HALVES' | 'THREE_PERIODS' | null;
@@ -8326,14 +8945,6 @@ export type SportLeagueListResponse = {
          */
         platformPricingProfileId: string;
         /**
-         * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
-         */
-        bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
-        /**
-         * What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request.
-         */
-        roundNames: Array<string>;
-        /**
          * The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
          */
         matchPeriodLayout: 'QUARTERS' | 'HALVES' | 'THREE_PERIODS' | null;
@@ -8478,14 +9089,6 @@ export type SportLeagueResponse = {
          */
         platformPricingProfileId: string;
         /**
-         * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
-         */
-        bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
-        /**
-         * What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request.
-         */
-        roundNames: Array<string>;
-        /**
          * The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
          */
         matchPeriodLayout: 'QUARTERS' | 'HALVES' | 'THREE_PERIODS' | null;
@@ -8550,10 +9153,6 @@ export type UpdateSportLeagueRequest = {
      * Names another pricing profile. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.
      */
     platformPricingProfileId?: string;
-    /**
-     * RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.
-     */
-    bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
 };
 
 /**
@@ -12801,13 +13400,13 @@ export type SportEventResponse = {
 };
 
 /**
- * A test event, made by hand on a test slot (QA only). Created DRAFT with its league's default round count and tiers, and its slot's dates; commissioners see it once it is released.
+ * A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league's default round count for one slot), its league's tiers, and its slots' dates; commissioners see it once it is released.
  */
 export type CreateSportEventRequest = {
     /**
-     * The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event's league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season; 409 SEASON_SLOT_TAKEN when it already has an event.
+     * The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays the league's default round count in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.
      */
-    seasonSlotId: string;
+    seasonSlotIds: Array<string>;
     name: string;
     venue?: string;
     location?: string;
@@ -12835,6 +13434,9 @@ export type UpdateSportEventRequest = {
      * null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.
      */
     endDate?: string | null;
+    /**
+     * Raises an event played in one slot to this many rounds. 422 EVENT_ROUNDS_FROM_SLOTS for an event with several slots, which plays a round in each.
+     */
     rounds?: number;
     /**
      * Par for every round, 60 to 80. null clears it, so contest scoring derives each round's par from the field.
@@ -12868,6 +13470,27 @@ export type SportEventRoundDto = {
      */
     roundNumber: number;
     /**
+     * The slot the round is played in: its label and whether it is the final.
+     */
+    slot: {
+        /**
+         * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+         */
+        seasonSlotId: string;
+        /**
+         * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+         */
+        name: string | null;
+        /**
+         * The slot's kind. FINAL is the event's final: never found by round position.
+         */
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * A WEEK slot's week ("Week 14"); null for every other kind.
+         */
+        weekNumber: number | null;
+    };
+    /**
      * ISO 8601 datetime string.
      */
     scheduledDate: string;
@@ -12900,6 +13523,27 @@ export type SportEventRoundListResponse = {
          * 1-based; how a score names its round.
          */
         roundNumber: number;
+        /**
+         * The slot the round is played in: its label and whether it is the final.
+         */
+        slot: {
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+             */
+            seasonSlotId: string;
+            /**
+             * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+             */
+            name: string | null;
+            /**
+             * The slot's kind. FINAL is the event's final: never found by round position.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * A WEEK slot's week ("Week 14"); null for every other kind.
+             */
+            weekNumber: number | null;
+        };
         /**
          * ISO 8601 datetime string.
          */
@@ -17000,6 +17644,31 @@ export type GamePicksResponse = {
         matchNumber: number;
         roundNumber: number;
         /**
+         * The slot the game's round is played in: the round's label.
+         */
+        slot: {
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+             */
+            seasonSlotId: string;
+            /**
+             * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+             */
+            name: string | null;
+            /**
+             * The slot's kind. FINAL is the event's final: never found by round position.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * A WEEK slot's week ("Week 14"); null for every other kind.
+             */
+            weekNumber: number | null;
+        };
+        /**
+         * Whether the game is the event's final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket's links end at. Never the last round by number.
+         */
+        isFinal: boolean;
+        /**
          * When the game starts: its scheduled time, else its event's start. Its pick locks then.
          */
         kickoff: string;
@@ -17341,6 +18010,31 @@ export type GamePickPreviewResponse = {
         sportEventRoundMatchId: string;
         matchNumber: number;
         roundNumber: number;
+        /**
+         * The slot the game's round is played in: the round's label.
+         */
+        slot: {
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+             */
+            seasonSlotId: string;
+            /**
+             * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+             */
+            name: string | null;
+            /**
+             * The slot's kind. FINAL is the event's final: never found by round position.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * A WEEK slot's week ("Week 14"); null for every other kind.
+             */
+            weekNumber: number | null;
+        };
+        /**
+         * Whether the game is the event's final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket's links end at. Never the last round by number.
+         */
+        isFinal: boolean;
         /**
          * When the game starts: its scheduled time, else its event's start. Its pick locks then.
          */
@@ -22436,548 +23130,6 @@ export type RaceResultPreviewResponse = {
 };
 
 /**
- * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
- */
-export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-
-/**
- * One side of a match. On a neutral site HOME is the upper line of the bracket.
- */
-export type MatchSideDto = 'HOME' | 'AWAY';
-
-/**
- * How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.
- */
-export type MatchEndingDto = 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
-
-/**
- * Both sides' score at the end of one period of a game (#772).
- */
-export type SportEventMatchPeriodScoreDto = {
-    /**
-     * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
-     */
-    periodNumber: number;
-    /**
-     * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
-     */
-    homeScore: number;
-    /**
-     * The away side's score at the end of the period, earlier periods included.
-     */
-    awayScore: number;
-};
-
-/**
- * One game or match of an event, which in a bracket is also a slot naming where its winner goes.
- */
-export type SportEventRoundMatchDto = {
-    id: string;
-    sportEventId: string;
-    /**
-     * The round the match is played in; its label comes from the sport definition's round labels.
-     */
-    roundNumber: number;
-    /**
-     * Unique within the event: the bracket slot and the display order.
-     */
-    matchNumber: number;
-    /**
-     * The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
-     */
-    homeSportEventParticipantId: string | null;
-    /**
-     * The field row on the away side; null until it is decided.
-     */
-    awaySportEventParticipantId: string | null;
-    /**
-     * True when neither side is at home: screens then say "vs" rather than "@".
-     */
-    isNeutralSite: boolean;
-    /**
-     * Tip-off or kickoff; null until it is announced.
-     */
-    scheduledDate: string | null;
-    /**
-     * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
-     */
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-    /**
-     * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
-     */
-    isUnplayed: boolean;
-    /**
-     * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
-     */
-    winnerSide: 'HOME' | 'AWAY' | null;
-    /**
-     * The home side's score; in a series, games won.
-     */
-    homeScore: number | null;
-    /**
-     * The away side's score; in a series, games won.
-     */
-    awayScore: number | null;
-    /**
-     * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
-     */
-    homeShootoutScore: number | null;
-    /**
-     * The away side's kicks scored in the shoot-out; null with the home side's.
-     */
-    awayShootoutScore: number | null;
-    /**
-     * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
-     */
-    ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
-    /**
-     * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
-     */
-    resultSource: 'PROVIDER' | null;
-    /**
-     * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
-     */
-    completedAt: string | null;
-    /**
-     * The match the winner moves on to; null for the final.
-     */
-    advancesToMatchId: string | null;
-    /**
-     * The side of that match the winner fills; null for the final.
-     */
-    advancesToSide: 'HOME' | 'AWAY' | null;
-    /**
-     * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
-     */
-    regionLabel: string | null;
-    /**
-     * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
-     */
-    homeSpread: number | null;
-    /**
-     * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
-     */
-    periodScores: Array<{
-        /**
-         * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
-         */
-        periodNumber: number;
-        /**
-         * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
-         */
-        homeScore: number;
-        /**
-         * The away side's score at the end of the period, earlier periods included.
-         */
-        awayScore: number;
-    }>;
-};
-
-/**
- * An event's bracket.
- */
-export type SportEventBracketResponse = {
-    /**
-     * Every match of the event in match-number order; empty until the bracket is loaded.
-     */
-    matches: Array<{
-        id: string;
-        sportEventId: string;
-        /**
-         * The round the match is played in; its label comes from the sport definition's round labels.
-         */
-        roundNumber: number;
-        /**
-         * Unique within the event: the bracket slot and the display order.
-         */
-        matchNumber: number;
-        /**
-         * The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
-         */
-        homeSportEventParticipantId: string | null;
-        /**
-         * The field row on the away side; null until it is decided.
-         */
-        awaySportEventParticipantId: string | null;
-        /**
-         * True when neither side is at home: screens then say "vs" rather than "@".
-         */
-        isNeutralSite: boolean;
-        /**
-         * Tip-off or kickoff; null until it is announced.
-         */
-        scheduledDate: string | null;
-        /**
-         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
-         */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-        /**
-         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
-         */
-        isUnplayed: boolean;
-        /**
-         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
-         */
-        winnerSide: 'HOME' | 'AWAY' | null;
-        /**
-         * The home side's score; in a series, games won.
-         */
-        homeScore: number | null;
-        /**
-         * The away side's score; in a series, games won.
-         */
-        awayScore: number | null;
-        /**
-         * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
-         */
-        homeShootoutScore: number | null;
-        /**
-         * The away side's kicks scored in the shoot-out; null with the home side's.
-         */
-        awayShootoutScore: number | null;
-        /**
-         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
-         */
-        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
-        /**
-         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
-         */
-        resultSource: 'PROVIDER' | null;
-        /**
-         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
-         */
-        completedAt: string | null;
-        /**
-         * The match the winner moves on to; null for the final.
-         */
-        advancesToMatchId: string | null;
-        /**
-         * The side of that match the winner fills; null for the final.
-         */
-        advancesToSide: 'HOME' | 'AWAY' | null;
-        /**
-         * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
-         */
-        regionLabel: string | null;
-        /**
-         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
-         */
-        homeSpread: number | null;
-        /**
-         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
-         */
-        periodScores: Array<{
-            /**
-             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
-             */
-            periodNumber: number;
-            /**
-             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
-             */
-            homeScore: number;
-            /**
-             * The away side's score at the end of the period, earlier periods included.
-             */
-            awayScore: number;
-        }>;
-    }>;
-};
-
-/**
- * One match of an event's bracket.
- */
-export type SportEventRoundMatchResponse = {
-    /**
-     * One game or match of an event, which in a bracket is also a slot naming where its winner goes.
-     */
-    match: {
-        id: string;
-        sportEventId: string;
-        /**
-         * The round the match is played in; its label comes from the sport definition's round labels.
-         */
-        roundNumber: number;
-        /**
-         * Unique within the event: the bracket slot and the display order.
-         */
-        matchNumber: number;
-        /**
-         * The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
-         */
-        homeSportEventParticipantId: string | null;
-        /**
-         * The field row on the away side; null until it is decided.
-         */
-        awaySportEventParticipantId: string | null;
-        /**
-         * True when neither side is at home: screens then say "vs" rather than "@".
-         */
-        isNeutralSite: boolean;
-        /**
-         * Tip-off or kickoff; null until it is announced.
-         */
-        scheduledDate: string | null;
-        /**
-         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
-         */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-        /**
-         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
-         */
-        isUnplayed: boolean;
-        /**
-         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
-         */
-        winnerSide: 'HOME' | 'AWAY' | null;
-        /**
-         * The home side's score; in a series, games won.
-         */
-        homeScore: number | null;
-        /**
-         * The away side's score; in a series, games won.
-         */
-        awayScore: number | null;
-        /**
-         * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
-         */
-        homeShootoutScore: number | null;
-        /**
-         * The away side's kicks scored in the shoot-out; null with the home side's.
-         */
-        awayShootoutScore: number | null;
-        /**
-         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
-         */
-        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
-        /**
-         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
-         */
-        resultSource: 'PROVIDER' | null;
-        /**
-         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
-         */
-        completedAt: string | null;
-        /**
-         * The match the winner moves on to; null for the final.
-         */
-        advancesToMatchId: string | null;
-        /**
-         * The side of that match the winner fills; null for the final.
-         */
-        advancesToSide: 'HOME' | 'AWAY' | null;
-        /**
-         * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
-         */
-        regionLabel: string | null;
-        /**
-         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
-         */
-        homeSpread: number | null;
-        /**
-         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
-         */
-        periodScores: Array<{
-            /**
-             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
-             */
-            periodNumber: number;
-            /**
-             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
-             */
-            homeScore: number;
-            /**
-             * The away side's score at the end of the period, earlier periods included.
-             */
-            awayScore: number;
-        }>;
-    };
-};
-
-/**
- * The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side.
- */
-export type LoadSportEventBracketRequest = {
-    matches: Array<{
-        /**
-         * Unique within the bracket: the slot and the display order.
-         */
-        matchNumber: number;
-        /**
-         * A round the event has.
-         */
-        roundNumber: number;
-        /**
-         * A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
-         */
-        homeSportEventParticipantId: string | null;
-        /**
-         * A field row of the event, or null as for the home side.
-         */
-        awaySportEventParticipantId: string | null;
-        isNeutralSite: boolean;
-        scheduledDate: string | null;
-        /**
-         * Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed.
-         */
-        advancesTo: {
-            /**
-             * A match of this bracket in a later round.
-             */
-            matchNumber: number;
-            /**
-             * The side of that match the winner fills, which must not name a team.
-             */
-            side: 'HOME' | 'AWAY';
-        } | null;
-        /**
-         * The region or conference the match is played in; omitted or null for none.
-         */
-        regionLabel?: string | null;
-    }>;
-};
-
-/**
- * One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.
- */
-export type UpdateSportEventRoundMatchRequest = {
-    /**
-     * Omitted keeps it; null empties the side. Only until the event is released.
-     */
-    homeSportEventParticipantId?: string | null;
-    /**
-     * Omitted keeps it; null empties the side. Only until the event is released.
-     */
-    awaySportEventParticipantId?: string | null;
-    isNeutralSite?: boolean;
-    /**
-     * Omitted keeps it; null clears it.
-     */
-    scheduledDate?: string | null;
-    /**
-     * The points spread from the home team's side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.
-     */
-    homeSpread?: number | null;
-};
-
-/**
- * The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated.
- */
-export type FillPlayInSlotRequest = {
-    /**
-     * The team that won the play-in game: an active participant of the event's sport not yet on the field.
-     */
-    participantId: string;
-};
-
-/**
- * A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
- */
-export type RecordSportEventRoundMatchResultRequest = {
-    /**
-     * The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.
-     */
-    winnerSide: 'HOME' | 'AWAY' | null;
-    /**
-     * The home side's score (games won, for a series), or null with the away score null too.
-     */
-    homeScore: number | null;
-    /**
-     * The away side's score, or null with the home score null too.
-     */
-    awayScore: number | null;
-    /**
-     * The home side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side's for none.
-     */
-    homeShootoutScore?: number | null;
-    /**
-     * The away side's kicks scored in a shoot-out; omitted or null with the home side's.
-     */
-    awayShootoutScore?: number | null;
-    /**
-     * How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner's may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.
-     */
-    ending?: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
-};
-
-/**
- * Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score.
- */
-export type RecordSportEventMatchPeriodScoreRequest = {
-    /**
-     * The home side's score at the end of the period, earlier periods included.
-     */
-    homeScore: number;
-    /**
-     * The away side's score at the end of the period, earlier periods included.
-     */
-    awayScore: number;
-};
-
-/**
- * Both sides of one match of a reseeded round.
- */
-export type RoundMatchupDto = {
-    /**
-     * A match of the round.
-     */
-    matchNumber: number;
-    /**
-     * The field row on the home side.
-     */
-    homeSportEventParticipantId: string;
-    /**
-     * The field row on the away side.
-     */
-    awaySportEventParticipantId: string;
-};
-
-/**
- * The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it.
- */
-export type SportEventRoundMatchupsResponse = {
-    /**
-     * One per match of the round, in match-number order.
-     */
-    matches: Array<{
-        /**
-         * A match of the round.
-         */
-        matchNumber: number;
-        /**
-         * The field row on the home side.
-         */
-        homeSportEventParticipantId: string;
-        /**
-         * The field row on the away side.
-         */
-        awaySportEventParticipantId: string;
-    }>;
-};
-
-/**
- * A reseeded round's teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it.
- */
-export type SetSportEventRoundMatchupsRequest = {
-    /**
-     * Every match of the round, once each.
-     */
-    matches: Array<{
-        /**
-         * A match of the round.
-         */
-        matchNumber: number;
-        /**
-         * The field row on the home side.
-         */
-        homeSportEventParticipantId: string;
-        /**
-         * The field row on the away side.
-         */
-        awaySportEventParticipantId: string;
-    }>;
-};
-
-/**
  * A claimed box of the grid. A box not listed is empty.
  */
 export type SquaresBoxDto = {
@@ -23112,9 +23264,30 @@ export type SquaresBoardResponse = {
         id: string;
         sportEventId: string;
         /**
-         * The round the match is played in; its label comes from the sport definition's round labels.
+         * The round the match is played in.
          */
         roundNumber: number;
+        /**
+         * The slot the match's round is played in: the round's label and whether the match is the final.
+         */
+        slot: {
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+             */
+            seasonSlotId: string;
+            /**
+             * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+             */
+            name: string | null;
+            /**
+             * The slot's kind. FINAL is the event's final: never found by round position.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * A WEEK slot's week ("Week 14"); null for every other kind.
+             */
+            weekNumber: number | null;
+        };
         /**
          * Unique within the event: the bracket slot and the display order.
          */
@@ -37487,10 +37660,6 @@ export type UpdateSportLeagueErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */

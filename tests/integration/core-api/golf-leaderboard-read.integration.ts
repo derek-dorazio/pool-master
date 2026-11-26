@@ -15,6 +15,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -95,10 +96,10 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     // a unique suffix, so a pre-existing round is a broken assumption worth failing on.
     const [round1, round2] = await Promise.all([
       prisma.sportEventRound.create({
-        data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-04-09T12:00:00.000Z') },
+        data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: new Date('2026-04-09T12:00:00.000Z') },
       }),
       prisma.sportEventRound.create({
-        data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-04-10T12:00:00.000Z') },
+        data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 2, scheduledDate: new Date('2026-04-10T12:00:00.000Z') },
       }),
     ]);
     const participants = await Promise.all([

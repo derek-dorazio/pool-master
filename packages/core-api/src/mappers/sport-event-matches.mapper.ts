@@ -2,14 +2,15 @@
  * Bracket mapper (#698) — an event's matches → their DTOs, dates as ISO strings.
  */
 
-import { isMatchUnplayed, type SportEventRoundMatch } from '@poolmaster/shared/domain';
-import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
+import { isMatchUnplayed, type SportEventRoundMatch, type SportEventRoundSlot } from '@poolmaster/shared/domain';
+import type { SportEventRoundMatchDto, SportEventRoundSlotDto } from '@poolmaster/shared/dto/bracket.dto';
 
 export function mapSportEventRoundMatchToDto(match: SportEventRoundMatch): SportEventRoundMatchDto {
   return {
     id: match.id,
     sportEventId: match.sportEventId,
     roundNumber: match.roundNumber,
+    slot: mapRoundSlotToDto(match.slot),
     matchNumber: match.matchNumber,
     homeSportEventParticipantId: match.homeSportEventParticipantId,
     awaySportEventParticipantId: match.awaySportEventParticipantId,
@@ -31,4 +32,9 @@ export function mapSportEventRoundMatchToDto(match: SportEventRoundMatch): Sport
     homeSpread: match.homeSpread,
     periodScores: match.periodScores.map(({ periodNumber, homeScore, awayScore }) => ({ periodNumber, homeScore, awayScore })),
   };
+}
+
+/** The slot a round is played in, for the wire (#2006): its series length and pairing stay server-side. */
+export function mapRoundSlotToDto({ seasonSlotId, name, slotKind, weekNumber }: SportEventRoundSlot): SportEventRoundSlotDto {
+  return { seasonSlotId, name, slotKind, weekNumber };
 }

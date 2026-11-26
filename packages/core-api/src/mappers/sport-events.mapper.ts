@@ -24,6 +24,7 @@ import {
   type SportEventRoundDto,
   type SportEventTierDto,
 } from '@poolmaster/shared/dto/events.dto';
+import { mapRoundSlotToDto } from './sport-event-matches.mapper';
 import { mapSportLeagueSeasonSlotToDto } from './sport-catalog.mapper';
 import { eventContestOpenings } from '../modules/contest-management/contest-opening';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
@@ -114,6 +115,7 @@ export function mapSportEventRoundToDto(round: SportEventRoundView): SportEventR
     id: round.id,
     sportEventId: round.sportEventId,
     roundNumber: round.roundNumber,
+    slot: mapRoundSlotToDto(round.slot),
     scheduledDate: round.scheduledDate.toISOString(),
     scheduledEndAt: round.scheduledEndAt?.toISOString() ?? null,
     status: round.progress.status,

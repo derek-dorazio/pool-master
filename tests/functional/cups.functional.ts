@@ -153,7 +153,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       })).data).slot;
       const eventId = expectDefined((await createEvent({
         client: a,
-        body: { seasonSlotId: slot.id, name: `${name} ${RUN}`, autoLifecycleEnabled: false },
+        body: { seasonSlotIds: [slot.id], name: `${name} ${RUN}`, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });

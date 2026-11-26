@@ -30,6 +30,16 @@ import { join } from 'node:path';
 import { PrismaContestConfigTemplateRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { isTestSlate, parseSportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
+/** A seeded league's knockout slot definitions, in play order: each one's name (null for its kind's word), kind and pairing (#2006). */
+async function knockoutDefinitions(sportLeagueName: string): Promise<Array<[string | null, string, string]>> {
+  const definitions = await getPrisma().sportLeagueCompetitionSlot.findMany({
+    where: { sportLeague: { name: sportLeagueName }, slotKind: { notIn: ['WEEK', 'TOURNAMENT', 'THIRD_PLACE'] } },
+    select: { name: true, slotKind: true, pairing: true },
+    orderBy: { slotKind: 'asc' },
+  });
+  return definitions.map(({ name, slotKind, pairing }) => [name, slotKind, pairing]);
+}
+
 // The contest templates the migrations seed, read back from real Postgres. A template with a
 // sport league is offered only for that league's events, so a template pointing at a league of
 // another sport would be offered nowhere it can be used: checked for every sport, so a mis-seeded
@@ -515,23 +525,19 @@ const SOCCER_COMPETITIONS = [
 ] as const;
 
 describe('Seeded soccer competitions and their knockout templates', () => {
-  it('seeds the nine competitions as fixed brackets, the international ones reading the sport\'s round names, and the Premier League, played in weeks, read back through the sport league repository', async () => {
+  it('seeds the ten soccer competitions, read back through the sport league repository, the leagues that name their knockout rounds naming them on their slots', async () => {
     const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
     const leagues = await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: soccer.id });
-    const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
-
-    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames])).toEqual([
-      ['Copa América', 'FIXED', []],
-      ['FIFA Women\'s World Cup', 'FIXED', []],
-      ['FIFA World Cup', 'FIXED', []],
-      ['MLS', 'FIXED', ['Wild Card', 'Round One', 'Conference Semifinals', 'Conference Finals', 'MLS Cup']],
-      ['NCAA Men\'s Soccer', 'FIXED', ncaaRounds],
-      ['NCAA Women\'s Soccer', 'FIXED', ncaaRounds],
-      ['NWSL', 'FIXED', ['Quarterfinals', 'Semifinals', 'Championship']],
-      ['Premier League', 'FIXED', []],
-      ['UEFA Champions League', 'FIXED', ['Knockout phase play-offs', 'Round of 16', 'Quarter-finals', 'Semi-finals', 'Final']],
-      ['UEFA European Championship', 'FIXED', []],
+    expect(leagues.map((league) => league.name)).toEqual([
+      'Copa América', 'FIFA Women\'s World Cup', 'FIFA World Cup', 'MLS', 'NCAA Men\'s Soccer', 'NCAA Women\'s Soccer', 'NWSL',
+      'Premier League', 'UEFA Champions League', 'UEFA European Championship',
     ]);
+    // A round is named by its slot (#2006): the leagues that name their knockout rounds do so on their slot definitions.
+    await expect(knockoutDefinitions('MLS')).resolves.toEqual([
+      ['Wild Card', 'PLAY_IN', 'FIXED'], ['Round One', 'ROUND_OF_16', 'FIXED'], ['Conference Semifinals', 'QUARTERFINAL', 'FIXED'],
+      ['Conference Finals', 'SEMIFINAL', 'FIXED'], ['MLS Cup', 'FINAL', 'FIXED'],
+    ]);
+    await expect(knockoutDefinitions('NWSL')).resolves.toEqual([[null, 'QUARTERFINAL', 'FIXED'], [null, 'SEMIFINAL', 'FIXED'], ['NWSL Championship', 'FINAL', 'FIXED']]);
   });
 
   it('starts squares at the Champions League final and the MLS conference semifinals, past their two-legged ties and best-of-three series, and every other soccer league at its first round', async () => {
@@ -619,19 +625,21 @@ describe('Seeded soccer week templates', () => {
 const TENNIS_ROUND_VALUES = [1, 2, 4, 8, 16, 32, 64];
 
 describe('Seeded tennis tours and their knockout templates', () => {
-  it('seeds the ATP and the WTA as fixed brackets on the sport\'s own round names and tiers, and the NCAA singles championships on the NCAA\'s round names, read back through the sport league repository', async () => {
+  it('seeds the ATP, the WTA and the NCAA singles championships on tennis\'s tiers, the NCAA\'s six rounds as knockout slots named by kind', async () => {
     const tennis = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.TENNIS } });
     const leagues = await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: tennis.id });
-    const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
-
     expect(new Set(leagues.map((league) => league.participantType))).toEqual(new Set(['INDIVIDUAL']));
     const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
-    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, platformTierProfileCodes.get(league.platformTierProfileId)])).toEqual([
-      ['ATP', 'FIXED', [], 'TIERS_6_OF_8'],
-      ['NCAA Men\'s Tennis', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
-      ['NCAA Women\'s Tennis', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
-      ['WTA', 'FIXED', [], 'TIERS_6_OF_8'],
+    expect(leagues.map((league) => [league.name, platformTierProfileCodes.get(league.platformTierProfileId)])).toEqual([
+      ['ATP', 'TIERS_6_OF_8'],
+      ['NCAA Men\'s Tennis', 'TIERS_6_OF_8'],
+      ['NCAA Women\'s Tennis', 'TIERS_6_OF_8'],
+      ['WTA', 'TIERS_6_OF_8'],
     ]);
+    // An NCAA championship's rounds are its six knockout slots, named by kind; a tour's Slam is one TOURNAMENT slot.
+    await expect(knockoutDefinitions('NCAA Men\'s Tennis')).resolves.toEqual(
+      ['ROUND_OF_64', 'ROUND_OF_32', 'ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL'].map((slotKind) => [null, slotKind, 'FIXED']),
+    );
   });
 
   it.each([['ATP', 'atp'], ['WTA', 'wta']] as const)('gives the %s twelve knockout templates, each on one Grand Slam or tour event at a time, one default per format, with Seeds only picking from the first four tiers and the second-week bracket starting at the fourth round', async (name, prefix) => {
@@ -717,7 +725,9 @@ describe('The seeded NFL league and its knockout templates', () => {
       orderBy: [{ templateKey: 'asc' }],
     });
 
-    expect(new Set(templates.map((template) => [template.sportLeague.name, template.sportLeague.bracketAdvancement].join(' ')))).toEqual(new Set(['NFL RESEED_BY_SEED']));
+    expect(new Set(templates.map((template) => template.sportLeague.name))).toEqual(new Set(['NFL']));
+    // The NFL reseeds: every postseason slot it plays is RESEEDED (#2006).
+    expect(new Set((await knockoutDefinitions('NFL')).map(([, , pairing]) => pairing))).toEqual(new Set(['RESEEDED']));
     expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault])).toEqual([
       ['nfl-budget-pick-3', SelectionType.BUDGET_PICK, true],
       ['nfl-random-draw-doubling', SelectionType.RANDOM_DRAW, true],
@@ -997,16 +1007,16 @@ function seededLeagueReader(sportId: string) {
 // The NBA and WNBA playoffs (#706): two more basketball sport leagues, data only, each with its own
 // round names and knockout presets sized to its bracket.
 describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
-  it('seeds the NBA and WNBA as fixed brackets that name their own rounds, read back through the sport league repository', async () => {
-    const basketball = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL } });
-    const seeded = seededLeagueReader(basketball.id);
-
-    const [nba, wnba] = await Promise.all([seeded('NBA'), seeded('WNBA')]);
-
-    expect([nba?.bracketAdvancement, nba?.roundNames]).toEqual(['FIXED', ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']]);
-    expect([wnba?.bracketAdvancement, wnba?.roundNames]).toEqual(['FIXED', ['First Round', 'Semifinals', 'WNBA Finals']]);
-    // The NCAA tournaments keep the sport's March Madness names.
-    expect((await seeded('NCAA Men\'s Basketball'))?.roundNames).toEqual([]);
+  it('seeds the NBA and WNBA playoffs as fixed slots that name their own rounds, and the NCAA tournament\'s with March Madness names', async () => {
+    await expect(knockoutDefinitions('NBA')).resolves.toEqual([
+      ['Play-In Tournament', 'PLAY_IN', 'FIXED'], ['First Round', 'ROUND_OF_16', 'FIXED'], ['Conference Semifinals', 'QUARTERFINAL', 'FIXED'],
+      ['Conference Finals', 'SEMIFINAL', 'FIXED'], ['NBA Finals', 'FINAL', 'FIXED'],
+    ]);
+    await expect(knockoutDefinitions('WNBA')).resolves.toEqual([['First Round', 'QUARTERFINAL', 'FIXED'], [null, 'SEMIFINAL', 'FIXED'], ['WNBA Finals', 'FINAL', 'FIXED']]);
+    await expect(knockoutDefinitions('NCAA Men\'s Basketball')).resolves.toEqual([
+      ['First Four', 'PLAY_IN', 'FIXED'], [null, 'ROUND_OF_64', 'FIXED'], [null, 'ROUND_OF_32', 'FIXED'], ['Sweet 16', 'ROUND_OF_16', 'FIXED'],
+      ['Elite Eight', 'QUARTERFINAL', 'FIXED'], ['Final Four', 'SEMIFINAL', 'FIXED'], ['National Championship', 'FINAL', 'FIXED'],
+    ]);
   });
 
   it.each([
@@ -1043,16 +1053,19 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
 // NCAA men's football (#707, renamed in #2143): a football sport league, data only, whose College
 // Football Playoff has its own round names, its own six tiers and knockout presets for its four rounds.
 describe('The seeded NCAA Men\'s Football league and its knockout templates', () => {
-  it('seeds NCAA Men\'s Football as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
+  it('seeds NCAA Men\'s Football on six tiers, its playoff rounds named on its slots', async () => {
     const football = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.FOOTBALL } });
     const seeded = seededLeagueReader(football.id);
 
     const [cfp, nfl] = await Promise.all([seeded('NCAA Men\'s Football'), seeded('NFL')]);
 
     const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
-    expect([cfp?.bracketAdvancement, cfp?.roundNames, platformTierProfileCodes.get(cfp?.platformTierProfileId ?? '')]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], 'TIERS_6_OF_2']);
-    // The NFL keeps the sport's round names and football's seven tiers of two.
-    expect([nfl?.roundNames, platformTierProfileCodes.get(nfl?.platformTierProfileId ?? '')]).toEqual([[], 'PLAYOFF_SEEDS_1_4_REST']);
+    expect(platformTierProfileCodes.get(cfp?.platformTierProfileId ?? '')).toBe('TIERS_6_OF_2');
+    await expect(knockoutDefinitions('NCAA Men\'s Football')).resolves.toEqual([
+      ['First Round', 'ROUND_OF_16', 'FIXED'], [null, 'QUARTERFINAL', 'FIXED'], [null, 'SEMIFINAL', 'FIXED'], ['National Championship', 'FINAL', 'FIXED'],
+    ]);
+    // The NFL keeps its playoff-seeds tier profile.
+    expect(platformTierProfileCodes.get(nfl?.platformTierProfileId ?? '')).toBe('PLAYOFF_SEEDS_1_4_REST');
   });
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default, picking one team from each of six tiers', async () => {

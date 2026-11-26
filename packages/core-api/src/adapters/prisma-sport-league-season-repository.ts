@@ -19,6 +19,17 @@ import type { SlotNamePattern, SportLeagueSeason, SyncSeasonSlot } from '@poolma
 import { SEASON_SLOT_SELECT, toSeasonSlot, type SeasonSlotRow } from './season-slot-select';
 
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
+const SLOT_WITH_EVENT_SELECT = {
+  ...SEASON_SLOT_SELECT,
+  sportLeagueId: true,
+  sportLeagueSeasonId: true,
+  eventSlot: { select: { sportEventId: true } },
+} as const satisfies Prisma.SportLeagueSeasonCompetitionSlotSelect;
+
+function toSlotWithEvent(row: Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof SLOT_WITH_EVENT_SELECT }>): SeasonSlotWithEvent {
+  const { sportLeagueId, sportLeagueSeasonId, eventSlot, ...slot } = row;
+  return { slot: toSeasonSlot(slot), sportLeagueId, sportLeagueSeasonId, sportEventId: eventSlot?.sportEventId ?? null };
+}
 
 export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -70,13 +81,14 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
   }
 
   async findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null> {
-    const row = await this.prisma.sportLeagueSeasonCompetitionSlot.findUnique({
-      where: { id: seasonSlotId },
-      select: { ...SEASON_SLOT_SELECT, sportLeagueId: true, sportLeagueSeasonId: true, eventSlot: { select: { sportEventId: true } } },
-    });
-    if (row === null) return null;
-    const { sportLeagueId, sportLeagueSeasonId, eventSlot, ...slot } = row;
-    return { slot: toSeasonSlot(slot), sportLeagueId, sportLeagueSeasonId, sportEventId: eventSlot?.sportEventId ?? null };
+    const row = await this.prisma.sportLeagueSeasonCompetitionSlot.findUnique({ where: { id: seasonSlotId }, select: SLOT_WITH_EVENT_SELECT });
+    return row === null ? null : toSlotWithEvent(row);
+  }
+
+  async findSlotsByIds(seasonSlotIds: readonly string[]): Promise<SeasonSlotWithEvent[]> {
+    if (seasonSlotIds.length === 0) return [];
+    const rows = await this.prisma.sportLeagueSeasonCompetitionSlot.findMany({ where: { id: { in: [...seasonSlotIds] } }, select: SLOT_WITH_EVENT_SELECT });
+    return rows.map(toSlotWithEvent);
   }
 
   async createTestSlot(input: TestSeasonSlotCreate): Promise<TestSlotCreateResult> {

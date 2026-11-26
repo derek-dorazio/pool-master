@@ -23,6 +23,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
+import { slotOfRound } from '../../support/round-slots';
 
 const HOUR = 60 * 60_000;
 const CLOSES_AT = new Date('2026-04-09T11:40:00.000Z');
@@ -296,7 +297,7 @@ describe('EntryReminders.queueDue', () => {
     matches = events.map((event, index) => ({
       id: `game-${String(index)}`,
       sportEventId: event.id,
-      roundNumber: 3,
+      roundNumber: 3, slot: slotOfRound(3),
       status: MatchStatus.SCHEDULED,
       scheduledDate: index === 0 ? CLOSES_AT : new Date(CLOSES_AT.getTime() + 72 * HOUR),
     }) as SportEventRoundMatch);
@@ -324,7 +325,7 @@ describe('EntryReminders.queueDue', () => {
     matches = [2, 3].map((roundNumber) => ({
       id: `game-${String(roundNumber)}`,
       sportEventId: tournament.id,
-      roundNumber,
+      roundNumber, slot: slotOfRound(roundNumber),
       status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
       scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : CLOSES_AT,
     }) as SportEventRoundMatch);
@@ -404,7 +405,7 @@ describe('EntryReminders.queueDue', () => {
     matches = [1, 2, 3].map((matchNumber) => ({
       id: `game-${String(matchNumber)}`,
       sportEventId: week.id,
-      roundNumber: 1,
+      roundNumber: 1, slot: slotOfRound(1),
       matchNumber,
       status: matchNumber === 3 ? MatchStatus.CANCELLED : MatchStatus.SCHEDULED,
     }) as SportEventRoundMatch);
@@ -447,7 +448,7 @@ describe('EntryReminders.queueDue', () => {
     matches = [{
       id: 'week1-game',
       sportEventId: week1.id,
-      roundNumber: 1,
+      roundNumber: 1, slot: slotOfRound(1),
       status: MatchStatus.COMPLETED,
       winnerSide: MatchSide.HOME,
       homeSportEventParticipantId: 'field-bears',
@@ -456,7 +457,7 @@ describe('EntryReminders.queueDue', () => {
     } as SportEventRoundMatch, {
       id: 'week2-game',
       sportEventId: week2.id,
-      roundNumber: 1,
+      roundNumber: 1, slot: slotOfRound(1),
       status: MatchStatus.SCHEDULED,
       scheduledDate: CLOSES_AT,
     } as SportEventRoundMatch];
@@ -501,7 +502,7 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.SQUARES,
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 100 },
     });
-    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
+    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
     const holder = member(league.id, 'Sam');
     member(league.id, 'Nora');
     const holding = await enter(contest.id, holder.squad.id);
@@ -532,7 +533,7 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.SQUARES,
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
     });
-    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
+    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
     const holder = member(league.id, 'Sam');
     const nora = member(league.id, 'Nora');
     const holding = await enter(contest.id, holder.squad.id);
@@ -570,7 +571,7 @@ describe('EntryReminders.queueDue', () => {
     matches = [2, 3].map((roundNumber) => ({
       id: `game-${String(roundNumber)}`,
       sportEventId: tournament.id,
-      roundNumber,
+      roundNumber, slot: slotOfRound(roundNumber),
       status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
       scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : CLOSES_AT,
     }) as SportEventRoundMatch);

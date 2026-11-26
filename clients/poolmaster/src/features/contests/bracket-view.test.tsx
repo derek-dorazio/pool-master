@@ -6,11 +6,9 @@ import { drawBracket } from './bracket-view-model';
 import { TEAMS, emptyBracketGames } from './test/bracket-fixtures';
 import { midTournamentGames, tournamentGames } from './test/bracket-tournament-fixture';
 
-const NCAA = ['First Round', 'Round of 32', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
-const ncaaLabel = (roundNumber: number) => NCAA[roundNumber - 1] ?? '';
 
 function renderView(games = midTournamentGames(), picking: Parameters<typeof BracketView>[0]['picking'] = null) {
-  render(<BracketView drawing={drawBracket(games, ncaaLabel)} isOwnEntry picking={picking} tiebreaker="Tiebreaker: 148 total points in the final." />);
+  render(<BracketView drawing={drawBracket(games)} isOwnEntry picking={picking} tiebreaker="Tiebreaker: 148 total points in the final." />);
 }
 
 /** Radix tabs switch on the press, as a tap does. */
@@ -114,7 +112,7 @@ describe('BracketView on a phone', () => {
     const onPick = vi.fn();
     render(
       <BracketView
-        drawing={drawBracket(emptyBracketGames(), (roundNumber) => ['Elite Eight', 'Final Four', 'National Championship'][roundNumber - 1] ?? '')}
+        drawing={drawBracket(emptyBracketGames())}
         isOwnEntry
         picking={{ isBusy: false, onPick }}
       />,
@@ -128,7 +126,7 @@ describe('BracketView on a phone', () => {
   it('holds every pick while one is saving', () => {
     render(
       <BracketView
-        drawing={drawBracket(emptyBracketGames(), (roundNumber) => `Round ${roundNumber}`)}
+        drawing={drawBracket(emptyBracketGames())}
         isOwnEntry
         picking={{ isBusy: true, onPick: vi.fn() }}
       />,
