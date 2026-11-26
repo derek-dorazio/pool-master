@@ -2,6 +2,9 @@ import {
   ContestFormat,
   ContestRulesWithEntryLimitSchema,
   LeaguePhase,
+  MatchEnding,
+  MatchSide,
+  MatchStatus,
   SlotKind,
   TemplateCoverageMode,
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
@@ -16,6 +19,7 @@ import {
   sportLeagueDefinitionOf,
   placeInRanges,
   templateCoverageProblem,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
@@ -29,6 +33,11 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PrismaContestConfigTemplateRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { isTestSlate, parseSportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
+import type { SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
+import { scoreKnockoutField } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/score-team';
+import { expectDefined } from '../../support/expect-defined';
+import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { roundSlot } from '../../support/round-slots';
 
 /** A seeded league's knockout slot definitions, in play order: each one's name (null for its kind's word), kind and pairing (#2006). */
 async function knockoutDefinitions(sportLeagueName: string): Promise<Array<[string | null, string, string]>> {
@@ -499,7 +508,7 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
 // playoff of eight teams or fewer), whether the field has seeds, and whether the league keeps one
 // template per format (NCAA soccer, low interest: Derek, 2026-11-26).
 const SOCCER_COMPETITIONS = [
-  ['FIFA World Cup', 'world-cup', [1, 2, 4, 8], 4, false, false],
+  ['FIFA World Cup', 'world-cup', [1, 2, 4, 8, 16], 4, false, false],
   ['FIFA Women\'s World Cup', 'womens-world-cup', [1, 2, 4, 8], 4, false, false],
   ['UEFA European Championship', 'euro', [1, 2, 4, 8], 4, false, false],
   ['Copa América', 'copa-america', [1, 2, 4], null, false, false],
@@ -1356,5 +1365,108 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
 
     expect(names.filter((name) => name.startsWith('Quick pick'))).toEqual([]);
     expect(names.filter((name) => name.startsWith(`${enumLabel('SelectionType', SelectionType.RANDOM_DRAW)}:`)).length).toBeGreaterThan(30);
+  });
+});
+
+/**
+ * A champion's run through the bracket rounds `slotKinds` names, first round first: one match a
+ * round, the champion winning each against a fresh opponent. Each round is one match, so each is
+ * decided by its one result.
+ */
+function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[] {
+  const store = new InMemorySportEvents();
+  const sport = store.addSport(Sport.SOCCER);
+  const event = store.addEvent({ sport: Sport.SOCCER, rounds: slotKinds.length });
+  const team = (name: string) => {
+    const participant = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
+    return { entry: store.addToField(event.id, participant.id), participant };
+  };
+  const champion = team('Champion');
+  const opponents = slotKinds.map((_, index) => team(`Opponent ${String(index + 1)}`));
+  const matches: SportEventRoundMatch[] = slotKinds.map((slotKind, index) => ({
+    id: `match-${String(index + 1)}`,
+    sportEventId: event.id,
+    roundNumber: index + 1,
+    slot: roundSlot(slotKind),
+    matchNumber: index + 1,
+    homeSportEventParticipantId: champion.entry.id,
+    awaySportEventParticipantId: opponents[index].entry.id,
+    isNeutralSite: true,
+    scheduledDate: null,
+    status: MatchStatus.COMPLETED,
+    winnerSide: MatchSide.HOME,
+    homeScore: 1,
+    awayScore: 0,
+    homeShootoutScore: null,
+    awayShootoutScore: null,
+    ending: MatchEnding.PLAYED,
+    advancesToMatchId: index + 1 < slotKinds.length ? `match-${String(index + 2)}` : null,
+    advancesToSide: index + 1 < slotKinds.length ? MatchSide.HOME : null,
+    regionLabel: null,
+    homeSpread: null,
+    resultSource: null,
+    completedAt: null,
+    periodScores: [],
+    createdAt: new Date('2030-07-19T19:00:00.000Z'),
+    updatedAt: new Date('2030-07-19T21:00:00.000Z'),
+  }));
+  return [champion, ...opponents].map(({ entry, participant }) => ({
+    entry,
+    participant,
+    valuation: null,
+    standing: null,
+    rounds: [],
+    raceResult: null,
+    matches: matches.filter((match) => match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id),
+    affiliatedWithSportLeague: true,
+  }));
+}
+
+describe('Seeded knockout round points cover every round a template lists', () => {
+  /**
+   * Every template a knockout round-points contest scores a whole bracket by: it covers all its
+   * listed slots, none of them a tournament (an event of its own, whose rounds its slots do not
+   * show). Each listed slot is a round of the bracket but the third-place play-off, a match beside
+   * the bracket that is no round of it.
+   */
+  async function bracketTemplates() {
+    const all = await new PrismaContestConfigTemplateRepository(getAppPrisma()).list();
+    return all.flatMap((template) => {
+      const scoring = template.configJson.scoring;
+      if (template.coverageMode !== TemplateCoverageMode.ALL_LISTED || scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS') return [];
+      if (template.slots.some((slot) => slot.slotKind === SlotKind.TOURNAMENT)) return [];
+      const rounds = template.slots.filter((slot) => slot.slotKind !== SlotKind.THIRD_PLACE).map((slot) => slot.slotKind);
+      return [{ template, roundValues: scoring.config.roundValues, upsetBonus: scoring.config.upsetBonus, rounds }];
+    });
+  }
+
+  it('gives every knockout round-points template one round value for each bracket round it lists, so no round, the final included, scores nothing', async () => {
+    const templates = await bracketTemplates();
+    const problems = templates.flatMap(({ template, roundValues, rounds }) => (roundValues.length === rounds.length
+      ? []
+      : [`${template.templateKey}: ${String(roundValues.length)} round values for ${String(rounds.length)} rounds (${rounds.join(', ')})`]));
+
+    expect(templates.length).toBeGreaterThan(50);
+    expect(problems).toEqual([]);
+  });
+
+  it('scores a champion who wins every round a knockout template lists the sum of its round values, the final its last value, in every league', async () => {
+    const problems = (await bracketTemplates()).flatMap(({ template, roundValues, upsetBonus, rounds }) => {
+      const [champion] = scoreKnockoutField(championRun(rounds), { roundValues, upsetBonus });
+      const expected = roundValues.reduce((total, value) => total + value, 0);
+      return champion.score === expected ? [] : [`${template.templateKey}: the champion scores ${String(champion.score)}, not ${String(expected)}`];
+    });
+
+    expect(problems).toEqual([]);
+  });
+
+  it('scores a FIFA World Cup champion 1 point in the Round of 32, doubling each round to 16 in the final, under Escalating', async () => {
+    const template = (await bracketTemplates()).find((each) => each.template.templateKey === 'world-cup-random-draw-doubling');
+    const { roundValues, upsetBonus, rounds } = expectDefined(template, 'the World Cup\'s Escalating random draw');
+    const [champion] = scoreKnockoutField(championRun(rounds), { roundValues, upsetBonus });
+
+    expect(rounds).toEqual([SlotKind.ROUND_OF_32, SlotKind.ROUND_OF_16, SlotKind.QUARTERFINAL, SlotKind.SEMIFINAL, SlotKind.FINAL]);
+    expect(roundValues).toEqual([1, 2, 4, 8, 16]);
+    expect(champion.score).toBe(31);
   });
 });
