@@ -14705,6 +14705,7 @@ export interface components {
              * @description ISO 8601 datetime string.
              */
             asOf: string | null;
+            /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
             currentRound: number | null;
             /** @description Present for a golf event with scores; null otherwise. */
             golf: {
@@ -14875,6 +14876,7 @@ export interface components {
                  * @description ISO 8601 datetime string.
                  */
                 asOf: string | null;
+                /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                 currentRound: number | null;
                 /** @description Present for a golf event with scores; null otherwise. */
                 golf: {
@@ -15076,6 +15078,7 @@ export interface components {
                      * @description ISO 8601 datetime string.
                      */
                     asOf: string | null;
+                    /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                     currentRound: number | null;
                     /** @description Present for a golf event with scores; null otherwise. */
                     golf: {
@@ -15311,6 +15314,7 @@ export interface components {
                      * @description ISO 8601 datetime string.
                      */
                     asOf: string | null;
+                    /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                     currentRound: number | null;
                     /** @description Present for a golf event with scores; null otherwise. */
                     golf: {
@@ -16379,6 +16383,7 @@ export interface components {
                      * @description ISO 8601 datetime string.
                      */
                     asOf: string | null;
+                    /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                     currentRound: number | null;
                     /** @description Present for a golf event with scores; null otherwise. */
                     golf: {

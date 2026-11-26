@@ -382,12 +382,11 @@ export class GolfScoreService {
         ? holesByRoundId.get(current.participantRound.sportEventRoundId) ?? null
         : null);
       const status = mapGolfLiveStatus(current.participantRound.status);
-      const currentRound = current.participantRound.roundNumber;
       const before = existingByEntry.get(sportEventParticipantId);
       return [{
-        write: { sportEventParticipantId, currentRound, status, asOf, eventScoreToPar, eventStrokes, currentRoundThru },
+        write: { sportEventParticipantId, status, asOf, eventScoreToPar, eventStrokes, currentRoundThru },
         before: before ? normalizeGolfStandingResult(before) : undefined,
-        after: normalizeGolfStanding({ sportEventParticipantId, eventScoreToPar, eventStrokes, currentRound, currentRoundThru, status }),
+        after: normalizeGolfStanding({ sportEventParticipantId, eventScoreToPar, eventStrokes, currentRoundThru, status }),
       }];
     });
 
@@ -662,7 +661,6 @@ function normalizeGolfStanding(input: {
   sportEventParticipantId: string;
   eventScoreToPar: number;
   eventStrokes: number;
-  currentRound: number | null;
   currentRoundThru: number | null;
   status: ParticipantStandingStatus;
 }): Record<string, unknown> {
@@ -673,7 +671,6 @@ function normalizeGolfStanding(input: {
     sportEventParticipantId: input.sportEventParticipantId,
     eventScoreToPar: input.eventScoreToPar,
     eventStrokes: input.eventStrokes,
-    currentRound: input.currentRound,
     currentRoundThru: input.currentRoundThru,
     status: input.status,
   };
@@ -684,7 +681,6 @@ function normalizeGolfStandingResult(result: GolfStandingResult): Record<string,
     sportEventParticipantId: result.standing.sportEventParticipantId,
     eventScoreToPar: result.golf.eventScoreToPar,
     eventStrokes: result.golf.eventStrokes,
-    currentRound: result.standing.currentRound,
     currentRoundThru: result.golf.currentRoundThru,
     status: result.standing.status,
   });

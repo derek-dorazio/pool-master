@@ -13915,6 +13915,9 @@ export type SportEventParticipantStandingDto = {
      * ISO 8601 datetime string.
      */
     asOf: string | null;
+    /**
+     * The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.
+     */
     currentRound: number | null;
     /**
      * Present for a golf event with scores; null otherwise.
@@ -14119,6 +14122,9 @@ export type SportEventParticipantDto = {
          * ISO 8601 datetime string.
          */
         asOf: string | null;
+        /**
+         * The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.
+         */
         currentRound: number | null;
         /**
          * Present for a golf event with scores; null otherwise.
@@ -14364,6 +14370,9 @@ export type SportEventParticipantListResponse = {
              * ISO 8601 datetime string.
              */
             asOf: string | null;
+            /**
+             * The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.
+             */
             currentRound: number | null;
             /**
              * Present for a golf event with scores; null otherwise.
@@ -14662,6 +14671,9 @@ export type SportEventParticipantResponse = {
              * ISO 8601 datetime string.
              */
             asOf: string | null;
+            /**
+             * The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.
+             */
             currentRound: number | null;
             /**
              * Present for a golf event with scores; null otherwise.
@@ -16104,6 +16116,9 @@ export type ContestLeaderboardResponse = {
              * ISO 8601 datetime string.
              */
             asOf: string | null;
+            /**
+             * The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.
+             */
             currentRound: number | null;
             /**
              * Present for a golf event with scores; null otherwise.

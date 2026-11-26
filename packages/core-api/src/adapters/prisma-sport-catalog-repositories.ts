@@ -932,7 +932,6 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
           displayPosition: standing.displayPosition,
           status: standing.status,
           asOf: standing.asOf,
-          currentRound: standing.currentRound,
           createdAt: standing.createdAt,
           updatedAt: standing.updatedAt,
         },
@@ -1422,7 +1421,6 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
     ranking: row.ranking ?? undefined,
     oddsToWin: row.oddsToWin === null ? undefined : Number(row.oddsToWin),
     seedNumber: row.seedNumber ?? undefined,
-    metadata: (row.metadata ?? {}) as Record<string, unknown>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

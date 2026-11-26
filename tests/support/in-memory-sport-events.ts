@@ -1072,10 +1072,10 @@ export class InMemorySportEvents {
   private writeGolfStanding(write: GolfStandingWrite): GolfStandingResult {
     let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
     if (!standing) {
-      standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+      standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf });
       this.standingRows.push(standing);
     }
-    Object.assign(standing, { status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+    Object.assign(standing, { status: write.status, asOf: write.asOf });
     let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
     if (!golf) {
       golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });

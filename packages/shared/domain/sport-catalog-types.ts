@@ -148,7 +148,6 @@ export interface SportEventParticipantStanding extends DomainEntity {
   displayPosition: string | null;
   status: ParticipantStandingStatus;
   asOf: Date | null;
-  currentRound: number | null;
 }
 
 /** A pick tier an event's field is divided into. Cross-sport: nothing here is golf. */

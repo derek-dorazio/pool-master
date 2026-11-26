@@ -89,7 +89,6 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
       await prisma.sportEventParticipantStanding.create({
         data: {
           sportEventParticipantId: row.id,
-          currentRound: 2,
           status: 'COMPLETE',
           asOf: new Date(),
           golf: { create: { eventScoreToPar: scoreToPar, eventStrokes: 144 + scoreToPar, currentRoundThru: 18 } },

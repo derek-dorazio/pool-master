@@ -220,11 +220,9 @@ describe('IngestionPersistence', () => {
           name: 'Scottie Scheffler',
           status: SportEventParticipantStatus.ACTIVE,
           ranking: 7,
-          metadata: {
-            seed: 1,
-            odds: 8.5,
-            oddsSourceEventId: 'golf-open-2026',
-          },
+          seed: 1,
+          odds: { toWin: 8.5, eventExternalId: 'golf-open-2026' },
+          metadata: {},
         },
       ],
     };
@@ -254,11 +252,6 @@ describe('IngestionPersistence', () => {
         ranking: 12,
         oddsToWin: 11.25,
         seedNumber: 3,
-        metadata: {
-          seed: 3,
-          odds: 11.25,
-          oddsSourceEventId: 'golf-open-2026',
-        },
       },
     });
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
@@ -307,7 +300,10 @@ describe('IngestionPersistence', () => {
         sport: Sport.BASKETBALL,
         name: 'Duke',
         status: SportEventParticipantStatus.ACTIVE,
-        metadata: { seed: 1 },
+        // A new ranking makes the row change either way, so the seed it is written with shows.
+        ranking: 5,
+        seed: 1,
+        metadata: {},
       }],
     };
     const prisma = fieldSyncPrisma({
@@ -324,7 +320,6 @@ describe('IngestionPersistence', () => {
         ranking: null,
         oddsToWin: null,
         seedNumber: 3,
-        metadata: { seed: 3 },
       },
     });
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
@@ -425,11 +420,9 @@ describe('IngestionPersistence', () => {
           name: 'Scottie Scheffler',
           status: SportEventParticipantStatus.ACTIVE,
           ranking: 7,
-          metadata: {
-            seed: 1,
-            odds: 8.5,
-            oddsSourceEventId: 'golf-open-2026',
-          },
+          seed: 1,
+          odds: { toWin: 8.5, eventExternalId: 'golf-open-2026' },
+          metadata: {},
         },
       ],
     };
@@ -459,11 +452,6 @@ describe('IngestionPersistence', () => {
         ranking: 12,
         oddsToWin: 11.25,
         seedNumber: 3,
-        metadata: {
-          seed: 3,
-          odds: 11.25,
-          oddsSourceEventId: 'golf-open-2026',
-        },
       },
     });
     const domainEvents = new RecordingDomainEvents();
@@ -488,7 +476,7 @@ describe('IngestionPersistence', () => {
       status: 'SCHEDULED',
       participants: [{
         externalId: 'golfer-01', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Scottie Scheffler', status: SportEventParticipantStatus.ACTIVE, ranking: 7,
-        metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
+        seed: 1, odds: { toWin: 8.5, eventExternalId: 'golf-open-2026' }, metadata: {},
       }],
     };
     const prisma = fieldSyncPrisma({
@@ -497,7 +485,6 @@ describe('IngestionPersistence', () => {
       linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1', status: 'ACTIVE', ranking: 7, oddsToWin: 8.5, seedNumber: 1,
-        metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
       },
     });
     const domainEvents = new RecordingDomainEvents();

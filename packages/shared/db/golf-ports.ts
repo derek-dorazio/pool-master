@@ -31,7 +31,6 @@ export interface SportEventParticipantGolfRoundRepository {
 export interface GolfStandingWrite {
   sportEventParticipantId: string;
   /** Core. */
-  currentRound: number | null;
   status: ParticipantStandingStatus;
   asOf: Date;
   /** Golf: the totals the standing was computed from. */

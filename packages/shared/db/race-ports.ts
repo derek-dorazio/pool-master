@@ -22,7 +22,6 @@ export interface RaceStandingWrite {
   position: number | null;
   displayPosition: string | null;
   status: ParticipantStandingStatus;
-  currentRound: number | null;
   asOf: Date;
 }
 

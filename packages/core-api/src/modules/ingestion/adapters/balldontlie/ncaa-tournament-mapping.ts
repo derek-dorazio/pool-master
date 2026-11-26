@@ -170,7 +170,8 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
         sport: Sport.BASKETBALL,
         name: team.full_name ?? required(team.name, bracketPathOf(league), `a team of ${gameName(game)}`, 'name'),
         status: SportEventParticipantStatus.ACTIVE,
-        metadata: Number.isInteger(seed) ? { seed } : {},
+        ...(Number.isInteger(seed) && { seed }),
+        metadata: {},
       });
     }
   }

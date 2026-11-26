@@ -179,7 +179,7 @@ export class PrismaSportEventParticipantGolfStandingRepository implements SportE
     if (writes.length === 0) return [];
     const rows = await this.prisma.$transaction((tx) => rewriteStandings(tx, writes.map((write) => ({
       sportEventParticipantId: write.sportEventParticipantId,
-      standing: { currentRound: write.currentRound, status: write.status, asOf: write.asOf },
+      standing: { status: write.status, asOf: write.asOf },
       golf: { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru },
     }))));
     return rows.flatMap(toGolfStandingResult);
@@ -232,7 +232,6 @@ function toGolfStandingResult(row: GolfStandingRow): GolfStandingResult[] {
       displayPosition: row.displayPosition,
       status: row.status,
       asOf: row.asOf,
-      currentRound: row.currentRound,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     },

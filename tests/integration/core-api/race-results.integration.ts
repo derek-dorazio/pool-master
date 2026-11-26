@@ -75,7 +75,6 @@ const standing = (sportEventParticipantId: string, position: number | null) => (
   position,
   displayPosition: position === null ? null : String(position),
   status: 'COMPLETE' as const,
-  currentRound: null,
   asOf: new Date('2026-05-02T22:30:00.000Z'),
 });
 

@@ -244,7 +244,6 @@ export class RaceResultService {
       position: result.finishPosition,
       displayPosition: result.finishPosition === null ? null : displayPlace(result.finishPosition, places),
       status: standingStatusForResult(result.resultStatus),
-      currentRound: null,
       asOf,
     }));
 

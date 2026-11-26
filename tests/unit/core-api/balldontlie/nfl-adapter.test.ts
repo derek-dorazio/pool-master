@@ -157,7 +157,7 @@ describe('BalldontlieAdapter (NFL)', () => {
 
       expect(detail).toMatchObject({ name: 'NFL Playoffs', status: 'IN_PROGRESS', rounds: 4 });
       expect(detail?.participants).toHaveLength(14);
-      expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.metadata.seed])).toEqual([['17', 1], ['3', 2]]);
+      expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.seed])).toEqual([['17', 1], ['3', 2]]);
       expect(detail?.games?.map((game) => [game.games[0]?.providerGameId, game.roundNumber])).toEqual([['403601', 1], ['403602', 1], ['403603', 2]]);
       expect(detail?.bracket).toHaveLength(13);
       expect(detail?.bracket?.[2]).toMatchObject({ matchNumber: 3, homeTeamExternalId: '13', awayTeamExternalId: '18', scheduledAt: new Date('2027-01-16T21:30:00.000Z') });

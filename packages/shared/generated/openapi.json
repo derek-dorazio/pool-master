@@ -32272,6 +32272,7 @@
             "description": "ISO 8601 datetime string."
           },
           "currentRound": {
+            "description": "The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.",
             "type": [
               "integer",
               "null"
@@ -32737,6 +32738,7 @@
                 "description": "ISO 8601 datetime string."
               },
               "currentRound": {
+                "description": "The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.",
                 "type": [
                   "integer",
                   "null"
@@ -33301,6 +33303,7 @@
                       "description": "ISO 8601 datetime string."
                     },
                     "currentRound": {
+                      "description": "The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.",
                       "type": [
                         "integer",
                         "null"
@@ -33992,6 +33995,7 @@
                     "description": "ISO 8601 datetime string."
                   },
                   "currentRound": {
+                    "description": "The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.",
                     "type": [
                       "integer",
                       "null"
@@ -37581,6 +37585,7 @@
                       "description": "ISO 8601 datetime string."
                     },
                     "currentRound": {
+                      "description": "The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish.",
                       "type": [
                         "integer",
                         "null"

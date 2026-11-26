@@ -148,7 +148,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     ]));
     expect(row.standing).toEqual(
       expect.objectContaining({
-        currentRound: 2,
         status: 'IN_PROGRESS',
         golf: expect.objectContaining({ eventScoreToPar: -7, eventStrokes: 101, currentRoundThru: 9 }),
       }),
@@ -233,12 +232,10 @@ describe('Golf live-score persistence', () => {
 
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0 });
     expect(await standingOf(expectDefined(sepByKey.get('rory')))).toMatchObject({
-      currentRound: 1,
       status: 'COMPLETE',
       golf: { eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 },
     });
     expect(await standingOf(expectDefined(sepByKey.get('tiger')))).toMatchObject({
-      currentRound: 1,
       status: 'IN_PROGRESS',
       golf: { eventScoreToPar: 1, eventStrokes: 37, currentRoundThru: 9 },
     });

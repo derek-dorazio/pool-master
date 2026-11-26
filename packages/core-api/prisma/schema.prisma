@@ -2268,7 +2268,6 @@ model SportEventParticipant {
   ranking        Int?
   oddsToWin      Decimal?                   @map("odds_to_win") @db.Decimal(10, 2)
   seedNumber     Int?                       @map("seed_number")
-  metadata       Json                       @default("{}")
   createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -2553,7 +2552,6 @@ model SportEventParticipantStanding {
   displayPosition         String?                   @map("display_position") @db.VarChar(20)
   status                  ParticipantStandingStatus @default(ACTIVE)
   asOf                    DateTime?                 @map("as_of") @db.Timestamptz
-  currentRound            Int?                      @map("current_round")
   createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
 
