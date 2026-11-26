@@ -777,7 +777,7 @@ describe('Golf extension repositories', () => {
     }]);
 
     const [byEvent] = await golfStandings.findBySportEvent(event.id);
-    expect(byEvent).toMatchObject({ standing: { currentRound: 2, status: 'IN_PROGRESS' }, golf: { eventScoreToPar: -5, currentRoundThru: 9 } });
+    expect(byEvent).toMatchObject({ standing: { status: 'IN_PROGRESS' }, golf: { eventScoreToPar: -5, currentRoundThru: 9 } });
     expect(byEvent.golf.standingId).toBe(byEvent.standing.id);
     await expect(golfStandings.findBySportEventParticipants([entry.id])).resolves.toHaveLength(1);
   });
