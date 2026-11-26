@@ -9,7 +9,8 @@
  */
 
 import { SelectionType } from '@poolmaster/shared/domain';
-import { findTierByLabel } from '../selection-rules';
+import { tierLabel } from '@poolmaster/shared/display-strings';
+import { findTierByNumber } from '../selection-rules';
 import type { SelectionTierConfig } from '../types';
 import {
   completenessIssues,
@@ -78,12 +79,12 @@ export const tieredSelectionEngine: SelectionEngine = {
   rosterSize: ({ tiers }) => tiers.reduce((sum, tier) => sum + tier.picksFromTier, 0),
 
   evaluate: ({ participant, existingPicks, tiers, rosterSize }) => {
-    const tierLabel = participant.tier;
-    if (!tierLabel) return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_MISSING };
+    const { tierNumber } = participant;
+    if (tierNumber == null) return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_MISSING };
 
-    const tier = findTierByLabel(tiers, tierLabel);
+    const tier = findTierByNumber(tiers, tierNumber);
     if (!tier) {
-      return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_NOT_FOUND, tierLabel };
+      return { kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_NOT_FOUND, tierNumber };
     }
 
     return resolveTieredPlacement({ tier, tiers, existingPicks, rosterSize });
@@ -108,7 +109,7 @@ export const tieredSelectionEngine: SelectionEngine = {
           const picksInTier = picks.filter((pick) => tierParticipantIds.has(pick.participantId));
           return picksInTier.length !== tier.picksFromTier;
         })
-        .map((tier) => tier.tierName),
+        .map((tier) => tierLabel(tier.tierNumber)),
     }),
 
   /** One group per tier, in tier order, each listing the tier's golfers that are on the field. */
@@ -118,7 +119,7 @@ export const tieredSelectionEngine: SelectionEngine = {
     );
     return tiers.map((tier) => ({
       groupId: tier.tierId,
-      groupName: tier.tierName,
+      groupName: tierLabel(tier.tierNumber),
       groupNumber: tier.tierNumber,
       picksFromGroup: tier.picksFromTier,
       participants: tier.participantIds.flatMap((participantId) => {

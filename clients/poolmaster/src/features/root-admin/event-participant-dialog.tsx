@@ -1,4 +1,4 @@
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, tierLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -150,7 +150,7 @@ export function EventParticipantDialog({
               <FormField help="A manual tier stops automatic tiering for this event." label="Tier">
                 <Select data-testid={`${testId}-edit-tier`} {...form.register('tierKey')}>
                   {current.tierKey === '' ? <option value="">Untiered</option> : null}
-                  {tiers.map((tier) => <option key={tier.id} value={tier.tierKey}>{tier.label}</option>)}
+                  {tiers.map((tier) => <option key={tier.id} value={tier.tierKey}>{tierLabel(tier.tierNumber)}</option>)}
                 </Select>
               </FormField>
               <FormField error={form.formState.errors.price?.message} help="A manual price stops automatic pricing for this event." label="Price">

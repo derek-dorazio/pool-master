@@ -7,6 +7,7 @@
  */
 
 import { assertNever, ReleaseCheckKey, type ReleaseCheck, type SportNoun } from '@poolmaster/shared/domain';
+import { tierLabel } from '@poolmaster/shared/display-strings';
 
 /** What the checks are judged on: the event's admin counts and its release facts. */
 export interface ReleaseCheckInputs {
@@ -15,7 +16,7 @@ export interface ReleaseCheckInputs {
   scheduledRoundCount: number;
   loadedParticipantCount: number;
   untieredParticipantCount: number;
-  emptyTierLabels: readonly string[];
+  emptyTierNumbers: readonly number[];
   isPriced: boolean;
   unpricedParticipantCount: number;
   /** What its bracket still lacks; null for an event not played as matches. */
@@ -31,7 +32,7 @@ export function evaluateReleaseChecks(inputs: ReleaseCheckInputs): ReleaseCheck[
   ];
   checks.push(
     { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: inputs.untieredParticipantCount === 0, value: inputs.untieredParticipantCount },
-    { key: ReleaseCheckKey.TIERS_FILLED, passed: inputs.emptyTierLabels.length === 0, value: [...inputs.emptyTierLabels] },
+    { key: ReleaseCheckKey.TIERS_FILLED, passed: inputs.emptyTierNumbers.length === 0, value: [...inputs.emptyTierNumbers] },
     inputs.isPriced
       ? { key: ReleaseCheckKey.PRICES_ASSIGNED, passed: inputs.unpricedParticipantCount === 0, value: inputs.unpricedParticipantCount }
       : { key: ReleaseCheckKey.PRICES_ASSIGNED, passed: false, value: null },
@@ -62,7 +63,7 @@ export function describeFailedReleaseCheck(check: ReleaseCheck, participant: Spo
     case ReleaseCheckKey.TIERS_ASSIGNED:
       return [`${check.value} active participant(s) have no tier`];
     case ReleaseCheckKey.TIERS_FILLED:
-      return check.value.map((label) => `${label} has no ${participant.many}`);
+      return check.value.map((tierNumber) => `${tierLabel(tierNumber)} has no ${participant.many}`);
     case ReleaseCheckKey.PRICES_ASSIGNED:
       return check.value === null ? ['its prices have not been assigned'] : [`${check.value} active participant(s) have no price`];
     case ReleaseCheckKey.BRACKET_COMPLETE:

@@ -35,7 +35,6 @@ export function toEffectiveTierDtoList(
 ): EffectiveTierDto[] {
   return tiers.map((tier) => ({
     tierKey: tier.tierKey,
-    label: tier.label,
     tierNumber: tier.tierNumber,
     assignments: tier.participants.map((participant) => ({
       sportEventParticipantId: participant.sportEventParticipantId,

@@ -55,7 +55,7 @@ const ADMIN_ONLY = '(Admin-only: operational detail no member surface reads.)';
 export const SportEventAdminCountsDtoSchema = z.object({
   untieredParticipantCount: z.number().int().describe('Active event participants with no tier. A DRAFT event can\'t be released while any remain.'),
   unpricedParticipantCount: z.number().int().describe('Active event participants with no price. A DRAFT event can\'t be released while any remain.'),
-  emptyTierLabels: z.array(z.string()).describe('Labels of the event\'s tiers no active participant is in, in tier order. A DRAFT event can\'t be released while any remain: no entry could pick from them.'),
+  emptyTierNumbers: z.array(z.number().int().min(1)).describe('Numbers of the event\'s tiers no active participant is in, in tier order. A DRAFT event can\'t be released while any remain: no entry could pick from them.'),
   contestCount: z.number().int().describe('Contests run on the event, across every league; an event with any cannot be deleted.'),
 }).describe('What only a root admin reads of an event: what still stops its release, and how many contests run on it.');
 export type SportEventAdminCountsDto = z.infer<typeof SportEventAdminCountsDtoSchema>;
@@ -72,7 +72,7 @@ export const ReleaseCheckDtoSchema = z.discriminatedUnion('key', [
   releaseCheck(ReleaseCheckKey.ROUNDS_SCHEDULED, z.number().int(), 'ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.'),
   releaseCheck(ReleaseCheckKey.FIELD_LOADED, z.number().int(), 'FIELD_LOADED: how many participants are in the field; at least one passes.'),
   releaseCheck(ReleaseCheckKey.TIERS_ASSIGNED, z.number().int(), 'TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.'),
-  releaseCheck(ReleaseCheckKey.TIERS_FILLED, z.array(z.string()), 'TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.'),
+  releaseCheck(ReleaseCheckKey.TIERS_FILLED, z.array(z.number().int().min(1)), 'TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.'),
   releaseCheck(ReleaseCheckKey.PRICES_ASSIGNED, z.number().int().nullable(), 'PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.'),
   releaseCheck(ReleaseCheckKey.BRACKET_COMPLETE, z.array(z.string()), 'BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes.'),
   releaseCheck(ReleaseCheckKey.CONTEST_SETUPS_ON, z.number().int(), 'CONTEST_SETUPS_ON: how many active contest setups the event\'s sport league offers; at least one passes.'),
@@ -264,8 +264,7 @@ export const SportEventTierDtoSchema = z.object({
   id: z.uuid(),
   sportEventId: z.uuid(),
   tierKey: z.string().describe('Stable key; assignments name a tier by it.'),
-  label: z.string(),
-  tierNumber: z.number().int().describe('Order among the event\'s tiers; 1 first.'),
+  tierNumber: z.number().int().describe('Order among the event\'s tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number.'),
 }).describe('A pick tier an event\'s field is divided into. Who is in it is on each field row\'s valuation.');
 export type SportEventTierDto = z.infer<typeof SportEventTierDtoSchema>;
 
@@ -277,7 +276,6 @@ export type SportEventTierListResponse = z.infer<typeof SportEventTierListRespon
 export const ReplaceSportEventTiersRequestSchema = z.object({
   tiers: z.array(z.object({
     tierKey: z.string().min(1),
-    label: z.string().min(1),
     tierNumber: z.number().int().min(1),
   })).min(1),
   reassignOrphansTo: z.string().optional().describe('A tierKey from this request; where participants in a removed tier go once a tier was placed by hand, and required then when a removed tier still has participants. Ignored otherwise: the field is placed in the new tiers afresh.'),

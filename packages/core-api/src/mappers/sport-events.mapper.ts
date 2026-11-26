@@ -146,7 +146,6 @@ export function mapSportEventTierToDto(tier: SportEventTier): SportEventTierDto 
     id: tier.id,
     sportEventId: tier.sportEventId,
     tierKey: tier.tierKey,
-    label: tier.label,
     tierNumber: tier.tierNumber,
   };
 }

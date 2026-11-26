@@ -7464,8 +7464,6 @@ export interface components {
         EffectiveTierDto: {
             /** @description Stable per-event tier key. */
             tierKey: string;
-            /** @description Commissioner-facing tier label. */
-            label: string;
             /** @description 1-based tier ordering. */
             tierNumber: number;
             /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
@@ -7488,8 +7486,6 @@ export interface components {
             effectiveTiers: {
                 /** @description Stable per-event tier key. */
                 tierKey: string;
-                /** @description Commissioner-facing tier label. */
-                label: string;
                 /** @description 1-based tier ordering. */
                 tierNumber: number;
                 /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
@@ -7519,8 +7515,6 @@ export interface components {
                 effectiveTiers: {
                     /** @description Stable per-event tier key. */
                     tierKey: string;
-                    /** @description Commissioner-facing tier label. */
-                    label: string;
                     /** @description 1-based tier ordering. */
                     tierNumber: number;
                     /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
@@ -8097,8 +8091,6 @@ export interface components {
                     effectiveTiers: {
                         /** @description Stable per-event tier key. */
                         tierKey: string;
-                        /** @description Commissioner-facing tier label. */
-                        label: string;
                         /** @description 1-based tier ordering. */
                         tierNumber: number;
                         /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
@@ -13154,8 +13146,8 @@ export interface components {
             untieredParticipantCount: number;
             /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
             unpricedParticipantCount: number;
-            /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
-            emptyTierLabels: string[];
+            /** @description Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+            emptyTierNumbers: number[];
             /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
             contestCount: number;
         };
@@ -13196,8 +13188,8 @@ export interface components {
             key: "TIERS_FILLED";
             /** @description Whether the check passed. */
             passed: boolean;
-            /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
-            value: string[];
+            /** @description TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+            value: number[];
         } | {
             /** @enum {string} */
             key: "PRICES_ASSIGNED";
@@ -13524,8 +13516,8 @@ export interface components {
                 key: "TIERS_FILLED";
                 /** @description Whether the check passed. */
                 passed: boolean;
-                /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
-                value: string[];
+                /** @description TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+                value: number[];
             } | {
                 /** @enum {string} */
                 key: "PRICES_ASSIGNED";
@@ -13569,8 +13561,8 @@ export interface components {
                 untieredParticipantCount: number;
                 /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
                 unpricedParticipantCount: number;
-                /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
-                emptyTierLabels: string[];
+                /** @description Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+                emptyTierNumbers: number[];
                 /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
                 contestCount: number;
             } | null;
@@ -13873,8 +13865,8 @@ export interface components {
                     key: "TIERS_FILLED";
                     /** @description Whether the check passed. */
                     passed: boolean;
-                    /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
-                    value: string[];
+                    /** @description TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+                    value: number[];
                 } | {
                     /** @enum {string} */
                     key: "PRICES_ASSIGNED";
@@ -13918,8 +13910,8 @@ export interface components {
                     untieredParticipantCount: number;
                     /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
                     unpricedParticipantCount: number;
-                    /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
-                    emptyTierLabels: string[];
+                    /** @description Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+                    emptyTierNumbers: number[];
                     /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
                     contestCount: number;
                 } | null;
@@ -14201,8 +14193,8 @@ export interface components {
                     key: "TIERS_FILLED";
                     /** @description Whether the check passed. */
                     passed: boolean;
-                    /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
-                    value: string[];
+                    /** @description TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+                    value: number[];
                 } | {
                     /** @enum {string} */
                     key: "PRICES_ASSIGNED";
@@ -14246,8 +14238,8 @@ export interface components {
                     untieredParticipantCount: number;
                     /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
                     unpricedParticipantCount: number;
-                    /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
-                    emptyTierLabels: string[];
+                    /** @description Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+                    emptyTierNumbers: number[];
                     /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
                     contestCount: number;
                 } | null;
@@ -14504,8 +14496,7 @@ export interface components {
             sportEventId: string;
             /** @description Stable key; assignments name a tier by it. */
             tierKey: string;
-            label: string;
-            /** @description Order among the event's tiers; 1 first. */
+            /** @description Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number. */
             tierNumber: number;
         };
         /** @description An event's tiers. */
@@ -14518,8 +14509,7 @@ export interface components {
                 sportEventId: string;
                 /** @description Stable key; assignments name a tier by it. */
                 tierKey: string;
-                label: string;
-                /** @description Order among the event's tiers; 1 first. */
+                /** @description Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number. */
                 tierNumber: number;
             }[];
         };
@@ -14527,7 +14517,6 @@ export interface components {
         ReplaceSportEventTiersRequest: {
             tiers: {
                 tierKey: string;
-                label: string;
                 tierNumber: number;
             }[];
             /** @description A tierKey from this request; where participants in a removed tier go once a tier was placed by hand, and required then when a removed tier still has participants. Ignored otherwise: the field is placed in the new tiers afresh. */

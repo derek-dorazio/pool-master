@@ -140,7 +140,7 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     const first = expectDefined(created[0]);
     const rounds = await getPrisma().sportEventRound.findMany({ where: { sportEventId: first.event.id }, orderBy: { roundNumber: 'asc' } });
     expect(rounds.map((round) => round.scheduledDate.toISOString().slice(0, 10))).toEqual(['2087-04-02', '2087-04-03', '2087-04-04', '2087-04-05']);
-    expect(first).toMatchObject({ tierCount: 6, loadedParticipantCount: 0, adminCounts: { emptyTierLabels: ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6'], contestCount: 0 } });
+    expect(first).toMatchObject({ tierCount: 6, loadedParticipantCount: 0, adminCounts: { emptyTierNumbers: ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6'], contestCount: 0 } });
   });
 
   it('skips an event already linked, and creates a provider event whose name a hand-made event of the Season shares: events are told apart by feed id, never by name', async () => {
@@ -205,7 +205,7 @@ describe('Creating one event (#1253)', () => {
 });
 
 describe('Editing an event\'s tiers (#1253)', () => {
-  const tier = (index: number) => ({ tierKey: `tier-${index}`, label: `Tier ${index}`, tierNumber: index });
+  const tier = (index: number) => ({ tierKey: `tier-${index}`, tierNumber: index });
 
   it('saves a tier list in the same number of queries however many tiers stay as they were', async () => {
     const tour = await golfTour();
@@ -226,7 +226,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
     expect(counts[1]).toEqual(counts[0]);
   });
 
-  it('reverses, renames, removes and adds tiers in one save, a new tier taking a removed one\'s number and kept tiers keeping their rows', async () => {
+  it('reverses, removes and adds tiers in one save, a new tier taking a removed one\'s number and kept tiers keeping their rows', async () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
     const created = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'))], name: 'Shuffle Open' });
@@ -237,13 +237,13 @@ describe('Editing an event\'s tiers (#1253)', () => {
       sportEventId: created.event.id,
       tiers: [
         ...[1, 2, 3, 4, 5].map((index) => ({ ...tier(index), tierNumber: 6 - index })),
-        { tierKey: 'tier-new', label: 'Long Shots', tierNumber: 6 },
-      ].map((definition) => (definition.tierKey === 'tier-1' ? { ...definition, label: 'Favourites' } : definition)),
+        { tierKey: 'tier-new', tierNumber: 6 },
+      ],
     });
 
     const after = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id }, orderBy: { tierNumber: 'asc' } });
-    expect(after.map((row) => [row.tierKey, row.tierNumber, row.label])).toEqual([
-      ['tier-5', 1, 'Tier 5'], ['tier-4', 2, 'Tier 4'], ['tier-3', 3, 'Tier 3'], ['tier-2', 4, 'Tier 2'], ['tier-1', 5, 'Favourites'], ['tier-new', 6, 'Long Shots'],
+    expect(after.map((row) => [row.tierKey, row.tierNumber])).toEqual([
+      ['tier-5', 1], ['tier-4', 2], ['tier-3', 3], ['tier-2', 4], ['tier-1', 5], ['tier-new', 6],
     ]);
     expect(after.filter((row) => row.tierKey !== 'tier-new').every((row) => row.id === idByKey.get(row.tierKey))).toBe(true);
   });

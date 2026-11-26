@@ -183,7 +183,6 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
 export function buildTier(tierNumber: number, golferCount: number): EffectiveTierDto {
   return {
     tierKey: `tier-${tierNumber}`,
-    label: `Tier ${tierNumber}`,
     tierNumber,
     assignments: Array.from({ length: golferCount }, (_, index) => ({
       sportEventParticipantId: `sep-${tierNumber}-${index}`,

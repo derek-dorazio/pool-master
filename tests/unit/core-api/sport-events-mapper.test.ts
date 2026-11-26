@@ -40,7 +40,7 @@ function summary(sportEvent: SportEvent, loadedParticipantCount: number, untiere
     event: sportEvent,
     loadedParticipantCount,
     tierCount: 0,
-    adminCounts: { untieredParticipantCount, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
+    adminCounts: { untieredParticipantCount, unpricedParticipantCount: 0, emptyTierNumbers: [], contestCount: 0 },
     slots: [],
   };
 }
@@ -185,7 +185,7 @@ describe('SportEvent admin counts on the wire (#1198)', () => {
 
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
-    const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: ['Tier 6'], contestCount: 2 };
+    const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [6], contestCount: 2 };
     expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, tierCount: 6, adminCounts, slots: [] })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
@@ -227,9 +227,9 @@ describe('the event\'s rounds and tiers on the wire', () => {
     expect(mapSportEventRoundToDto(round)).toMatchObject({ status: RoundStatus.COMPLETED, resultCount: 8, completedAt: AT.toISOString() });
   });
 
-  it('sends a tier\'s key, label and number', () => {
-    expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 } as never))
-      .toEqual({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 });
+  it('sends a tier\'s key and number, with no stored name', () => {
+    expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', tierKey: 'A', tierNumber: 1 } as never))
+      .toEqual({ id: 't1', sportEventId: 'e1', tierKey: 'A', tierNumber: 1 });
   });
 });
 

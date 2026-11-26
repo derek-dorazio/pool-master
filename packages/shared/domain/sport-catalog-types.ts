@@ -148,7 +148,7 @@ export interface SportEventParticipantStanding extends DomainEntity {
 export interface SportEventTier extends DomainEntity {
   sportEventId: string;
   tierKey: string;
-  label: string;
+  /** 1 is the top tier; its words are `tierLabel(tierNumber)` (#2047). */
   tierNumber: number;
 }
 

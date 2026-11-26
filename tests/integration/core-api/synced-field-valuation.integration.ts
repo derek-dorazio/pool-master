@@ -43,7 +43,7 @@ async function syncedEvent(golfers: number, status: SportEventStatus = SportEven
     }
   }
   await getPrisma().sportEventTier.createMany({
-    data: [1, 2].map((tierNumber) => ({ sportEventId: event.id, tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber })),
+    data: [1, 2].map((tierNumber) => ({ sportEventId: event.id, tierKey: `tier-${tierNumber}`, tierNumber })),
   });
   // The provider's id for the event (#2004), which a field sync names it by.
   const ref = { providerId: 'balldontlie', externalId: `valuation-${event.id}` };

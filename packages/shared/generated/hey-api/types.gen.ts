@@ -4687,10 +4687,6 @@ export type EffectiveTierDto = {
      */
     tierKey: string;
     /**
-     * Commissioner-facing tier label.
-     */
-    label: string;
-    /**
      * 1-based tier ordering.
      */
     tierNumber: number;
@@ -4733,10 +4729,6 @@ export type ContestManagementSportEventDto = {
          * Stable per-event tier key.
          */
         tierKey: string;
-        /**
-         * Commissioner-facing tier label.
-         */
-        label: string;
         /**
          * 1-based tier ordering.
          */
@@ -4793,10 +4785,6 @@ export type ContestManagementDetailDto = {
              * Stable per-event tier key.
              */
             tierKey: string;
-            /**
-             * Commissioner-facing tier label.
-             */
-            label: string;
             /**
              * 1-based tier ordering.
              */
@@ -5613,10 +5601,6 @@ export type ContestManagementResponse = {
                  * Stable per-event tier key.
                  */
                 tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
                 /**
                  * 1-based tier ordering.
                  */
@@ -11944,9 +11928,9 @@ export type SportEventAdminCountsDto = {
      */
     unpricedParticipantCount: number;
     /**
-     * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+     * Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
      */
-    emptyTierLabels: Array<string>;
+    emptyTierNumbers: Array<number>;
     /**
      * Contests run on the event, across every league; an event with any cannot be deleted.
      */
@@ -12003,9 +11987,9 @@ export type ReleaseCheckDto = {
      */
     passed: boolean;
     /**
-     * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+     * TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
      */
-    value: Array<string>;
+    value: Array<number>;
 } | {
     key: 'PRICES_ASSIGNED';
     /**
@@ -12438,9 +12422,9 @@ export type SportEventDto = {
          */
         passed: boolean;
         /**
-         * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+         * TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
          */
-        value: Array<string>;
+        value: Array<number>;
     } | {
         key: 'PRICES_ASSIGNED';
         /**
@@ -12502,9 +12486,9 @@ export type SportEventDto = {
          */
         unpricedParticipantCount: number;
         /**
-         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+         * Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
          */
-        emptyTierLabels: Array<string>;
+        emptyTierNumbers: Array<number>;
         /**
          * Contests run on the event, across every league; an event with any cannot be deleted.
          */
@@ -12900,9 +12884,9 @@ export type SportEventListResponse = {
              */
             passed: boolean;
             /**
-             * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+             * TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
              */
-            value: Array<string>;
+            value: Array<number>;
         } | {
             key: 'PRICES_ASSIGNED';
             /**
@@ -12964,9 +12948,9 @@ export type SportEventListResponse = {
              */
             unpricedParticipantCount: number;
             /**
-             * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+             * Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
              */
-            emptyTierLabels: Array<string>;
+            emptyTierNumbers: Array<number>;
             /**
              * Contests run on the event, across every league; an event with any cannot be deleted.
              */
@@ -13337,9 +13321,9 @@ export type SportEventResponse = {
              */
             passed: boolean;
             /**
-             * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+             * TIERS_FILLED: the numbers of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
              */
-            value: Array<string>;
+            value: Array<number>;
         } | {
             key: 'PRICES_ASSIGNED';
             /**
@@ -13401,9 +13385,9 @@ export type SportEventResponse = {
              */
             unpricedParticipantCount: number;
             /**
-             * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+             * Numbers of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
              */
-            emptyTierLabels: Array<string>;
+            emptyTierNumbers: Array<number>;
             /**
              * Contests run on the event, across every league; an event with any cannot be deleted.
              */
@@ -13716,9 +13700,8 @@ export type SportEventTierDto = {
      * Stable key; assignments name a tier by it.
      */
     tierKey: string;
-    label: string;
     /**
-     * Order among the event's tiers; 1 first.
+     * Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number.
      */
     tierNumber: number;
 };
@@ -13737,9 +13720,8 @@ export type SportEventTierListResponse = {
          * Stable key; assignments name a tier by it.
          */
         tierKey: string;
-        label: string;
         /**
-         * Order among the event's tiers; 1 first.
+         * Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number.
          */
         tierNumber: number;
     }>;
@@ -13751,7 +13733,6 @@ export type SportEventTierListResponse = {
 export type ReplaceSportEventTiersRequest = {
     tiers: Array<{
         tierKey: string;
-        label: string;
         tierNumber: number;
     }>;
     /**

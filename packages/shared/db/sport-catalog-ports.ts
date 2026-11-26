@@ -302,7 +302,7 @@ export interface SportEventRepository {
    * asked about (empty where none). An event can't be released while any remain: no entry could
    * pick from them.
    */
-  findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>>;
+  findEmptyTierNumbers(sportEventIds: readonly string[]): Promise<Map<string, number[]>>;
   /**
    * What only a release's ready checks read of one event (#1823), each a count: its scheduled
    * rounds, and the active contest setups its sport league offers.
@@ -490,7 +490,7 @@ export interface SportEventTierRepository {
   countValuations(sportEventId: string): Promise<Map<string, number>>;
 }
 
-export type SportEventTierDefinition = Pick<SportEventTier, 'tierKey' | 'label' | 'tierNumber'>;
+export type SportEventTierDefinition = Pick<SportEventTier, 'tierKey' | 'tierNumber'>;
 
 /** A tier to create, on its event. */
 export type SportEventTierCreate = SportEventTierDefinition & { sportEventId: string };

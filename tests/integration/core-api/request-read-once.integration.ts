@@ -298,7 +298,7 @@ async function tieredGolfEvent(name: string) {
   });
   const tiers = [];
   for (const [index, tierKey] of TIER_KEYS.entries()) {
-    tiers.push(await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey, label: `Tier ${tierKey}`, tierNumber: index + 1 } }));
+    tiers.push(await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey, tierNumber: index + 1 } }));
   }
   for (const [index, tier] of tiers.slice(0, 2).entries()) {
     const golfer = await prisma.participant.create({

@@ -9,12 +9,12 @@ import { standardEventPricing } from '../../support/budget-pricing';
 // sport-event-repositories.integration.
 
 const TWO_TIERS = [
-  { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
-  { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+  { tierKey: 'tier-1', tierNumber: 1 },
+  { tierKey: 'tier-2', tierNumber: 2 },
 ];
 
 function tierDefinitions(count: number) {
-  return Array.from({ length: count }, (_, index) => ({ tierKey: `tier-${index + 1}`, label: `Tier ${index + 1}`, tierNumber: index + 1 }));
+  return Array.from({ length: count }, (_, index) => ({ tierKey: `tier-${index + 1}`, tierNumber: index + 1 }));
 }
 
 /** `count` active participants, p-01 the shortest odds. */
@@ -50,7 +50,7 @@ describe('SportEventTierService — tiers', () => {
     const written = await service.createDefaultTiers(league, [playoff.id]);
 
     expect(golf.get(event.id)?.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
-    expect(written.get(playoff.id)?.map((tier) => tier.label)).toEqual(['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4']);
+    expect(written.get(playoff.id)?.map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
     expect((await service.listTiers(playoff.id)).map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
     expect(store.tierRows).toHaveLength(10);
   });
@@ -129,20 +129,20 @@ describe('SportEventTierService — tiers', () => {
     await service.autoAssignTiers({ sportEventId: event.id });
 
     const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [
-      { tierKey: 'tier-1', label: 'Favourites', tierNumber: 1 },
-      { tierKey: 'tier-3', label: 'Middle', tierNumber: 2 },
-      { tierKey: 'tier-4', label: 'Long shots', tierNumber: 3 },
+      { tierKey: 'tier-1', tierNumber: 1 },
+      { tierKey: 'tier-3', tierNumber: 2 },
+      { tierKey: 'tier-4', tierNumber: 3 },
     ] });
 
-    expect(groups.map((group) => [group.label, group.participants.map((placement) => placement.participantId)])).toEqual([
-      ['Favourites', ['p-01', 'p-02']],
-      ['Middle', ['p-03', 'p-04']],
-      ['Long shots', ['p-05', 'p-06']],
+    expect(groups.map((group) => [group.tierNumber, group.participants.map((placement) => placement.participantId)])).toEqual([
+      [1, ['p-01', 'p-02']],
+      [2, ['p-03', 'p-04']],
+      [3, ['p-05', 'p-06']],
     ]);
     expect(store.valuationRows.every((valuation) => valuation.tierAssignedSource === 'AUTO_ODDS')).toBe(true);
   });
 
-  it('keeps every place once a tier was placed by hand, renaming tiers without re-placing anyone', async () => {
+  it('keeps every place once a tier was placed by hand, re-saving the tiers without re-placing anyone', async () => {
     const { store, event, service } = setup();
     await store.addTiers(event.id, TWO_TIERS);
     addFieldByOdds(store, event.id, 2);
@@ -154,13 +154,13 @@ describe('SportEventTierService — tiers', () => {
     ]);
 
     const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [
-      { tierKey: 'tier-1', label: 'Top', tierNumber: 1 },
-      { tierKey: 'tier-2', label: 'Rest', tierNumber: 2 },
+      { tierKey: 'tier-1', tierNumber: 1 },
+      { tierKey: 'tier-2', tierNumber: 2 },
     ] });
 
-    expect(groups.map((group) => [group.label, group.participants.map((placement) => placement.participantId)])).toEqual([
-      ['Top', ['p-02']],
-      ['Rest', ['p-01']],
+    expect(groups.map((group) => [group.tierNumber, group.participants.map((placement) => placement.participantId)])).toEqual([
+      [1, ['p-02']],
+      [2, ['p-01']],
     ]);
   });
 
@@ -576,7 +576,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     const both = await service.getEffectiveTiersAndValuations(event.id, heldField);
 
     expect(both.tiers).toEqual([expect.objectContaining({ id: tier.id, participants: [expect.objectContaining({ participantId: 'p-1' })] })]);
-    expect(both.valuations).toEqual([expect.objectContaining({ participantId: 'p-1', tierId: tier.id, tierLabel: tier.label })]);
+    expect(both.valuations).toEqual([expect.objectContaining({ participantId: 'p-1', tierId: tier.id, tierNumber: tier.tierNumber })]);
     expect(findTiers).toHaveBeenCalledTimes(1);
     expect(findBySportEvent).not.toHaveBeenCalled();
   });

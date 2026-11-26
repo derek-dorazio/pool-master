@@ -255,7 +255,7 @@ function primeMocks(opts?: {
   listEventTiersMock.mockResolvedValue({
     data: {
       tiers: Object.entries(opts?.tiers ?? {}).map(([id, tierNumber]) => ({
-        id, sportEventId: 'event-1', tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber,
+        id, sportEventId: 'event-1', tierKey: `tier-${tierNumber}`, tierNumber,
       })),
     },
   });

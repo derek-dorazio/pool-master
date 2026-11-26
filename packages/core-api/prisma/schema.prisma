@@ -2527,7 +2527,6 @@ model SportEventTier {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId String   @map("sport_event_id") @db.Uuid
   tierKey      String   @map("tier_key") @db.VarChar(50)
-  label        String   @db.VarChar(100)
   tierNumber   Int      @map("tier_number")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz

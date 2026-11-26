@@ -265,7 +265,7 @@ describe('events routes', () => {
       });
       if (options.tiered) {
         const tier = await prisma.sportEventTier.create({
-          data: { sportEventId: eventId, tierKey: 'A', label: 'Tier A', tierNumber: 1 },
+          data: { sportEventId: eventId, tierKey: 'A', tierNumber: 1 },
         });
         await prisma.sportEventParticipantValuation.create({
           data: {
@@ -280,7 +280,7 @@ describe('events routes', () => {
     }
 
     const tierPayload = {
-      tiers: [{ tierKey: 'A', label: 'Tier A', tierNumber: 1 }],
+      tiers: [{ tierKey: 'A', tierNumber: 1 }],
     };
 
     it('releases a tiered draft for a root admin, then locks its tiers while the generic transition never releases', async () => {
@@ -382,7 +382,7 @@ describe('events routes', () => {
       const admin = await createTestUser({ displayName: 'Release Empty Tier Admin', isRootAdmin: true });
       const eventId = await seedDraftGolfEvent({ tiered: true });
       await getPrisma().sportEventTier.create({
-        data: { sportEventId: eventId, tierKey: 'B', label: 'Tier B', tierNumber: 2 },
+        data: { sportEventId: eventId, tierKey: 'B', tierNumber: 2 },
       });
       const pricesRes = await getApp().inject({
         method: 'POST',

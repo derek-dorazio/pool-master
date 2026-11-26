@@ -238,7 +238,6 @@ function createSportEventTierServiceStub(
   const tiers = Array.from({ length: tierCount }, (_, index) => ({
     id: `tier-${index + 1}`,
     tierKey: `tier-${index + 1}`,
-    label: `Tier ${index + 1}`,
     tierNumber: index + 1,
     participants: withParticipants
       ? [
@@ -1011,7 +1010,6 @@ describe('ContestManagementService', () => {
     expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
         tierKey: 'tier-1',
-        label: 'Tier 1',
         tierNumber: 1,
         assignments: [
           {
@@ -1024,7 +1022,6 @@ describe('ContestManagementService', () => {
       },
       {
         tierKey: 'tier-2',
-        label: 'Tier 2',
         tierNumber: 2,
         assignments: [
           {

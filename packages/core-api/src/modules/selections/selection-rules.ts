@@ -87,7 +87,6 @@ export function buildSelectionTiers(
     .slice(0, getTiersInPlay(tierGroups.length, tiersUsed));
   return inPlay.map((tier) => ({
     tierId: tier.tierKey,
-    tierName: tier.label,
     tierNumber: tier.tierNumber,
     picksFromTier: picksPerTier,
     participantIds: tier.participants.map((participant) => participant.participantId),
@@ -107,7 +106,7 @@ export function buildValuationLookup(
     valuations.map((valuation) => [
       valuation.sportEventParticipantId,
       {
-        tierLabel: valuation.tierLabel,
+        tierNumber: valuation.tierNumber,
         tierOrderIndex: valuation.tierOrderIndex,
         price: valuation.price,
       },
@@ -152,7 +151,7 @@ export function buildSelectionParticipants(input: {
         price: valuation?.price ?? undefined,
         ranking: entry.ranking ?? undefined,
         seedNumber: showsSeeds ? entry.seedNumber ?? null : null,
-        tier: valuation?.tierLabel ?? null,
+        tierNumber: valuation?.tierNumber ?? null,
         orderIndex: valuation?.tierOrderIndex ?? undefined,
         isAvailable,
       };
@@ -171,16 +170,12 @@ export function buildSelectionParticipants(input: {
     });
 }
 
-/**
- * The tier a participant's tier label names, by id or by display name. Field rows carry the
- * label rather than the tier's key, and both have matched since tiers moved onto the event,
- * so both are accepted.
- */
-export function findTierByLabel(
+/** The tier a participant's tier number names: the event's tiers are told apart by number alone (#2047). */
+export function findTierByNumber(
   tiers: readonly SelectionTierConfig[],
-  tierLabel: string,
+  tierNumber: number,
 ): SelectionTierConfig | undefined {
-  return tiers.find((tier) => tier.tierId === tierLabel || tier.tierName === tierLabel);
+  return tiers.find((tier) => tier.tierNumber === tierNumber);
 }
 
 /** Which tier each participant sits in, for resolving a pick's tier from its participant. */

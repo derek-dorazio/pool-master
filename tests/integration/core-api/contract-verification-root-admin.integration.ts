@@ -1542,8 +1542,8 @@ describe('Contract verification (root admin)', () => {
         headers: rootAdmin.headers,
         payload: {
           tiers: [
-            { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
-            { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+            { tierKey: 'tier-1', tierNumber: 1 },
+            { tierKey: 'tier-2', tierNumber: 2 },
           ],
         },
       });

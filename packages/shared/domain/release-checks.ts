@@ -28,7 +28,7 @@ export type ReleaseCheck =
   | { key: typeof ReleaseCheckKey.ROUNDS_SCHEDULED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.FIELD_LOADED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.TIERS_ASSIGNED; passed: boolean; value: number }
-  | { key: typeof ReleaseCheckKey.TIERS_FILLED; passed: boolean; value: string[] }
+  | { key: typeof ReleaseCheckKey.TIERS_FILLED; passed: boolean; value: number[] }
   | { key: typeof ReleaseCheckKey.PRICES_ASSIGNED; passed: boolean; value: number | null }
   | { key: typeof ReleaseCheckKey.BRACKET_COMPLETE; passed: boolean; value: string[] }
   | { key: typeof ReleaseCheckKey.CONTEST_SETUPS_ON; passed: boolean; value: number };

@@ -588,20 +588,20 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return slotsByEvent;
   }
 
-  async findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>> {
+  async findEmptyTierNumbers(sportEventIds: readonly string[]): Promise<Map<string, number[]>> {
     const rows = await this.prisma.sportEventTier.findMany({
       where: {
         sportEventId: { in: [...sportEventIds] },
         valuations: { none: { sportEventParticipant: { isActive: true } } },
       },
-      select: { sportEventId: true, label: true },
+      select: { sportEventId: true, tierNumber: true },
       orderBy: { tierNumber: 'asc' },
     });
-    const labels = new Map<string, string[]>(sportEventIds.map((id) => [id, []]));
+    const numbers = new Map<string, number[]>(sportEventIds.map((id) => [id, []]));
     for (const row of rows) {
-      labels.get(row.sportEventId)?.push(row.label);
+      numbers.get(row.sportEventId)?.push(row.tierNumber);
     }
-    return labels;
+    return numbers;
   }
 
   async findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts> {
@@ -1128,7 +1128,7 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
       const removed = existing.filter((tier) => !keep.has(tier.tierKey));
       const changed = tiers.flatMap((tier) => {
         const before = existingByKey.get(tier.tierKey);
-        return before && (before.label !== tier.label || before.tierNumber !== tier.tierNumber) ? [{ id: before.id, tier }] : [];
+        return before && before.tierNumber !== tier.tierNumber ? [{ id: before.id, tier }] : [];
       });
       const added = tiers.filter((tier) => !existingByKey.has(tier.tierKey));
       // Park every number that moves or goes away below zero in one statement first (tier numbers
@@ -1138,11 +1138,11 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
       if (parkedIds.length > 0) {
         await tx.sportEventTier.updateMany({ where: { id: { in: parkedIds } }, data: { tierNumber: { multiply: -1 } } });
       }
-      // Each changed tier takes its own label and number, so these stay one statement apiece;
+      // Each changed tier takes its own number, so these stay one statement apiece;
       // valuations point at a tier, so a tier cannot be deleted and inserted again instead.
       for (const { id, tier } of changed) {
-        // poolmaster-allow-query-in-loop: only the tiers whose label or number changed, of an event's handful
-        await tx.sportEventTier.update({ where: { id }, data: { label: tier.label, tierNumber: tier.tierNumber } });
+        // poolmaster-allow-query-in-loop: only the tiers whose number changed, of an event's handful
+        await tx.sportEventTier.update({ where: { id }, data: { tierNumber: tier.tierNumber } });
       }
       if (added.length > 0) {
         await tx.sportEventTier.createMany({ data: added.map((tier) => ({ sportEventId, ...tierColumns(tier) })) });
@@ -1431,7 +1431,7 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
 }
 
 function tierColumns(tier: SportEventTierDefinition) {
-  return { tierKey: tier.tierKey, label: tier.label, tierNumber: tier.tierNumber };
+  return { tierKey: tier.tierKey, tierNumber: tier.tierNumber };
 }
 
 function toTier(row: Prisma.SportEventTierGetPayload<object>): SportEventTier {

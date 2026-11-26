@@ -166,7 +166,6 @@ async function seedImportedGolfEvent(options: {
       data: {
         sportEventId: sportEvent.id,
         tierKey,
-        label: `Tier ${tierKey}`,
         tierNumber: tierIndex + 1,
       },
     }));
@@ -307,7 +306,6 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(echoedTiers).toHaveLength(6);
     expect(echoedTiers[0]).toMatchObject({
       tierKey: 'A',
-      label: 'Tier A',
       tierNumber: 1,
     });
     expect(echoedTiers.reduce((total, tier) => total + tier.assignments.length, 0)).toBe(80);
@@ -1122,7 +1120,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         sportEventId: sportEvent.id,
         tierKey: 'tier-1',
-        label: 'Tier 1',
         tierNumber: 1,
       },
     });

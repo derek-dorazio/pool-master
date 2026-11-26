@@ -23,7 +23,6 @@ import type { ParticipantValuationView } from '../events/sport-event-tier-servic
  */
 export interface SelectionTierConfig {
   tierId: string;
-  tierName: string;
   tierNumber: number;
   picksFromTier: number;
   participantIds: string[];
@@ -41,14 +40,15 @@ export interface SelectionParticipant {
   ranking?: number;
   /** The bracket seed (#701): 1 is the best; null where the event seeds nobody. */
   seedNumber: number | null;
-  tier?: string | null;
+  /** The participant's tier at the event, by number; null while untiered (#2047). */
+  tierNumber?: number | null;
   orderIndex?: number;
   isAvailable: boolean;
 }
 
 /** One field row's effective tier and price, keyed by `sportEventParticipantId`. */
 export interface ParticipantValuation {
-  tierLabel: string | null;
+  tierNumber: number | null;
   tierOrderIndex: number | null;
   price: number | null;
 }

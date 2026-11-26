@@ -79,7 +79,7 @@ export interface SportEventAdminCounts {
   /** Active participants with no price: a DRAFT event can't be released while any remain (#93). */
   unpricedParticipantCount: number;
   /** Labels of the tiers no active participant is in, in tier order: a DRAFT event can't be released while any remain. */
-  emptyTierLabels: string[];
+  emptyTierNumbers: number[];
   contestCount: number;
 }
 
@@ -768,7 +768,7 @@ export class SportEventService {
       scheduledRoundCount: facts.scheduledRoundCount,
       loadedParticipantCount: summary.loadedParticipantCount,
       untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
-      emptyTierLabels: summary.adminCounts.emptyTierLabels,
+      emptyTierNumbers: summary.adminCounts.emptyTierNumbers,
       isPriced: event.pricingConfig !== undefined,
       unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
       bracketBlockers,
@@ -876,7 +876,7 @@ export class SportEventService {
         adminCounts: {
           untieredParticipantCount: 0,
           unpricedParticipantCount: 0,
-          emptyTierLabels: tiers.map((tier) => tier.label),
+          emptyTierNumbers: tiers.map((tier) => tier.tierNumber),
           contestCount: 0,
         },
       };
@@ -924,7 +924,7 @@ export class SportEventService {
       this.summarize(events),
       this.deps.sportEvents.countUntieredActiveParticipants(ids),
       this.deps.sportEvents.countUnpricedActiveParticipants(ids),
-      this.deps.sportEvents.findEmptyTierLabels(ids),
+      this.deps.sportEvents.findEmptyTierNumbers(ids),
       this.deps.sportEvents.countContests(ids),
     ]);
     return summaries.map((summary) => ({
@@ -932,7 +932,7 @@ export class SportEventService {
       adminCounts: {
         untieredParticipantCount: untiered.get(summary.event.id) ?? 0,
         unpricedParticipantCount: unpriced.get(summary.event.id) ?? 0,
-        emptyTierLabels: emptyTiers.get(summary.event.id) ?? [],
+        emptyTierNumbers: emptyTiers.get(summary.event.id) ?? [],
         contestCount: contests.get(summary.event.id) ?? 0,
       },
     }));

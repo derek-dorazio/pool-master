@@ -81,7 +81,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     slots: [seasonSlotFixture()],
     autoLifecycleEnabled: true,
     tierCount: 6,
-    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
+    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [], contestCount: 0 },
     releaseChecks: passingReleaseChecks(),
     lastAutoReleaseCheck: null,
     allowedTransitions: ['CANCELLED'],
@@ -189,7 +189,6 @@ export function tierFixture(overrides: Partial<SportEventTierDto> = {}): SportEv
     id: `tier-${tierNumber}`,
     sportEventId: 'event-1',
     tierKey: `TIER_${tierNumber}`,
-    label: `Tier ${tierNumber}`,
     tierNumber,
     ...overrides,
   };

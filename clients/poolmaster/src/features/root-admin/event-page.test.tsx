@@ -214,7 +214,7 @@ function renderEventPage(path: string, {
   listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
   listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
   // Out of tier order, as a read may answer: the ⚙ lists them by tier number.
-  listEventTiersMock.mockResolvedValue({ data: { tiers: [tierFixture({ tierNumber: 2, label: 'Field' }), tierFixture({ tierNumber: 1, label: 'Favourites' })] } });
+  listEventTiersMock.mockResolvedValue({ data: { tiers: [tierFixture({ id: 'tier-2', tierKey: 'tier-2', tierNumber: 2 }), tierFixture({ id: 'tier-1', tierKey: 'tier-1', tierNumber: 1 })] } });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -637,7 +637,7 @@ describe('Event page ⚙ dialog', () => {
   it('lists the event\'s tiers in tier order and opens the Tiers dialog from ⚙ while they are editable, but offers no edit once released', async () => {
     const { unmount } = renderEventPage('/manage/sports/golf/events/tour-1/field');
     const released = await openSettings();
-    expect(await within(released).findByTestId('root-admin-event-settings-dialog-tiers')).toHaveTextContent('Favourites · Field');
+    expect(await within(released).findByTestId('root-admin-event-settings-dialog-tiers')).toHaveTextContent('Tier 1 · Tier 2');
     expect(within(released).queryByTestId('root-admin-event-settings-dialog-edit-tiers')).not.toBeInTheDocument();
     unmount();
 
@@ -646,7 +646,7 @@ describe('Event page ⚙ dialog', () => {
     await userEvent.click(await within(draft).findByTestId('root-admin-event-settings-dialog-edit-tiers'));
 
     expect(await screen.findByTestId('root-admin-event-tiers-dialog')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-event-tiers-dialog-label-1')).toHaveValue('Field');
+    expect(screen.getByTestId('root-admin-event-tiers-dialog-label-1')).toHaveTextContent('Tier 2');
     expect(screen.queryByTestId('root-admin-event-settings-dialog')).not.toBeInTheDocument();
   });
 

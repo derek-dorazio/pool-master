@@ -50,8 +50,8 @@ afterAll(async () => {
 beforeEach(() => cleanupTestData());
 
 const TIERS = [
-  { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
-  { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+  { tierKey: 'tier-1', tierNumber: 1 },
+  { tierKey: 'tier-2', tierNumber: 2 },
 ];
 
 function repos() {
@@ -187,11 +187,11 @@ describe('SportEventRepository — writes', () => {
     expect(fixture.contestId).toBeDefined();
   });
 
-  it('lists, in tier order, the labels of the tiers no active participant is in — a tier holding only a withdrawn one counts as empty', async () => {
+  it('lists, in tier order, the numbers of the tiers no active participant is in — a tier holding only a withdrawn one counts as empty', async () => {
     const { events, tiers, field, valuations } = repos();
     const event = await createEvent('Empty Tiers');
     const bare = await createEvent('No Tiers');
-    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
+    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', tierNumber: 3 }]);
     const [active, withdrawn] = await createParticipants(['Active Golfer', 'Withdrawn Golfer']);
     await field.createMany(event.id, [{ participantId: active.id }, { participantId: withdrawn.id }]);
     await getPrisma().sportEventParticipant.updateMany({ where: { participantId: withdrawn.id }, data: { isActive: false } });
@@ -204,7 +204,7 @@ describe('SportEventRepository — writes', () => {
       source: 'MANUAL',
     })));
 
-    expect(await events.findEmptyTierLabels([event.id, bare.id])).toEqual(new Map([[event.id, ['Tier 2', 'Tier 3']], [bare.id, []]]));
+    expect(await events.findEmptyTierNumbers([event.id, bare.id])).toEqual(new Map([[event.id, ['Tier 2', 'Tier 3']], [bare.id, []]]));
   });
 
   it('finds the lifecycle scheduler\'s candidates: auto lifecycle on and scheduled, in progress or postponed, linked to a provider or not', async () => {
@@ -458,19 +458,19 @@ describe('SportEventTierRepository and valuations', () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
+    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', tierNumber: 3 }]);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
     const tier3 = (await tiers.findBySportEvent(event.id))[2];
     await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier3.id, tierOrderIndex: 4, source: 'AUTO_ODDS' }]);
 
     await tiers.replace(event.id, [
-      { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 2 },
-      { tierKey: 'tier-2', label: 'Top', tierNumber: 1 },
+      { tierKey: 'tier-1', tierNumber: 2 },
+      { tierKey: 'tier-2', tierNumber: 1 },
     ], 'tier-2');
 
     const after = await tiers.findBySportEvent(event.id);
-    expect(after.map((tier) => [tier.tierKey, tier.tierNumber, tier.label])).toEqual([['tier-2', 1, 'Top'], ['tier-1', 2, 'Tier 1']]);
+    expect(after.map((tier) => [tier.tierKey, tier.tierNumber])).toEqual([['tier-2', 1], ['tier-1', 2]]);
     const [valuation] = await valuations.findBySportEvent(event.id);
     expect(valuation).toMatchObject({ sportEventTierId: after[0].id, tierOrderIndex: null });
     expect(await tiers.countValuations(event.id)).toEqual(new Map([[after[0].id, 1]]));
@@ -486,7 +486,7 @@ describe('SportEventTierRepository and valuations', () => {
     const [, tier2] = await tiers.findBySportEvent(event.id);
     await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
 
-    await tiers.replace(event.id, [TIERS[0], { tierKey: 'tier-late', label: 'Late Adds', tierNumber: 2 }], 'tier-late');
+    await tiers.replace(event.id, [TIERS[0], { tierKey: 'tier-late', tierNumber: 2 }], 'tier-late');
 
     const after = await tiers.findBySportEvent(event.id);
     expect(after.map((tier) => [tier.tierKey, tier.tierNumber])).toEqual([['tier-1', 1], ['tier-late', 2]]);

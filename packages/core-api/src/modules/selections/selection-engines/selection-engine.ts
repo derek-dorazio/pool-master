@@ -57,7 +57,7 @@ export type SelectionRejection =
   | {
     kind: typeof SelectionOutcomeKind.REJECT;
     code: typeof SelectionRejectCode.TIER_NOT_FOUND;
-    tierLabel: string;
+    tierNumber: number;
   };
 
 export type SelectionOutcome =

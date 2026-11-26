@@ -282,7 +282,6 @@ export class InMemoryContestWorld {
       id: this.nextId('tier'),
       sportEventId,
       tierKey: `tier-${index + 1}`,
-      label: `Tier ${index + 1}`,
       tierNumber: index + 1,
       createdAt: T0,
       updatedAt: T0,
