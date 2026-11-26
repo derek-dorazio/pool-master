@@ -24,7 +24,7 @@ import {
   type SurvivorWeek,
   type SurvivorWeekName,
 } from './survivor-board';
-import { useEventRoundLabels } from './use-bracket-round-label';
+import { useEventRoundNames } from './use-bracket-round-label';
 import { useContestLeague } from './use-contest-league';
 import { useSurvivorLeaderboardQuery } from './use-contest-leaderboard';
 import { gamePicksQueryOptions } from './use-game-picks';
@@ -164,12 +164,23 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
   const board = leaderboardQuery.data;
   // A playoff's rounds (#785) are named as its bracket names them.
   const playoffEventId = board?.weeks.find((week) => week.roundCount > 1)?.sportEventId ?? '';
-  const nameOfRound = useEventRoundLabels(playoffEventId);
+  const rounds = useEventRoundNames(playoffEventId);
+  const nameOfRound = rounds.nameOfRound;
   const weekName: SurvivorWeekName = (week) => (week.roundCount > 1 ? nameOfRound(week.roundNumber) : week.name);
   const current = survivorCurrentWeek(board?.weeks ?? []);
   const ownEntryIds = (board?.entries ?? []).filter(isMySquadsEntry(mySquadId)).map((entry) => entry.entryId);
   const ownTeams = useOwnWeekTeams(contest, current.week && current.week.status !== SportEventStatus.COMPLETED ? ownEntryIds : [], current.week);
-  const fallback = useLeaderboardFallback(leaderboardQuery, { action: 'survivorLeaderboard.load.failed', contestId });
+  // The board waits for a playoff's round names, so its weeks never show "Round N" first (#2198).
+  const fallback = useLeaderboardFallback(
+    {
+      data: leaderboardQuery.data,
+      error: leaderboardQuery.error,
+      isError: leaderboardQuery.isError,
+      isLoading: leaderboardQuery.isLoading || rounds.isLoading,
+      refetch: leaderboardQuery.refetch,
+    },
+    { action: 'survivorLeaderboard.load.failed', contestId },
+  );
 
   if (fallback || !board) {
     return fallback;
