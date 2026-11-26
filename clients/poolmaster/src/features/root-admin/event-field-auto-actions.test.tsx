@@ -287,6 +287,27 @@ describe('the Field section\'s automatic tiers and prices', () => {
     })));
   });
 
+  it('opens the price dialog of an event whose pricing profile was deleted on the sport league\'s profile, keeping the values the event was priced with', async () => {
+    seed({ tournament: { pricing: { platformPricingProfileId: null, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
+    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue(STANDARD_PLATFORM_PRICING_PROFILE_ID);
+    expect(screen.getByTestId('root-admin-tier-auto-prices-topSharePercent')).toHaveValue('30');
+  });
+
+  it('asks for a pricing profile, and will not assign, when the event\'s profile was deleted and its sport league names none in the list', async () => {
+    seed({ tournament: { pricing: { platformPricingProfileId: null, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ platformPricingProfileId: '00000000-0000-4000-8000-0000000000ff' }) } });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
+    expect(screen.getByTestId('root-admin-tier-auto-prices-modal')).toHaveTextContent('Choose the pricing profile the values start from.');
+    expect(screen.getByTestId('root-admin-tier-auto-prices-confirm')).toBeDisabled();
+  });
+
   it('starts the price dialog from the values the event was last priced with', async () => {
     seed({ tournament: { pricing: { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
     renderPage();

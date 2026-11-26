@@ -7,6 +7,12 @@
 ALTER TABLE "sport_events" ADD COLUMN "platform_pricing_profile_id" UUID,
 ADD COLUMN "platform_tier_profile_id" UUID;
 
+-- CreateIndex: deleting a profile sets these null without scanning the events.
+CREATE INDEX "sport_events_platform_pricing_profile_id_idx" ON "sport_events"("platform_pricing_profile_id");
+
+-- CreateIndex
+CREATE INDEX "sport_events_platform_tier_profile_id_idx" ON "sport_events"("platform_tier_profile_id");
+
 -- AddForeignKey
 ALTER TABLE "sport_events" ADD CONSTRAINT "sport_events_platform_pricing_profile_id_fkey" FOREIGN KEY ("platform_pricing_profile_id") REFERENCES "platform_pricing_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 

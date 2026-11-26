@@ -2185,6 +2185,8 @@ model SportEvent {
   @@unique([id, sportLeagueSeasonId])
   @@index([sportLeagueId, sportLeagueSeasonId])
   @@index([sportLeagueSeasonId])
+  @@index([platformPricingProfileId])
+  @@index([platformTierProfileId])
   @@index([startDate, endDate])
   @@index([status])
   /// A trigram index serves the event name search, a substring match (#1301).
