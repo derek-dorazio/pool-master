@@ -290,7 +290,7 @@ describe('contestCutoff — where a contest\'s window closes', () => {
 describe('cutoffTiming — the timing a contest\'s window runs on', () => {
   it('is the event\'s own timing for a contest that closes at the event\'s start', () => {
     const underWay = event('regional', -48, SportEventStatus.IN_PROGRESS);
-    expect(cutoffTiming({ kind: ContestCutoffKind.EVENT_START }, underWay, [{ id: 'game-2', roundNumber: 2, status: MatchStatus.SCHEDULED, scheduledDate: new Date(NOW.getTime() + 5 * HOUR) }])).toBe(underWay);
+    expect(cutoffTiming({ kind: ContestCutoffKind.EVENT_START }, underWay, [legacyMatch({ id: 'game-2', roundNumber: 2, status: MatchStatus.SCHEDULED, scheduledDate: new Date(NOW.getTime() + 5 * HOUR) })])).toBe(underWay);
   });
 });
 
