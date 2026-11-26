@@ -66,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, StoredEventPricingSchema, StoredEventTierLayoutSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -1214,7 +1214,7 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
       })));
       await tx.sportEvent.update({
         where: { id: input.sportEventId },
-        data: { tierConfig: input.tierConfig },
+        data: storedTierConfig(input.tierConfig),
       });
     }));
   }
@@ -1232,10 +1232,20 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
       })));
       await tx.sportEvent.update({
         where: { id: input.sportEventId },
-        data: { pricingConfig: input.pricingConfig },
+        data: storedPricingConfig(input.pricingConfig),
       });
     }));
   }
+}
+
+/** An event's tier layout as its columns hold it: the layout as JSON, and the profile it came from as a key (#2205). */
+function storedTierConfig({ platformTierProfileId, ...layout }: EventTierConfig) {
+  return { tierConfig: layout, platformTierProfileId };
+}
+
+/** An event's pricing as its columns hold it: the values as JSON, and the profile they started from as a key (#2205). */
+function storedPricingConfig({ platformPricingProfileId, ...values }: EventPricingConfig) {
+  return { pricingConfig: values, platformPricingProfileId };
 }
 
 /** A change to one field row's valuation: its tier columns, its price columns, or both. */
@@ -1362,8 +1372,12 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     ...(syncProviderId !== null && { syncProviderId }),
     ...(syncProviderName !== null && { syncProviderName }),
     autoLifecycleEnabled: row.autoLifecycleEnabled,
-    ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
-    ...(row.tierConfig !== null && { tierConfig: EventTierConfigSchema.parse(row.tierConfig) }),
+    ...(row.pricingConfig !== null && {
+      pricingConfig: { ...StoredEventPricingSchema.parse(row.pricingConfig), platformPricingProfileId: row.platformPricingProfileId },
+    }),
+    ...(row.tierConfig !== null && {
+      tierConfig: { ...StoredEventTierLayoutSchema.parse(row.tierConfig), platformTierProfileId: row.platformTierProfileId },
+    }),
     ...(row.autoReleaseCheckedAt !== null && row.autoReleaseOutcome !== null && {
       autoReleaseCheck: { checkedAt: row.autoReleaseCheckedAt, outcome: row.autoReleaseOutcome, failedChecks: row.autoReleaseFailedChecks },
     }),

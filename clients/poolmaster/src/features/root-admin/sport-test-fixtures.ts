@@ -57,7 +57,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     roundsParMin: 60,
     roundsParMax: 80,
     participantCount: 0,
-    pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    pricing: { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     tierLayout: null,
     readinessStatus: 'NOT_RELEASED',
     readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],

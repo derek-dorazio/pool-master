@@ -24,12 +24,13 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  standardEventPricingInDb,
 } from '../helpers';
+import { standardEventPricing } from '../../support/budget-pricing';
 import { findUnindexedScans } from '../index-check';
 import { recordStatements, statementShape } from '../statement-log';
 import { createRoundRows, createSportEventRow, createTierRows } from '../../support/sport-event-rows';
 import { freshEventEdition, mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
-import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
 import { linkTestSlot } from '../../support/test-slots';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
@@ -575,7 +576,7 @@ describe('SportEventTierRepository and valuations', () => {
     await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_RANKING' }]);
     await valuations.assignEventPrices({
       sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+      pricingConfig: await standardEventPricingInDb(),
       assignments: [{ sportEventParticipantId: entry.id, price: 15, source: 'AUTO_ODDS' }],
     });
 
@@ -592,7 +593,8 @@ describe('SportEventTierRepository and valuations', () => {
     await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
     const [first, second] = await field.findBySportEvent(event.id);
     const [tier1] = await tiers.findBySportEvent(event.id);
-    const tierConfig = { profileName: '1 tier of 1, capped', type: 'EQUAL_GROUPS' as const, tierCount: 1, tierSize: 1, lastTier: 'CAPPED' as const, lastTierMax: 1 };
+    const { id: platformTierProfileId } = await getPrisma().platformTierProfile.findFirstOrThrow({ select: { id: true } });
+    const tierConfig = { platformTierProfileId, type: 'EQUAL_GROUPS' as const, tierCount: 1, tierSize: 1, lastTier: 'CAPPED' as const, lastTierMax: 1 };
 
     await valuations.assignEventTiers({
       sportEventId: event.id,
@@ -604,6 +606,9 @@ describe('SportEventTierRepository and valuations', () => {
     });
 
     expect((await events.findById(event.id))?.tierConfig).toEqual(tierConfig);
+    // The profile is a key of its own (#2205): the layout's JSON holds no profile.
+    await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id }, select: { platformTierProfileId: true, tierConfig: true } }))
+      .resolves.toEqual({ platformTierProfileId, tierConfig: { type: 'EQUAL_GROUPS', tierCount: 1, tierSize: 1, lastTier: 'CAPPED', lastTierMax: 1 } });
     await expect(valuations.findBySportEvent(event.id)).resolves.toEqual(expect.arrayContaining([
       expect.objectContaining({ sportEventParticipantId: first.id, sportEventTierId: tier1.id }),
       expect.objectContaining({ sportEventParticipantId: second.id, sportEventTierId: null, tierAssignedSource: 'AUTO_ODDS' }),
@@ -666,15 +671,46 @@ describe('Budget pricing on the event (#93)', () => {
 
     await valuations.assignEventPrices({
       sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+      pricingConfig: await standardEventPricingInDb(),
       assignments: [
         { sportEventParticipantId: first.id, price: 12000, source: 'AUTO_RANKING' },
         { sportEventParticipantId: second.id, price: 6000, source: 'AUTO_RANKING' },
       ],
     });
 
-    expect((await events.findById(event.id))?.pricingConfig).toEqual(standardEventPricing());
+    expect((await events.findById(event.id))?.pricingConfig).toEqual(await standardEventPricingInDb());
     expect((await valuations.findBySportEvent(event.id)).map((row) => row.price)).toEqual(expect.arrayContaining([12000, 6000]));
+  });
+
+  it('keeps an event\'s pricing values and tier layout when their profiles are deleted, read back with no profile (#2205)', async () => {
+    const { events, valuations, field } = repos();
+    const event = await createEvent();
+    const [ana] = await createParticipants(['Ana']);
+    await field.createMany(event.id, [{ participantId: ana.id }]);
+    const [entry] = await field.findBySportEvent(event.id);
+    const run = randomUUID().slice(0, 8).toUpperCase();
+    const pricingProfile = await getPrisma().platformPricingProfile.create({ data: {
+      code: `TEST_${run}`, name: `Test pricing ${run}`, description: 'A profile this test deletes.',
+      salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4,
+    } });
+    const tierProfile = await getPrisma().platformTierProfile.create({ data: {
+      code: `TEST_${run}`, name: `Test tiers ${run}`, description: 'A profile this test deletes.',
+      type: 'EQUAL_GROUPS', tierCount: 1, tierSize: 1, lastTier: 'CAPPED', lastTierMax: 1,
+    } });
+    const layout = { type: 'EQUAL_GROUPS' as const, tierCount: 1, tierSize: 1, lastTier: 'CAPPED' as const, lastTierMax: 1 };
+    await valuations.assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(pricingProfile.id),
+      assignments: [{ sportEventParticipantId: entry.id, price: 12000, source: 'AUTO_RANKING' }],
+    });
+    await valuations.assignEventTiers({ sportEventId: event.id, tierConfig: { ...layout, platformTierProfileId: tierProfile.id }, assignments: [] });
+
+    await getPrisma().platformPricingProfile.delete({ where: { id: pricingProfile.id } });
+    await getPrisma().platformTierProfile.delete({ where: { id: tierProfile.id } });
+
+    const stored = await events.findById(event.id);
+    expect(stored?.pricingConfig).toEqual(standardEventPricing(null));
+    expect(stored?.tierConfig).toEqual({ ...layout, platformTierProfileId: null });
   });
 
   it('writes neither the prices nor the event\'s pricing values when one price fails', async () => {
@@ -686,7 +722,7 @@ describe('Budget pricing on the event (#93)', () => {
 
     await expect(valuations.assignEventPrices({
       sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+      pricingConfig: await standardEventPricingInDb(),
       assignments: [
         { sportEventParticipantId: entry.id, price: 12000, source: 'AUTO_RANKING' },
         { sportEventParticipantId: randomUUID(), price: 6000, source: 'AUTO_RANKING' },
@@ -711,7 +747,7 @@ describe('Budget pricing on the event (#93)', () => {
     const priced = expectDefined(rows.find((row) => row.participantId === ana.id));
     await valuations.assignEventPrices({
       sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+      pricingConfig: await standardEventPricingInDb(),
       assignments: [{ sportEventParticipantId: priced.id, price: 9000, source: 'MANUAL' }],
     });
 

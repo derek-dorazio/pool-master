@@ -60,7 +60,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { keyedSlotDefinitionId } from '../support/event-edition';
 import { uniqueTestSlotLabel } from '../support/test-slots';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 
 // A league's 2099 World Marathon Majors (men) Cup end to end (#841): the cup is made with the
 // league's first contest of the season, and two races settled through the real routes rank the
@@ -163,7 +163,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
       });
       await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } });
-      await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() });
+      await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) });
       expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
       return eventId;
     };

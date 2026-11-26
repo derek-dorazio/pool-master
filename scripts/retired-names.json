@@ -86,7 +86,8 @@
     "toMatchResultInput": "#2184 (10e-web): result routes take sides, no translation",
     "toPeriodScoreInput": "#2184 (10e-web): result routes take sides, no translation",
     "homeTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side",
-    "awayTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side"
+    "awayTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side",
+    "profileName": "#2205: platformTierProfileId / platformPricingProfileId, the profile by key"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -173,5 +174,6 @@
   "toMatchResultInput": 0,
   "toPeriodScoreInput": 0,
   "homeTeamName": 0,
-  "awayTeamName": 0
+  "awayTeamName": 0,
+  "profileName": 0
 }

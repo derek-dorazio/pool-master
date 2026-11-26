@@ -444,6 +444,12 @@
       "key": "awayTeamName",
       "now": 0,
       "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "profileName",
+      "now": 0,
+      "reason": "retired by #2205"
     }
   ]
 }

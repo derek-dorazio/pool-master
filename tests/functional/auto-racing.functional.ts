@@ -29,7 +29,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 
 // Auto racing end to end over HTTP (#624): an admin builds a race in the seeded NASCAR Cup Series
 // and loads its field's rankings by upload, a commissioner runs a contest from the series' default
@@ -114,7 +114,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
@@ -260,7 +260,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     expect(fourTiers.response?.status).toBe(200);
     expect(expectDefined(fourTiers.data).tiers).toHaveLength(4);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

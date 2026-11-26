@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import {
   EqualGroupsLayoutSchema,
   EventTierConfigSchema,
+  StoredEventTierLayoutSchema,
   FieldOrderBasis,
   PlatformTierProfileLastTier,
   TierProfileType,
@@ -22,6 +23,8 @@ import {
 const SIX_OF_TEN: EqualGroupsLayout = { type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
 const SIX_OF_TEN_CAPPED: EqualGroupsLayout = { ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 };
 
+/** A tier profile's id, as an event records the profile its layout came from (#2205). */
+const PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
 const ODDS_FIRST = [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING];
 
 function range(tierNumber: number, fromValue: number, toValue: number | null): TierRange {
@@ -158,13 +161,27 @@ describe('EqualGroupsLayoutSchema and EventTierConfigSchema', () => {
     expect(EqualGroupsLayoutSchema.safeParse(SIX_OF_TEN).success).toBe(true);
   });
 
-  it('reads back an event\'s recorded layout with the profile it came from', () => {
-    expect(EventTierConfigSchema.parse({ profileName: '6 tiers of 10', ...SIX_OF_TEN_CAPPED })).toEqual({ profileName: '6 tiers of 10', ...SIX_OF_TEN_CAPPED });
+  it('reads back an event\'s recorded layout with the id of the profile it came from', () => {
+    const recorded = { platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN_CAPPED };
+
+    expect(EventTierConfigSchema.parse(recorded)).toEqual(recorded);
   });
 
   it('reads back an event\'s recorded ranges layout with its ranges', () => {
-    const recorded = { profileName: 'Playoff seeds 1, 2-4, rest', type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
+    const recorded = { platformTierProfileId: PROFILE_ID, type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
 
     expect(EventTierConfigSchema.parse(recorded)).toEqual(recorded);
+  });
+
+  it('reads back a recorded layout whose profile was deleted, with no profile', () => {
+    expect(EventTierConfigSchema.parse({ platformTierProfileId: null, ...SIX_OF_TEN_CAPPED })).toEqual({ platformTierProfileId: null, ...SIX_OF_TEN_CAPPED });
+  });
+
+  it('refuses a recorded layout that names its profile by name rather than id', () => {
+    expect(EventTierConfigSchema.safeParse({ profileName: '6 tiers of 10', ...SIX_OF_TEN_CAPPED }).success).toBe(false);
+  });
+
+  it('stores a layout without its profile, which the event keeps as a column of its own', () => {
+    expect(StoredEventTierLayoutSchema.parse({ platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN_CAPPED })).toEqual(SIX_OF_TEN_CAPPED);
   });
 });

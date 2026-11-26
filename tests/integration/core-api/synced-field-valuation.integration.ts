@@ -60,15 +60,18 @@ describe('Synced field valuation (#1822)', () => {
     const { event, ref } = await syncedEvent(4);
     const service = valuationService();
 
+    const { platformPricingProfileId } = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: event.sportLeagueId }, select: { platformPricingProfileId: true } });
+
     expect(await service.afterFieldLoad(ref)).toMatchObject({
       outcome: 'VALUED',
       tiers: { result: 'MADE', basis: 'ODDS', tierCount: 2 },
-      prices: { result: 'MADE', basis: 'ODDS', pricedCount: 4, profileName: 'Standard' },
+      prices: { result: 'MADE', basis: 'ODDS', pricedCount: 4, platformPricingProfileId },
     });
     const made = await valuationsOf(event.id);
     expect(made).toHaveLength(4);
     expect(made.every((row) => row.sportEventTierId !== null && row.tierAssignedSource === 'AUTO_ODDS' && row.priceAssignedSource === 'AUTO_ODDS')).toBe(true);
-    expect((await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } })).pricingConfig).toMatchObject({ profileName: 'Standard', salaryCap: 50_000 });
+    const stored = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id }, select: { pricingConfig: true, platformPricingProfileId: true } });
+    expect(stored).toMatchObject({ platformPricingProfileId, pricingConfig: { salaryCap: 50_000 } });
   });
 
   it('writes nothing when a re-sync finds the same field, and keeps every tier once one is placed by hand', async () => {

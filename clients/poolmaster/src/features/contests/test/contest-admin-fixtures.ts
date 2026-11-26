@@ -99,7 +99,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     roundsParMin: 60,
     roundsParMax: 80,
     participantCount: 89,
-    pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     tierLayout: null,
     readinessStatus: 'CONTEST_ELIGIBLE',
     readinessReasons: [],

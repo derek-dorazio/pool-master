@@ -28,7 +28,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 
 // Running end to end over HTTP (#627): an admin builds a marathon in the seeded World Marathon
 // Majors (men) series and loads its elite field by upload with each runner's World Athletics
@@ -116,7 +116,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

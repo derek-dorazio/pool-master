@@ -1,4 +1,4 @@
-import { enumLabel, profileWords, tierLabel } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel, profileWords, tierLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -116,6 +116,14 @@ export function EventSettingsDialog({
   const tierOrder = overview === undefined ? '…' : overview.tierOrderBasis === null ? 'No active field' : enumLabel('FieldOrderBasis', overview.tierOrderBasis);
   const testId = 'root-admin-event-settings-dialog';
 
+  /** The profile the event was priced from, by its words (#2205); one since deleted is said so. */
+  const pricedFromName = (profileId: string | null): string => {
+    if (profileId === null) return displayString('word.deletedProfile');
+    // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
+    const profile = platformPricingProfilesQuery.data?.find((candidate) => candidate.id === profileId);
+    return profile ? profileWords('pricingProfile', profile).name : '…';
+  };
+
   const facts: Fact[] = [
     { id: 'league', label: 'Sport league', value: sportLeague?.name ?? '…', testId: `${testId}-league` },
     { id: 'status', label: 'Status', value: formatSportEventStatus(event.status), testId: `${testId}-status` },
@@ -144,7 +152,7 @@ export function EventSettingsDialog({
     {
       id: 'pricedWith',
       label: 'Priced with',
-      value: event.pricing === null ? 'Not priced yet' : `${event.pricing.profileName}: ${describeBudgetPricing(event.pricing)}`,
+      value: event.pricing === null ? 'Not priced yet' : `${pricedFromName(event.pricing.platformPricingProfileId)}: ${describeBudgetPricing(event.pricing)}`,
       testId: `${testId}-priced-with`,
     },
     {

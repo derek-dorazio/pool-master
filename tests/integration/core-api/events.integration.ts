@@ -9,9 +9,9 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
+  standardEventPricingInDb,
 } from '../helpers';
 import { fixtureSeasonId, freshEventEdition } from '../../support/event-edition';
-import { standardEventPricing } from '../../support/budget-pricing';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
@@ -309,7 +309,7 @@ describe('events routes', () => {
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: admin.headers,
-        payload: standardEventPricing(),
+        payload: await standardEventPricingInDb(),
       });
       expect(pricesRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(pricesRes.json()).success).toBe(true);
@@ -333,13 +333,13 @@ describe('events routes', () => {
       });
       expect(lockedTierRes.statusCode).toBe(409);
       expect(lockedTierRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_TIERS_LOCKED' } });
-      expect(releaseRes.json()).toMatchObject({ event: { pricing: standardEventPricing() } });
+      expect(releaseRes.json()).toMatchObject({ event: { pricing: await standardEventPricingInDb() } });
 
       const lockedPricesRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: admin.headers,
-        payload: { ...standardEventPricing(), salaryCap: 5000, unit: 10 },
+        payload: { ...(await standardEventPricingInDb()), salaryCap: 5000, unit: 10 },
       });
       expect(lockedPricesRes.statusCode).toBe(409);
       expect(lockedPricesRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_TIERS_LOCKED' } });
@@ -351,6 +351,41 @@ describe('events routes', () => {
       });
       expect(againRes.statusCode).toBe(409);
       expect(againRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_NOT_DRAFT' } });
+    });
+
+    it('prices with the profile a request names by id and records that id, dropping a profile name sent with it like any unknown key (#2205)', async () => {
+      const admin = await createTestUser({ displayName: 'Price By Id Admin', isRootAdmin: true });
+      const eventId = await seedDraftGolfEvent({ tiered: true });
+      const standard = await standardEventPricingInDb();
+
+      const res = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: admin.headers,
+        payload: { ...standard, profileName: 'Standard' },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const stored = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: eventId }, select: { platformPricingProfileId: true, pricingConfig: true } });
+      expect(stored.platformPricingProfileId).toBe(standard.platformPricingProfileId);
+      expect(stored.pricingConfig).not.toHaveProperty('profileName');
+    });
+
+    it('refuses to price with a pricing profile id there is no profile for with 404 PLATFORM_PRICING_PROFILE_NOT_FOUND and records no pricing (#2205)', async () => {
+      const admin = await createTestUser({ displayName: 'Price Unknown Profile Admin', isRootAdmin: true });
+      const eventId = await seedDraftGolfEvent({ tiered: true });
+
+      const res = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: admin.headers,
+        payload: { ...(await standardEventPricingInDb()), platformPricingProfileId: randomUUID() },
+      });
+
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toMatchObject({ error: { code: 'PLATFORM_PRICING_PROFILE_NOT_FOUND' } });
+      const stored = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: eventId }, select: { platformPricingProfileId: true, pricingConfig: true } });
+      expect(stored).toEqual({ platformPricingProfileId: null, pricingConfig: null });
     });
 
     it('refuses to release a draft whose golfer has no tier with 422 SPORT_EVENT_NOT_READY and leaves it a draft', async () => {
@@ -379,7 +414,7 @@ describe('events routes', () => {
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: admin.headers,
-        payload: standardEventPricing(),
+        payload: await standardEventPricingInDb(),
       });
       expect(pricesRes.statusCode).toBe(200);
 

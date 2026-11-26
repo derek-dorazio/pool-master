@@ -879,8 +879,14 @@ export class InMemorySportEvents {
   }
 
   /** The pricing profile each sport league names, by league id. */
-  platformPricingProfileRepo(): Pick<PlatformPricingProfileRepository, 'findBySportLeague'> {
-    return { findBySportLeague: async (sportLeagueId) => this.profileOf(this.platformPricingProfiles, sportLeagueId, 'platformPricingProfileId') };
+  platformPricingProfileRepo(): Pick<PlatformPricingProfileRepository, 'findBySportLeague' | 'findById'> {
+    return {
+      findBySportLeague: async (sportLeagueId) => this.profileOf(this.platformPricingProfiles, sportLeagueId, 'platformPricingProfileId'),
+      findById: async (id) => {
+        const profile = this.platformPricingProfiles.find((row) => row.id === id);
+        return profile ? { ...profile } : null;
+      },
+    };
   }
 
   /** A league the store doesn't hold (an event's placeholder league) names the default profiles. */

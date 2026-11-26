@@ -236,11 +236,11 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
       await getPrisma().sportEventParticipantValuation.create({
         data: { sportEventParticipantId: expectDefined(field[0]).id, sportEventTierId: tier.id, tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL },
       });
-      const pricingConfig = { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+      const pricingConfig = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
       await measure(() => new PrismaSportEventParticipantValuationRepository(getAppPrisma()).assignEventPrices({
         sportEventId: event.id,
-        pricingConfig,
+        pricingConfig: { ...pricingConfig, platformPricingProfileId: null },
         assignments: field.map((row, index) => ({ sportEventParticipantId: row.id, price: 10_000 - index * 100, source: ValuationSource.AUTO_ODDS })),
       }));
 

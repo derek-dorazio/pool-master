@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  BudgetPricingValuesSchema,
   ProviderCode,
   AutoReleaseCheckOutcome,
   ContestOpening,
@@ -294,8 +295,10 @@ export const ReplaceSportEventTierAssignmentsRequestSchema = z.object({
 }).describe('The drag-and-drop tier save.');
 export type ReplaceSportEventTierAssignmentsRequest = z.infer<typeof ReplaceSportEventTierAssignmentsRequestSchema>;
 
-export const AutoAssignSportEventPricesRequestSchema = EventPricingConfigSchema.describe(
-  'Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed.',
+export const AutoAssignSportEventPricesRequestSchema = BudgetPricingValuesSchema.extend({
+  platformPricingProfileId: z.uuid().describe('The pricing profile the values started from. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when there is none with this id.'),
+}).describe(
+  'Prices the active field on the budget curve with these values, in the field\'s order, and records them on the event as its pricing, with the profile they started from. The values usually are the profile\'s, possibly changed.',
 );
 export type AutoAssignSportEventPricesRequest = z.infer<typeof AutoAssignSportEventPricesRequestSchema>;
 
