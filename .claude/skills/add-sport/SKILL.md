@@ -67,7 +67,7 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
    contest create refuses any other. What fits follows the scoring family:
    - Every sport: the roster picks, `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW`.
    - A sport played in games (head to head) can add the prediction types: `BRACKET`, a knockout
-     bracket pool, picked to the final before it starts; `PICK_EM`, the winner of every game of each week,
+     bracket pool, picked from the first round to the final before it starts; `PICK_EM`, the winner of every game of each week,
      straight up or by confidence, optionally against the spread; and `SURVIVOR`, one team a
      week, each team once. The validity matrix allows prediction contests only on events of
      games.
@@ -344,8 +344,8 @@ down: a lesson that was true mid-series may not be by the end.
   (`sport.<SPORT>.tie`), tennis included, because the shared result and pick screens read it; the
   definition test refuses one without.
 - **A second tier layout for a variation.** Tiers live on the event and every contest shares
-  them, so a variation that picks from fewer tiers (tennis's Seeds only, golf's Top four tiers)
-  is the tiered rules' `tiersUsed`, not a new tier layout.
+  them, and a tiered entry picks from every tier. A variation that wants fewer tiers is a
+  different tier profile on the sport league, not a new tier layout or a contest setting.
 - **Squares on a league whose final is a series.** A series is one bracket match scored in
   games won, so it has no single game for a grid. Leave squares out of such a sport's selection
   types and its period layout off the definition, and add the league to the template checks'

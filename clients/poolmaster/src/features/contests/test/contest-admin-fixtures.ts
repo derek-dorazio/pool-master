@@ -16,38 +16,27 @@ export const FUTURE_START = '2099-04-09T12:40:00.000Z';
 
 /**
  * The API's contest openings for an event before it starts: every selection type its definition
- * offers, OPEN when it is contest-ready and NOT_YET otherwise, a bracket at the full bracket only.
- * A test of a knockout under way passes its own.
+ * offers, OPEN when it is contest-ready and NOT_YET otherwise. A test of a knockout under way
+ * passes its own.
  */
 export function openingsBeforeStart(
   event: Pick<SportEventDto, 'sport' | 'participantType' | 'scoringFamily'>,
   opening: ContestOpening = ContestOpening.OPEN,
 ): SportEventDto['contestOpenings'] {
-  return eventSportDefinition(event).selectionTypes.map((selectionType) => ({
-    selectionType,
-    opening,
-    startsAtRounds: selectionType === SelectionType.BRACKET ? [1] : [],
-  }));
+  return eventSportDefinition(event).selectionTypes.map((selectionType) => ({ selectionType, opening }));
 }
 
 /**
- * The API's contest openings for a knockout under way (#721, #711): a second-chance bracket from
- * the rounds given and squares stay OPEN, every other selection type is CLOSED.
+ * The API's contest openings for a knockout under way (#711): squares stay OPEN, every other
+ * selection type is CLOSED.
  */
 export function openingsUnderWay(
   event: Pick<SportEventDto, 'sport' | 'participantType' | 'scoringFamily'>,
-  bracketStartsAtRounds: number[],
 ): SportEventDto['contestOpenings'] {
-  return eventSportDefinition(event).selectionTypes.map((selectionType) => {
-    if (selectionType === SelectionType.BRACKET) {
-      return {
-        selectionType,
-        opening: bracketStartsAtRounds.length > 0 ? ContestOpening.OPEN : ContestOpening.CLOSED,
-        startsAtRounds: bracketStartsAtRounds,
-      };
-    }
-    return { selectionType, opening: selectionType === SelectionType.SQUARES ? ContestOpening.OPEN : ContestOpening.CLOSED, startsAtRounds: [] };
-  });
+  return eventSportDefinition(event).selectionTypes.map((selectionType) => ({
+    selectionType,
+    opening: selectionType === SelectionType.SQUARES ? ContestOpening.OPEN : ContestOpening.CLOSED,
+  }));
 }
 
 type LooseEvent = { sport: SportEventDto['sport']; participantType?: SportEventDto['participantType']; scoringFamily?: SportEventDto['scoringFamily']; contestEligible?: boolean; contestOpenings?: unknown; slotDefinitionIds?: string[] };

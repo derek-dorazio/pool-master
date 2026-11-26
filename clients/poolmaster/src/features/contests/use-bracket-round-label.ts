@@ -49,6 +49,15 @@ export function sportEventRoundsQueryOptions(eventId: string) {
  * `eventId` reads nothing; until the rounds load, and if the read fails, rounds read "Round N".
  */
 export function useEventRoundLabels(eventId: string): RoundName {
+  return useEventRoundNames(eventId).nameOfRound;
+}
+
+/**
+ * `useEventRoundLabels`, with whether the rounds are still loading, for a screen that waits for
+ * the names rather than show "Round N" first. A failed read is not loading: its rounds read "Round N".
+ */
+export function useEventRoundNames(eventId: string): { nameOfRound: RoundName; isLoading: boolean } {
   const roundsQuery = useQuery(sportEventRoundsQueryOptions(eventId));
-  return useMemo(() => roundLabels(roundsQuery.data ?? []), [roundsQuery.data]);
+  const nameOfRound = useMemo(() => roundLabels(roundsQuery.data ?? []), [roundsQuery.data]);
+  return { nameOfRound, isLoading: roundsQuery.isLoading };
 }

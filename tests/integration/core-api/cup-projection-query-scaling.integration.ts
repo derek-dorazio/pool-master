@@ -213,7 +213,7 @@ const liveBracketContest: LiveContestSeed = async (seeded, index) => {
     data: {
       contestId: contest.id,
       selectionType: SelectionType.BRACKET,
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+      configJson: { selectionType: SelectionType.BRACKET },
       participantScoringRules: {
         create: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', sortOrder: 1, config: { roundValues: [1, 2], upsetBonus: { rule: 'NONE' } } },
       },

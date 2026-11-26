@@ -526,8 +526,7 @@ on an action. Each kind of clock-driven email sweeps every 5 minutes on a timer 
 its own (`DueNotificationsScheduler`), apart from the lifecycle sweep, so a slow kind never holds
 up another or a contest going live. The kinds' sweeps fall 30 seconds apart within each interval,
 after the lifecycle sweep's, so they don't all reach the database at once. The reminders' sweep queues the reminder whose time has come, at the `entryReminderHours` offsets before
-each event's cutoff (the event's start, a second-chance bracket's starting round, a squares
-game's kickoff). Everyone gets a reminder at the same moment, one email per person however many
+each event's cutoff (the event's start, or a squares game's kickoff). Everyone gets a reminder at the same moment, one email per person however many
 squads they own. Only the latest reminder whose time has passed is sent, and none more than an
 hour late, so a contest opened after a reminder's time skips it, and none within 6 hours of the
 contest opening. The idempotency key (contest, event, offset, person) keeps a second sweep or
@@ -575,8 +574,7 @@ roster, pick'em, survivor or bracket contest is `ACTIVE`, one goes after each mo
   picks for readers with an entry (in survivor, an entry still in).
 - **After a bracket round** ("After Sweet 16: March Madness"): every game of the round has its
   result or was cancelled, at the latest time any of them was written (a game records no result
-  time of its own). Not after the final, and not for rounds before a second-chance bracket's
-  starting round. It names the round in the sport league's words, lists the leaders by points,
+  time of its own). Not after the final. It names the round in the sport league's words, lists the leaders by points,
   tells each reader whether their entries' champion picks are still alive and how many points
   each entry can still reach, and gives the next round's first game time. A playoff
   that a survivor contest plays a week per round settles, and is reported, once, as the event.

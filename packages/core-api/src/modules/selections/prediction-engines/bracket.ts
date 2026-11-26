@@ -7,7 +7,7 @@
 
 import { SelectionType, isTeamChoice } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
-import { bracketFinal, resolveBracketPicks, scoreBracketPicks } from '../../scoring-families/head-to-head/bracket-picks';
+import { bracketTiebreakerGame, resolveBracketPicks, scoreBracketPicks } from '../../scoring-families/head-to-head/bracket-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
 
 export const bracketPredictionEngine: PredictionEngine = {
@@ -18,7 +18,7 @@ export const bracketPredictionEngine: PredictionEngine = {
   takesTiePicks: false,
 
   tiebreakerGame({ games }) {
-    return bracketFinal(games);
+    return bracketTiebreakerGame(games);
   },
 
   acceptsConfidence({ confidence }) {

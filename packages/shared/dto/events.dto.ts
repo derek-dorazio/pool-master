@@ -89,8 +89,7 @@ export type SportEventAutoReleaseCheckDto = z.infer<typeof SportEventAutoRelease
 
 export const SportEventContestOpeningDtoSchema = z.object({
   selectionType: z.enum(SelectionType).describe('A way to pick that the event\'s sport league offers.'),
-  opening: z.enum(ContestOpening).describe('OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game\'s kickoff; Create contest checks the chosen round or game itself.'),
-  startsAtRounds: z.array(z.number().int()).describe('For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type.'),
+  opening: z.enum(ContestOpening).describe('OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to squares, whose cutoff is its own game\'s kickoff; Create contest checks the chosen game itself.'),
 }).describe('Whether one selection type can start a contest on the event now.');
 export type SportEventContestOpeningDto = z.infer<typeof SportEventContestOpeningDtoSchema>;
 

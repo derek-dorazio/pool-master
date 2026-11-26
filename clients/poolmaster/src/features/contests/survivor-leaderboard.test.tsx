@@ -229,9 +229,39 @@ describe('Survivor contest leaderboard', () => {
     primeMocks(playoffSurvivorLeaderboardFixture(), playoffSurvivorContestFixture());
     renderLeaderboard();
 
+    // The round names come with the event's rounds, a read of their own that can land after the board's.
+    await screen.findByRole('columnheader', { name: /Super Bowl/ });
     expect(await headers()).toEqual(['Entry', 'Status', 'Weeks', 'Super Bowl', 'Conference ChampionshipLive']);
     expect(screen.getByTestId('survivor-leaderboard-standing-entry-2')).toHaveTextContent('Out · Conference Championship');
     expect(screen.getByTestId('survivor-leaderboard-week-playoffs-round-1-entry-1')).toHaveTextContent('Bills');
+  });
+
+  it('shows the loading state, never "Round 1" and "Round 2", until a playoff pool\'s round names have loaded', async () => {
+    primeMocks(playoffSurvivorLeaderboardFixture(), playoffSurvivorContestFixture());
+    let releaseRounds: () => void = () => undefined;
+    listEventRoundsMock.mockImplementation(() => new Promise((resolve) => {
+      releaseRounds = () => resolve(eventRoundsResponse('playoffs', PLAYOFF_ROUND_SLOTS));
+    }));
+    renderLeaderboard();
+
+    await waitFor(() => expect(getSurvivorLeaderboardMock).toHaveBeenCalled());
+    await waitFor(() => expect(listEventRoundsMock).toHaveBeenCalled());
+    expect(screen.getByText('Loading contest leaderboard...')).toBeInTheDocument();
+    expect(screen.queryByTestId('survivor-leaderboard-table')).not.toBeInTheDocument();
+    expect(screen.queryByText('Round 1')).not.toBeInTheDocument();
+
+    releaseRounds();
+
+    expect(await screen.findByRole('columnheader', { name: /Super Bowl/ })).toBeInTheDocument();
+  });
+
+  it('heads a playoff pool\'s weeks "Round 1" and "Round 2" when its rounds cannot be read, rather than loading for ever', async () => {
+    primeMocks(playoffSurvivorLeaderboardFixture(), playoffSurvivorContestFixture());
+    listEventRoundsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'rounds unavailable' } } });
+    renderLeaderboard();
+
+    await screen.findByRole('columnheader', { name: /Round 2/ });
+    expect(await headers()).toEqual(['Entry', 'Status', 'Weeks', 'Round 2', 'Round 1Live']);
   });
 
   it('reads "In · 1 life left" for an entry that lost a life it stays in with, and shows that week red as lost', async () => {

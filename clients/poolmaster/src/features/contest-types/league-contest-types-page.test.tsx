@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -306,16 +306,12 @@ describe('League › Contest types', () => {
     expect(screen.queryByTestId('contest-type-nfl-create-nfl-tiered-doubling-upset-bonus')).not.toBeInTheDocument();
   });
 
-  describe('a commissioner\'s bracket links, which open only where the event can start that bracket', () => {
+  describe('a commissioner\'s bracket link, which opens only where the event can start that bracket', () => {
     const NCAA_MEN = '80300000-0000-4000-8000-000000000003';
     const BRACKETS = [
       template('ncaa-men-bracket-doubling', {
         id: 'tpl-full-bracket', slots: [templateSlotFixture(sportSlotId('BASKETBALL'))], sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
-        configuration: { selectionType: 'BRACKET', startsAtRound: 1, maxEntriesPerSquad: 1 },
-      }),
-      template('ncaa-men-bracket-second-chance', {
-        id: 'tpl-second-chance', slots: [templateSlotFixture(sportSlotId('BASKETBALL'))], sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
-        isDefault: false, sortOrder: 2, configuration: { selectionType: 'BRACKET', startsAtRound: 3, maxEntriesPerSquad: 1 },
+        configuration: { selectionType: 'BRACKET', maxEntriesPerSquad: 1 },
       }),
     ];
     const MARCH_MADNESS = {
@@ -323,7 +319,7 @@ describe('League › Contest types', () => {
     };
     const MARCH_MADNESS_UNDER_WAY = {
       ...MARCH_MADNESS, status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false,
-      contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3, 4, 5]),
+      contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }),
     };
 
     function primeBrackets(event: Record<string, unknown>) {
@@ -335,23 +331,18 @@ describe('League › Contest types', () => {
       }));
     }
 
-    it('links the full bracket before the tournament starts, but not its second-chance variation', async () => {
+    it('links the bracket before the tournament starts', async () => {
       primeBrackets(MARCH_MADNESS);
       renderPage();
 
       expect(await screen.findByTestId('contest-type-ncaa-men-create-ncaa-men-bracket-doubling')).toHaveTextContent('Create this contest');
-      expect(screen.getByTestId('contest-type-ncaa-men-ncaa-men-bracket-doubling-variations')).toHaveTextContent('ncaa-men-bracket-second-chance name');
-      // Its link stands while the events load, and goes once they show no event can start it.
-      await waitFor(() => expect(screen.queryByTestId('contest-type-ncaa-men-create-ncaa-men-bracket-second-chance')).not.toBeInTheDocument());
-      expect(screen.getByTestId('contest-type-ncaa-men-create-ncaa-men-bracket-doubling')).toBeInTheDocument();
     });
 
-    it('links the second chance once the tournament is under way and says the full bracket has no event left', async () => {
+    it('says the bracket has no event left once the tournament is under way', async () => {
       primeBrackets(MARCH_MADNESS_UNDER_WAY);
       renderPage();
 
       expect(await screen.findByTestId('contest-type-ncaa-men-no-events-ncaa-men-bracket-doubling')).toHaveTextContent('No upcoming events yet');
-      expect(screen.getByTestId('contest-type-ncaa-men-create-ncaa-men-bracket-second-chance')).toBeInTheDocument();
     });
   });
 

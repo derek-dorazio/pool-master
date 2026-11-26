@@ -1,4 +1,4 @@
-import { SelectionType, canFillBudgetRoster, survivorLivesOf } from '@poolmaster/shared/domain';
+import { ContestRulesSchema, ContestRulesWithEntryLimitSchema, SelectionType, canFillBudgetRoster, survivorLivesOf } from '@poolmaster/shared/domain';
 
 describe('canFillBudgetRoster', () => {
   it('fits when the cheapest golfers for every place cost exactly the cap', () => {
@@ -22,7 +22,22 @@ describe('survivorLivesOf', () => {
   it('reads a survivor contest\'s lives, 1 when its rules name none, and 1 for any other format', () => {
     expect(survivorLivesOf({ selectionType: SelectionType.SURVIVOR, lives: 2 })).toBe(2);
     expect(survivorLivesOf({ selectionType: SelectionType.SURVIVOR })).toBe(1);
-    expect(survivorLivesOf({ selectionType: SelectionType.BRACKET, startsAtRound: 1 })).toBe(1);
+    expect(survivorLivesOf({ selectionType: SelectionType.BRACKET })).toBe(1);
     expect(survivorLivesOf(null)).toBe(1);
+  });
+});
+
+describe('the retired bracket start round and tiers used', () => {
+  it('drops a starting round sent with bracket rules, so every bracket is picked from the first round to the final', () => {
+    for (const schema of [ContestRulesSchema, ContestRulesWithEntryLimitSchema]) {
+      expect(schema.parse({ selectionType: SelectionType.BRACKET, startsAtRound: 3 })).toEqual({ selectionType: SelectionType.BRACKET });
+    }
+  });
+
+  it('drops the tiers used sent with tiered rules, so a tiered entry picks from every tier of the event', () => {
+    for (const schema of [ContestRulesSchema, ContestRulesWithEntryLimitSchema]) {
+      expect(schema.parse({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, tiersUsed: 4 }))
+        .toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
+    }
   });
 });

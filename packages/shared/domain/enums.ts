@@ -791,7 +791,7 @@ export function hasSportEventStarted(
 
 /**
  * The statuses an event can still take a contest in: released and not yet started (or moved), or a
- * knockout under way for a second-chance bracket or a squares game to come. A finished or called
+ * knockout under way for a squares game to come. A finished or called
  * off event never can. Contest setup lists events in these statuses, and they bound what a
  * caller other than a root admin may list (#1348).
  */
@@ -1119,6 +1119,12 @@ export const ProviderSyncFindingKind = {
    * league, the event it moved to, Provider and the provider's game id.
    */
   GAME_MOVED: 'GAME_MOVED',
+  /**
+   * A slot's tiebreaker game was cancelled or moved to another slot (#2048), so the rule chose
+   * another; entries' guesses carry over to it. WARNING. Subject: league and event; no Provider or
+   * value, since the choice is the app's own. A root admin resolves it once they have checked the new game.
+   */
+  TIEBREAKER_GAME_REPLACED: 'TIEBREAKER_GAME_REPLACED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
@@ -2193,6 +2199,8 @@ export const BackgroundJobType = {
   FOLLOW_POSTPONED_EVENT_CONTESTS: 'FOLLOW_POSTPONED_EVENT_CONTESTS',
   /** Resolves the OPEN unmapped participant findings of feed ids a mapping now names, however it was made (#2069). */
   RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
+  /** Runs the tiebreaker game rule for each slot of one event after a write to its games (#2048). */
+  REFRESH_SLOT_TIEBREAKERS: 'REFRESH_SLOT_TIEBREAKERS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */

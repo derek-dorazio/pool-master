@@ -3,8 +3,7 @@
  * Each offer used to read its series' editions, and then each edition's event, sports league,
  * sport and field count, on its own: about 6 statements an offer on every cache refill.
  *
- * The offers take the seeded Championship Weekend page's squares and bracket offers in
- * turn, each on a series of its own with an edition next month, so every offer is shown and every
+ * The offers take the seeded NFL squares and bracket templates in turn, each on a series of its own with an edition next month, so every offer is shown and every
  * way of asking whether an offer could open is read with 2 offers and with 20. The pages
  * are kept by no cache here, so each run reads. `rules/testing-rules.md` §9B *Query Scaling
  * Tests* says when a route needs one.
@@ -42,19 +41,19 @@ function removeScalingPages() {
 }
 
 /**
- * The seeded Championship Weekend page's offers, squares first, then the bracket from the
- * conference round. Each asks whether it could open its own way: squares by the next game's
- * kickoff, the bracket by its round's start and its games and field.
+ * The seeded NFL squares and bracket templates, squares first. Each asks whether it could open its
+ * own way: squares by the next game's kickoff, the bracket by the event's start and its games and
+ * field.
  */
-async function championshipWeekendOffers() {
-  const offers = await getPrisma().eventPageOffer.findMany({
-    where: { eventPage: { sport: Sport.FOOTBALL, urlSegment: 'championship-weekend' } },
-    include: { template: { select: { selectionType: true } } },
+async function nflOfferTemplates() {
+  const templates = await getPrisma().contestConfigTemplate.findMany({
+    where: { templateKey: { in: ['nfl-squares', 'nfl-bracket-doubling'] } },
+    select: { id: true, sportLeagueId: true, selectionType: true },
   });
   return [SelectionType.SQUARES, SelectionType.BRACKET].map((selectionType) => {
-    const offer = offers.find((each) => each.template.selectionType === selectionType);
-    if (offer === undefined) throw new Error(`The Championship Weekend page has no ${selectionType} offer.`);
-    return offer;
+    const template = templates.find((each) => each.selectionType === selectionType);
+    if (template === undefined) throw new Error(`The NFL has no seeded ${selectionType} template.`);
+    return { sportLeagueId: template.sportLeagueId, templateId: template.id };
   });
 }
 
@@ -66,7 +65,7 @@ async function championshipWeekendOffers() {
  */
 async function seedPage(offers: number, displayOrder: number, first = 0) {
   const prisma = getPrisma();
-  const kinds = await championshipWeekendOffers();
+  const kinds = await nflOfferTemplates();
   const football = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.FOOTBALL } });
   const suffix = randomUUID().slice(0, 8);
   const page = await prisma.eventPage.create({
@@ -74,8 +73,8 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
   });
   const startDate = new Date(Date.now() + 30 * DAY);
   for (let sortOrder = 1; sortOrder <= offers; sortOrder += 1) {
-    const { sportLeagueId, templateId, bracketStartRound } = kinds[(first + sortOrder - 1) % kinds.length];
-    const roundNumber = bracketStartRound ?? 1;
+    const { sportLeagueId, templateId } = kinds[(first + sortOrder - 1) % kinds.length];
+    const roundNumber = 1;
     const name = `Scaling Weekend ${suffix} ${String(sortOrder)}`;
     const event = await prisma.sportEvent.create({
       data: {
@@ -103,7 +102,7 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
     const sportLeagueCompetitionSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `${SYNCED_SLOT_KEY_PREFIX}SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
     await putEventInSlot(prisma, event.id, sportLeagueCompetitionSlotId);
     await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId, sportLeagueCompetitionSlotId, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },
+      data: { eventPageId: page.id, sportLeagueId, sportLeagueCompetitionSlotId, templateId, sortOrder, isPrimary: sortOrder === 1 },
     });
   }
   return page;

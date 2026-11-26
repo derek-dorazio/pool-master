@@ -86,7 +86,7 @@ describe('contest rules fields for a survivor contest', () => {
 });
 
 describe('contest rules fields for a tiered contest', () => {
-  it('puts how "Tiers to pick from" works behind its (?), not under the field', () => {
+  it('picks from every tier of the event, so the roster reads the event\'s tier count times the picks per tier and there is no tier count to choose', () => {
     render(
       <ContestRulesFields
         onChange={vi.fn()}
@@ -98,8 +98,43 @@ describe('contest rules fields for a tiered contest', () => {
       />,
     );
 
-    expect(screen.queryByText(/The first tiers only/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('contest-tiered-tiers-used-help'));
-    expect(screen.getByTestId('contest-tiered-tiers-used-help-callout')).toHaveTextContent('The first tiers only, in tier order. Leave empty for all 6.');
+    expect(screen.getByText('6 tiers × 1 = 6 golfers per entry')).toBeInTheDocument();
+    expect(screen.queryByText('Tiers to pick from')).not.toBeInTheDocument();
+  });
+});
+
+describe('contest rules fields for a budget contest', () => {
+  it('says the salary cap is not set and the field has no prices yet when the event has no cap, and marks unset counts with a question mark', () => {
+    render(
+      <ContestRulesFields
+        onChange={vi.fn()}
+        participant={TEAM}
+        salaryCap={null}
+        selectionType={SelectionType.BUDGET_PICK}
+        tierCount={0}
+        values={{ ...DEFAULT_CONTEST_RULES, countedScores: '', rosterSize: '' }}
+      />,
+    );
+
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent(`Salary cap not set`);
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent(`have no prices yet`);
+    expect(screen.getByText('Best ? of ?')).toBeInTheDocument();
+  });
+
+  it('shows the event\'s salary cap, which the commissioner cannot edit, and the counted scores of the roster', () => {
+    render(
+      <ContestRulesFields
+        onChange={vi.fn()}
+        participant={TEAM}
+        salaryCap={50000}
+        selectionType={SelectionType.BUDGET_PICK}
+        tierCount={0}
+        values={{ ...DEFAULT_CONTEST_RULES, countedScores: '3', rosterSize: '4' }}
+      />,
+    );
+
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent('salary cap');
+    expect(screen.getByTestId('contest-budget-salary-cap')).not.toHaveTextContent('Salary cap not set');
+    expect(screen.getByText('Best 3 of 4')).toBeInTheDocument();
   });
 });

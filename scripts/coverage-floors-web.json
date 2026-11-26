@@ -20,10 +20,6 @@
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 71
         },
-        "src/features/contests/contest-rules-fields.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 79
-        },
         "src/features/contests/contest-scoring-settings.ts": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 71

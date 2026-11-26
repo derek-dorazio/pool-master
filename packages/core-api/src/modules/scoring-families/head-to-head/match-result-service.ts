@@ -104,9 +104,8 @@ export interface MatchResultServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'applyResult' | 'saveGamePeriodScores'>;
   /**
-   * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
-   * second-chance bracket's starting round puts it live even where the scheduler leaves the event
-   * to an admin, as a period score does for a squares contest on that game (#711). A game's result
+   * Starts the event's contests whose cutoff a result shows has passed (#721): a period score puts
+   * a squares contest on that game live even where the scheduler leaves the event to an admin (#711). A game's result
    * or cancellation is a GAME_DECIDED, which settles the squares contests played on it.
    */
   contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;

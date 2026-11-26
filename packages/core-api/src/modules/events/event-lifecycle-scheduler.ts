@@ -14,7 +14,7 @@
  *
  * A DRAFT event is never touched: only an admin's release moves it (#431). This
  * scheduler's job is the two status writes below, and, while an event is in progress, starting
- * the contests whose cutoff comes after the event's start (a second-chance bracket, #721). A
+ * the contests whose cutoff comes after the event's start (a squares game, #711). A
  * POSTPONED event's status is left alone, but its contests follow its start (#1792): open while
  * it is ahead, wherever the start has moved to, and live once it has passed.
  *
@@ -126,7 +126,7 @@ export class EventLifecycleScheduler {
         return;
       }
       case SportEventStatus.IN_PROGRESS: {
-        // A second-chance bracket goes live at its starting round's first game, mid-event (#721).
+        // A squares contest goes live at its game's kickoff, mid-event (#711).
         await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
         const dueAt = completionDueAt(candidate, roundSchedule);
         if (dueAt === undefined || now < dueAt) return;

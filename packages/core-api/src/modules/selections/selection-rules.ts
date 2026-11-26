@@ -11,7 +11,6 @@
  */
 
 import {
-  getTiersInPlay,
   eventPlaysMatches,
   SelectionStatus,
   SportEventParticipantStatus,
@@ -73,19 +72,15 @@ export function buildEntryUserIdMap(
 /**
  * Tiers are event-owned data (plans/124 §4.6/§4.6b) — this is the one place an already
  * resolved `SportEventTierGroup[]` becomes the selection room's `SelectionTierConfig[]`. How many
- * picks each tier takes is the contest's: the same `picksPerTier` for every tier (#479), and a
- * contest that picks from only the first `tiersUsed` tiers (#704) gets only those. Per-golfer
+ * picks each tier takes is the contest's: the same `picksPerTier` for every tier (#479). Per-golfer
  * tier and price are a separate lookup (`buildValuationLookup`), since a golfer can have a
  * price with no tier at all.
  */
 export function buildSelectionTiers(
   tierGroups: readonly SportEventTierGroup[],
   picksPerTier: number,
-  tiersUsed?: number,
 ): SelectionTierConfig[] {
-  const inPlay = [...tierGroups].sort((left, right) => left.tierNumber - right.tierNumber)
-    .slice(0, getTiersInPlay(tierGroups.length, tiersUsed));
-  return inPlay.map((tier) => ({
+  return [...tierGroups].sort((left, right) => left.tierNumber - right.tierNumber).map((tier) => ({
     tierId: tier.tierKey,
     tierName: tier.label,
     tierNumber: tier.tierNumber,

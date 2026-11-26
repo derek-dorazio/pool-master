@@ -63,7 +63,7 @@ import {
 import { roundLabels } from '@poolmaster/shared/display-strings';
 import { SportEventError } from './errors';
 import { homeSpreadOf } from '../../mappers/sport-event-matches.mapper';
-import type { JobsForWrite } from '../background-jobs/background-job-queue';
+import { combineJobsForWrite, type JobsForWrite } from '../background-jobs/background-job-queue';
 import { DomainEventType, type DomainEvents } from '../domain-events';
 import { findReseededPlaceGaps, findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
 
@@ -310,7 +310,7 @@ export class SportEventBracketService {
       advancesToMatchId: match.advancesTo ? idByPlace.get(match.advancesTo) as string : null,
       advancesToSideNumber: match.advancesTo ? sideNumberOfMatchSide(match.advancesTo.side) : null,
     }));
-    const rebuild = await this.rebuild(sportEventId);
+    const rebuild = await this.gamesWrite(sportEventId);
     await this.deps.matches.replaceBracket(sportEventId, writes, rebuild.jobs);
     rebuild.queued();
     this.deps.logger?.info({ sportEventId, matches: writes.length }, 'Loaded bracket');
@@ -346,10 +346,10 @@ export class SportEventBracketService {
       this.assertSpreadKept(event, match, edit.homeSpread);
       await this.assertSpreadUnpicked(event, match);
     }
-    const rebuild = await this.rebuild(sportEventId);
+    const rebuild = await this.gamesWrite(sportEventId);
     await this.deps.matches.update(match.id, toPatch(edit), rebuild.jobs);
     rebuild.queued();
-    // A squares grid or a second-chance bracket closes at a game's start (#1170).
+    // A squares grid closes at its game's start (#1170).
     if (edit.scheduledDate !== undefined && edit.scheduledDate?.getTime() !== match.scheduledDate?.getTime()) {
       await this.deps.contests.recheckReminders({ sportEventId }, this.deps.now?.() ?? new Date());
     }
@@ -450,7 +450,7 @@ export class SportEventBracketService {
     }
     // A reseeded round's matchups are numbered within the round.
     const idByNumber = new Map(bracket.filter((match) => match.roundNumber === roundNumber).map((match) => [match.matchNumber, match.id]));
-    const rebuild = await this.rebuild(sportEventId);
+    const rebuild = await this.gamesWrite(sportEventId);
     await this.deps.matches.placeSides(matchups.map((matchup) => ({
       id: idByNumber.get(matchup.matchNumber) as string,
       sides: [
@@ -657,6 +657,17 @@ export class SportEventBracketService {
   /** The job rebuilding the event's boards, written with a bracket write that may change them (#1466, #1946). */
   private rebuild(sportEventId: string): Promise<JobsForWrite> {
     return this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
+  }
+
+  /**
+   * What a write loading, timing or pairing the event's games carries: the boards' rebuild, and
+   * what follows a change to its games (its slots' tiebreaker games, #2048).
+   */
+  private async gamesWrite(sportEventId: string): Promise<JobsForWrite> {
+    return combineJobsForWrite(
+      await this.rebuild(sportEventId),
+      await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_GAMES_CHANGED, sportEventId }),
+    );
   }
 
   private async requireBracketEvent(sportEventId: string): Promise<SportEvent> {

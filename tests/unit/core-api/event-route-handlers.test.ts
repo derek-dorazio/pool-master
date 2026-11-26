@@ -129,6 +129,7 @@ function fakes() {
     ingestion: ingestion as unknown as IngestionService,
     leaderboards,
     eventOverviews,
+    slotTiebreakers: { listSlotTiebreakers: fn([]), chooseTiebreakerGame: fn(undefined as never) },
   });
   return { services, lifecycle, ingestion, leaderboards, eventOverviews, handlers };
 }

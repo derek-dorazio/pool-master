@@ -55,6 +55,7 @@ import { randomUUID } from 'node:crypto';
 import { freshEventEdition, fixtureSeasonId } from '../../support/event-edition';
 import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { makeSlotTiebreaker } from '../../support/slot-tiebreaker-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
 
@@ -1011,6 +1012,8 @@ describe('Contract verification (web)', () => {
       sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1,
       teams: [away.id, home.id], isNeutralSite: false, scheduledDate: new Date('2099-03-19T16:00:00.000Z'),
     });
+    // The week's one game is its tiebreaker game, as the rule names it (#2048).
+    await makeSlotTiebreaker(prisma, game.id);
     await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
     const entry = await prisma.contestEntry.findFirstOrThrow({ where: { contestId: contest.id }, select: { id: true } });
     await prisma.contestEntryEvent.create({ data: { contestEntryId: entry.id, sportEventId: event.id } });

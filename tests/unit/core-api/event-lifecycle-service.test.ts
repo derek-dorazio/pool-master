@@ -633,6 +633,37 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
+  it('leaves a squares contest open while its game is still to kick off, starting only the contests that close at the event\'s start', async () => {
+    const kickoff = new Date(STARTED_EVENT_START.getTime() + 60 * 60_000);
+    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
+    const atStart = buildContest({ ...STARTED_CONTEST, id: 'contest-at-start' });
+    const squares = buildContest({
+      ...STARTED_CONTEST,
+      id: 'contest-squares',
+      leagueId: 'league-2',
+      selectionType: SelectionType.SQUARES,
+      squaresGameMatchId: 'game-1',
+    });
+    const written: unknown[] = [];
+    const contests = contestDeps();
+    contests.contests.findBySportEvent = jest.fn().mockResolvedValue([atStart, squares]);
+    contests.configurations = fakeContestConfigurationRepo({
+      findByContests: jest.fn().mockResolvedValue([{ contestId: squares.id, configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 } }]),
+    });
+    contests.matches = {
+      findBySportEvent: jest.fn().mockResolvedValue([
+        legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: kickoff }),
+      ]),
+    };
+    contests.contests.transitionStatuses = guardedMove(written, (ids) => [...ids]);
+    const service = lifecycleService(contests, sportEvents, fakeLogger(), startedJobs());
+
+    expect(await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), new Date(kickoff.getTime() - 60_000))).toBe(1);
+
+    expect(contests.contests.transitionStatuses).toHaveBeenCalledTimes(1);
+    expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-at-start'], expect.objectContaining({ startsAt: STARTED_EVENT_START }));
+  });
+
   it('writes no contest-started email job when the contest is already active, and wakes the runner only for the status change\'s own follow-ups', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const written: unknown[] = [];
@@ -1049,21 +1080,17 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1', 'contest-2'], expect.objectContaining({ startsAt: NEW_START }));
   });
 
-  it('keeps live a squares contest, a contest whose draw dealt its picks and a bracket starting at a later round, and reopens a full bracket', async () => {
+  it('keeps live a squares contest and a contest whose draw dealt its picks, and reopens a bracket, reading no rules to decide', async () => {
     const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' });
     const drawn = buildContest({ ...LIVE, id: 'contest-drawn', drawnAt: new Date('2026-05-01T00:00:00.000Z') });
-    const secondChance = buildContest({ ...LIVE, id: 'contest-second-chance', selectionType: SelectionType.BRACKET });
     const fullBracket = buildContest({ ...LIVE, id: 'contest-full-bracket', selectionType: SelectionType.BRACKET });
-    const deps = liveContests([squares, drawn, secondChance, fullBracket], {
-      configurations: [
-        { contestId: secondChance.id, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 2 } },
-        { contestId: fullBracket.id, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 } },
-      ],
+    const deps = liveContests([squares, drawn, fullBracket], {
+      configurations: [{ contestId: fullBracket.id, configJson: { selectionType: SelectionType.BRACKET } }],
     });
 
     await follow(deps, postponedEvents(NEW_START));
 
-    expect(deps.configurations.findByContests).toHaveBeenCalledWith([secondChance.id, fullBracket.id]);
+    expect(deps.configurations.findByContests).not.toHaveBeenCalled();
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith([fullBracket.id], expect.objectContaining({ to: ContestStatus.OPEN }));
   });
 

@@ -23,6 +23,7 @@ export * from './sport-catalog-types';
 export * from './match-place';
 export * from './match-sides';
 export * from './bracket-final';
+export * from './slot-tiebreaker';
 export * from './sport-rows';
 export * from './tournament-format';
 export * from './template-coverage';
@@ -51,7 +52,6 @@ export {
   FINISH_POSITION_POINTS_TABLE_MAX_PLACES,
   FinishPositionPointsSettingsSchema,
   isRoundComplete,
-  KNOCKOUT_ROUND_VALUES_MAX_ROUNDS,
   KnockoutRoundPointsSettingsSchema,
   PARTICIPANT_SCORING_DEFINITIONS,
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,

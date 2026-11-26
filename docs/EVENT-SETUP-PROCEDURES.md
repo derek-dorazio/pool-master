@@ -168,8 +168,8 @@ As a commissioner of a test league (root admin is not needed):
    - **Tiered**, **Budget** and **Random draw** for every sport. Budget is offered only on an
      event whose field has been priced; its salary cap is the event's and shows read-only. A
      random draw has nothing to pick: the commissioner runs the draw once entries are in.
-   - **Bracket**, for a knockout (basketball, American football): every game picked before it
-     starts, or a second-chance bracket from a later round once the knockout is under way.
+   - **Bracket**, for a knockout (basketball, American football): every game, from the first
+     round to the final, picked before it starts.
    - **Pick'em** and **Survivor**, for a week of games (American football, basketball): every
      game's winner each week, or one team to win each week.
 

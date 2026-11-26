@@ -18,12 +18,11 @@
  * - **A cancelled game** is not one of the week's games, so a pick on it is not scored or counted,
  *   even when it was made before the cancellation. A confidence pool keeps the other picks' values
  *   as they were submitted, unrenumbered, so nobody's ranking moves after kickoff.
- * - **The tiebreaker** is the total points of the week's last game by kickoff, both teams together
- *   (Monday night). Among entries with the same points, the one closest to it ranks first
- *   (`rankPredictionStandings`).
+ * - **The tiebreaker** is the total points of the game the week's slot names as its tiebreaker
+ *   (#2048), both teams together: the week's last kickoff, Monday night, by the slot rule. Among
+ *   entries with the same points, the one closest to it ranks first (`rankPredictionStandings`).
  */
 import {
-  compareMatchPlaces,
   MatchEnding,
   MatchStatus,
   endedTied,
@@ -135,20 +134,13 @@ export function scoreGamePicks(
 }
 
 /**
- * The week's tiebreaker game: its last game by kickoff, the last in game order (round, then number
- * within it) among games that kick off together. A game with no time of its own kicks off at `eventStart`. Null for a week with
- * no games.
+ * The tiebreaker game among `games` (#2048): the one game its slot names as the slot's tiebreaker,
+ * which `SlotTiebreakerService` chooses by the one rule. Null while no game's slot names it among
+ * these, or when games of two slots each name one (a guess per slot is slice 18b's).
  */
-export function weekTiebreakerGame<Match extends Pick<SportEventRoundMatch, 'scheduledDate' | 'roundNumber' | 'matchNumber'>>(
-  games: readonly Match[],
-  eventStart: Date,
-): Match | null {
-  const kickoff = (game: Match) => (game.scheduledDate ?? eventStart).getTime();
-  return games.reduce<Match | null>((last, game) => (
-    last === null || kickoff(game) > kickoff(last) || (kickoff(game) === kickoff(last) && compareMatchPlaces(game, last) > 0)
-      ? game
-      : last
-  ), null);
+export function slotTiebreakerGame<Match extends Pick<SportEventRoundMatch, 'id' | 'slot'>>(games: readonly Match[]): Match | null {
+  const named = games.filter((game) => game.slot.tiebreakerMatchId === game.id);
+  return named.length === 1 ? named[0] : null;
 }
 
 /** A played game's combined score, both teams together: what a tiebreaker guesses. Null until it completes. */

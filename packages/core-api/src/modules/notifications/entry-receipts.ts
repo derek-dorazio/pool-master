@@ -264,8 +264,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
           kind: EntryReceiptKind.BRACKET,
           eventName: sportEvent.name,
           rounds: bracketRounds(picked),
-          // A bracket's picks lock together: at the event's start, or a second-chance bracket's
-          // starting round.
+          // A bracket's picks lock together, at the event's start.
           changeUntil: view.picksCloseAt,
         };
       case SelectionType.SURVIVOR:

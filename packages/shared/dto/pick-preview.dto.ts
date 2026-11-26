@@ -48,9 +48,9 @@ export const GamePickPreviewRequestSchema = z.object({
   sportEventId: z.uuid().describe('The event the setup is for: its games and lines are the ones shown.'),
   rules: z.discriminatedUnion('selectionType', [
     PickEmContestRulesSchema,
-    BracketContestRulesSchema,
-    // Last, as in every rules union: see the note above `ContestRulesSchema`.
+    // Last, with bracket, as in every rules union: see the note above `ContestRulesSchema`.
     SurvivorContestRulesSchema,
+    BracketContestRulesSchema,
   ]).describe('The setup\'s rules as the form holds them now, unsaved: a pick\'em, bracket or survivor setup.'),
   picks: z.array(GamePickWriteSchema).max(PICK_PREVIEW_PICKS_MAX)
     .refine((picks) => new Set(picks.map((pick) => pick.sportEventRoundMatchId)).size === picks.length, {
@@ -68,7 +68,7 @@ export const GamePickPreviewPickDtoSchema = GamePickDtoSchema.pick({
 export type GamePickPreviewPickDto = z.infer<typeof GamePickPreviewPickDtoSchema>;
 
 export const GamePickPreviewGameDtoSchema = GamePickGameDtoSchema.omit({ pick: true, revealed: true }).extend({
-  locked: z.boolean().describe('Whether the game\'s pick would already be closed once the contest opens: it has kicked off, or in a bracket the starting round has.'),
+  locked: z.boolean().describe('Whether the game\'s pick would already be closed once the contest opens: it has kicked off, or in a bracket the event has started.'),
   pick: GamePickPreviewPickDtoSchema.nullable().describe('The trial pick on the game; null when there is none, or it no longer stands (in a bracket, a later pick whose team an earlier trial pick knocked out).'),
 }).describe('One game of the event with the trial pick on it.');
 export type GamePickPreviewGameDto = z.infer<typeof GamePickPreviewGameDtoSchema>;
@@ -83,7 +83,7 @@ export const GamePickPreviewResponseSchema = z.object({
   gameCount: z.number().int(),
   tiebreakerMatchId: z.uuid().nullable().describe('The game an entry\'s tiebreaker would guess the total points of: a bracket\'s final, a pick\'em week\'s last game. Null where there is none.'),
   tiebreakerMax: z.number().int().describe('The highest tiebreaker an entry\'s save would take; 0 is the lowest.'),
-  games: z.array(GamePickPreviewGameDtoSchema).describe('The games an entry would pick, in game-number order: cancelled games left out, a bracket\'s from its starting round.'),
+  games: z.array(GamePickPreviewGameDtoSchema).describe('The games an entry would pick, in game-number order: cancelled games left out.'),
 }).describe('A game setup\'s pick screen as members would see it, with the trial picks on it. Nothing is saved.');
 export type GamePickPreviewResponse = z.infer<typeof GamePickPreviewResponseSchema>;
 

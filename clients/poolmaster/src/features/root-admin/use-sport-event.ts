@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEvent, getEventBracket, listEventTiers } from '@/lib/api';
+import { getEvent, getEventBracket, listEventSlotTiebreakers, listEventTiers } from '@/lib/api';
 import { sportEventRoundsQueryOptions } from '@/features/contests/use-bracket-round-label';
 import type {
   SportEventDto,
   SportEventRoundMatchDto,
+  SportEventSlotTiebreakerDto,
   SportEventTierDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
@@ -67,6 +68,22 @@ export function useSportEventTiersQuery(eventId: string) {
 
 export function useSportEventRoundsQuery(eventId: string) {
   return useQuery(sportEventRoundsQueryOptions(eventId));
+}
+
+/** Each slot's tiebreaker game and the Games it could be (#2048), for the Slots tab's dialog. */
+export function useSportEventSlotTiebreakersQuery(eventId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.slotTiebreakers(eventId),
+    queryFn: async (): Promise<SportEventSlotTiebreakerDto[]> => {
+      const response = await listEventSlotTiebreakers({ path: { eventId } });
+      if (!response.data?.slots) {
+        throwApiError(response.error, 'Slot tiebreakers response is missing data.');
+      }
+      return response.data.slots;
+    },
+    enabled: eventId !== '',
+    retry: false,
+  });
 }
 
 /** A bracket event's matches in match-number order (#698); empty until its bracket is loaded. */

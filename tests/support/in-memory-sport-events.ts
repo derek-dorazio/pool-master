@@ -80,7 +80,7 @@ const T0 = new Date('2026-01-01T00:00:00.000Z');
 
 /** A round's slot as the round read gives it (#2006). */
 function roundSlotOf({ id, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot): SportEventRoundSlot {
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false };
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false, tiebreakerMatchId: null };
 }
 
 /** A Game read back, as a database hands it: a copy, its side results in side order. */

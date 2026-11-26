@@ -181,7 +181,7 @@
   "own:packages/shared/dto/api-error-codes.ts": 1,
   "own:packages/shared/dto/auth.dto.ts": 5,
   "own:packages/shared/dto/billing.dto.ts": 8,
-  "own:packages/shared/dto/bracket.dto.ts": 16,
+  "own:packages/shared/dto/bracket.dto.ts": 15,
   "own:packages/shared/dto/championship.dto.ts": 5,
   "own:packages/shared/dto/client-logs.dto.ts": 3,
   "own:packages/shared/dto/common.dto.ts": 1,
@@ -216,5 +216,6 @@
   "own:packages/shared/dto/system-emails.dto.ts": 5,
   "own:packages/shared/dto/team-owner-invitations.dto.ts": 8,
   "own:packages/shared/dto/users.dto.ts": 5,
-  "own:packages/shared/dto/version.dto.ts": 1
+  "own:packages/shared/dto/version.dto.ts": 1,
+  "own:packages/shared/dto/slot-tiebreaker.dto.ts": 2
 }

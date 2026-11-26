@@ -230,7 +230,6 @@ export function CreateContestPage() {
         sportDefinition={draft.sportDefinition}
       />
       <CreateContestRulesSection
-        bracketStartRounds={draft.bracketStartRounds}
         onChange={changeRules}
         rulesError={draft.rulesError}
         salaryCap={draft.salaryCap}

@@ -35,7 +35,6 @@ export function previewRulesFor(configuration: ContestConfigurationRequest): Pre
           selectionType: SelectionType.TIERED,
           picksPerTier: configuration.picksPerTier,
           countedScores: configuration.countedScores,
-          ...(configuration.tiersUsed === undefined ? {} : { tiersUsed: configuration.tiersUsed }),
         },
       };
     case SelectionType.BUDGET_PICK:
@@ -49,7 +48,7 @@ export function previewRulesFor(configuration: ContestConfigurationRequest): Pre
         rules: { selectionType: SelectionType.PICK_EM, mode: configuration.mode, againstTheSpread: configuration.againstTheSpread },
       };
     case SelectionType.BRACKET:
-      return { kind: 'games', rules: { selectionType: SelectionType.BRACKET, startsAtRound: configuration.startsAtRound } };
+      return { kind: 'games', rules: { selectionType: SelectionType.BRACKET } };
     case SelectionType.SURVIVOR:
       return {
         kind: 'games',

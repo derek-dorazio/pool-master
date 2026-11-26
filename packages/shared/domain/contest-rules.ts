@@ -1,15 +1,14 @@
 import { z } from 'zod';
 import { PickEmMode, SelectionType } from './enums';
 import { BUDGET_SALARY_CAP_MAX } from './budget-pricing';
-import { ContestScoringSettingsSchema, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS } from './contest-scoring';
+import { ContestScoringSettingsSchema } from './contest-scoring';
 
 /**
  * A contest's rules (#93): one shape per selection type, told apart by `selectionType`, which
  * always matches the contest's own. A new selection type adds its own arm here.
  *
- * - **Tiered:** the entry picks `picksPerTier` golfers from each of the event's tiers, or only
- *   its first `tiersUsed` tiers, so its roster is that many tiers times `picksPerTier` (see
- *   tiered-roster.ts).
+ * - **Tiered:** the entry picks `picksPerTier` golfers from each of the event's tiers, so its
+ *   roster is the event's tier count times `picksPerTier` (see tiered-roster.ts).
  * - **Budget:** the entry picks `rosterSize` golfers whose prices fit under the salary cap. The
  *   cap is the event's (its field was priced against it), copied onto the contest when it is
  *   created or its rules change; the commissioner never sets it.
@@ -41,9 +40,7 @@ export const TieredContestRulesSchema = z.object({
   picksPerTier: z.number().int().min(1)
     .describe("How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."),
   countedScores: countedScoresSchema,
-  tiersUsed: z.number().int().min(1).optional()
-    .describe("How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."),
-}).describe('Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers.');
+}).describe('Tiered rules: pick the same number of golfers from every tier of the event.');
 export type TieredContestRules = z.infer<typeof TieredContestRulesSchema>;
 
 export const BudgetContestRulesSchema = z.object({
@@ -76,9 +73,7 @@ export type PickEmContestRules = z.infer<typeof PickEmContestRulesSchema>;
 
 export const BracketContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.BRACKET),
-  startsAtRound: z.number().int().min(1).max(KNOCKOUT_ROUND_VALUES_MAX_ROUNDS)
-    .describe('The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event\'s round values score each round from it on.'),
-}).describe('Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round\'s first game.');
+}).describe('Bracket rules: pick the winner of every game of one knockout event, from the first round to the final, before its first game.');
 export type BracketContestRules = z.infer<typeof BracketContestRulesSchema>;
 
 /** A survivor entry's lives (#1754): one by default, two at most, so an entry can lose once and stay in. */
@@ -120,11 +115,12 @@ export function extendRules<RulesShape extends z.ZodRawShape, Shape extends z.Zo
 }
 
 /**
- * Every union of the selection types' rules lists survivor last. Survivor's rules require nothing
- * but `selectionType`, and the API validates a union as an `anyOf` with Fastify's
+ * Every union of the selection types' rules lists survivor, then bracket, last. Their rules require
+ * nothing but `selectionType`, and the API validates a union as an `anyOf` with Fastify's
  * `removeAdditional`: a branch whose required fields all match goes on to strip every field it
- * does not know, so a survivor branch tried before another type removes that type's rules (a
- * squares contest's box limit) before its own branch is reached (#711).
+ * does not know, so a survivor or bracket branch tried before another type removes that type's
+ * rules (a squares contest's box limit) before its own branch is reached (#711). Bracket comes
+ * after survivor because its fields are a subset of survivor's, so survivor strips none of them.
  */
 /** The rules a commissioner chooses, and a template presets. */
 export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
@@ -132,10 +128,10 @@ export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   BudgetContestRulesSchema,
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
-  BracketContestRulesSchema,
   SquaresContestRulesSchema,
-  // Last: see the note above.
+  // Last, with bracket: see the note above.
   SurvivorContestRulesSchema,
+  BracketContestRulesSchema,
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
@@ -151,10 +147,10 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
   BudgetContestConfigSchema,
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
-  BracketContestRulesSchema,
   SquaresContestRulesSchema,
-  // Last: see the note above `ContestRulesSchema`.
+  // Last, with bracket: see the note above `ContestRulesSchema`.
   SurvivorContestRulesSchema,
+  BracketContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
@@ -184,10 +180,10 @@ export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionT
   extendRules(BudgetContestRulesSchema, withEntryLimit),
   extendRules(RandomDrawContestRulesSchema, withEntryLimit),
   extendRules(PickEmContestRulesSchema, withEntryLimit),
-  extendRules(BracketContestRulesSchema, withEntryLimit),
   extendRules(SquaresContestRulesSchema, withEntryLimit),
-  // Last: see the note above `ContestRulesSchema`.
+  // Last, with bracket: see the note above `ContestRulesSchema`.
   extendRules(SurvivorContestRulesSchema, withEntryLimit),
+  extendRules(BracketContestRulesSchema, withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 
