@@ -394,6 +394,43 @@ describe('MatchResultService once the next game has quarter scores', () => {
 
 });
 
+describe('MatchResultService side outcomes (#2046)', () => {
+  /** Each side's outcome on the match at this place, side 1's first. */
+  const outcomesAt = (store: InMemorySportEvents, place: { roundNumber: number; matchNumber: number }) =>
+    expectDefined(store.matchRows.find((match) => isAtPlace(match, place))).sides.map((side) => side.outcome);
+
+  it('rolls a win up to the winning side WON and the other LOST, and a tie where the game can end level to both TIED', async () => {
+    const { service, event, store } = await week();
+
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 2 }, { winnerSide: null, homeScore: 20, awayScore: 20 });
+
+    // Side 1 is the away team, side 2 the home team.
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 1 })).toEqual([MatchSideOutcome.LOST, MatchSideOutcome.WON]);
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 2 })).toEqual([MatchSideOutcome.TIED, MatchSideOutcome.TIED]);
+  });
+
+  it('rolls a level game a shoot-out settled up to the shoot-out\'s winner, where the game cannot end level', async () => {
+    const { service, event, store } = await setup({ sport: Sport.SOCCER });
+
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4 });
+
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 1 })).toEqual([MatchSideOutcome.WON, MatchSideOutcome.LOST]);
+  });
+
+  it('rolls a 4-2 series up to the side with four wins WON, leaving its Games as they were', async () => {
+    const { service, event, store } = await setup();
+    // The first round is played as best-of-seven series, its matches' slot says so.
+    for (const match of store.matchRows) match.slot = { ...match.slot, seriesGames: 7 };
+    const before = expectDefined(store.matchRows.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))).games;
+
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 2 });
+
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 1 })).toEqual([MatchSideOutcome.LOST, MatchSideOutcome.WON]);
+    expect(expectDefined(store.matchRows.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))).games).toEqual(before);
+  });
+});
+
 describe('MatchResultService shoot-outs (#791)', () => {
   it('saves a soccer bracket match level after extra time with its shoot-out, the shoot-out\'s winner moving on', async () => {
     const { service, event, vermont } = await setup({ sport: Sport.SOCCER });

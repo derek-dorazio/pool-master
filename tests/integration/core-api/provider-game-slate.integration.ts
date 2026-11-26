@@ -1,7 +1,7 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { MatchSide, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchSide, Sport, SportEventStatus, sideNumberOfMatchSide } from '@poolmaster/shared/domain';
 import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
@@ -11,6 +11,8 @@ import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { eventRoundSlots, fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
+import { rowSideTeam } from '../../support/match-rows';
 
 // A synced league's game week and fixed-shape playoff take their games from its provider (ADR
 // 0011, #1728), against real Postgres: the draft's matches written through the bracket's own
@@ -72,8 +74,18 @@ async function syncedWeek() {
 }
 
 async function matchesOf(sportEventId: string) {
-  const rows = await getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }] });
-  return rows.map((row) => [row.matchNumber, row.homeSportEventParticipantId, row.awaySportEventParticipantId, row.scheduledDate?.toISOString() ?? null]);
+  const rows = await getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, include: { sides: true }, orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }] });
+  return rows.map((row) => [row.matchNumber, rowSideTeam(row, HOME_SIDE), rowSideTeam(row, AWAY_SIDE), row.scheduledDate?.toISOString() ?? null]);
+}
+
+/** The event's one match's sides: each side's number, its team and where it plays Game 1. */
+async function sidesOf(sportEventId: string) {
+  const sides = await getPrisma().sportEventRoundMatchSide.findMany({
+    where: { sportEventId },
+    orderBy: { sideNumber: 'asc' },
+    include: { gameResults: { where: { game: { gameNumber: 1 } }, select: { homeAway: true } } },
+  });
+  return sides.map((side) => [side.sideNumber, side.sportEventParticipantId, side.gameResults[0]?.homeAway ?? null]);
 }
 
 describe('Provider game slate (#1728)', () => {
@@ -95,6 +107,19 @@ describe('Provider game slate (#1728)', () => {
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
       [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 7 * HOUR).toISOString()],
     ]);
+  });
+
+  it('writes each synced game with its away team on side 1 and its home team on side 2, and a released game the provider lists the other way round keeps its sides and changes only where each plays Game 1 (#2046)', async () => {
+    const { event, externalId, field, game } = await syncedWeek();
+    const { providerGames } = integrationSportEventServices();
+    await providerGames.afterFieldLoad({ providerId: PROVIDER, externalId, games: [game('g1', 'Bears', 'Lions', 0)] });
+    const loaded = await sidesOf(event.id);
+
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
+    await providerGames.afterFieldLoad({ providerId: PROVIDER, externalId, games: [game('g1', 'Lions', 'Bears', 0)] });
+
+    expect(loaded).toEqual([[1, field.Lions, 'AWAY'], [2, field.Bears, 'HOME']]);
+    expect(await sidesOf(event.id)).toEqual([[1, field.Lions, 'HOME'], [2, field.Bears, 'AWAY']]);
   });
 
   it('leaves an event of a league that is not synced without games', async () => {
@@ -183,7 +208,11 @@ describe('Provider game slate (#1728)', () => {
     await prisma.sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
     for (const [matchNumber, winnerSide] of [[1, 'HOME'], [2, 'AWAY'], [3, 'HOME']] as const) {
       // poolmaster-allow-query-in-loop: three test fixture results
-      await prisma.sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, sportEventRound: { roundNumber: 1 }, matchNumber }, data: { status: 'COMPLETED', winnerSide, homeScore: 20, awayScore: 17 } });
+      const { id } = await prisma.sportEventRoundMatch.findFirstOrThrow({ where: { sportEventId: event.id, sportEventRound: { roundNumber: 1 }, matchNumber }, select: { id: true } });
+      await prisma.sportEventRoundMatch.update({ where: { id }, data: { status: 'COMPLETED', completedAt: new Date() } });
+      const winner = sideNumberOfMatchSide(winnerSide);
+      await prisma.sportEventRoundMatchSide.updateMany({ where: { sportEventRoundMatchId: id, sideNumber: winner }, data: { outcome: 'WON' } });
+      await prisma.sportEventRoundMatchSide.updateMany({ where: { sportEventRoundMatchId: id, sideNumber: { not: winner } }, data: { outcome: 'LOST' } });
     }
     const divisionalKickoff = new Date(KICKOFF.getTime() + WEEK);
     await expect(providerGames.afterFieldLoad({

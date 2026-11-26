@@ -82,7 +82,13 @@ interface OldMatchRow {
 /** Puts the tables back as they were, inserts `rows` as the old table held them, runs the migration and answers the events' Games, all rolled back. */
 async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[], kickoff: Date): Promise<MigratedGame[]> {
   return getPrisma().$transaction(async (tx) => {
-    // The tables as they were before the migration.
+    // The tables as they were before the migration: first the match sides migration (#2046) taken
+    // back as far as this one needs, its side results gone with the Games and the match's result
+    // columns back.
+    await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_side_result_period_scores"');
+    await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_side_results"');
+    await tx.$executeRawUnsafe('CREATE TYPE "PrismaMatchSide" AS ENUM (\'HOME\', \'AWAY\')');
+    await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "winner_side" "PrismaMatchSide", ADD COLUMN "home_score" INTEGER, ADD COLUMN "away_score" INTEGER');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_provider_mappings"');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_games"');
     await tx.$executeRawUnsafe('DROP INDEX "sport_event_round_matches_event_id_key"');
@@ -97,15 +103,17 @@ async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[]
       // poolmaster-allow-query-in-loop: the migration's own statements, in order
       await tx.$executeRawUnsafe(statement);
     }
-    const games = await tx.sportEventRoundMatchGame.findMany({
-      where: { sportEventId: { in: [...eventIds] } },
-      select: {
-        sportEventRoundMatchId: true, sportEventSlotId: true, gameNumber: true, scheduledDate: true, status: true, winnerSide: true, homeScore: true, awayScore: true, lastProviderNotificationAt: true,
-        providerMappings: { select: { externalId: true, provider: { select: { code: true } } } },
-      },
-    });
+    // Read as the migration left the Games, with their result columns, which the client no longer has.
+    const games = await tx.$queryRaw<{
+      matchId: string; sportEventSlotId: string; gameNumber: number; scheduledDate: Date | null; status: string;
+      winnerSide: string | null; homeScore: number | null; awayScore: number | null; notifiedAt: Date | null; providerGameIds: string[];
+    }[]>`SELECT g."sport_event_round_match_id"::text AS "matchId", g."sport_event_slot_id"::text AS "sportEventSlotId", g."game_number" AS "gameNumber",
+        g."scheduled_date" AS "scheduledDate", g."status"::text AS "status", g."winner_side"::text AS "winnerSide", g."home_score" AS "homeScore",
+        g."away_score" AS "awayScore", g."last_provider_notification_at" AS "notifiedAt",
+        COALESCE(ARRAY(SELECT p."code" || ':' || m."external_id" FROM "sport_event_round_match_game_provider_mappings" m JOIN "providers" p ON p."id" = m."provider_id" WHERE m."sport_event_round_match_game_id" = g."id"), ARRAY[]::text[]) AS "providerGameIds"
+      FROM "sport_event_round_match_games" g WHERE g."sport_event_id" = ANY(${[...eventIds]}::uuid[])`;
     throw new Rollback(JSON.stringify(games.map((game): MigratedGame => ({
-      matchId: game.sportEventRoundMatchId,
+      matchId: game.matchId,
       sportEventSlotId: game.sportEventSlotId,
       gameNumber: game.gameNumber,
       scheduledDate: game.scheduledDate?.toISOString() ?? null,
@@ -113,8 +121,8 @@ async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[]
       winnerSide: game.winnerSide,
       homeScore: game.homeScore,
       awayScore: game.awayScore,
-      lastProviderNotificationAt: game.lastProviderNotificationAt?.toISOString() ?? null,
-      providerGameIds: game.providerMappings.map((mapping) => `${mapping.provider.code}:${mapping.externalId}`),
+      lastProviderNotificationAt: game.notifiedAt?.toISOString() ?? null,
+      providerGameIds: game.providerGameIds,
     }))));
   }, { timeout: 30_000 }).catch((error: unknown) => {
     if (error instanceof Rollback) return JSON.parse(error.message) as MigratedGame[];

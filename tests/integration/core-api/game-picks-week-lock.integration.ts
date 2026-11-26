@@ -33,6 +33,8 @@ import { expectDefined } from '../../support/expect-defined';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { testDomainEvents } from '../../support/domain-events';
+import { HOME_SIDE } from '../../support/match-sides';
+import { rowSideId } from '../../support/match-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -129,7 +131,7 @@ async function seedPickedWeek() {
       contestEntryId: entry.id,
       sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
-      sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
+      sportEventRoundMatchSideId: rowSideId(game, HOME_SIDE),
       pickedAt: new Date(),
     })),
   });

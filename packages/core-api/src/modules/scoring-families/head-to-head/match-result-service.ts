@@ -78,7 +78,7 @@ import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
 /** One side's part of a result: its score (games won, for a series) and its shoot-out kicks scored. */
-export interface SideResultInput {
+interface SideResultInput {
   sideNumber: number;
   score: number | null;
   /** Left out is none. */
@@ -145,7 +145,7 @@ function withResult(match: SportEventRoundMatch, { id: _id, outcomes, gameOne, .
 }
 
 /** A Game with its sides' scores and shoot-out as written. */
-export function withSideScores(game: SportEventRoundMatchGame, scores: readonly GameSideScoreWrite[], status: SportEventRoundMatchGame['status'], completedAt: Date | null): SportEventRoundMatchGame {
+function withSideScores(game: SportEventRoundMatchGame, scores: readonly GameSideScoreWrite[], status: SportEventRoundMatchGame['status'], completedAt: Date | null): SportEventRoundMatchGame {
   return {
     ...game,
     status,

@@ -1,7 +1,8 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, JobTrigger, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
-import type { SportEventRoundMatchWrite } from '@poolmaster/shared/db';
+import { BackgroundJobType, HomeAway, JobTrigger, MatchEnding, MatchSideOutcome, MatchStatus, ParticipantStatus, PeriodKind, Sport, gameNumbered, matchSpread, shootoutScoreOf, sideParticipantId, gameScoreOf } from '@poolmaster/shared/domain';
+import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
+import type { MatchResultWrite, MatchSideWrite, SportEventRoundMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
   PrismaSportEventRoundMatchRepository,
@@ -34,9 +35,6 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 beforeEach(() => cleanupTestData());
-
-/** A result with no shoot-out, played to its end. */
-const NO_SHOOTOUT = { homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED };
 
 function repos() {
   return {
@@ -84,15 +82,77 @@ async function createBracketEvent() {
   return { event, sport, sportLeague, entries, entryOf };
 }
 
+/** A neutral-site match's two sides: side 1 then side 2, each with its team or none yet. */
+function neutralSides(sideOne: string | null, sideTwo: string | null): MatchSideWrite[] {
+  return [
+    { sideNumber: 1, sportEventParticipantId: sideOne, homeAway: HomeAway.NONE },
+    { sideNumber: 2, sportEventParticipantId: sideTwo, homeAway: HomeAway.NONE },
+  ];
+}
+
 /** Two semifinals feeding a final, with ids chosen up front so the links can name them. */
 function fourTeamBracket(entryOf: (name: string) => { id: string }): SportEventRoundMatchWrite[] {
   const finalId = randomUUID();
   return [
-    { id: randomUUID(), roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Vermont').id, isNeutralSite: true, scheduledDate: new Date('2027-03-18T19:10:00.000Z'), advancesToMatchId: finalId, advancesToSide: MatchSide.HOME, regionLabel: null },
-    { id: randomUUID(), roundNumber: 1, matchNumber: 2, homeSportEventParticipantId: entryOf('Houston').id, awaySportEventParticipantId: entryOf('Texas').id, isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSide: MatchSide.AWAY, regionLabel: null },
-    { id: finalId, roundNumber: 2, matchNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null },
+    { id: randomUUID(), roundNumber: 1, matchNumber: 1, sides: neutralSides(entryOf('Vermont').id, entryOf('Duke').id), isNeutralSite: true, scheduledDate: new Date('2027-03-18T19:10:00.000Z'), advancesToMatchId: finalId, advancesToSideNumber: 2, regionLabel: null },
+    { id: randomUUID(), roundNumber: 1, matchNumber: 2, sides: neutralSides(entryOf('Texas').id, entryOf('Houston').id), isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSideNumber: 1, regionLabel: null },
+    { id: finalId, roundNumber: 2, matchNumber: 3, sides: neutralSides(null, null), isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSideNumber: null, regionLabel: null },
   ];
 }
+
+/** The match's Game 1, which every loaded match has. */
+function gameOneOf(match: SportEventRoundMatch) {
+  return expectDefined(gameNumbered(match, 1), `Game 1 of match ${match.matchNumber}`);
+}
+
+/** Each side's own points per period of Game 1, as the read gives them. */
+function periodScoresOf(match: SportEventRoundMatch) {
+  return gameOneOf(match).sideResults.map((result) => ({ sideNumber: result.sideNumber, periodScores: result.periodScores }));
+}
+
+/** Each side's period of play, side 1's then side 2's points. */
+function regularPeriods(periods: readonly [number, number, number][]) {
+  return [1, 2].map((sideNumber) => ({
+    sideNumber,
+    periodScores: periods.map(([periodNumber, sideOne, sideTwo]) => ({ kind: PeriodKind.REGULAR, periodNumber, score: sideNumber === 1 ? sideOne : sideTwo })),
+  }));
+}
+
+/** When a test's results were recorded. */
+const RECORDED_AT = new Date('2027-03-19T05:00:00.000Z');
+
+interface ResultRequest {
+  status?: MatchStatus;
+  /** Side 1's outcome then side 2's. */
+  outcomes: [MatchSideOutcome, MatchSideOutcome];
+  /** Side 1's score then side 2's in Game 1, or null to leave the Games as they are. */
+  scores: [number | null, number | null] | null;
+  shootout?: [number, number];
+  ending?: MatchEnding;
+}
+
+/** A single-game match's result, written to its Game 1. */
+function resultOf(match: SportEventRoundMatch, { status = MatchStatus.COMPLETED, outcomes, scores, shootout, ending = MatchEnding.PLAYED }: ResultRequest): MatchResultWrite {
+  return {
+    id: match.id,
+    status,
+    ending,
+    completedAt: status === MatchStatus.COMPLETED ? RECORDED_AT : null,
+    outcomes: outcomes.map((outcome, index) => ({ sideNumber: index + 1, outcome })),
+    gameOne: scores === null ? null : {
+      gameId: gameOneOf(match).id,
+      scores: scores.map((score, index) => ({ sideNumber: index + 1, score, shootoutScore: shootout?.[index] ?? null })),
+    },
+  };
+}
+
+/** The result cleared: SCHEDULED, both sides PENDING, Game 1 unscored. */
+function clearedResultOf(match: SportEventRoundMatch): MatchResultWrite {
+  return resultOf(match, { status: MatchStatus.SCHEDULED, outcomes: [MatchSideOutcome.PENDING, MatchSideOutcome.PENDING], scores: [null, null] });
+}
+
+const SIDE_TWO_WINS: [MatchSideOutcome, MatchSideOutcome] = [MatchSideOutcome.LOST, MatchSideOutcome.WON];
+const SIDE_ONE_WINS: [MatchSideOutcome, MatchSideOutcome] = [MatchSideOutcome.WON, MatchSideOutcome.LOST];
 
 describe('PrismaSportEventRoundMatchRepository', () => {
   it('loads a bracket in one write and reads it back in match order with each match\'s round number and where its winner goes', async () => {
@@ -106,19 +166,41 @@ describe('PrismaSportEventRoundMatchRepository', () => {
       matchNumber: match.matchNumber,
       roundNumber: match.roundNumber,
       advancesToMatchId: match.advancesToMatchId,
-      advancesToSide: match.advancesToSide,
+      advancesToSideNumber: match.advancesToSideNumber,
       status: match.status,
     }))).toEqual([
-      { matchNumber: 1, roundNumber: 1, advancesToMatchId: bracket[2].id, advancesToSide: MatchSide.HOME, status: MatchStatus.SCHEDULED },
-      { matchNumber: 2, roundNumber: 1, advancesToMatchId: bracket[2].id, advancesToSide: MatchSide.AWAY, status: MatchStatus.SCHEDULED },
-      { matchNumber: 3, roundNumber: 2, advancesToMatchId: null, advancesToSide: null, status: MatchStatus.SCHEDULED },
+      { matchNumber: 1, roundNumber: 1, advancesToMatchId: bracket[2].id, advancesToSideNumber: 2, status: MatchStatus.SCHEDULED },
+      { matchNumber: 2, roundNumber: 1, advancesToMatchId: bracket[2].id, advancesToSideNumber: 1, status: MatchStatus.SCHEDULED },
+      { matchNumber: 3, roundNumber: 2, advancesToMatchId: null, advancesToSideNumber: null, status: MatchStatus.SCHEDULED },
     ]);
-    expect(matches[0]).toMatchObject({
-      homeSportEventParticipantId: entryOf('Duke').id,
-      scheduledDate: new Date('2027-03-18T19:10:00.000Z'),
-      winnerSide: null,
-      homeScore: null,
-    });
+    expect(matches[0]).toMatchObject({ scheduledDate: new Date('2027-03-18T19:10:00.000Z') });
+    expect(matches[0].sides.map((side) => [side.sideNumber, side.sportEventParticipantId, side.outcome, side.spread])).toEqual([
+      [1, entryOf('Vermont').id, MatchSideOutcome.PENDING, null],
+      [2, entryOf('Duke').id, MatchSideOutcome.PENDING, null],
+    ]);
+  });
+
+  it('gives every loaded match its Game 1 with one unscored result per side, each where the side plays it', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    const [first, second, final] = fourTeamBracket(entryOf);
+    const homeAndAway = { ...second, isNeutralSite: false, sides: [
+      { sideNumber: 1, sportEventParticipantId: entryOf('Texas').id, homeAway: HomeAway.AWAY },
+      { sideNumber: 2, sportEventParticipantId: entryOf('Houston').id, homeAway: HomeAway.HOME },
+    ] };
+
+    await repos().matches.replaceBracket(event.id, [first, homeAndAway, final]);
+    const matches = await repos().matches.findBySportEvent(event.id);
+
+    expect(matches.map((match) => match.games.map((game) => [game.gameNumber, game.status, game.completedAt]))).toEqual([
+      [[1, MatchStatus.SCHEDULED, null]],
+      [[1, MatchStatus.SCHEDULED, null]],
+      [[1, MatchStatus.SCHEDULED, null]],
+    ]);
+    expect(matches.map((match) => gameOneOf(match).sideResults.map((result) => [result.sideNumber, result.homeAway, result.score]))).toEqual([
+      [[1, HomeAway.NONE, null], [2, HomeAway.NONE, null]],
+      [[1, HomeAway.AWAY, null], [2, HomeAway.HOME, null]],
+      [[1, HomeAway.NONE, null], [2, HomeAway.NONE, null]],
+    ]);
   });
 
   it('replaces a loaded bracket whole, though its matches point at each other', async () => {
@@ -126,7 +208,7 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
 
     const [first] = fourTeamBracket(entryOf);
-    await repos().matches.replaceBracket(event.id, [{ ...first, advancesToMatchId: null, advancesToSide: null }]);
+    await repos().matches.replaceBracket(event.id, [{ ...first, advancesToMatchId: null, advancesToSideNumber: null }]);
 
     expect((await repos().matches.findBySportEvent(event.id)).map((match) => match.matchNumber)).toEqual([1]);
   });
@@ -156,17 +238,16 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     await expect(repos().matches.findBySportEvents([])).resolves.toEqual([]);
   });
 
-  it('reads one match by id, as the event read reads it with its round number and its period scores in period order, and null for no match', async () => {
+  it('reads one match by id, as the event read reads it with its round number and each side\'s period scores in period order, and null for no match', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const final = expectDefined((await repos().matches.findBySportEvent(event.id)).find((match) => match.roundNumber === 2));
-    await repos().matches.savePeriodScore(final.id, { periodNumber: 2, homeScore: 30, awayScore: 28 });
-    await repos().matches.savePeriodScore(final.id, { periodNumber: 1, homeScore: 14, awayScore: 10 });
+    await repos().matches.saveGamePeriodScores({ sportEventRoundMatchId: final.id, gameId: gameOneOf(final).id, sides: regularPeriods([[2, 28, 30], [1, 10, 14]]) });
 
-    const read = await repos().matches.findById(final.id);
+    const read = expectDefined(await repos().matches.findById(final.id));
 
     expect(read).toEqual((await repos().matches.findBySportEvent(event.id)).find((match) => match.id === final.id));
-    expect(read?.periodScores.map((score) => score.periodNumber)).toEqual([1, 2]);
+    expect(gameOneOf(read).sideResults.map((result) => result.periodScores.map((period) => period.periodNumber))).toEqual([[1, 2], [1, 2]]);
     await expect(repos().matches.findById(randomUUID())).resolves.toBeNull();
   });
 
@@ -178,68 +259,101 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     await repos().matches.update(first.id, { scheduledDate: null, isNeutralSite: false });
 
     const [edited] = await repos().matches.findBySportEvent(event.id);
-    expect(edited).toMatchObject({ scheduledDate: null, isNeutralSite: false, homeSportEventParticipantId: entryOf('Duke').id });
+    expect(edited).toMatchObject({ scheduledDate: null, isNeutralSite: false });
+    expect(sideParticipantId(edited, 2)).toBe(entryOf('Duke').id);
   });
 
-  it('stores a game\'s spread in half points and reads it back as a number, clearing it with null (#720)', async () => {
-    const { event, entryOf } = await createBracketEvent();
-    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
-    const [first, second] = await repos().matches.findBySportEvent(event.id);
-    expect([first.homeSpread, second.homeSpread]).toEqual([null, null]);
-
-    await repos().matches.update(first.id, { homeSpread: -3.5 });
-    await repos().matches.update(second.id, { homeSpread: 14 });
-    expect((await repos().matches.findBySportEvent(event.id)).slice(0, 2).map((match) => match.homeSpread)).toEqual([-3.5, 14]);
-
-    await repos().matches.update(first.id, { homeSpread: null });
-    expect((await repos().matches.findBySportEvent(event.id))[0]?.homeSpread).toBeNull();
-  });
-
-  it('saves and replaces a game\'s period scores, reading them in period order, and drops them with the bracket (#772)', async () => {
+  it('changes where each side plays Game 1 without moving either team off its side, as a provider listing the teams the other way round does', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first] = await repos().matches.findBySportEvent(event.id);
 
-    await repos().matches.savePeriodScore(first.id, { periodNumber: 3, homeScore: 21, awayScore: 14 });
-    await repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: 7, awayScore: 0 });
-    await repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: 7, awayScore: 3 });
-    expect((await repos().matches.findBySportEvent(event.id))[0]?.periodScores).toEqual([
-      { periodNumber: 1, homeScore: 7, awayScore: 3 },
-      { periodNumber: 3, homeScore: 21, awayScore: 14 },
+    await repos().matches.update(first.id, { isNeutralSite: false, gameOneHomeAway: [{ sideNumber: 1, homeAway: HomeAway.HOME }, { sideNumber: 2, homeAway: HomeAway.AWAY }] });
+
+    const [edited] = await repos().matches.findBySportEvent(event.id);
+    expect(gameOneOf(edited).sideResults.map((result) => [result.sideNumber, result.homeAway])).toEqual([[1, HomeAway.HOME], [2, HomeAway.AWAY]]);
+    expect([sideParticipantId(edited, 1), sideParticipantId(edited, 2)]).toEqual([entryOf('Vermont').id, entryOf('Duke').id]);
+  });
+
+  it('stores a game\'s spread on side 1 in half points and reads it back as a number, clearing it with null (#720)', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first, second] = await repos().matches.findBySportEvent(event.id);
+    expect([matchSpread(first), matchSpread(second)]).toEqual([null, null]);
+
+    await repos().matches.update(first.id, { spread: -3.5 });
+    await repos().matches.update(second.id, { spread: 14 });
+    const spread = await repos().matches.findBySportEvent(event.id);
+    expect(spread.slice(0, 2).map(matchSpread)).toEqual([-3.5, 14]);
+    expect(spread[0].sides.map((side) => side.spread)).toEqual([-3.5, null]);
+
+    await repos().matches.update(first.id, { spread: null });
+    expect(matchSpread(expectDefined((await repos().matches.findBySportEvent(event.id))[0]))).toBeNull();
+  });
+
+  it('saves and replaces a Game\'s period scores for each side, reading them in period order, and drops them with the bracket (#772)', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+    const save = (periods: readonly [number, number, number][]) => repos().matches.saveGamePeriodScores({ sportEventRoundMatchId: first.id, gameId: gameOneOf(first).id, sides: regularPeriods(periods) });
+
+    await save([[3, 7, 14], [1, 0, 7]]);
+    await save([[3, 7, 14], [1, 3, 7]]);
+    expect(periodScoresOf(expectDefined((await repos().matches.findBySportEvent(event.id))[0]))).toEqual([
+      { sideNumber: 1, periodScores: [{ kind: PeriodKind.REGULAR, periodNumber: 1, score: 3 }, { kind: PeriodKind.REGULAR, periodNumber: 3, score: 7 }] },
+      { sideNumber: 2, periodScores: [{ kind: PeriodKind.REGULAR, periodNumber: 1, score: 7 }, { kind: PeriodKind.REGULAR, periodNumber: 3, score: 14 }] },
     ]);
 
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
-    await expect(getPrisma().sportEventMatchPeriodScore.count({ where: { sportEventRoundMatchId: first.id } })).resolves.toBe(0);
+    await expect(getPrisma().sportEventRoundMatchGameSideResultPeriodScore.count({ where: { sideResult: { sportEventRoundMatchId: first.id } } })).resolves.toBe(0);
+  });
+
+  it('keeps a Game\'s shoot-out when its periods of play are saved again', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+    await repos().matches.applyResult({ result: resultOf(first, { outcomes: SIDE_TWO_WINS, scores: [1, 1], shootout: [3, 4] }), sideFill: null, standings: [] });
+
+    await repos().matches.saveGamePeriodScores({ sportEventRoundMatchId: first.id, gameId: gameOneOf(first).id, sides: regularPeriods([[1, 1, 0], [2, 0, 1]]) });
+
+    const game = gameOneOf(expectDefined(await repos().matches.findById(first.id)));
+    expect([shootoutScoreOf(game, 1), shootoutScoreOf(game, 2)]).toEqual([3, 4]);
+    expect(game.sideResults.find((result) => result.sideNumber === 1)?.periodScores.map((period) => period.kind)).toEqual([PeriodKind.REGULAR, PeriodKind.REGULAR, PeriodKind.SHOOTOUT]);
   });
 
   it('refuses a period before the first and a negative period score in the database', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first] = await repos().matches.findBySportEvent(event.id);
+    const save = (periodNumber: number, score: number) => repos().matches.saveGamePeriodScores({
+      sportEventRoundMatchId: first.id,
+      gameId: gameOneOf(first).id,
+      sides: [{ sideNumber: 1, periodScores: [{ kind: PeriodKind.REGULAR, periodNumber, score }] }],
+    });
 
-    await expect(repos().matches.savePeriodScore(first.id, { periodNumber: 0, homeScore: 0, awayScore: 0 })).rejects.toThrow(/period_number_check/);
-    await expect(repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: -1, awayScore: 0 })).rejects.toThrow(/scores_check/);
+    await expect(save(0, 0)).rejects.toThrow(/period_scores_check/);
+    await expect(save(1, -1)).rejects.toThrow(/period_scores_check/);
   });
 
   it('refuses a bracket naming a round the event does not have, and writes none of it', async () => {
     const { event, entryOf } = await createBracketEvent();
     const [first] = fourTeamBracket(entryOf);
 
-    await expect(repos().matches.replaceBracket(event.id, [{ ...first, roundNumber: 3, advancesToMatchId: null, advancesToSide: null }]))
+    await expect(repos().matches.replaceBracket(event.id, [{ ...first, roundNumber: 3, advancesToMatchId: null, advancesToSideNumber: null }]))
       .rejects.toThrow(`Sport event ${event.id} has no round 3`);
     await expect(repos().matches.findBySportEvent(event.id)).resolves.toEqual([]);
   });
 
-  it('saves a period score and queues its background jobs together, so a saved score always has its follow-up queued', async () => {
+  it('saves period scores and queues their background jobs together, so a saved score always has its follow-up queued', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first] = await repos().matches.findBySportEvent(event.id);
 
-    await repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: 10, awayScore: 8 }, [
+    await repos().matches.saveGamePeriodScores({ sportEventRoundMatchId: first.id, gameId: gameOneOf(first).id, sides: regularPeriods([[1, 8, 10]]) }, [
       { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [randomUUID()], sport: Sport.BASKETBALL, eventId: event.id }, start: { trigger: JobTrigger.SYSTEM } },
     ]);
 
-    expect((await repos().matches.findById(first.id))?.periodScores).toEqual([{ periodNumber: 1, homeScore: 10, awayScore: 8 }]);
+    expect(periodScoresOf(expectDefined(await repos().matches.findById(first.id))).map((side) => side.periodScores.map((period) => period.score))).toEqual([[8], [10]]);
     await expect(getPrisma().backgroundJob.count({ where: { type: BackgroundJobType.MANUAL_EVENT_SYNC } })).resolves.toBe(1);
   });
 
@@ -249,12 +363,25 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     const [first, , final] = await repos().matches.findBySportEvent(event.id);
 
     await repos().matches.placeSides([
-      { id: final.id, homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Texas').id },
+      { id: final.id, sides: [{ sideNumber: 1, sportEventParticipantId: entryOf('Texas').id }, { sideNumber: 2, sportEventParticipantId: entryOf('Duke').id }] },
     ]);
 
     const [unchanged, , placed] = await repos().matches.findBySportEvent(event.id);
-    expect(placed).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Texas').id });
-    expect(unchanged.homeSportEventParticipantId).toBe(first.homeSportEventParticipantId);
+    expect([sideParticipantId(placed, 1), sideParticipantId(placed, 2)]).toEqual([entryOf('Texas').id, entryOf('Duke').id]);
+    expect(unchanged.sides).toEqual(first.sides);
+  });
+
+  it('moves a team from one side of a match to the other in one placement, though a team is on a match once', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await repos().matches.placeSides([
+      { id: first.id, sides: [{ sideNumber: 1, sportEventParticipantId: entryOf('Duke').id }, { sideNumber: 2, sportEventParticipantId: entryOf('Vermont').id }] },
+    ]);
+
+    const [swapped] = await repos().matches.findBySportEvent(event.id);
+    expect([sideParticipantId(swapped, 1), sideParticipantId(swapped, 2)]).toEqual([entryOf('Duke').id, entryOf('Vermont').id]);
   });
 
   it('deletes the bracket with its event', async () => {
@@ -264,11 +391,9 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     await repos().events.delete(event.id);
 
     await expect(getPrisma().sportEventRoundMatch.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
+    await expect(getPrisma().sportEventRoundMatchSide.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
   });
 });
-
-/** When a test's results were recorded. */
-const RECORDED_AT = new Date('2027-03-19T05:00:00.000Z');
 
 describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
   it('completes the match, fills the next match\'s side and writes every standing in one transaction, then rewrites them', async () => {
@@ -278,22 +403,25 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     const asOf = new Date('2027-03-19T04:00:00.000Z');
 
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
-      sideFill: { id: final.id, side: MatchSide.HOME, sportEventParticipantId: entryOf('Vermont').id },
+      result: resultOf(first, { outcomes: SIDE_ONE_WINS, scores: [80, 70] }),
+      sideFill: { id: final.id, sideNumber: 2, sportEventParticipantId: entryOf('Vermont').id },
       standings: [
         { sportEventParticipantId: entryOf('Vermont').id, position: 1, displayPosition: '1', status: 'ACTIVE', currentRound: 2, asOf },
         { sportEventParticipantId: entryOf('Duke').id, position: 4, displayPosition: '4', status: 'ELIMINATED', currentRound: 1, asOf },
       ],
     });
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
+      result: resultOf(first, { outcomes: SIDE_ONE_WINS, scores: [81, 70] }),
       sideFill: null,
       standings: [{ sportEventParticipantId: entryOf('Duke').id, position: 3, displayPosition: 'T3', status: 'ELIMINATED', currentRound: 1, asOf }],
     });
 
     const [completed, , filled] = await repos().matches.findBySportEvent(event.id);
-    expect(completed).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT });
-    expect(filled.homeSportEventParticipantId).toBe(entryOf('Vermont').id);
+    expect(completed).toMatchObject({ status: MatchStatus.COMPLETED, completedAt: RECORDED_AT });
+    expect(completed.sides.map((side) => side.outcome)).toEqual(SIDE_ONE_WINS);
+    expect(gameOneOf(completed)).toMatchObject({ status: MatchStatus.COMPLETED, completedAt: RECORDED_AT });
+    expect([gameScoreOf(gameOneOf(completed), 1), gameScoreOf(gameOneOf(completed), 2)]).toEqual([81, 70]);
+    expect(sideParticipantId(filled, 2)).toBe(entryOf('Vermont').id);
     const standings = await getPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } });
     expect(Object.fromEntries(standings.map((row) => [row.sportEventParticipantId, [row.displayPosition, row.status]]))).toEqual({
       [entryOf('Duke').id]: ['T3', 'ELIMINATED'],
@@ -301,38 +429,35 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     });
   });
 
-  it('fills the away side of the next match when the winner advances to it as the away team', async () => {
+  it('fills side 1 of the next match when the winner advances to side 1', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [, second, final] = await repos().matches.findBySportEvent(event.id);
 
     await repos().matches.applyResult({
-      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
-      sideFill: { id: final.id, side: MatchSide.AWAY, sportEventParticipantId: entryOf('Houston').id },
+      result: resultOf(second, { outcomes: SIDE_TWO_WINS, scores: [70, 75] }),
+      sideFill: { id: final.id, sideNumber: 1, sportEventParticipantId: entryOf('Houston').id },
       standings: [],
     });
 
-    const filled = await repos().matches.findById(final.id);
-    expect(filled).toMatchObject({ awaySportEventParticipantId: entryOf('Houston').id, homeSportEventParticipantId: null });
+    const filled = expectDefined(await repos().matches.findById(final.id));
+    expect([sideParticipantId(filled, 1), sideParticipantId(filled, 2)]).toEqual([entryOf('Houston').id, null]);
   });
 
-  it('stores a level match\'s shoot-out apart from its score, and clears it with the result (#791)', async () => {
+  it('stores a level game\'s shoot-out apart from its score, and clears it with the result (#791)', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first] = await repos().matches.findBySportEvent(event.id);
-    const level = { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 };
 
-    await repos().matches.applyResult({ result: { ...level, homeShootoutScore: 3, awayShootoutScore: 4, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT }, sideFill: null, standings: [] });
-    const [settled] = await repos().matches.findBySportEvent(event.id);
-    await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT, resultSource: null, completedAt: null },
-      sideFill: null,
-      standings: [],
-    });
-    const [cleared] = await repos().matches.findBySportEvent(event.id);
+    await repos().matches.applyResult({ result: resultOf(first, { outcomes: SIDE_TWO_WINS, scores: [1, 1], shootout: [3, 4] }), sideFill: null, standings: [] });
+    const settled = gameOneOf(expectDefined(await repos().matches.findById(first.id)));
+    await repos().matches.applyResult({ result: clearedResultOf(first), sideFill: null, standings: [] });
+    const cleared = expectDefined(await repos().matches.findById(first.id));
 
-    expect(settled).toMatchObject({ homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, winnerSide: MatchSide.AWAY });
-    expect(cleared).toMatchObject({ homeShootoutScore: null, awayShootoutScore: null });
+    expect([gameScoreOf(settled, 1), gameScoreOf(settled, 2), shootoutScoreOf(settled, 1), shootoutScoreOf(settled, 2)]).toEqual([1, 1, 3, 4]);
+    expect([shootoutScoreOf(gameOneOf(cleared), 1), shootoutScoreOf(gameOneOf(cleared), 2)]).toEqual([null, null]);
+    expect(cleared.sides.map((side) => side.outcome)).toEqual([MatchSideOutcome.PENDING, MatchSideOutcome.PENDING]);
+    expect(gameOneOf(cleared)).toMatchObject({ status: MatchStatus.SCHEDULED, completedAt: null });
   });
 
   it('stores how a match ended, and a walkover with no score, and puts it back to played when cleared (#704)', async () => {
@@ -340,41 +465,45 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first] = await repos().matches.findBySportEvent(event.id);
 
-    await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: null, awayScore: null, ...NO_SHOOTOUT, ending: MatchEnding.WALKOVER, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
-      sideFill: null,
-      standings: [],
-    });
-    const [walkover] = await repos().matches.findBySportEvent(event.id);
-    await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT, resultSource: null, completedAt: null },
-      sideFill: null,
-      standings: [],
-    });
-    const [cleared] = await repos().matches.findBySportEvent(event.id);
+    await repos().matches.applyResult({ result: resultOf(first, { outcomes: SIDE_TWO_WINS, scores: [null, null], ending: MatchEnding.WALKOVER }), sideFill: null, standings: [] });
+    const walkover = expectDefined(await repos().matches.findById(first.id));
+    await repos().matches.applyResult({ result: clearedResultOf(first), sideFill: null, standings: [] });
+    const cleared = expectDefined(await repos().matches.findById(first.id));
 
-    expect(walkover).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: null, ending: MatchEnding.WALKOVER });
-    expect(cleared).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED, resultSource: null, completedAt: null });
+    expect(walkover).toMatchObject({ status: MatchStatus.COMPLETED, ending: MatchEnding.WALKOVER });
+    expect(walkover.sides.map((side) => side.outcome)).toEqual(SIDE_TWO_WINS);
+    expect(gameScoreOf(gameOneOf(walkover), 2)).toBeNull();
+    expect(cleared).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED, completedAt: null });
   });
 
-  it('writes a live score on a match with no result, and leaves a match that has one as it is', async () => {
+  it('leaves a series\' Games as they are when its result is written, the result naming no Game 1 score', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await repos().matches.applyResult({ result: resultOf(first, { outcomes: SIDE_ONE_WINS, scores: null }), sideFill: null, standings: [] });
+
+    const decided = expectDefined(await repos().matches.findById(first.id));
+    expect(decided.status).toBe(MatchStatus.COMPLETED);
+    expect(decided.games).toEqual(first.games);
+  });
+
+  it('writes a match\'s live status on a match with no result, and leaves a match that has one as it is', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first, second] = await repos().matches.findBySportEvent(event.id);
-    await repos().matches.applyResult({
-      result: { id: second.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 75, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
-      sideFill: null,
-      standings: [],
-    });
+    await repos().matches.applyResult({ result: resultOf(second, { outcomes: SIDE_TWO_WINS, scores: [70, 75] }), sideFill: null, standings: [] });
 
-    await repos().matches.applyLiveScores([
-      { id: first.id, status: MatchStatus.IN_PROGRESS, homeScore: 30, awayScore: 28 },
-      { id: second.id, status: MatchStatus.IN_PROGRESS, homeScore: 1, awayScore: 0 },
+    await repos().matches.applyStatuses([
+      { id: first.id, status: MatchStatus.IN_PROGRESS },
+      { id: second.id, status: MatchStatus.IN_PROGRESS },
     ]);
 
     const [live, decided] = await repos().matches.findBySportEvent(event.id);
-    expect(live).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 30, awayScore: 28, winnerSide: null });
-    expect(decided).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: 75, awayScore: 70 });
+    expect(live.status).toBe(MatchStatus.IN_PROGRESS);
+    expect(live.sides.map((side) => side.outcome)).toEqual([MatchSideOutcome.PENDING, MatchSideOutcome.PENDING]);
+    expect(decided.status).toBe(MatchStatus.COMPLETED);
+    expect([gameScoreOf(gameOneOf(decided), 1), gameScoreOf(gameOneOf(decided), 2)]).toEqual([70, 75]);
   });
 
   it('writes nothing when one part of the result is refused by the database', async () => {
@@ -383,13 +512,13 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     await expect(repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70, ...NO_SHOOTOUT, resultSource: MatchResultSource.PROVIDER, completedAt: RECORDED_AT },
-      sideFill: { id: randomUUID(), side: MatchSide.HOME, sportEventParticipantId: entryOf('Duke').id },
+      result: resultOf(first, { outcomes: SIDE_TWO_WINS, scores: [70, 80] }),
+      sideFill: { id: first.id, sideNumber: 1, sportEventParticipantId: entryOf('Duke').id },
       standings: [],
     })).rejects.toThrow();
 
-    const [unchanged] = await repos().matches.findBySportEvent(event.id);
-    expect(unchanged).toMatchObject({ status: MatchStatus.SCHEDULED, winnerSide: null });
+    const unchanged = expectDefined(await repos().matches.findById(first.id));
+    expect(unchanged).toEqual(first);
   });
 });
 
@@ -425,7 +554,7 @@ const loadedBracket = async (context: Awaited<ReturnType<typeof createBracketEve
   await repos().matches.replaceBracket(context.event.id, fourTeamBracket(context.entryOf));
   return repos().matches.findBySportEvent(context.event.id);
 };
-const matchRows = (sportEventId: string) => getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' } });
+const matchRows = (sportEventId: string) => getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' }, include: { sides: { orderBy: { sideNumber: 'asc' } } } });
 const fieldRows = (sportEventId: string) => getPrisma().sportEventParticipant.findMany({ where: { sportEventId }, orderBy: { id: 'asc' } });
 
 const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
@@ -440,7 +569,7 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
   ['a round\'s matchups placed', async (context) => {
     const [, , final] = await loadedBracket(context);
     return {
-      write: (jobs) => repos().matches.placeSides([{ id: expectDefined(final).id, homeSportEventParticipantId: context.entryOf('Duke').id, awaySportEventParticipantId: context.entryOf('Texas').id }], jobs),
+      write: (jobs) => repos().matches.placeSides([{ id: expectDefined(final).id, sides: [{ sideNumber: 1, sportEventParticipantId: context.entryOf('Texas').id }, { sideNumber: 2, sportEventParticipantId: context.entryOf('Duke').id }] }], jobs),
       state: () => matchRows(context.event.id),
     };
   }],
@@ -496,7 +625,7 @@ describe('Bracket and field writes carry the event\'s leaderboard rebuild (#1466
   });
 });
 
-describe('sport_event_round_matches database checks', () => {
+describe('sport_event_round_matches and match side database checks', () => {
   /** Inserts one match of the event directly, as only a defect in the service could. */
   async function insertMatch(event: { id: string }, values: Record<string, unknown> = {}) {
     const round = await getPrisma().sportEventRound.findFirstOrThrow({ where: { sportEventId: event.id, roundNumber: 1 } });
@@ -505,83 +634,107 @@ describe('sport_event_round_matches database checks', () => {
     });
   }
 
-  it('refuses a match whose two sides are one team', async () => {
-    const { event, entryOf } = await createBracketEvent();
+  /** Inserts one side of a match directly. */
+  function insertSide(match: { id: string; sportEventId: string }, values: { sideNumber: number } & Record<string, unknown>) {
+    return getPrisma().sportEventRoundMatchSide.create({ data: { sportEventId: match.sportEventId, sportEventRoundMatchId: match.id, ...values } });
+  }
 
-    await expect(insertMatch(event, { homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Duke').id }))
-      .rejects.toThrow(/sport_event_round_matches_sides_differ/);
+  it('refuses one team on both sides of a match', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    const match = await insertMatch(event);
+    await insertSide(match, { sideNumber: 1, sportEventParticipantId: entryOf('Duke').id });
+
+    await expect(insertSide(match, { sideNumber: 2, sportEventParticipantId: entryOf('Duke').id })).rejects.toThrow(/Unique constraint/);
   });
 
-  it('refuses a side to advance to without the match, and a match to advance to without the side', async () => {
+  it('refuses a side number other than 1 or 2, and a second side with the same number', async () => {
+    const { event } = await createBracketEvent();
+    const match = await insertMatch(event);
+    await insertSide(match, { sideNumber: 1 });
+
+    await expect(insertSide(match, { sideNumber: 3 })).rejects.toThrow(/sport_event_round_match_sides_side_number_check/);
+    await expect(insertSide(match, { sideNumber: 1 })).rejects.toThrow(/Unique constraint/);
+  });
+
+  it('refuses a spread on side 2 and one not in half points, and takes one in half points on side 1 (#720)', async () => {
+    const { event } = await createBracketEvent();
+    const match = await insertMatch(event);
+
+    await expect(insertSide(match, { sideNumber: 2, spread: 3.5 })).rejects.toThrow(/sport_event_round_match_sides_spread_side_one_check/);
+    await expect(insertSide(match, { sideNumber: 1, spread: 3.2 })).rejects.toThrow(/sport_event_round_match_sides_spread_half_points_check/);
+    await expect(insertSide(match, { sideNumber: 1, spread: -6.5 })).resolves.toMatchObject({ sideNumber: 1 });
+  });
+
+  it('refuses a side naming a team from another event\'s field', async () => {
+    const { event } = await createBracketEvent();
+    const other = await createBracketEvent();
+    const match = await insertMatch(event);
+
+    await expect(insertSide(match, { sideNumber: 1, sportEventParticipantId: other.entryOf('Duke').id })).rejects.toThrow(/sport_event_round_match_sides_participant_fkey/);
+  });
+
+  it('refuses a side number to advance to without the match, a match to advance to without the side, and a side number other than 1 or 2', async () => {
     const { event } = await createBracketEvent();
     const next = await insertMatch(event, { matchNumber: 2 });
 
-    await expect(insertMatch(event, { advancesToSide: MatchSide.HOME })).rejects.toThrow(/sport_event_round_matches_advances_to_side_with_match/);
-    await expect(insertMatch(event, { advancesToMatchId: next.id })).rejects.toThrow(/sport_event_round_matches_advances_to_side_with_match/);
+    await expect(insertMatch(event, { advancesToSideNumber: 1 })).rejects.toThrow(/sport_event_round_matches_advances_to_side_number_check/);
+    await expect(insertMatch(event, { advancesToMatchId: next.id })).rejects.toThrow(/sport_event_round_matches_advances_to_side_number_check/);
+    await expect(insertMatch(event, { advancesToMatchId: next.id, advancesToSideNumber: 3 })).rejects.toThrow(/sport_event_round_matches_advances_to_side_number_check/);
   });
 
   it('refuses a match that advances into itself', async () => {
     const { event } = await createBracketEvent();
     const match = await insertMatch(event);
 
-    await expect(getPrisma().sportEventRoundMatch.update({ where: { id: match.id }, data: { advancesToMatchId: match.id, advancesToSide: MatchSide.HOME } }))
+    await expect(getPrisma().sportEventRoundMatch.update({ where: { id: match.id }, data: { advancesToMatchId: match.id, advancesToSideNumber: 1 } }))
       .rejects.toThrow(/sport_event_round_matches_advances_elsewhere/);
   });
 
-  it('refuses a winner on a match that is not COMPLETED, and takes one on a COMPLETED match', async () => {
-    const { event } = await createBracketEvent();
+  it('refuses a match number below 1, and a negative Game score', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
 
-    await expect(insertMatch(event, { winnerSide: MatchSide.HOME, status: MatchStatus.IN_PROGRESS }))
-      .rejects.toThrow(/sport_event_round_matches_winner_only_when_completed/);
-    await expect(insertMatch(event, { winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 4, awayScore: 2 }))
-      .resolves.toMatchObject({ winnerSide: MatchSide.HOME });
-  });
-
-  it('refuses a negative score and a match number below 1', async () => {
-    const { event } = await createBracketEvent();
-
-    await expect(insertMatch(event, { homeScore: -1 })).rejects.toThrow(/sport_event_round_matches_scores_not_negative/);
     await expect(insertMatch(event, { matchNumber: 0 })).rejects.toThrow(/sport_event_round_matches_match_number_positive/);
+    await expect(getPrisma().sportEventRoundMatchGameSideResult.updateMany({ where: { sportEventRoundMatchGameId: gameOneOf(first).id }, data: { score: -1 } }))
+      .rejects.toThrow(/sport_event_round_match_game_side_results_score_check/);
   });
 
-  it('refuses one shoot-out score without the other and a negative one, and takes both (#791)', async () => {
-    const { event } = await createBracketEvent();
+  it('refuses a shoot-out numbered other than 1, and takes one numbered 1 (#791)', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+    const sideResult = await getPrisma().sportEventRoundMatchGameSideResult.findFirstOrThrow({ where: { sportEventRoundMatchGameId: gameOneOf(first).id } });
+    const insert = (periodNumber: number) => getPrisma().sportEventRoundMatchGameSideResultPeriodScore.create({
+      data: { sportEventRoundMatchGameSideResultId: sideResult.id, kind: PeriodKind.SHOOTOUT, periodNumber, score: 4 },
+    });
 
-    await expect(insertMatch(event, { homeShootoutScore: 4 })).rejects.toThrow(/sport_event_round_matches_shootout_scores_check/);
-    await expect(insertMatch(event, { homeShootoutScore: -1, awayShootoutScore: 3 })).rejects.toThrow(/sport_event_round_matches_shootout_scores_check/);
-    await expect(insertMatch(event, { homeShootoutScore: 4, awayShootoutScore: 3 })).resolves.toMatchObject({ homeShootoutScore: 4 });
+    await expect(insert(2)).rejects.toThrow(/sport_event_round_match_game_side_result_period_scores_check/);
+    await expect(insert(1)).resolves.toMatchObject({ kind: PeriodKind.SHOOTOUT });
   });
 
-  it('refuses an early ending on a match without a winner and a walkover with a score, and takes a retirement whose winner trailed (#704)', async () => {
+  it('refuses an early ending on a match that is not COMPLETED, and takes a retirement on a COMPLETED one (#704)', async () => {
     const { event } = await createBracketEvent();
 
     await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT })).rejects.toThrow(/sport_event_round_matches_ending_check/);
-    await expect(insertMatch(event, { ending: MatchEnding.WALKOVER, winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 1, awayScore: 0 }))
-      .rejects.toThrow(/sport_event_round_matches_ending_check/);
-    await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT, winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 0, awayScore: 1 }))
+    await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT, status: MatchStatus.COMPLETED }))
       .resolves.toMatchObject({ ending: MatchEnding.RETIREMENT });
   });
 
-  it('refuses a spread that is not in half points, and takes one that is (#720)', async () => {
-    const { event } = await createBracketEvent();
-
-    await expect(insertMatch(event, { homeSpread: 3.2 })).rejects.toThrow(/sport_event_round_matches_home_spread_half_points_check/);
-    await expect(insertMatch(event, { homeSpread: -6.5 })).resolves.toMatchObject({ matchNumber: 1 });
-  });
-
-  it('refuses a match number used twice in one event, and two matches advancing to one side', async () => {
+  it('refuses a match number used twice in one round, and two matches advancing to one side', async () => {
     const { event } = await createBracketEvent();
     const final = await insertMatch(event, { matchNumber: 3 });
-    await insertMatch(event, { matchNumber: 1, advancesToMatchId: final.id, advancesToSide: MatchSide.HOME });
+    await insertMatch(event, { matchNumber: 1, advancesToMatchId: final.id, advancesToSideNumber: 2 });
 
     await expect(insertMatch(event, { matchNumber: 1 })).rejects.toThrow(/Unique constraint/);
-    await expect(insertMatch(event, { matchNumber: 2, advancesToMatchId: final.id, advancesToSide: MatchSide.HOME }))
+    await expect(insertMatch(event, { matchNumber: 2, advancesToMatchId: final.id, advancesToSideNumber: 2 }))
       .rejects.toThrow(/Unique constraint/);
   });
 
-  it('refuses to remove a field row a match names, so a bracket never loses a team silently', async () => {
+  it('refuses to remove a field row a match side names, so a bracket never loses a team silently', async () => {
     const { event, entryOf } = await createBracketEvent();
-    await insertMatch(event, { homeSportEventParticipantId: entryOf('Duke').id });
+    const match = await insertMatch(event);
+    await insertSide(match, { sideNumber: 2, sportEventParticipantId: entryOf('Duke').id });
 
     await expect(repos().field.delete(entryOf('Duke').id)).rejects.toThrow(/Foreign key constraint/);
     await expect(repos().field.findById(entryOf('Duke').id)).resolves.not.toBeNull();

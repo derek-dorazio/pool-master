@@ -56,6 +56,7 @@ import { freshEventEdition, fixtureSeasonId } from '../../support/event-edition'
 import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -1009,16 +1010,9 @@ describe('Contract verification (web)', () => {
       const team = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'TEAM'  } });
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
     }));
-    const game = await prisma.sportEventRoundMatch.create({
-      data: {
-        sportEventId: event.id,
-        sportEventRoundId: round.id,
-        matchNumber: 1,
-        homeSportEventParticipantId: home.id,
-        awaySportEventParticipantId: away.id,
-        isNeutralSite: false,
-        scheduledDate: new Date('2099-03-19T16:00:00.000Z'),
-      },
+    const game = await createMatchRow(prisma, {
+      sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1,
+      teams: [away.id, home.id], isNeutralSite: false, scheduledDate: new Date('2099-03-19T16:00:00.000Z'),
     });
     await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
     const entry = await prisma.contestEntry.findFirstOrThrow({ where: { contestId: contest.id }, select: { id: true } });

@@ -125,13 +125,13 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
 
   async saveGamePeriodScores({ sportEventRoundMatchId, gameId, sides }: GamePeriodScoresWrite, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const results = await sideResultsOf(tx, sportEventRoundMatchId, gameId, sides.map((side) => side.sideNumber));
+      const results = await sideResultsOf(tx, [{ sportEventRoundMatchId, gameId, sideNumbers: sides.map((side) => side.sideNumber) }]);
       // A Game's periods of play are replaced together; its shoot-out stays.
       await tx.sportEventRoundMatchGameSideResultPeriodScore.deleteMany({
-        where: { sportEventRoundMatchGameSideResultId: { in: [...results.values()] }, kind: { not: PeriodKind.SHOOTOUT } },
+        where: { sportEventRoundMatchGameSideResultId: { in: [...(results.get(gameId)?.values() ?? [])] }, kind: { not: PeriodKind.SHOOTOUT } },
       });
       await tx.sportEventRoundMatchGameSideResultPeriodScore.createMany({
-        data: sides.flatMap(({ sideNumber, periodScores }) => periodScores.map((period) => ({ ...period, sportEventRoundMatchGameSideResultId: requireResult(results, sideNumber, gameId) }))),
+        data: sides.flatMap(({ sideNumber, periodScores }) => periodScores.map((period) => ({ ...period, sportEventRoundMatchGameSideResultId: requireResult(results, gameId, sideNumber) }))),
       });
       if (jobs.length > 0) await insertBackgroundJobs(tx, jobs);
     });
@@ -167,7 +167,7 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
       if (gameOne !== null) {
         // A single game's Game 1 is the match: it takes the result's status and completion time.
         await tx.sportEventRoundMatchGame.update({ where: { id: gameOne.gameId }, data: { status: values.status, completedAt: values.completedAt } });
-        await writeSideScores(tx, id, gameOne.gameId, gameOne.scores);
+        await writeSideScores(tx, [{ sportEventRoundMatchId: id, gameId: gameOne.gameId, scores: gameOne.scores }]);
       }
       if (sideFill) {
         await tx.sportEventRoundMatchSide.updateMany({
@@ -191,42 +191,69 @@ function sideTeamUpdates(db: Db, sportEventRoundMatchId: string, sides: readonly
   }));
 }
 
-/** A Game's side result ids by side number, created where a side has none yet. */
-async function sideResultsOf(db: Prisma.TransactionClient, sportEventRoundMatchId: string, gameId: string, sideNumbers: readonly number[]): Promise<Map<number, string>> {
-  const sides = await db.sportEventRoundMatchSide.findMany({
-    where: { sportEventRoundMatchId, sideNumber: { in: [...sideNumbers] } },
-    select: { id: true, sideNumber: true, gameResults: { where: { sportEventRoundMatchGameId: gameId }, select: { id: true } } },
-  });
-  const missing = sides.filter((side) => side.gameResults.length === 0);
-  const created = missing.length === 0 ? [] : await db.sportEventRoundMatchGameSideResult.createManyAndReturn({
-    data: missing.map((side) => ({ sportEventRoundMatchId, sportEventRoundMatchGameId: gameId, sportEventRoundMatchSideId: side.id })),
-    select: { id: true, sportEventRoundMatchSideId: true },
-  });
-  return new Map(sides.map((side) => [side.sideNumber, side.gameResults.at(0)?.id ?? created.find((each) => each.sportEventRoundMatchSideId === side.id)?.id ?? '']));
+/** One Game's side scores to write. */
+interface GameSideScores {
+  sportEventRoundMatchId: string;
+  gameId: string;
+  scores: readonly (GameSideScoreWrite & { homeAway?: HomeAway })[];
 }
 
-function requireResult(results: ReadonlyMap<number, string>, sideNumber: number, gameId: string): string {
-  const id = results.get(sideNumber);
-  if (id === undefined || id === '') throw new Error(`Game ${gameId} has no side ${String(sideNumber)}`);
+/**
+ * Each Game's side result ids by side number, created where a side has none yet: one read and at
+ * most one insert, however many Games, so a sync's batch costs the same reads for 2 games as 20.
+ */
+async function sideResultsOf(
+  db: Prisma.TransactionClient,
+  games: readonly { sportEventRoundMatchId: string; gameId: string; sideNumbers: readonly number[] }[],
+): Promise<Map<string, Map<number, string>>> {
+  const gameIds = games.map((game) => game.gameId);
+  const sides = await db.sportEventRoundMatchSide.findMany({
+    where: { sportEventRoundMatchId: { in: games.map((game) => game.sportEventRoundMatchId) } },
+    select: {
+      id: true, sideNumber: true, sportEventRoundMatchId: true,
+      gameResults: { where: { sportEventRoundMatchGameId: { in: gameIds } }, select: { id: true, sportEventRoundMatchGameId: true } },
+    },
+  });
+  const sidesOfMatch = (matchId: string) => sides.filter((side) => side.sportEventRoundMatchId === matchId);
+  const missing = games.flatMap((game) => sidesOfMatch(game.sportEventRoundMatchId)
+    .filter((side) => game.sideNumbers.includes(side.sideNumber) && !side.gameResults.some((result) => result.sportEventRoundMatchGameId === game.gameId))
+    .map((side) => ({ sportEventRoundMatchId: game.sportEventRoundMatchId, sportEventRoundMatchGameId: game.gameId, sportEventRoundMatchSideId: side.id })));
+  const created = missing.length === 0 ? [] : await db.sportEventRoundMatchGameSideResult.createManyAndReturn({
+    data: missing,
+    select: { id: true, sportEventRoundMatchSideId: true, sportEventRoundMatchGameId: true },
+  });
+  const results = [
+    ...sides.flatMap((side) => side.gameResults.map((result) => ({ id: result.id, gameId: result.sportEventRoundMatchGameId, sideId: side.id }))),
+    ...created.map((result) => ({ id: result.id, gameId: result.sportEventRoundMatchGameId, sideId: result.sportEventRoundMatchSideId })),
+  ];
+  return new Map(games.map((game) => [game.gameId, new Map(sidesOfMatch(game.sportEventRoundMatchId).flatMap((side) => {
+    const result = results.find((each) => each.gameId === game.gameId && each.sideId === side.id);
+    return result ? [[side.sideNumber, result.id] as const] : [];
+  }))]));
+}
+
+function requireResult(results: ReadonlyMap<string, ReadonlyMap<number, string>>, gameId: string, sideNumber: number): string {
+  const id = results.get(gameId)?.get(sideNumber);
+  if (id === undefined) throw new Error(`Game ${gameId} has no side ${String(sideNumber)}`);
   return id;
 }
 
-/** Writes each side's score in a Game, where it played when given, and its shoot-out, or none. */
-async function writeSideScores(
-  db: Prisma.TransactionClient,
-  sportEventRoundMatchId: string,
-  gameId: string,
-  scores: readonly (GameSideScoreWrite & { homeAway?: HomeAway })[],
-): Promise<void> {
-  const results = await sideResultsOf(db, sportEventRoundMatchId, gameId, scores.map((each) => each.sideNumber));
-  // poolmaster-allow-query-in-loop: a Game's two sides (per-row values, one transaction)
-  await Promise.all(scores.map(({ sideNumber, score, homeAway }) => db.sportEventRoundMatchGameSideResult.update({
-    where: { id: requireResult(results, sideNumber, gameId) },
+/**
+ * Writes each side's score in each Game, where it played when given, and its shoot-out, or none:
+ * one read, one update per side result and a fixed number of shoot-out writes for the batch.
+ */
+async function writeSideScores(db: Prisma.TransactionClient, games: readonly GameSideScores[]): Promise<void> {
+  if (games.length === 0) return;
+  const results = await sideResultsOf(db, games.map(({ sportEventRoundMatchId, gameId, scores }) => ({ sportEventRoundMatchId, gameId, sideNumbers: scores.map((each) => each.sideNumber) })));
+  const rows = games.flatMap(({ gameId, scores }) => scores.map((score) => ({ ...score, resultId: requireResult(results, gameId, score.sideNumber) })));
+  // poolmaster-allow-query-in-loop: each scored side result (per-row values, one transaction)
+  await Promise.all(rows.map(({ resultId, score, homeAway }) => db.sportEventRoundMatchGameSideResult.update({
+    where: { id: resultId },
     data: { score, ...(homeAway !== undefined && { homeAway }) },
   })));
-  await db.sportEventRoundMatchGameSideResultPeriodScore.deleteMany({ where: { sportEventRoundMatchGameSideResultId: { in: [...results.values()] }, kind: PeriodKind.SHOOTOUT } });
-  const shootouts = scores.flatMap(({ sideNumber, shootoutScore }) => (shootoutScore === null ? [] : [{
-    sportEventRoundMatchGameSideResultId: requireResult(results, sideNumber, gameId), kind: PeriodKind.SHOOTOUT, periodNumber: 1, score: shootoutScore,
+  await db.sportEventRoundMatchGameSideResultPeriodScore.deleteMany({ where: { sportEventRoundMatchGameSideResultId: { in: rows.map((row) => row.resultId) }, kind: PeriodKind.SHOOTOUT } });
+  const shootouts = rows.flatMap(({ resultId, shootoutScore }) => (shootoutScore === null ? [] : [{
+    sportEventRoundMatchGameSideResultId: resultId, kind: PeriodKind.SHOOTOUT, periodNumber: 1, score: shootoutScore,
   }]));
   if (shootouts.length > 0) await db.sportEventRoundMatchGameSideResultPeriodScore.createMany({ data: shootouts });
 }
@@ -318,11 +345,9 @@ export class PrismaSportEventRoundMatchGameRepository implements SportEventRound
       }
       // poolmaster-allow-query-in-loop: the Games one sync found moved (per-row values, one transaction)
       for (const { id, movedToGameId } of moved) await tx.sportEventRoundMatchGame.update({ where: { id }, data: { movedToGameId } });
-      for (const { id, sportEventRoundMatchId, sides, ...values } of scores) {
-        // poolmaster-allow-query-in-loop: the Games one sync scored (per-row values, one transaction)
-        await tx.sportEventRoundMatchGame.update({ where: { id }, data: values });
-        await writeSideScores(tx, sportEventRoundMatchId, id, sides);
-      }
+      // poolmaster-allow-query-in-loop: the Games one sync scored (per-row values, one transaction)
+      for (const { id, status, completedAt } of scores) await tx.sportEventRoundMatchGame.update({ where: { id }, data: { status, completedAt } });
+      await writeSideScores(tx, scores.map(({ id, sportEventRoundMatchId, sides }) => ({ sportEventRoundMatchId, gameId: id, scores: sides })));
     });
   }
 

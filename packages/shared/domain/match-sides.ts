@@ -58,7 +58,7 @@ export function matchSpread(match: MatchWithSides): number | null {
 }
 
 /** A Game's result for one side, or null while none is written. */
-export function sideResultOf(game: Pick<SportEventRoundMatchGame, 'sideResults'>, sideNumber: number): SportEventRoundMatchGameSideResult | null {
+function sideResultOf(game: Pick<SportEventRoundMatchGame, 'sideResults'>, sideNumber: number): SportEventRoundMatchGameSideResult | null {
   return game.sideResults.find((result) => result.sideNumber === sideNumber) ?? null;
 }
 
@@ -117,7 +117,7 @@ export function hasPeriodScores(match: Pick<SportEventRoundMatch, 'games'>): boo
 }
 
 /** The running score of both sides at the end of one period of a Game, as a scoreboard shows it. */
-export interface RunningPeriodScore {
+interface RunningPeriodScore {
   kind: PeriodKind;
   periodNumber: number;
   /** Each side's points to the end of this period, by side number. */

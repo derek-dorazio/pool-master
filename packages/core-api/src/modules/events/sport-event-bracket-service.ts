@@ -115,7 +115,7 @@ function isFedSide(bracket: readonly SportEventRoundMatch[], matchId: string, si
  * A match being created, on its sides (#2046): the home team on side 2 and the away team on side 1,
  * where each plays Game 1 (NONE at a neutral site).
  */
-export function sidesOfInput(match: Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId' | 'isNeutralSite'>): MatchSideWrite[] {
+function sidesOfInput(match: Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId' | 'isNeutralSite'>): MatchSideWrite[] {
   return SIDES.map((side) => ({
     sideNumber: sideNumberOfMatchSide(side),
     sportEventParticipantId: sideOf(match, side),

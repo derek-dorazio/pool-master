@@ -9,6 +9,8 @@ import { expectDefined } from '../../support/expect-defined';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams, seedTiers } from '../list-route-seeds';
 import { expectSameStatementCount } from '../query-scaling';
+import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
+import { rowSideTeam } from '../../support/match-rows';
 
 // No mocks.
 
@@ -120,7 +122,7 @@ describe('POST /leagues/:id/pick-preview/games', () => {
     const response = await preview('games', league.id, commissioner, {
       sportEventId: event.id,
       rules: CONFIDENCE,
-      picks: [{ sportEventRoundMatchId: first.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: first.awaySportEventParticipantId, confidence: 2 }],
+      picks: [{ sportEventRoundMatchId: first.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: rowSideTeam(first, AWAY_SIDE), confidence: 2 }],
     });
     expect(response.statusCode).toBe(200);
     const parsed = GamePickPreviewResponseSchema.safeParse(response.json());
@@ -128,7 +130,7 @@ describe('POST /leagues/:id/pick-preview/games', () => {
     const body = expectDefined(parsed.data);
 
     expect(body).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, gameCount: 2, pickedCount: 1 });
-    expect(body.games[0]?.pick).toEqual({ predictedResult: PredictedResult.TEAM, sportEventParticipantId: first.awaySportEventParticipantId, confidence: 2 });
+    expect(body.games[0]?.pick).toEqual({ predictedResult: PredictedResult.TEAM, sportEventParticipantId: rowSideTeam(first, AWAY_SIDE), confidence: 2 });
     expect(body.games.every((game) => !game.locked)).toBe(true);
     expect(await storedRows()).toEqual(before);
   });
@@ -153,7 +155,7 @@ describe('POST /leagues/:id/pick-preview/games', () => {
       call: async ({ commissioner, league, event, games }) => okBody(await preview('games', league.id, commissioner, {
         sportEventId: event.id,
         rules: CONFIDENCE,
-        picks: games.map((game) => ({ sportEventRoundMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: game.homeSportEventParticipantId, confidence: null })),
+        picks: games.map((game) => ({ sportEventRoundMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: rowSideTeam(game, HOME_SIDE), confidence: null })),
       }), GamePickPreviewResponseSchema),
       rowsShown: (body) => body.pickedCount,
     });

@@ -17597,7 +17597,7 @@
           "HOME",
           "AWAY"
         ],
-        "description": "One side of a match. On a neutral site HOME is the upper line of the bracket."
+        "description": "One side of a match: HOME is side 2 and AWAY side 1, the sides the sync placed the home and away teams on. On a neutral site HOME is the upper line of the bracket."
       },
       "MatchEndingDto": {
         "type": "string",
@@ -17616,13 +17616,13 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991,
-            "description": "1 for the first period (quarter, in American football); never the last, whose score is the match's final result."
+            "description": "1 for the first period (quarter, in American football)."
           },
           "homeScore": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991,
-            "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it."
+            "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
           },
           "awayScore": {
             "type": "integer",
@@ -17637,7 +17637,7 @@
           "awayScore"
         ],
         "additionalProperties": false,
-        "description": "Both sides' score at the end of one period of a game (#772)."
+        "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
       },
       "SportEventRoundSlotDto": {
         "type": "object",
@@ -17801,6 +17801,10 @@
             ],
             "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
           },
+          "isFinal": {
+            "type": "boolean",
+            "description": "True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status."
+          },
           "isUnplayed": {
             "type": "boolean",
             "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
@@ -17864,7 +17868,7 @@
             "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
           },
           "resultSource": {
-            "description": "Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.",
+            "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
             "type": [
               "string",
               "null"
@@ -17925,13 +17929,13 @@
                   "type": "integer",
                   "minimum": 1,
                   "maximum": 9007199254740991,
-                  "description": "1 for the first period (quarter, in American football); never the last, whose score is the match's final result."
+                  "description": "1 for the first period (quarter, in American football)."
                 },
                 "homeScore": {
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991,
-                  "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it."
+                  "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
                 },
                 "awayScore": {
                   "type": "integer",
@@ -17946,9 +17950,9 @@
                 "awayScore"
               ],
               "additionalProperties": false,
-              "description": "Both sides' score at the end of one period of a game (#772)."
+              "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
             },
-            "description": "The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+            "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
           }
         },
         "required": [
@@ -17962,6 +17966,7 @@
           "isNeutralSite",
           "scheduledDate",
           "status",
+          "isFinal",
           "isUnplayed",
           "winnerSide",
           "homeScore",
@@ -18097,6 +18102,10 @@
                   ],
                   "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
                 },
+                "isFinal": {
+                  "type": "boolean",
+                  "description": "True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status."
+                },
                 "isUnplayed": {
                   "type": "boolean",
                   "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
@@ -18160,7 +18169,7 @@
                   "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
                 },
                 "resultSource": {
-                  "description": "Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.",
+                  "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
                   "type": [
                     "string",
                     "null"
@@ -18221,13 +18230,13 @@
                         "type": "integer",
                         "minimum": 1,
                         "maximum": 9007199254740991,
-                        "description": "1 for the first period (quarter, in American football); never the last, whose score is the match's final result."
+                        "description": "1 for the first period (quarter, in American football)."
                       },
                       "homeScore": {
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991,
-                        "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it."
+                        "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
                       },
                       "awayScore": {
                         "type": "integer",
@@ -18242,9 +18251,9 @@
                       "awayScore"
                     ],
                     "additionalProperties": false,
-                    "description": "Both sides' score at the end of one period of a game (#772)."
+                    "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
                   },
-                  "description": "The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+                  "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
                 }
               },
               "required": [
@@ -18258,6 +18267,7 @@
                 "isNeutralSite",
                 "scheduledDate",
                 "status",
+                "isFinal",
                 "isUnplayed",
                 "winnerSide",
                 "homeScore",
@@ -18400,6 +18410,10 @@
                 ],
                 "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
               },
+              "isFinal": {
+                "type": "boolean",
+                "description": "True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status."
+              },
               "isUnplayed": {
                 "type": "boolean",
                 "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
@@ -18463,7 +18477,7 @@
                 "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
               },
               "resultSource": {
-                "description": "Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.",
+                "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
                 "type": [
                   "string",
                   "null"
@@ -18524,13 +18538,13 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991,
-                      "description": "1 for the first period (quarter, in American football); never the last, whose score is the match's final result."
+                      "description": "1 for the first period (quarter, in American football)."
                     },
                     "homeScore": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 9007199254740991,
-                      "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it."
+                      "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
                     },
                     "awayScore": {
                       "type": "integer",
@@ -18545,9 +18559,9 @@
                     "awayScore"
                   ],
                   "additionalProperties": false,
-                  "description": "Both sides' score at the end of one period of a game (#772)."
+                  "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
                 },
-                "description": "The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+                "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
               }
             },
             "required": [
@@ -18561,6 +18575,7 @@
               "isNeutralSite",
               "scheduledDate",
               "status",
+              "isFinal",
               "isUnplayed",
               "winnerSide",
               "homeScore",
@@ -28479,7 +28494,7 @@
           },
           "shootout": {
             "type": "boolean",
-            "description": "Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport."
+            "description": "Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one."
           },
           "isTestData": {
             "type": "boolean",
@@ -29570,7 +29585,7 @@
                 },
                 "shootout": {
                   "type": "boolean",
-                  "description": "Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport."
+                  "description": "Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one."
                 },
                 "isTestData": {
                   "type": "boolean",
@@ -30615,7 +30630,7 @@
               },
               "shootout": {
                 "type": "boolean",
-                "description": "Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport."
+                "description": "Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one."
               },
               "isTestData": {
                 "type": "boolean",
@@ -53312,6 +53327,10 @@
                 ],
                 "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
               },
+              "isFinal": {
+                "type": "boolean",
+                "description": "True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status."
+              },
               "isUnplayed": {
                 "type": "boolean",
                 "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
@@ -53375,7 +53394,7 @@
                 "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
               },
               "resultSource": {
-                "description": "Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.",
+                "description": "Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.",
                 "type": [
                   "string",
                   "null"
@@ -53436,13 +53455,13 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991,
-                      "description": "1 for the first period (quarter, in American football); never the last, whose score is the match's final result."
+                      "description": "1 for the first period (quarter, in American football)."
                     },
                     "homeScore": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 9007199254740991,
-                      "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it."
+                      "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
                     },
                     "awayScore": {
                       "type": "integer",
@@ -53457,9 +53476,9 @@
                     "awayScore"
                   ],
                   "additionalProperties": false,
-                  "description": "Both sides' score at the end of one period of a game (#772)."
+                  "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
                 },
-                "description": "The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+                "description": "Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
               }
             },
             "required": [
@@ -53473,6 +53492,7 @@
               "isNeutralSite",
               "scheduledDate",
               "status",
+              "isFinal",
               "isUnplayed",
               "winnerSide",
               "homeScore",

@@ -40,6 +40,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -403,25 +404,16 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
   }));
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
-  const game = await prisma.sportEventRoundMatch.create({
-    data: {
-      sportEventId: event.id,
-      sportEventRoundId: round.id,
-      matchNumber: 1,
-      isNeutralSite: true,
-      homeSportEventParticipantId: home.id,
-      awaySportEventParticipantId: away.id,
-      ...(options.gameFinished
-        ? { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 27, awayScore: 31 }
-        : { status: 'IN_PROGRESS' }),
-      periodScores: {
-        create: [
-          { periodNumber: 1, homeScore: 7, awayScore: 0 },
-          { periodNumber: 2, homeScore: 14, awayScore: 10 },
-          { periodNumber: 3, homeScore: 21, awayScore: 24 },
-        ],
-      },
-    },
+  // The away team on side 1 and the home team on side 2, each period its own points.
+  const game = await createMatchRow(prisma, {
+    sportEventId: event.id,
+    sportEventRoundId: round.id,
+    sportEventSlotId: round.sportEventSlotId,
+    matchNumber: 1,
+    isNeutralSite: true,
+    teams: [away.id, home.id],
+    ...(options.gameFinished ? { result: { winnerSideNumber: 1, scores: [31, 27] } } : { inProgress: true }),
+    periods: [[0, 7], [10, 7], [14, 7]],
   });
   // Each contest is a squares pool on the same game, with one entry holding a row of boxes.
   const contestIds: string[] = [];

@@ -18,6 +18,7 @@ import { expectConstantQueries } from '../query-scaling';
 import { participantLeagueId } from '../../support/participant-league';
 import { fixtureSeasonId, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 import { oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
 
 // No mocks.
 
@@ -94,16 +95,9 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
     };
     const [home, away] = [await team('Home'), await team('Away')];
-    await prisma.sportEventRoundMatch.create({
-      data: {
-        sportEventId: event.id,
-        sportEventRoundId: round.id,
-        matchNumber: 1,
-        homeSportEventParticipantId: home.id,
-        awaySportEventParticipantId: away.id,
-        isNeutralSite: true,
-        scheduledDate: startDate,
-      },
+    await createMatchRow(prisma, {
+      sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1,
+      teams: [away.id, home.id], isNeutralSite: true, scheduledDate: startDate,
     });
     // Each offer shows the next slot of a definition of its own, the event's (#2010).
     const sportLeagueCompetitionSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
