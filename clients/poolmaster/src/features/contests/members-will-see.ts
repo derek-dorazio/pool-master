@@ -25,7 +25,7 @@ export function membersWillSeeRules(
 ) {
   return [
     formatContestRules(configuration, tierCount, participant, salaryCap, roundName),
-    scoring ? SCORING_SETTINGS_UI[scoring.participantScoringDefinitionId].describe(scoring) : null,
+    scoring ? SCORING_SETTINGS_UI[scoring.participantScoringDefinitionId].describe(scoring, configuration.selectionType) : null,
     `${formatEntriesPerTeamSentence(configuration.maxEntriesPerSquad)}.`,
   ].filter((sentence) => sentence !== null).join(' ');
 }

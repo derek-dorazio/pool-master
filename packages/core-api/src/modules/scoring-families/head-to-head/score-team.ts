@@ -10,8 +10,12 @@
  *   difference times the multiplier. No bonus for equal seeds or when the better seed wins.
  * - An unseeded team counts as the field's worst seed: the highest seed number on the field, which
  *   is locked from release (design Q3.1).
- * - A team placed straight into a later round (a bye) has no match in the round it skipped, so it
- *   scores nothing for it (design Q3.4).
+ * - A bye counts as a win (#2170): a team placed straight into a later round scores the value of
+ *   each round it skipped, as if it had won a match there, and the bye counts among its wins. The
+ *   credit lands when the skipped round is decided (every one of its games has its result or was
+ *   cancelled), the same moment that round's winners are scored. A bye earns no upset bonus,
+ *   since nobody was beaten. `byeEntries` is the one reading of who had a bye, shared with
+ *   bracket pick'em.
  * - A team withdrawn after the draw (#704) and replaced in its place has no match: it scores
  *   nothing and is out, a first-round loss.
  * - Until the bracket has a result, no team is scored: nobody has won or lost yet.
@@ -27,6 +31,7 @@ import {
   type UpsetBonus,
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
+import { isMatchRoundDecided } from './finished-rounds';
 
 /**
  * The field rows withdrawn after the draw and replaced (#704): inactive as WITHDRAWN, and named
@@ -42,9 +47,43 @@ export function withdrawnRowIds(
     .map((row) => row.id));
 }
 
+/** A team placed straight into a later round of a bracket (a bye). */
+export interface ByeEntry {
+  /** The round of the team's first match. */
+  entersAtRound: number;
+  /** The bracket's rounds before it, which the team skipped, lowest first. */
+  skippedRounds: number[];
+}
+
+/**
+ * Every team on a bye, by field row id: a team whose first match in `bracket` comes after the
+ * bracket's first round. The one reading of a bye, for team scoring here and for bracket pick'em,
+ * where a bye team holds its side of its first game. It relies on `bracket` holding every game a
+ * team was drawn into, cancelled ones included where the caller keeps them: a team whose first game
+ * were missing from it would read as a bye.
+ */
+export function byeEntries(
+  bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'roundNumber' | 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>>,
+): Map<string, ByeEntry> {
+  const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
+  const firstMatchRound = new Map<string, number>();
+  for (const match of bracket) {
+    for (const team of [match.homeSportEventParticipantId, match.awaySportEventParticipantId]) {
+      const seen = team === null ? undefined : firstMatchRound.get(team);
+      if (team !== null && (seen === undefined || match.roundNumber < seen)) {
+        firstMatchRound.set(team, match.roundNumber);
+      }
+    }
+  }
+  return new Map([...firstMatchRound].flatMap(([team, entersAtRound]) => {
+    const skippedRounds = rounds.filter((roundNumber) => roundNumber < entersAtRound);
+    return skippedRounds.length > 0 ? [[team, { entersAtRound, skippedRounds }] as const] : [];
+  }));
+}
+
 /** How a team's knockout score came about: what a leaderboard pick shows beside its points. */
 export interface KnockoutTeamRecord {
-  /** Matches won. */
+  /** Matches won, with each bye whose skipped round is decided counted as a win. */
   wins: number;
   /** The part of the score that is upset bonus; 0 with the bonus off. */
   upsetBonusPoints: number;
@@ -105,7 +144,10 @@ export function scoreKnockoutField(
     }
   }
   const seedById = knockoutSeeds(field.map((row) => row.entry));
-  const withdrawn = withdrawnRowIds(field.map((row) => row.entry), field.flatMap((row) => row.matches));
+  // Each row carries the matches it is in; the bracket is every one of them, once.
+  const bracket = [...new Map(field.flatMap((row) => row.matches).map((match) => [match.id, match])).values()];
+  const withdrawn = withdrawnRowIds(field.map((row) => row.entry), bracket);
+  const byes = byeEntries(bracket);
 
   return field.map((row) => {
     const results = row.matches.flatMap((match) => {
@@ -118,9 +160,11 @@ export function scoreKnockoutField(
       seedById.get(row.entry.id) ?? null,
       seedById.get(sideRowId(match, otherSide(match.winnerSide)) ?? '') ?? null,
     ), 0);
-    const roundPoints = won.map((match) => settings.roundValues.at(match.roundNumber - 1));
+    const byeRounds = (byes.get(row.entry.id)?.skippedRounds ?? []).filter((roundNumber) => isMatchRoundDecided(bracket, roundNumber));
+    const roundPoints = [...byeRounds, ...won.map((match) => match.roundNumber)]
+      .map((roundNumber) => settings.roundValues.at(roundNumber - 1));
     const record: KnockoutTeamRecord = {
-      wins: won.length,
+      wins: won.length + byeRounds.length,
       upsetBonusPoints,
       isAlive: !withdrawn.has(row.entry.id) && results.length === won.length,
     };

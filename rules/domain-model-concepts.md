@@ -68,7 +68,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
   knockout round points, as a knockout roster pool does.
 - **A knockout roster pick scores per match it wins** (`KNOCKOUT_ROUND_POINTS`, #699): that
   round's value from the contest's table, plus an upset bonus when the contest has one on. A
-  team placed straight into a later round (a bye) scores nothing for the round it skipped.
+  team placed straight into a later round (a bye) counts the bye as a win: it scores the value
+  of each round it skipped once that round is decided, with no upset bonus (#2170).
 - **A match's winner is its own fact** (`winnerSide`), and every scorer reads it, never the
   score. In a sport that settles a level knockout by shoot-out (`SportDefinition.shootout`,
   soccer's penalties), a bracket match level after extra time names its winner by the
