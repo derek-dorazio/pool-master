@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { MatchEnding, MatchSide, MatchStatus, SlotPairing, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { matchPlaceOf, MatchEnding, MatchSide, MatchStatus, SlotPairing, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   findReseededPlaceGaps,
   findRoundMatchupProblems,
@@ -10,6 +10,7 @@ import {
 } from '../../../packages/core-api/src/modules/events/bracket-reseed';
 import { findBracketProblems, type BracketMatchInput } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { bracketRoundSlots } from '../../support/round-slots';
+import { expectDefined } from '../../support/expect-defined';
 
 // The pure rules of a reseeded bracket (#722), on an NFL-shaped playoff: seven seeds in each
 // conference, the 1 seed on a bye, Wild Card games that link nowhere, a Divisional round placed by
@@ -221,14 +222,14 @@ describe('findRoundMatchupProblems', () => {
 });
 
 describe('findBracketProblems on a league that reseeds', () => {
-  const asInput = (match: SportEventRoundMatch): BracketMatchInput => ({
+  const asInput = (match: SportEventRoundMatch, _index: number, all: readonly SportEventRoundMatch[]): BracketMatchInput => ({
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
     homeSportEventParticipantId: match.homeSportEventParticipantId,
     awaySportEventParticipantId: match.awaySportEventParticipantId,
     isNeutralSite: match.isNeutralSite,
     scheduledDate: null,
-    advancesTo: match.advancesToMatchId === null ? null : { matchNumber: Number(match.advancesToMatchId.slice(1)), side: match.advancesToSide ?? MatchSide.HOME },
+    advancesTo: match.advancesToMatchId === null ? null : { ...matchPlaceOf(expectDefined(all.find((next) => next.id === match.advancesToMatchId), 'the next match')), side: match.advancesToSide ?? MatchSide.HOME },
     regionLabel: match.regionLabel,
   });
   const matches = nflPlayoff().map(asInput);

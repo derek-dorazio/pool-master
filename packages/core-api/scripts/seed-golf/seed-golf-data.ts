@@ -3,7 +3,7 @@
  * move, which of a test seed's events a run loads, and what each stored round looks like. No I/O, so it is unit tested alone.
  */
 
-import { MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, type MatchPlace, MatchPlaceMap, matchPlaceOf, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { isTestEventName, TEST_EVENT_NAME_PREFIX, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague } from './sport-data-file';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -234,19 +234,19 @@ export function testSeedEventNameOf(storedName: string): string | null {
  * or before `through`. A game still to come keeps its result for a later run, so a squares pool
  * or a pick can still be made on it.
  */
-export function dueResultMatchNumbers(
-  fileMatches: ReadonlyArray<{ matchNumber: number; result?: unknown }>,
-  storedMatches: ReadonlyArray<{ matchNumber: number; scheduledDate: string | null; status: string }>,
+export function dueResultMatches(
+  fileMatches: ReadonlyArray<MatchPlace & { result?: unknown }>,
+  storedMatches: ReadonlyArray<MatchPlace & { scheduledDate: string | null; status: string }>,
   through: Date,
   eventStart: Date,
-): number[] {
-  const withResult = new Set(fileMatches.filter((match) => match.result !== undefined).map((match) => match.matchNumber));
+): MatchPlace[] {
+  const withResult = new MatchPlaceMap(fileMatches.filter((match) => match.result !== undefined).map((match) => [match, true] as const));
   return storedMatches
-    .filter((match) => withResult.has(match.matchNumber)
+    .filter((match) => withResult.has(match)
       && match.status === MatchStatus.SCHEDULED
       && (match.scheduledDate === null ? eventStart.getTime() : Date.parse(match.scheduledDate)) <= through.getTime())
-    .map((match) => match.matchNumber)
-    .sort((left, right) => left - right);
+    .map(matchPlaceOf)
+    .sort(compareMatchPlaces);
 }
 
 /**

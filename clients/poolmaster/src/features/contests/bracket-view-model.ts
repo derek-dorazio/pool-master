@@ -143,7 +143,10 @@ export function drawBracket(games: readonly BracketGame[]): BracketDrawing {
 
   const regionLabels = [...new Set(games.flatMap((game) => (game.regionLabel === null ? [] : [game.regionLabel])))];
   // The regions in the order the bracket lists them: by their first game.
-  regionLabels.sort((left, right) => firstMatch(games, left) - firstMatch(games, right));
+  regionLabels.sort((left, right) => {
+    const [one, other] = [firstMatch(games, left), firstMatch(games, right)];
+    return one.roundNumber - other.roundNumber || one.matchNumber - other.matchNumber;
+  });
   const regions = regionLabels.map((regionLabel): BracketGroup => {
     const regionRounds = drawnRounds.flatMap(({ round, regions: drawn }) => {
       const region = drawn.find((candidate) => candidate.regionLabel === regionLabel);
@@ -169,8 +172,11 @@ export function drawBracket(games: readonly BracketGame[]): BracketDrawing {
   };
 }
 
-function firstMatch(games: readonly BracketGame[], regionLabel: string): number {
-  return Math.min(...games.filter((game) => game.regionLabel === regionLabel).map((game) => game.matchNumber));
+/** A region's first game in bracket order: its earliest round, then the lowest number in that round. */
+function firstMatch(games: readonly BracketGame[], regionLabel: string): Pick<BracketGame, 'roundNumber' | 'matchNumber'> {
+  const [first] = games.filter((game) => game.regionLabel === regionLabel)
+    .sort((left, right) => left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber);
+  return first;
 }
 
 /** The regions on each half of a desktop bracket: the first, third… on the left, the rest mirrored on the right. */

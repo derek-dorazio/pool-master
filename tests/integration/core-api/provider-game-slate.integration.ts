@@ -72,7 +72,7 @@ async function syncedWeek() {
 }
 
 async function matchesOf(sportEventId: string) {
-  const rows = await getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' } });
+  const rows = await getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }] });
   return rows.map((row) => [row.matchNumber, row.homeSportEventParticipantId, row.awaySportEventParticipantId, row.scheduledDate?.toISOString() ?? null]);
 }
 
@@ -90,7 +90,7 @@ describe('Provider game slate (#1728)', () => {
 
     await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
     await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: externalId, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', 7)] }))
-      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
     expect(await matchesOf(event.id)).toEqual([
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
       [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 7 * HOUR).toISOString()],
@@ -160,8 +160,9 @@ describe('Provider game slate (#1728)', () => {
     });
     const bracket = [
       slot(1, 1, 2, 7), slot(2, 1, 3, 6), slot(3, 1, 4, 5),
-      slot(4, 2, 1, null, { matchNumber: 6, side: MatchSide.HOME }), slot(5, 2, null, null, { matchNumber: 6, side: MatchSide.AWAY }),
-      slot(6, 3, null, null),
+      // Each round numbers its games from 1 (#2161).
+      slot(1, 2, 1, null, { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME }), slot(2, 2, null, null, { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY }),
+      slot(1, 3, null, null),
     ];
     const game = (id: string, roundNumber: number, home: number, away: number, at: Date): ProviderScheduledGame => ({
       externalGameId: id, roundNumber, homeTeamExternalId: team(home), awayTeamExternalId: team(away), scheduledAt: at, isNeutralSite: false,
@@ -175,14 +176,14 @@ describe('Provider game slate (#1728)', () => {
     const seedRow = (seed: number) => row.get(seed) ?? null;
     expect(await sides()).toEqual([
       [1, seedRow(2), seedRow(7)], [2, seedRow(3), seedRow(6)], [3, seedRow(4), seedRow(5)],
-      [4, seedRow(1), null], [5, null, null], [6, null, null],
+      [1, seedRow(1), null], [2, null, null], [1, null, null],
     ]);
 
     // Released, and the Wild Card played: the 2 and 4 seeds win at home, the 6 seed away.
     await prisma.sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
     for (const [matchNumber, winnerSide] of [[1, 'HOME'], [2, 'AWAY'], [3, 'HOME']] as const) {
       // poolmaster-allow-query-in-loop: three test fixture results
-      await prisma.sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, matchNumber }, data: { status: 'COMPLETED', winnerSide, homeScore: 20, awayScore: 17 } });
+      await prisma.sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, sportEventRound: { roundNumber: 1 }, matchNumber }, data: { status: 'COMPLETED', winnerSide, homeScore: 20, awayScore: 17 } });
     }
     const divisionalKickoff = new Date(KICKOFF.getTime() + WEEK);
     await expect(providerGames.afterFieldLoad({
@@ -190,10 +191,10 @@ describe('Provider game slate (#1728)', () => {
       externalId: externalId,
       games: [...wildCard, game('d1', 2, 1, 6, divisionalKickoff), game('d2', 2, 2, 4, divisionalKickoff)],
       bracket,
-    })).resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [4, 5] });
+    })).resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 2, matchNumber: 1 }, { roundNumber: 2, matchNumber: 2 }] });
     expect((await matchesOf(event.id)).slice(3, 5)).toEqual([
-      [4, seedRow(1), seedRow(6), divisionalKickoff.toISOString()],
-      [5, seedRow(2), seedRow(4), divisionalKickoff.toISOString()],
+      [1, seedRow(1), seedRow(6), divisionalKickoff.toISOString()],
+      [2, seedRow(2), seedRow(4), divisionalKickoff.toISOString()],
     ]);
   });
 });

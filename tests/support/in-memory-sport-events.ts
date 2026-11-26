@@ -40,7 +40,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -939,7 +939,7 @@ export class InMemorySportEvents {
       raceResult: raceResult ? { ...raceResult } : null,
       matches: this.matchRows
         .filter((match) => match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id)
-        .sort((left, right) => left.matchNumber - right.matchNumber)
+        .sort(compareMatchPlaces)
         .map((match) => ({ ...match, periodScores: [...match.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) })),
       affiliatedWithSportLeague: this.participants.some((row) => row.id === entry.participantId && row.sportLeagueId === sportLeagueId),
     };
@@ -1029,7 +1029,7 @@ export class InMemorySportEvents {
   matchRepo(): SportEventRoundMatchRepository {
     const findBySportEvents = async (sportEventIds: readonly string[]) => this.matchRows
       .filter((row) => sportEventIds.includes(row.sportEventId))
-      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber)
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || compareMatchPlaces(left, right))
       .map((row) => ({ ...row, periodScores: [...row.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) }));
     const requireRow = (id: string) => {
       const row = this.matchRows.find((match) => match.id === id);

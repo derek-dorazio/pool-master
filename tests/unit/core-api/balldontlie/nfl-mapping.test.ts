@@ -226,13 +226,13 @@ describe('NFL postseason bracket', () => {
       [4, 1, 'NFC', team('PHI'), team('GB'), null, false],
       [5, 1, 'NFC', team('TB'), team('WAS'), null, false],
       [6, 1, 'NFC', team('LAR'), team('MIN'), null, false],
-      [7, 2, 'AFC', team('KC'), null, null, false],
-      [8, 2, 'AFC', null, null, null, false],
-      [9, 2, 'NFC', team('DET'), null, null, false],
-      [10, 2, 'NFC', null, null, null, false],
-      [11, 3, 'AFC', null, null, { matchNumber: 13, side: MatchSide.HOME }, false],
-      [12, 3, 'NFC', null, null, { matchNumber: 13, side: MatchSide.AWAY }, false],
-      [13, 4, null, null, null, null, true],
+      [1, 2, 'AFC', team('KC'), null, null, false],
+      [2, 2, 'AFC', null, null, null, false],
+      [3, 2, 'NFC', team('DET'), null, null, false],
+      [4, 2, 'NFC', null, null, null, false],
+      [1, 3, 'AFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.HOME }, false],
+      [2, 3, 'NFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.AWAY }, false],
+      [1, 4, null, null, null, null, true],
     ]);
   });
 

@@ -333,7 +333,7 @@ test('act 3: a new member joins, picks week 1\'s game, saves the tiebreaker on i
   });
 
   await test.step('pick the Bills', async () => {
-    const billsTestId = `pick-em-game-1-team-${week1FieldRowIds['Bills']}`;
+    const billsTestId = `pick-em-game-1-1-team-${week1FieldRowIds['Bills']}`;
     await submitAndRead(page, billsTestId, 'PUT', gamePicksPath());
     await expect(page.getByTestId(billsTestId)).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId('pick-em-picked-count')).toHaveText('1 of 1');

@@ -184,9 +184,9 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
 
     await postJson(api, headers, `/api/v1/events/${eventId}/bracket`, {
       matches: [
-        { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Duke'], awaySportEventParticipantId: fieldRowIds['Texas'], isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: 'HOME' } },
-        { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Houston'], awaySportEventParticipantId: fieldRowIds['Vermont'], isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: 'AWAY' } },
-        { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+        { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Duke'], awaySportEventParticipantId: fieldRowIds['Texas'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' } },
+        { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Houston'], awaySportEventParticipantId: fieldRowIds['Vermont'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'AWAY' } },
+        { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
       ],
     }, 'put');
     const released = await postJson<{ event: { status: string } }>(api, headers, `/api/v1/events/${eventId}/release`, undefined);
@@ -274,13 +274,13 @@ test('act 3: a new member joins, fills in the bracket, sees a changed pick clear
   test.setTimeout(120_000);
   const state = requireJourney();
   const { run, fieldRowIds } = state;
-  const teamButton = (matchNumber: number, name: string) => page.getByTestId(`bracket-game-${matchNumber}-team-${fieldRowIds[name]}`);
+  const teamButton = (roundNumber: number, matchNumber: number, name: string) => page.getByTestId(`bracket-game-${roundNumber}-${matchNumber}-team-${fieldRowIds[name]}`);
   const gamePicksPath = () => `/api/v1/selections/${state.contestId}/entries/${state.entryId}/events/${state.eventId}/game-picks`;
 
   /** Picks one team and waits for the saved bracket, which replaces the page's. */
-  async function pick(matchNumber: number, name: string) {
-    await submitAndRead(page, `bracket-game-${matchNumber}-team-${fieldRowIds[name]}`, 'PUT', gamePicksPath());
-    await expect(teamButton(matchNumber, name)).toHaveAttribute('aria-pressed', 'true');
+  async function pick(roundNumber: number, matchNumber: number, name: string) {
+    await submitAndRead(page, `bracket-game-${roundNumber}-${matchNumber}-team-${fieldRowIds[name]}`, 'PUT', gamePicksPath());
+    await expect(teamButton(roundNumber, matchNumber, name)).toHaveAttribute('aria-pressed', 'true');
   }
 
   await test.step('register through the join link and accept', async () => {
@@ -305,24 +305,24 @@ test('act 3: a new member joins, fills in the bracket, sees a changed pick clear
     state.entryId = created.entry.id;
     await expect(page.getByTestId('bracket-board')).toBeVisible();
     await expect(page.getByTestId('bracket-picked-count')).toHaveText('0 of 3');
-    await expect(page.getByTestId('bracket-game-3-open-home')).toBeVisible();
+    await expect(page.getByTestId('bracket-game-2-1-open-home')).toBeVisible();
   });
 
   await test.step('pick Duke and Houston in the first round, then Duke in the final the two picks fill', async () => {
-    await pick(1, 'Duke');
-    await pick(2, 'Houston');
-    await expect(teamButton(3, 'Duke')).toBeVisible();
-    await expect(teamButton(3, 'Houston')).toBeVisible();
-    await pick(3, 'Duke');
+    await pick(1, 1, 'Duke');
+    await pick(1, 2, 'Houston');
+    await expect(teamButton(2, 1, 'Duke')).toBeVisible();
+    await expect(teamButton(2, 1, 'Houston')).toBeVisible();
+    await pick(2, 1, 'Duke');
     await expect(page.getByTestId('bracket-picked-count')).toHaveText('3 of 3');
   });
 
   await test.step('switch the first game to Texas: the final now offers Texas, and its Duke pick is cleared', async () => {
-    await pick(1, 'Texas');
-    await expect(teamButton(3, 'Duke')).toHaveCount(0);
-    await expect(teamButton(3, 'Texas')).toHaveAttribute('aria-pressed', 'false');
+    await pick(1, 1, 'Texas');
+    await expect(teamButton(2, 1, 'Duke')).toHaveCount(0);
+    await expect(teamButton(2, 1, 'Texas')).toHaveAttribute('aria-pressed', 'false');
     await expect(page.getByTestId('bracket-picked-count')).toHaveText('2 of 3');
-    await pick(3, 'Texas');
+    await pick(2, 1, 'Texas');
   });
 
   await test.step(`type a tiebreaker of ${TIEBREAKER} total points and submit the bracket, which saves the tiebreaker first`, async () => {

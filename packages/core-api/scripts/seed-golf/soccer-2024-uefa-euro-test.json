@@ -270,7 +270,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-06-30T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 9,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -294,7 +295,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-06-29T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 9,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -318,7 +320,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-07-01T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 10,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "result": {
@@ -344,7 +347,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-07-01T16:00:00Z",
               "advancesTo": {
-                "matchNumber": 10,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -368,7 +372,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-07-02T16:00:00Z",
               "advancesTo": {
-                "matchNumber": 11,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "result": {
@@ -392,7 +397,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-07-02T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 11,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "result": {
@@ -416,7 +422,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-06-30T16:00:00Z",
               "advancesTo": {
-                "matchNumber": 12,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "result": {
@@ -440,7 +447,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2024-06-29T16:00:00Z",
               "advancesTo": {
-                "matchNumber": 12,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "result": {
@@ -457,14 +465,15 @@
               ]
             },
             {
-              "matchNumber": 9,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2024-07-05T16:00:00Z",
               "advancesTo": {
-                "matchNumber": 13,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -481,14 +490,15 @@
               ]
             },
             {
-              "matchNumber": 10,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2024-07-05T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 13,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -507,14 +517,15 @@
               ]
             },
             {
-              "matchNumber": 11,
+              "matchNumber": 3,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2024-07-06T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 14,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "result": {
@@ -531,14 +542,15 @@
               ]
             },
             {
-              "matchNumber": 12,
+              "matchNumber": 4,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2024-07-06T16:00:00Z",
               "advancesTo": {
-                "matchNumber": 14,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -557,14 +569,15 @@
               ]
             },
             {
-              "matchNumber": 13,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2024-07-09T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 15,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -581,14 +594,15 @@
               ]
             },
             {
-              "matchNumber": 14,
+              "matchNumber": 2,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2024-07-10T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 15,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -605,7 +619,7 @@
               ]
             },
             {
-              "matchNumber": 15,
+              "matchNumber": 1,
               "roundNumber": 4,
               "home": null,
               "away": null,

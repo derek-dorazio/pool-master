@@ -160,7 +160,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     expect(expectMatchesSchema(SportEventBracketResponseSchema, loaded.data).matches.map((game) => [game.matchNumber, game.advancesToMatchId])).toEqual([[1, null], [2, null], [3, null], [4, null]]);
 
     // --- Released, a game is cancelled one by one; a draft's games are edited freely -----------
-    expectFunctionalError(await cancelEventMatch({ client: a, path: { eventId, matchNumber: 4 } }), { status: 409, code: 'SPORT_EVENT_NOT_RELEASED' });
+    expectFunctionalError(await cancelEventMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 4 } }), { status: 409, code: 'SPORT_EVENT_NOT_RELEASED' });
     const released = await releaseEvent({ client: a, path: { eventId } });
     expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
 
@@ -186,33 +186,33 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
 
     // Eagles-Giants is called off for this week: cancelled here, it would be added to the week it
     // moves to. Only the feed postpones a game (#2074).
-    const cancelled = await cancelEventMatch({ client: a, path: { eventId, matchNumber: 4 } });
+    const cancelled = await cancelEventMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 4 } });
     expect([cancelled.error, cancelled.response?.status]).toEqual([undefined, 200]);
     const statusOf = (matches: readonly { matchNumber: number; status: string }[]) => matches.map((game) => [game.matchNumber, game.status]);
     expect(statusOf(expectMatchesSchema(SportEventBracketResponseSchema, cancelled.data).matches))
       .toEqual([[1, MatchStatus.SCHEDULED], [2, MatchStatus.SCHEDULED], [3, MatchStatus.SCHEDULED], [4, MatchStatus.CANCELLED]]);
-    expect(statusOf(expectDefined((await cancelEventMatch({ client: a, path: { eventId, matchNumber: 4 } })).data).matches))
+    expect(statusOf(expectDefined((await cancelEventMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 4 } })).data).matches))
       .toEqual([[1, MatchStatus.SCHEDULED], [2, MatchStatus.SCHEDULED], [3, MatchStatus.SCHEDULED], [4, MatchStatus.CANCELLED]]);
 
     // --- The other three games are played, and the week completes -------------------------------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    const billsWin = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 20 } });
+    const billsWin = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 20 } });
     expect([billsWin.error, billsWin.response?.status]).toEqual([undefined, 200]);
     // A game of a week can end in a tie (#792): no winner, and both scores, level. Corrected here
     // to the Raiders' win.
     expectFunctionalError(
-      await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: null, homeScore: 17, awayScore: 24 } }),
+      await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: null, homeScore: 17, awayScore: 24 } }),
       { status: 422, code: 'MATCH_RESULT_INVALID' },
     );
-    const tie = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: null, homeScore: 20, awayScore: 20 } });
+    const tie = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: null, homeScore: 20, awayScore: 20 } });
     expect(expectMatchesSchema(SportEventBracketResponseSchema, tie.data).matches.filter((game) => game.matchNumber === 2)
       .map((game) => [game.status, game.winnerSide, game.homeScore, game.awayScore])).toEqual([[MatchStatus.COMPLETED, null, 20, 20]]);
-    expect((await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } })).response?.status).toBe(200);
-    const packersWin = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
+    expect((await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } })).response?.status).toBe(200);
+    const packersWin = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber: 3 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
     expect(expectMatchesSchema(SportEventBracketResponseSchema, packersWin.data).matches.map((game) => [game.matchNumber, game.status, game.winnerSide]))
       .toEqual([[1, MatchStatus.COMPLETED, MatchSide.HOME], [2, MatchStatus.COMPLETED, MatchSide.AWAY], [3, MatchStatus.COMPLETED, MatchSide.HOME], [4, MatchStatus.CANCELLED, null]]);
     // A played game is not cancelled.
-    expectFunctionalError(await cancelEventMatch({ client: a, path: { eventId, matchNumber: 1 } }), { status: 409, code: 'MATCH_ALREADY_PLAYED' });
+    expectFunctionalError(await cancelEventMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 } }), { status: 409, code: 'MATCH_ALREADY_PLAYED' });
 
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
   });

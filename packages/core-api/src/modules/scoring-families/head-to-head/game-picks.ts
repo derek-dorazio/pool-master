@@ -23,6 +23,7 @@
  *   (`rankPredictionStandings`).
  */
 import {
+  compareMatchPlaces,
   MatchEnding,
   MatchSide,
   MatchStatus,
@@ -126,17 +127,17 @@ export function scoreGamePicks(
 }
 
 /**
- * The week's tiebreaker game: its last game by kickoff, the highest game number among games that
- * kick off together. A game with no time of its own kicks off at `eventStart`. Null for a week with
+ * The week's tiebreaker game: its last game by kickoff, the last in game order (round, then number
+ * within it) among games that kick off together. A game with no time of its own kicks off at `eventStart`. Null for a week with
  * no games.
  */
-export function weekTiebreakerGame<Match extends Pick<SportEventRoundMatch, 'scheduledDate' | 'matchNumber'>>(
+export function weekTiebreakerGame<Match extends Pick<SportEventRoundMatch, 'scheduledDate' | 'roundNumber' | 'matchNumber'>>(
   games: readonly Match[],
   eventStart: Date,
 ): Match | null {
   const kickoff = (game: Match) => (game.scheduledDate ?? eventStart).getTime();
   return games.reduce<Match | null>((last, game) => (
-    last === null || kickoff(game) > kickoff(last) || (kickoff(game) === kickoff(last) && game.matchNumber > last.matchNumber)
+    last === null || kickoff(game) > kickoff(last) || (kickoff(game) === kickoff(last) && compareMatchPlaces(game, last) > 0)
       ? game
       : last
   ), null);

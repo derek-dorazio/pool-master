@@ -34,7 +34,7 @@
  */
 
 import { z } from 'zod';
-import { getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
+import { describeMatchPlace, getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -114,7 +114,7 @@ const FieldEntrySchema = z.object({
 }).strict();
 
 const MatchSchema = z.object({
-  /** Unique within the event: the bracket slot and the display order. */
+  /** Unique within its round (#2161): the match's place in the round and its display order. */
   matchNumber: z.number().int().min(1),
   roundNumber: z.number().int().min(1),
   /** A player key from the event's field, or null where an earlier match's winner fills the side. */
@@ -127,7 +127,7 @@ const MatchSchema = z.object({
    * Where the winner moves on to; null for the final. In a reseeded slot, also null for each
    * match of a round whose winners are placed by seed (the NFL's Wild Card games).
    */
-  advancesTo: z.object({ matchNumber: z.number().int().min(1), side: z.enum(MatchSide) }).strict().nullable(),
+  advancesTo: z.object({ roundNumber: z.number().int().min(1), matchNumber: z.number().int().min(1), side: z.enum(MatchSide) }).strict().nullable(),
   /** The region or conference the match is played in ("AFC", "East"); left out for none. */
   regionLabel: z.string().min(1).max(40).optional(),
   /**
@@ -443,8 +443,8 @@ function cancelledGameProblems(matches: readonly SportDataMatch[]): string[] {
   if (cancelled.length === 0) return [];
   const isWeek = formsNoBracket(matches, (match) => match.advancesTo !== null);
   return cancelled.flatMap((match) => {
-    if (!isWeek) return [`match ${match.matchNumber} is cancelled, but only a week's game can be: a bracket cannot lose a game`];
-    if (match.result !== undefined || match.periodScores !== undefined) return [`match ${match.matchNumber} is cancelled, so it has no result and no period scores`];
+    if (!isWeek) return [`${describeMatchPlace(match)} is cancelled, but only a week's game can be: a bracket cannot lose a game`];
+    if (match.result !== undefined || match.periodScores !== undefined) return [`${describeMatchPlace(match)} is cancelled, so it has no result and no period scores`];
     return [];
   });
 }
@@ -468,10 +468,10 @@ function tieProblems(event: SportDataEvent, matches: readonly SportDataMatch[]):
   return matches.flatMap((match) => {
     const result = match.result;
     if (result?.winner !== null) return [];
-    if (event.rounds > 1 || match.advancesTo !== null) return [`match ${match.matchNumber} has no winner, but a bracket match always has one`];
+    if (event.rounds > 1 || match.advancesTo !== null) return [`${describeMatchPlace(match)} has no winner, but a bracket match always has one`];
     const level = result.homeScore !== null && result.homeScore === result.awayScore;
     const shootout = result.homeShootoutScore !== undefined || result.awayShootoutScore !== undefined;
-    if (!level || shootout || result.ending !== undefined) return [`match ${match.matchNumber} has no winner, so it needs level scores, played to its end with no shoot-out`];
+    if (!level || shootout || result.ending !== undefined) return [`${describeMatchPlace(match)} has no winner, so it needs level scores, played to its end with no shoot-out`];
     return [];
   });
 }
@@ -483,14 +483,14 @@ function periodScoreProblems(sport: string, matches: readonly SportDataMatch[]):
   return matches.flatMap((match) => {
     const scores = match.periodScores ?? [];
     if (scores.length === 0) return [];
-    if (!periods) return [`match ${match.matchNumber} carries period scores, but its sport keeps no score by period`];
+    if (!periods) return [`${describeMatchPlace(match)} carries period scores, but its sport keeps no score by period`];
     const problems: string[] = [];
-    if (match.result === undefined) problems.push(`match ${match.matchNumber} carries period scores but no result, and they are entered with its result`);
+    if (match.result === undefined) problems.push(`${describeMatchPlace(match)} carries period scores but no result, and they are entered with its result`);
     if (scores.some((score) => score.periodNumber >= periods.count)) {
-      problems.push(`match ${match.matchNumber} has a score for ${periods.label.one} ${periods.count} or later, which is the result's final score`);
+      problems.push(`${describeMatchPlace(match)} has a score for ${periods.label.one} ${periods.count} or later, which is the result's final score`);
     }
     if (scores.some((score, index) => index > 0 && score.periodNumber <= scores[index - 1].periodNumber)) {
-      problems.push(`match ${match.matchNumber}'s period scores are not in period order, once each`);
+      problems.push(`${describeMatchPlace(match)}'s period scores are not in period order, once each`);
     }
     return problems;
   });

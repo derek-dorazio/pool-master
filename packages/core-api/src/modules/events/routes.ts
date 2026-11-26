@@ -605,7 +605,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       tags: TAGS,
       summary: 'Load a sport event\'s bracket',
       description: `${TEST_EVENT_ONLY} ` + 'Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. '
-        + '409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats, a round is not the event\'s, a side names a field row the event lacks or one already named, '
+        + '409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats within a round, a round is not the event\'s, a side names a field row the event lacks or one already named, '
         + 'a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. '
         + `422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
       operationId: 'loadEventBracket',
@@ -616,7 +616,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.loadEventBracket,
   });
 
-  fastify.patch('/:eventId/bracket/matches/:matchNumber', {
+  fastify.patch('/:eventId/bracket/rounds/:roundNumber/matches/:matchNumber', {
     ...write,
     schema: {
       tags: TAGS,
@@ -624,12 +624,12 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       description: `${TEST_EVENT_ONLY} ` + 'Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). '
         + 'The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). '
         + '422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match\'s winner fills, or both sides one team. '
-        + `404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 ${BRACKET_NOT_A_BRACKET} Root admin only.`,
+        + `404 BRACKET_MATCH_NOT_FOUND for a round and match number the bracket lacks. 422 ${BRACKET_NOT_A_BRACKET} Root admin only.`,
       operationId: 'updateEventBracketMatch',
       params: {
         type: 'object',
-        required: ['eventId', 'matchNumber'],
-        properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
+        required: ['eventId', 'roundNumber', 'matchNumber'],
+        properties: { eventId: uuid, roundNumber: { type: 'integer', minimum: 1 }, matchNumber: { type: 'integer', minimum: 1 } },
       },
       body: schemaRef('UpdateSportEventRoundMatchRequest'),
       response: { 200: schemaRef('SportEventRoundMatchResponse'), ...errors(400, 401, 403, 404, 409, 422) },
@@ -639,12 +639,12 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
 
   const MATCH_PARAMS = {
     type: 'object',
-    required: ['eventId', 'matchNumber'],
-    properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
+    required: ['eventId', 'roundNumber', 'matchNumber'],
+    properties: { eventId: uuid, roundNumber: { type: 'integer', minimum: 1 }, matchNumber: { type: 'integer', minimum: 1 } },
   } as const;
   const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score.';
 
-  fastify.put('/:eventId/bracket/matches/:matchNumber/result', {
+  fastify.put('/:eventId/bracket/rounds/:roundNumber/matches/:matchNumber/result', {
     ...write,
     schema: {
       tags: TAGS,
@@ -665,13 +665,13 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
 
   const PERIOD_PARAMS = {
     type: 'object',
-    required: ['eventId', 'matchNumber', 'periodNumber'],
-    properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 }, periodNumber: { type: 'integer', minimum: 1 } },
+    required: ['eventId', 'roundNumber', 'matchNumber', 'periodNumber'],
+    properties: { eventId: uuid, roundNumber: { type: 'integer', minimum: 1 }, matchNumber: { type: 'integer', minimum: 1 }, periodNumber: { type: 'integer', minimum: 1 } },
   } as const;
   const PERIOD_REFUSALS = '409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_CANCELLED for a cancelled game. '
     + '422 MATCH_PERIOD_INVALID when the event\'s sport keeps no score by period, or for the last period or past it, whose score is the final result.';
 
-  fastify.put('/:eventId/bracket/matches/:matchNumber/periods/:periodNumber', {
+  fastify.put('/:eventId/bracket/rounds/:roundNumber/matches/:matchNumber/periods/:periodNumber', {
     ...write,
     schema: {
       tags: TAGS,
@@ -688,7 +688,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.recordEventMatchPeriodScore,
   });
 
-  fastify.post('/:eventId/bracket/matches/:matchNumber/cancel', {
+  fastify.post('/:eventId/bracket/rounds/:roundNumber/matches/:matchNumber/cancel', {
     ...write,
     schema: {
       tags: TAGS,

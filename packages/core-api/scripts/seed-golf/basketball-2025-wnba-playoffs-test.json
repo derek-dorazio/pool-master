@@ -194,7 +194,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 5,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -211,7 +212,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 5,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -228,7 +230,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 6,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -245,7 +248,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-09-15T02:00:00Z",
               "advancesTo": {
-                "matchNumber": 6,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "result": {
@@ -255,14 +259,15 @@
               }
             },
             {
-              "matchNumber": 5,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 7,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -272,14 +277,15 @@
               }
             },
             {
-              "matchNumber": 6,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 7,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -289,7 +295,7 @@
               }
             },
             {
-              "matchNumber": 7,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,

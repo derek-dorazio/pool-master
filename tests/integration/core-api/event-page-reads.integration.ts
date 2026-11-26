@@ -211,7 +211,7 @@ describe('a match records when its result came in', () => {
     const result = { winnerSide: 'HOME', homeScore: 24, awayScore: 10 };
 
     const beforeRecord = okBody(await get(`/api/v1/events/${event.id}/bracket`, rootAdmin), SportEventBracketResponseSchema).matches[0];
-    const recorded = await send('PUT', `/api/v1/events/${event.id}/bracket/matches/1/result`, rootAdmin, result);
+    const recorded = await send('PUT', `/api/v1/events/${event.id}/bracket/rounds/1/matches/1/result`, rootAdmin, result);
     const afterRecord = okBody(await get(`/api/v1/events/${event.id}/bracket`, rootAdmin), SportEventBracketResponseSchema).matches[0];
 
     expect(recorded.statusCode).toBe(200);

@@ -12,7 +12,7 @@ function GameLines({ drawn, isMirrored, picking }: { drawn: BracketDrawnGame; is
   const { game } = drawn;
   const choosable = picking !== null && !game.locked;
   return (
-    <div className="flex flex-1 flex-col justify-center gap-0.5 py-1" data-testid={`bracket-game-${game.matchNumber}`}>
+    <div className="flex flex-1 flex-col justify-center gap-0.5 py-1" data-testid={`bracket-game-${game.roundNumber}-${game.matchNumber}`}>
       {drawn.lines.map((line, index) => {
         const side = index === 0 ? 'home' : 'away';
         if (!line.team) {
@@ -22,7 +22,7 @@ function GameLines({ drawn, isMirrored, picking }: { drawn: BracketDrawnGame; is
               isOpen
               key={side}
               name={line.openLabel}
-              testId={`bracket-game-${game.matchNumber}-open-${side}`}
+              testId={`bracket-game-${game.roundNumber}-${game.matchNumber}-open-${side}`}
             />
           );
         }
@@ -38,7 +38,7 @@ function GameLines({ drawn, isMirrored, picking }: { drawn: BracketDrawnGame; is
             name={team.name}
             onPick={choosable ? () => picking.onPick(game, team) : undefined}
             seed={team.seedNumber}
-            testId={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
+            testId={`bracket-game-${game.roundNumber}-${game.matchNumber}-team-${team.sportEventParticipantId}`}
           />
         );
       })}

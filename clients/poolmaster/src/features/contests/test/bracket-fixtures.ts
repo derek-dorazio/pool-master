@@ -54,7 +54,7 @@ const FIXTURE_ROUND_SLOTS: Readonly<Record<number, Game['slot']>> = {
 export function bracketGame(overrides: Partial<Game> & Pick<Game, 'matchNumber' | 'roundNumber'>): Game {
   const { matchNumber, roundNumber } = overrides;
   return {
-    sportEventRoundMatchId: `match-${matchNumber}`,
+    sportEventRoundMatchId: `match-${roundNumber}-${matchNumber}`,
     slot: FIXTURE_ROUND_SLOTS[roundNumber],
     isFinal: FIXTURE_ROUND_SLOTS[roundNumber].slotKind === SlotKind.FINAL,
     kickoff: BRACKET_START,
@@ -99,28 +99,28 @@ export function emptyBracketGames(): Game[] {
     openingGame(2, 'East', TEAMS.houston, TEAMS.texas),
     openingGame(3, 'West', TEAMS.kansas, TEAMS.akron),
     openingGame(4, 'West', TEAMS.gonzaga, TEAMS.yale),
-    bracketGame({ matchNumber: 5, roundNumber: 2, regionLabel: 'East' }),
-    bracketGame({ matchNumber: 6, roundNumber: 2, regionLabel: 'West' }),
-    bracketGame({ matchNumber: 7, roundNumber: 3 }),
+    bracketGame({ matchNumber: 1, roundNumber: 2, regionLabel: 'East' }),
+    bracketGame({ matchNumber: 2, roundNumber: 2, regionLabel: 'West' }),
+    bracketGame({ matchNumber: 1, roundNumber: 3 }),
   ];
 }
 
 /**
  * A second-chance bracket's games (#721): only those from its starting round on, here the Elite
- * Eight, Final Four and final of a six-round bracket, numbered as the whole bracket numbers them.
+ * Eight, Final Four and final of a six-round bracket, each numbered within its round.
  * The Elite Eight's teams are decided, so they are offered as the first round's are.
  */
 export function secondChanceBracketGames(): Game[] {
   const eliteEight = (matchNumber: number, regionLabel: string, home: Team, away: Team) =>
     bracketGame({ matchNumber, roundNumber: 4, regionLabel, home, away, predictedHome: home, predictedAway: away });
   return [
-    eliteEight(57, 'East', TEAMS.duke, TEAMS.vermont),
-    eliteEight(58, 'East', TEAMS.houston, TEAMS.texas),
-    eliteEight(59, 'West', TEAMS.kansas, TEAMS.akron),
-    eliteEight(60, 'West', TEAMS.gonzaga, TEAMS.yale),
-    bracketGame({ matchNumber: 61, roundNumber: 5 }),
-    bracketGame({ matchNumber: 62, roundNumber: 5 }),
-    bracketGame({ matchNumber: 63, roundNumber: 6 }),
+    eliteEight(1, 'East', TEAMS.duke, TEAMS.vermont),
+    eliteEight(2, 'East', TEAMS.houston, TEAMS.texas),
+    eliteEight(3, 'West', TEAMS.kansas, TEAMS.akron),
+    eliteEight(4, 'West', TEAMS.gonzaga, TEAMS.yale),
+    bracketGame({ matchNumber: 1, roundNumber: 5 }),
+    bracketGame({ matchNumber: 2, roundNumber: 5 }),
+    bracketGame({ matchNumber: 1, roundNumber: 6 }),
   ];
 }
 
@@ -135,9 +135,9 @@ export function filledBracketGames(): Game[] {
     { ...g2, pick: gamePick(TEAMS.houston) },
     { ...g3, pick: gamePick(TEAMS.kansas) },
     { ...g4, pick: gamePick(TEAMS.gonzaga) },
-    bracketGame({ matchNumber: 5, roundNumber: 2, regionLabel: 'East', predictedHome: TEAMS.duke, predictedAway: TEAMS.houston, pick: gamePick(TEAMS.duke) }),
-    bracketGame({ matchNumber: 6, roundNumber: 2, regionLabel: 'West', predictedHome: TEAMS.kansas, predictedAway: TEAMS.gonzaga, pick: gamePick(TEAMS.kansas) }),
-    bracketGame({ matchNumber: 7, roundNumber: 3, predictedHome: TEAMS.duke, predictedAway: TEAMS.kansas, pick: gamePick(TEAMS.duke) }),
+    bracketGame({ matchNumber: 1, roundNumber: 2, regionLabel: 'East', predictedHome: TEAMS.duke, predictedAway: TEAMS.houston, pick: gamePick(TEAMS.duke) }),
+    bracketGame({ matchNumber: 2, roundNumber: 2, regionLabel: 'West', predictedHome: TEAMS.kansas, predictedAway: TEAMS.gonzaga, pick: gamePick(TEAMS.kansas) }),
+    bracketGame({ matchNumber: 1, roundNumber: 3, predictedHome: TEAMS.duke, predictedAway: TEAMS.kansas, pick: gamePick(TEAMS.duke) }),
   ];
 }
 

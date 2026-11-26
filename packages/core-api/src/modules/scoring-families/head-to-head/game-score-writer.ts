@@ -31,7 +31,7 @@
  * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
  * with that winner (`play-in-fill.ts`), so the game links to the place's match in the same sync.
  */
-import { requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, seriesWinsNeeded, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, describeMatchPlace, matchPlaceOf, requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, seriesWinsNeeded, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventRoundMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -97,7 +97,7 @@ export async function writeGameScores(
   await deps.matches.linkGames(links.map(({ game, match }) => ({ id: match.id, externalGameId: game.externalGameId })));
   for (const { game, match } of links) {
     deps.logger?.info(
-      { action: 'liveScore.game.linked', data: { sportEventId, matchNumber: match.matchNumber, externalGameId: game.externalGameId } },
+      { action: 'liveScore.game.linked', data: { sportEventId, ...matchPlaceOf(match), externalGameId: game.externalGameId } },
       'Linked a provider game to the match its teams play',
     );
   }
@@ -124,7 +124,7 @@ export async function writeGameScores(
       const result: MatchResultFromGame = { winnerSide: each.winnerSide, homeScore: each.homeWins, awayScore: each.awayWins };
       return [{ match: each.match, externalId: each.externalId, resultOn: () => result }];
     }),
-  ].sort((left, right) => left.match.roundNumber - right.match.roundNumber || left.match.matchNumber - right.match.matchNumber);
+  ].sort((left, right) => compareMatchPlaces(left.match, right.match));
   /** Each match as the latest result in this batch wrote it. */
   const rewritten = new Map<string, SportEventRoundMatch>();
 
@@ -135,7 +135,7 @@ export async function writeGameScores(
     const result = final.resultOn(match);
     if (result === null) {
       deps.logger?.warn(
-        { action: 'liveScore.game.teamsDoNotFit', data: { sportEventId, matchNumber: match.matchNumber, externalGameId: externalId } },
+        { action: 'liveScore.game.teamsDoNotFit', data: { sportEventId, ...matchPlaceOf(match), externalGameId: externalId } },
         'Skipped a final game that cannot score the linked match: its teams are not the match\'s, or it has no score',
       );
       continue;
@@ -147,20 +147,20 @@ export async function writeGameScores(
       homeShootoutScore: match.homeShootoutScore,
       awayShootoutScore: match.awayShootoutScore,
     };
-    const row = { id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: `Match ${match.matchNumber}`, before, after: { ...result } };
+    const row = { id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: describeMatchPlace(match, { sentenceStart: true }), before, after: { ...result } };
     if (hasResult(match, result)) {
       rows.push({ ...row, disposition: 'UNCHANGED' });
       continue;
     }
     try {
       // One at a time: the bracket each result writes is the one the next is read against.
-      const bracket = await deps.results.recordResult(sportEventId, match.matchNumber, result);
+      const bracket = await deps.results.recordResult(sportEventId, matchPlaceOf(match), result);
       for (const each of bracket) rewritten.set(each.id, each);
       rows.push({ ...row, disposition: 'UPDATED' });
     } catch (error) {
       if (!(error instanceof SportEventError)) throw error;
       deps.logger?.warn(
-        { action: 'liveScore.game.refused', data: { sportEventId, matchNumber: match.matchNumber, externalGameId: externalId, code: error.code } },
+        { action: 'liveScore.game.refused', data: { sportEventId, ...matchPlaceOf(match), externalGameId: externalId, code: error.code } },
         'The match refused a provider\'s final result',
       );
     }
@@ -186,7 +186,7 @@ export async function writeGameScores(
     const unchanged = before.status === score.status && before.homeScore === score.homeScore && before.awayScore === score.awayScore;
     if (!unchanged) live.push({ id: match.id, ...score });
     rows.push({
-      id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: `Match ${match.matchNumber}`,
+      id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: describeMatchPlace(match, { sentenceStart: true }),
       before, after: { ...score }, disposition: unchanged ? 'UNCHANGED' : 'UPDATED',
     });
   }
@@ -243,7 +243,7 @@ function seriesStandings(
     if (seriesGames.length === 0) return [];
     if (candidates.length > 1) {
       deps.logger?.warn(
-        { action: 'liveScore.series.ambiguous', data: { sportEventId, matchNumbers: candidates.map((match) => match.matchNumber) } },
+        { action: 'liveScore.series.ambiguous', data: { sportEventId, matches: candidates.map(matchPlaceOf) } },
         'Skipped a series whose two teams two matches share: an admin settles which one the games score',
       );
       return [];
@@ -261,7 +261,7 @@ function seriesStandings(
     // A game counted after the series was won (5-0 in a best of seven) is as wrong as one too many.
     if (winners.length > length || Math.max(homeWins, awayWins) > needed) {
       deps.logger?.warn(
-        { action: 'liveScore.series.tooManyGames', data: { sportEventId, matchNumber: match.matchNumber, externalGameIds: externalId, length } },
+        { action: 'liveScore.series.tooManyGames', data: { sportEventId, ...matchPlaceOf(match), externalGameIds: externalId, length } },
         'Skipped a series whose feed has more decided games than the series can have',
       );
       return [];

@@ -118,7 +118,7 @@ describe('SDK Functional: American football', () => {
 
     // --- The Super Bowl's quarter scores (#772): Seattle, the away side, 3-0, 9-0 and 12-0 --------
     const superBowlOf = async () => expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches
-      .find((match) => match.matchNumber === 13));
+      .find((match) => match.roundNumber === 4 && match.matchNumber === 1));
     const superBowl = await superBowlOf();
     expect([superBowl.awaySportEventParticipantId, superBowl.awayScore, superBowl.homeScore]).toEqual([rowOf('Seattle Seahawks'), 29, 13]);
     const asLoaded = [
@@ -127,7 +127,9 @@ describe('SDK Functional: American football', () => {
       { periodNumber: 3, homeScore: 0, awayScore: 12 },
     ];
     expect(superBowl.periodScores).toEqual(asLoaded);
-    const superBowlQuarter = (periodNumber: number) => ({ eventId: event.id, matchNumber: 13, periodNumber });
+    // Each round numbers its games from 1 (#2161): the Super Bowl is round 4's match 1.
+    const superBowlPlace = { roundNumber: 4, matchNumber: 1 };
+    const superBowlQuarter = (periodNumber: number) => ({ eventId: event.id, ...superBowlPlace, periodNumber });
     // A score below the half's, past the final score, or for the last quarter is refused; a member may not enter one.
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: { homeScore: 0, awayScore: 6 } })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: { homeScore: 14, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
@@ -141,9 +143,9 @@ describe('SDK Functional: American football', () => {
     // Results come only from the feed (#2074): the routes that cleared a result or a quarter's score,
     // postponed a game or replaced a withdrawn participant are gone, so even a root admin gets 404.
     const removedRoutes = await Promise.all([
-      a.delete({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result', path: { eventId: event.id, matchNumber: 13 } }),
-      a.delete({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}', path: superBowlQuarter(2) }),
-      a.post({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone', path: { eventId: event.id, matchNumber: 13 } }),
+      a.delete({ url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/result', path: { eventId: event.id, ...superBowlPlace } }),
+      a.delete({ url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/periods/{periodNumber}', path: superBowlQuarter(2) }),
+      a.post({ url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/postpone', path: { eventId: event.id, ...superBowlPlace } }),
       a.put({
         url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/replacement',
         path: { eventId: event.id, sportEventParticipantId: superBowl.homeSportEventParticipantId },
@@ -176,14 +178,14 @@ describe('SDK Functional: American football', () => {
     );
     await moveLinks((link) => expectDefined(syncedOf.get(link.seasonSlot.sportLeagueCompetitionSlotId), 'the synced slot beside the test one'));
     const seahawks = rowOf('Seattle Seahawks');
-    const matchPath = { eventId: event.id, matchNumber: 13 };
+    const matchPath = { eventId: event.id, ...superBowlPlace };
     const refused = await Promise.all([
       loadEventBracket({ client: a, path: { eventId: event.id }, body: { matches: [{ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: null }] } }),
       updateEventBracketMatch({ client: a, path: matchPath, body: { isNeutralSite: true } }),
       recordEventMatchResult({ client: a, path: matchPath, body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29 } }),
       recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } }),
       cancelEventMatch({ client: a, path: matchPath }),
-      setEventRoundMatchups({ client: a, path: { eventId: event.id, roundNumber: 2 }, body: { matches: [{ matchNumber: 7, homeSportEventParticipantId: seahawks, awaySportEventParticipantId: rowOf('Los Angeles Rams') }] } }),
+      setEventRoundMatchups({ client: a, path: { eventId: event.id, roundNumber: 2 }, body: { matches: [{ matchNumber: 1, homeSportEventParticipantId: seahawks, awaySportEventParticipantId: rowOf('Los Angeles Rams') }] } }),
       setEventPlayInWinner({ client: a, path: { eventId: event.id, sportEventParticipantId: seahawks }, body: { participantId: ANY_UUID } }),
       applyEventGolfRoundScores({ client: a, path: { eventId: event.id, roundNumber: 1 }, body: { rows: [{ participantId: ANY_UUID, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }] } }),
       updateEventParticipantGolfRoundScore({ client: a, path: { eventId: event.id, roundNumber: 1, sportEventParticipantId: seahawks }, body: { strokes: 70 } }),

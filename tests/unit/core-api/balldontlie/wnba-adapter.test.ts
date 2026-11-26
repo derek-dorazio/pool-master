@@ -135,13 +135,13 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       const team = (id: number) => String(id);
       // Minnesota 1 v Golden State 8, Phoenix 4 v New York 5, Atlanta 3 v Indiana 6, Las Vegas 2 v Seattle 7.
       expect(detail?.bracket?.map((match) => [match.matchNumber, match.roundNumber, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
-        [1, 1, team(8), team(18), { matchNumber: 5, side: MatchSide.HOME }],
-        [2, 1, team(10), team(9), { matchNumber: 5, side: MatchSide.AWAY }],
-        [3, 1, team(1), team(5), { matchNumber: 6, side: MatchSide.AWAY }],
-        [4, 1, team(7), team(11), { matchNumber: 6, side: MatchSide.HOME }],
-        [5, 2, null, null, { matchNumber: 7, side: MatchSide.HOME }],
-        [6, 2, null, null, { matchNumber: 7, side: MatchSide.AWAY }],
-        [7, 3, null, null, null],
+        [1, 1, team(8), team(18), { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME }],
+        [2, 1, team(10), team(9), { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY }],
+        [3, 1, team(1), team(5), { roundNumber: 2, matchNumber: 2, side: MatchSide.AWAY }],
+        [4, 1, team(7), team(11), { roundNumber: 2, matchNumber: 2, side: MatchSide.HOME }],
+        [1, 2, null, null, { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME }],
+        [2, 2, null, null, { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY }],
+        [1, 3, null, null, null],
       ]);
       expect(detail?.rounds).toBe(3);
       expect(detail?.games).toHaveLength(7);

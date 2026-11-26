@@ -184,14 +184,14 @@ describe('a World Cup bracket and its games from the feed (#1728)', () => {
       awayTeamExternalId: '33',
       isNeutralSite: true,
       scheduledAt: new Date(byVendorNumber(74).datetime ?? ''),
-      advancesTo: { matchNumber: 17, side: MatchSide.HOME },
+      advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME },
       regionLabel: null,
     });
-    expect(bracket?.[1].advancesTo).toEqual({ matchNumber: 17, side: MatchSide.AWAY });
+    expect(bracket?.[1].advancesTo).toEqual({ roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY });
     expect(bracket?.map((match) => match.roundNumber)).toEqual([...Array<number>(16).fill(1), ...Array<number>(8).fill(2), 3, 3, 3, 3, 4, 4, 5]);
-    expect(bracket?.[16]).toMatchObject({ matchNumber: 17, homeTeamExternalId: null, awayTeamExternalId: null, advancesTo: { matchNumber: 25, side: MatchSide.HOME } });
-    expect(bracket?.[28]).toMatchObject({ matchNumber: 29, scheduledAt: new Date(byVendorNumber(101).datetime ?? ''), advancesTo: { matchNumber: 31, side: MatchSide.HOME } });
-    expect(bracket?.[30]).toMatchObject({ matchNumber: 31, roundNumber: 5, advancesTo: null, scheduledAt: new Date(byVendorNumber(104).datetime ?? '') });
+    expect(bracket?.[16]).toMatchObject({ roundNumber: 2, matchNumber: 1, homeTeamExternalId: null, awayTeamExternalId: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME } });
+    expect(bracket?.[28]).toMatchObject({ roundNumber: 4, matchNumber: 1, scheduledAt: new Date(byVendorNumber(101).datetime ?? ''), advancesTo: { roundNumber: 5, matchNumber: 1, side: MatchSide.HOME } });
+    expect(bracket?.[30]).toMatchObject({ matchNumber: 1, roundNumber: 5, advancesTo: null, scheduledAt: new Date(byVendorNumber(104).datetime ?? '') });
   });
 
   it('links a decided side to the match its team won the round before, the same as its source would', () => {

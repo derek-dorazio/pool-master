@@ -66,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -960,8 +960,8 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
     })),
     raceResult: raceResult ? toRaceResult(raceResult) : null,
     matches: [...homeMatches, ...awayMatches]
-      .sort((left, right) => left.matchNumber - right.matchNumber)
-      .map(toSportEventRoundMatch),
+      .map(toSportEventRoundMatch)
+      .sort(compareMatchPlaces),
     affiliatedWithSportLeague: participant.sportLeagueId === sportLeagueId,
   };
 }

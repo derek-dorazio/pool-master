@@ -159,14 +159,14 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const result = async (matchNumber: number, side: Side) => {
     const recorded = await recordEventMatchResult({
       client: a,
-      path: { eventId, matchNumber },
+      path: { eventId, roundNumber: 1, matchNumber },
       body: side === 'home' ? { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60 } : { winnerSide: MatchSide.AWAY, homeScore: 60, awayScore: 70 },
     });
     expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
   };
   /** The admin calls off game `matchNumber`, as for a postponed game. */
   const cancel = async (matchNumber: number) => {
-    const cancelled = await cancelEventMatch({ client: a, path: { eventId, matchNumber } });
+    const cancelled = await cancelEventMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber } });
     expect([cancelled.error, cancelled.response?.status]).toEqual([undefined, 200]);
   };
   return { eventId, gameId: (matchNumber: number) => game(matchNumber).id, pick, result, cancel };

@@ -350,7 +350,7 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
 
     const saved = await getApp().inject({
       method: 'PUT',
-      url: `/api/v1/events/${season.liveWeek.event.id}/bracket/matches/3/result`,
+      url: `/api/v1/events/${season.liveWeek.event.id}/bracket/rounds/1/matches/3/result`,
       headers: admin.headers,
       payload: { winnerSide: 'HOME', homeScore: 24, awayScore: 10 },
     });

@@ -1,7 +1,7 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, isAtPlace, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status } from '@poolmaster/shared/domain';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
@@ -93,6 +93,19 @@ describe('ProviderGameSlateService', () => {
     ]);
   });
 
+  it('keeps each game\'s number within its round when the provider adds a game kicking off later: the new game takes the next number', async () => {
+    const { service, event, field, matchesNow } = setup();
+    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Bears', 'Lions', 0)] });
+
+    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
+      .resolves.toMatchObject({ sportEventId: event.id });
+
+    expect(await matchesNow()).toEqual([
+      [1, field.Bears, field.Lions, KICKOFF.toISOString()],
+      [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 3 * HOUR).toISOString()],
+    ]);
+  });
+
   it('writes nothing when a draft already holds the provider\'s games', async () => {
     const { service, event, store } = setup();
     await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
@@ -111,7 +124,7 @@ describe('ProviderGameSlateService', () => {
 
     // The Packers game's kickoff firms up an hour earlier, so it now sorts first.
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', -1)] }))
-      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
 
     expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
     expect(store.matchRows.map((match) => match.homeSpread)).toEqual([-3.5, 6.5]);
@@ -127,7 +140,7 @@ describe('ProviderGameSlateService', () => {
     store.matchRows = store.matchRows.map((match) => ({ ...match, homeSpread: match.matchNumber === 1 ? -3.5 : null }));
 
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Lions', 'Bears', 0), WEEK[0]] }))
-      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
 
     expect(await matchesNow()).toEqual([
       [1, field.Lions, field.Bears, KICKOFF.toISOString()],
@@ -142,10 +155,10 @@ describe('ProviderGameSlateService', () => {
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
 
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Lions', 'Bears', 1), WEEK[0]] }))
-      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
 
     expect((await matchesNow())[0]).toEqual([1, field.Bears, field.Lions, new Date(KICKOFF.getTime() + HOUR).toISOString()]);
-    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: event.id, swappedMatchNumbers: [1] }), expect.any(String));
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: event.id, swappedMatches: [{ roundNumber: 1, matchNumber: 1 }] }), expect.any(String));
     expect(logger.warn).not.toHaveBeenCalledWith(expect.objectContaining({ unmatchedPairings: expect.anything() }), expect.any(String));
   });
 
@@ -170,7 +183,7 @@ describe('ProviderGameSlateService', () => {
 
     const flexed = [game('g1', 'Bears', 'Lions', 5), game('g2', 'Packers', 'Vikings', 8), game('g9', 'Bears', 'Vikings', 9)];
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: flexed }))
-      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
 
     expect(await matchesNow()).toEqual([
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
@@ -190,7 +203,7 @@ describe('ProviderGameSlateService', () => {
 
     const rescheduled = [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', 26)];
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: rescheduled }))
-      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
 
     expect(await matchesNow()).toContainEqual([2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 26 * HOUR).toISOString()]);
     expect(store.matchRows.find((match) => match.matchNumber === 2)?.status).toBe(MatchStatus.POSTPONED);
@@ -317,13 +330,13 @@ describe('ProviderGameSlateService', () => {
         service.syncGames({ providerId: PROVIDER, externalId: POSTSEASON_EVENT, games, bracket: shape });
       const sides = () => store.matchRows
         .slice()
-        .sort((left, right) => left.matchNumber - right.matchNumber)
-        .map((match) => [match.matchNumber, match.homeSportEventParticipantId, match.awaySportEventParticipantId]);
+        .sort(compareMatchPlaces)
+        .map((match) => [match.roundNumber, match.matchNumber, match.homeSportEventParticipantId, match.awaySportEventParticipantId]);
       /** Round 1 played: the 2 and 4 seeds win at home, the 6 seed wins away. */
       const playWildCard = () => {
         const winners = new Map([[1, MatchSide.HOME], [2, MatchSide.AWAY], [3, MatchSide.HOME]]);
         store.matchRows = store.matchRows.map((match) => {
-          const winnerSide = winners.get(match.matchNumber);
+          const winnerSide = match.roundNumber === 1 ? winners.get(match.matchNumber) : undefined;
           return winnerSide === undefined ? match : { ...match, status: MatchStatus.COMPLETED, winnerSide, homeScore: 20, awayScore: 17 };
         });
       };
@@ -347,10 +360,11 @@ describe('ProviderGameSlateService', () => {
       slot(1, 1, 2, 7, { scheduledAt: KICKOFF }),
       slot(2, 1, 3, 6, { scheduledAt: KICKOFF }),
       slot(3, 1, 4, 5, { scheduledAt: KICKOFF }),
-      slot(4, 2, 1, null),
-      slot(5, 2, null, null),
-      slot(6, 3, null, null, { regionLabel: null, isNeutralSite: true }),
-    ].map((match) => (match.matchNumber === 4 ? { ...match, advancesTo: { matchNumber: 6, side: MatchSide.HOME } } : match.matchNumber === 5 ? { ...match, advancesTo: { matchNumber: 6, side: MatchSide.AWAY } } : match));
+      // Each round numbers its games from 1 (#2161).
+      slot(1, 2, 1, null, { advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME } }),
+      slot(2, 2, null, null, { advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY } }),
+      slot(1, 3, null, null, { regionLabel: null, isNeutralSite: true }),
+    ];
     const playoffGame = (id: string, roundNumber: number, home: number, away: number, hoursAfterKickoff = 0): ProviderScheduledGame => ({
       externalGameId: id,
       roundNumber,
@@ -367,24 +381,24 @@ describe('ProviderGameSlateService', () => {
       await expect(sync(WILD_CARD)).resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
 
       expect(sides()).toEqual([
-        [1, rowOf(2), rowOf(7)], [2, rowOf(3), rowOf(6)], [3, rowOf(4), rowOf(5)],
-        [4, rowOf(1), null], [5, null, null], [6, null, null],
+        [1, 1, rowOf(2), rowOf(7)], [1, 2, rowOf(3), rowOf(6)], [1, 3, rowOf(4), rowOf(5)],
+        [2, 1, rowOf(1), null], [2, 2, null, null], [3, 1, null, null],
       ]);
-      const byNumber = new Map(store.matchRows.map((match) => [match.matchNumber, match]));
-      expect(byNumber.get(4)?.advancesToMatchId).toBe(byNumber.get(6)?.id);
-      expect(byNumber.get(5)?.advancesToSide).toBe(MatchSide.AWAY);
-      expect(byNumber.get(6)).toMatchObject({ isNeutralSite: true, regionLabel: null });
-      expect(byNumber.get(1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
+      const at = (roundNumber: number, matchNumber: number) => store.matchRows.find((match) => isAtPlace(match, { roundNumber, matchNumber }));
+      expect(at(2, 1)?.advancesToMatchId).toBe(at(3, 1)?.id);
+      expect(at(2, 2)?.advancesToSide).toBe(MatchSide.AWAY);
+      expect(at(3, 1)).toMatchObject({ isNeutralSite: true, regionLabel: null });
+      expect(at(1, 1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });
 
     it('logs which regions meet in each match fed from two regions when it loads a bracket, so an admin can check them before release', async () => {
       const { sync, logger, event } = playoffSetup();
-      const twoRegions = BRACKET.map((match) => (match.matchNumber === 5 ? { ...match, regionLabel: 'NFC' } : match));
+      const twoRegions = BRACKET.map((match) => (isAtPlace(match, { roundNumber: 2, matchNumber: 2 }) ? { ...match, regionLabel: 'NFC' } : match));
 
       await sync(WILD_CARD, twoRegions);
 
       expect(logger.info).toHaveBeenCalledWith(
-        expect.objectContaining({ sportEventId: event.id, crossRegionPairings: [{ matchNumber: 6, regions: ['AFC', 'NFC'] }] }),
+        expect.objectContaining({ sportEventId: event.id, crossRegionPairings: [{ roundNumber: 3, matchNumber: 1, regions: ['AFC', 'NFC'] }] }),
         expect.any(String),
       );
     });
@@ -415,7 +429,7 @@ describe('ProviderGameSlateService', () => {
       const idsBefore = store.matchRows.map((match) => match.id);
 
       await expect(sync([playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[]))
-        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
       expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
     });
 
@@ -426,7 +440,7 @@ describe('ProviderGameSlateService', () => {
       const idsBefore = store.matchRows.map((match) => match.id);
 
       await expect(service.syncGames({ providerId: PROVIDER, externalId: POSTSEASON_EVENT, games: [playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[] }))
-        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
       expect(sides()).toEqual(before);
       expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
     });
@@ -434,10 +448,11 @@ describe('ProviderGameSlateService', () => {
     it('reloads a draft bracket when the provider\'s seeds change who plays whom', async () => {
       const { sync, sides, rowOf, event } = playoffSetup();
       await sync(WILD_CARD);
-      const reseeded = BRACKET.map((match) => (match.matchNumber === 2 ? slot(2, 1, 3, 5, { scheduledAt: KICKOFF }) : match.matchNumber === 3 ? slot(3, 1, 4, 6, { scheduledAt: KICKOFF }) : match));
+      const reseeded = BRACKET.map((match) => (isAtPlace(match, { roundNumber: 1, matchNumber: 2 }) ? slot(2, 1, 3, 5, { scheduledAt: KICKOFF })
+        : isAtPlace(match, { roundNumber: 1, matchNumber: 3 }) ? slot(3, 1, 4, 6, { scheduledAt: KICKOFF }) : match));
 
       await expect(sync([], reseeded)).resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
-      expect(sides().slice(1, 3)).toEqual([[2, rowOf(3), rowOf(5)], [3, rowOf(4), rowOf(6)]]);
+      expect(sides().slice(1, 3)).toEqual([[1, 2, rowOf(3), rowOf(5)], [1, 3, rowOf(4), rowOf(6)]]);
     });
 
     it('places a released playoff\'s reseeded round from the provider\'s games once the round before is played, taking their kickoffs', async () => {
@@ -449,14 +464,14 @@ describe('ProviderGameSlateService', () => {
       // The 1 seed hosts the worst seed left (the 6), and the 2 hosts the 4.
       const divisional = [playoffGame('d1', 2, 1, 6, 168), playoffGame('d2', 2, 2, 4, 170)];
       await expect(sync([...WILD_CARD, ...divisional]))
-        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [4, 5] });
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 2, matchNumber: 1 }, { roundNumber: 2, matchNumber: 2 }] });
 
-      expect(sides().slice(3, 5)).toEqual([[4, rowOf(1), rowOf(6)], [5, rowOf(2), rowOf(4)]]);
+      expect(sides().slice(3, 5)).toEqual([[2, 1, rowOf(1), rowOf(6)], [2, 2, rowOf(2), rowOf(4)]]);
       const kickoffs = store.matchRows
         .filter((match) => match.roundNumber === 2)
         .sort((left, right) => left.matchNumber - right.matchNumber)
         .map((match) => [match.matchNumber, match.scheduledDate?.toISOString()]);
-      expect(kickoffs).toEqual([[4, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()], [5, new Date(KICKOFF.getTime() + 170 * HOUR).toISOString()]]);
+      expect(kickoffs).toEqual([[1, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()], [2, new Date(KICKOFF.getTime() + 170 * HOUR).toISOString()]]);
       expect((await roundDates())[1]).toEqual([2, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()]);
     });
 
@@ -469,7 +484,7 @@ describe('ProviderGameSlateService', () => {
       await expect(sync([...WILD_CARD, playoffGame('d1', 2, 1, 4, 168), playoffGame('d2', 2, 2, 6, 170)]))
         .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
 
-      expect(sides().slice(3, 5)).toEqual([[4, expect.any(String), null], [5, null, null]]);
+      expect(sides().slice(3, 5)).toEqual([[2, 1, expect.any(String), null], [2, 2, null, null]]);
       expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: event.id, roundNumber: 2 }), expect.stringContaining('pairs the teams differently'));
     });
 
@@ -482,7 +497,7 @@ describe('ProviderGameSlateService', () => {
       await expect(sync([...WILD_CARD, playoffGame('d1', 2, 1, 6, 168), playoffGame('d2', 2, 2, 4, 170)]))
         .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
       expect(propose).not.toHaveBeenCalled();
-      expect(sides()[4]).toEqual([5, null, null]);
+      expect(sides()[4]).toEqual([2, 2, null, null]);
     });
 
     it('reads no bracket on a released playoff, so a side the bracket names that has left the field (a filled play-in place) holds up no games', async () => {
@@ -490,14 +505,14 @@ describe('ProviderGameSlateService', () => {
       await sync(WILD_CARD);
       await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
 
-      await expect(sync([playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[], BRACKET.map((match) => (match.matchNumber === 4 ? slot(4, 2, 8, null) : match))))
-        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+      await expect(sync([playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[], BRACKET.map((match) => (isAtPlace(match, { roundNumber: 2, matchNumber: 1 }) ? slot(1, 2, 8, null) : match))))
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
     });
 
     it('leaves the bracket unloaded while a team the bracket names is not in the field yet', async () => {
       const { sync, sides } = playoffSetup();
 
-      await expect(sync([], BRACKET.map((match) => (match.matchNumber === 4 ? slot(4, 2, 8, null) : match))))
+      await expect(sync([], BRACKET.map((match) => (isAtPlace(match, { roundNumber: 2, matchNumber: 1 }) ? slot(1, 2, 8, null) : match))))
         .resolves.toEqual({ outcome: 'SKIPPED', reason: 'TEAMS_NOT_IN_FIELD' });
       expect(sides()).toEqual([]);
     });

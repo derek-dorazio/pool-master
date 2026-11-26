@@ -129,17 +129,17 @@ describe('BalldontlieAdapter (MLB)', () => {
       expect(detail).toMatchObject({ participantCount: 12, rounds: 4 });
       // AL: New York 4 v Boston 5 and Cleveland 3 v Detroit 6; Toronto (1) and Seattle (2) wait. NL likewise.
       expect(detail?.bracket?.map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
-        [1, 1, 'AL', team(10), team(2), { matchNumber: 5, side: MatchSide.AWAY }],
-        [2, 1, 'AL', team(6), team(7), { matchNumber: 6, side: MatchSide.AWAY }],
-        [3, 1, 'NL', team(16), team(24), { matchNumber: 7, side: MatchSide.AWAY }],
-        [4, 1, 'NL', team(18), team(17), { matchNumber: 8, side: MatchSide.AWAY }],
-        [5, 2, 'AL', team(14), null, { matchNumber: 9, side: MatchSide.HOME }],
-        [6, 2, 'AL', team(25), null, { matchNumber: 9, side: MatchSide.AWAY }],
-        [7, 2, 'NL', team(19), null, { matchNumber: 10, side: MatchSide.HOME }],
-        [8, 2, 'NL', team(22), null, { matchNumber: 10, side: MatchSide.AWAY }],
-        [9, 3, 'AL', null, null, { matchNumber: 11, side: MatchSide.HOME }],
-        [10, 3, 'NL', null, null, { matchNumber: 11, side: MatchSide.AWAY }],
-        [11, 4, null, null, null, null],
+        [1, 1, 'AL', team(10), team(2), { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY }],
+        [2, 1, 'AL', team(6), team(7), { roundNumber: 2, matchNumber: 2, side: MatchSide.AWAY }],
+        [3, 1, 'NL', team(16), team(24), { roundNumber: 2, matchNumber: 3, side: MatchSide.AWAY }],
+        [4, 1, 'NL', team(18), team(17), { roundNumber: 2, matchNumber: 4, side: MatchSide.AWAY }],
+        [1, 2, 'AL', team(14), null, { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME }],
+        [2, 2, 'AL', team(25), null, { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY }],
+        [3, 2, 'NL', team(19), null, { roundNumber: 3, matchNumber: 2, side: MatchSide.HOME }],
+        [4, 2, 'NL', team(22), null, { roundNumber: 3, matchNumber: 2, side: MatchSide.AWAY }],
+        [1, 3, 'AL', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.HOME }],
+        [2, 3, 'NL', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.AWAY }],
+        [1, 4, null, null, null, null],
       ]);
       expect(detail?.games).toHaveLength(4);
     });

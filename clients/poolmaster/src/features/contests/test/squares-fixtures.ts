@@ -34,7 +34,7 @@ export function squaresGameFixture(overrides: Partial<SportEventRoundMatchDto> =
     sportEventId: 'event-1',
     roundNumber: 4,
     slot: roundSlot(SlotKind.FINAL, 'Super Bowl'),
-    matchNumber: 13,
+    matchNumber: 1,
     homeSportEventParticipantId: 'field-eagles',
     awaySportEventParticipantId: 'field-chiefs',
     isNeutralSite: true,

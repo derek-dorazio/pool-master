@@ -37,7 +37,12 @@ import {
   eventPlaysMatches,
   eventSportDefinition,
   getSportDefinition,
+  describeMatchPlace,
+  isAtPlace,
   isMatchUnplayed,
+  type MatchPlace,
+  MatchPlaceMap,
+  matchPlaceOf,
   MatchSide,
   type Participant,
   ParticipantStatus,
@@ -55,16 +60,13 @@ import type { JobsForWrite } from '../background-jobs/background-job-queue';
 import { DomainEventType, type DomainEvents } from '../domain-events';
 import { findReseededPlaceGaps, findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
 
-/** Where a match's winner moves on to: the next match, by number, and the side it fills there. */
-export interface BracketAdvance {
-  matchNumber: number;
+/** Where a match's winner moves on to: the next match, by round and number, and the side it fills there. */
+export interface BracketAdvance extends MatchPlace {
   side: MatchSide;
 }
 
-/** One match of a bracket as the admin loads it. */
-export interface BracketMatchInput {
-  matchNumber: number;
-  roundNumber: number;
+/** One match of a bracket as the admin loads it, numbered within its round (#2161). */
+export interface BracketMatchInput extends MatchPlace {
   homeSportEventParticipantId: string | null;
   awaySportEventParticipantId: string | null;
   isNeutralSite: boolean;
@@ -84,9 +86,9 @@ function sideOf(match: Pick<BracketMatchInput, 'homeSportEventParticipantId' | '
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
 }
 
-/** "match 3 home": a side of a match, as the problems name it. */
-function describeSide(matchNumber: number, side: MatchSide): string {
-  return `match ${matchNumber} ${side.toLowerCase()}`;
+/** "round 2 match 1 home": a side of a match, as the problems name it. */
+function describeSide(place: MatchPlace, side: MatchSide): string {
+  return `${describeMatchPlace(place)} ${side.toLowerCase()}`;
 }
 
 /**
@@ -122,52 +124,52 @@ export function findBracketProblems(
   },
 ): string[] {
   const problems: string[] = [];
-  const byNumber = new Map<number, BracketMatchInput>();
+  const byPlace = new MatchPlaceMap<BracketMatchInput>();
   for (const match of matches) {
-    if (byNumber.has(match.matchNumber)) {
-      problems.push(`match number ${match.matchNumber} is used more than once`);
+    if (byPlace.has(match)) {
+      problems.push(`${describeMatchPlace(match)} is used more than once`);
     }
-    byNumber.set(match.matchNumber, match);
+    byPlace.set(match, match);
   }
 
   const sideOwner = new Map<string, string>();
   const fedSides = new Set<string>();
   for (const match of matches) {
     if (!context.roundNumbers.has(match.roundNumber)) {
-      problems.push(`match ${match.matchNumber} is in round ${match.roundNumber}, which the event does not have`);
+      problems.push(`${describeMatchPlace(match)} is in a round the event does not have`);
     }
     for (const side of SIDES) {
       const sportEventParticipantId = sideOf(match, side);
       if (sportEventParticipantId === null) continue;
       if (!context.fieldIds.has(sportEventParticipantId)) {
-        problems.push(`${describeSide(match.matchNumber, side)} names ${sportEventParticipantId}, which is not on the event's field`);
+        problems.push(`${describeSide(match, side)} names ${sportEventParticipantId}, which is not on the event's field`);
         continue;
       }
       const owner = sideOwner.get(sportEventParticipantId);
       if (owner !== undefined) {
-        problems.push(`${describeSide(match.matchNumber, side)} names the same field row as ${owner}`);
+        problems.push(`${describeSide(match, side)} names the same field row as ${owner}`);
       } else {
-        sideOwner.set(sportEventParticipantId, describeSide(match.matchNumber, side));
+        sideOwner.set(sportEventParticipantId, describeSide(match, side));
       }
     }
 
     const { advancesTo } = match;
     if (advancesTo === null) continue;
-    const next = byNumber.get(advancesTo.matchNumber);
+    const next = byPlace.get(advancesTo);
     if (!next) {
-      problems.push(`match ${match.matchNumber} advances to match ${advancesTo.matchNumber}, which the bracket does not have`);
+      problems.push(`${describeMatchPlace(match)} advances to ${describeMatchPlace(advancesTo)}, which the bracket does not have`);
       continue;
     }
     if (next.roundNumber <= match.roundNumber) {
-      problems.push(`match ${match.matchNumber} advances to match ${advancesTo.matchNumber}, which is not in a later round`);
+      problems.push(`${describeMatchPlace(match)} advances to ${describeMatchPlace(advancesTo)}, which is not in a later round`);
     }
-    const fed = describeSide(advancesTo.matchNumber, advancesTo.side);
+    const fed = describeSide(advancesTo, advancesTo.side);
     if (fedSides.has(fed)) {
       problems.push(`two matches advance to ${fed}`);
     }
     fedSides.add(fed);
     if (sideOf(next, advancesTo.side) !== null) {
-      problems.push(`${fed} names a team, but match ${match.matchNumber}'s winner fills it`);
+      problems.push(`${fed} names a team, but ${describeMatchPlace(match)}'s winner fills it`);
     }
   }
 
@@ -185,7 +187,7 @@ export function findBracketProblems(
   // Outside the final's round, only a reseeded bracket leaves a winner unplaced: the next round's reseed places it.
   if (context.reseeds !== true) {
     for (const match of unlinked.filter((each) => !finalRoundNumbers.has(each.roundNumber))) {
-      problems.push(`match ${match.matchNumber}'s winner advances nowhere, but it is not the final`);
+      problems.push(`${describeMatchPlace(match)}'s winner advances nowhere, but it is not the final`);
     }
   }
   return problems;
@@ -215,7 +217,7 @@ export interface SportEventBracketServiceDeps {
 export class SportEventBracketService {
   constructor(private readonly deps: SportEventBracketServiceDeps) {}
 
-  /** The bracket in match-number order; empty until it is loaded. */
+  /** The bracket in round order, then match-number order; empty until it is loaded. */
   async listBracket(sportEventId: string): Promise<SportEventRoundMatch[]> {
     await this.requireBracketEvent(sportEventId);
     return this.deps.matches.findBySportEvent(sportEventId);
@@ -244,12 +246,12 @@ export class SportEventBracketService {
     }
 
     const newId = this.deps.newId ?? randomUUID;
-    const idByNumber = new Map(matches.map((match) => [match.matchNumber, newId()]));
+    const idByPlace = new MatchPlaceMap(matches.map((match) => [match, newId()] as const));
     const writes: SportEventRoundMatchWrite[] = matches.map(({ advancesTo, regionLabel, ...match }) => ({
       ...match,
       regionLabel: regionLabel ?? null,
-      id: idByNumber.get(match.matchNumber) as string,
-      advancesToMatchId: advancesTo ? idByNumber.get(advancesTo.matchNumber) as string : null,
+      id: idByPlace.get(match) as string,
+      advancesToMatchId: advancesTo ? idByPlace.get(advancesTo) as string : null,
       advancesToSide: advancesTo?.side ?? null,
     }));
     const rebuild = await this.rebuild(sportEventId);
@@ -266,12 +268,12 @@ export class SportEventBracketService {
    * Its spread (#720) can change until release, and after it only while no entry has picked the
    * game (409 MATCH_SPREAD_LOCKED), and never back to none (422 MATCH_SPREAD_REQUIRED).
    */
-  async updateMatch(sportEventId: string, matchNumber: number, edit: BracketMatchEdit): Promise<SportEventRoundMatch> {
+  async updateMatch(sportEventId: string, place: MatchPlace, edit: BracketMatchEdit): Promise<SportEventRoundMatch> {
     const event = await this.requireBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
-    const match = bracket.find((candidate) => candidate.matchNumber === matchNumber);
+    const match = bracket.find((candidate) => isAtPlace(candidate, place));
     if (!match) {
-      throw new SportEventError(`Sport event ${sportEventId} has no match ${matchNumber}.`, 'BRACKET_MATCH_NOT_FOUND', 404);
+      throw new SportEventError(`Sport event ${sportEventId} has no ${describeMatchPlace(place)}.`, 'BRACKET_MATCH_NOT_FOUND', 404);
     }
 
     const changesSides = edit.homeSportEventParticipantId !== undefined || edit.awaySportEventParticipantId !== undefined;
@@ -279,8 +281,8 @@ export class SportEventBracketService {
       this.assertPairingsEditable(event);
       const problems = await this.findSideEditProblems(match, bracket, edit);
       if (problems.length > 0) {
-        this.deps.logger?.warn({ sportEventId, matchNumber, problems }, 'Refused a match edit with problems');
-        throw new SportEventError(`Match ${matchNumber} cannot be changed: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
+        this.deps.logger?.warn({ sportEventId, ...place, problems }, 'Refused a match edit with problems');
+        throw new SportEventError(`${describeMatchPlace(place, { sentenceStart: true })} cannot be changed: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
       }
     }
     const changesSpread = edit.homeSpread !== undefined && edit.homeSpread !== match.homeSpread;
@@ -295,7 +297,7 @@ export class SportEventBracketService {
     if (edit.scheduledDate !== undefined && edit.scheduledDate?.getTime() !== match.scheduledDate?.getTime()) {
       await this.deps.contests.recheckReminders({ sportEventId }, this.deps.now?.() ?? new Date());
     }
-    this.deps.logger?.info({ sportEventId, matchNumber, changesSides, changesSpread }, 'Updated bracket match');
+    this.deps.logger?.info({ sportEventId, ...place, changesSides, changesSpread }, 'Updated bracket match');
     const updated = (await this.deps.matches.findBySportEvent(sportEventId)).find((candidate) => candidate.id === match.id);
     return updated as SportEventRoundMatch;
   }
@@ -393,7 +395,8 @@ export class SportEventBracketService {
       this.deps.logger?.warn({ sportEventId, roundNumber, problems }, 'Refused a reseeded round with problems');
       throw new SportEventError(`Round ${roundNumber} cannot be set: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
     }
-    const idByNumber = new Map(bracket.map((match) => [match.matchNumber, match.id]));
+    // A reseeded round's matchups are numbered within the round.
+    const idByNumber = new Map(bracket.filter((match) => match.roundNumber === roundNumber).map((match) => [match.matchNumber, match.id]));
     const rebuild = await this.rebuild(sportEventId);
     await this.deps.matches.placeSides(matchups.map((matchup) => ({
       id: idByNumber.get(matchup.matchNumber) as string,
@@ -531,7 +534,7 @@ export class SportEventBracketService {
       const elsewhere = bracket.find((other) => other.id !== match.id
         && (other.homeSportEventParticipantId === sportEventParticipantId || other.awaySportEventParticipantId === sportEventParticipantId));
       if (elsewhere) {
-        problems.push(`the ${side.toLowerCase()} side names a team already in match ${elsewhere.matchNumber}`);
+        problems.push(`the ${side.toLowerCase()} side names a team already in ${describeMatchPlace(elsewhere)}`);
       }
     }
     return problems;
@@ -544,9 +547,9 @@ export class SportEventBracketService {
    */
   private assertSpreadKept(event: SportEvent, match: SportEventRoundMatch, homeSpread: number | null | undefined): void {
     if (homeSpread === null) {
-      this.deps.logger?.warn({ sportEventId: event.id, matchNumber: match.matchNumber }, 'Refused clearing a released game\'s spread');
+      this.deps.logger?.warn({ sportEventId: event.id, ...matchPlaceOf(match) }, 'Refused clearing a released game\'s spread');
       throw new SportEventError(
-        `Match ${match.matchNumber} has been released, so its spread can be changed but not cleared.`,
+        `${describeMatchPlace(match, { sentenceStart: true })} has been released, so its spread can be changed but not cleared.`,
         'MATCH_SPREAD_REQUIRED',
         422,
       );
@@ -559,9 +562,9 @@ export class SportEventBracketService {
    */
   private async assertSpreadUnpicked(event: SportEvent, match: SportEventRoundMatch): Promise<void> {
     if (await this.deps.predictions.hasAnyOnMatch(match.id)) {
-      this.deps.logger?.warn({ sportEventId: event.id, matchNumber: match.matchNumber }, 'Refused a spread change on a game that has picks');
+      this.deps.logger?.warn({ sportEventId: event.id, ...matchPlaceOf(match) }, 'Refused a spread change on a game that has picks');
       throw new SportEventError(
-        `Match ${match.matchNumber} already has picks, so its spread can no longer change.`,
+        `${describeMatchPlace(match, { sentenceStart: true })} already has picks, so its spread can no longer change.`,
         'MATCH_SPREAD_LOCKED',
         409,
       );

@@ -1743,7 +1743,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 65,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -1761,7 +1762,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T22:10:00Z",
               "advancesTo": {
-                "matchNumber": 65,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -1779,7 +1781,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T23:20:00Z",
               "advancesTo": {
-                "matchNumber": 66,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -1797,7 +1800,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:50:00Z",
               "advancesTo": {
-                "matchNumber": 66,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -1815,7 +1819,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:20:00Z",
               "advancesTo": {
-                "matchNumber": 67,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -1833,7 +1838,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T18:25:00Z",
               "advancesTo": {
-                "matchNumber": 67,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -1851,7 +1857,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 68,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -1870,7 +1877,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T20:25:00Z",
               "advancesTo": {
-                "matchNumber": 68,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -1888,7 +1896,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T17:20:00Z",
               "advancesTo": {
-                "matchNumber": 69,
+                "roundNumber": 2,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -1906,7 +1915,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T18:30:00Z",
               "advancesTo": {
-                "matchNumber": 69,
+                "roundNumber": 2,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -1924,7 +1934,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T16:40:00Z",
               "advancesTo": {
-                "matchNumber": 70,
+                "roundNumber": 2,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -1942,7 +1953,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T20:20:00Z",
               "advancesTo": {
-                "matchNumber": 70,
+                "roundNumber": 2,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -1960,7 +1972,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T22:25:00Z",
               "advancesTo": {
-                "matchNumber": 71,
+                "roundNumber": 2,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -1978,7 +1991,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T21:40:00Z",
               "advancesTo": {
-                "matchNumber": 71,
+                "roundNumber": 2,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -1996,7 +2010,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T16:40:00Z",
               "advancesTo": {
-                "matchNumber": 72,
+                "roundNumber": 2,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -2014,7 +2029,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T18:10:00Z",
               "advancesTo": {
-                "matchNumber": 72,
+                "roundNumber": 2,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -2032,7 +2048,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 73,
+                "roundNumber": 2,
+                "matchNumber": 9,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2050,7 +2067,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T21:45:00Z",
               "advancesTo": {
-                "matchNumber": 73,
+                "roundNumber": 2,
+                "matchNumber": 9,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2068,7 +2086,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T16:40:00Z",
               "advancesTo": {
-                "matchNumber": 74,
+                "roundNumber": 2,
+                "matchNumber": 10,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2086,7 +2105,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T16:45:00Z",
               "advancesTo": {
-                "matchNumber": 74,
+                "roundNumber": 2,
+                "matchNumber": 10,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2104,7 +2124,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T23:25:00Z",
               "advancesTo": {
-                "matchNumber": 75,
+                "roundNumber": 2,
+                "matchNumber": 11,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2122,7 +2143,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:25:00Z",
               "advancesTo": {
-                "matchNumber": 75,
+                "roundNumber": 2,
+                "matchNumber": 11,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2140,7 +2162,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T23:05:00Z",
               "advancesTo": {
-                "matchNumber": 76,
+                "roundNumber": 2,
+                "matchNumber": 12,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2158,7 +2181,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T22:50:00Z",
               "advancesTo": {
-                "matchNumber": 76,
+                "roundNumber": 2,
+                "matchNumber": 12,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2176,7 +2200,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T17:45:00Z",
               "advancesTo": {
-                "matchNumber": 77,
+                "roundNumber": 2,
+                "matchNumber": 13,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2194,7 +2219,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 77,
+                "roundNumber": 2,
+                "matchNumber": 13,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2212,7 +2238,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T19:40:00Z",
               "advancesTo": {
-                "matchNumber": 78,
+                "roundNumber": 2,
+                "matchNumber": 14,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2230,7 +2257,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 78,
+                "roundNumber": 2,
+                "matchNumber": 14,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2248,7 +2276,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T20:50:00Z",
               "advancesTo": {
-                "matchNumber": 79,
+                "roundNumber": 2,
+                "matchNumber": 15,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2266,7 +2295,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T21:35:00Z",
               "advancesTo": {
-                "matchNumber": 79,
+                "roundNumber": 2,
+                "matchNumber": 15,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2284,7 +2314,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 80,
+                "roundNumber": 2,
+                "matchNumber": 16,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -2302,7 +2333,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 80,
+                "roundNumber": 2,
+                "matchNumber": 16,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -2320,7 +2352,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 81,
+                "roundNumber": 2,
+                "matchNumber": 17,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2338,7 +2371,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:15:00Z",
               "advancesTo": {
-                "matchNumber": 81,
+                "roundNumber": 2,
+                "matchNumber": 17,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2356,7 +2390,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:10:00Z",
               "advancesTo": {
-                "matchNumber": 82,
+                "roundNumber": 2,
+                "matchNumber": 18,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2374,7 +2409,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 82,
+                "roundNumber": 2,
+                "matchNumber": 18,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2392,7 +2428,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 83,
+                "roundNumber": 2,
+                "matchNumber": 19,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2410,7 +2447,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 83,
+                "roundNumber": 2,
+                "matchNumber": 19,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2428,7 +2466,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:05:00Z",
               "advancesTo": {
-                "matchNumber": 84,
+                "roundNumber": 2,
+                "matchNumber": 20,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2446,7 +2485,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 84,
+                "roundNumber": 2,
+                "matchNumber": 20,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2464,7 +2504,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:20:00Z",
               "advancesTo": {
-                "matchNumber": 85,
+                "roundNumber": 2,
+                "matchNumber": 21,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2482,7 +2523,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:55:00Z",
               "advancesTo": {
-                "matchNumber": 85,
+                "roundNumber": 2,
+                "matchNumber": 21,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2500,7 +2542,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 86,
+                "roundNumber": 2,
+                "matchNumber": 22,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2518,7 +2561,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 86,
+                "roundNumber": 2,
+                "matchNumber": 22,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2536,7 +2580,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T21:20:00Z",
               "advancesTo": {
-                "matchNumber": 87,
+                "roundNumber": 2,
+                "matchNumber": 23,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2554,7 +2599,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:45:00Z",
               "advancesTo": {
-                "matchNumber": 87,
+                "roundNumber": 2,
+                "matchNumber": 23,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2572,7 +2618,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:45:00Z",
               "advancesTo": {
-                "matchNumber": 88,
+                "roundNumber": 2,
+                "matchNumber": 24,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -2590,7 +2637,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 88,
+                "roundNumber": 2,
+                "matchNumber": 24,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -2608,7 +2656,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 89,
+                "roundNumber": 2,
+                "matchNumber": 25,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2626,7 +2675,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T18:25:00Z",
               "advancesTo": {
-                "matchNumber": 89,
+                "roundNumber": 2,
+                "matchNumber": 25,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2644,7 +2694,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T19:50:00Z",
               "advancesTo": {
-                "matchNumber": 90,
+                "roundNumber": 2,
+                "matchNumber": 26,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2662,7 +2713,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 90,
+                "roundNumber": 2,
+                "matchNumber": 26,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2680,7 +2732,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 91,
+                "roundNumber": 2,
+                "matchNumber": 27,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2698,7 +2751,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T19:20:00Z",
               "advancesTo": {
-                "matchNumber": 91,
+                "roundNumber": 2,
+                "matchNumber": 27,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2716,7 +2770,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 92,
+                "roundNumber": 2,
+                "matchNumber": 28,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2734,7 +2789,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 92,
+                "roundNumber": 2,
+                "matchNumber": 28,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2752,7 +2808,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T01:30:00Z",
               "advancesTo": {
-                "matchNumber": 93,
+                "roundNumber": 2,
+                "matchNumber": 29,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2770,7 +2827,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T16:55:00Z",
               "advancesTo": {
-                "matchNumber": 93,
+                "roundNumber": 2,
+                "matchNumber": 29,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2788,7 +2846,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 94,
+                "roundNumber": 2,
+                "matchNumber": 30,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2806,7 +2865,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:15:00Z",
               "advancesTo": {
-                "matchNumber": 94,
+                "roundNumber": 2,
+                "matchNumber": 30,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2824,7 +2884,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:10:00Z",
               "advancesTo": {
-                "matchNumber": 95,
+                "roundNumber": 2,
+                "matchNumber": 31,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2842,7 +2903,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 95,
+                "roundNumber": 2,
+                "matchNumber": 31,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2860,7 +2922,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 96,
+                "roundNumber": 2,
+                "matchNumber": 32,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -2878,7 +2941,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:30:00Z",
               "advancesTo": {
-                "matchNumber": 96,
+                "roundNumber": 2,
+                "matchNumber": 32,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -2889,14 +2953,15 @@
               }
             },
             {
-              "matchNumber": 65,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T01:40:00Z",
               "advancesTo": {
-                "matchNumber": 97,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -2907,14 +2972,15 @@
               }
             },
             {
-              "matchNumber": 66,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T18:45:00Z",
               "advancesTo": {
-                "matchNumber": 97,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -2925,14 +2991,15 @@
               }
             },
             {
-              "matchNumber": 67,
+              "matchNumber": 3,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 98,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -2943,14 +3010,15 @@
               }
             },
             {
-              "matchNumber": 68,
+              "matchNumber": 4,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T18:25:00Z",
               "advancesTo": {
-                "matchNumber": 98,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -2961,14 +3029,15 @@
               }
             },
             {
-              "matchNumber": 69,
+              "matchNumber": 5,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T23:30:00Z",
               "advancesTo": {
-                "matchNumber": 99,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -2979,14 +3048,15 @@
               }
             },
             {
-              "matchNumber": 70,
+              "matchNumber": 6,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T22:30:00Z",
               "advancesTo": {
-                "matchNumber": 99,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -2997,14 +3067,15 @@
               }
             },
             {
-              "matchNumber": 71,
+              "matchNumber": 7,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T22:25:00Z",
               "advancesTo": {
-                "matchNumber": 100,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -3015,14 +3086,15 @@
               }
             },
             {
-              "matchNumber": 72,
+              "matchNumber": 8,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T22:05:00Z",
               "advancesTo": {
-                "matchNumber": 100,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -3033,14 +3105,15 @@
               }
             },
             {
-              "matchNumber": 73,
+              "matchNumber": 9,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 101,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -3051,14 +3124,15 @@
               }
             },
             {
-              "matchNumber": 74,
+              "matchNumber": 10,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T21:05:00Z",
               "advancesTo": {
-                "matchNumber": 101,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3069,14 +3143,15 @@
               }
             },
             {
-              "matchNumber": 75,
+              "matchNumber": 11,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T18:25:00Z",
               "advancesTo": {
-                "matchNumber": 102,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -3087,14 +3162,15 @@
               }
             },
             {
-              "matchNumber": 76,
+              "matchNumber": 12,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T23:05:00Z",
               "advancesTo": {
-                "matchNumber": 102,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3105,14 +3181,15 @@
               }
             },
             {
-              "matchNumber": 77,
+              "matchNumber": 13,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T18:05:00Z",
               "advancesTo": {
-                "matchNumber": 103,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -3123,14 +3200,15 @@
               }
             },
             {
-              "matchNumber": 78,
+              "matchNumber": 14,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 103,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3141,14 +3219,15 @@
               }
             },
             {
-              "matchNumber": 79,
+              "matchNumber": 15,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T19:20:00Z",
               "advancesTo": {
-                "matchNumber": 104,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -3159,14 +3238,15 @@
               }
             },
             {
-              "matchNumber": 80,
+              "matchNumber": 16,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 104,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3177,14 +3257,15 @@
               }
             },
             {
-              "matchNumber": 81,
+              "matchNumber": 17,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 105,
+                "roundNumber": 3,
+                "matchNumber": 9,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3195,14 +3276,15 @@
               }
             },
             {
-              "matchNumber": 82,
+              "matchNumber": 18,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 105,
+                "roundNumber": 3,
+                "matchNumber": 9,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -3213,14 +3295,15 @@
               }
             },
             {
-              "matchNumber": 83,
+              "matchNumber": 19,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T23:25:00Z",
               "advancesTo": {
-                "matchNumber": 106,
+                "roundNumber": 3,
+                "matchNumber": 10,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3231,14 +3314,15 @@
               }
             },
             {
-              "matchNumber": 84,
+              "matchNumber": 20,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T23:05:00Z",
               "advancesTo": {
-                "matchNumber": 106,
+                "roundNumber": 3,
+                "matchNumber": 10,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -3249,14 +3333,15 @@
               }
             },
             {
-              "matchNumber": 85,
+              "matchNumber": 21,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 107,
+                "roundNumber": 3,
+                "matchNumber": 11,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3267,14 +3352,15 @@
               }
             },
             {
-              "matchNumber": 86,
+              "matchNumber": 22,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 107,
+                "roundNumber": 3,
+                "matchNumber": 11,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -3285,14 +3371,15 @@
               }
             },
             {
-              "matchNumber": 87,
+              "matchNumber": 23,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T17:20:00Z",
               "advancesTo": {
-                "matchNumber": 108,
+                "roundNumber": 3,
+                "matchNumber": 12,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3303,14 +3390,15 @@
               }
             },
             {
-              "matchNumber": 88,
+              "matchNumber": 24,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T22:55:00Z",
               "advancesTo": {
-                "matchNumber": 108,
+                "roundNumber": 3,
+                "matchNumber": 12,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -3321,14 +3409,15 @@
               }
             },
             {
-              "matchNumber": 89,
+              "matchNumber": 25,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T17:10:00Z",
               "advancesTo": {
-                "matchNumber": 109,
+                "roundNumber": 3,
+                "matchNumber": 13,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -3339,14 +3428,15 @@
               }
             },
             {
-              "matchNumber": 90,
+              "matchNumber": 26,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T20:50:00Z",
               "advancesTo": {
-                "matchNumber": 109,
+                "roundNumber": 3,
+                "matchNumber": 13,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3357,14 +3447,15 @@
               }
             },
             {
-              "matchNumber": 91,
+              "matchNumber": 27,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T22:05:00Z",
               "advancesTo": {
-                "matchNumber": 110,
+                "roundNumber": 3,
+                "matchNumber": 14,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -3375,14 +3466,15 @@
               }
             },
             {
-              "matchNumber": 92,
+              "matchNumber": 28,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T21:20:00Z",
               "advancesTo": {
-                "matchNumber": 110,
+                "roundNumber": 3,
+                "matchNumber": 14,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3393,14 +3485,15 @@
               }
             },
             {
-              "matchNumber": 93,
+              "matchNumber": 29,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T23:40:00Z",
               "advancesTo": {
-                "matchNumber": 111,
+                "roundNumber": 3,
+                "matchNumber": 15,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -3411,14 +3504,15 @@
               }
             },
             {
-              "matchNumber": 94,
+              "matchNumber": 30,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T23:50:00Z",
               "advancesTo": {
-                "matchNumber": 111,
+                "roundNumber": 3,
+                "matchNumber": 15,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3429,14 +3523,15 @@
               }
             },
             {
-              "matchNumber": 95,
+              "matchNumber": 31,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T22:40:00Z",
               "advancesTo": {
-                "matchNumber": 112,
+                "roundNumber": 3,
+                "matchNumber": 16,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -3447,14 +3542,15 @@
               }
             },
             {
-              "matchNumber": 96,
+              "matchNumber": 32,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T00:35:00Z",
               "advancesTo": {
-                "matchNumber": 112,
+                "roundNumber": 3,
+                "matchNumber": 16,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3465,14 +3561,15 @@
               }
             },
             {
-              "matchNumber": 97,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T02:40:00Z",
               "advancesTo": {
-                "matchNumber": 113,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -3483,14 +3580,15 @@
               }
             },
             {
-              "matchNumber": 98,
+              "matchNumber": 2,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T19:05:00Z",
               "advancesTo": {
-                "matchNumber": 113,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -3501,14 +3599,15 @@
               }
             },
             {
-              "matchNumber": 99,
+              "matchNumber": 3,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T20:45:00Z",
               "advancesTo": {
-                "matchNumber": 114,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -3519,14 +3618,15 @@
               }
             },
             {
-              "matchNumber": 100,
+              "matchNumber": 4,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T21:40:00Z",
               "advancesTo": {
-                "matchNumber": 114,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -3537,14 +3637,15 @@
               }
             },
             {
-              "matchNumber": 101,
+              "matchNumber": 5,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T19:05:00Z",
               "advancesTo": {
-                "matchNumber": 115,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -3555,14 +3656,15 @@
               }
             },
             {
-              "matchNumber": 102,
+              "matchNumber": 6,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T02:05:00Z",
               "advancesTo": {
-                "matchNumber": 115,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3573,14 +3675,15 @@
               }
             },
             {
-              "matchNumber": 103,
+              "matchNumber": 7,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 116,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -3591,14 +3694,15 @@
               }
             },
             {
-              "matchNumber": 104,
+              "matchNumber": 8,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T17:05:00Z",
               "advancesTo": {
-                "matchNumber": 116,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3609,14 +3713,15 @@
               }
             },
             {
-              "matchNumber": 105,
+              "matchNumber": 9,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T16:45:00Z",
               "advancesTo": {
-                "matchNumber": 117,
+                "roundNumber": 4,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3627,14 +3732,15 @@
               }
             },
             {
-              "matchNumber": 106,
+              "matchNumber": 10,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T23:05:00Z",
               "advancesTo": {
-                "matchNumber": 117,
+                "roundNumber": 4,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -3645,14 +3751,15 @@
               }
             },
             {
-              "matchNumber": 107,
+              "matchNumber": 11,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T22:35:00Z",
               "advancesTo": {
-                "matchNumber": 118,
+                "roundNumber": 4,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3663,14 +3770,15 @@
               }
             },
             {
-              "matchNumber": 108,
+              "matchNumber": 12,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T21:40:00Z",
               "advancesTo": {
-                "matchNumber": 118,
+                "roundNumber": 4,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -3681,14 +3789,15 @@
               }
             },
             {
-              "matchNumber": 109,
+              "matchNumber": 13,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T02:45:00Z",
               "advancesTo": {
-                "matchNumber": 119,
+                "roundNumber": 4,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -3699,14 +3808,15 @@
               }
             },
             {
-              "matchNumber": 110,
+              "matchNumber": 14,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T21:15:00Z",
               "advancesTo": {
-                "matchNumber": 119,
+                "roundNumber": 4,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3717,14 +3827,15 @@
               }
             },
             {
-              "matchNumber": 111,
+              "matchNumber": 15,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 120,
+                "roundNumber": 4,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -3735,14 +3846,15 @@
               }
             },
             {
-              "matchNumber": 112,
+              "matchNumber": 16,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T18:20:00Z",
               "advancesTo": {
-                "matchNumber": 120,
+                "roundNumber": 4,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3753,14 +3865,15 @@
               }
             },
             {
-              "matchNumber": 113,
+              "matchNumber": 1,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-08T01:15:00Z",
               "advancesTo": {
-                "matchNumber": 121,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -3771,14 +3884,15 @@
               }
             },
             {
-              "matchNumber": 114,
+              "matchNumber": 2,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T20:45:00Z",
               "advancesTo": {
-                "matchNumber": 121,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -3789,14 +3903,15 @@
               }
             },
             {
-              "matchNumber": 115,
+              "matchNumber": 3,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T21:45:00Z",
               "advancesTo": {
-                "matchNumber": 122,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -3807,14 +3922,15 @@
               }
             },
             {
-              "matchNumber": 116,
+              "matchNumber": 4,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T18:05:00Z",
               "advancesTo": {
-                "matchNumber": 122,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3825,14 +3941,15 @@
               }
             },
             {
-              "matchNumber": 117,
+              "matchNumber": 5,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T19:35:00Z",
               "advancesTo": {
-                "matchNumber": 123,
+                "roundNumber": 5,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3843,14 +3960,15 @@
               }
             },
             {
-              "matchNumber": 118,
+              "matchNumber": 6,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T19:15:00Z",
               "advancesTo": {
-                "matchNumber": 123,
+                "roundNumber": 5,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -3861,14 +3979,15 @@
               }
             },
             {
-              "matchNumber": 119,
+              "matchNumber": 7,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 124,
+                "roundNumber": 5,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -3879,14 +3998,15 @@
               }
             },
             {
-              "matchNumber": 120,
+              "matchNumber": 8,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T18:10:00Z",
               "advancesTo": {
-                "matchNumber": 124,
+                "roundNumber": 5,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3897,14 +4017,15 @@
               }
             },
             {
-              "matchNumber": 121,
+              "matchNumber": 1,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-10T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 125,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -3915,14 +4036,15 @@
               }
             },
             {
-              "matchNumber": 122,
+              "matchNumber": 2,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-09T21:05:00Z",
               "advancesTo": {
-                "matchNumber": 125,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -3934,14 +4056,15 @@
               }
             },
             {
-              "matchNumber": 123,
+              "matchNumber": 3,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-08T18:25:00Z",
               "advancesTo": {
-                "matchNumber": 126,
+                "roundNumber": 6,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -3952,14 +4075,15 @@
               }
             },
             {
-              "matchNumber": 124,
+              "matchNumber": 4,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-09T03:00:00Z",
               "advancesTo": {
-                "matchNumber": 126,
+                "roundNumber": 6,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -3970,14 +4094,15 @@
               }
             },
             {
-              "matchNumber": 125,
+              "matchNumber": 1,
               "roundNumber": 6,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-11T19:15:00Z",
               "advancesTo": {
-                "matchNumber": 127,
+                "roundNumber": 7,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -3987,14 +4112,15 @@
               }
             },
             {
-              "matchNumber": 126,
+              "matchNumber": 2,
               "roundNumber": 6,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-11T23:40:00Z",
               "advancesTo": {
-                "matchNumber": 127,
+                "roundNumber": 7,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -4004,7 +4130,7 @@
               }
             },
             {
-              "matchNumber": 127,
+              "matchNumber": 1,
               "roundNumber": 7,
               "home": null,
               "away": null,
@@ -5711,7 +5837,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 65,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5729,7 +5856,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 65,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5747,7 +5875,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T16:45:00Z",
               "advancesTo": {
-                "matchNumber": 66,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5765,7 +5894,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 66,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5783,7 +5913,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T18:05:00Z",
               "advancesTo": {
-                "matchNumber": 67,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5801,7 +5932,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T21:40:00Z",
               "advancesTo": {
-                "matchNumber": 67,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5819,7 +5951,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 68,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5837,7 +5970,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:25:00Z",
               "advancesTo": {
-                "matchNumber": 68,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5855,7 +5989,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:20:00Z",
               "advancesTo": {
-                "matchNumber": 69,
+                "roundNumber": 2,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5873,7 +6008,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T21:15:00Z",
               "advancesTo": {
-                "matchNumber": 69,
+                "roundNumber": 2,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5891,7 +6027,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:20:00Z",
               "advancesTo": {
-                "matchNumber": 70,
+                "roundNumber": 2,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5909,7 +6046,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T20:50:00Z",
               "advancesTo": {
-                "matchNumber": 70,
+                "roundNumber": 2,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5927,7 +6065,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T21:30:00Z",
               "advancesTo": {
-                "matchNumber": 71,
+                "roundNumber": 2,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5945,7 +6084,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 71,
+                "roundNumber": 2,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5963,7 +6103,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:45:00Z",
               "advancesTo": {
-                "matchNumber": 72,
+                "roundNumber": 2,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -5981,7 +6122,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:55:00Z",
               "advancesTo": {
-                "matchNumber": 72,
+                "roundNumber": 2,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -5999,7 +6141,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T16:10:00Z",
               "advancesTo": {
-                "matchNumber": 73,
+                "roundNumber": 2,
+                "matchNumber": 9,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6017,7 +6160,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T04:10:00Z",
               "advancesTo": {
-                "matchNumber": 73,
+                "roundNumber": 2,
+                "matchNumber": 9,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6035,7 +6179,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 74,
+                "roundNumber": 2,
+                "matchNumber": 10,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6053,7 +6198,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:20:00Z",
               "advancesTo": {
-                "matchNumber": 74,
+                "roundNumber": 2,
+                "matchNumber": 10,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6071,7 +6217,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 75,
+                "roundNumber": 2,
+                "matchNumber": 11,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6089,7 +6236,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:25:00Z",
               "advancesTo": {
-                "matchNumber": 75,
+                "roundNumber": 2,
+                "matchNumber": 11,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6107,7 +6255,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:10:00Z",
               "advancesTo": {
-                "matchNumber": 76,
+                "roundNumber": 2,
+                "matchNumber": 12,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6125,7 +6274,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T20:50:00Z",
               "advancesTo": {
-                "matchNumber": 76,
+                "roundNumber": 2,
+                "matchNumber": 12,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6143,7 +6293,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T23:05:00Z",
               "advancesTo": {
-                "matchNumber": 77,
+                "roundNumber": 2,
+                "matchNumber": 13,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6161,7 +6312,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T21:20:00Z",
               "advancesTo": {
-                "matchNumber": 77,
+                "roundNumber": 2,
+                "matchNumber": 13,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6179,7 +6331,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:55:00Z",
               "advancesTo": {
-                "matchNumber": 78,
+                "roundNumber": 2,
+                "matchNumber": 14,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6197,7 +6350,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:30:00Z",
               "advancesTo": {
-                "matchNumber": 78,
+                "roundNumber": 2,
+                "matchNumber": 14,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6215,7 +6369,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T16:35:00Z",
               "advancesTo": {
-                "matchNumber": 79,
+                "roundNumber": 2,
+                "matchNumber": 15,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6233,7 +6388,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:35:00Z",
               "advancesTo": {
-                "matchNumber": 79,
+                "roundNumber": 2,
+                "matchNumber": 15,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6251,7 +6407,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T21:05:00Z",
               "advancesTo": {
-                "matchNumber": 80,
+                "roundNumber": 2,
+                "matchNumber": 16,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -6269,7 +6426,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 80,
+                "roundNumber": 2,
+                "matchNumber": 16,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -6287,7 +6445,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T19:45:00Z",
               "advancesTo": {
-                "matchNumber": 81,
+                "roundNumber": 2,
+                "matchNumber": 17,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6305,7 +6464,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 81,
+                "roundNumber": 2,
+                "matchNumber": 17,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6323,7 +6483,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T18:05:00Z",
               "advancesTo": {
-                "matchNumber": 82,
+                "roundNumber": 2,
+                "matchNumber": 18,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6341,7 +6502,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T21:50:00Z",
               "advancesTo": {
-                "matchNumber": 82,
+                "roundNumber": 2,
+                "matchNumber": 18,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6359,7 +6521,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T21:30:00Z",
               "advancesTo": {
-                "matchNumber": 83,
+                "roundNumber": 2,
+                "matchNumber": 19,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6377,7 +6540,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T21:55:00Z",
               "advancesTo": {
-                "matchNumber": 83,
+                "roundNumber": 2,
+                "matchNumber": 19,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6395,7 +6559,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 84,
+                "roundNumber": 2,
+                "matchNumber": 20,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6413,7 +6578,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T18:25:00Z",
               "advancesTo": {
-                "matchNumber": 84,
+                "roundNumber": 2,
+                "matchNumber": 20,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6431,7 +6597,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T22:15:00Z",
               "advancesTo": {
-                "matchNumber": 85,
+                "roundNumber": 2,
+                "matchNumber": 21,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6449,7 +6616,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T20:45:00Z",
               "advancesTo": {
-                "matchNumber": 85,
+                "roundNumber": 2,
+                "matchNumber": 21,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6467,7 +6635,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T20:45:00Z",
               "advancesTo": {
-                "matchNumber": 86,
+                "roundNumber": 2,
+                "matchNumber": 22,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6485,7 +6654,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T01:50:00Z",
               "advancesTo": {
-                "matchNumber": 86,
+                "roundNumber": 2,
+                "matchNumber": 22,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6503,7 +6673,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 87,
+                "roundNumber": 2,
+                "matchNumber": 23,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6521,7 +6692,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 87,
+                "roundNumber": 2,
+                "matchNumber": 23,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6539,7 +6711,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T16:40:00Z",
               "advancesTo": {
-                "matchNumber": 88,
+                "roundNumber": 2,
+                "matchNumber": 24,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -6557,7 +6730,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 88,
+                "roundNumber": 2,
+                "matchNumber": 24,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -6575,7 +6749,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T23:05:00Z",
               "advancesTo": {
-                "matchNumber": 89,
+                "roundNumber": 2,
+                "matchNumber": 25,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6593,7 +6768,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T18:30:00Z",
               "advancesTo": {
-                "matchNumber": 89,
+                "roundNumber": 2,
+                "matchNumber": 25,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6611,7 +6787,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 90,
+                "roundNumber": 2,
+                "matchNumber": 26,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6629,7 +6806,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 90,
+                "roundNumber": 2,
+                "matchNumber": 26,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6647,7 +6825,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 91,
+                "roundNumber": 2,
+                "matchNumber": 27,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6665,7 +6844,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:45:00Z",
               "advancesTo": {
-                "matchNumber": 91,
+                "roundNumber": 2,
+                "matchNumber": 27,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6683,7 +6863,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 92,
+                "roundNumber": 2,
+                "matchNumber": 28,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6701,7 +6882,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 92,
+                "roundNumber": 2,
+                "matchNumber": 28,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6719,7 +6901,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T02:20:00Z",
               "advancesTo": {
-                "matchNumber": 93,
+                "roundNumber": 2,
+                "matchNumber": 29,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6737,7 +6920,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T22:40:00Z",
               "advancesTo": {
-                "matchNumber": 93,
+                "roundNumber": 2,
+                "matchNumber": 29,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6755,7 +6939,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:05:00Z",
               "advancesTo": {
-                "matchNumber": 94,
+                "roundNumber": 2,
+                "matchNumber": 30,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6773,7 +6958,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T20:25:00Z",
               "advancesTo": {
-                "matchNumber": 94,
+                "roundNumber": 2,
+                "matchNumber": 30,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6791,7 +6977,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:45:00Z",
               "advancesTo": {
-                "matchNumber": 95,
+                "roundNumber": 2,
+                "matchNumber": 31,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6809,7 +6996,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:45:00Z",
               "advancesTo": {
-                "matchNumber": 95,
+                "roundNumber": 2,
+                "matchNumber": 31,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6827,7 +7015,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T21:45:00Z",
               "advancesTo": {
-                "matchNumber": 96,
+                "roundNumber": 2,
+                "matchNumber": 32,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -6845,7 +7034,8 @@
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 96,
+                "roundNumber": 2,
+                "matchNumber": 32,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -6856,14 +7046,15 @@
               }
             },
             {
-              "matchNumber": 65,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 97,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -6874,14 +7065,15 @@
               }
             },
             {
-              "matchNumber": 66,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T18:50:00Z",
               "advancesTo": {
-                "matchNumber": 97,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -6892,14 +7084,15 @@
               }
             },
             {
-              "matchNumber": 67,
+              "matchNumber": 3,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 98,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -6910,14 +7103,15 @@
               }
             },
             {
-              "matchNumber": 68,
+              "matchNumber": 4,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 98,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -6928,14 +7122,15 @@
               }
             },
             {
-              "matchNumber": 69,
+              "matchNumber": 5,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T17:40:00Z",
               "advancesTo": {
-                "matchNumber": 99,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -6946,14 +7141,15 @@
               }
             },
             {
-              "matchNumber": 70,
+              "matchNumber": 6,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 99,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -6964,14 +7160,15 @@
               }
             },
             {
-              "matchNumber": 71,
+              "matchNumber": 7,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T23:30:00Z",
               "advancesTo": {
-                "matchNumber": 100,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -6982,14 +7179,15 @@
               }
             },
             {
-              "matchNumber": 72,
+              "matchNumber": 8,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T02:10:00Z",
               "advancesTo": {
-                "matchNumber": 100,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -7000,14 +7198,15 @@
               }
             },
             {
-              "matchNumber": 73,
+              "matchNumber": 9,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 101,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -7018,14 +7217,15 @@
               }
             },
             {
-              "matchNumber": 74,
+              "matchNumber": 10,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 101,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7036,14 +7236,15 @@
               }
             },
             {
-              "matchNumber": 75,
+              "matchNumber": 11,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 102,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -7054,14 +7255,15 @@
               }
             },
             {
-              "matchNumber": 76,
+              "matchNumber": 12,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 102,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7072,14 +7274,15 @@
               }
             },
             {
-              "matchNumber": 77,
+              "matchNumber": 13,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T00:10:00Z",
               "advancesTo": {
-                "matchNumber": 103,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -7090,14 +7293,15 @@
               }
             },
             {
-              "matchNumber": 78,
+              "matchNumber": 14,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T21:35:00Z",
               "advancesTo": {
-                "matchNumber": 103,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7108,14 +7312,15 @@
               }
             },
             {
-              "matchNumber": 79,
+              "matchNumber": 15,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T17:20:00Z",
               "advancesTo": {
-                "matchNumber": 104,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -7126,14 +7331,15 @@
               }
             },
             {
-              "matchNumber": 80,
+              "matchNumber": 16,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T19:30:00Z",
               "advancesTo": {
-                "matchNumber": 104,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7144,14 +7350,15 @@
               }
             },
             {
-              "matchNumber": 81,
+              "matchNumber": 17,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T21:30:00Z",
               "advancesTo": {
-                "matchNumber": 105,
+                "roundNumber": 3,
+                "matchNumber": 9,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7162,14 +7369,15 @@
               }
             },
             {
-              "matchNumber": 82,
+              "matchNumber": 18,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T18:35:00Z",
               "advancesTo": {
-                "matchNumber": 105,
+                "roundNumber": 3,
+                "matchNumber": 9,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -7180,14 +7388,15 @@
               }
             },
             {
-              "matchNumber": 83,
+              "matchNumber": 19,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 106,
+                "roundNumber": 3,
+                "matchNumber": 10,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7198,14 +7407,15 @@
               }
             },
             {
-              "matchNumber": 84,
+              "matchNumber": 20,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T16:40:00Z",
               "advancesTo": {
-                "matchNumber": 106,
+                "roundNumber": 3,
+                "matchNumber": 10,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -7216,14 +7426,15 @@
               }
             },
             {
-              "matchNumber": 85,
+              "matchNumber": 21,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T22:55:00Z",
               "advancesTo": {
-                "matchNumber": 107,
+                "roundNumber": 3,
+                "matchNumber": 11,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7234,14 +7445,15 @@
               }
             },
             {
-              "matchNumber": 86,
+              "matchNumber": 22,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T18:45:00Z",
               "advancesTo": {
-                "matchNumber": 107,
+                "roundNumber": 3,
+                "matchNumber": 11,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -7252,14 +7464,15 @@
               }
             },
             {
-              "matchNumber": 87,
+              "matchNumber": 23,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T19:15:00Z",
               "advancesTo": {
-                "matchNumber": 108,
+                "roundNumber": 3,
+                "matchNumber": 12,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7270,14 +7483,15 @@
               }
             },
             {
-              "matchNumber": 88,
+              "matchNumber": 24,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T23:10:00Z",
               "advancesTo": {
-                "matchNumber": 108,
+                "roundNumber": 3,
+                "matchNumber": 12,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -7288,14 +7502,15 @@
               }
             },
             {
-              "matchNumber": 89,
+              "matchNumber": 25,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 109,
+                "roundNumber": 3,
+                "matchNumber": 13,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -7306,14 +7521,15 @@
               }
             },
             {
-              "matchNumber": 90,
+              "matchNumber": 26,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T16:50:00Z",
               "advancesTo": {
-                "matchNumber": 109,
+                "roundNumber": 3,
+                "matchNumber": 13,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7324,14 +7540,15 @@
               }
             },
             {
-              "matchNumber": 91,
+              "matchNumber": 27,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 110,
+                "roundNumber": 3,
+                "matchNumber": 14,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -7342,14 +7559,15 @@
               }
             },
             {
-              "matchNumber": 92,
+              "matchNumber": 28,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T19:15:00Z",
               "advancesTo": {
-                "matchNumber": 110,
+                "roundNumber": 3,
+                "matchNumber": 14,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7360,14 +7578,15 @@
               }
             },
             {
-              "matchNumber": 93,
+              "matchNumber": 29,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 111,
+                "roundNumber": 3,
+                "matchNumber": 15,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -7378,14 +7597,15 @@
               }
             },
             {
-              "matchNumber": 94,
+              "matchNumber": 30,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 111,
+                "roundNumber": 3,
+                "matchNumber": 15,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7396,14 +7616,15 @@
               }
             },
             {
-              "matchNumber": 95,
+              "matchNumber": 31,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-03T22:15:00Z",
               "advancesTo": {
-                "matchNumber": 112,
+                "roundNumber": 3,
+                "matchNumber": 16,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -7414,14 +7635,15 @@
               }
             },
             {
-              "matchNumber": 96,
+              "matchNumber": 32,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T01:50:00Z",
               "advancesTo": {
-                "matchNumber": 112,
+                "roundNumber": 3,
+                "matchNumber": 16,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7432,14 +7654,15 @@
               }
             },
             {
-              "matchNumber": 97,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 113,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -7450,14 +7673,15 @@
               }
             },
             {
-              "matchNumber": 98,
+              "matchNumber": 2,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T17:05:00Z",
               "advancesTo": {
-                "matchNumber": 113,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -7468,14 +7692,15 @@
               }
             },
             {
-              "matchNumber": 99,
+              "matchNumber": 3,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 114,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -7486,14 +7711,15 @@
               }
             },
             {
-              "matchNumber": 100,
+              "matchNumber": 4,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 114,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -7504,14 +7730,15 @@
               }
             },
             {
-              "matchNumber": 101,
+              "matchNumber": 5,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 115,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -7522,14 +7749,15 @@
               }
             },
             {
-              "matchNumber": 102,
+              "matchNumber": 6,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T15:10:00Z",
               "advancesTo": {
-                "matchNumber": 115,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7540,14 +7768,15 @@
               }
             },
             {
-              "matchNumber": 103,
+              "matchNumber": 7,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T01:30:00Z",
               "advancesTo": {
-                "matchNumber": 116,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -7558,14 +7787,15 @@
               }
             },
             {
-              "matchNumber": 104,
+              "matchNumber": 8,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-04T19:05:00Z",
               "advancesTo": {
-                "matchNumber": 116,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7576,14 +7806,15 @@
               }
             },
             {
-              "matchNumber": 105,
+              "matchNumber": 9,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 117,
+                "roundNumber": 4,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7594,14 +7825,15 @@
               }
             },
             {
-              "matchNumber": 106,
+              "matchNumber": 10,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 117,
+                "roundNumber": 4,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -7612,14 +7844,15 @@
               }
             },
             {
-              "matchNumber": 107,
+              "matchNumber": 11,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 118,
+                "roundNumber": 4,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7630,14 +7863,15 @@
               }
             },
             {
-              "matchNumber": 108,
+              "matchNumber": 12,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T19:45:00Z",
               "advancesTo": {
-                "matchNumber": 118,
+                "roundNumber": 4,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -7648,14 +7882,15 @@
               }
             },
             {
-              "matchNumber": 109,
+              "matchNumber": 13,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T17:55:00Z",
               "advancesTo": {
-                "matchNumber": 119,
+                "roundNumber": 4,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -7666,14 +7901,15 @@
               }
             },
             {
-              "matchNumber": 110,
+              "matchNumber": 14,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 119,
+                "roundNumber": 4,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7684,14 +7920,15 @@
               }
             },
             {
-              "matchNumber": 111,
+              "matchNumber": 15,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-05T23:05:00Z",
               "advancesTo": {
-                "matchNumber": 120,
+                "roundNumber": 4,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -7702,14 +7939,15 @@
               }
             },
             {
-              "matchNumber": 112,
+              "matchNumber": 16,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T01:05:00Z",
               "advancesTo": {
-                "matchNumber": 120,
+                "roundNumber": 4,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7720,14 +7958,15 @@
               }
             },
             {
-              "matchNumber": 113,
+              "matchNumber": 1,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 121,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -7738,14 +7977,15 @@
               }
             },
             {
-              "matchNumber": 114,
+              "matchNumber": 2,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T16:45:00Z",
               "advancesTo": {
-                "matchNumber": 121,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Top quarter",
@@ -7756,14 +7996,15 @@
               }
             },
             {
-              "matchNumber": 115,
+              "matchNumber": 3,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-06T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 122,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Second quarter",
@@ -7774,14 +8015,15 @@
               }
             },
             {
-              "matchNumber": 116,
+              "matchNumber": 4,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T01:30:00Z",
               "advancesTo": {
-                "matchNumber": 122,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7792,14 +8034,15 @@
               }
             },
             {
-              "matchNumber": 117,
+              "matchNumber": 5,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T15:05:00Z",
               "advancesTo": {
-                "matchNumber": 123,
+                "roundNumber": 5,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7810,14 +8053,15 @@
               }
             },
             {
-              "matchNumber": 118,
+              "matchNumber": 6,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T23:10:00Z",
               "advancesTo": {
-                "matchNumber": 123,
+                "roundNumber": 5,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Third quarter",
@@ -7828,14 +8072,15 @@
               }
             },
             {
-              "matchNumber": 119,
+              "matchNumber": 7,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 124,
+                "roundNumber": 5,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Bottom quarter",
@@ -7846,14 +8091,15 @@
               }
             },
             {
-              "matchNumber": 120,
+              "matchNumber": 8,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-07T20:10:00Z",
               "advancesTo": {
-                "matchNumber": 124,
+                "roundNumber": 5,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7864,14 +8110,15 @@
               }
             },
             {
-              "matchNumber": 121,
+              "matchNumber": 1,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-08T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 125,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Top quarter",
@@ -7882,14 +8129,15 @@
               }
             },
             {
-              "matchNumber": 122,
+              "matchNumber": 2,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-09T00:20:00Z",
               "advancesTo": {
-                "matchNumber": 125,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Second quarter",
@@ -7900,14 +8148,15 @@
               }
             },
             {
-              "matchNumber": 123,
+              "matchNumber": 3,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-09T18:20:00Z",
               "advancesTo": {
-                "matchNumber": 126,
+                "roundNumber": 6,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Third quarter",
@@ -7918,14 +8167,15 @@
               }
             },
             {
-              "matchNumber": 124,
+              "matchNumber": 4,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-09T15:40:00Z",
               "advancesTo": {
-                "matchNumber": 126,
+                "roundNumber": 6,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Bottom quarter",
@@ -7936,14 +8186,15 @@
               }
             },
             {
-              "matchNumber": 125,
+              "matchNumber": 1,
               "roundNumber": 6,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-10T23:15:00Z",
               "advancesTo": {
-                "matchNumber": 127,
+                "roundNumber": 7,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -7953,14 +8204,15 @@
               }
             },
             {
-              "matchNumber": 126,
+              "matchNumber": 2,
               "roundNumber": 6,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2026-09-11T00:55:00Z",
               "advancesTo": {
-                "matchNumber": 127,
+                "roundNumber": 7,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -7970,7 +8222,7 @@
               }
             },
             {
-              "matchNumber": 127,
+              "matchNumber": 1,
               "roundNumber": 7,
               "home": null,
               "away": null,
