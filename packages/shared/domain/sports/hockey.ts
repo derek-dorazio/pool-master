@@ -1,17 +1,12 @@
-import { displayString } from '../../display-strings/display-strings';
 import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
-
-/** What the rounds of a college hockey bracket are called, counted back from the final. */
-const ROUND_NAMES_FROM_FINAL = ['National Championship', 'Frozen Four', 'Regional Finals', 'Regional Semifinals'] as const;
 
 /**
  * Hockey (#788): teams playing a knockout bracket, scored by the head-to-head family from the
  * bracket's matches, as basketball is. Its sport leagues are the NHL and PWHL playoffs, where a
  * series is one match whose scores are the games each side won, and the NCAA Division I men's
- * and women's tournaments, single games whose scores are goals. The NHL, the PWHL and the women's
- * tournament name their own rounds (`SportLeague.roundNames`), so the names below are the men's
- * tournament's. A game is three periods; overtime goals count only in the final score.
+ * and women's tournaments, single games whose scores are goals. Every round is named by the slot it
+ * is played in (#2006). A game is three periods; overtime goals count only in the final score.
  *
  * The NHL and the men's tournament are 16 teams in four rounds, four tiers of four. The women's
  * tournament seeds five teams and fills three quarterfinal places from a first round, through
@@ -30,9 +25,4 @@ export const hockeySportDefinition: SportDefinition = {
   matchPeriodLayout: MatchPeriodLayout.THREE_PERIODS,
   // A four-round bracket reads Regional Semifinals, Regional Finals, Frozen Four, National
   // Championship; a shorter one keeps the names counted back from its final.
-  roundLabel: (roundNumber, roundCount, locale) => {
-    const fromFinal = roundCount - roundNumber;
-    const name = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
-  },
 };

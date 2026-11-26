@@ -124,16 +124,13 @@ describe('stroke-play leaderboard', () => {
     expect(board.pickDetail('entry-1', unplayedPick, cutGolfer).total).toBe('+16');
   });
 
-  it('shows 80 in an unplayed round and names that round with the sport\'s own round label', () => {
-    const board = strokePlayUi.leaderboard(golfLeaderboard, {
-      ...golf,
-      roundLabel: (roundNumber) => `Day ${roundNumber}`,
-    });
+  it('shows 80 in an unplayed round and names that round by its number, as its column header does', () => {
+    const board = strokePlayUi.leaderboard(golfLeaderboard, golf);
 
     const [, firstRound] = board.pickDetail('entry-1', unplayedPick, cutGolfer).detailCells;
 
     expect(firstRound.text).toBe('80');
-    expect(firstRound.unplayed?.ariaLabel).toBe('Day 1 not played, counts as 80 strokes');
+    expect(firstRound.unplayed?.ariaLabel).toBe('Round 1 not played, counts as 80 strokes');
   });
 
   it('explains the 80s in a footnote only when a pick on the board has an unplayed round', () => {

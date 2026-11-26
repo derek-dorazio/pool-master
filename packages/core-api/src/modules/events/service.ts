@@ -63,7 +63,7 @@ import { SportEventError } from './errors';
 import { describeFailedReleaseCheck, evaluateReleaseChecks, failedReleaseChecks } from './release-checks';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
-import { dailyRoundSchedule, providerEventRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
+import { dailyRoundSchedule, providerEventRoundSchedule, roundsInSlots, type SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 import { NO_JOBS_FOR_WRITE, combineJobsForWrite } from '../background-jobs';
 import { DomainEventType, type DomainEvents } from '../domain-events';
@@ -844,7 +844,12 @@ export class SportEventService {
       if (isSlotConflict(error)) throw new SportEventError('That slot already has an event.', 'SEASON_SLOT_TAKEN', 409);
       throw error;
     }
-    await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
+    // Each event's rounds are played in its slots, read back in play order (#2006): one read for them all.
+    const slotsByEvent = await this.deps.sportEvents.findSlots(events.map((event) => event.id));
+    await this.deps.rounds.createSchedules(events.map((event, index) => ({
+      sportEventId: event.id,
+      rounds: roundsInSlots(editions[index]?.rounds ?? [], slotsByEvent.get(event.id) ?? []),
+    })));
     const tiersByEvent = await this.deps.tiers.createDefaultTiers(sportLeague, events.map((event) => event.id));
     return events.map((event, index): SportEventAdminSummary => {
       const tiers = tiersByEvent.get(event.id) ?? [];
@@ -967,7 +972,8 @@ function providerEdition(
       startDate: dates.startDate,
       endDate: dates.endDate ?? undefined,
       status: SportEventStatus.DRAFT,
-      rounds: schedule.length,
+      // A round per slot when it covers several (#2006).
+      rounds: input.plays.length > 1 ? input.plays.length : schedule.length,
       sportLeagueId: input.sportLeagueId,
       sportLeagueSeasonId: input.sportLeagueSeasonId,
       autoLifecycleEnabled: true,

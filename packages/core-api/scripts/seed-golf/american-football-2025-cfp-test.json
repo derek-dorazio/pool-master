@@ -34,7 +34,6 @@
   "sportLeagues": [
     {
       "name": "NCAA Men's Football",
-      "bracketAdvancement": "FIXED",
       "players": [
         {
           "key": "cfp-indiana-hoosiers",

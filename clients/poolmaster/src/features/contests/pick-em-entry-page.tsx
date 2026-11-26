@@ -53,7 +53,7 @@ import {
   type PickEmGame,
   type PickEmTeam,
 } from './pick-em-week';
-import { useBracketRoundLabel } from './use-bracket-round-label';
+import { useEventRoundLabels } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
 import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
 import { useEntryName } from './use-entry-name';
@@ -80,7 +80,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const sportEventId = requestedEventId ?? currentContestEvent(contest)?.sportEventId ?? '';
   // A playoff survivor pool's round on screen (#785), until the member switches: the one being picked.
   const [requestedRound, setRequestedRound] = useState<number | null>(null);
-  const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
+  const roundLabel = useEventRoundLabels(sportEventId);
   const tieLabel = contestTieLabel(contest.sport);
   const match = contestMatchNoun(contest.sport);
   const participant = contestParticipantNoun(contest.sport);
@@ -126,8 +126,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const eventPicks = gamePicksQuery.data;
   const isPlayoff = isPlayoffSurvivor(eventPicks);
   const rounds = weekRounds(eventPicks);
-  // poolmaster-allow-position: weekRounds sorts round numbers ascending: the highest is the last round
-  const roundCount = rounds.at(-1) ?? 1;
   const round = requestedRound !== null && rounds.includes(requestedRound) ? requestedRound : currentWeekRound(eventPicks);
   // A playoff round reads as a week of its own; any other event is one week.
   const gamePicks = isPlayoff ? roundWeek(eventPicks, round) : eventPicks;
@@ -144,9 +142,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   // A used team names the week it was picked in; a week that is one of this playoff's rounds, by the round's name.
   const usedWeekName = (weekNumber: number) => {
     const round = isPlayoff ? eventPicks.survivor?.roundWeeks.find((week) => week.weekNumber === weekNumber)?.roundNumber : undefined;
-    return round === undefined ? displayString('word.weekNumber', { n: weekNumber }) : roundLabel(round, roundCount);
+    return round === undefined ? displayString('word.weekNumber', { n: weekNumber }) : roundLabel(round);
   };
-  const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound, roundCount)}` : `week ${eliminatedInWeek ?? ''}`;
+  const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound)}` : `week ${eliminatedInWeek ?? ''}`;
   // poolmaster-allow-position: weekRounds sorts round numbers ascending: the lowest is the first round
   const roundNeedsPick = isPlayoff && round !== rounds.at(0) && canChangeWeek(gamePicks) && gamePicks.pickedCount === 0;
   const survivorTeam = isSurvivor ? survivorPickTeam(gamePicks) : null;
@@ -240,7 +238,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         <FormField className="max-w-md" label="Round">
           <Select data-testid="survivor-round-switcher" onChange={(event) => setRequestedRound(Number(event.target.value))} value={String(round)}>
             {rounds.map((roundNumber) => (
-              <option key={roundNumber} value={roundNumber}>{roundLabel(roundNumber, roundCount)}</option>
+              <option key={roundNumber} value={roundNumber}>{roundLabel(roundNumber)}</option>
             ))}
           </Select>
         </FormField>

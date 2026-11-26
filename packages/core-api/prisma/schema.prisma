@@ -396,13 +396,6 @@ enum PrismaPredictedResult {
   TIE
 }
 
-/// How a sport league's bracket winners reach their next match (#722). Mirrors the domain
-/// `BracketAdvancement`.
-enum PrismaBracketAdvancement {
-  FIXED
-  RESEED_BY_SEED
-}
-
 /// The periods a sport league's games are played in, when not its sport's (#786). Mirrors the
 /// domain `MatchPeriodLayout`.
 enum PrismaMatchPeriodLayout {
@@ -1144,13 +1137,6 @@ model SportLeague {
   /// there. Reference data, set by the migration that seeds the league.
   timeZone                   String                   @map("time_zone") @db.VarChar(64)
   isActive                   Boolean                  @default(true) @map("is_active")
-  /// How a bracket's winners reach their next match (#722): by fixed links, or reseeded by seed
-  /// after a round (the NFL). Only a sport played as a bracket reads it.
-  bracketAdvancement         PrismaBracketAdvancement @default(FIXED) @map("bracket_advancement")
-  /// What the sport league calls its bracket's rounds, first to final (#706: the NBA's First Round,
-  /// Conference Semifinals, Conference Finals, NBA Finals). Empty: the sport's names are used.
-  /// Reference data, set by the migration that seeds the league.
-  roundNames                 String[]                 @default([]) @map("round_names")
   /// The tier profile a new event of the sport league is tiered with (#1844): how many tiers it
   /// starts with, how many participants auto-tiering puts in each, and what the last tier takes.
   /// Every league names one; a new league gets its profile from the migration that seeds it.
@@ -1167,11 +1153,6 @@ model SportLeague {
   /// is one match with no half-time score). Null: every round. Reference data, set by the
   /// migration that seeds the league.
   squaresFromRound           Int?                     @map("squares_from_round")
-  /// Each round's best-of length, first to final, lined up with the event's last round as
-  /// `roundNames` is (#1545: the NBA's 7, 7, 7, 7). Empty, or a round with no entry, plays single
-  /// games. Reference data, set where the league is seeded; a game-score sync reads it to count a
-  /// series' wins.
-  roundSeriesLengths         Int[]                    @default([]) @map("round_series_lengths")
   /// What screens call the sport league, when not what its sport calls one (#834: the NCAA's
   /// tennis championships are leagues, not tours). Null: the sport's noun. Reference data, set by
   /// the migration that seeds the league.
@@ -2144,7 +2125,11 @@ model SportEventSlot {
   seasonSlot SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueSeasonId, id], onDelete: Restrict, map: "sport_event_slots_season_slot_fkey")
 
   /// A slot belongs to at most one event (slot ids are unique, so the Season adds nothing).
+  rounds     SportEventRound[]
+
   @@unique([sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId], map: "sport_event_slots_season_slot_key")
+  /// The target of a round's composite key, which keeps the round in one of its own event's slots.
+  @@unique([sportEventId, id], map: "sport_event_slots_event_id_key")
   @@index([sportEventId, sportLeagueSeasonId], map: "sport_event_slots_event_idx")
   @@map("sport_event_slots")
 }
@@ -2192,6 +2177,10 @@ model SportEventParticipant {
 model SportEventRound {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId   String    @map("sport_event_id") @db.Uuid
+  /// The event slot the round is played in (#2006): the composite key keeps it one of the round's
+  /// own event's slots. A golf tournament's four rounds share its one slot; a bracket event has a
+  /// round per slot.
+  sportEventSlotId String  @map("sport_event_slot_id") @db.Uuid
   roundNumber    Int       @map("round_number")
   scheduledDate  DateTime  @map("scheduled_date") @db.Timestamptz
   scheduledEndAt DateTime? @map("scheduled_end_at") @db.Timestamptz
@@ -2199,6 +2188,7 @@ model SportEventRound {
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   sportEvent        SportEvent                   @relation(fields: [sportEventId], references: [id])
+  eventSlot         SportEventSlot               @relation(fields: [sportEventId, sportEventSlotId], references: [sportEventId, id], onDelete: Restrict, map: "sport_event_rounds_event_slot_fkey")
   participantRounds SportEventParticipantRound[]
   matches           SportEventRoundMatch[]
 

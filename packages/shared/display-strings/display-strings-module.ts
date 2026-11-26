@@ -44,7 +44,6 @@ export type SharedEnums = {
   MatchStatus: Enums.MatchStatus;
   MatchSide: Enums.MatchSide;
   MatchEnding: Enums.MatchEnding;
-  BracketAdvancement: Enums.BracketAdvancement;
   MatchPeriodLayout: Enums.MatchPeriodLayout;
   SportLeagueNoun: Enums.SportLeagueNoun;
   RaceResultStatus: Enums.RaceResultStatus;

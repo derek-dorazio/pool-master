@@ -1,4 +1,5 @@
 import { MatchSide } from '@poolmaster/shared/domain';
+import { roundLabels } from '@poolmaster/shared/display-strings';
 import type { SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { describeEntry, sideEntry } from './bracket-copy';
 
@@ -33,13 +34,12 @@ function scoreOf(match: SportEventRoundMatchDto): string | null {
     : `${score} (${String(match.homeShootoutScore)}–${String(match.awayShootoutScore)} shoot-out)`;
 }
 
-/** The Matches grid's rows, in match order, each named by its round and its two sides. */
+/** The Matches grid's rows, in match order, each named by its round's slot and its two sides. */
 export function eventMatchRows(
   matches: readonly SportEventRoundMatchDto[],
   field: readonly SportEventParticipantDto[],
-  roundLabel: (roundNumber: number, roundCount: number) => string,
-  roundCount: number,
 ): EventMatchRow[] {
+  const roundLabel = roundLabels(matches);
   const fieldById = new Map(field.map((entry) => [entry.id, entry]));
   return matches.map((match) => {
     const home = sideName(match, MatchSide.HOME, fieldById);
@@ -48,7 +48,7 @@ export function eventMatchRows(
       match,
       id: match.id,
       roundNumber: match.roundNumber,
-      roundLabel: roundLabel(match.roundNumber, roundCount),
+      roundLabel: roundLabel(match.roundNumber),
       matchNumber: match.matchNumber,
       pairingLabel: match.isNeutralSite ? `${home} vs ${away}` : `${away} @ ${home}`,
       scheduledDate: match.scheduledDate,

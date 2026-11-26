@@ -22,7 +22,6 @@ import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, gamePickErrorValues } from './contest-sport';
 import { firstContestEvent } from './contest-events';
 import { canRenameEntries } from './contest-status';
-import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
 import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
 import { useEntryName } from './use-entry-name';
@@ -40,7 +39,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const contestId = contest.id;
   // A bracket covers one event (#721).
   const sportEventId = firstContestEvent(contest)?.sportEventId ?? '';
-  const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
 
   const { gamePicksQuery, saveMutation, setTiebreakerDraft, submitMutation, tiebreakerDraft } = useGamePicks({
     action: 'bracket',
@@ -72,7 +70,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const match = contestMatchNoun(contest.sport);
   const participant = contestParticipantNoun(contest.sport);
   const entrySummary = entryQuery.data?.entry ?? null;
-  const rounds = buildBracketRounds(gamePicks.games, roundLabel);
+  const rounds = buildBracketRounds(gamePicks.games);
   // A full bracket closes at the event's start; a second-chance one at its first round's first game.
   const closesAt = describeBracketClose(rounds, eventStart);
   const isOpen = gamePicks.games.some((game) => !game.locked);
@@ -155,7 +153,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
             titleTestId="contest-entry-builder-heading"
           >
             <BracketView
-              drawing={drawBracket(gamePicks.games, roundLabel)}
+              drawing={drawBracket(gamePicks.games)}
               isOwnEntry={gamePicks.ownEntry}
               picking={canPick ? { isBusy: saveMutation.isPending, onPick: pick } : null}
               tiebreaker={canPick ? undefined : describeBracketTiebreaker(gamePicks.tiebreakerValue, scoreUnit)}

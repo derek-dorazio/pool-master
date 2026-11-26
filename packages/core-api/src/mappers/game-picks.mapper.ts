@@ -17,6 +17,7 @@ import {
 } from '@poolmaster/shared/dto';
 import type { GamePickGame, GamePicksView, GamePreview, GamesPreview } from '../modules/selections/prediction-service';
 import { selectionErrors } from '../modules/selections/selection-errors';
+import { mapRoundSlotToDto } from './sport-event-matches.mapper';
 
 function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
   const { match, pick, pickScore } = game;
@@ -24,6 +25,7 @@ function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
     sportEventRoundMatchId: match.id,
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
+    slot: mapRoundSlotToDto(match.slot),
     kickoff: game.kickoff.toISOString(),
     status: match.status,
     isNeutralSite: match.isNeutralSite,
@@ -104,6 +106,7 @@ function toGamePickPreviewGameDto(game: GamePreview): GamePickPreviewGameDto {
     sportEventRoundMatchId: match.id,
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
+    slot: mapRoundSlotToDto(match.slot),
     kickoff: game.kickoff.toISOString(),
     status: match.status,
     isNeutralSite: match.isNeutralSite,

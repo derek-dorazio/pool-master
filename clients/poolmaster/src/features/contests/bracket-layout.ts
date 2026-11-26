@@ -5,8 +5,8 @@
  * regions meet (a Final Four, a Super Bowl), carry no region, so they read as one group after the
  * regional rounds. Everything here is derived from the game-pick read; nothing is stored.
  */
-import { PickOutcome } from '@poolmaster/shared/domain';
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { PickOutcome, SlotKind } from '@poolmaster/shared/domain';
+import { enumLabel, roundLabels } from '@poolmaster/shared/display-strings';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 import type { PickEmGame } from './pick-em-week';
 
@@ -21,23 +21,25 @@ export interface BracketRegionGroup {
 
 export interface BracketRound {
   roundNumber: number;
-  /** The round's name in the sport's or its league's words: "Sweet 16", "Super Bowl". */
+  /** The round's name, its slot's: "Sweet 16", "Super Bowl". */
   label: string;
   regions: BracketRegionGroup[];
 }
 
-/** A round's name from its number and the bracket's round count. */
-export type BracketRoundLabel = (roundNumber: number, roundCount: number) => string;
+/** Whether a game is played in its event's FINAL slot (#2006): the bracket's final. */
+export function isFinalGame(game: Pick<BracketGame, 'slot'>): boolean {
+  return game.slot.slotKind === SlotKind.FINAL;
+}
 
-/** The bracket's games by round and region, in the order the bracket lists them. */
-export function buildBracketRounds(games: readonly BracketGame[], roundLabel: BracketRoundLabel): BracketRound[] {
+/** The bracket's games by round and region, in the order the bracket lists them, each round named by its slot. */
+export function buildBracketRounds(games: readonly BracketGame[]): BracketRound[] {
   const ordered = [...games].sort((left, right) => left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber);
-  const roundCount = ordered.at(-1)?.roundNumber ?? 0;
+  const roundLabel = roundLabels(ordered);
   const rounds = new Map<number, BracketRound>();
   for (const game of ordered) {
     let round = rounds.get(game.roundNumber);
     if (!round) {
-      round = { roundNumber: game.roundNumber, label: roundLabel(game.roundNumber, roundCount), regions: [] };
+      round = { roundNumber: game.roundNumber, label: roundLabel(game.roundNumber), regions: [] };
       rounds.set(game.roundNumber, round);
     }
     let region = round.regions.find((candidate) => candidate.regionLabel === game.regionLabel);

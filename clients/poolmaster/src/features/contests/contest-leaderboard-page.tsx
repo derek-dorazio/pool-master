@@ -1,5 +1,4 @@
 import { Trophy } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import type { ContestDto } from '@/lib/api';
@@ -49,8 +48,7 @@ import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
 import { upperFirst } from '@/lib/upper-first';
-import { useEventRoundName } from './use-bracket-round-label';
-import { sportEventQueryOptions } from './use-contest-schedule';
+import { useEventRoundLabels } from './use-bracket-round-label';
 import { useLeaderboardEventGames } from './use-event-games';
 
 /**
@@ -369,8 +367,7 @@ export function ContestLeaderboardPage() {
   const isTeamPicks = leaderboardQuery.data !== undefined
     && eventSportDefinition(leaderboardQuery.data).scoringFamily === ScoringFamily.HEAD_TO_HEAD;
   const gamesQuery = useLeaderboardEventGames(shownEventId, contestQuery.data?.status, isTeamPicks);
-  const shownEventQuery = useQuery({ ...sportEventQueryOptions(shownEventId), enabled: isTeamPicks && shownEventId !== '' });
-  const roundName = useEventRoundName(shownEventQuery.data ?? null);
+  const roundName = useEventRoundLabels(shownEventId);
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
@@ -411,7 +408,7 @@ export function ContestLeaderboardPage() {
     games: gamesQuery.data,
     roundName,
     formatStart: (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences),
-  } : undefined, { isLive: contestQuery.data.status === ContestStatus.ACTIVE });
+  } : undefined, { isLive: contestQuery.data.status === ContestStatus.ACTIVE, roundName });
   const participantNoun = sportVocabulary(eventSportDefinition(leaderboardQuery.data)).participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const hasStatLines = view.entries.some((entry) => entry.picks.some((pick) => pick.statLine));

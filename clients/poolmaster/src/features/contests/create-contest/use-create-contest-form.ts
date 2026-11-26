@@ -38,7 +38,7 @@ import {
 import { membersWillSeeRules } from '../members-will-see';
 import { sportEventsQueryOptions } from '../sport-events-query';
 import { useActiveContestTemplatesQuery } from '../use-active-contest-templates-query';
-import { useEventRoundName } from '../use-bracket-round-label';
+import { useEventRoundLabels } from '../use-bracket-round-label';
 import { useSquaresGameChoices } from '../use-squares-game-choices';
 import {
   type CreatableSelectionType,
@@ -157,7 +157,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     [eventsQuery.data, requestedSportLeagueId, requestedTemplate],
   );
   // A knockout under way takes only a second-chance bracket: the API's rounds say which.
-  const roundName = useEventRoundName(selectionType === SelectionType.BRACKET ? selectedEvent : null);
+  const roundName = useEventRoundLabels(selectionType === SelectionType.BRACKET ? selectedEvent?.id ?? '' : '');
   const bracketStartRounds = selectionType === SelectionType.BRACKET && selectedEvent
     ? bracketStartRoundOptions(bracketStartRoundsOf(selectedEvent), roundName)
     : [];

@@ -20,6 +20,7 @@ import {
   SportEventStatus,
   ValuationSource,
 } from '@poolmaster/shared/domain';
+import { SportEventRoundSlotDtoSchema } from './bracket.dto';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 import { SportLeagueSeasonSlotDtoSchema, UploadRowResolutionDtoSchema } from './sport-catalog.dto';
@@ -191,7 +192,7 @@ export const UpdateSportEventRequestSchema = z.object({
   location: z.string().nullable().optional().describe('null clears it.'),
   startDate: DateTimeSchema.optional().describe('422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots\'.'),
   endDate: z.iso.datetime().nullable().optional().describe('null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.'),
-  rounds: z.number().int().min(1).optional(),
+  rounds: z.number().int().min(1).optional().describe('Raises an event played in one slot to this many rounds. 422 EVENT_ROUNDS_FROM_SLOTS for an event with several slots, which plays a round in each.'),
   roundsPar: z.number().int().min(ROUNDS_PAR_MIN).max(ROUNDS_PAR_MAX).nullable().optional()
     .describe(`Par for every round, ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}. null clears it, so contest scoring derives each round's par from the field.`),
   autoLifecycleEnabled: z.boolean().optional(),
@@ -211,6 +212,7 @@ export const SportEventRoundDtoSchema = z.object({
   id: z.uuid(),
   sportEventId: z.uuid(),
   roundNumber: z.number().int().describe('1-based; how a score names its round.'),
+  slot: SportEventRoundSlotDtoSchema.describe('The slot the round is played in: its label and whether it is the final.'),
   scheduledDate: DateTimeSchema,
   // A fresh schema rather than DateTimeSchema.nullable(): reusing the instance makes the
   // JSON-schema output an allOf $ref without a type, which the route builder rejects.

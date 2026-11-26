@@ -10,6 +10,7 @@ import {
   previewTiePick,
   toPreviewWeek,
 } from './pick-preview';
+import { weekSlot } from './test/round-slots';
 
 const golfer = { one: 'golfer', many: 'golfers' };
 
@@ -40,6 +41,7 @@ function previewGame(matchNumber: number, pick: PreviewGame['pick'] = null): Pre
     sportEventRoundMatchId: `match-${matchNumber}`,
     matchNumber,
     roundNumber: 1,
+    slot: weekSlot(1),
     kickoff: '2099-09-13T17:00:00.000Z',
     status: 'SCHEDULED',
     isNeutralSite: false,

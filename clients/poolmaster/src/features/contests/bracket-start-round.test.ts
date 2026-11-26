@@ -1,4 +1,4 @@
-import { SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
+import { SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import {
   bracketRoundCount,
@@ -7,8 +7,9 @@ import {
   secondChanceRoundName,
 } from './bracket-start-round';
 import { buildManagedContest, buildSportEvent } from './test/contest-admin-fixtures';
+import { tournamentRoundName } from './test/round-slots';
 
-const MARCH_MADNESS_ROUND = (roundNumber: number) => getSportDefinition(Sport.BASKETBALL).roundLabel(roundNumber, 6);
+const MARCH_MADNESS_ROUND = tournamentRoundName;
 
 describe('where a bracket can start', () => {
   it('names each round the API says a bracket can start at, the full bracket as such and a later round as a second chance', () => {

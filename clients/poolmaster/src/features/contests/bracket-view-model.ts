@@ -7,7 +7,7 @@
  */
 import { MatchStatus, PickOutcome } from '@poolmaster/shared/domain';
 import type { TeamLineMark } from '@/features/shared/ui';
-import { buildBracketRounds, describeOpenSide, type BracketGame, type BracketRound, type BracketRoundLabel, type BracketTeam } from './bracket-layout';
+import { buildBracketRounds, describeOpenSide, isFinalGame, type BracketGame, type BracketRound, type BracketTeam } from './bracket-layout';
 
 /** One line of a game: the team the entry's picks put there, or an open line waiting for them. */
 export interface BracketLine {
@@ -109,15 +109,16 @@ function winnerLine(game: BracketGame): BracketLine | null {
 
 /** The entry's pick to win the final, and whether that team is out; null until it is picked. */
 function drawChampion(rounds: readonly BracketRound[]): BracketChampion | null {
-  const finalRound = rounds.at(-1);
-  const final = finalRound?.regions.length === 1 && finalRound.regions[0].games.length === 1 ? finalRound.regions[0].games[0] : null;
+  // The final is the game of the FINAL slot (#2006), never the last round's.
+  const finals = rounds.flatMap((round) => round.regions.flatMap((region) => region.games)).filter(isFinalGame);
+  const final = finals.length === 1 ? finals[0] : null;
   const winner = final ? winnerLine(final) : null;
   return winner?.team ? { team: winner.team, isOut: winner.mark === 'wrong' } : null;
 }
 
 /** The bracket's games drawn as regions meeting in the middle, with every line marked. */
-export function drawBracket(games: readonly BracketGame[], roundLabel: BracketRoundLabel): BracketDrawing {
-  const rounds = buildBracketRounds(games, roundLabel);
+export function drawBracket(games: readonly BracketGame[]): BracketDrawing {
+  const rounds = buildBracketRounds(games);
   const feederPicks = new Map<string, NonNullable<BracketGame['pick']>>();
   const drawnRounds = rounds.map((round) => {
     const openLabel = describeOpenSide(round, rounds);
@@ -204,18 +205,21 @@ export function openingRoundIndex(group: Pick<BracketGroup, 'rounds'>): number {
  */
 export function splitMiddle(middle: Pick<BracketGroup, 'rounds'>): {
   final: BracketDrawnGame | null;
+  finalRound: BracketDrawnRound | null;
   left: BracketDrawnRound[];
   right: BracketDrawnRound[];
 } {
-  const last = middle.rounds.at(-1);
-  const final = last?.games.length === 1 ? last.games[0] : null;
-  const before = final ? middle.rounds.slice(0, -1) : middle.rounds;
+  // The final is the game of the FINAL slot (#2006), never the last round's.
+  const finalRound = middle.rounds.find((round) => round.games.length === 1 && round.games.every(({ game }) => isFinalGame(game))) ?? null;
+  const final = finalRound?.games[0] ?? null;
+  const before = middle.rounds.filter((round) => round !== finalRound);
   const half = (round: BracketDrawnRound, side: 'left' | 'right'): BracketDrawnRound => {
     const cut = Math.ceil(round.games.length / 2);
     return { ...round, games: side === 'left' ? round.games.slice(0, cut) : round.games.slice(cut) };
   };
   return {
     final,
+    finalRound,
     left: before.map((round) => half(round, 'left')),
     right: before.map((round) => half(round, 'right')).filter((round) => round.games.length > 0),
   };

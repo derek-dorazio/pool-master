@@ -8,7 +8,7 @@
  * in its own region. A side an earlier match's link fills keeps that winner.
  */
 
-import { isMatchUnplayed, MatchSide, MatchStatus, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { isMatchUnplayed, MatchSide, MatchStatus, SlotKind, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 
 /** Both sides of one match of a reseeded round, as the admin sets them. */
 export interface RoundMatchup {
@@ -36,11 +36,10 @@ function winnerOf(match: SportEventRoundMatch): string | null {
   return match.status === MatchStatus.COMPLETED && match.winnerSide !== null ? sideOf(match, match.winnerSide) : null;
 }
 
-/** The rounds whose teams are placed by reseeding: each after a round with a match that links nowhere, below the last. */
+/** The rounds whose teams are placed by reseeding: each after a round with a match that links nowhere, short of the FINAL slot's (#2006). */
 export function reseededRounds(bracket: readonly SportEventRoundMatch[]): Set<number> {
-  const lastRound = Math.max(0, ...bracket.map((match) => match.roundNumber));
   return new Set(bracket
-    .filter((match) => match.advancesToMatchId === null && match.roundNumber < lastRound)
+    .filter((match) => match.advancesToMatchId === null && match.slot.slotKind !== SlotKind.FINAL)
     .map((match) => match.roundNumber + 1));
 }
 

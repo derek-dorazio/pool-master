@@ -6,7 +6,7 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { ProviderCode, BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
 
 /**
@@ -52,13 +52,6 @@ export interface SportLeague extends DomainEntity {
    * check passes (#1823); null releases only by hand. 1 to 30, 7 for a new league.
    */
   autoReleaseDaysBeforeStart: number | null;
-  /** How its bracket winners reach their next match; read only for a sport played as a bracket. */
-  bracketAdvancement: BracketAdvancement;
-  /**
-   * What it calls its bracket's rounds, first to final ("First Round" ... "NBA Finals"); empty
-   * when the sport's names fit (#706). Reference data, set where the league is seeded.
-   */
-  roundNames: readonly string[];
   /**
    * The tier profile a new event of the league starts with and is auto-tiered by (#1844): the
    * College Football Playoff's six tiers of two. Every league names one.
@@ -99,12 +92,33 @@ export interface SportLeague extends DomainEntity {
   scoringFamily: ScoringFamily;
 }
 
-/** A scheduled sub-period of an event — a golf round, a match day. */
+/**
+ * The Season slot a round is played in (#2006), as every reader of the round needs it: what it is
+ * called and what kind of slot it is (the final is the slot kind FINAL, never the last round), and
+ * how its matches are played.
+ */
+export interface SportEventRoundSlot {
+  seasonSlotId: string;
+  /** The definition's proper name; null when screens show the word for its kind. */
+  name: string | null;
+  slotKind: SlotKind;
+  /** A WEEK slot's week number; null for every other kind. */
+  weekNumber: number | null;
+  /** How many games a match of the slot is played over, copied to the Season slot from its definition. */
+  seriesGames: number;
+  /** Whether the slot's matches are set by fixed links or reseeded. */
+  pairing: SlotPairing;
+}
+
+/** What a match reads of its round's slot (#2006): its label's facts and its kind. */
+
+/** A scheduled sub-period of an event — a golf round, a match day — played in one of its slots. */
 export interface SportEventRound extends DomainEntity {
   sportEventId: string;
   roundNumber: number;
   scheduledDate: Date;
   scheduledEndAt: Date | null;
+  slot: SportEventRoundSlot;
 }
 
 /** One participant's part in one round. What was scored lives in the sport's extension row. */
@@ -213,6 +227,8 @@ export interface SportEventRoundMatch extends DomainEntity {
   sportEventId: string;
   /** The round it is played in, by number. */
   roundNumber: number;
+  /** The slot its round is played in (#2006): what the round is called, and whether it is the FINAL. */
+  slot: SportEventRoundSlot;
   /** Unique within the event: the bracket slot and the display order. */
   matchNumber: number;
   homeSportEventParticipantId: string | null;

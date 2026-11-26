@@ -6,7 +6,7 @@ import { contestSecondChanceRoundName } from './bracket-start-round';
 import { firstContestEvent } from './contest-events';
 import { getContestReadinessChecks } from './contest-readiness';
 import { OpenContestDialog } from './open-contest-action';
-import { useEventRoundName } from './use-bracket-round-label';
+import { useEventRoundLabels } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useManagedContestQuery } from './use-managed-contest-query';
 
@@ -29,7 +29,7 @@ export function OpenContestFromListDialog({
   const isBracket = contest.selectionType === SelectionType.BRACKET;
   const eventQuery = useQuery(sportEventQueryOptions(open ? firstContestEvent(contest)?.sportEventId ?? '' : ''));
   const managedContestQuery = useManagedContestQuery(open && isBracket ? contest.leagueId : undefined, contest.id);
-  const roundName = useEventRoundName(isBracket ? eventQuery.data ?? null : null);
+  const roundName = useEventRoundLabels(isBracket ? eventQuery.data?.id ?? '' : '');
 
   const bracketStartRoundName = contestSecondChanceRoundName(managedContestQuery.data?.configuration, roundName);
   const isLoading = eventQuery.isLoading || managedContestQuery.isLoading;

@@ -8,7 +8,7 @@ import { EventRoundDialog } from './event-round-dialog';
 import { EventMatchesCard } from './event-matches-card';
 import { EventSyncsCard } from './event-syncs-card';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
-import { useEventRoundLabel } from './use-sport-catalog';
+import { roundLabels } from '@poolmaster/shared/display-strings';
 import { useSportEventRoundsQuery } from './use-sport-event';
 
 /**
@@ -20,13 +20,16 @@ import { useSportEventRoundsQuery } from './use-sport-event';
 export function EventRoundsTab() {
   const { event, isSynced, overview } = useEventPage();
   const roundsQuery = useSportEventRoundsQuery(event.id);
-  const roundLabel = useEventRoundLabel(event);
   const [openRoundId, setOpenRoundId] = useState<string | null>(null);
   const columns = useMemo(() => eventRoundColumns(), []);
   const { ResultsPanel } = getScoringFamilyAdminUi(event);
   const rows = useMemo<EventRoundRow[] | undefined>(
-    () => roundsQuery.data?.map((round, _index, rounds) => ({ ...round, label: roundLabel(round.roundNumber, rounds.length) })),
-    [roundLabel, roundsQuery.data],
+    () => {
+      if (roundsQuery.data === undefined) return undefined;
+      const roundLabel = roundLabels(roundsQuery.data);
+      return roundsQuery.data.map((round) => ({ ...round, label: roundLabel(round.roundNumber) }));
+    },
+    [roundsQuery.data],
   );
 
   return (

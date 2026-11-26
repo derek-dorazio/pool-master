@@ -47,8 +47,8 @@ export interface LiveScoreWriteDeps {
 export interface LiveScoreTargetEvent {
   id: string;
   rounds: number | null;
-  /** Its sport league's best-of length per round, first to final (#1545); empty plays single games. */
-  roundSeriesLengths: readonly number[];
+  /** Each round's best-of length by round number, its slot's `seriesGames` (#1545, #2006): 1 plays single games. */
+  seriesGamesByRound: ReadonlyMap<number, number>;
 }
 
 /** A live-score result category, the discriminant of a provider's `LiveScoreResult`. */

@@ -1,8 +1,7 @@
 import type { SportEventDto } from '@/lib/api';
 import { ErrorState, FormField, LoadingState, Notice, Select, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
-import { bracketRoundCount } from './bracket-start-round';
 import { formatSquaresGameTeams } from './squares-board';
-import { useSportLeagueRoundLabel } from './use-bracket-round-label';
+import { useEventRoundLabels } from './use-bracket-round-label';
 import type { useSquaresGameChoices } from './use-squares-game-choices';
 
 /** The game picker of Create contest for a squares contest: one of the event's games still to kick off. */
@@ -18,8 +17,7 @@ export function SquaresGamePicker({
   value: string;
 }) {
   const displayPreferences = useDisplayPreferences();
-  const roundLabel = useSportLeagueRoundLabel(event.sport, event.sportLeagueId);
-  const roundCount = bracketRoundCount(event);
+  const roundLabel = useEventRoundLabels(event.id);
   if (choices.isLoading) {
     return <LoadingState body="Loading games..." testId="contest-squares-games-loading" />;
   }
@@ -39,7 +37,7 @@ export function SquaresGamePicker({
         {choices.games.map((game) => (
           <option key={game.id} value={game.id}>
             {[
-              roundLabel(game.roundNumber, roundCount),
+              roundLabel(game.roundNumber),
               formatSquaresGameTeams(game, choices.namesById),
               formatDateTimeDisplay(game.scheduledDate, displayPreferences, 'Kickoff to be announced'),
             ].join(' · ')}

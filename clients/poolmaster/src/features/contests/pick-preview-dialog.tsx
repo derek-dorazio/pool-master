@@ -31,7 +31,6 @@ import {
 } from './pick-preview';
 import { tiebreakerLabel } from './pick-em-week';
 import { RosterContestEntryLineupSection } from './roster-contest-entry-lineup-section';
-import { useSportLeagueRoundLabel } from './use-bracket-round-label';
 
 /** The event a preview draws: its field, tiers, prices and games are the ones members pick from. */
 export type PickPreviewEvent = Pick<SportEventDto, 'id' | 'loadedParticipantCount' | 'name' | 'pricing' | 'sport' | 'sportLeagueId'>;
@@ -143,7 +142,6 @@ function GamePickPreview({
   const [picks, setPicks] = useState<GamePickPreviewRequest['picks']>([]);
   const [tiebreakerText, setTiebreakerText] = useState('');
   const [tiebreakerValue, setTiebreakerValue] = useState<number | null>(null);
-  const roundLabel = useSportLeagueRoundLabel(event.sport, event.sportLeagueId);
   const request: GamePickPreviewRequest = { sportEventId: event.id, rules, picks };
   const previewQuery = useQuery({
     ...previewQueryDefaults,
@@ -165,7 +163,7 @@ function GamePickPreview({
       <div className="space-y-4">
         {error}
         <BracketView
-          drawing={drawBracket(week.games, roundLabel)}
+          drawing={drawBracket(week.games)}
           isOwnEntry
           picking={{ isBusy, onPick: (game, team) => setPicks(previewTeamPick(week, game, team)) }}
         />

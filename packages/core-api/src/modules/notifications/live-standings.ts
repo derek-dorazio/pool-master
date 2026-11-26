@@ -30,6 +30,7 @@
  * whose places each email records for the next.
  */
 
+import { roundLabels } from '@poolmaster/shared/display-strings';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestConfigurationRepository,
@@ -51,8 +52,8 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantRoundStatus,
   SelectionType,
+  SlotKind,
   SportEventStatus,
-  eventRoundLabel,
   type Contest,
   type League,
   type SportEvent,
@@ -299,13 +300,11 @@ export class LiveStandings implements DueNotifications {
     const rules = configuration?.configJson;
     const startsAtRound = rules?.selectionType === SelectionType.BRACKET ? rules.startsAtRound : 1;
     const finished = lastFinishedMatchRound(matches, startsAtRound);
-    const lastRound = Math.max(...matches.map((match) => match.roundNumber));
-    if (!finished || finished.roundNumber >= lastRound || !isDue(finished.finishedAt)) return [];
+    // A finished final ends the bracket, so it sends no round email.
+    const playedFinal = matches.some((match) => match.roundNumber === finished?.roundNumber && match.slot.slotKind === SlotKind.FINAL);
+    if (!finished || playedFinal || !isDue(finished.finishedAt)) return [];
     const roundNumber = finished.roundNumber;
-    const roundNames = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
-    // Its games tell its round count where the event stores none, as entry receipts read it.
-    const roundCount = Math.max(sportEvent.rounds ?? 0, lastRound);
-    const roundName = (round: number): string => eventRoundLabel(sportEvent, roundNames, round, roundCount);
+    const roundName = roundLabels(matches);
     const nextStart = matches
       .flatMap((match) => (match.roundNumber === roundNumber + 1 && match.scheduledDate !== null ? [match.scheduledDate.getTime()] : []))
       .sort((left, right) => left - right)

@@ -75,7 +75,7 @@ import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 import { SPORT_EVENT_SPORT_SELECT, SPORT_LEAGUE_SPORT_SELECT, sportEventSportWhere, sportOfEvent, sportUrlSegmentOfEvent } from './sport-of';
-import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
+import { COVERS_TEST_SLOT, ROUND_EVENT_SLOT_SELECT, SEASON_SLOT_SELECT, toRoundSlot, toSeasonSlot } from './season-slot-select';
 import { SLOT_PLACE_SELECT, slotPlaceOf } from './slot-place-select';
 
 /** The statuses the lifecycle scheduler moves an event on from. */
@@ -182,7 +182,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     const data = {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
-        ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
         ...(updates.autoReleaseDaysBeforeStart !== undefined && { autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }),
         ...(updates.platformTierProfileId !== undefined && { platformTierProfileId: updates.platformTierProfileId }),
         ...(updates.platformPricingProfileId !== undefined && { platformPricingProfileId: updates.platformPricingProfileId }),
@@ -691,14 +690,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return counts;
   }
 
-  async sportLeagueHasLoadedBracket(sportLeagueId: string): Promise<boolean> {
-    const match = await this.prisma.sportEventRoundMatch.findFirst({
-      where: { sportEvent: { sportLeagueSeason: { sportLeagueId } } },
-      select: { id: true },
-    });
-    return match !== null;
-  }
-
   async summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>> {
     // An adapter id no Provider carries has no events.
     const codes = providerIds.flatMap((providerId) => {
@@ -834,6 +825,7 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   async findBySportEvent(sportEventId: string): Promise<SportEventRound[]> {
     const rows = await this.prisma.sportEventRound.findMany({
       where: { sportEventId },
+      include: ROUND_SLOT_INCLUDE,
       orderBy: { roundNumber: 'asc' },
     });
     return rows.map(toSportEventRound);
@@ -844,6 +836,7 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
     if (sportEventIds.length === 0) return rounds;
     const rows = await this.prisma.sportEventRound.findMany({
       where: { sportEventId: { in: [...sportEventIds] } },
+      include: ROUND_SLOT_INCLUDE,
       orderBy: { roundNumber: 'asc' },
     });
     for (const row of rows) rounds.get(row.sportEventId)?.push(toSportEventRound(row));
@@ -852,8 +845,15 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
 
   async createMany(rounds: readonly SportEventRoundCreate[]): Promise<void> {
     if (rounds.length === 0) return;
+    // Each round's event slot row, found by its event and Season slot: one read for every round.
+    const eventSlots = await this.prisma.sportEventSlot.findMany({
+      where: { sportEventId: { in: [...new Set(rounds.map((round) => round.sportEventId))] } },
+      select: { id: true, sportEventId: true, sportLeagueSeasonCompetitionSlotId: true },
+    });
+    const eventSlotIdOf = new Map(eventSlots.map((row) => [`${row.sportEventId}:${row.sportLeagueSeasonCompetitionSlotId}`, row.id]));
     await this.prisma.sportEventRound.createMany({
       data: rounds.map((round) => ({
+        sportEventSlotId: requiredEventSlotId(eventSlotIdOf, round),
         sportEventId: round.sportEventId,
         roundNumber: round.roundNumber,
         scheduledDate: round.scheduledDate,
@@ -874,10 +874,21 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   }
 
   async findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound> {
+    const stored = await this.prisma.sportEventRound.findUnique({
+      where: { sportEventId_roundNumber: { sportEventId, roundNumber } },
+      include: ROUND_SLOT_INCLUDE,
+    });
+    if (stored !== null) return toSportEventRound(stored);
+    // A round made for a score is played in the event's one slot.
+    const eventSlots = await this.prisma.sportEventSlot.findMany({ where: { sportEventId }, select: { id: true }, take: 2 });
+    if (eventSlots.length !== 1) {
+      throw new Error(`Sport event ${sportEventId} has ${eventSlots.length === 0 ? 'no slot' : 'several slots'}, so a round cannot be made for a score in round ${roundNumber}.`);
+    }
     return toSportEventRound(await this.prisma.sportEventRound.upsert({
       where: { sportEventId_roundNumber: { sportEventId, roundNumber } },
-      create: { sportEventId, roundNumber, scheduledDate: new Date() },
+      create: { sportEventId, sportEventSlotId: eventSlots[0].id, roundNumber, scheduledDate: new Date() },
       update: {},
+      include: ROUND_SLOT_INCLUDE,
     }));
   }
 }
@@ -1296,8 +1307,6 @@ function toSportLeague(row: SportLeagueRow): SportLeague {
     isActive: row.isActive,
     selectedProviderMapping: toSelectedProviderMapping(row.selectedProviderMapping),
     autoReleaseDaysBeforeStart: row.autoReleaseDaysBeforeStart,
-    bracketAdvancement: row.bracketAdvancement,
-    roundNames: row.roundNames,
     platformTierProfileId: row.platformTierProfileId,
     platformPricingProfileId: row.platformPricingProfileId,
     matchPeriodLayout: row.matchPeriodLayout,
@@ -1373,13 +1382,24 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
   };
 }
 
-function toSportEventRound(row: Prisma.SportEventRoundGetPayload<object>): SportEventRound {
+/** The event slot row a round to create is played in, refused when its event does not cover that Season slot. */
+function requiredEventSlotId(eventSlotIdOf: ReadonlyMap<string, string>, round: SportEventRoundCreate): string {
+  const id = eventSlotIdOf.get(`${round.sportEventId}:${round.seasonSlotId}`);
+  if (id === undefined) throw new Error(`Sport event ${round.sportEventId} does not cover Season slot ${round.seasonSlotId}.`);
+  return id;
+}
+
+/** A round with the slot it is played in (#2006). */
+export const ROUND_SLOT_INCLUDE = { eventSlot: ROUND_EVENT_SLOT_SELECT } as const satisfies Prisma.SportEventRoundInclude;
+
+export function toSportEventRound(row: Prisma.SportEventRoundGetPayload<{ include: typeof ROUND_SLOT_INCLUDE }>): SportEventRound {
   return {
     id: row.id,
     sportEventId: row.sportEventId,
     roundNumber: row.roundNumber,
     scheduledDate: row.scheduledDate,
     scheduledEndAt: row.scheduledEndAt,
+    slot: toRoundSlot(row.eventSlot),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

@@ -54,7 +54,6 @@
   "sportLeagues": [
     {
       "name": "NFL",
-      "bracketAdvancement": "RESEED_BY_SEED",
       "players": [
         {
           "key": "nfl-denver-broncos",

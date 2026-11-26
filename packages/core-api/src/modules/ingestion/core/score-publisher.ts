@@ -102,7 +102,12 @@ export async function publishLiveScoreUpdate(
     where: { provider: { code: providerCode }, externalId: validated.externalEventId },
     select: {
       sportEvent: {
-        select: { id: true, rounds: true, status: true, sportLeagueSeason: { select: { sportLeague: { select: { id: true, scoringFamily: true, roundSeriesLengths: true, sport: { select: { sport: true } } } } } } },
+        select: {
+          id: true, rounds: true, status: true,
+          sportLeagueSeason: { select: { sportLeague: { select: { id: true, scoringFamily: true, sport: { select: { sport: true } } } } } },
+          // Each round's best-of length is its slot's (#2006).
+          roundSchedule: { select: { roundNumber: true, eventSlot: { select: { seasonSlot: { select: { seriesGames: true } } } } } },
+        },
       },
     },
   }))?.sportEvent ?? null;
@@ -151,7 +156,7 @@ export async function publishLiveScoreUpdate(
   const target: LiveScoreTargetEvent = {
     id: sportEvent.id,
     rounds: sportEvent.rounds,
-    roundSeriesLengths: sportEvent.sportLeagueSeason.sportLeague.roundSeriesLengths,
+    seriesGamesByRound: new Map(sportEvent.roundSchedule.map((round) => [round.roundNumber, round.eventSlot.seasonSlot.seriesGames])),
   };
   const write = writer === null ? null : writeFor(writer, deps, target, validated);
   if (write === null) {

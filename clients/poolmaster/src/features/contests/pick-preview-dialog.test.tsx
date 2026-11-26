@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GamePickPreviewResponse, RosterPickPreviewResponse } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { PickPreviewAction } from './pick-preview-dialog';
+import { weekSlot } from './test/round-slots';
 
 const {
   createContestMock,
@@ -84,6 +85,7 @@ function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTe
       sportEventRoundMatchId: 'match-1',
       matchNumber: 1,
       roundNumber: 1,
+      slot: weekSlot(1),
       kickoff: '2099-11-22T18:00:00.000Z',
       status: 'SCHEDULED',
       isNeutralSite: false,

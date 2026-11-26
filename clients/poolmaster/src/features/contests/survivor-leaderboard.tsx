@@ -24,7 +24,7 @@ import {
   type SurvivorWeek,
   type SurvivorWeekName,
 } from './survivor-board';
-import { useBracketRoundLabel } from './use-bracket-round-label';
+import { useEventRoundLabels } from './use-bracket-round-label';
 import { useContestLeague } from './use-contest-league';
 import { useSurvivorLeaderboardQuery } from './use-contest-leaderboard';
 import { gamePicksQueryOptions } from './use-game-picks';
@@ -164,8 +164,8 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
   const board = leaderboardQuery.data;
   // A playoff's rounds (#785) are named as its bracket names them.
   const playoffEventId = board?.weeks.find((week) => week.roundCount > 1)?.sportEventId ?? '';
-  const roundLabel = useBracketRoundLabel(contest.sport, playoffEventId);
-  const weekName: SurvivorWeekName = (week) => (week.roundCount > 1 ? roundLabel(week.roundNumber, week.roundCount) : week.name);
+  const roundLabel = useEventRoundLabels(playoffEventId);
+  const weekName: SurvivorWeekName = (week) => (week.roundCount > 1 ? roundLabel(week.roundNumber) : week.name);
   const current = survivorCurrentWeek(board?.weeks ?? []);
   const ownEntryIds = (board?.entries ?? []).filter(isMySquadsEntry(mySquadId)).map((entry) => entry.entryId);
   const ownTeams = useOwnWeekTeams(contest, current.week && current.week.status !== SportEventStatus.COMPLETED ? ownEntryIds : [], current.week);
