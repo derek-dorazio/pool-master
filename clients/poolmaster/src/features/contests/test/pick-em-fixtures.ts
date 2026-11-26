@@ -8,6 +8,7 @@ import type {
   SportEventParticipantDto,
   SurvivorLeaderboardResponse,
 } from '@/lib/api';
+import { weekSlot } from './round-slots';
 
 /**
  * Pick'em contest fixtures (#718) in the generated contract's shapes: an NFL pick'em of two
@@ -40,6 +41,8 @@ function game(matchNumber: number, kickoff: string, away: Team, home: Team, over
     sportEventRoundMatchId: `match-${matchNumber}`,
     matchNumber,
     roundNumber: 1,
+    slot: weekSlot(2),
+    isFinal: false,
     kickoff,
     status: 'SCHEDULED',
     isNeutralSite: false,
@@ -387,6 +390,7 @@ export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Part
     id: `week2-game-${String(matchNumber)}`,
     sportEventId: 'week-2',
     roundNumber: 1,
+    slot: weekSlot(2),
     matchNumber,
     homeSportEventParticipantId: home.sportEventParticipantId,
     awaySportEventParticipantId: away.sportEventParticipantId,

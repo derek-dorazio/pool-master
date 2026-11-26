@@ -131,7 +131,7 @@
       "events": [
         {
           "key": "mlb-postseason-2025",
-          "slotKey": "FINAL",
+          "roundSlotKeys": ["ROUND_OF_16", "QUARTERFINAL", "SEMIFINAL", "FINAL"],
           "name": "MLB Postseason",
           "startDate": "2025-09-30",
           "endDate": "2025-11-01",

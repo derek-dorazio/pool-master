@@ -14,12 +14,13 @@ import type {
 } from '@poolmaster/shared/db';
 import { MatchSide, MatchStatus, UNPLAYED_MATCH_STATUSES } from '@poolmaster/shared/domain';
 import type { BackgroundJobRequest, SportEventRoundMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
+import { ROUND_EVENT_SLOT_SELECT, toRoundSlot } from './season-slot-select';
 import { rewriteStandings } from './prisma-standing-rewrite';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 
 /** What a match is read with: its round's number and its period scores in order. */
 export const MATCH_INCLUDE = {
-  sportEventRound: { select: { roundNumber: true } },
+  sportEventRound: { select: { roundNumber: true, eventSlot: ROUND_EVENT_SLOT_SELECT } },
   periodScores: { select: { periodNumber: true, homeScore: true, awayScore: true }, orderBy: { periodNumber: 'asc' } },
 } satisfies Prisma.SportEventRoundMatchInclude;
 
@@ -143,6 +144,8 @@ export function toSportEventRoundMatch(
   return {
     ...row,
     roundNumber: sportEventRound.roundNumber,
+    slot: toRoundSlot(sportEventRound.eventSlot),
     homeSpread: homeSpread === null ? null : Number(homeSpread),
   };
 }
+

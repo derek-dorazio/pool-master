@@ -1,4 +1,5 @@
 import type { GamePicksResponse } from '@/lib/api';
+import { TOURNAMENT_ROUND_SLOTS } from './round-slots';
 
 /**
  * A whole 64-team, four-region bracket in the generated contract's shapes (#1753), for the
@@ -84,6 +85,8 @@ export function tournamentGames({
         sportEventRoundMatchId: `match-${matchNumber}`,
         matchNumber,
         roundNumber,
+        slot: TOURNAMENT_ROUND_SLOTS[roundNumber - 1] ?? TOURNAMENT_ROUND_SLOTS[0],
+        isFinal: roundNumber === TOURNAMENT_ROUND_SLOTS.length,
         kickoff: '2026-03-20T16:00:00.000Z',
         status: played ? 'COMPLETED' : 'SCHEDULED',
         isNeutralSite: true,

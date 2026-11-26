@@ -1,6 +1,5 @@
 import {
   contestFormatForSelectionType,
-  eventRoundLabel,
   getDefaultTournamentFormatForSport,
   getSportDefinition,
   getValidContestFormatsForTournamentFormat,
@@ -100,24 +99,11 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
-  it('labels every round of an eight-round event, each one differently', () => {
-    const labels = Array.from({ length: 8 }, (_, index) => definition.roundLabel(index + 1, 8));
-
-    expect(labels.every((label) => label.trim() !== '')).toBe(true);
-    expect(new Set(labels).size).toBe(labels.length);
-  });
 });
 
 describe('sport registry', () => {
   it('has a definition for every sport in the enum', () => {
     expect(Object.keys(SPORT_DEFINITIONS).sort()).toEqual(Object.values(Sport).sort());
-  });
-
-  it('labels golf rounds by number and calls an eliminated golfer Cut', () => {
-    const golf = getSportDefinition(Sport.GOLF);
-
-    expect(golf.roundLabel(2, 4)).toBe('Round 2');
-    expect(sportVocabulary(golf).eliminated).toBe('Cut');
   });
 
   it('scores horse racing by finishing place, calls a withdrawn horse Scratched, and reads the generic Eliminated, having no word of its own', () => {
@@ -140,11 +126,10 @@ describe('sport registry', () => {
     expect(sportVocabulary(golf).sportLeague).toEqual({ one: 'tour', many: 'tours' });
   });
 
-  it('gives a new horse race one round labelled Race', () => {
+  it('gives a new horse race one round', () => {
     const horseRacing = getSportDefinition(Sport.HORSE_RACING);
 
     expect(horseRacing.defaultRounds).toBe(1);
-    expect(horseRacing.roundLabel(1, 1)).toBe('Race');
   });
 
   it('scores auto racing by finishing place in races of a series, calls a driver a driver, and names no rider or top places, and reads the generic Eliminated', () => {
@@ -164,11 +149,10 @@ describe('sport registry', () => {
     expect([sportVocabulary(autoRacing).rider, sportVocabulary(autoRacing).topPlaces]).toEqual([undefined, undefined]);
   });
 
-  it('gives a new auto race one round labelled Race, and five tiers of eight so a 40-car field fills each exactly', () => {
+  it('gives a new auto race one round, and five tiers of eight so a 40-car field fills each exactly', () => {
     const autoRacing = getSportDefinition(Sport.AUTO_RACING);
 
     expect(autoRacing.defaultRounds).toBe(1);
-    expect(autoRacing.roundLabel(1, 1)).toBe('Race');
     expect(autoRacing.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
@@ -189,11 +173,10 @@ describe('sport registry', () => {
     expect([sportVocabulary(cycling).rider, sportVocabulary(cycling).topPlaces]).toEqual([undefined, undefined]);
   });
 
-  it('gives a new cycling race one round labelled Race, not one per stage, and five tiers of ten with the last taking the rest', () => {
+  it('gives a new cycling race one round, not one per stage, and five tiers of ten with the last taking the rest', () => {
     const cycling = getSportDefinition(Sport.CYCLING);
 
     expect(cycling.defaultRounds).toBe(1);
-    expect(cycling.roundLabel(1, 1)).toBe('Race');
     expect(cycling.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
@@ -214,11 +197,10 @@ describe('sport registry', () => {
     expect([sportVocabulary(running).rider, sportVocabulary(running).topPlaces]).toEqual([undefined, undefined]);
   });
 
-  it('gives a new running race one round labelled Race, and four tiers of six with the last taking the rest of an elite field', () => {
+  it('gives a new running race one round, and four tiers of six with the last taking the rest of an elite field', () => {
     const running = getSportDefinition(Sport.RUNNING);
 
     expect(running.defaultRounds).toBe(1);
-    expect(running.roundLabel(1, 1)).toBe('Race');
     expect(running.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
@@ -259,22 +241,6 @@ describe('basketball', () => {
     ]);
   });
 
-  it('labels a six-round bracket First Round through National Championship', () => {
-    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => basketball.roundLabel(roundNumber, 6))).toEqual([
-      'First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
-    ]);
-  });
-
-  it('names a shorter bracket\'s rounds back from its final, so a four-round bracket starts at the Sweet 16', () => {
-    expect([1, 2, 3, 4].map((roundNumber) => basketball.roundLabel(roundNumber, 4))).toEqual([
-      'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
-    ]);
-  });
-
-  it('calls a stored round past the event\'s round count Round N, never a name counted from the final', () => {
-    expect(basketball.roundLabel(7, 6)).toBe('Round 7');
-  });
-
   it('calls a participant a team and the moment entries close the opening tip-off', () => {
     expect(sportVocabulary(basketball).participant).toEqual({ one: 'team', many: 'teams' });
     expect(sportVocabulary(basketball).eventStart).toBe('opening tip-off');
@@ -293,13 +259,6 @@ describe('American football', () => {
 
   it('gives new playoffs four rounds', () => {
     expect(americanFootball.defaultRounds).toBe(4);
-  });
-
-  it('labels a four-round bracket Wild Card through Super Bowl, and a stored round past the count Round N', () => {
-    expect([1, 2, 3, 4].map((roundNumber) => americanFootball.roundLabel(roundNumber, 4))).toEqual([
-      'Wild Card', 'Divisional', 'Conference Championship', 'Super Bowl',
-    ]);
-    expect(americanFootball.roundLabel(5, 4)).toBe('Round 5');
   });
 
   it('offers the three roster selection types, pick\'em, bracket, survivor and squares', () => {
@@ -334,13 +293,6 @@ describe('hockey', () => {
     expect(hockey.defaultRounds).toBe(4);
   });
 
-  it('labels a four-round bracket Regional Semifinals through National Championship, and a stored round past the count Round N', () => {
-    expect([1, 2, 3, 4].map((roundNumber) => hockey.roundLabel(roundNumber, 4))).toEqual([
-      'Regional Semifinals', 'Regional Finals', 'Frozen Four', 'National Championship',
-    ]);
-    expect(hockey.roundLabel(5, 4)).toBe('Round 5');
-  });
-
   it('offers the three roster selection types, bracket, survivor and squares, and no pick\'em, since it has no weeks of games', () => {
     expect(hockey.selectionTypes).toEqual([
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
@@ -366,13 +318,6 @@ describe('baseball', () => {
 
   it('gives a new postseason four rounds, for a 12-team bracket', () => {
     expect(baseball.defaultRounds).toBe(4);
-  });
-
-  it('labels a four-round postseason Wild Card Series through World Series, and a stored round past the count Round N', () => {
-    expect([1, 2, 3, 4].map((roundNumber) => baseball.roundLabel(roundNumber, 4))).toEqual([
-      'Wild Card Series', 'Division Series', 'League Championship Series', 'World Series',
-    ]);
-    expect(baseball.roundLabel(5, 4)).toBe('Round 5');
   });
 
   it('offers the three roster selection types, bracket and survivor, and no squares or pick\'em, since every round is a series', () => {
@@ -406,13 +351,6 @@ describe('soccer', () => {
     expect(soccer.defaultRounds).toBe(4);
   });
 
-  it('labels a four-round knockout Round of 16 through Final, a five-round one from the Round of 32, and a stored round past the count Round N', () => {
-    expect([1, 2, 3, 4].map((roundNumber) => soccer.roundLabel(roundNumber, 4))).toEqual(['Round of 16', 'Quarter-finals', 'Semi-finals', 'Final']);
-    expect(soccer.roundLabel(1, 5)).toBe('Round of 32');
-    expect(soccer.roundLabel(1, 3)).toBe('Quarter-finals');
-    expect(soccer.roundLabel(5, 4)).toBe('Round 5');
-  });
-
   it('offers the three roster selection types, pick\'em, bracket, survivor and squares, its pick\'em taking draw picks and no spread', () => {
     expect(soccer.selectionTypes).toEqual([
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
@@ -444,17 +382,6 @@ describe('tennis', () => {
     expect(tennis.defaultRounds).toBe(7);
   });
 
-  it('labels a Slam\'s seven rounds First round through Final, a six-round draw with no Fourth round, and a stored round past the count Round N', () => {
-    expect([1, 2, 3, 4, 5, 6, 7].map((roundNumber) => tennis.roundLabel(roundNumber, 7))).toEqual([
-      'First round', 'Second round', 'Third round', 'Fourth round', 'Quarterfinals', 'Semifinals', 'Final',
-    ]);
-    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => tennis.roundLabel(roundNumber, 6))).toEqual([
-      'First round', 'Second round', 'Third round', 'Quarterfinals', 'Semifinals', 'Final',
-    ]);
-    expect(tennis.roundLabel(8, 7)).toBe('Round 8');
-    expect(tennis.roundLabel(4, 3)).toBe('Round 4');
-  });
-
   it('offers the three roster selection types, bracket and survivor, and no pick\'em or squares', () => {
     expect(tennis.selectionTypes).toEqual([
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR,
@@ -481,22 +408,3 @@ describe('sportPlaysMatches', () => {
   });
 });
 
-describe('round labels from a sport league\'s own round names', () => {
-  const nba = ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
-
-  it('names each round of an NBA bracket by the league\'s names, not March Madness\'s', () => {
-    expect([1, 2, 3, 4].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, nba, roundNumber, 4))).toEqual(nba);
-  });
-
-  it('lines the league\'s names up with the final, so a shorter bracket keeps the last ones and a longer one takes the sport\'s for its first rounds', () => {
-    expect([1, 2, 3].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, nba, roundNumber, 3))).toEqual(['Conference Semifinals', 'Conference Finals', 'NBA Finals']);
-    expect([1, 2, 3, 4, 5].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, nba, roundNumber, 5))).toEqual(['First Round', 'First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']);
-  });
-
-  it('uses the sport\'s names for a league that names none, and for a stored round past the count', () => {
-    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, [], roundNumber, 6))).toEqual([
-      'First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
-    ]);
-    expect(eventRoundLabel({ sport: Sport.BASKETBALL }, nba, 5, 4)).toBe(getSportDefinition(Sport.BASKETBALL).roundLabel(5, 4));
-  });
-});

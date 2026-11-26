@@ -9,6 +9,7 @@ import {
 import type { SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
+import { roundSlot } from '../../support/round-slots';
 
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
   return {
@@ -201,14 +202,16 @@ describe('SportEvent next statuses on the wire', () => {
 describe('the event\'s rounds and tiers on the wire', () => {
   const AT = new Date('2026-04-09T12:00:00.000Z');
 
-  it('sends a round\'s scheduled end as ISO, and a round with none as null', () => {
+  it('sends a round\'s scheduled end as ISO, and a round with none as null, with the slot it is played in', () => {
     const round = {
       id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT, scheduledEndAt: AT, createdAt: AT, updatedAt: AT,
+      slot: roundSlot(SlotKind.FINAL, { name: 'Super Bowl' }),
       progress: { status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null },
     };
 
     expect(mapSportEventRoundToDto(round)).toEqual({
       id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT.toISOString(), scheduledEndAt: AT.toISOString(),
+      slot: { seasonSlotId: round.slot.seasonSlotId, name: 'Super Bowl', slotKind: SlotKind.FINAL, weekNumber: null },
       status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null,
     });
     expect(mapSportEventRoundToDto({ ...round, scheduledEndAt: null }).scheduledEndAt).toBeNull();
@@ -217,6 +220,7 @@ describe('the event\'s rounds and tiers on the wire', () => {
   it('sends a finished round\'s status, result count and completion time as ISO', () => {
     const round = {
       id: 'r1', sportEventId: 'e1', roundNumber: 2, scheduledDate: AT, scheduledEndAt: null, createdAt: AT, updatedAt: AT,
+      slot: roundSlot(SlotKind.TOURNAMENT),
       progress: { status: RoundStatus.COMPLETED, resultCount: 8, completedAt: AT },
     };
 

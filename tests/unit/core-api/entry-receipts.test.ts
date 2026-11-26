@@ -20,6 +20,10 @@ import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
+import { namedSlotOfRound } from '../../support/round-slots';
+
+/** The names of the slots a bracket's rounds are played in, first to final, as a test sets them (#2006). */
+let slotNames: readonly string[] = [];
 
 const SUBMITTED_AT = new Date('2026-09-10T12:00:00.000Z');
 const KICKOFF = new Date('2026-09-13T17:00:00.000Z');
@@ -51,7 +55,7 @@ function game(options: {
       awaySportEventParticipantId: away.sportEventParticipantId,
       isNeutralSite: false,
       homeSpread: options.homeSpread ?? null,
-      roundNumber: options.roundNumber ?? 1,
+      roundNumber: options.roundNumber ?? 1, slot: namedSlotOfRound(options.roundNumber ?? 1, slotNames),
       matchNumber: options.matchNumber ?? 1,
     } as SportEventRoundMatch,
     kickoff: options.kickoff ?? KICKOFF,
@@ -76,13 +80,12 @@ function game(options: {
 describe('EntryReceipts', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
-  let roundNames: string[];
   let logger: ReturnType<typeof fakeLogger>;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
-    roundNames = [];
+    slotNames = [];
     logger = fakeLogger();
   });
 
@@ -105,7 +108,7 @@ describe('EntryReceipts', () => {
     return new EntryReceipts({
       leagues: world.leagueRepo(),
       ...reads,
-      sportLeagues: { findById: async () => ({ name: 'NFL', roundNames } as unknown as SportLeague) },
+      sportLeagues: { findById: async () => ({ name: 'NFL' } as unknown as SportLeague) },
       email,
       appBaseUrl: 'https://app.example.test/',
       logger,
@@ -263,7 +266,7 @@ describe('EntryReceipts', () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.BRACKET, {
       name: 'NCAA Tournament', sport: Sport.BASKETBALL, rounds: 4, startDate: KICKOFF,
     });
-    roundNames = ['First Round', 'Elite Eight', 'Final Four', 'Championship'];
+    slotNames = ['First Round', 'Elite Eight', 'Final Four', 'Championship'];
 
     await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       selectionType: SelectionType.BRACKET,
@@ -293,7 +296,7 @@ describe('EntryReceipts', () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.BRACKET, {
       name: 'NCAA Tournament', sport: Sport.BASKETBALL, rounds: 4, startDate: eventStart,
     });
-    roundNames = ['Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
+    slotNames = ['Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
 
     await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       selectionType: SelectionType.BRACKET,

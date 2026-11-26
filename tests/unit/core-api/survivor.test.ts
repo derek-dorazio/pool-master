@@ -43,6 +43,7 @@ import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
 import { testDomainEvents } from '../../support/domain-events';
+import { weekRoundSlot } from '../../support/round-slots';
 
 const HOUR = 60 * 60 * 1000;
 const T0 = new Date('2026-09-01T00:00:00.000Z');
@@ -216,7 +217,7 @@ function survivorWeek(overrides: Partial<SurvivorWeek> & Pick<SurvivorWeek, 'spo
 
 function game(id: string, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
   return {
-    id, sportEventId: 'week', roundNumber: 1, matchNumber: 1,
+    id, sportEventId: 'week', roundNumber: 1, slot: weekRoundSlot(), matchNumber: 1,
     homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`,
     isNeutralSite: false, scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null,
     homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [],

@@ -17,11 +17,12 @@
  *   - A POSTPONED event's contests follow its start, each sweep.
  *   - One event's failure does not stop the sweep from processing the rest.
  */
-import type { SportEvent } from '@poolmaster/shared/domain';
+import { SlotKind, type SportEvent } from '@poolmaster/shared/domain';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
+import { roundSlot } from '../../support/round-slots';
 
 interface Candidate {
   event: Partial<SportEvent>;
@@ -37,6 +38,7 @@ function storeWith(candidates: Candidate[]) {
       id: store.id('round'),
       sportEventId: event.id,
       roundNumber: index + 1,
+      slot: roundSlot(SlotKind.TOURNAMENT),
       ...round,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,

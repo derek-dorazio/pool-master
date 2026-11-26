@@ -21,9 +21,6 @@ import type {
   ParticipantProviderMappingRepository,
 } from '@poolmaster/shared/db';
 import {
-  BracketAdvancement,
-  getSportDefinition,
-  sportPlaysMatches,
   type Participant,
   type ProviderCode,
   type ProviderLeagueSettings,
@@ -174,12 +171,6 @@ export class SportLeagueService {
    * 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. Its current Season is never set here:
    * the daily recompute sets it (#2003).
    *
-   * 422 SPORT_LEAGUE_NOT_BRACKET for RESEED_BY_SEED on a sport not played as a bracket. 409
-   * SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED for a change of `bracketAdvancement` while any event of
-   * the sport league has a bracket loaded (#730): a loaded bracket's links were drawn for the rule
-   * it had, so switching a reseeded bracket to fixed would strand the winners of its unlinked
-   * games. Sending the rule the league already has changes nothing and is allowed.
-   *
    * `syncProviderLeagueId` turns the league's event sync on with a provider league, mapping the
    * league to it when it is not yet, or off with null (ADR 0011, #1997): 404
    * PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of
@@ -195,20 +186,14 @@ export class SportLeagueService {
    */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'isActive' | 'bracketAdvancement' | 'syncProviderLeagueId' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>
+    updates: Pick<SportLeagueUpdate, 'name' | 'isActive' | 'syncProviderLeagueId' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
     await this.assertEventSyncFits(sportLeague, updates);
     await this.assertProfilesFit(sportLeagueId, updates);
-    if (updates.bracketAdvancement !== undefined) {
-      const sportRow = await this.deps.sports.findById(sportLeague.sportId);
-      if (sportRow) this.assertAdvancementFits(sportRow.sport, updates.bracketAdvancement);
-      if (updates.bracketAdvancement !== sportLeague.bracketAdvancement) await this.assertNoBracketLoaded(sportLeague);
-    }
     const updated = await this.deps.sportLeagues.update(sportLeagueId, {
       name: updates.name,
       isActive: updates.isActive,
-      bracketAdvancement: updates.bracketAdvancement,
       syncProviderLeagueId: updates.syncProviderLeagueId,
       autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart,
       platformTierProfileId: updates.platformTierProfileId,
@@ -310,33 +295,6 @@ export class SportLeagueService {
         `Tier profile ${platformTierProfile.name} starts with ${tierFirst} and pricing profile ${platformPricingProfile.name} starts with ${pricingFirst}. A league's two profiles start with the same source.`,
         'PROFILE_FIRST_SOURCES_DIFFER',
         422,
-      );
-    }
-  }
-
-  /** A reseeded bracket is a bracket's rule: only a sport played as a bracket takes one. */
-  private assertAdvancementFits(sport: Sport, bracketAdvancement: BracketAdvancement | undefined): void {
-    if (bracketAdvancement === BracketAdvancement.RESEED_BY_SEED && !sportPlaysMatches(sport)) {
-      this.deps.logger?.warn({ sport, bracketAdvancement }, 'Refused a reseeded bracket for a sport not played as a bracket');
-      throw new SportCatalogError(
-        `A ${getSportDefinition(sport).name.toLowerCase()} sport league plays no bracket, so it cannot reseed one.`,
-        'SPORT_LEAGUE_NOT_BRACKET',
-        422,
-      );
-    }
-  }
-
-  /** A loaded bracket was drawn for the league's rule; the rule holds until no event has one. */
-  private async assertNoBracketLoaded(sportLeague: SportLeague): Promise<void> {
-    if (await this.deps.sportEvents.sportLeagueHasLoadedBracket(sportLeague.id)) {
-      this.deps.logger?.warn({
-        action: 'sportLeagueService.updateSportLeague.bracketAdvancementLocked',
-        data: { sportLeagueId: sportLeague.id, bracketAdvancement: sportLeague.bracketAdvancement },
-      }, 'Refused a bracket rule change on a sport league with a loaded bracket');
-      throw new SportCatalogError(
-        `${sportLeague.name} has an event with its bracket loaded, so how its bracket winners advance cannot change.`,
-        'SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED',
-        409,
       );
     }
   }

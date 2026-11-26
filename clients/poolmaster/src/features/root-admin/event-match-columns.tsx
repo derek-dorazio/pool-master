@@ -16,7 +16,7 @@ export function eventMatchColumns() {
     columnHelper.accessor('roundNumber', {
       header: displayString('word.roundHeading'),
       meta: { info: 'The round the match is played in, first round first.', type: { kind: 'number' } },
-      cell: ({ row }) => row.original.roundLabel,
+      cell: ({ row }) => row.original.roundName,
     }),
     columnHelper.accessor('pairingLabel', {
       header: 'Match',

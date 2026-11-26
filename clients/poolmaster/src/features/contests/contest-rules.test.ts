@@ -5,7 +5,6 @@ import {
   formatEntriesPerTeam,
   formatEntriesPerTeamSentence,
   formatSelectionTypeName,
-  getSportDefinition,
   PickEmMode,
   SelectionType,
   Sport,
@@ -14,6 +13,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONTEST_RULES, parseContestRules, toContestRulesValues } from './contest-rules-form';
+import { tournamentRoundName } from './test/round-slots';
 
 const GOLFER = sportVocabulary(Sport.GOLF).participant;
 const HORSE = sportVocabulary(Sport.HORSE_RACING).participant;
@@ -251,7 +251,7 @@ describe('squares rules', () => {
 
 describe('bracket rules', () => {
   const TEAM = sportVocabulary(Sport.BASKETBALL).participant;
-  const MARCH_MADNESS_ROUND = (roundNumber: number) => getSportDefinition(Sport.BASKETBALL).roundLabel(roundNumber, 6);
+  const MARCH_MADNESS_ROUND = tournamentRoundName;
 
   it('names a full bracket contest Bracket and reads its rules as every game picked to the final before the first game', () => {
     expect(formatSelectionTypeName(SelectionType.BRACKET)).toBe('Bracket');

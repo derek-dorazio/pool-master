@@ -4,6 +4,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
+import { SportEventRoundSlotDtoSchema } from './bracket.dto';
 import { ContestEntryStatus, MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
 import { SURVIVOR_LIVES_MAX } from '../domain/contest-rules';
 
@@ -58,6 +59,8 @@ export const GamePickGameDtoSchema = z.object({
   sportEventRoundMatchId: z.uuid(),
   matchNumber: z.number().int(),
   roundNumber: z.number().int(),
+  slot: SportEventRoundSlotDtoSchema.describe('The slot the game\'s round is played in: the round\'s label.'),
+  isFinal: z.boolean().describe('Whether the game is the event\'s final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket\'s links end at. Never the last round by number.'),
   kickoff: z.iso.datetime().describe('When the game starts: its scheduled time, else its event\'s start. Its pick locks then.'),
   status: z.enum(MatchStatus),
   isNeutralSite: z.boolean(),

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { SportEventRoundDto } from '@/lib/api';
 import { roundScheduleRequestBody, roundScheduleValuesOf } from './event-round-form';
+import { SlotKind } from '@poolmaster/shared/domain';
+import { roundSlot } from '@/features/contests/test/round-slots';
 
 const round: SportEventRoundDto = {
   id: 'round-1',
   sportEventId: 'event-1',
   roundNumber: 2,
+  slot: roundSlot(SlotKind.TOURNAMENT),
   scheduledDate: '2026-11-26T17:00:00.000Z',
   scheduledEndAt: null,
   status: 'SCHEDULED',

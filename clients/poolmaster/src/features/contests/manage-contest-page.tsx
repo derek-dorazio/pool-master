@@ -49,7 +49,7 @@ import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { DeleteContestDialog } from './delete-contest-dialog';
 import { contestSecondChanceRoundName } from './bracket-start-round';
-import { useEventRoundName } from './use-bracket-round-label';
+import { useEventRoundLabels } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
@@ -122,7 +122,7 @@ export function ManageContestPage() {
     ?? managedContestQuery.data?.sportEvents.at(0)?.sportEventId;
   const eventQuery = useQuery(sportEventQueryOptions(firstEventId ?? ''));
   // A bracket's rounds are named for where it starts (#721); other formats read no round names.
-  const roundName = useEventRoundName(contest?.selectionType === SelectionType.BRACKET ? eventQuery.data ?? null : null);
+  const roundName = useEventRoundLabels(contest?.selectionType === SelectionType.BRACKET ? eventQuery.data?.id ?? '' : '');
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 

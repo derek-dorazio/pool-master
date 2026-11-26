@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GamePickPreviewResponse, RosterPickPreviewResponse } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { PickPreviewAction } from './pick-preview-dialog';
+import { weekSlot } from './test/round-slots';
 
 const {
   createContestMock,
@@ -84,6 +85,8 @@ function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTe
       sportEventRoundMatchId: 'match-1',
       matchNumber: 1,
       roundNumber: 1,
+      slot: weekSlot(1),
+      isFinal: false,
       kickoff: '2099-11-22T18:00:00.000Z',
       status: 'SCHEDULED',
       isNeutralSite: false,
@@ -230,7 +233,7 @@ describe('Preview contest entry', () => {
   });
 
   it('draws a bracket setup on the bracket board from its starting round', async () => {
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sl-nfl', name: 'NFL', roundNames: [] } } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sl-nfl', name: 'NFL' } } });
     previewGamePicksMock.mockResolvedValue({ data: gamesPreview({ selectionType: 'BRACKET', mode: null, againstTheSpread: false }) });
     renderAction({
       configuration: { selectionType: 'BRACKET', startsAtRound: 1 },

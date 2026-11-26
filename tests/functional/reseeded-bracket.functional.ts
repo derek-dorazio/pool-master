@@ -13,9 +13,8 @@ import {
   releaseEvent,
   setEventRoundMatchups,
   transitionEvent,
-  updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
-import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStandingStatus, Sport } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, ParticipantStandingStatus, Sport } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema, SportEventRoundMatchupsResponseSchema } from '@poolmaster/shared/dto';
 import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
@@ -72,7 +71,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Reseeded bracket', () => {
-  it('places the Divisional round by seed after Wild Card weekend, refuses (409) switching the league to a fixed bracket meanwhile, moves a placed team when its result is corrected, and crowns the conference champion', async () => {
+  it('places the Divisional round by seed after Wild Card weekend, moves a placed team when its result is corrected, and crowns the conference champion', async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
@@ -83,13 +82,17 @@ describe('SDK Functional: Reseeded bracket', () => {
     await promoteToRootAdmin(admin);
     const a = admin.client;
 
-    // --- A league that reseeds, and its playoff -------------------------------------------------
-    const league = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    // --- A league, and a playoff whose Divisional round's slot reseeds ---------------------------
+    const league = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}` });
     const sportLeagueId = league.id;
     created.sportLeagueIds.add(sportLeagueId);
     const playoff = await createTestEvent({
       client: a,
-      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Conference Playoff ${RUN}`, startDate: '2099-01-09T18:00:00.000Z', rounds: 3, autoLifecycleEnabled: false },
+      body: {
+        sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Conference Playoff ${RUN}`, startDate: '2099-01-09T18:00:00.000Z',
+        roundSlots: [{ slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' }, { slotKind: 'FINAL' }],
+        autoLifecycleEnabled: false,
+      },
     });
     const eventId = expectDefined(playoff.data).event.id;
     created.sportEventIds.add(eventId);
@@ -148,15 +151,6 @@ describe('SDK Functional: Reseeded bracket', () => {
     // --- What reseeding refuses -----------------------------------------------------------------
     expectFunctionalError(await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } }), { status: 409, code: 'BRACKET_ROUND_NOT_FINISHED' });
     expectFunctionalError(await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 3 } }), { status: 422, code: 'BRACKET_NOT_RESEEDED' });
-    // The league's bracket rule holds while its bracket is loaded: a fixed bracket would strand the
-    // Wild Card winners, whose games link nowhere. Sending the rule it already has changes nothing.
-    expectFunctionalError(
-      await updateSportLeague({ client: a, path: { sportLeagueId }, body: { bracketAdvancement: BracketAdvancement.FIXED } }),
-      { status: 409, code: 'SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED' },
-    );
-    const unchanged = await updateSportLeague({ client: a, path: { sportLeagueId }, body: { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } });
-    expect([unchanged.error, unchanged.data?.sportLeague.bracketAdvancement]).toEqual([undefined, BracketAdvancement.RESEED_BY_SEED]);
-    expectFunctionalError(await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } }), { status: 409, code: 'BRACKET_ROUND_NOT_FINISHED' });
 
     // --- Wild Card weekend: the 7 upsets the 2, the 3 and the 5 win -------------------------------
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 1 }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } });

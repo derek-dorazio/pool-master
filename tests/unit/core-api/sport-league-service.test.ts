@@ -1,7 +1,7 @@
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
 import type { SportLeagueSeasonRepository } from '@poolmaster/shared/db';
-import { BracketAdvancement, FieldOrderBasis, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import type { Participant, SportLeague, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
@@ -25,8 +25,6 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     sportId: 'sport-golf',
     name: 'PGA Tour',
     urlSegment: 'pga-tour',
-    bracketAdvancement: BracketAdvancement.FIXED,
-    roundNames: [],
     platformTierProfileId: 'tier-profile-1',
     platformPricingProfileId: 'pricing-profile-1',
     matchPeriodLayout: null,
@@ -190,49 +188,6 @@ describe('SportLeagueService — tier and pricing profiles', () => {
 
     expect(deps.platformTierProfiles.findBySportLeague).not.toHaveBeenCalled();
     expect(deps.platformPricingProfiles.findBySportLeague).not.toHaveBeenCalled();
-  });
-});
-
-describe('SportLeagueService — bracket advancement', () => {
-
-  it('refuses (422 SPORT_LEAGUE_NOT_BRACKET) a golf sport league switched to reseeding, writing nothing', async () => {
-    const { service, deps } = buildService({ sports: { findById: jest.fn().mockResolvedValue(GOLF) } });
-
-    await expect(service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
-    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
-  });
-
-  it('refuses (409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED) switching a reseeding league to fixed while one of its events has a bracket loaded, writing nothing', async () => {
-    const { service, deps } = buildService({
-      sports: { findById: jest.fn().mockResolvedValue(BASKETBALL) },
-      sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ sportId: 'sport-basketball', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED })) },
-      sportEvents: { sportLeagueHasLoadedBracket: jest.fn().mockResolvedValue(true) },
-    });
-
-    await expect(service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.FIXED }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED', statusCode: 409 });
-    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
-  });
-
-  it('accepts the bracket rule a league already has, and a change once none of its events has a bracket loaded', async () => {
-    const reseeding = sportLeague({ sportId: 'sport-basketball', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
-    const loaded = buildService({
-      sports: { findById: jest.fn().mockResolvedValue(BASKETBALL) },
-      sportLeagues: { findById: jest.fn().mockResolvedValue(reseeding), update: jest.fn().mockResolvedValue(reseeding) },
-      sportEvents: { sportLeagueHasLoadedBracket: jest.fn().mockResolvedValue(true) },
-    });
-    await expect(loaded.service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
-      .resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
-
-    const fixed = { ...reseeding, bracketAdvancement: BracketAdvancement.FIXED };
-    const unloaded = buildService({
-      sports: { findById: jest.fn().mockResolvedValue(BASKETBALL) },
-      sportLeagues: { findById: jest.fn().mockResolvedValue(reseeding), update: jest.fn().mockResolvedValue(fixed) },
-      sportEvents: { sportLeagueHasLoadedBracket: jest.fn().mockResolvedValue(false) },
-    });
-    await expect(unloaded.service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.FIXED }))
-      .resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.FIXED });
   });
 });
 

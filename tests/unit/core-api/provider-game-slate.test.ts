@@ -1,7 +1,7 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus, type SportEventStatus as Status } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status } from '@poolmaster/shared/domain';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
@@ -268,7 +268,6 @@ describe('ProviderGameSlateService', () => {
       const store = new InMemorySportEvents();
       const sport = store.addSport(Sport.FOOTBALL);
       const league = store.addSportLeague(sport.id, 'NFL');
-      store.sportLeagues = store.sportLeagues.map((row) => (row.id === league.id ? { ...row, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } : row));
       const event = store.addEvent({
         sportLeagueId: league.id,
         sport: Sport.FOOTBALL,
@@ -278,7 +277,9 @@ describe('ProviderGameSlateService', () => {
         syncProviderId: PROVIDER,
       });
       // A day apart from two hours before the first kickoff, as a provider event's rounds are made.
-      void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: roundDefault(roundNumber) })));
+      // Its postseason slots reseed, the last its FINAL (#2006).
+      const slots = store.addRoundSlots(event.id, [SlotKind.QUARTERFINAL, SlotKind.SEMIFINAL, SlotKind.FINAL].map((slotKind) => ({ slotKind, pairing: SlotPairing.RESEEDED })));
+      void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: roundDefault(roundNumber) })), (roundNumber) => slots[roundNumber - 1]);
       const field = new Map(SEEDS.map((seed) => {
         const participant = store.addParticipant(sport.id, `Seed ${seed}`, { participantType: 'TEAM' });
         void store.mappingRepo().bind({ participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: team(seed), participantType: 'TEAM', mappedAt: KICKOFF });

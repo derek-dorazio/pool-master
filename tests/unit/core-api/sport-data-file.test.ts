@@ -262,7 +262,7 @@ describe('sport data bracket', () => {
   interface BracketFile {
     testData: boolean;
     scope: { contents: string[] };
-    sportLeagues: Array<{ bracketAdvancement?: string; events: Array<{ rounds?: number; field: unknown[]; matches: BracketMatch[] }> }>;
+    sportLeagues: Array<{ events: Array<{ rounds?: number; field: unknown[]; matches: BracketMatch[] }> }>;
   }
 
   function bracketFile(): BracketFile {
@@ -323,7 +323,6 @@ describe('sport data bracket', () => {
       'NCAA Men, Tournament: bracket: match 2 away names the same field row as match 1 home.',
       'NCAA Men, Tournament: bracket: match 3 advances to match 1, which is not in a later round.',
       'NCAA Men, Tournament: bracket: match 1 home names a team, but match 3\'s winner fills it.',
-      'NCAA Men, Tournament: bracket: a bracket has one final, the one match whose winner advances nowhere, but this one has 0.',
       'NCAA Men, Tournament: ncaa-texas-xavier is in the field but in no match, and the release refuses a field member left out of the games.',
     ]);
   });
@@ -508,32 +507,15 @@ describe('sport data bracket', () => {
     ]);
   });
 
-  it('reads a league that reseeds: first-round games that link nowhere, each match in its region', () => {
+  it('reads first-round games that link nowhere, each match in its region, leaving where the final is to the bracket\'s load (#2006)', () => {
     const file = bracketFile();
-    file.sportLeagues[0].bracketAdvancement = 'RESEED_BY_SEED';
     for (const match of file.sportLeagues[0].events[0].matches) match.regionLabel = 'East';
     file.sportLeagues[0].events[0].matches[0].advancesTo = null;
     file.sportLeagues[0].events[0].matches[1].advancesTo = null;
 
     const league = parseSportDataFile(file).sportLeagues[0];
 
-    expect(league.bracketAdvancement).toBe('RESEED_BY_SEED');
     expect(league.events[0].matches?.map((match) => [match.matchNumber, match.regionLabel, match.advancesTo])).toEqual([[1, 'East', null], [2, 'East', null], [3, 'East', null]]);
-  });
-
-  it('refuses first-round games that link nowhere when the league does not reseed', () => {
-    const file = bracketFile();
-    file.sportLeagues[0].events[0].matches[0].advancesTo = null;
-
-    expect(problemsOf(file)).toEqual(['NCAA Men, Tournament: bracket: a bracket has one final, the one match whose winner advances nowhere, but this one has 2.']);
-  });
-
-  it('refuses a golf league that reseeds its brackets', () => {
-    const golf = edited((file) => {
-      (file.sportLeagues[0] as { bracketAdvancement?: string }).bracketAdvancement = 'RESEED_BY_SEED';
-    });
-
-    expect(problemsOf(golf)).toEqual(['PGA TOUR: reseeds its brackets, which only a sport played as a bracket has.']);
   });
 
   it('refuses a bracket, a seed or a play-in place for a sport not played as a bracket', () => {

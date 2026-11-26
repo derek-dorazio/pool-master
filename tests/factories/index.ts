@@ -15,7 +15,6 @@ import type {
   User,
 } from '@poolmaster/shared/domain/types';
 import {
-  BracketAdvancement,
   ParticipantType,
   ScoringFamily,
   CupPointsScale,
@@ -87,8 +86,6 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     isActive: true,
     selectedProviderMapping: null,
     autoReleaseDaysBeforeStart: 7,
-    bracketAdvancement: BracketAdvancement.FIXED,
-    roundNames: [],
     platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
     platformPricingProfileId: '00000000-0000-4000-8000-0000000000b1',
     matchPeriodLayout: null,

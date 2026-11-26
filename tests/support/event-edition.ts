@@ -9,7 +9,8 @@
  * seeded, since an event is scored by its league's family (#2001), and an event reads its sport
  * through its Season's league (#2042, #2004): a test about another sport's event names that sport.
  */
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { randomInt } from 'node:crypto';
+import type { Prisma, PrismaClient, PrismaSlotKind, PrismaSlotPairing } from '@prisma/client';
 import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport } from '@poolmaster/shared/domain';
 import { competitionFor, seasonCompetitionFor } from './competitions';
 import { sportLeagueRowDefaults } from './league-profiles';
@@ -19,6 +20,9 @@ import { sportRowKeys } from './sport-rows';
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
 
 const LINKED_EVENT_ROUNDS = 4;
+/** The key prefix of the slot definition a linked provider event is played in, one made per event. */
+const LINKED_EVENT_SLOT_KEY = 'LINKED_EVENT';
+let linkedEventCount = 0;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueSeason' | 'platformTierProfile' | 'platformPricingProfile'>;
@@ -166,12 +170,18 @@ export async function fixtureTourSlotId(prisma: Db, sportCode: Sport = Sport.GOL
  * unless `phase` says otherwise), keyed `key` (made on first use):
  * a test that needs two events in different slots, or a template covering one of them (#2010).
  */
-export async function keyedSlotDefinitionId(prisma: Db, sportLeagueId: string, key: string, options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: 'TOURNAMENT' | 'WEEK' | 'SEMIFINAL' | 'FINAL'; name?: string } = {}): Promise<string> {
+export async function keyedSlotDefinitionId(
+  prisma: Db,
+  sportLeagueId: string,
+  key: string,
+  options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: PrismaSlotKind; name?: string; pairing?: PrismaSlotPairing; seriesGames?: number } = {},
+): Promise<string> {
   const { competitionId } = await competitionFor(prisma, { sportLeagueId, phase: options.phase ?? 'REGULAR' });
   await prisma.sportLeagueCompetitionSlot.createMany({
     data: [{
       sportLeagueId, sportLeagueCompetitionId: competitionId, key, slotKind: options.slotKind ?? 'TOURNAMENT', name: options.name ?? null,
-      awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+      awardsTrophy: false, squaresEligible: false,
+      seriesFormat: (options.seriesGames ?? 1) > 1 ? 'BEST_OF' : 'SINGLE_GAME', seriesGames: options.seriesGames ?? 1, pairing: options.pairing ?? 'FIXED',
       ...(await fixtureSlotPlay(prisma, sportLeagueId)),
     }],
     skipDuplicates: true,
@@ -188,6 +198,8 @@ export async function putEventInSlot(
   prisma: Pick<PrismaClient, 'sportEvent' | 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventSlot'>,
   sportEventId: string,
   sportLeagueCompetitionSlotId: string,
+  /** A synced slot (false) is unlabelled and makes no test event; a test slot is the default. */
+  options: { isTestData?: boolean } = {},
 ): Promise<string> {
   const event = await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { sportLeagueId: true, sportLeagueSeasonId: true } });
   const definition = await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({
@@ -203,7 +215,7 @@ export async function putEventInSlot(
     data: {
       sportLeagueId: event.sportLeagueId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonCompetitionId: seasonCompetitionId,
       sportLeagueCompetitionSlotId, seriesFormat: definition.seriesFormat, seriesGames: definition.seriesGames, pairing: definition.pairing,
-      isTestData: true, label: `event ${sportEventId}`,
+      isTestData: options.isTestData ?? true, label: (options.isTestData ?? true) ? `event ${sportEventId}` : null,
     },
     select: { id: true },
   });
@@ -273,7 +285,7 @@ export async function mapEventToProvider(
  * creates a round (#435).
  */
 export async function linkedProviderEvent(
-  prisma: Db & Pick<PrismaClient, 'sportEvent' | 'providerLeague' | 'sportLeagueProviderMapping' | 'sportEventProviderMapping'>,
+  prisma: Db & Pick<PrismaClient, 'sportEvent' | 'providerLeague' | 'sportLeagueProviderMapping' | 'sportEventProviderMapping' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventSlot' | 'sportEventRound'>,
   input: {
     providerId: string;
     externalId: string;
@@ -289,13 +301,21 @@ export async function linkedProviderEvent(
       name: input.name,
       startDate: input.startDate,
       rounds: LINKED_EVENT_ROUNDS,
-      roundSchedule: {
-        create: Array.from({ length: LINKED_EVENT_ROUNDS }, (_, index) => ({
-          roundNumber: index + 1,
-          scheduledDate: new Date(input.startDate.getTime() + index * MS_PER_DAY),
-        })),
-      },
     },
+  });
+  // The event's one synced slot, its four rounds played in it (#2006).
+  // A Season holds one synced slot per definition, so each linked event plays a definition of its own.
+  linkedEventCount += 1;
+  const key = `${LINKED_EVENT_SLOT_KEY}_${String(randomInt(1, 1_000_000))}_${String(linkedEventCount)}`;
+  const seasonSlotId = await putEventInSlot(prisma, event.id, await keyedSlotDefinitionId(prisma, event.sportLeagueId, key), { isTestData: false });
+  const { id: sportEventSlotId } = await prisma.sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id, sportLeagueSeasonCompetitionSlotId: seasonSlotId }, select: { id: true } });
+  await prisma.sportEventRound.createMany({
+    data: Array.from({ length: LINKED_EVENT_ROUNDS }, (_, index) => ({
+      sportEventId: event.id,
+      sportEventSlotId,
+      roundNumber: index + 1,
+      scheduledDate: new Date(input.startDate.getTime() + index * MS_PER_DAY),
+    })),
   });
   await mapEventToProvider(prisma, event.id, { providerId: input.providerId, externalId: input.externalId });
   return event;
@@ -321,4 +341,35 @@ export async function coverLeagueEventsWithTestSlot(prisma: PrismaClient, sportL
     data: templates.flatMap((template) => played.map((slot) => ({ sportLeagueId, templateId: template.id, sportLeagueCompetitionSlotId: slot.sportLeagueCompetitionSlotId }))),
     skipDuplicates: true,
   });
+}
+
+/** A round's slot as `eventRoundSlots` makes it: a definition of the league, keyed by its kind unless `key` is given. */
+export interface TestRoundSlot {
+  slotKind: PrismaSlotKind;
+  key?: string;
+  name?: string;
+  pairing?: PrismaSlotPairing;
+  seriesGames?: number;
+}
+
+/**
+ * Puts the event in one Season slot per round (#2006), each of a postseason definition of its
+ * league made on first use, in the order given (a bracket: its FINAL last). Answers each round's
+ * SportEventSlot id, round 1 first, for rounds written straight to the database.
+ */
+export async function eventRoundSlots(
+  prisma: Db & Pick<PrismaClient, 'sportEvent' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventSlot'>,
+  sportEventId: string,
+  slots: readonly TestRoundSlot[],
+  /** Synced slots (false) keep a synced event synced; test slots are the default. */
+  options: { isTestData?: boolean } = {},
+): Promise<string[]> {
+  const { sportLeagueId } = await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { sportLeagueId: true } });
+  const ids: string[] = [];
+  for (const slot of slots) {
+    const definitionId = await keyedSlotDefinitionId(prisma, sportLeagueId, slot.key ?? slot.slotKind, { phase: 'POSTSEASON', ...slot });
+    const seasonSlotId = await putEventInSlot(prisma, sportEventId, definitionId, options);
+    ids.push((await prisma.sportEventSlot.findFirstOrThrow({ where: { sportEventId, sportLeagueSeasonCompetitionSlotId: seasonSlotId }, select: { id: true } })).id);
+  }
+  return ids;
 }

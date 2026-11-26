@@ -9,7 +9,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { SportEventRoundRepository, SportEventRoundSchedule } from '@poolmaster/shared/db';
+import type { SportEventRoundCreate, SportEventRoundRepository, SportEventRoundSchedule } from '@poolmaster/shared/db';
 import { NO_ROUND_RESULTS, roundProgressOf, type RoundProgress, type SportEventRound } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
 
@@ -42,7 +42,7 @@ export class SportEventRoundService {
    * Creates new events' round schedules, every event's in one insert (#1253). The events have no
    * rounds yet: an event is created with its schedule.
    */
-  async createSchedules(schedules: ReadonlyArray<{ sportEventId: string; rounds: readonly SportEventRoundSchedule[] }>): Promise<void> {
+  async createSchedules(schedules: ReadonlyArray<{ sportEventId: string; rounds: ReadonlyArray<Omit<SportEventRoundCreate, 'sportEventId'>> }>): Promise<void> {
     await this.deps.rounds.createMany(schedules.flatMap(({ sportEventId, rounds }) => rounds.map((round) => ({ sportEventId, ...round }))));
     this.deps.logger?.info(
       { sportEventIds: schedules.map(({ sportEventId }) => sportEventId), roundCount: schedules.reduce((total, { rounds }) => total + rounds.length, 0) },
@@ -57,6 +57,16 @@ export class SportEventRoundService {
    */
   async extendTo(input: { sportEventId: string; rounds: number; startDate: Date }): Promise<SportEventRound[]> {
     const existing = await this.deps.rounds.findBySportEvent(input.sportEventId);
+    // Only an event played in one slot takes more rounds: a round per slot is the others' count (#2006).
+    const seasonSlotIds = new Set(existing.map((round) => round.slot.seasonSlotId));
+    const [seasonSlotId] = [...seasonSlotIds];
+    if (seasonSlotIds.size !== 1) {
+      throw new SportEventError(
+        `Sport event ${input.sportEventId} plays a round in each of its slots, so its round count comes from them.`,
+        'EVENT_ROUNDS_FROM_SLOTS',
+        422,
+      );
+    }
     const dateByRound = new Map(existing.map((round) => [round.roundNumber, round.scheduledDate]));
     const added: SportEventRoundSchedule[] = [];
     for (let roundNumber = 1; roundNumber <= input.rounds; roundNumber += 1) {
@@ -69,7 +79,7 @@ export class SportEventRoundService {
       added.push({ roundNumber, scheduledDate });
     }
     if (added.length > 0) {
-      await this.deps.rounds.createMany(added.map((round) => ({ sportEventId: input.sportEventId, ...round })));
+      await this.deps.rounds.createMany(added.map((round) => ({ sportEventId: input.sportEventId, seasonSlotId, ...round })));
       this.deps.logger?.info(
         { sportEventId: input.sportEventId, createdRoundNumbers: added.map((round) => round.roundNumber) },
         'Added rounds to the schedule',
@@ -130,4 +140,31 @@ export function dailyRoundSchedule(rounds: number, startDate: Date): SportEventR
     roundNumber: index + 1,
     scheduledDate: new Date(startDate.getTime() + index * MS_PER_DAY),
   }));
+}
+
+/**
+ * An event's rounds in its slots (#2006), its slots in play order: an event played in one slot
+ * plays every round of `schedule` there (a golf tournament's four, a week's one); an event with
+ * several plays a round in each, numbered in that order and dated by the slot, else by the
+ * schedule's start.
+ */
+export function roundsInSlots(
+  schedule: readonly SportEventRoundSchedule[],
+  slots: ReadonlyArray<{ id: string; startsAt: Date | null; endsAt: Date | null }>,
+): Array<Omit<SportEventRoundCreate, 'sportEventId'>> {
+  if (slots.length === 0) throw new Error('An event is created on at least one Season slot.');
+  // poolmaster-allow-position: an event of one slot plays every round in it
+  if (slots.length === 1) return schedule.map((round) => ({ ...round, seasonSlotId: slots[0].id }));
+  const start = schedule.length === 0 ? null : new Date(Math.min(...schedule.map((round) => round.scheduledDate.getTime())));
+  return slots.map((slot, index) => ({
+    roundNumber: index + 1,
+    scheduledDate: requiredDate(slot.startsAt ?? start, slot.id),
+    scheduledEndAt: slot.endsAt,
+    seasonSlotId: slot.id,
+  }));
+}
+
+function requiredDate(date: Date | null, seasonSlotId: string): Date {
+  if (date === null) throw new Error(`Season slot ${seasonSlotId} has no start, and the event no schedule to date its round by.`);
+  return date;
 }

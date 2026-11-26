@@ -20,7 +20,7 @@ import { recordStatements, statementCounts } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 import { sportRowKeys } from '../../support/sport-rows';
-import { mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
+import { eventRoundSlots, mapEventToProvider, fixtureSeasonId, type TestRoundSlot } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
@@ -41,7 +41,7 @@ const PROVIDER = 'balldontlie';
  * g2: basketball's, or soccer's, whose level knockout games a shoot-out settles. Its sport league
  * is the NCAA men's, which plays single games, unless another is named (the NBA plays series).
  */
-async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOCCER = Sport.BASKETBALL, league?: string) {
+async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOCCER = Sport.BASKETBALL, league?: string, seriesRounds?: readonly TestRoundSlot[]) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: sportOf },
@@ -67,15 +67,29 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   });
   // Under the league's own provider league, so a seeded league (the NBA) gains no second mapping
   // that outlives the test.
+  // The seeded NBA has its BALLDONTLIE mapping without a selection, so the league's own mapping
+  // counts too; a second mapping would outlive the test and show in the seeded mapping checks.
   const selected = await prisma.sportLeagueProviderMapping.findFirst({
-    where: { selectedBy: { is: { id: sportLeague.id } } },
+    where: { OR: [{ selectedBy: { is: { id: sportLeague.id } } }, { sportLeagueId: sportLeague.id }] },
+    orderBy: { createdAt: 'asc' },
     select: { providerLeague: { select: { code: true } } },
   });
   await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, selected?.providerLeague.code ?? (sportOf === Sport.SOCCER ? 'worldcup' : 'ncaab'));
-  await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [
+  const schedule = [
     { roundNumber: 1, scheduledDate: new Date('2027-04-03T22:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-04-05T01:00:00.000Z') },
-  ]);
+  ];
+  if (seriesRounds) {
+    // Each round in a slot of its own, whose series length the round plays.
+    const eventSlotIds = await eventRoundSlots(prisma, event.id, seriesRounds);
+    const eventSlots = await prisma.sportEventSlot.findMany({ where: { id: { in: eventSlotIds } }, select: { id: true, sportLeagueSeasonCompetitionSlotId: true } });
+    await new PrismaSportEventRoundRepository(getAppPrisma()).createMany(schedule.map((round, index) => ({
+      sportEventId: event.id, ...round,
+      seasonSlotId: expectDefined(eventSlots.find((eventSlot) => eventSlot.id === eventSlotIds[index]), 'round slot').sportLeagueSeasonCompetitionSlotId,
+    })));
+  } else {
+    await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, schedule);
+  }
   const names = ['Duke', 'Houston', 'Auburn', 'Florida'];
   const teams = await Promise.all(names.map((name) => prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name, participantType: 'TEAM' } })));
   await prisma.participantProviderMapping.createMany({
@@ -285,8 +299,8 @@ describe('game scores from a provider', () => {
   });
 
   it('counts each NBA series\' games as wins, completing a series at four and sending its winner on, and shows a series still on as its wins so far (#1545)', async () => {
-    // The NBA's rounds are best of seven, as its reference data says.
-    const { event, externalId, entryOf, teamId, matches } = await linkedBracket(Sport.BASKETBALL, 'NBA');
+    // The NBA's conference finals and Finals slots are best of seven, as its reference data says.
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket(Sport.BASKETBALL, 'NBA', [{ slotKind: 'SEMIFINAL' }, { slotKind: 'FINAL' }]);
     await getPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: event.id }, data: { externalGameId: null } });
     const final = (id: string, home: string, away: string, homeScore: number, awayScore: number): GameScoreUpdate =>
       ({ externalGameId: id, homeTeamExternalId: teamId(home), awayTeamExternalId: teamId(away), state: ProviderGameState.FINAL, homeScore, awayScore });
@@ -339,7 +353,11 @@ describe('game scores from a provider', () => {
       ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_matches', 1],
       ['SELECT sport_event_rounds', 1],
+      // The rounds' slots (#2006): each round reads its slot's definition and Season slot.
+      ['SELECT sport_event_slots', 1],
       ['SELECT sport_events', 1],
+      ['SELECT sport_league_competition_slots', 1],
+      ['SELECT sport_league_season_competition_slots', 1],
       ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
       // The event's sport, read through its league (#2042), to pick its scoring family's writer.
@@ -377,9 +395,14 @@ describe('game scores from a provider', () => {
       ['SELECT sport_event_provider_mappings', 3],
       ['SELECT sport_event_round_matches', 3],
       ['SELECT sport_event_rounds', 3],
-      // Each full read of the event names its slot definitions (#2010), where templates are offered.
-      ['SELECT sport_event_slots', 2],
+      // Each full read of the event names its slot definitions (#2010), where templates are offered,
+      // and each read of the rounds reads their slots (#2006): a fixed cost per read, not per round.
+      ['SELECT sport_event_slots', 5],
       ['SELECT sport_events', 3],
+      ['SELECT sport_league_competition_slots', 5],
+      ['SELECT sport_league_competitions', 2],
+      ['SELECT sport_league_phases', 2],
+      ['SELECT sport_league_season_competition_slots', 5],
       ['SELECT sport_league_seasons', 3],
       ['SELECT sport_leagues', 3],
       ['SELECT sports', 3],
