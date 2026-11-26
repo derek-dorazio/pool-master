@@ -71,9 +71,11 @@ give each event its `matches`: each match's number, round, its two sides as play
 the event's field (`null` where an earlier match's winner fills the side), whether it is on a
 neutral site, its `scheduledAt`, and `advancesTo` (the match and side its winner
 moves on to; `null` for the final), and its `regionLabel` (the March Madness region or NFL
-conference) where it has one. A league that reseeds gives `bracketAdvancement`
-`RESEED_BY_SEED`, and its first-round games `advancesTo: null`; the run sets the rule on the
-sport league, new or existing. A field entry may give its bracket `seed` (1-16 in each
+conference) where it has one. A bracket played over several slots names each round's slot
+definition key in `roundSlotKeys`, round 1 first and FINAL last, in place of `slotKey`; the run
+makes a test slot of each and plays round n in the nth (#2006). Whether it reseeds is its slots'
+`pairing` (the NFL's are `RESEEDED`), so a reseeded file gives its first-round games
+`advancesTo: null` and sets no rule on the sport league. A field entry may give its bracket `seed` (1-16 in each
 March Madness region) where the seed is not its place in the field, and `isPlayInPlace` for a
 First Four pairing. The run refuses a bracket the bracket endpoint would refuse, before any
 write.

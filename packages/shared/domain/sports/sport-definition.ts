@@ -67,10 +67,4 @@ export interface SportDefinition {
    * by the sport's `shootout` word.
    */
   shootout: boolean;
-  /**
-   * How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. A round with no
-   * proper name reads a display string (`word.roundNumber`, `word.raceNumber`)
-   * in the reader's locale.
-   */
-  roundLabel: (roundNumber: number, roundCount: number, locale?: string | null) => string;
 }

@@ -15,6 +15,7 @@ import {
   type IngestionService,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
+import { weekRoundSlot } from '../../support/round-slots';
 
 const AT = new Date('2026-04-09T12:00:00.000Z');
 const ISO = AT.toISOString();
@@ -52,7 +53,7 @@ const fieldRow = {
   valuation: null, standing: null, rounds: [], raceResult: null, affiliatedWithSportLeague: true,
 };
 const round = {
-  id: 'r1', sportEventId: EVENT_ID, roundNumber: 1, scheduledDate: AT, scheduledEndAt: null, createdAt: AT, updatedAt: AT,
+  id: 'r1', sportEventId: EVENT_ID, roundNumber: 1, scheduledDate: AT, scheduledEndAt: null, createdAt: AT, updatedAt: AT, slot: weekRoundSlot(),
   progress: { status: 'COMPLETED', resultCount: 4, completedAt: AT },
 };
 const EVENT_OVERVIEW: SportEventOverview = {
@@ -111,7 +112,7 @@ function fakes() {
     bracket: {
       listBracket: fn([]),
       loadBracket: fn([]),
-      updateMatch: fn({ id: 'm1', scheduledDate: null, periodScores: [] }),
+      updateMatch: fn({ id: 'm1', scheduledDate: null, periodScores: [], slot: weekRoundSlot() }),
       proposeRoundMatchups: fn([{ matchNumber: 1 }]),
       setRoundMatchups: fn([]),
       fillPlayInSlot: fn(undefined),
@@ -200,10 +201,10 @@ describe('event writes', () => {
   it('creates a test event on the test slot the body names, answering 201', async () => {
     const { services, handlers } = fakes();
 
-    const created = await callHandler(handlers.createEvent, stubRequest({ body: { seasonSlotId: 'slot-1', name: 'Open' } }));
+    const created = await callHandler(handlers.createEvent, stubRequest({ body: { seasonSlotIds: ['slot-1'], name: 'Open' } }));
 
     expect(created.statusCode).toBe(201);
-    expect(services.sportEvents.createEvent.mock.calls).toEqual([[{ seasonSlotId: 'slot-1', name: 'Open' }]]);
+    expect(services.sportEvents.createEvent.mock.calls).toEqual([[{ seasonSlotIds: ['slot-1'], name: 'Open' }]]);
   });
 
   it('updates an event, telling members unless the body says not to, and clears an end sent as null', async () => {

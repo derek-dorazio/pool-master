@@ -25,6 +25,7 @@ import {
   MatchSide,
   MatchStatus,
   PickOutcome,
+  finalRoundsOfMatches,
   type KnockoutRoundPointsSettings,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
@@ -179,10 +180,11 @@ export function findBracketProblem(
     return startsAtRound > 1 ? `it has no games from round ${startsAtRound} on` : 'it has no games';
   }
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
-  // poolmaster-allow-position: round numbers sorted ascending: the highest is the final round
-  const finals = bracket.filter((match) => match.roundNumber === rounds.at(-1));
+  // The final is the game of the final's round (#2006), never the last round's.
+  const finalRounds = finalRoundsOfMatches(bracket);
+  const finals = bracket.filter((match) => finalRounds.has(match.roundNumber));
   if (finals.length !== 1) {
-    return `its last round has ${finals.length} games, not one final`;
+    return `its final has ${finals.length} games, not one`;
   }
   const picks: BracketPick[] = [];
   for (const roundNumber of rounds) {
@@ -278,10 +280,10 @@ export function scoreBracketPicks(
   };
 }
 
-/** The bracket's final, its one game of the last round; null while that round has not one game. */
+/** The bracket's final, its one game of the final's round (#2006); null while that round has not one game. */
 export function bracketFinal(bracket: readonly SportEventRoundMatch[]): SportEventRoundMatch | null {
-  const lastRound = Math.max(...bracket.map((match) => match.roundNumber));
-  const finals = bracket.filter((match) => match.roundNumber === lastRound);
+  const finalRounds = finalRoundsOfMatches(bracket);
+  const finals = bracket.filter((match) => finalRounds.has(match.roundNumber));
   return finals.length === 1 ? finals[0] : null;
 }
 

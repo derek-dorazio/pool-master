@@ -16,6 +16,7 @@ import {
   weekPick,
 } from './test/pick-em-fixtures';
 import type { SurvivorLeaderboardResponse } from '@/lib/api';
+import { eventRoundsResponse, PLAYOFF_ROUND_SLOTS } from './test/round-slots';
 
 type SurvivorPick = SurvivorLeaderboardResponse['entries'][number]['weeks'][number];
 
@@ -26,6 +27,7 @@ const {
   getContestMock,
   getLeagueMock,
   getGamePicksMock,
+  listEventRoundsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -37,6 +39,7 @@ const {
     getContestMock: vi.fn(),
     getLeagueMock: vi.fn(),
     getGamePicksMock: vi.fn(),
+    listEventRoundsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -48,6 +51,7 @@ bindApiMocks({
   getContestLeaderboard: getContestLeaderboardMock,
   getLeague: getLeagueMock,
   getGamePicks: getGamePicksMock,
+  listEventRounds: listEventRoundsMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -96,6 +100,8 @@ function primeMocks(
   getSurvivorLeaderboardMock.mockResolvedValue({ data: board });
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
   getGamePicksMock.mockResolvedValue({ data: survivorWeekFixture({ sportEventId: 'week-2', status: 'DRAFT' }) });
+  // A playoff's rounds are named by their slots.
+  listEventRoundsMock.mockResolvedValue(eventRoundsResponse('playoffs', PLAYOFF_ROUND_SLOTS));
 }
 
 /** The headers of the board's columns, as read. */
@@ -106,7 +112,7 @@ async function headers(): Promise<string[]> {
 
 describe('Survivor contest leaderboard', () => {
   afterEach(() => {
-    for (const mock of [getSurvivorLeaderboardMock, getPickEmLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock, getGamePicksMock]) {
+    for (const mock of [getSurvivorLeaderboardMock, getPickEmLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock, getGamePicksMock, listEventRoundsMock]) {
       mock.mockReset();
     }
   });

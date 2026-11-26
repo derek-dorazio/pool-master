@@ -6,6 +6,8 @@ import type {
   LeagueContextResponse,
 } from '@/lib/api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
+import { SlotKind } from '@poolmaster/shared/domain';
+import { TOURNAMENT_ROUND_SLOTS } from './round-slots';
 
 /**
  * Bracket contest fixtures (#721) in the generated contract's shapes: an eight-team basketball
@@ -35,10 +37,26 @@ export const TEAMS = {
 /** Far enough ahead that "has not started" holds whatever day the suite runs. */
 export const BRACKET_START = '2099-03-19T16:00:00.000Z';
 
+/**
+ * Each fixture round's slot: rounds 1 to 3 are the seven-game bracket's (an Elite Eight on), its
+ * round 3 the final; rounds 4 to 6 are a six-round tournament's last three, as a second-chance
+ * bracket shows them.
+ */
+const FIXTURE_ROUND_SLOTS: Readonly<Record<number, Game['slot']>> = {
+  1: TOURNAMENT_ROUND_SLOTS[3],
+  2: TOURNAMENT_ROUND_SLOTS[4],
+  3: TOURNAMENT_ROUND_SLOTS[5],
+  4: TOURNAMENT_ROUND_SLOTS[3],
+  5: TOURNAMENT_ROUND_SLOTS[4],
+  6: TOURNAMENT_ROUND_SLOTS[5],
+};
+
 export function bracketGame(overrides: Partial<Game> & Pick<Game, 'matchNumber' | 'roundNumber'>): Game {
-  const { matchNumber } = overrides;
+  const { matchNumber, roundNumber } = overrides;
   return {
     sportEventRoundMatchId: `match-${matchNumber}`,
+    slot: FIXTURE_ROUND_SLOTS[roundNumber],
+    isFinal: FIXTURE_ROUND_SLOTS[roundNumber].slotKind === SlotKind.FINAL,
     kickoff: BRACKET_START,
     status: 'SCHEDULED',
     isNeutralSite: true,

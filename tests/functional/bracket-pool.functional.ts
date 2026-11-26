@@ -29,7 +29,6 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { testDomainEvents } from '../support/domain-events';
 import {
-  BracketAdvancement,
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
@@ -63,6 +62,7 @@ import { PrismaSportEventRepository } from '../../packages/core-api/src/adapters
 import { NO_SETTLE_JOBS } from '../support/event-settlement';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import type { TestRoundSlot } from '../support/event-edition';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -133,7 +133,8 @@ async function releasedKnockout(options: {
   seeds: readonly number[];
   rounds: number;
   tierSize: number;
-  bracketAdvancement?: BracketAdvancement;
+  /** One test slot per round, when the rounds are told apart by their slots (a reseeded round). */
+  roundSlots?: readonly TestRoundSlot[];
   matches: readonly BracketMatchInput[];
 }) {
   // The migration's reference row, restored in case an earlier suite cleared the sports table.
@@ -146,11 +147,11 @@ async function releasedKnockout(options: {
   await promoteToRootAdmin(admin);
   const a = admin.client;
 
-  const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, bracketAdvancement: options.bracketAdvancement });
+  const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}` });
   created.sportLeagueIds.add(sportLeagueId);
   const event = await createTestEvent({
     client: a,
-    body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, autoLifecycleEnabled: false },
+    body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, ...(options.roundSlots !== undefined && { roundSlots: options.roundSlots }), autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);
@@ -451,7 +452,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       seeds: [1, 2, 3, 4, 5, 6, 7],
       rounds: 3,
       tierSize: 2,
-      bracketAdvancement: BracketAdvancement.RESEED_BY_SEED,
+      // Wild Card, a Divisional round the pairing reseeds, and the conference final.
+      roundSlots: [{ slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' }, { slotKind: 'FINAL' }],
       matches: [
         wildCard(1, 2, 7), wildCard(2, 3, 6), wildCard(3, 4, 5),
         { matchNumber: 4, roundNumber: 2, home: 1, away: null, advancesTo: { matchNumber: 6, side: MatchSide.HOME }, regionLabel: 'AFC' },

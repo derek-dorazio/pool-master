@@ -19,7 +19,6 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import {
-  BracketAdvancement,
   ContestFormat,
   MatchSide,
   MatchStatus,
@@ -112,8 +111,8 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     await promoteToRootAdmin(admin);
     const a = admin.client;
 
-    // --- A league that reseeds its playoffs, and a week of three games --------------------------
-    const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    // --- A league and a week of three games -----------------------------------------------------
+    const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.FOOTBALL, name: `Week League ${RUN}` });
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {

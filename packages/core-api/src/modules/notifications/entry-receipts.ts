@@ -10,6 +10,7 @@
  * sends a second one. A squares draw is final, so its receipt is keyed by the entry alone.
  */
 
+import { roundLabels } from '@poolmaster/shared/display-strings';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryWithSquad,
@@ -20,7 +21,6 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   type Contest,
-  eventRoundLabel,
   formatSpread,
   type League,
   PickEmMode,
@@ -131,7 +131,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
       return;
     }
     const submittedAt = view.submittedAt;
-    const receipt = this.receiptOf(view, sportEvent, setting.sportLeague?.roundNames ?? []);
+    const receipt = this.receiptOf(view, sportEvent);
     const tiebreaker = describeTiebreaker(view, sportEvent);
     await this.deps.email.sendMany(TEMPLATE_KEY, this.ownerEmails(setting, {
       contest,
@@ -240,7 +240,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     }));
   }
 
-  private receiptOf(view: GamePicksView, sportEvent: SportEvent, roundNames: readonly string[]): EntryReceipt {
+  private receiptOf(view: GamePicksView, sportEvent: SportEvent): EntryReceipt {
     const tieWord = sportVocabulary(sportEvent.sport).tie;
     const picked = view.games.filter((game) => game.pick !== null);
     switch (view.selectionType) {
@@ -261,7 +261,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
         return {
           kind: EntryReceiptKind.BRACKET,
           eventName: sportEvent.name,
-          rounds: bracketRounds(picked, sportEvent, roundNames),
+          rounds: bracketRounds(picked),
           // A bracket's picks lock together: at the event's start, or a second-chance bracket's
           // starting round.
           changeUntil: view.picksCloseAt,
@@ -280,12 +280,12 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
   }
 }
 
-/** The bracket's picks for its last rounds, the final first, each round in its sport league's words. */
-function bracketRounds(picked: GamePickGame[], sportEvent: SportEvent, roundNames: readonly string[]): Array<{ name: string; picks: string[] }> {
+/** The bracket's picks for its last rounds, the final first, each round named by the slot it is played in. */
+function bracketRounds(picked: GamePickGame[]): Array<{ name: string; picks: string[] }> {
   const roundNumbers = [...new Set(picked.map((game) => game.match.roundNumber))].sort((left, right) => right - left);
-  const roundCount = Math.max(sportEvent.rounds ?? 0, roundNumbers.at(0) ?? 0);
+  const roundName = roundLabels(picked.map((game) => game.match));
   return roundNumbers.slice(0, BRACKET_RECEIPT_ROUNDS).map((roundNumber) => ({
-    name: eventRoundLabel(sportEvent, roundNames, roundNumber, roundCount),
+    name: roundName(roundNumber),
     picks: picked
       .filter((game) => game.match.roundNumber === roundNumber)
       .sort((left, right) => left.match.matchNumber - right.match.matchNumber)

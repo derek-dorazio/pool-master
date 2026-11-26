@@ -8,6 +8,7 @@ import type {
 } from '@poolmaster/shared/db';
 import type { SportEvent } from '@poolmaster/shared/domain';
 import { expectDefined } from './expect-defined';
+import { linkTestSlot } from './test-slots';
 
 // One-row fixtures over the catalog repositories' batch writes (#1253), for tests that set up
 // a single event, or one event's rounds or tiers.
@@ -18,9 +19,21 @@ export async function createSportEventRow(events: SportEventRepository, input: S
   return expectDefined(event, 'created sport event');
 }
 
-/** One event's rounds. */
-export function createRoundRows(rounds: SportEventRoundRepository, sportEventId: string, schedule: readonly SportEventRoundSchedule[]): Promise<void> {
-  return rounds.createMany(schedule.map((round) => ({ sportEventId, ...round })));
+/**
+ * One event's rounds, all played in its one slot (#2006): the event's own, else a slot the sync
+ * keeps, linked to it now (an event a test made below the API has none), so it stays no test event.
+ */
+export async function createRoundRows(
+  prisma: Parameters<typeof linkTestSlot>[0],
+  rounds: SportEventRoundRepository,
+  event: { id: string; sportLeagueSeasonId: string; startDate: Date },
+  schedule: readonly SportEventRoundSchedule[],
+): Promise<void> {
+  const slots = await prisma.sportEventSlot.findMany({ where: { sportEventId: event.id }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+  if (slots.length > 1) throw new Error(`Sport event ${event.id} has ${String(slots.length)} slots; createRoundRows places rounds in one.`);
+  // poolmaster-allow-position: the event's one slot
+  const seasonSlotId = slots.length === 1 ? slots[0].sportLeagueSeasonCompetitionSlotId : await linkTestSlot(prisma, event, false);
+  await rounds.createMany(schedule.map((round) => ({ sportEventId: event.id, seasonSlotId, ...round })));
 }
 
 /** One event's tiers. */

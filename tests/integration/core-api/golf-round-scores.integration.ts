@@ -25,6 +25,7 @@ import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -59,7 +60,7 @@ async function createField(suffix: string) {
   const event = { ...created, externalId: `golf-round-scores-${created.id}` };
   await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: event.externalId });
   const round1 = await prisma.sportEventRound.create({
-    data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-05-07T12:00:00.000Z') },
+    data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: new Date('2026-05-07T12:00:00.000Z') },
   });
   const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth'].map(async (name) => {
     const participant = await prisma.participant.create({
@@ -343,8 +344,9 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
     const { event, rory, jordan } = await createField('beyond-schedule-sync');
     const prisma = getPrisma();
     await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
+    const sportEventSlotId = await oneEventSlotId(prisma, event.id);
     await prisma.sportEventRound.createMany({
-      data: [2, 3, 4].map((roundNumber) => ({ sportEventId: event.id, roundNumber, scheduledDate: new Date('2026-05-07T12:00:00.000Z') })),
+      data: [2, 3, 4].map((roundNumber) => ({ sportEventId: event.id, sportEventSlotId, roundNumber, scheduledDate: new Date('2026-05-07T12:00:00.000Z') })),
     });
     await prisma.participantProviderMapping.createMany({
       data: [

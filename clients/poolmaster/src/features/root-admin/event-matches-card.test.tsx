@@ -1,4 +1,4 @@
-import { MatchEnding } from '@poolmaster/shared/domain';
+import { MatchEnding, SlotKind } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,6 +9,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { EventRoundsTab } from './event-rounds-tab';
 import { EventTabOutlet } from './test/event-tab-outlet';
 import { fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { roundSlot } from '@/features/contests/test/round-slots';
 
 // The Event page's Matches grid and each match's dialog (#1890). Results come only from the feed
 // (#2074), so the grid and dialog show them and offer Settle again, and nothing enters one.
@@ -76,6 +77,7 @@ const texas = fieldEntryFixture({ id: 'sep-4', participantId: 'p-4', seedNumber:
 function match(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
   return {
     sportEventId: 'evt-1',
+    slot: overrides.roundNumber === 2 ? roundSlot(SlotKind.FINAL, 'Final') : roundSlot(SlotKind.SEMIFINAL, 'Semifinals'),
     homeSportEventParticipantId: null,
     awaySportEventParticipantId: null,
     isNeutralSite: true,
@@ -118,7 +120,7 @@ const MATCHES = [
 function seed(matches: SportEventRoundMatchDto[] = MATCHES) {
   getEventMock.mockResolvedValue({ data: { event: tournament } });
   listSportLeaguesMock.mockResolvedValue({
-    data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Men\'s Basketball', roundNames: [], matchPeriodLayout: null })] },
+    data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Men\'s Basketball', matchPeriodLayout: null })] },
   });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: [duke, vermont, houston, texas] } });
   getEventBracketMock.mockResolvedValue({ data: { matches } });

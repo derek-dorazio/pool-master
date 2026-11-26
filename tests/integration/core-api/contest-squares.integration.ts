@@ -22,6 +22,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { recordStatements } from '../statement-log';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -73,7 +74,7 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
     return prisma.sportEventParticipant.create({ data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true } });
   }));
   const round = await prisma.sportEventRound.create({
-    data: { sportEventId: sportEvent.id, roundNumber: 1, scheduledDate: sportEvent.startDate },
+    data: { sportEventId: sportEvent.id, sportEventSlotId: await oneEventSlotId(prisma, sportEvent.id), roundNumber: 1, scheduledDate: sportEvent.startDate },
   });
   const game = await prisma.sportEventRoundMatch.create({
     data: {

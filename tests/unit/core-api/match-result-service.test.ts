@@ -11,6 +11,7 @@ import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { DomainEventType } from '../../../packages/core-api/src/modules/domain-events';
 import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
+import { bracketRoundSlots } from '../../support/round-slots';
 
 // The admin's match results against an in-memory store (#699): what a result saves (the winner,
 // the next match's side, every team's standing), what it refuses, and the correction lock. The
@@ -793,7 +794,7 @@ describe('MatchResultService on a reseeded bracket', () => {
       return store.addToField(event.id, team.id, { seedNumber: seed });
     });
     const match = (matchNumber: number, roundNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => ({
-      id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
+      id: `m${matchNumber}`, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [],

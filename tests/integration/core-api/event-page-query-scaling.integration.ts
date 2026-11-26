@@ -17,6 +17,7 @@ import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { participantLeagueId } from '../../support/participant-league';
 import { fixtureSeasonId, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // No mocks.
 
@@ -85,7 +86,7 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
         rounds: roundNumber,
       },
     });
-    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber, scheduledDate: startDate } });
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber, scheduledDate: startDate } });
     const team = async (side: string) => {
       const participant = await prisma.participant.create({
         data: { sportLeagueId: await participantLeagueId(prisma, football.id), name: `${side} ${suffix} ${String(sortOrder)}`, participantType: 'TEAM' },

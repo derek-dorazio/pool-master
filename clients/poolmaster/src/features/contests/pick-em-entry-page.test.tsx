@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryPage } from './contest-entry-page';
 import { bracketLeagueContextFixture } from './test/bracket-fixtures';
+import { eventRoundsResponse, PLAYOFF_ROUND_SLOTS } from './test/round-slots';
 import {
   NFL_TEAMS,
   pickEmContestFixture,
@@ -27,6 +28,7 @@ const {
   mockLogger,
   saveGamePicksMock,
   submitGamePicksMock,
+  listEventRoundsMock,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockImplementation(() => logger);
@@ -39,6 +41,7 @@ const {
     mockLogger: logger,
     saveGamePicksMock: vi.fn(),
     submitGamePicksMock: vi.fn(),
+    listEventRoundsMock: vi.fn(),
   };
 });
 
@@ -50,6 +53,7 @@ bindApiMocks({
   getContestEntry: getContestEntryMock,
   saveGamePicks: saveGamePicksMock,
   submitGamePicks: submitGamePicksMock,
+  listEventRounds: listEventRoundsMock,
 });
 
 // The league-context hook reads the cached session user; the page renders bare here.
@@ -524,7 +528,7 @@ describe('Playoff survivor entry page', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
+      getContestEntryMock, saveGamePicksMock, submitGamePicksMock, listEventRoundsMock,
     ]) {
       mock.mockReset();
     }
@@ -532,6 +536,8 @@ describe('Playoff survivor entry page', () => {
 
   function primePlayoff(week = playoffSurvivorFixture()) {
     primeMocks({ week });
+    // The playoff's rounds are named by their slots.
+    listEventRoundsMock.mockResolvedValue(eventRoundsResponse(week.sportEventId, PLAYOFF_ROUND_SLOTS));
     getContestMock.mockResolvedValue({ data: { contest: playoffSurvivorContestFixture() } });
   }
 

@@ -24,8 +24,7 @@ export function BracketMiddle({
   picking: BracketPicking | null;
   tiebreaker?: ReactNode;
 }) {
-  const { final, left, right } = splitMiddle(middle);
-  const finalRound = final ? middle.rounds.at(-1) : undefined;
+  const { final, finalRound, left, right } = splitMiddle(middle);
   return (
     <div className="flex flex-col items-center gap-4" data-testid="bracket-middle">
       <div className="flex w-full items-center justify-center gap-2">

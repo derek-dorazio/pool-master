@@ -5,7 +5,6 @@ import { extractErrorMessage } from '@/lib/errors';
 import { eventMatchColumns } from './event-match-columns';
 import { EventMatchDialog } from './event-match-dialog';
 import { eventMatchRows } from './event-match-rows';
-import { useEventRoundLabel } from './use-sport-catalog';
 import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-event';
 
 /**
@@ -15,14 +14,12 @@ import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-
 export function EventMatchesCard({ event }: { event: SportEventDto }) {
   const bracketQuery = useSportEventBracketQuery(event.id);
   const fieldQuery = useSportEventFieldQuery(event.id);
-  const roundLabel = useEventRoundLabel(event);
   const columns = useMemo(() => eventMatchColumns(), []);
   const [openMatchId, setOpenMatchId] = useState<string | null>(null);
   const rows = useMemo(() => {
     if (bracketQuery.data === undefined || fieldQuery.data === undefined) return undefined;
-    const roundCount = Math.max(event.rounds ?? 0, ...bracketQuery.data.map((match) => match.roundNumber));
-    return eventMatchRows(bracketQuery.data, fieldQuery.data, roundLabel, roundCount);
-  }, [bracketQuery.data, event.rounds, fieldQuery.data, roundLabel]);
+    return eventMatchRows(bracketQuery.data, fieldQuery.data);
+  }, [bracketQuery.data, fieldQuery.data]);
   const failed = bracketQuery.isError ? bracketQuery : fieldQuery;
 
   return (

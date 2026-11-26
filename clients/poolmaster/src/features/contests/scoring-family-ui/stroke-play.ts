@@ -60,7 +60,7 @@ export const strokePlayUi: ScoringFamilyUi = {
     format: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format,
     describe: (value) => `Winning score relative to par: ${PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(value)}`,
   },
-  leaderboard(response, sport) {
+  leaderboard(response) {
     // Stroke play has one scoring definition: golf's total relative to par.
     const definition = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
     // A withdrawn golfer's 80s can fall on rounds nobody has played yet, so those get columns too.
@@ -107,7 +107,7 @@ export const strokePlayUi: ScoringFamilyUi = {
               ...cell,
               text: UNPLAYED_ROUND_CELL,
               unplayed: {
-                ariaLabel: `${sport.roundLabel(roundNumber, fieldRoundNumbers.length)} not played, counts as 80 strokes`,
+                ariaLabel: `${displayString('word.roundNumber', { n: roundNumber })} not played, counts as 80 strokes`,
               },
             };
           }

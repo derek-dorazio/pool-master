@@ -153,9 +153,6 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       tags: TAGS,
       summary: 'Update a sport league',
       description: 'The current Season is never set here: the daily recompute sets it (#2003). '
-        + '422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. '
-        + '409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: '
-        + 'the loaded bracket\'s links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. '
         + 'syncProviderLeagueId turns the league\'s event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: '
         + '404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. '
         + 'autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). '
@@ -163,7 +160,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       operationId: 'updateSportLeague',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('UpdateSportLeagueRequest'),
-      response: { 200: schemaRef('SportLeagueResponse'), ...errors(403, 404, 409, 422) },
+      response: { 200: schemaRef('SportLeagueResponse'), ...errors(403, 404, 422) },
     },
     handler: handler.updateSportLeague,
   });

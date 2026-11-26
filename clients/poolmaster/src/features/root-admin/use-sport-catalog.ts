@@ -1,7 +1,7 @@
-import { eventRoundLabel, sportLeagueNounOf, type Sport, type SportNoun } from '@poolmaster/shared/domain';
+import { sportLeagueNounOf, type Sport, type SportNoun } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { getParticipant, listSportLeagueParticipants, listSportLeagues, listSports } from '@/lib/api';
-import type { ParticipantDto, SportDto, SportEventDto, SportLeagueDto } from '@/lib/api';
+import type { ParticipantDto, SportDto, SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -44,19 +44,6 @@ export function useSportLeaguesQuery(sport: Sport | undefined) {
     enabled: sport !== undefined,
     retry: false,
   });
-}
-
-/**
- * How an event's rounds are labelled (#706): by its sport league's round names where the league
- * has them (the NBA's "Conference Finals"), otherwise by its sport's (a stat
- * pool's games). It reads the sport's
- * leagues, which the Manage screens already hold; until they load, rounds take the sport's names.
- */
-export function useEventRoundLabel(event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>): (roundNumber: number, roundCount: number) => string {
-  const leaguesQuery = useSportLeaguesQuery(event.sport);
-  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
-  const roundNames = leaguesQuery.data?.find((league) => league.id === event.sportLeagueId)?.roundNames ?? [];
-  return (roundNumber, roundCount) => eventRoundLabel(event, roundNames, roundNumber, roundCount);
 }
 
 /**

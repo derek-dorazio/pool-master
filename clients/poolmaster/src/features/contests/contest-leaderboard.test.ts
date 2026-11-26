@@ -5,7 +5,6 @@ import type {
   SportEventParticipantDto,
   SportEventParticipantRoundDto,
 } from '@/lib/api';
-import { getSportDefinition, Sport } from '@poolmaster/shared/domain';
 import { buildLeaderboardView, type LeaderboardPickRow, type LeaderboardView } from './contest-leaderboard';
 import {
   formatCurrentRoundLabel,
@@ -13,8 +12,6 @@ import {
   resolveRoundNumbers,
 } from './contest-leaderboard-rounds';
 import { formatThru } from './scoring-family-ui/stroke-play';
-
-const golf = getSportDefinition(Sport.GOLF);
 
 /** The round columns stroke play adds after THR, as round numbers. */
 function roundNumbersOf(view: LeaderboardView): number[] {
@@ -194,17 +191,18 @@ describe('resolveCurrentRound', () => {
 });
 
 describe('formatCurrentRoundLabel', () => {
+  const numberedRound = (roundNumber: number) => `Round ${String(roundNumber)}`;
   it('says nothing when there is no round to name', () => {
-    expect(formatCurrentRoundLabel(null, golf, 4)).toBeNull();
+    expect(formatCurrentRoundLabel(null, numberedRound)).toBeNull();
   });
 
   it('labels a round still being played', () => {
-    expect(formatCurrentRoundLabel({ roundNumber: 2, isComplete: false }, golf, 4))
+    expect(formatCurrentRoundLabel({ roundNumber: 2, isComplete: false }, numberedRound))
       .toBe('Round 2 — In Progress');
   });
 
   it('labels a finished round', () => {
-    expect(formatCurrentRoundLabel({ roundNumber: 4, isComplete: true }, golf, 4))
+    expect(formatCurrentRoundLabel({ roundNumber: 4, isComplete: true }, numberedRound))
       .toBe('Round 4 — Complete');
   });
 });

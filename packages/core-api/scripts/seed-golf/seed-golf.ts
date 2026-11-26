@@ -92,7 +92,6 @@ import {
   updateEvent,
   updateEventBracketMatch,
   updateEventParticipants,
-  updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
 import {
@@ -382,12 +381,9 @@ class Loader {
     for (const league of this.file.sportLeagues) await this.loadLeague(league);
   }
 
-  /**
-   * The league's id. The league must be on the site already: a missing one is refused. A bracket
-   * rule the file names is changed on a league that has another.
-   */
+  /** The league's id. The league must be on the site already: a missing one is refused. */
   private async ensureLeague(client: Client, league: SportDataLeague): Promise<SportLeagueDto> {
-    const { name, urlSegment, bracketAdvancement } = league;
+    const { name, urlSegment } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
     // A file that names the league's stored URL segment finds it by that; an older file, by name.
     const existing = urlSegment === undefined
@@ -399,24 +395,7 @@ class Loader {
     }
     if (existing) {
       this.leagueDefinitions.set(name, sportLeagueDefinitionOf(this.sport, existing));
-      const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;
-      const change = `bracket advancement ${existing.bracketAdvancement} -> ${bracketAdvancement}`;
-      const row = { sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, name };
-      if (!changed) {
-        this.report({ ...row, action: LoadAction.SKIP, detail: null });
-        return existing;
-      }
-      // The server refuses the change while an event of the league has its bracket loaded (#730).
-      // A dry run cannot know that without the write, so it reports the change it would ask for.
-      if (this.apply) {
-        const result = await updateSportLeague({ client, path: { sportLeagueId: existing.id }, body: { bracketAdvancement } });
-        if (result.error?.error.code === 'SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED') {
-          this.report({ ...row, action: LoadAction.CONFLICT, detail: `${change} not changed: an event of the league has its bracket loaded` });
-          return existing;
-        }
-        await must(Promise.resolve(result), `Update sport league ${name}`);
-      }
-      this.report({ ...row, action: LoadAction.UPDATE, detail: change });
+      this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, name, action: LoadAction.SKIP, detail: null });
       return existing;
     }
     // A sport league is added by migration with its phases and slots (the add-sport skill), never by
@@ -761,7 +740,8 @@ class Loader {
       }
       // A test event is made on a test slot of one of the league's slot definitions (#2004): an
       // event the league has no slot for could never be synced, so it is not loaded either.
-      if (event.slotKey === undefined) {
+      const slotKeys = event.roundSlotKeys ?? (event.slotKey === undefined ? [] : [event.slotKey]);
+      if (slotKeys.length === 0) {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'names no slot definition, and the league plays only its own slots' });
         return;
       }
@@ -777,15 +757,20 @@ class Loader {
       }
       if (loadsBracket) this.report({ ...at, subject: LoadSubject.BRACKET, action: LoadAction.ADD, detail: `${matches.length} matches` });
       if (!this.apply) return;
-      const seasonSlotId = await this.testSlotFor(client, input.sportLeagueId, event, event.slotKey);
-      if (seasonSlotId === null) {
-        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `the league has no slot definition ${event.slotKey}` });
-        return;
+      // One test slot per key: a bracket over several slots plays a round in each (#2006).
+      const seasonSlotIds: string[] = [];
+      for (const slotKey of slotKeys) {
+        const seasonSlotId = await this.testSlotFor(client, input.sportLeagueId, event, slotKey);
+        if (seasonSlotId === null) {
+          this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `the league has no slot definition ${slotKey}` });
+          return;
+        }
+        seasonSlotIds.push(seasonSlotId);
       }
       const created = await must(createEvent({
         client,
         body: {
-          seasonSlotId,
+          seasonSlotIds,
           name: event.name,
           ...(event.venue ? { venue: event.venue } : {}),
           ...(event.location ? { location: event.location } : {}),

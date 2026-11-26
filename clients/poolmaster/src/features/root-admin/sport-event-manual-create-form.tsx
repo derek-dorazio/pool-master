@@ -72,7 +72,8 @@ export function SportEventManualCreateForm({
     mutationFn: async (values: ManualFormValues) => {
       const response = await createEvent({
         body: {
-          seasonSlotId: values.seasonSlotId,
+          // The form makes a test event on one slot; a test bracket over several slots is made by the test-data loader.
+          seasonSlotIds: [values.seasonSlotId],
           name: values.name,
           ...(values.venue === '' ? {} : { venue: values.venue }),
           ...(values.location === '' ? {} : { location: values.location }),

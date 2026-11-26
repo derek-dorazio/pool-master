@@ -151,7 +151,7 @@
       "events": [
         {
           "key": "nhl-playoffs-2026",
-          "slotKey": "FINAL",
+          "roundSlotKeys": ["ROUND_OF_16", "QUARTERFINAL", "SEMIFINAL", "FINAL"],
           "name": "Stanley Cup Playoffs",
           "startDate": "2026-04-18",
           "endDate": "2026-06-14",

@@ -48,6 +48,7 @@ import type { GamePickGame, GamePicksView, GamesPreview } from '../../../package
 import type { SquaresBoard } from '../../../packages/core-api/src/modules/selections/squares-service';
 import type { SelectionGroup } from '../../../packages/core-api/src/modules/selections/types';
 import type { SportLeagueSummary } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
+import { weekRoundSlot } from '../../support/round-slots';
 
 const AT = new Date('2026-03-01T12:00:00.000Z');
 const ISO = AT.toISOString();
@@ -57,6 +58,7 @@ function match(overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMa
     id: 'm1',
     sportEventId: 'e1',
     roundNumber: 1,
+    slot: weekRoundSlot(),
     matchNumber: 3,
     homeSportEventParticipantId: 'h',
     awaySportEventParticipantId: 'a',
@@ -325,16 +327,13 @@ describe('sport catalog mappers', () => {
     expect(mapSportToDto(sport)).toEqual({ id: 's1', sport: 'GOLF', tournamentFormat: 'STROKE', createdAt: ISO, updatedAt: ISO });
   });
 
-  it('sends a sport league with a copy of its round names, its counts, and its sport\'s name and ways of picking', () => {
-    const roundNames = ['Round 1', 'Final'];
+  it('sends a sport league with its counts, and its sport\'s name and ways of picking', () => {
     const summary = {
-      id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', roundNames, participantCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
+      id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', participantCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
     } as unknown as SportLeagueSummary;
 
     const dto = mapSportLeagueToDto(summary);
 
-    expect(dto.roundNames).toEqual(roundNames);
-    expect(dto.roundNames).not.toBe(roundNames);
     expect(dto).toEqual(expect.objectContaining({ participantCount: 32, sportEventCount: 18, createdAt: ISO }));
     expect(dto.sportName).toBe(getSportDefinition(Sport.FOOTBALL).name);
     expect(dto.selectionTypes).toEqual(getSportDefinition(Sport.FOOTBALL).selectionTypes);
@@ -342,7 +341,7 @@ describe('sport catalog mappers', () => {
   });
 
   it('sends a sport league\'s selected provider mapping as a copy with the provider\'s name, and null for a league not synced', () => {
-    const base = { id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', roundNames: [], participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
+    const base = { id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
     const mapping = buildProviderMapping({ providerLeagueCode: 'nfl', providerLeagueName: 'NFL' });
 
     const synced = mapSportLeagueToDto({ ...base, selectedProviderMapping: mapping } as unknown as SportLeagueSummary);

@@ -11,6 +11,7 @@ import type {
 import { getScoringFamilyUi } from './registry';
 import { formatKnockoutStatus, headToHeadUi } from './head-to-head';
 import type { LeaderboardContext } from './types';
+import { TOURNAMENT_ROUND_SLOTS } from '../test/round-slots';
 
 const basketball = sportLeagueDefinitionOf(Sport.BASKETBALL, sportPlay(Sport.BASKETBALL));
 
@@ -99,6 +100,7 @@ function game(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRound
   return {
     id: `match-${String(overrides.matchNumber)}`,
     sportEventId: 'event-1',
+    slot: TOURNAMENT_ROUND_SLOTS[overrides.roundNumber - 1] ?? TOURNAMENT_ROUND_SLOTS[0],
     homeSportEventParticipantId: 'sep-1',
     awaySportEventParticipantId: 'sep-2',
     isNeutralSite: true,
