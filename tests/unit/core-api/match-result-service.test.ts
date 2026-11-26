@@ -3,7 +3,7 @@ import { expect, jest } from '@jest/globals';
 import { BackgroundJobType, isAtPlace, matchPlaceOf, type MatchPlace, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { MatchResultService, describeScoreProblem } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
+import { MatchResultService, describeScoreProblem, gameStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
 import { homeAwayOf, homeAwayPeriod, homeAwayResult, legacyMatch, placeTeam, type HomeAwayResultRequest } from '../../support/match-sides';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
@@ -1049,5 +1049,63 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
     await expect(service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins)).rejects.toThrow('result write failed');
     expect(domainEvents.handedOutSportEventIds).toEqual([event.id]);
     expect(domainEvents.changedSportEventIds).toEqual([]);
+  });
+});
+
+describe('MatchResultService on matches missing a Game or a side (#2046)', () => {
+  /** The week with its first game's Game 1 taken away, and the service by side number. */
+  async function weekWithoutGameOne() {
+    const setUp = await week();
+    const first = expectDefined(setUp.store.matchRows.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })));
+    first.games = [];
+    const bySide = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: setUp.store.sportEventRepo(), matches: setUp.store.matchRepo(), now: () => AS_OF });
+    return { ...setUp, first, bySide };
+  }
+
+  it('fails, saving nothing, on a period score for a match with no Game 1, which every loaded match has', async () => {
+    const { event, first, bySide } = await weekWithoutGameOne();
+
+    await expect(bySide.recordPeriodScore(event.id, { roundNumber: 1, matchNumber: 1 }, 1, [{ sideNumber: 1, score: 0 }, { sideNumber: 2, score: 7 }]))
+      .rejects.toThrow(`Match ${first.id} has no Game 1`);
+    expect(first.games).toEqual([]);
+  });
+
+  it('completes a match with no Game 1 with its winner, writing no Game\'s scores', async () => {
+    const { event, bySide } = await weekWithoutGameOne();
+
+    const after = await bySide.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSideNumber: 2, sides: [{ sideNumber: 1, score: 7 }, { sideNumber: 2, score: 14 }] });
+
+    const first = expectDefined(after.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })));
+    expect([first.status, first.sides.map((side) => side.outcome), first.games]).toEqual([MatchStatus.COMPLETED, [MatchSideOutcome.LOST, MatchSideOutcome.WON], []]);
+  });
+
+  it('leaves a side\'s Game 1 score as it was when a walkover names no side\'s score', async () => {
+    const { store, event } = await week();
+    const bySide = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+
+    const after = await bySide.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSideNumber: 2, sides: [], ending: MatchEnding.WALKOVER });
+
+    const first = expectDefined(after.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })));
+    expect([first.ending, first.games[0]?.sideResults.map((result) => result.score)]).toEqual([MatchEnding.WALKOVER, [null, null]]);
+  });
+
+  it('counts a side a period score leaves out as 0 at the end of that period', async () => {
+    const { store, event } = await week();
+    const bySide = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+
+    const after = await bySide.recordPeriodScore(event.id, { roundNumber: 1, matchNumber: 1 }, 1, [{ sideNumber: 2, score: 7 }]);
+
+    expect(homeAwayOf(expectDefined(after.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })))).periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 0 }]);
+  });
+
+  it('refuses a winner that is not one of the match\'s sides', () => {
+    expect(describeScoreProblem({ winnerSideNumber: 3, sides: [{ sideNumber: 1, score: 1 }, { sideNumber: 2, score: 0 }] }, { inBracket: true, canEndTied: false }))
+      .toBe('the winner must be one of the match\'s sides');
+  });
+
+  it('gives a week\'s side with no team yet no standing, and its other side one', () => {
+    const match = legacyMatch({ id: 'm', homeSportEventParticipantId: 'home-team', status: MatchStatus.SCHEDULED });
+
+    expect(gameStandings([match], AS_OF).map((row) => [row.sportEventParticipantId, row.status])).toEqual([['home-team', ParticipantStandingStatus.ACTIVE]]);
   });
 });

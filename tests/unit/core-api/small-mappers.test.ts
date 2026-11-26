@@ -2,7 +2,7 @@
  * The short mappers (#1481): each one's nullable and optional fields, its rollups and its dates,
  * one named case per branch.
  */
-import { legacyMatch, type HomeAwayFields } from '../../support/match-sides';
+import { AWAY_SIDE, HOME_SIDE, legacyMatch, type HomeAwayFields } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import type { LeaguePaymentRecord, PayerPaymentRecord } from '@poolmaster/shared/db';
 import {
@@ -46,7 +46,7 @@ import {
   mapSportLeagueToDto,
   mapSportToDto,
 } from '../../../packages/core-api/src/mappers/sport-catalog.mapper';
-import { mapSportEventRoundMatchToDto } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
+import { mapSportEventRoundMatchToDto, toMatchResultInput } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
 import { toSquaresBoardResponse } from '../../../packages/core-api/src/mappers/squares.mapper';
 import { toSurvivorLeaderboardResponse, toSurvivorLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/survivor-leaderboard.mapper';
 import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/golf/golf-score-service';
@@ -119,6 +119,36 @@ describe('mapSportEventRoundMatchToDto', () => {
   it('sends a completed game\'s result time as ISO, and a game without a result\'s as null (#1889)', () => {
     expect(mapSportEventRoundMatchToDto(match({ status: 'COMPLETED', completedAt: AT })).completedAt).toBe(ISO);
     expect(mapSportEventRoundMatchToDto(match({ completedAt: null })).completedAt).toBeNull();
+  });
+
+  it('sends no shoot-out scores and no period scores for a match that has no Game 1 yet', () => {
+    const dto = mapSportEventRoundMatchToDto({ ...match(), games: [] });
+
+    expect([dto.homeShootoutScore, dto.awayShootoutScore, dto.periodScores]).toEqual([null, null, []]);
+  });
+
+  it('sends a side with no result in Game 1 as 0 in each period score', () => {
+    const played = match({ periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 3 }] });
+    const homeOnly = { ...played, games: played.games.map((game) => ({ ...game, sideResults: game.sideResults.filter((result) => result.sideNumber === HOME_SIDE) })) };
+
+    expect(mapSportEventRoundMatchToDto(homeOnly).periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 0 }]);
+  });
+});
+
+describe('toMatchResultInput', () => {
+  it('puts away on side 1 and home on side 2, a tie as no winner, and omitted shoot-out scores as null', () => {
+    expect(toMatchResultInput({ winnerSide: null, homeScore: 2, awayScore: 2 })).toEqual({
+      winnerSideNumber: null,
+      sides: [{ sideNumber: AWAY_SIDE, score: 2, shootoutScore: null }, { sideNumber: HOME_SIDE, score: 2, shootoutScore: null }],
+    });
+  });
+
+  it('names the home winner as side 2 and keeps the shoot-out scores and the ending', () => {
+    expect(toMatchResultInput({ winnerSide: 'HOME', homeScore: 1, awayScore: 1, homeShootoutScore: 5, awayShootoutScore: 4, ending: MatchEnding.PLAYED })).toEqual({
+      winnerSideNumber: HOME_SIDE,
+      sides: [{ sideNumber: AWAY_SIDE, score: 1, shootoutScore: 4 }, { sideNumber: HOME_SIDE, score: 1, shootoutScore: 5 }],
+      ending: MatchEnding.PLAYED,
+    });
   });
 });
 

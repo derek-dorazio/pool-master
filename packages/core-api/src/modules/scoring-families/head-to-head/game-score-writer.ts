@@ -175,13 +175,16 @@ export async function writeGameScores(
   ];
 
   const now = deps.now?.() ?? new Date();
-  const scores = placed.flatMap(({ feed, gameId, match, stored }) => {
+  const scored = placed.flatMap(({ feed, gameId, match, stored }) => {
     const score = gameScoreOf(feed, match, sidesOf, teamsOf, stored, now);
-    return score === null ? [] : [{ id: gameId, ...score }];
+    if (score === null) return [];
+    const { winnerSideNumber, ...write } = score;
+    return [{ write: { id: gameId, ...write }, winnerSideNumber }];
   });
+  const scores = scored.map((each) => each.write);
   await deps.games.applySync({ providerCode, created: placement.created, mapped: placement.mapped, moved: placement.moved, scores });
 
-  const series = seriesStandings(deps, sportEventId, placed, placement.overLength, storedGames, scores);
+  const series = seriesStandings(deps, sportEventId, placed, placement.overLength, storedGames, scored);
   const finals: FinalResult[] = [
     ...placed.flatMap(({ feed, match }) => (match.slot.seriesGames === 1 && feed.state === ProviderGameState.FINAL
       ? [{ match, externalId: feed.providerGameId, resultOn: (current: SportEventRoundMatch) => resultFromGame(feed, current, sidesOf, teamsOf) }]
@@ -397,10 +400,10 @@ function seriesStandings(
   placed: readonly PlacedGame[],
   overLength: ReadonlyMap<string, readonly GameScoreUpdate[]>,
   storedGames: readonly ProviderMappedGame[],
-  scores: readonly SportEventRoundMatchGameScoreWrite[],
+  scored: readonly ScoredGameWrite[],
 ): SeriesStanding[] {
   const seriesMatches = new Map(placed.filter(({ match }) => match.slot.seriesGames > 1).map(({ match }) => [match.id, match]));
-  const scoreOf = new Map(scores.map((score): [string, GameState] => [score.id, { id: score.id, status: score.status, winnerSideNumber: score.status === MatchStatus.COMPLETED ? winnerOfScores(score.sides) : null }]));
+  const scoreOf = new Map(scored.map(({ write, winnerSideNumber }): [string, GameState] => [write.id, { id: write.id, status: write.status, winnerSideNumber }]));
   const gamesOf = new Map<string, GameState[]>();
   const add = (matchId: string, game: GameState) => {
     gamesOf.set(matchId, [...(gamesOf.get(matchId) ?? []).filter((each) => each.id !== game.id), scoreOf.get(game.id) ?? game]);
@@ -432,11 +435,21 @@ function seriesStandings(
   });
 }
 
+/** A side's score in a played game, and its shoot-out. */
+interface ScoredSide {
+  sideNumber: number;
+  score: number;
+  shootoutScore: number | null;
+}
+
+/** A Game's score as this sync writes it, with the side that won it: null until it is final, or when level. */
+interface ScoredGameWrite {
+  write: SportEventRoundMatchGameScoreWrite;
+  winnerSideNumber: number | null;
+}
+
 /** The side number with the higher score, or on a level score the higher shoot-out; null when level. */
-function winnerOfScores(sides: readonly GameSideScoreWrite[]): number | null {
-  if (sides.length !== 2) return null;
-  const [first, second] = sides;
-  if (first.score === null || second.score === null) return null;
+function winnerOfScores(first: ScoredSide, second: ScoredSide): number | null {
   if (first.score !== second.score) return first.score > second.score ? first.sideNumber : second.sideNumber;
   if (first.shootoutScore === null || second.shootoutScore === null || first.shootoutScore === second.shootoutScore) return null;
   return first.shootoutScore > second.shootoutScore ? first.sideNumber : second.sideNumber;
@@ -513,11 +526,13 @@ function resultFromGame(
     : { home: game.homeShootoutScore, away: game.awayShootoutScore };
   // A shoot-out decides only a level game; a provider's shoot-out beside a decided score is ignored.
   const level = game.homeScore === game.awayScore;
+  const home: ScoredSide = { sideNumber: homeSide.sideNumber, score: game.homeScore, shootoutScore: level && shootout ? shootout.home : null };
+  const away: ScoredSide = { sideNumber: awaySide.sideNumber, score: game.awayScore, shootoutScore: level && shootout ? shootout.away : null };
   const sides: FeedSideScore[] = [
-    { sideNumber: homeSide.sideNumber, score: game.homeScore, shootoutScore: level && shootout ? shootout.home : null, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.HOME },
-    { sideNumber: awaySide.sideNumber, score: game.awayScore, shootoutScore: level && shootout ? shootout.away : null, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.AWAY },
+    { ...home, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.HOME },
+    { ...away, homeAway: match.isNeutralSite ? HomeAway.NONE : HomeAway.AWAY },
   ].sort((left, right) => left.sideNumber - right.sideNumber);
-  return { winnerSideNumber: winnerOfScores(sides), sides };
+  return { winnerSideNumber: winnerOfScores(home, away), sides };
 }
 
 const SCORED_STATES: ReadonlySet<ProviderGameState> = new Set([ProviderGameState.FINAL, ProviderGameState.IN_PROGRESS]);
@@ -536,7 +551,7 @@ const GAME_STATUS_BY_STATE: Readonly<Record<ProviderGameState, MatchStatus>> = {
  * score, where each side played and its shoot-out; none for one not under way. Null when there is
  * nothing to write: the Game already holds it, a played game has no score or teams that are not
  * the match's, or the Game is a single game's that the result writes (a final, or a match decided
- * or cancelled).
+ * or cancelled). A final Game carries the side that won it, for its series.
  */
 function gameScoreOf(
   game: GameScoreUpdate,
@@ -545,7 +560,7 @@ function gameScoreOf(
   teamsOf: ReadonlyMap<string, string>,
   stored: SportEventRoundMatchGame | null,
   now: Date,
-): Omit<SportEventRoundMatchGameScoreWrite, 'id'> | null {
+): Omit<SportEventRoundMatchGameScoreWrite, 'id'> & Pick<ScoredGameWrite, 'winnerSideNumber'> | null {
   const status = GAME_STATUS_BY_STATE[game.state];
   // A single game's Game 1 is its match: its final score is the result's to write (recordResult),
   // and a match with a result, or cancelled, takes no live score.
@@ -560,7 +575,8 @@ function gameScoreOf(
   const unchanged = stored !== null && stored.status === status && sides.every((side) => storedGameScoreOf(stored, side.sideNumber) === side.score
     && shootoutScoreOf(stored, side.sideNumber) === side.shootoutScore && homeAwayOf(stored, side.sideNumber) === side.homeAway);
   if (unchanged) return null;
-  return { sportEventRoundMatchId: match.id, status, sides, completedAt: status === MatchStatus.COMPLETED ? now : null };
+  const completed = status === MatchStatus.COMPLETED;
+  return { sportEventRoundMatchId: match.id, status, sides, completedAt: completed ? now : null, winnerSideNumber: completed && score !== null ? score.winnerSideNumber : null };
 }
 
 /** Where a side plays a new Game of its match before the provider says: as it played Game 1. */

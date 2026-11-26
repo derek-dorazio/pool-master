@@ -430,7 +430,7 @@ export class MatchResultService {
     bracket: readonly SportEventRoundMatch[],
     result: MatchResultWrite,
     sideFill: MatchSideFill | null,
-    jobs: readonly BackgroundJobRequest[] = [],
+    jobs: readonly BackgroundJobRequest[],
   ): Promise<SportEventRoundMatch[]> {
     // The standings are read off the bracket as it will stand after this write, which is answered.
     const after = bracket.map((candidate) => {
@@ -612,9 +612,11 @@ export function describePeriodScoreProblem(
       return `a side's score is higher than at the end of ${periods.label.one} ${other.periodNumber}`;
     }
   }
-  const final = gameOne === null ? [] : match.sides.map(({ sideNumber }) => ({ sideNumber, score: gameScoreOf(gameOne, sideNumber) }));
-  if (match.status === MatchStatus.COMPLETED && final.length > 0 && final.every((each) => each.score !== null)
-    && below(final.map(({ sideNumber, score: total }) => ({ sideNumber, score: total ?? 0 })), score)) {
+  const final = gameOne === null ? [] : match.sides.flatMap(({ sideNumber }) => {
+    const total = gameScoreOf(gameOne, sideNumber);
+    return total === null ? [] : [{ sideNumber, score: total }];
+  });
+  if (match.status === MatchStatus.COMPLETED && final.length > 0 && final.length === match.sides.length && below(final, score)) {
     return 'a side\'s score is higher than its final score';
   }
   return null;
@@ -655,8 +657,9 @@ function describeFinalBelowPeriods(
   { sides }: MatchResultInput,
   periods: SportMatchPeriods | undefined,
 ): string | null {
-  if (sides.some((side) => side.score === null) || !periods || match.slot.seriesGames !== 1) return null;
+  const finals = sides.flatMap(({ sideNumber, score }) => (score === null ? [] : [{ sideNumber, score }]));
+  if (finals.length < sides.length || !periods || match.slot.seriesGames !== 1) return null;
   const higher = runningRegularPeriods(gameNumbered(match, 1))
-    .find((period) => sides.some((side) => (period.totals.get(side.sideNumber) ?? 0) > (side.score ?? 0)));
+    .find((period) => finals.some((side) => (period.totals.get(side.sideNumber) ?? 0) > side.score));
   return higher ? `a side's final score is lower than at the end of ${periods.label.one} ${higher.periodNumber}` : null;
 }

@@ -1,5 +1,5 @@
 {
-  "$comment": "Retired names and how many uses production source still has (scripts/check-retired-names.mjs; rules/review-triggers.md \u00a710). Counts only go down: run the check with --update after a cleanup. When a plan or code pass retires a name, add it with its owner ticket under $owners and declare the new entry in scripts/baseline-raises.json (reason \"retired by #N\").",
+  "$comment": "Retired names and how many uses production source still has (scripts/check-retired-names.mjs; rules/review-triggers.md §10). Counts only go down: run the check with --update after a cleanup. When a plan or code pass retires a name, add it with its owner ticket under $owners and declare the new entry in scripts/baseline-raises.json (reason \"retired by #N\").",
   "$owners": {
     "ROUND_NAMES_FROM_FINAL": "#2006 (9): slot definition name, or the display string for its kind",
     "roundLabel": "#2006 (9): slot name or slot kind word; SportDefinition.roundLabel deleted",

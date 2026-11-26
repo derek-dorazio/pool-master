@@ -121,6 +121,15 @@ describe('writeGameScores', () => {
     });
   });
 
+  it('says neither side played at home in a game at a neutral site', async () => {
+    const [first, ...rest] = bracket();
+    const { deps } = writer([linked(expectDefined(first), 'g1', { isNeutralSite: true }), ...rest]);
+
+    const result = await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', 27, 24)]);
+
+    expect(result.writeDiagnostics.rows[0]?.after).toMatchObject({ sides: [{ sideNumber: 1, homeAway: HomeAway.NONE }, { sideNumber: 2, homeAway: HomeAway.NONE }] });
+  });
+
   it('scores the right sides when the provider lists the match\'s teams the other way round', async () => {
     const { deps, recordResult } = writer(bracket());
 
@@ -568,6 +577,17 @@ describe('writeGameScores', () => {
       ]);
 
       expect(applyStatuses).toHaveBeenCalledWith([{ id: 'm1', status: MatchStatus.IN_PROGRESS }]);
+    });
+
+    it('puts no live status on a series already decided, though the feed sends one of its games', async () => {
+      const matches = series();
+      matches[1] = withHomeAway(matches[1], { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
+      const { deps, applyStatuses, recordResult } = writer(matches);
+
+      await writeGameScores(deps, SEVENS, [nth(1, game('t1', 'PHI', 'DAL', 101, 99))]);
+
+      expect(applyStatuses).toHaveBeenCalledWith([]);
+      expect(recordResult).not.toHaveBeenCalled();
     });
 
     it('counts a level game settled by a shoot-out as the shoot-out winner\'s, so a best-of-three takes its result at two wins', async () => {
