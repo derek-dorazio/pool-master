@@ -45,16 +45,10 @@ export function sportEventRoundsQueryOptions(eventId: string) {
 
 /**
  * What an event's rounds are called (#2006): each by the slot it is played in ("Sweet 16", "Super
- * Bowl", "Week 14"), and rounds that share a slot (a golf tournament's) by number. An empty
- * `eventId` reads nothing; until the rounds load, and if the read fails, rounds read "Round N".
- */
-export function useEventRoundLabels(eventId: string): RoundName {
-  return useEventRoundNames(eventId).nameOfRound;
-}
-
-/**
- * `useEventRoundLabels`, with whether the rounds are still loading, for a screen that waits for
- * the names rather than show "Round N" first. A failed read is not loading: its rounds read "Round N".
+ * Bowl", "Week 14"), and rounds that share a slot (a golf tournament's) by number, with whether
+ * they are still loading. A screen waits while they load, so a round never shows as "Round N"
+ * first (#2198, #2200). An empty `eventId` reads nothing and is not loading; a failed read is not
+ * loading either, and its rounds read "Round N".
  */
 export function useEventRoundNames(eventId: string): { nameOfRound: RoundName; isLoading: boolean } {
   const roundsQuery = useQuery(sportEventRoundsQueryOptions(eventId));

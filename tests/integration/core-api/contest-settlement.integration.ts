@@ -531,7 +531,6 @@ async function createSettlementParticipant(input: {
     data: {
       sportEventId: input.sportEventId,
       participantId: participant.id,
-      isActive: true,
     },
   });
   await prisma.sportEventParticipantStanding.create({

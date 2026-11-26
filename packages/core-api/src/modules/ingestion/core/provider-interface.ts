@@ -10,7 +10,7 @@
  * result with Zod and persists it through the event's scoring family.
  */
 
-import type { MatchSide, ParticipantInactiveReason, ProviderCode, ProviderSlotPlay, Sport } from '@poolmaster/shared/domain';
+import type { MatchSide, ProviderCode, SportEventParticipantStatus, ProviderSlotPlay, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
@@ -251,9 +251,8 @@ export interface ProviderParticipant {
   role?: string;
   teamAffiliation?: string;
   photoUrl?: string;
-  active: boolean;
-  /** Meaningful only when `active` is false; undefined covers "inactive, no more specific reason." */
-  inactiveReason?: ParticipantInactiveReason;
+  /** The participant's place in the event as the provider lists it: ACTIVE, or how it went out. */
+  status: SportEventParticipantStatus;
   /**
    * The participant's ranking as the provider's field reports it (#384). When present, an
    * event field load writes it onto the event participant; when absent, the participant keeps
@@ -269,11 +268,6 @@ export interface ProviderParticipant {
  */
 export interface ProviderParticipantMetadata {
   seed?: number;
-  /**
-   * A play-in place (#1728): the participant stands for a First Four pairing until its winner
-   * fills the place, so the field row a load creates for it is marked as one.
-   */
-  playInPlace?: boolean;
   /** Odds to win, valid only for the event named by `oddsSourceEventId`. */
   odds?: number;
   oddsSourceEventId?: string;

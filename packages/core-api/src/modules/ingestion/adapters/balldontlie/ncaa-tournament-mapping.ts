@@ -9,19 +9,17 @@
  * numbers it.
  *
  * The two brackets number their rounds differently (the men's First Four is round 1, the
- * women's round 0), so each league names its own. PoolMaster's bracket starts at the round of
- * 64, with each First Four pairing one play-in place filled with its winner. So First Four games
- * carry no score here, since no match is theirs, and their teams are left out of the field before
- * and after they play: the play-in place stands for them. Once a First Four game is final, its
- * winner's round of 64 game names it (`playInWinnerTeamExternalId`), and that game fills the place
- * (#1571).
+ * women's round 0), so each league names its own. PoolMaster's event starts at the First Four,
+ * its play-in round (#2184): each First Four game is a match of round 1, its two teams in the
+ * field like any other, and its winner advances into the side of its round of 64 match, which
+ * stays empty until then. No team stands in for a pairing.
  *
  * Team ids are the provider's own (`participantFeedId`, #2040): the vendor numbers each league's
  * teams on its own, and a mapping is kept per sport league, so a school's men's and women's
  * teams, which share a name, each map to their own league's participant.
  */
 
-import { MatchSide, Sport } from '@poolmaster/shared/domain';
+import { MatchSide, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderBracketMatch, ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -63,9 +61,14 @@ export const NCAA_WOMEN: NcaaTournamentLeague = {
 
 export const NCAA_TOURNAMENT_LEAGUES: readonly NcaaTournamentLeague[] = [NCAA_MEN, NCAA_WOMEN];
 
-/** The rounds of PoolMaster's bracket: the round of 64 to the championship. */
+/** The rounds of PoolMaster's event: the First Four to the championship. */
 export function tournamentRoundsOf(league: NcaaTournamentLeague): number {
-  return league.championshipRound - league.firstFourRound;
+  return league.championshipRound - league.firstFourRound + 1;
+}
+
+/** PoolMaster's round of a vendor round: the First Four is round 1. */
+function eventRoundOf(league: NcaaTournamentLeague, vendorRound: number): number {
+  return vendorRound - league.firstFourRound + 1;
 }
 
 export const bracketPathOf = (league: NcaaTournamentLeague) => `/${league.key}/v1/bracket`;
@@ -139,7 +142,7 @@ export function toNcaaTeamParticipant(league: NcaaTournamentLeague, team: NcaaTe
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.BASKETBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
-    active: true,
+    status: SportEventParticipantStatus.ACTIVE,
     metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }
@@ -150,20 +153,15 @@ function decidedTeam(team: NcaaBracketTeam | null | undefined): (NcaaBracketTeam
 }
 
 /**
- * The teams in a season's bracket, each once, in the order they first appear, with their seed.
- * A side still to be decided names no team yet. A team that plays in the First Four is left out
- * in every round, its winner too: the admin's play-in place stands for it, and a row of its own
- * beside that place would make the place unfillable.
+ * The teams in a season's bracket, each once, in the order they first appear, with their seed,
+ * the First Four's teams included. A side still to be decided names no team yet.
  */
 export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: readonly NcaaBracketGame[]): ProviderParticipant[] {
-  const playIn = new Set(games
-    .filter((game) => game.round === league.firstFourRound)
-    .flatMap((game) => [decidedTeam(game.home_team)?.id, decidedTeam(game.away_team)?.id]));
   const teams = new Map<string, ProviderParticipant>();
   for (const game of games) {
     for (const side of [game.home_team, game.away_team]) {
       const team = decidedTeam(side);
-      if (!team || playIn.has(team.id)) continue;
+      if (!team) continue;
       const externalId = participantFeedId(team.id);
       if (teams.has(externalId)) continue;
       const seed = team.seed ? Number.parseInt(team.seed, 10) : Number.NaN;
@@ -172,7 +170,7 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
         providerId: BALLDONTLIE_PROVIDER_ID,
         sport: Sport.BASKETBALL,
         name: team.full_name ?? required(team.name, bracketPathOf(league), `a team of ${gameName(game)}`, 'name'),
-        active: true,
+        status: SportEventParticipantStatus.ACTIVE,
         metadata: Number.isInteger(seed) ? { seed } : {},
       });
     }
@@ -181,29 +179,19 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
 }
 
 /**
- * Each bracket game's teams, state and score, for the GAME live-score category: every game from
- * the round of 64 on whose two teams are decided. A First Four winner's round of 64 game names
- * that team as the play-in place's (`playInWinnerTeamExternalId`), the place it fills. A game whose
- * state the vendor calls `unknown` is left out.
+ * Each bracket game's teams, state and score, for the GAME live-score category: every game, the
+ * First Four's included, whose two teams are decided. A game whose state the vendor calls
+ * `unknown` is left out.
  */
 export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: readonly NcaaBracketGame[]): GameScoreUpdate[] {
   const path = bracketPathOf(league);
-  const playInWinners = new Set(games.flatMap((game) => {
-    if (game.round !== league.firstFourRound || game.status_state !== CompetitionStatusState.FINAL) return [];
-    const home = decidedTeam(game.home_team);
-    const away = decidedTeam(game.away_team);
-    if (!home || !away || home.score === undefined || home.score === null || away.score === undefined || away.score === null || home.score === away.score) return [];
-    return [home.score > away.score ? home.id : away.id];
-  }));
   return games.flatMap((game) => {
     const home = decidedTeam(game.home_team);
     const away = decidedTeam(game.away_team);
     if (game.status_state === CompetitionStatusState.UNKNOWN || !home || !away) return [];
-    if (required(game.round, path, gameName(game), 'round') <= league.firstFourRound) return [];
+    required(game.round, path, gameName(game), 'round');
     const state = GAME_STATE_BY_STATUS[game.status_state];
     const started = hasStarted(state);
-    // Only its round of 64 game: in a later round the place is long filled and the winner is a team like any other.
-    const playInWinner = game.round === league.firstFourRound + 1 ? [home, away].find((team) => playInWinners.has(team.id)) : undefined;
     return [{
       providerGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
       homeTeamExternalId: participantFeedId(home.id),
@@ -211,7 +199,6 @@ export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: read
       state,
       homeScore: started ? home.score ?? null : null,
       awayScore: started ? away.score ?? null : null,
-      ...(playInWinner ? { playInWinnerTeamExternalId: participantFeedId(playInWinner.id) } : {}),
     }];
   });
 }
@@ -222,47 +209,6 @@ function seedOf(team: NcaaBracketTeam): number | null {
   return Number.isInteger(seed) ? seed : null;
 }
 
-/** The teams that play in the First Four, by the vendor's id. */
-function firstFourTeamIds(league: NcaaTournamentLeague, games: readonly NcaaBracketGame[]): Set<number> {
-  return new Set(games
-    .filter((game) => game.round === league.firstFourRound)
-    .flatMap((game) => [decidedTeam(game.home_team)?.id, decidedTeam(game.away_team)?.id])
-    .filter((id) => id !== undefined));
-}
-
-/** A First Four pairing's place in the field: its region and seed, the identity the place keeps. */
-export function ncaaPlayInPlaceExternalId(scope: NcaaTournamentScope, regionLabel: string, seed: number): string {
-  const region = regionLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  return `${scope.league.key}-${String(scope.season)}-${region}-${String(seed)}-seed-play-in`;
-}
-
-/**
- * The play-in places of the field (#1728): one per First Four game in a named region, standing for
- * its pairing ("Texas Longhorns / NC State Wolfpack") with the pairing's seed, until the winner
- * fills it (#1571). A place is listed only while its game is not final: once it is, the winner is
- * about to fill the place, and a field load must not write the pairing a row again.
- */
-export function toNcaaPlayInPlaces(scope: NcaaTournamentScope, games: readonly NcaaBracketGame[]): ProviderParticipant[] {
-  const { league } = scope;
-  return games.flatMap((game) => {
-    const home = decidedTeam(game.home_team);
-    const away = decidedTeam(game.away_team);
-    const region = game.region_label;
-    if (game.round !== league.firstFourRound || game.status_state === CompetitionStatusState.FINAL || !home || !away || !region) return [];
-    const seed = seedOf(home) ?? seedOf(away);
-    if (seed === null) return [];
-    const name = (team: NcaaBracketTeam) => team.full_name ?? required(team.name, bracketPathOf(league), `a team of ${gameName(game)}`, 'name');
-    return [{
-      externalId: ncaaPlayInPlaceExternalId(scope, region, seed),
-      providerId: BALLDONTLIE_PROVIDER_ID,
-      sport: Sport.BASKETBALL,
-      name: `${name(home)} / ${name(away)}`,
-      active: true,
-      metadata: { seed, playInPlace: true },
-    }];
-  });
-}
-
 /** Each region's round of 64 games from top to bottom, by the better seed of each. */
 const ROUND_OF_64_BY_BETTER_SEED: readonly number[] = [1, 8, 5, 4, 6, 3, 7, 2];
 const REGIONS = 4;
@@ -271,15 +217,17 @@ const GAMES_PER_REGION = ROUND_OF_64_BY_BETTER_SEED.length;
 const OPPONENT_SEED_SUM = 17;
 
 /**
- * The tournament's whole bracket from its round of 64 (#1728), numbered as an admin loads it: each
- * region's eight games in bracket order (1 v 16, 8 v 9, 5 v 12, 4 v 13, 6 v 11, 3 v 14, 7 v 10,
- * 2 v 15), the better seed home, regions in the vendor's `region_id` order (matches 1 to 32), then
- * each round's games below them, each pair of games linking to the next round's game (33 to 48,
- * 49 to 56, the Elite Eight 57 to 60), the first two regions' champions meeting in national
- * semifinal 61 and the last two in 62, and the championship 63. Every game is at a neutral site.
- * A side a First Four pairing fills is its play-in place. Null unless the vendor lists four
- * regions of eight round of 64 games with their seeds, every side placed: the women's bracket,
- * which names no region, never has a shape here.
+ * The tournament's whole bracket (#1728), numbered as an admin loads it. Round 1 is the First
+ * Four (#2184): its games in region order, then by seed, each at a neutral site and each advancing
+ * into the side of the round of 64 game its pairing's seed plays in. Round 2 is the round of 64:
+ * each region's eight games in bracket order (1 v 16, 8 v 9, 5 v 12, 4 v 13, 6 v 11, 3 v 14,
+ * 7 v 10, 2 v 15), the better seed home, regions in the vendor's `region_id` order, then each
+ * round's games below them, each pair of games linking to the next round's game, the first two
+ * regions' champions meeting in the first national semifinal and the last two in the second, and
+ * the championship last. Every game is at a neutral site. A side a First Four game fills is empty
+ * until its winner advances into it. Null unless the vendor lists four regions of eight round of 64
+ * games with their seeds, every side placed: the women's bracket, which names no region, never has
+ * a shape here.
  *
  * Which regions meet in the national semifinals is read from `region_id` order, which the vendor's
  * document does not promise; it is to be checked against a real bracket before a live tournament.
@@ -293,46 +241,83 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
     .sort(([leftLabel, leftId], [rightLabel, rightId]) => leftId - rightId || leftLabel.localeCompare(rightLabel))
     .map(([label]) => label);
   if (regionOrder.length !== REGIONS) return null;
-  const playInPlaces = new Set(toNcaaPlayInPlaces(scope, games).map((place) => place.externalId));
-  const firstFour = firstFourTeamIds(league, games);
 
-  const firstRound: ProviderBracketMatch[] = [];
+  // Each First Four game by its region and the seed its pairing shares.
+  const playIns = new Map<string, NcaaBracketGame & { region_label: string; seed: number }>();
+  for (const game of games) {
+    if (game.round !== league.firstFourRound) continue;
+    const home = decidedTeam(game.home_team);
+    const away = decidedTeam(game.away_team);
+    const seed = (home && seedOf(home)) ?? (away && seedOf(away));
+    if (!game.region_label || seed === null) return null;
+    playIns.set(JSON.stringify([game.region_label, seed]), { ...game, region_label: game.region_label, seed });
+  }
+  const playInTeams = new Set([...playIns.values()].flatMap((game) => [decidedTeam(game.home_team)?.id, decidedTeam(game.away_team)?.id]));
+
+  const firstFourOf = new Map([...playIns.entries()]
+    .sort(([, left], [, right]) => regionOrder.indexOf(left.region_label) - regionOrder.indexOf(right.region_label) || left.seed - right.seed)
+    .map(([key, game], index): [string, ProviderBracketMatch] => {
+      const home = decidedTeam(game.home_team);
+      const away = decidedTeam(game.away_team);
+      return [key, {
+        matchNumber: index + 1,
+        roundNumber: 1,
+        homeTeamExternalId: home ? participantFeedId(home.id) : null,
+        awayTeamExternalId: away ? participantFeedId(away.id) : null,
+        isNeutralSite: true,
+        scheduledAt: game.date ? new Date(game.date) : null,
+        advancesTo: null,
+        regionLabel: game.region_label,
+      }];
+    }));
+  const firstFour = [...firstFourOf.values()];
+
+  const roundOfSixtyFour: ProviderBracketMatch[] = [];
   for (const [regionIndex, region] of regionOrder.entries()) {
     const regionGames = roundOf64.filter((game) => game.region_label === region);
     if (regionGames.length !== GAMES_PER_REGION) return null;
-    const slots = new Map<number, ProviderBracketMatch>();
+    const slots = new Map<number, { match: ProviderBracketMatch; feeders: [ProviderBracketMatch | undefined, ProviderBracketMatch | undefined] }>();
     for (const game of regionGames) {
       const sides = [decidedTeam(game.home_team), decidedTeam(game.away_team)].filter((team) => team !== null);
       const seeds = sides.map(seedOf).filter((seed) => seed !== null);
       const betterSeed = seeds.length === 0 ? null : Math.min(...seeds.map((seed) => Math.min(seed, OPPONENT_SEED_SUM - seed)));
       const position = betterSeed === null ? -1 : ROUND_OF_64_BY_BETTER_SEED.indexOf(betterSeed);
       if (betterSeed === null || position === -1 || slots.has(position)) return null;
-      const sideOf = (seed: number): string | null => {
-        const team = sides.find((side) => seedOf(side) === seed && !firstFour.has(side.id));
-        if (team) return participantFeedId(team.id);
-        const place = ncaaPlayInPlaceExternalId(scope, region, seed);
-        return playInPlaces.has(place) ? place : null;
+      // A seed a First Four game fills: its side is empty until the winner advances into it.
+      const sideOf = (seed: number): { team: string | null; feeder?: ProviderBracketMatch } | null => {
+        const feeder = firstFourOf.get(JSON.stringify([region, seed]));
+        if (feeder) return { team: null, feeder };
+        const team = sides.find((side) => seedOf(side) === seed && !playInTeams.has(side.id));
+        return team ? { team: participantFeedId(team.id) } : null;
       };
       const home = sideOf(betterSeed);
       const away = sideOf(OPPONENT_SEED_SUM - betterSeed);
       if (home === null || away === null) return null;
       slots.set(position, {
-        matchNumber: regionIndex * GAMES_PER_REGION + position + 1,
-        roundNumber: 1,
-        homeTeamExternalId: home,
-        awayTeamExternalId: away,
-        isNeutralSite: true,
-        scheduledAt: game.date ? new Date(game.date) : null,
-        advancesTo: null,
-        regionLabel: region,
+        match: {
+          matchNumber: regionIndex * GAMES_PER_REGION + position + 1,
+          roundNumber: 2,
+          homeTeamExternalId: home.team,
+          awayTeamExternalId: away.team,
+          isNeutralSite: true,
+          scheduledAt: game.date ? new Date(game.date) : null,
+          advancesTo: null,
+          regionLabel: region,
+        },
+        feeders: [home.feeder, away.feeder],
       });
     }
-    firstRound.push(...[...slots.values()].sort((left, right) => left.matchNumber - right.matchNumber));
+    for (const { match, feeders: [home, away] } of [...slots.values()].sort((left, right) => left.match.matchNumber - right.match.matchNumber)) {
+      if (home) home.advancesTo = { roundNumber: match.roundNumber, matchNumber: match.matchNumber, side: MatchSide.HOME };
+      if (away) away.advancesTo = { roundNumber: match.roundNumber, matchNumber: match.matchNumber, side: MatchSide.AWAY };
+      roundOfSixtyFour.push(match);
+    }
   }
+  if (firstFour.some((match) => match.advancesTo === null)) return null;
 
   // Each later round: half the games of the round before, the region kept through the Elite Eight.
-  const rounds: ProviderBracketMatch[][] = [firstRound];
-  let previous = firstRound;
+  const rounds: ProviderBracketMatch[][] = [firstFour, roundOfSixtyFour];
+  let previous = roundOfSixtyFour;
   while (previous.length > 1) {
     const round: ProviderBracketMatch[] = [];
     for (let index = 0; index + 1 < previous.length; index += 2) {
@@ -359,22 +344,19 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
 }
 
 /**
- * The tournament's games from the round of 64 on with both teams decided, each in PoolMaster's
- * round (#1728), for a synced event's matches to take their kickoffs from. A round of 64 game of a
- * First Four team is left out: its side is the play-in place until the winner fills it, and then
- * the game links like any other.
+ * The tournament's games with both teams decided, the First Four's included, each in PoolMaster's
+ * round (#1728), for a synced event's matches to take their kickoffs from. A First Four winner's
+ * round of 64 game pairs with its match once the winner has advanced into it.
  */
 export function toNcaaScheduledGames(league: NcaaTournamentLeague, games: readonly NcaaBracketGame[]): ProviderScheduledGame[] {
-  const firstFour = firstFourTeamIds(league, games);
   return games.flatMap((game) => {
     const home = decidedTeam(game.home_team);
     const away = decidedTeam(game.away_team);
     const round = game.round;
-    if (!home || !away || round === undefined || round <= league.firstFourRound || game.game_id === undefined || game.game_id === null) return [];
-    if (round === league.firstFourRound + 1 && (firstFour.has(home.id) || firstFour.has(away.id))) return [];
+    if (!home || !away || round === undefined || game.game_id === undefined || game.game_id === null) return [];
     return [{
       games: [{ providerGameId: String(game.game_id), gameNumber: 1 }],
-      roundNumber: round - league.firstFourRound,
+      roundNumber: eventRoundOf(league, round),
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),
       scheduledAt: game.date ? new Date(game.date) : null,

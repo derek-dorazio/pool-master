@@ -14,7 +14,7 @@ import type {
   PlatformPricingProfile,
   ProviderEventRef,
   OverdueEventFacts,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   Participant,
   ParticipantType,
   ProviderSyncKind,
@@ -383,12 +383,10 @@ export interface SportEventRoundRepository {
 
 /** undefined leaves a field alone; null clears it. */
 export interface SportEventParticipantPatch {
-  isActive?: boolean;
-  inactiveReason?: ParticipantInactiveReason | null;
+  status?: SportEventParticipantStatus;
   ranking?: number | null;
   oddsToWin?: number | null;
   seedNumber?: number | null;
-  isPlayInPlace?: boolean;
 }
 
 export type SportEventParticipantCreate = SportEventParticipantPatch & { participantId: string };
@@ -465,12 +463,6 @@ export interface SportEventParticipantRepository {
   delete(id: string, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Contest-entry picks made of this field row. */
   countPicks(id: string): Promise<number>;
-  /**
-   * Points a play-in slot's field row at the team that won the play-in and inactivates the
-   * participant that stood for the pairing, in one transaction (#698). The row keeps its seed,
-   * tier, price and picks, and is no longer a play-in place (#709). `jobs` are written with it.
-   */
-  fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
 }
 
 export interface SportEventTierRepository {
@@ -684,7 +676,7 @@ export interface SportLeaguePageParticipant {
 /** One field row of an event as its Event page reads it (#1889). */
 export interface SportEventPageFieldRow {
   id: string;
-  isActive: boolean;
+  status: SportEventParticipantStatus;
   oddsToWin: number | null;
   seedNumber: number | null;
   ranking: number | null;

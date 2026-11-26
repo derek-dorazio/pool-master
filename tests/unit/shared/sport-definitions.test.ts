@@ -391,7 +391,6 @@ describe('tennis', () => {
     expect(sportVocabulary(tennis).match).toEqual({ one: 'match', many: 'matches' });
     expect(sportVocabulary(tennis).eliminated).toBe('Out');
     expect(sportVocabulary(tennis).eventStart).toBe('first match');
-    expect(sportVocabulary(tennis).playInPlace).toBe('qualifier');
   });
 });
 

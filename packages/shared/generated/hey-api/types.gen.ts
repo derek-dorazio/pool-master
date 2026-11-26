@@ -7838,16 +7838,6 @@ export type UpdateSportEventRoundMatchRequest = {
 };
 
 /**
- * The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated.
- */
-export type FillPlayInSlotRequest = {
-    /**
-     * The team that won the play-in game: an active participant of the event's sport not yet on the field.
-     */
-    participantId: string;
-};
-
-/**
  * A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
  */
 export type RecordSportEventRoundMatchResultRequest = {
@@ -13926,23 +13916,15 @@ export type SportEventParticipantDto = {
     sportEventId: string;
     participantId: string;
     /**
-     * Whether the participant is competing; false is withdrawn or eliminated.
+     * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
      */
-    isActive: boolean;
-    /**
-     * Meaningful only when isActive is false; null means no more specific reason is recorded.
-     */
-    inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+    status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
     /**
      * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
      */
     ranking: number | null;
     oddsToWin: number | null;
     seedNumber: number | null;
-    /**
-     * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-     */
-    isPlayInPlace: boolean;
     /**
      * The canonical participant.
      */
@@ -14179,23 +14161,15 @@ export type SportEventParticipantListResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
-        /**
-         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-         */
-        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -14449,8 +14423,10 @@ export type UpdateSportEventParticipantsRequest = {
      */
     participants: Array<{
         sportEventParticipantId: string;
-        isActive?: boolean;
-        inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+        /**
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+         */
+        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         ranking?: number | null;
         seedNumber?: number | null;
         /**
@@ -14465,10 +14441,6 @@ export type UpdateSportEventParticipantsRequest = {
          * Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for.
          */
         tierKey?: string;
-        /**
-         * Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release.
-         */
-        isPlayInPlace?: boolean;
     }>;
 };
 
@@ -14487,23 +14459,15 @@ export type SportEventParticipantResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
-        /**
-         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-         */
-        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -14737,8 +14701,10 @@ export type SportEventParticipantUploadRequest = {
          */
         externalId?: string;
         playerName?: string;
-        isActive?: boolean;
-        inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+        /**
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+         */
+        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         ranking?: number | null;
         seedNumber?: number | null;
     }>;
@@ -14762,8 +14728,10 @@ export type SportEventParticipantUploadPreviewResponse = {
              */
             externalId?: string;
             playerName?: string;
-            isActive?: boolean;
-            inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking?: number | null;
             seedNumber?: number | null;
         };
@@ -14795,8 +14763,10 @@ export type SportEventParticipantUploadPreviewResponse = {
          * What is stored now; set whenever the row resolved.
          */
         before: {
-            isActive: boolean;
-            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking: number | null;
             seedNumber: number | null;
         } | null;
@@ -14804,8 +14774,10 @@ export type SportEventParticipantUploadPreviewResponse = {
          * What applying would store; null when the row cannot be applied.
          */
         after: {
-            isActive: boolean;
-            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking: number | null;
             seedNumber: number | null;
         } | null;
@@ -15929,23 +15901,15 @@ export type ContestLeaderboardResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
-        /**
-         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-         */
-        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -37724,54 +37688,6 @@ export type SetEventRoundMatchupsResponses = {
 };
 
 export type SetEventRoundMatchupsResponse = SetEventRoundMatchupsResponses[keyof SetEventRoundMatchupsResponses];
-
-export type SetEventPlayInWinnerData = {
-    body: FillPlayInSlotRequest;
-    path: {
-        eventId: string;
-        sportEventParticipantId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/play-in-winner';
-};
-
-export type SetEventPlayInWinnerErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type SetEventPlayInWinnerError = SetEventPlayInWinnerErrors[keyof SetEventPlayInWinnerErrors];
-
-export type SetEventPlayInWinnerResponses = {
-    /**
-     * One field row.
-     */
-    200: SportEventParticipantResponse;
-};
-
-export type SetEventPlayInWinnerResponse = SetEventPlayInWinnerResponses[keyof SetEventPlayInWinnerResponses];
 
 export type ListSportsData = {
     body?: never;

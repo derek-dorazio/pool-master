@@ -100,7 +100,7 @@ function adjustNode(node: ConvertedNode): void {
 /**
  * A nullable enum converts to `{ type, enum, nullable: true }`. Ajv's `nullable` widens `type`
  * but not `enum`, so null still fails the enum check and Fastify refuses a request body that
- * sends it with a 400 — `inactiveReason: null` on the field grid save did (#666). Listing null
+ * sends it with a 400 — the field grid's nullable inactive reason did (#666). Listing null
  * among the enum values says what the Zod schema means.
  */
 function permitNullInNullableEnum(node: Record<string, unknown>): Record<string, unknown> {

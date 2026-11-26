@@ -20,6 +20,7 @@ import {
   ParticipantStandingStatus,
   SportEventStatus,
   type SportEvent,
+  SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import type {
   ParticipantRoundView,
@@ -53,7 +54,7 @@ export function isRoundFinished(round: ParticipantRoundView): boolean {
 
 export function isOutOfEvent(row: SportEventParticipantView): boolean {
   const status = row.standing?.standing.status;
-  return !row.entry.isActive
+  return row.entry.status !== SportEventParticipantStatus.ACTIVE
     || status === ParticipantStandingStatus.WITHDRAWN
     || status === ParticipantStandingStatus.ELIMINATED;
 }

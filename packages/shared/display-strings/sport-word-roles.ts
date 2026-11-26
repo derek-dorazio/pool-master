@@ -16,7 +16,6 @@ export const GENERIC_SPORT_WORD_ROLES = [
   'eventStart',
   'overtime',
   'tie',
-  'playInPlace',
   'scoreUnit',
 ] as const;
 

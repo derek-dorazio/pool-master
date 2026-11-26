@@ -83,7 +83,7 @@ async function seedLeagueWithContestHistory() {
     },
   });
   const eventParticipant = await prisma.sportEventParticipant.create({
-    data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true },
+    data: { sportEventId: sportEvent.id, participantId: participant.id },
   });
   const contest = await prisma.contest.create({
     data: {

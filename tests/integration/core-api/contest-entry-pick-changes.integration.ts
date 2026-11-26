@@ -98,7 +98,7 @@ async function seedFixture(): Promise<FormatFixture> {
       },
     });
     const sep = await prisma.sportEventParticipant.create({
-      data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true },
+      data: { sportEventId: sportEvent.id, participantId: participant.id },
     });
     fieldIds[index] = sep.id;
     participantBySportEventParticipant.set(sep.id, participant.id);

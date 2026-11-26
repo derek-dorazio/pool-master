@@ -22,12 +22,10 @@ const cutGolfer: SportEventParticipantDto = {
   id: 'sep-1',
   sportEventId: 'event-1',
   participantId: 'participant-1',
-  isActive: true,
-  inactiveReason: null,
+  status: 'ACTIVE',
   ranking: null,
   oddsToWin: null,
   seedNumber: null,
-  isPlayInPlace: false,
   participant: {
     id: 'participant-1',
     sportLeagueId: 'league-golf',

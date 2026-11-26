@@ -20,7 +20,7 @@
   "testData": true,
   "provenance": {
     "gatheredAt": "2026-10-21",
-    "gatheredBy": "load-sport-data, the 2026 US Open men's and women's singles as played: each 128-player draw, its 32 seeds and every match's winner and sets from Wikipedia's draw pages, cross-checked match by match against ESPN's US Open scoreboard, which agrees on every pairing, winner and set count (254 matches). Match times (scheduledAt) are ESPN's. A match's score is sets won; the two men's retirements (Moutet to Sweeny in the first round, Blockx to Khachanov in the quarterfinals) count only the sets finished. Each draw's 16 qualifier places are play-in places whose playInWinner is the qualifier who filled it, named on both the draw and the qualifying pages. The lucky losers who replaced withdrawals (Ruud, the 19th men's seed, among them) are in the field as they played, unseeded, so the men's draw has 31 seeds. Each quarter of the draw is a region through the quarterfinals. Seeds' rankings are Wikipedia's (as of August 31, 2026). The unseeded players' rankings are not on the fetched pages: they rank after the seeds in the order of ESPN's ATP and WTA rankings of October 21, 2026, then in draw order, so they are an ordering, not the real ranking; qualifier places and qualifiers rank last. A player's country is Wikipedia's flag; a neutral athlete, who has none there, takes ESPN's (from its scoreboard notes, else its rankings' citizenship). Odds to win are made up, in seed order and then ranking order.",
+    "gatheredBy": "load-sport-data, the 2026 US Open men's and women's singles as played: each 128-player draw, its 32 seeds and every match's winner and sets from Wikipedia's draw pages, cross-checked match by match against ESPN's US Open scoreboard, which agrees on every pairing, winner and set count (254 matches). Match times (scheduledAt) are ESPN's. A match's score is sets won; the two men's retirements (Moutet to Sweeny in the first round, Blockx to Khachanov in the quarterfinals) count only the sets finished. Each draw's 16 qualifiers are in the field in their draw places, named on both the draw and the qualifying pages (#2184). The lucky losers who replaced withdrawals (Ruud, the 19th men's seed, among them) are in the field as they played, unseeded, so the men's draw has 31 seeds. Each quarter of the draw is a region through the quarterfinals. Seeds' rankings are Wikipedia's (as of August 31, 2026). The unseeded players' rankings are not on the fetched pages: they rank after the seeds in the order of ESPN's ATP and WTA rankings of October 21, 2026, then in draw order, so they are an ordering, not the real ranking; qualifiers rank last. A player's country is Wikipedia's flag; a neutral athlete, who has none there, takes ESPN's (from its scoreboard notes, else its rankings' citizenship). Odds to win are made up, in seed order and then ranking order.",
     "sources": [
       {
         "name": "2026 US Open – Men's singles (Wikipedia)",
@@ -727,102 +727,6 @@
           "name": "Alexander Shevchenko",
           "countryCode": "KZ",
           "ranking": 118
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-01",
-          "name": "US Open men's qualifier 1",
-          "countryCode": "US",
-          "ranking": 119
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-02",
-          "name": "US Open men's qualifier 2",
-          "countryCode": "US",
-          "ranking": 120
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-03",
-          "name": "US Open men's qualifier 3",
-          "countryCode": "US",
-          "ranking": 121
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-04",
-          "name": "US Open men's qualifier 4",
-          "countryCode": "US",
-          "ranking": 122
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-05",
-          "name": "US Open men's qualifier 5",
-          "countryCode": "US",
-          "ranking": 123
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-06",
-          "name": "US Open men's qualifier 6",
-          "countryCode": "US",
-          "ranking": 124
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-07",
-          "name": "US Open men's qualifier 7",
-          "countryCode": "US",
-          "ranking": 125
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-08",
-          "name": "US Open men's qualifier 8",
-          "countryCode": "US",
-          "ranking": 126
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-09",
-          "name": "US Open men's qualifier 9",
-          "countryCode": "US",
-          "ranking": 127
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-10",
-          "name": "US Open men's qualifier 10",
-          "countryCode": "US",
-          "ranking": 128
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-11",
-          "name": "US Open men's qualifier 11",
-          "countryCode": "US",
-          "ranking": 129
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-12",
-          "name": "US Open men's qualifier 12",
-          "countryCode": "US",
-          "ranking": 130
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-13",
-          "name": "US Open men's qualifier 13",
-          "countryCode": "US",
-          "ranking": 131
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-14",
-          "name": "US Open men's qualifier 14",
-          "countryCode": "US",
-          "ranking": 132
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-15",
-          "name": "US Open men's qualifier 15",
-          "countryCode": "US",
-          "ranking": 133
-        },
-        {
-          "key": "atp-us-open-2026-qualifier-16",
-          "name": "US Open men's qualifier 16",
-          "countryCode": "US",
-          "ranking": 134
         },
         {
           "key": "atp-grigor-dimitrov",
@@ -1606,131 +1510,99 @@
               "oddsToWin": 447.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-01",
+              "player": "atp-grigor-dimitrov",
               "ranking": 119,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-grigor-dimitrov",
               "oddsToWin": 451.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-02",
+              "player": "atp-harry-wendelken",
               "ranking": 120,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-harry-wendelken",
               "oddsToWin": 455.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-03",
+              "player": "atp-dalibor-svrcina",
               "ranking": 121,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-dalibor-svrcina",
               "oddsToWin": 459.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-04",
+              "player": "atp-francesco-passaro",
               "ranking": 122,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-francesco-passaro",
               "oddsToWin": 463.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-05",
+              "player": "atp-andrea-guerrieri",
               "ranking": 123,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-andrea-guerrieri",
               "oddsToWin": 467.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-06",
+              "player": "atp-jurij-rodionov",
               "ranking": 124,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-jurij-rodionov",
               "oddsToWin": 471.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-07",
+              "player": "atp-zsombor-piros",
               "ranking": 125,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-zsombor-piros",
               "oddsToWin": 475.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-08",
+              "player": "atp-tomas-barrios-vera",
               "ranking": 126,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-tomas-barrios-vera",
               "oddsToWin": 479.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-09",
+              "player": "atp-nishesh-basavareddy",
               "ranking": 127,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-nishesh-basavareddy",
               "oddsToWin": 483.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-10",
+              "player": "atp-tristan-schoolkate",
               "ranking": 128,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-tristan-schoolkate",
               "oddsToWin": 487.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-11",
+              "player": "atp-hugo-gaston",
               "ranking": 129,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-hugo-gaston",
               "oddsToWin": 491.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-12",
+              "player": "atp-rei-sakamoto",
               "ranking": 130,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-rei-sakamoto",
               "oddsToWin": 495.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-13",
+              "player": "atp-federico-cina",
               "ranking": 131,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-federico-cina",
               "oddsToWin": 499.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-14",
+              "player": "atp-toby-samuel",
               "ranking": 132,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-toby-samuel",
               "oddsToWin": 503.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-15",
+              "player": "atp-lloyd-harris",
               "ranking": 133,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-lloyd-harris",
               "oddsToWin": 507.0
             },
             {
-              "player": "atp-us-open-2026-qualifier-16",
+              "player": "atp-coleman-wong",
               "ranking": 134,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "atp-coleman-wong",
               "oddsToWin": 511.0
             }
           ],
@@ -1776,7 +1648,7 @@
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-01",
+              "home": "atp-grigor-dimitrov",
               "away": "atp-alexei-popyrin",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T23:20:00Z",
@@ -1815,7 +1687,7 @@
               "matchNumber": 5,
               "roundNumber": 1,
               "home": "atp-luciano-darderi",
-              "away": "atp-us-open-2026-qualifier-02",
+              "away": "atp-harry-wendelken",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:20:00Z",
               "advancesTo": {
@@ -1833,7 +1705,7 @@
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-03",
+              "home": "atp-dalibor-svrcina",
               "away": "atp-valentin-royer",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T18:25:00Z",
@@ -1987,7 +1859,7 @@
               "matchNumber": 14,
               "roundNumber": 1,
               "home": "atp-jesper-de-jong",
-              "away": "atp-us-open-2026-qualifier-04",
+              "away": "atp-francesco-passaro",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T21:40:00Z",
               "advancesTo": {
@@ -2024,7 +1896,7 @@
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-05",
+              "home": "atp-andrea-guerrieri",
               "away": "atp-alex-de-minaur",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T18:10:00Z",
@@ -2138,7 +2010,7 @@
             {
               "matchNumber": 22,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-06",
+              "home": "atp-jurij-rodionov",
               "away": "atp-giovanni-mpetshi-perricard",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:25:00Z",
@@ -2215,7 +2087,7 @@
               "matchNumber": 26,
               "roundNumber": 1,
               "home": "atp-mattia-bellucci",
-              "away": "atp-us-open-2026-qualifier-07",
+              "away": "atp-zsombor-piros",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
@@ -2272,7 +2144,7 @@
               "matchNumber": 29,
               "roundNumber": 1,
               "home": "atp-alexander-blockx",
-              "away": "atp-us-open-2026-qualifier-08",
+              "away": "atp-tomas-barrios-vera",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T20:50:00Z",
               "advancesTo": {
@@ -2309,8 +2181,8 @@
             {
               "matchNumber": 31,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-09",
-              "away": "atp-us-open-2026-qualifier-10",
+              "home": "atp-nishesh-basavareddy",
+              "away": "atp-tristan-schoolkate",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
               "advancesTo": {
@@ -2348,7 +2220,7 @@
               "matchNumber": 33,
               "roundNumber": 1,
               "home": "atp-daniil-medvedev",
-              "away": "atp-us-open-2026-qualifier-11",
+              "away": "atp-hugo-gaston",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:00:00Z",
               "advancesTo": {
@@ -2462,7 +2334,7 @@
               "matchNumber": 39,
               "roundNumber": 1,
               "home": "atp-aleksandar-vukic",
-              "away": "atp-us-open-2026-qualifier-12",
+              "away": "atp-rei-sakamoto",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:05:00Z",
               "advancesTo": {
@@ -2519,7 +2391,7 @@
               "matchNumber": 42,
               "roundNumber": 1,
               "home": "atp-alex-michelsen",
-              "away": "atp-us-open-2026-qualifier-13",
+              "away": "atp-federico-cina",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:55:00Z",
               "advancesTo": {
@@ -2746,7 +2618,7 @@
             {
               "matchNumber": 54,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-14",
+              "home": "atp-toby-samuel",
               "away": "atp-tomas-machac",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T19:20:00Z",
@@ -2765,7 +2637,7 @@
             {
               "matchNumber": 55,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-15",
+              "home": "atp-lloyd-harris",
               "away": "atp-jack-kennedy",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:00:00Z",
@@ -2860,7 +2732,7 @@
             {
               "matchNumber": 60,
               "roundNumber": 1,
-              "home": "atp-us-open-2026-qualifier-16",
+              "home": "atp-coleman-wong",
               "away": "atp-tommy-paul",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:15:00Z",
@@ -4823,102 +4695,6 @@
           "ranking": 115
         },
         {
-          "key": "wta-us-open-2026-qualifier-01",
-          "name": "US Open women's qualifier 1",
-          "countryCode": "US",
-          "ranking": 116
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-02",
-          "name": "US Open women's qualifier 2",
-          "countryCode": "US",
-          "ranking": 117
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-03",
-          "name": "US Open women's qualifier 3",
-          "countryCode": "US",
-          "ranking": 118
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-04",
-          "name": "US Open women's qualifier 4",
-          "countryCode": "US",
-          "ranking": 119
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-05",
-          "name": "US Open women's qualifier 5",
-          "countryCode": "US",
-          "ranking": 120
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-06",
-          "name": "US Open women's qualifier 6",
-          "countryCode": "US",
-          "ranking": 121
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-07",
-          "name": "US Open women's qualifier 7",
-          "countryCode": "US",
-          "ranking": 122
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-08",
-          "name": "US Open women's qualifier 8",
-          "countryCode": "US",
-          "ranking": 123
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-09",
-          "name": "US Open women's qualifier 9",
-          "countryCode": "US",
-          "ranking": 124
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-10",
-          "name": "US Open women's qualifier 10",
-          "countryCode": "US",
-          "ranking": 125
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-11",
-          "name": "US Open women's qualifier 11",
-          "countryCode": "US",
-          "ranking": 126
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-12",
-          "name": "US Open women's qualifier 12",
-          "countryCode": "US",
-          "ranking": 127
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-13",
-          "name": "US Open women's qualifier 13",
-          "countryCode": "US",
-          "ranking": 128
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-14",
-          "name": "US Open women's qualifier 14",
-          "countryCode": "US",
-          "ranking": 129
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-15",
-          "name": "US Open women's qualifier 15",
-          "countryCode": "US",
-          "ranking": 130
-        },
-        {
-          "key": "wta-us-open-2026-qualifier-16",
-          "name": "US Open women's qualifier 16",
-          "countryCode": "US",
-          "ranking": 131
-        },
-        {
           "key": "wta-polina-iatcenko",
           "name": "Polina Iatcenko",
           "countryCode": "RU",
@@ -5700,131 +5476,99 @@
               "oddsToWin": 447.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-01",
+              "player": "wta-polina-iatcenko",
               "ranking": 116,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-polina-iatcenko",
               "oddsToWin": 451.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-02",
+              "player": "wta-storm-hunter",
               "ranking": 117,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-storm-hunter",
               "oddsToWin": 455.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-03",
+              "player": "wta-elvina-kalieva",
               "ranking": 118,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-elvina-kalieva",
               "oddsToWin": 459.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-04",
+              "player": "wta-lucrezia-stefanini",
               "ranking": 119,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-lucrezia-stefanini",
               "oddsToWin": 463.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-05",
+              "player": "wta-anouk-koevermans",
               "ranking": 120,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-anouk-koevermans",
               "oddsToWin": 467.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-06",
+              "player": "wta-gabriela-knutson",
               "ranking": 121,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-gabriela-knutson",
               "oddsToWin": 471.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-07",
+              "player": "wta-arantxa-rus",
               "ranking": 122,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-arantxa-rus",
               "oddsToWin": 475.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-08",
+              "player": "wta-francesca-jones",
               "ranking": 123,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-francesca-jones",
               "oddsToWin": 479.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-09",
+              "player": "wta-mary-stoiana",
               "ranking": 124,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-mary-stoiana",
               "oddsToWin": 483.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-10",
+              "player": "wta-himeno-sakatsume",
               "ranking": 125,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-himeno-sakatsume",
               "oddsToWin": 487.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-11",
+              "player": "wta-harriet-dart",
               "ranking": 126,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-harriet-dart",
               "oddsToWin": 491.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-12",
+              "player": "wta-lucie-havlickova",
               "ranking": 127,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-lucie-havlickova",
               "oddsToWin": 495.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-13",
+              "player": "wta-zheng-qinwen",
               "ranking": 128,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-zheng-qinwen",
               "oddsToWin": 499.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-14",
+              "player": "wta-kristina-liutova",
               "ranking": 129,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-kristina-liutova",
               "oddsToWin": 503.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-15",
+              "player": "wta-tamara-zidansek",
               "ranking": 130,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-tamara-zidansek",
               "oddsToWin": 507.0
             },
             {
-              "player": "wta-us-open-2026-qualifier-16",
+              "player": "wta-robin-montgomery",
               "ranking": 131,
               "seed": null,
-              "isPlayInPlace": true,
-              "playInWinner": "wta-robin-montgomery",
               "oddsToWin": 511.0
             }
           ],
@@ -5852,7 +5596,7 @@
               "matchNumber": 2,
               "roundNumber": 1,
               "home": "wta-renata-zarazua",
-              "away": "wta-us-open-2026-qualifier-01",
+              "away": "wta-polina-iatcenko",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T15:10:00Z",
               "advancesTo": {
@@ -5985,7 +5729,7 @@
               "matchNumber": 9,
               "roundNumber": 1,
               "home": "wta-marta-kostyuk",
-              "away": "wta-us-open-2026-qualifier-02",
+              "away": "wta-storm-hunter",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:20:00Z",
               "advancesTo": {
@@ -6098,7 +5842,7 @@
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-03",
+              "home": "wta-elvina-kalieva",
               "away": "wta-lanlana-tararudee",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T17:45:00Z",
@@ -6231,7 +5975,7 @@
             {
               "matchNumber": 22,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-04",
+              "home": "wta-lucrezia-stefanini",
               "away": "wta-dayana-yastremska",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-30T18:25:00Z",
@@ -6383,7 +6127,7 @@
             {
               "matchNumber": 30,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-05",
+              "home": "wta-anouk-koevermans",
               "away": "wta-caty-mcnally",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T19:35:00Z",
@@ -6459,7 +6203,7 @@
             {
               "matchNumber": 34,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-06",
+              "home": "wta-gabriela-knutson",
               "away": "wta-eva-lys",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:50:00Z",
@@ -6535,7 +6279,7 @@
             {
               "matchNumber": 38,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-07",
+              "home": "wta-arantxa-rus",
               "away": "wta-leolia-jeanjean",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T21:55:00Z",
@@ -6612,7 +6356,7 @@
               "matchNumber": 42,
               "roundNumber": 1,
               "home": "wta-magda-linette",
-              "away": "wta-us-open-2026-qualifier-08",
+              "away": "wta-francesca-jones",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T20:45:00Z",
               "advancesTo": {
@@ -6649,7 +6393,7 @@
             {
               "matchNumber": 44,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-09",
+              "home": "wta-mary-stoiana",
               "away": "wta-alexandra-eala",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-02T01:50:00Z",
@@ -6688,7 +6432,7 @@
               "matchNumber": 46,
               "roundNumber": 1,
               "home": "wta-anhelina-kalinina",
-              "away": "wta-us-open-2026-qualifier-10",
+              "away": "wta-himeno-sakatsume",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:05:00Z",
               "advancesTo": {
@@ -6782,7 +6526,7 @@
             {
               "matchNumber": 51,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-11",
+              "home": "wta-harriet-dart",
               "away": "wta-peyton-stearns",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:10:00Z",
@@ -6839,7 +6583,7 @@
             {
               "matchNumber": 54,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-12",
+              "home": "wta-lucie-havlickova",
               "away": "wta-anna-bondar",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:45:00Z",
@@ -6858,8 +6602,8 @@
             {
               "matchNumber": 55,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-13",
-              "away": "wta-us-open-2026-qualifier-14",
+              "home": "wta-zheng-qinwen",
+              "away": "wta-kristina-liutova",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T15:10:00Z",
               "advancesTo": {
@@ -6934,7 +6678,7 @@
             {
               "matchNumber": 59,
               "roundNumber": 1,
-              "home": "wta-us-open-2026-qualifier-15",
+              "home": "wta-tamara-zidansek",
               "away": "wta-maria-timofeeva",
               "isNeutralSite": true,
               "scheduledAt": "2026-08-31T17:05:00Z",
@@ -6973,7 +6717,7 @@
               "matchNumber": 61,
               "roundNumber": 1,
               "home": "wta-maria-sakkari",
-              "away": "wta-us-open-2026-qualifier-16",
+              "away": "wta-robin-montgomery",
               "isNeutralSite": true,
               "scheduledAt": "2026-09-01T18:45:00Z",
               "advancesTo": {

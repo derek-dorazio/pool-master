@@ -72,7 +72,7 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
     const participant = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Golfer ${golfer} ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
-    const row = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
+    const row = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
     const scoreToPar = scoresToPar?.[golfer - 1];
     if (rounds && scoreToPar !== undefined) {
       for (const [index, round] of rounds.entries()) {

@@ -1,3 +1,4 @@
+import { SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { SportEventDto, SportEventOverviewDto, SportEventTierDto } from '@/lib/api';
 import { DataGrid, SectionCard } from '@/features/shared/ui';
@@ -35,7 +36,7 @@ export function EventFieldGridCard({
     [shown.team, shown.country, shown.seed, shown.lastInFeed],
   );
   const openRow = openRowId === null ? undefined : rows.find((row) => row.id === openRowId);
-  const activeCount = field.filter((entry) => entry.isActive).length;
+  const activeCount = field.filter((entry) => (entry.status === SportEventParticipantStatus.ACTIVE)).length;
 
   return (
     <SectionCard

@@ -20,12 +20,10 @@ function team(overrides: Partial<SportEventParticipantDto> = {}): SportEventPart
     id: 'sep-1',
     sportEventId: 'event-1',
     participantId: 'participant-1',
-    isActive: true,
-    inactiveReason: null,
+    status: 'ACTIVE',
     ranking: null,
     oddsToWin: null,
     seedNumber: 12,
-    isPlayInPlace: false,
     participant: {
       id: 'participant-1',
       sportLeagueId: 'league-basketball',
@@ -268,7 +266,7 @@ describe('formatKnockoutStatus', () => {
   });
 
   it('shows a withdrawn team in the sport\'s word, and nothing for a team with no knockout result', () => {
-    expect(formatKnockoutStatus(plainWin, team({ isActive: false }), basketball)).toEqual({ text: 'Withdrawn', chip: 'neutral' });
+    expect(formatKnockoutStatus(plainWin, team({ status: 'WITHDRAWN' }), basketball)).toEqual({ text: 'Withdrawn', chip: 'neutral' });
     expect(formatKnockoutStatus(pick(null), team(), basketball)).toEqual({ text: null });
   });
 });

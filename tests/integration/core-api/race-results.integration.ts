@@ -60,7 +60,7 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL' },
     });
     field.push(await prisma.sportEventParticipant.create({
-      data: { sportEventId: event.id, participantId: participant.id, isActive: index < 3 },
+      data: { sportEventId: event.id, participantId: participant.id, status: index < 3 ? 'ACTIVE' : 'WITHDRAWN' },
     }));
   }
   const [arrow, bolt, comet, drift] = field;

@@ -10,7 +10,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'crypto';
 import { expect } from '@jest/globals';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository } from '../../../packages/core-api/src/adapters';
@@ -46,7 +46,7 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
   const prisma = getPrisma();
   const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
   const suffix = randomUUID().slice(0, 8);
-  const golfer: ProviderParticipant = { externalId: `golfer-${suffix}`, providerId: PROVIDER, sport: Sport.GOLF, name: `${NAME_PREFIX}${suffix}`, active: true, ranking: 7, metadata: {}, ...overrides };
+  const golfer: ProviderParticipant = { externalId: `golfer-${suffix}`, providerId: PROVIDER, sport: Sport.GOLF, name: `${NAME_PREFIX}${suffix}`, status: SportEventParticipantStatus.ACTIVE, ranking: 7, metadata: {}, ...overrides };
   const detail: SportEventDetail = {
     externalId: `event-${suffix}`,
     providerId: PROVIDER,

@@ -33,10 +33,9 @@ import type {
   ParticipantProviderMappingRepository,
 } from '@poolmaster/shared/db';
 import {
-  getSportDefinition,
   eventPlaysMatches,
   SportEventStatus,
-  type ParticipantInactiveReason,
+  type SportEventParticipantStatus,
   type SportEvent,
   type SportEventParticipant,
   sideOfParticipant,
@@ -76,8 +75,7 @@ export interface FieldUploadRowInput extends ParticipantRowIdentifiers, Omit<Spo
 
 /** The values an upload can change on a field row, each as stored (null when unset). */
 export interface FieldUploadValues {
-  isActive: boolean;
-  inactiveReason: ParticipantInactiveReason | null;
+  status: SportEventParticipantStatus;
   ranking: number | null;
   seedNumber: number | null;
 }
@@ -105,12 +103,11 @@ export interface FieldUploadPreviewRow {
   message: string | null;
 }
 
-const FIELD_UPLOAD_VALUE_KEYS = ['isActive', 'inactiveReason', 'ranking', 'seedNumber'] as const;
+const FIELD_UPLOAD_VALUE_KEYS = ['status', 'ranking', 'seedNumber'] as const;
 
 function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
   return {
-    isActive: entry.isActive,
-    inactiveReason: entry.inactiveReason ?? null,
+    status: entry.status,
     ranking: entry.ranking ?? null,
     seedNumber: entry.seedNumber ?? null,
   };
@@ -120,20 +117,17 @@ function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
 function changedValues(entry: SportEventParticipant, patch: SportEventParticipantPatch): SportEventParticipantPatch {
   const before = fieldUploadValues(entry);
   const changed: SportEventParticipantPatch = {};
-  if (patch.isActive !== undefined && patch.isActive !== before.isActive) changed.isActive = patch.isActive;
-  if (patch.inactiveReason !== undefined && patch.inactiveReason !== before.inactiveReason) changed.inactiveReason = patch.inactiveReason;
+  if (patch.status !== undefined && patch.status !== before.status) changed.status = patch.status;
   if (patch.ranking !== undefined && patch.ranking !== before.ranking) changed.ranking = patch.ranking;
   if (patch.oddsToWin !== undefined && patch.oddsToWin !== (entry.oddsToWin ?? null)) changed.oddsToWin = patch.oddsToWin;
   if (patch.seedNumber !== undefined && patch.seedNumber !== before.seedNumber) changed.seedNumber = patch.seedNumber;
-  if (patch.isPlayInPlace !== undefined && patch.isPlayInPlace !== entry.isPlayInPlace) changed.isPlayInPlace = patch.isPlayInPlace;
   return changed;
 }
 
 /** The patch a row carries: only the values it names, each exactly as sent. */
 function fieldUploadPatch(row: FieldUploadRowInput): SportEventParticipantPatch {
   const patch: SportEventParticipantPatch = {};
-  if (row.isActive !== undefined) patch.isActive = row.isActive;
-  if (row.inactiveReason !== undefined) patch.inactiveReason = row.inactiveReason;
+  if (row.status !== undefined) patch.status = row.status;
   if (row.ranking !== undefined) patch.ranking = row.ranking;
   if (row.seedNumber !== undefined) patch.seedNumber = row.seedNumber;
   return patch;
@@ -240,9 +234,7 @@ export class SportEventParticipantService implements EventFieldReads {
    * odds, seed and withdrawals stay editable after release; a price does not (409
    * SPORT_EVENT_TIERS_LOCKED, #431), and neither does a seed on an event played as a bracket,
    * whose upset bonus reads the seeds as they stood at release (409 SPORT_EVENT_SEEDS_LOCKED,
-   * #698). A seed sent unchanged is not a change. Marking a row as a play-in place (#709) is
-   * only for a bracket event (422 SPORT_EVENT_NOT_BRACKET) before release (409
-   * SPORT_EVENT_BRACKET_LOCKED); one sent unchanged is not a change.
+   * #698). A seed sent unchanged is not a change.
    */
   async updateParticipants(sportEventId: string, updates: readonly FieldEntryUpdate[]): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
@@ -266,28 +258,6 @@ export class SportEventParticipantService implements EventFieldReads {
         throw new SportEventError(
           `Sport event ${sportEventId} has been released for contests, so its seeds are locked.`,
           'SPORT_EVENT_SEEDS_LOCKED',
-          409,
-        );
-      }
-    }
-    const playInById = new Map(field.map((entry) => [entry.id, entry.isPlayInPlace]));
-    const remarked = updates.filter((update) => update.isPlayInPlace !== undefined
-      && playInById.has(update.sportEventParticipantId)
-      && update.isPlayInPlace !== playInById.get(update.sportEventParticipantId));
-    if (remarked.length > 0) {
-      if (!eventPlaysMatches(event)) {
-        this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a play-in place on an event that plays no bracket');
-        throw new SportEventError(
-          `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket, so it has no play-in places.`,
-          'SPORT_EVENT_NOT_BRACKET',
-          422,
-        );
-      }
-      if (event.status !== SportEventStatus.DRAFT) {
-        this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a play-in place change on a released bracket');
-        throw new SportEventError(
-          `Sport event ${sportEventId} has been released for contests, so its play-in places are locked.`,
-          'SPORT_EVENT_BRACKET_LOCKED',
           409,
         );
       }

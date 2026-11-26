@@ -26,12 +26,10 @@ function runner(
     id: 'sep-1',
     sportEventId: 'event-1',
     participantId: 'participant-1',
-    isActive: true,
-    inactiveReason: null,
+    status: 'ACTIVE',
     ranking: null,
     oddsToWin: null,
     seedNumber: null,
-    isPlayInPlace: false,
     participant: {
       id: 'participant-1',
       sportLeagueId: 'league-horse-racing',
@@ -157,7 +155,7 @@ describe('formatFinish', () => {
   });
 
   it('shows a scratched runner with no result in the sport\'s word, Scratched', () => {
-    expect(formatFinish(runner(null, { isActive: false }), horseRacing)).toBe('Scratched');
+    expect(formatFinish(runner(null, { status: 'WITHDRAWN' }), horseRacing)).toBe('Scratched');
   });
 
   it('shows nothing for a runner with no result yet, or a finisher not yet placed', () => {

@@ -52,12 +52,10 @@ function participantFixture(
   return {
     sportEventId: 'event-1',
     participantId: `participant-${overrides.id}`,
-    isActive: true,
-    inactiveReason: null,
+    status: 'ACTIVE',
     ranking: null,
     oddsToWin: null,
     seedNumber: null,
-    isPlayInPlace: false,
     participant: {
       id: `participant-${overrides.id}`,
       sportLeagueId: 'league-golf',

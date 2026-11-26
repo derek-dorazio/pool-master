@@ -91,7 +91,7 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
       const participant = await prisma.participant.create({
         data: { sportLeagueId: await participantLeagueId(prisma, football.id), name: `${side} ${suffix} ${String(sortOrder)}`, participantType: 'TEAM' },
       });
-      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
     };
     const [home, away] = [await team('Home'), await team('Away')];
     await createMatchRow(prisma, {

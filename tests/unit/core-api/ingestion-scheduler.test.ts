@@ -29,7 +29,7 @@ import type {
   SportDataProvider,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import { JobTrigger, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { JobTrigger, ProviderCode, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { ProviderRateLimitedError } from '../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
@@ -221,8 +221,8 @@ describe('IngestionScheduler', () => {
         fieldLocked: false,
         providerSlots: [],
         participants: [
-          { externalId: 'player-1', providerId: 'mock-provider', sport: 'GOLF', name: 'Player One', active: true, metadata: {} },
-          { externalId: 'player-2', providerId: 'mock-provider', sport: 'GOLF', name: 'Player Two', active: true, metadata: {} },
+          { externalId: 'player-1', providerId: 'mock-provider', sport: 'GOLF', name: 'Player One', status: SportEventParticipantStatus.ACTIVE, metadata: {} },
+          { externalId: 'player-2', providerId: 'mock-provider', sport: 'GOLF', name: 'Player Two', status: SportEventParticipantStatus.ACTIVE, metadata: {} },
         ],
       };
       const provider = fakeSportDataProvider({
@@ -533,7 +533,7 @@ describe('IngestionScheduler', () => {
             providerId: 'mock-provider',
             sport: 'GOLF',
             name: 'Player One',
-            active: true,
+            status: SportEventParticipantStatus.ACTIVE,
             metadata: {},
           },
         ],

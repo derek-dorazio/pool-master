@@ -89,8 +89,7 @@ describe('field row mappers', () => {
     id: 'sep-1',
     sportEventId: 'event-1',
     participantId: 'p-scheffler',
-    isActive: true,
-    isPlayInPlace: false,
+    status: 'ACTIVE',
     createdAt: created,
     updatedAt: updated,
   };
@@ -100,7 +99,7 @@ describe('field row mappers', () => {
 
     expect(dto).toMatchObject({
       id: 'sep-1',
-      inactiveReason: null,
+      status: 'ACTIVE',
       ranking: null,
       oddsToWin: null,
       seedNumber: null,
@@ -115,7 +114,7 @@ describe('field row mappers', () => {
 
   it('nests a scored row\'s valuation, its standing with golf detail, each round with golf, and its race result', () => {
     const view = {
-      entry: { ...entry, isActive: false, inactiveReason: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 },
+      entry: { ...entry, status: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 },
       participant: scottie,
       valuation: { id: 'v-1', sportEventTierId: 'tier-a', tierOrderIndex: 0, tierAssignedSource: 'MANUAL', price: 12000, priceAssignedSource: 'UPLOAD' },
       standing: {
@@ -132,7 +131,7 @@ describe('field row mappers', () => {
 
     const dto = mapSportEventParticipantToDto(view);
 
-    expect(dto).toMatchObject({ isActive: false, inactiveReason: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 });
+    expect(dto).toMatchObject({ status: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 });
     expect(dto.valuation).toEqual({ id: 'v-1', sportEventTierId: 'tier-a', tierOrderIndex: 0, tierAssignedSource: 'MANUAL', price: 12000, priceAssignedSource: 'UPLOAD' });
     expect(dto.standing).toEqual({
       id: 's-1',

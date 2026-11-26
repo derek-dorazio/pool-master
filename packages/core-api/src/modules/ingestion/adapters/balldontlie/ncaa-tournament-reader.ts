@@ -1,7 +1,6 @@
 /**
  * The BALLDONTLIE NCAA basketball tournament reads behind the adapter (#1496), for one league,
- * men's or women's: each season's tournament as an event, its teams with their seeds and its
- * play-in places, its games and the men's whole bracket (#1728), every Division I team, and the
+ * men's or women's: each season's tournament as an event, its teams with their seeds, its games and the men's whole bracket (#1728), every Division I team, and the
  * tournament's game scores. The bracket endpoints need the GOAT tier;
  * the teams lists name no paid tier.
  */
@@ -17,7 +16,6 @@ import {
   toNcaaBracket,
   toNcaaFieldParticipants,
   toNcaaGameScoreUpdates,
-  toNcaaPlayInPlaces,
   toNcaaScheduledGames,
   toNcaaTeamParticipant,
   toNcaaTournamentEvent,
@@ -53,8 +51,7 @@ export class NcaaTournamentReader {
     const games = await this.bracketOf(season);
     if (games.length === 0) return null;
     const scope = { league: this.league, season };
-    // The play-in places stand in the field for the First Four's teams until a winner fills one (#1728).
-    const participants = [...toNcaaFieldParticipants(this.league, games), ...toNcaaPlayInPlaces(scope, games)];
+    const participants = toNcaaFieldParticipants(this.league, games);
     const bracket = toNcaaBracket(scope, games);
     return {
       ...toNcaaTournamentEvent(scope, games, participants.length),

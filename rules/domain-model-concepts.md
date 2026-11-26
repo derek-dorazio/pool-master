@@ -249,31 +249,30 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
   running result names only the runner, so its `riderName` stays empty, and a runner who drops
   out is a `DID_NOT_FINISH` result, not a withdrawal. A marathon is one `SportEvent` with one
   round.
-- **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
-  inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
+- **Scratched, withdrawn**: a runner taken out of a race before the start is a field row whose
+  `status` is `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.
 - **Withdrawn after the draw, replacement** (#704): in any bracket sport, a field member who
-  withdraws before their first-round match is made inactive (`WITHDRAWN`) and a replacement (a
+  withdraws before their first-round match gets the status `WITHDRAWN` and a replacement (a
   tennis lucky loser) gets a field row of its own in that bracket place; a bye's place is not
   replaced. "Withdrawn" in scoring means `WITHDRAWN` and named by no match. Picks stay on the withdrawn row
-  and score as a first-round loss; they never move to the replacement, unlike a play-in place,
-  which stands for whoever wins it. After the match starts a withdrawal is a walkover result.
+  and score as a first-round loss; they never move to the replacement. After the match starts a withdrawal is a walkover result.
 - **Official**: a race's result counts for contest scoring only once the admin marks it official,
   which applies to the whole race. Until then its places are provisional.
 - **Dead heat**: runners who share a finishing place. Both take that place's full points, and the
   next place is skipped (1, 2, 2, 4).
 - **Bracket, seed, play-in (basketball)**: the bracket is the event's matches. A **seed** is the
   field member's `seedNumber`, locked once a bracket event is released. A First Four
-  **play-in** place is one field member standing for the pairing ("Texas / Xavier"), marked
-  `isPlayInPlace` before release; only a marked row takes a winner, and its winner
-  takes over that field row, ending the mark, keeping its seed, tier, price and picks, and the pairing's
-  participant is inactivated. A side with no team is filled by an earlier match's winner; a team with a **bye** is named
+  **play-in** is the event's first round, its two teams field members like any other: its
+  match advances its winner into the side of the round of 64 match its place feeds, which has no
+  team until then. No field row stands for a pairing (#2184). A side with no team is filled by an earlier match's winner; a team with a **bye** is named
   straight on a later round's match, with no earlier match feeding its side. A round played in a
   slot whose `pairing` is `RESEEDED` **reseeds**: the round before's winners go to no fixed match, and
   the feed or a test's admin places them by seed within their region (the NFL's Divisional round).
   The pairing is the Season slot's, from its definition (#2006), never the league's.
-- **Active**: `isActive` on a league, squad, user or field member (present in normal views),
-  and the contest status `ACTIVE` (its first event has started and it has not settled). Different things.
+- **Active**: `isActive` on a league, squad or user (present in normal views), a field row's
+  status `ACTIVE` (still in the event: not withdrawn, eliminated or disqualified), and the contest
+  status `ACTIVE` (its first event has started and it has not settled). Different things.
 
 ---
 

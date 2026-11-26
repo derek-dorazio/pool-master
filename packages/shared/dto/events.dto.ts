@@ -7,7 +7,7 @@ import {
   ContestStatus,
   EventPricingConfigSchema,
   EventTierConfigSchema,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   ParticipantRoundStatus,
   ParticipantType,
   ParticipantStandingStatus,
@@ -356,16 +356,16 @@ export const SportEventParticipantRaceResultDtoSchema = z.object({
 }).describe('Finish-position extension of a field row: how one runner\'s race ended, as an admin entered it.');
 export type SportEventParticipantRaceResultDto = z.infer<typeof SportEventParticipantRaceResultDtoSchema>;
 
+const SportEventParticipantStatusDtoSchema = z.enum(SportEventParticipantStatus).describe('The field row\'s place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.');
+
 export const SportEventParticipantDtoSchema = z.object({
   id: z.uuid().describe('Field row identifier.'),
   sportEventId: z.uuid(),
   participantId: z.uuid(),
-  isActive: z.boolean().describe('Whether the participant is competing; false is withdrawn or eliminated.'),
-  inactiveReason: z.enum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null means no more specific reason is recorded.'),
+  status: SportEventParticipantStatusDtoSchema,
   ranking: z.number().int().nullable().describe('The participant\'s rank coming into this event — seeded from the provider\'s ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.'),
   oddsToWin: z.number().nullable(),
   seedNumber: z.number().int().nullable(),
-  isPlayInPlace: z.boolean().describe('Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.'),
   participant: ParticipantDtoSchema.describe('The canonical participant.'),
   valuation: SportEventParticipantValuationDtoSchema.nullable().describe('Null until a tier or price is set.'),
   standing: SportEventParticipantStandingDtoSchema.nullable().describe('Null until the participant has a scored round, or a race result.'),
@@ -400,8 +400,7 @@ const MAX_INT32 = 2147483647;
 /** The field-row values an admin patches — by the grid save and by the field upload alike. */
 /** The values a field upload can set on a field row; odds come only from the feed (#2081). */
 const SportEventParticipantUploadPatchShape = {
-  isActive: z.boolean().optional(),
-  inactiveReason: z.enum(ParticipantInactiveReason).nullable().optional(),
+  status: SportEventParticipantStatusDtoSchema.optional(),
   ranking: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
   seedNumber: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
 };
@@ -417,7 +416,6 @@ export const UpdateSportEventParticipantsRequestSchema = z.object({
     ...SportEventParticipantPatchShape,
     price: z.number().nullable().optional().describe('A manual price; null clears it.'),
     tierKey: z.string().min(1).optional().describe('Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for.'),
-    isPlayInPlace: z.boolean().optional().describe('Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release.'),
   })).min(1).describe('Field rows to patch, all or none. Omitted fields are left alone; null clears.'),
 }).describe('One save of the field grid.');
 export type UpdateSportEventParticipantsRequest = z.infer<typeof UpdateSportEventParticipantsRequestSchema>;
@@ -442,8 +440,7 @@ export const SportEventParticipantUploadRequestSchema = z.object({
 export type SportEventParticipantUploadRequest = z.infer<typeof SportEventParticipantUploadRequestSchema>;
 
 export const SportEventParticipantUploadValuesDtoSchema = z.object({
-  isActive: z.boolean(),
-  inactiveReason: z.enum(ParticipantInactiveReason).nullable(),
+  status: SportEventParticipantStatusDtoSchema,
   ranking: z.number().int().nullable(),
   seedNumber: z.number().int().nullable(),
 }).describe('The values a field upload can change on a field row. Odds are not among them: they come only from the feed.');

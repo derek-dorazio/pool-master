@@ -107,14 +107,12 @@ async function seedContestFixture(): Promise<FixtureContext> {
     data: {
       sportEventId: sportEvent.id,
       participantId: participantA.id,
-      isActive: true,
     },
   });
   const sepB = await prisma.sportEventParticipant.create({
     data: {
       sportEventId: sportEvent.id,
       participantId: participantB.id,
-      isActive: true,
     },
   });
   const contest = await prisma.contest.create({

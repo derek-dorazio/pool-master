@@ -1,8 +1,8 @@
-import { legacyMatch, homeAwayOf, withHomeAway } from '../../support/match-sides';
+import { homeAwayOf, withHomeAway } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { isAtPlace, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -47,10 +47,8 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
   const domainEvents = new RecordingDomainEvents();
   const service = new SportEventBracketService({
     sportEvents: store.sportEventRepo(),
-    sportLeagues: store.sportLeagueRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
-    participants: store.participantRepo(),
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
@@ -64,18 +62,6 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     },
   });
   return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas, reminderRechecks, domainEvents };
-}
-
-/**
- * The event's league given a roster with `onRoster` on it, and the sport's other league, whose
- * own team is on its roster only: men's and women's are separate leagues (#830).
- */
-function withRosters(context: ReturnType<typeof setup>, ...onRoster: string[]) {
-  for (const participantId of onRoster) context.store.affiliate(context.sportLeague.id, participantId);
-  const women = context.store.addSportLeague(context.sportRow.id, 'NCAA Women\'s Basketball');
-  const otherLeagueTeam = context.store.addParticipant(context.sportRow.id, 'South Carolina', { participantType: 'TEAM' });
-  context.store.affiliate(women.id, otherLeagueTeam.id);
-  return otherLeagueTeam;
 }
 
 /** Two semifinals feeding a final: the smallest whole bracket. */
@@ -377,7 +363,7 @@ describe('SportEventBracketService.releaseBlockers', () => {
   it('counts a withdrawn team still in the bracket, and does not ask for a withdrawn team left out of it', async () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
-    expectDefined(context.store.field.find((entry) => entry.id === context.texas.id)).isActive = false;
+    expectDefined(context.store.field.find((entry) => entry.id === context.texas.id)).status = SportEventParticipantStatus.WITHDRAWN;
 
     await expect(context.service.releaseBlockers(context.event)).resolves.toEqual(['1 withdrawn teams are still in the bracket']);
   });
@@ -410,10 +396,8 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     const seed = (number: number): string => expectDefined(seeds[number - 1]).id;
     const service = new SportEventBracketService({ domainEvents: testDomainEvents(),
       sportEvents: store.sportEventRepo(),
-      sportLeagues: store.sportLeagueRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
-      participants: store.participantRepo(),
       matches: store.matchRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
@@ -456,91 +440,6 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     await expect(context.service.releaseBlockers(context.event)).resolves.toEqual([
       'Divisional in AFC has 1 open place(s) for 2 Wild Card winner(s) still to come',
     ]);
-  });
-});
-
-describe('SportEventBracketService.fillPlayInSlot', () => {
-  function withPlayInPlace() {
-    const context = setup({ status: SportEventStatus.SCHEDULED });
-    const pairing = context.store.addParticipant(context.sportRow.id, 'Texas / Xavier', { participantType: 'TEAM' });
-    const slot = context.store.addToField(context.event.id, pairing.id, { seedNumber: 11, isPlayInPlace: true });
-    const xavier = context.store.addParticipant(context.sportRow.id, 'Xavier', { participantType: 'TEAM' });
-    return { ...context, pairing, slot, xavier };
-  }
-
-  it('points the play-in place at the winning team, keeping the row and its seed, inactivates the pairing and leaves the row a play-in place no more', async () => {
-    const { service, store, event, pairing, slot, xavier } = withPlayInPlace();
-
-    await service.fillPlayInSlot(event.id, slot.id, xavier.id);
-
-    expect(store.field.find((entry) => entry.id === slot.id)).toMatchObject({ participantId: xavier.id, seedNumber: 11, isPlayInPlace: false });
-    expect(store.participants.find((participant) => participant.id === pairing.id)?.status).toBe(ParticipantStatus.INACTIVE);
-  });
-
-  it('refuses (409 EVENT_PARTICIPANT_ALREADY_ON_FIELD) a winner already on the field', async () => {
-    const { service, store, event, slot, duke } = withPlayInPlace();
-
-    await expect(service.fillPlayInSlot(event.id, slot.id, duke.participantId))
-      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_ALREADY_ON_FIELD', statusCode: 409 });
-    expect(store.field.find((entry) => entry.id === slot.id)?.participantId).not.toBe(duke.participantId);
-  });
-
-  it('refuses an inactive winner (404 PARTICIPANT_NOT_FOUND), and one of another sport, whose league is not the event\'s (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE)', async () => {
-    const { service, store, event, slot } = withPlayInPlace();
-    const golfer = store.addParticipant(store.addSport(Sport.GOLF).id, 'Ana');
-    const retired = store.addParticipant(store.sports[0].id, 'Retired U', { status: ParticipantStatus.INACTIVE });
-
-    await expect(service.fillPlayInSlot(event.id, slot.id, golfer.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE', statusCode: 409 });
-    await expect(service.fillPlayInSlot(event.id, slot.id, retired.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
-  });
-
-  it('refuses (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE) a winner off the event\'s league roster, as a women\'s team in a men\'s bracket, and leaves the place alone', async () => {
-    const context = withPlayInPlace();
-    const { service, store, event, slot, pairing } = context;
-    const otherLeagueTeam = withRosters(context, context.xavier.id);
-
-    await expect(service.fillPlayInSlot(event.id, slot.id, otherLeagueTeam.id))
-      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE', statusCode: 409 });
-    expect(store.field.find((entry) => entry.id === slot.id)).toMatchObject({ participantId: pairing.id, isPlayInPlace: true });
-  });
-
-  it('takes a winner on the event\'s league roster once the league has one', async () => {
-    const context = withPlayInPlace();
-    const { service, store, event, slot, xavier } = context;
-    withRosters(context, xavier.id);
-
-    await service.fillPlayInSlot(event.id, slot.id, xavier.id);
-
-    expect(store.field.find((entry) => entry.id === slot.id)?.participantId).toBe(xavier.id);
-  });
-
-  it('refuses (409 EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE) a row that is not a play-in place, leaving the team and its participant alone', async () => {
-    const { service, store, event, duke, xavier } = withPlayInPlace();
-
-    await expect(service.fillPlayInSlot(event.id, duke.id, xavier.id))
-      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE', statusCode: 409 });
-    expect(store.field.find((entry) => entry.id === duke.id)?.participantId).toBe(duke.participantId);
-    expect(store.participants.find((participant) => participant.id === duke.participantId)?.status).toBe(ParticipantStatus.ACTIVE);
-  });
-
-  it('refuses (404 EVENT_PARTICIPANT_NOT_FOUND) a field row of another event', async () => {
-    const { service, store, event, xavier } = withPlayInPlace();
-    const other = store.addEvent({ sport: Sport.BASKETBALL });
-    const elsewhere = store.addToField(other.id, store.addParticipant(store.sports[0].id, 'Gonzaga').id);
-
-    await expect(service.fillPlayInSlot(event.id, elsewhere.id, xavier.id))
-      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
-  });
-
-  it('refuses (409 PLAY_IN_SLOT_ALREADY_PLAYED) once the place has started a bracket match', async () => {
-    const { service, store, event, slot, xavier, duke } = withPlayInPlace();
-    store.matchRows.push(legacyMatch({
-      id: 'match-started', sportEventId: event.id, roundNumber: 1, slot: expectDefined(store.roundRows.find((round) => round.roundNumber === 1)).slot, matchNumber: 1,
-      homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true, status: MatchStatus.IN_PROGRESS,
-    }));
-
-    await expect(service.fillPlayInSlot(event.id, slot.id, xavier.id))
-      .rejects.toMatchObject({ code: 'PLAY_IN_SLOT_ALREADY_PLAYED', statusCode: 409 });
   });
 });
 
@@ -646,7 +545,6 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
     return { jobs: context.store.backgroundJobs.slice(from.jobs), woken: context.domainEvents.changedSportEventIds.slice(from.woken) };
   }
   const mark = (context: ReturnType<typeof setup>) => ({ jobs: context.store.backgroundJobs.length, woken: context.domainEvents.changedSportEventIds.length });
-  const once = (sportEventId: string) => ({ jobs: [eventRebuildJob(sportEventId)], woken: [sportEventId] });
   /** A write of the event's games also runs its slots' tiebreaker rule again (#2048). */
   const gamesWritten = (sportEventId: string) => ({ jobs: [eventRebuildJob(sportEventId), slotTiebreakersRefreshJob(sportEventId)], woken: [sportEventId] });
 
@@ -658,14 +556,6 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
     const before = mark(context);
     await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { isNeutralSite: false });
     expect(since(context, before)).toEqual(gamesWritten(context.event.id));
-  });
-
-  it('writes the rebuild job with a filled play-in place', async () => {
-    const context = setup({ status: SportEventStatus.SCHEDULED });
-    const slot = context.store.addToField(context.event.id, context.store.addParticipant(context.sportRow.id, 'Texas / Xavier', { participantType: 'TEAM' }).id, { seedNumber: 11, isPlayInPlace: true });
-    const xavier = context.store.addParticipant(context.sportRow.id, 'Xavier', { participantType: 'TEAM' });
-    await context.service.fillPlayInSlot(context.event.id, slot.id, xavier.id);
-    expect(since(context, { jobs: 0, woken: 0 })).toEqual(once(context.event.id));
   });
 
   it('writes the rebuild and tiebreaker jobs with a reseeded round\'s matchups', async () => {

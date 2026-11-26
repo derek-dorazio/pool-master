@@ -43,7 +43,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, ParticipantStatus, Sport, FieldOrderBasis, TierProfileType } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -461,7 +461,7 @@ export class InMemorySportEvents {
   }
 
   addToField(sportEventId: string, participantId: string, overrides: Partial<SportEventParticipant> = {}): SportEventParticipant {
-    const entry = stamp({ id: this.id('sep'), sportEventId, participantId, isActive: true, isPlayInPlace: false, metadata: {}, ...overrides });
+    const entry = stamp({ id: this.id('sep'), sportEventId, participantId, status: SportEventParticipantStatus.ACTIVE, metadata: {}, ...overrides });
     this.field.push(entry);
     return entry;
   }
@@ -571,7 +571,7 @@ export class InMemorySportEvents {
       findFieldFeedIds: async (providerId, sportLeagueId, ids) => {
         const provider = TEST_PROVIDER_ROWS[requireProviderCodeOfSourceId(providerId)].id;
         const fields = new Map<string, Set<string>>();
-        for (const row of this.field.filter((entry) => ids.includes(entry.sportEventId) && entry.isActive)) {
+        for (const row of this.field.filter((entry) => ids.includes(entry.sportEventId) && entry.status === SportEventParticipantStatus.ACTIVE)) {
           const field = fields.get(row.sportEventId) ?? new Set<string>();
           for (const mapping of this.mappings) {
             if (mapping.participantId === row.participantId && mapping.providerId === provider && mapping.sportLeagueId === sportLeagueId) field.add(mapping.externalId);
@@ -640,19 +640,19 @@ export class InMemorySportEvents {
       countParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => row.sportEventId === id).length),
       countUntieredActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
         row.sportEventId === id
-        && row.isActive
+        && row.status === SportEventParticipantStatus.ACTIVE
         && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && (valuation.sportEventTierId || valuation.tierAssignedSource))
       )).length),
       countUnpricedActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
         row.sportEventId === id
-        && row.isActive
+        && row.status === SportEventParticipantStatus.ACTIVE
         && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && valuation.price !== null)
       )).length),
       countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
       findEmptyTierLabels: async (ids) => new Map(ids.map((id) => [id, this.tierRows
         .filter((tier) => tier.sportEventId === id && !this.valuationRows.some((valuation) => (
           valuation.sportEventTierId === tier.id
-          && this.field.some((row) => row.id === valuation.sportEventParticipantId && row.isActive)
+          && this.field.some((row) => row.id === valuation.sportEventParticipantId && row.status === SportEventParticipantStatus.ACTIVE)
         )))
         .sort((left, right) => left.tierNumber - right.tierNumber)
         .map((tier) => tier.label)])),
@@ -820,15 +820,6 @@ export class InMemorySportEvents {
         this.valuationRows = this.valuationRows.filter((row) => row.sportEventParticipantId !== id);
       },
       countPicks: async (id) => this.picksByEntry.get(id) ?? 0,
-      fillPlayInSlot: async ({ id, winnerParticipantId, pairingParticipantId }, jobs) => {
-        this.backgroundJobs.push(...(jobs ?? []));
-        const row = this.field.find((entry) => entry.id === id);
-        const pairing = this.participants.find((participant) => participant.id === pairingParticipantId);
-        if (!row || !pairing) throw new Error('unknown field row or participant');
-        row.participantId = winnerParticipantId;
-        row.isPlayInPlace = false;
-        pairing.status = ParticipantStatus.INACTIVE;
-      },
     };
   }
 

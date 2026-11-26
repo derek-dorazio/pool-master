@@ -48,13 +48,10 @@ export function oneEventOf(fileName: string, leagueName: string, eventName: stri
     const league = expectDefined(file.sportLeagues.find((row) => row.name === leagueName), leagueName);
     const event = expectDefined(league.events.find((row) => row.name === eventName), eventName);
     const tagged = (key: string) => `${tag}-${key}`;
-    const inField = new Set(event.field.flatMap((entry) => [entry.player, ...(entry.playInWinner === undefined ? [] : [entry.playInWinner])]));
+    const inField = new Set(event.field.map((entry) => entry.player));
     league.players = league.players.filter((player) => inField.has(player.key)).map((player) => ({ ...player, key: tagged(player.key) }));
     event.name = `${event.name} ${tag}`;
-    for (const entry of event.field) {
-      entry.player = tagged(entry.player);
-      if (entry.playInWinner !== undefined) entry.playInWinner = tagged(entry.playInWinner);
-    }
+    for (const entry of event.field) entry.player = tagged(entry.player);
     for (const match of event.matches ?? []) {
       match.home = match.home === null ? null : tagged(match.home);
       match.away = match.away === null ? null : tagged(match.away);

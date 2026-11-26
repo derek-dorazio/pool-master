@@ -2190,7 +2190,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport event's field
-         * @description Patches field rows, their manual prices and their moves into another tier, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price or tier would change: its tiers and prices are locked. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change: the upset bonus reads the seeds as they stood at release. 422 UNKNOWN_TIER_KEY for a tierKey the event has no tier for; 422 SPORT_EVENT_NOT_BRACKET for a play-in place on an event that plays no bracket.
+         * @description Patches field rows, their manual prices and their moves into another tier, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price or tier would change: its tiers and prices are locked. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change: the upset bonus reads the seeds as they stood at release. 422 UNKNOWN_TIER_KEY for a tierKey the event has no tier for.
          */
         patch: operations["updateEventParticipants"];
         trace?: never;
@@ -2246,7 +2246,7 @@ export interface paths {
         put?: never;
         /**
          * Preview a field upload
-         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber, isActive and inactiveReason (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
+         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
          */
         post: operations["previewEventParticipantUpload"];
         delete?: never;
@@ -2656,26 +2656,6 @@ export interface paths {
          * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Places both sides of every match of the round, all or none; it can be set again until the round starts. 422 BRACKET_NOT_RESEEDED when the event's league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. 409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started or has a period score. 422 BRACKET_INVALID, naming every problem, when a match is left out or set twice, a team is not one left in the round or plays twice, a team leaves its region, or a bye or linked winner is moved. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         put: operations["setEventRoundMatchups"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/participants/{sportEventParticipantId}/play-in-winner": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Set the winner of a play-in place
-         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. For a field row that stands for a play-in pairing ("Texas / Xavier"): the row then names the team that won, keeping its seed, tier, price and every pick of it, and the pairing's participant is inactivated. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the winner is not an active participant of the event's sport; 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE when the event's sport league has a roster and the winner is not on it; 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the winner already has a field row; 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has started or played a bracket match. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the field row. Root admin only.
-         */
-        put: operations["setEventPlayInWinner"];
         post?: never;
         delete?: never;
         options?: never;
@@ -9778,14 +9758,6 @@ export interface components {
             /** @description The points spread from the home team's side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game. */
             homeSpread?: number | null;
         };
-        /** @description The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated. */
-        FillPlayInSlotRequest: {
-            /**
-             * Format: uuid
-             * @description The team that won the play-in game: an active participant of the event's sport not yet on the field.
-             */
-            participantId: string;
-        };
         /** @description A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores. */
         RecordSportEventRoundMatchResultRequest: {
             /**
@@ -14700,19 +14672,15 @@ export interface components {
             sportEventId: string;
             /** Format: uuid */
             participantId: string;
-            /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-            isActive: boolean;
             /**
-             * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-             * @enum {string|null}
+             * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             * @enum {string}
              */
-            inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+            status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
             /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
             ranking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;
-            /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
-            isPlayInPlace: boolean;
             /** @description The canonical participant. */
             participant: {
                 /** @description Participant identifier. */
@@ -14905,19 +14873,15 @@ export interface components {
                 sportEventId: string;
                 /** Format: uuid */
                 participantId: string;
-                /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-                isActive: boolean;
                 /**
-                 * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-                 * @enum {string|null}
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
                  */
-                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
                 ranking: number | null;
                 oddsToWin: number | null;
                 seedNumber: number | null;
-                /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
-                isPlayInPlace: boolean;
                 /** @description The canonical participant. */
                 participant: {
                     /** @description Participant identifier. */
@@ -15116,9 +15080,11 @@ export interface components {
             participants: {
                 /** Format: uuid */
                 sportEventParticipantId: string;
-                isActive?: boolean;
-                /** @enum {string|null} */
-                inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                /**
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
+                 */
+                status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 ranking?: number | null;
                 seedNumber?: number | null;
                 /** @description The odds to win, as the feed sends them. Kept on the grid save only for the test-data loader, which writes test odds in the feed's place (#2077). */
@@ -15127,8 +15093,6 @@ export interface components {
                 price?: number | null;
                 /** @description Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for. */
                 tierKey?: string;
-                /** @description Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release. */
-                isPlayInPlace?: boolean;
             }[];
         };
         /** @description One field row. */
@@ -15144,19 +15108,15 @@ export interface components {
                 sportEventId: string;
                 /** Format: uuid */
                 participantId: string;
-                /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-                isActive: boolean;
                 /**
-                 * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-                 * @enum {string|null}
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
                  */
-                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
                 ranking: number | null;
                 oddsToWin: number | null;
                 seedNumber: number | null;
-                /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
-                isPlayInPlace: boolean;
                 /** @description The canonical participant. */
                 participant: {
                     /** @description Participant identifier. */
@@ -15344,9 +15304,11 @@ export interface components {
                 /** @description The participant's canonical external id. */
                 externalId?: string;
                 playerName?: string;
-                isActive?: boolean;
-                /** @enum {string|null} */
-                inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                /**
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
+                 */
+                status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 ranking?: number | null;
                 seedNumber?: number | null;
             }[];
@@ -15361,9 +15323,11 @@ export interface components {
                     /** @description The participant's canonical external id. */
                     externalId?: string;
                     playerName?: string;
-                    isActive?: boolean;
-                    /** @enum {string|null} */
-                    inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                    /**
+                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                     * @enum {string}
+                     */
+                    status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                     ranking?: number | null;
                     seedNumber?: number | null;
                 };
@@ -15396,17 +15360,21 @@ export interface components {
                 change: "UPDATE" | "UNCHANGED" | null;
                 /** @description What is stored now; set whenever the row resolved. */
                 before: {
-                    isActive: boolean;
-                    /** @enum {string|null} */
-                    inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                    /**
+                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                     ranking: number | null;
                     seedNumber: number | null;
                 } | null;
                 /** @description What applying would store; null when the row cannot be applied. */
                 after: {
-                    isActive: boolean;
-                    /** @enum {string|null} */
-                    inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                    /**
+                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                     ranking: number | null;
                     seedNumber: number | null;
                 } | null;
@@ -16208,19 +16176,15 @@ export interface components {
                 sportEventId: string;
                 /** Format: uuid */
                 participantId: string;
-                /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-                isActive: boolean;
                 /**
-                 * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-                 * @enum {string|null}
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
                  */
-                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
                 ranking: number | null;
                 oddsToWin: number | null;
                 seedNumber: number | null;
-                /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
-                isPlayInPlace: boolean;
                 /** @description The canonical participant. */
                 participant: {
                     /** @description Participant identifier. */
@@ -36273,87 +36237,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventBracketResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    setEventPlayInWinner: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-                sportEventParticipantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FillPlayInSlotRequest"];
-            };
-        };
-        responses: {
-            /** @description One field row. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantResponse"];
                 };
             };
             /** @description Standard API error envelope. */

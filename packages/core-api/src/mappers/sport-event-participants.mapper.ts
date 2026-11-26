@@ -22,12 +22,10 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
     id: entry.id,
     sportEventId: entry.sportEventId,
     participantId: entry.participantId,
-    isActive: entry.isActive,
-    inactiveReason: entry.inactiveReason ?? null,
+    status: entry.status,
     ranking: entry.ranking ?? null,
     oddsToWin: entry.oddsToWin ?? null,
     seedNumber: entry.seedNumber ?? null,
-    isPlayInPlace: entry.isPlayInPlace,
     participant: mapParticipantToDto(view.participant),
     valuation: valuation
       ? {

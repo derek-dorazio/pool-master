@@ -18,6 +18,7 @@ import {
   providerSourceIdOf,
   providerCodeOfSourceId,
   requireProviderCodeOfSourceId,
+  SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
@@ -158,7 +159,7 @@ export class IngestionPersistence {
         externalId: participant.externalId,
         sport: participant.sport,
         name: participant.name,
-        active: participant.active,
+        status: participant.status,
       })),
     }, 'Persisting participants from ingestion');
 
@@ -424,8 +425,7 @@ export class IngestionPersistence {
       // the row stays rather than being blanked.
       const ranking = participant.ranking ?? existing?.ranking ?? null;
       const values = {
-        isActive: participant.active,
-        inactiveReason: participant.inactiveReason ?? null,
+        status: participant.status,
         ranking,
         oddsToWin: readEventScopedOddsToWin(participant, detail.externalId),
         seedNumber,
@@ -451,8 +451,7 @@ export class IngestionPersistence {
       const rebuild = await this.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
       const [created] = await this.prisma.$transaction([
         this.prisma.sportEventParticipant.createManyAndReturn({
-          // A play-in place is marked as one when its row is made; a later load leaves the mark to the bracket's own fill (#1571).
-          data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data, isPlayInPlace: plan.participant.metadata.playInPlace === true })),
+          data: toCreate.map((plan) => ({ sportEventId, participantId: plan.participantId, ...plan.data })),
           select: { id: true, participantId: true },
         }),
         // poolmaster-allow-query-in-loop: the changed rows of one event's field (per-row values, one transaction)
@@ -526,7 +525,7 @@ function participantValues(participant: ProviderParticipant) {
     role: participant.role ?? null,
     teamAffiliation: participant.teamAffiliation ?? null,
     photoUrl: participant.photoUrl ?? null,
-    status: participant.active ? ParticipantStatus.ACTIVE : ParticipantStatus.INACTIVE,
+    status: participant.status === SportEventParticipantStatus.ACTIVE ? ParticipantStatus.ACTIVE : ParticipantStatus.INACTIVE,
   };
 }
 
@@ -586,16 +585,14 @@ function normalizeSportEventRow(row: {
 }
 
 function normalizeSportEventParticipantInput(input: {
-  isActive: boolean;
-  inactiveReason: string | null;
+  status: SportEventParticipantStatus;
   ranking: number | null;
   oddsToWin: number | null;
   seedNumber: number | null;
   metadata: Record<string, unknown>;
 }): Record<string, unknown> {
   return {
-    isActive: input.isActive,
-    inactiveReason: input.inactiveReason,
+    status: input.status,
     ranking: input.ranking,
     oddsToWin: input.oddsToWin,
     seedNumber: input.seedNumber,
@@ -604,16 +601,14 @@ function normalizeSportEventParticipantInput(input: {
 }
 
 function normalizeSportEventParticipantRow(row: {
-  isActive: boolean;
-  inactiveReason: string | null;
+  status: SportEventParticipantStatus;
   ranking: number | null;
   oddsToWin: Prisma.Decimal | number | null;
   seedNumber: number | null;
   metadata: Prisma.JsonValue;
 }): Record<string, unknown> {
   return {
-    isActive: row.isActive,
-    inactiveReason: row.inactiveReason,
+    status: row.status,
     ranking: row.ranking,
     oddsToWin: decimalToNumber(row.oddsToWin),
     seedNumber: row.seedNumber,

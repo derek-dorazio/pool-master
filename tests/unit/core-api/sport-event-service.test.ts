@@ -1,7 +1,7 @@
 import { SlotTiebreakerService } from '../../../packages/core-api/src/modules/events/slot-tiebreaker-service';
 import { expect, jest } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
-import { BackgroundJobType, SlotKind, SlotWindowStatus, Sport, SportEventStatus, type SportEvent, type SportLeague, HomeAway } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SlotKind, SlotWindowStatus, Sport, SportEventStatus, type SportEvent, type SportLeague, HomeAway, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
@@ -73,10 +73,8 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() }),
     bracket: new SportEventBracketService({ domainEvents: testDomainEvents(),
       sportEvents,
-      sportLeagues: store.sportLeagueRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
-      participants: store.participantRepo(),
       matches: store.matchRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
@@ -874,7 +872,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     const event = await draftWithField(store, 2, 2);
     await store.addTiers(event.id, [{ tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
     const withdrawn = store.addToField(event.id, 'participant-withdrawn');
-    withdrawn.isActive = false;
+    withdrawn.status = SportEventParticipantStatus.WITHDRAWN;
     const tier2Id = store.tierRows.filter((tier) => tier.tierKey === 'tier-2').map((tier) => tier.id)[0];
     await store.valuationRepo().assignTiers([{ sportEventParticipantId: withdrawn.id, sportEventTierId: tier2Id, tierOrderIndex: 3, source: 'MANUAL' }]);
 
@@ -909,7 +907,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     const { store, service } = setup();
     const event = await draftWithField(store, 2, 2);
     const withdrawn = store.addToField(event.id, 'participant-withdrawn');
-    withdrawn.isActive = false;
+    withdrawn.status = SportEventParticipantStatus.WITHDRAWN;
 
     await expect(service.releaseEvent(event.id)).resolves.toMatchObject({ event: { status: SportEventStatus.SCHEDULED } });
   });

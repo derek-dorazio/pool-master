@@ -33,8 +33,10 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { SportEventParticipantResponseSchema } from '@poolmaster/shared/dto';
 
 // plans/124 §8 — pool-master-z3l. End-to-end golf-admin authoring journey through
 // the generated SDK: tour -> players -> roster upload -> tournament in an event
@@ -216,8 +218,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       body: {
         participants: expectDefined(field.data).participants.slice(0, 2).map((e) => ({
           sportEventParticipantId: e.id,
-          isActive: false,
-          inactiveReason: 'WITHDRAWN' as const,
+          status: 'WITHDRAWN' as const,
         })),
       },
     });
@@ -340,7 +341,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         pricedCount += 1;
       }
     });
-    expect(pricedCount).toBe(expectDefined(prices.data).participants.filter((e) => e.isActive).length);
+    expect(pricedCount).toBe(expectDefined(prices.data).participants.filter((e) => e.status === SportEventParticipantStatus.ACTIVE).length);
     const pricedEvent = await getEvent({ client: c, path: { eventId } });
     expect(expectDefined(pricedEvent.data).event.pricing).toEqual(standardEventPricing());
 
@@ -404,7 +405,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       body: { strokes: 65, status: 'COMPLETED' },
     });
     expect(correction.response?.status).toBe(200);
-    expect(expectDefined(correction.data).participant.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
+    expect(expectMatchesSchema(SportEventParticipantResponseSchema, correction.data).participant.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
 
     // --- COMPLETE the event -----------------------------------------------------
     const toDone = await transitionEvent({ client: c, path: { eventId }, body: { toStatus: 'COMPLETED' } });

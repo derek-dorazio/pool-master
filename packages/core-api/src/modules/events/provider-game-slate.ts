@@ -128,7 +128,7 @@ export class ProviderGameSlateService {
     }
 
     // Only a draft loads the bracket, so a released event reads none: a side it names may have left
-    // the field since (a play-in place its winner filled), and must not hold up the games.
+    // the field since, and must not hold up the games.
     const sync = event.status === SportEventStatus.DRAFT ? input : { ...input, bracket: undefined };
     const fieldRowOf = await this.fieldRows(event, sync);
     if (fieldRowOf === null) {

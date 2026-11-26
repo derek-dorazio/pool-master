@@ -288,7 +288,7 @@ describe('sport data bracket', () => {
             { player: 'ncaa-duke', seed: 1, oddsToWin: 3 },
             { player: 'ncaa-vermont', seed: 16, oddsToWin: 4 },
             { player: 'ncaa-houston', seed: 1, oddsToWin: 5 },
-            { player: 'ncaa-texas-xavier', seed: 16, isPlayInPlace: true, oddsToWin: 6 },
+            { player: 'ncaa-texas-xavier', seed: 16, oddsToWin: 6 },
           ],
           matches: [
             { matchNumber: 1, roundNumber: 1, home: 'ncaa-duke', away: 'ncaa-vermont', isNeutralSite: true, scheduledAt: '2027-03-20T12:15:00-04:00', advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' } },
@@ -301,7 +301,7 @@ describe('sport data bracket', () => {
     return file;
   }
 
-  it('reads a basketball file whose events carry a bracket, region seeds and a play-in place', () => {
+  it('reads a basketball file whose events carry a bracket and region seeds', () => {
     const file = parseSportDataFile(bracketFile());
     const event = file.sportLeagues[0].events[0];
 
@@ -310,7 +310,7 @@ describe('sport data bracket', () => {
       [2, 'ncaa-houston', 'ncaa-texas-xavier', { roundNumber: 2, matchNumber: 1, side: 'AWAY' }],
       [1, null, null, null],
     ]);
-    expect(event.field.map((entry) => [entry.seed, entry.isPlayInPlace ?? false])).toEqual([[1, false], [16, false], [1, false], [16, true]]);
+    expect(event.field.map((entry) => entry.seed)).toEqual([1, 16, 1, 16]);
   });
 
   it('refuses a bracket whose shape the bracket endpoint would refuse, naming each problem with the event', () => {
@@ -467,28 +467,6 @@ describe('sport data bracket', () => {
     ]);
   });
 
-  it('reads a play-in place\'s winner in a test seed: a team of the league not in the field', () => {
-    const file = bracketTestSeed();
-    file.sportLeagues[0].events[0].field[3] = { ...(file.sportLeagues[0].events[0].field[3] as object), playInWinner: 'ncaa-xavier' };
-    (file.sportLeagues[0] as unknown as { players: unknown[] }).players.push({ key: 'ncaa-xavier', name: 'Xavier', countryCode: 'US', ranking: 1 });
-
-    const event = parseSportDataFile(file).sportLeagues[0].events[0];
-
-    expect(event.field.map((entry) => entry.playInWinner ?? null)).toEqual([null, null, null, 'ncaa-xavier']);
-  });
-
-  it('refuses a play-in winner on a place that is not a play-in place, or naming a team outside the league or already in the field', () => {
-    const seed = bracketTestSeed();
-    const field = seed.sportLeagues[0].events[0].field;
-    field[0] = { ...(field[0] as object), playInWinner: 'ncaa-houston' };
-    field[3] = { ...(field[3] as object), playInWinner: 'ncaa-gonzaga' };
-    expect(problemsOf(seed)).toEqual([
-      'NCAA Men, Tournament: ncaa-duke names a play-in winner, but is not a play-in place.',
-      'NCAA Men, Tournament: ncaa-duke\'s play-in winner ncaa-houston is already in the field.',
-      'NCAA Men, Tournament: ncaa-texas-xavier\'s play-in winner ncaa-gonzaga is not in NCAA Men\'s players.',
-    ]);
-  });
-
   it('refuses a football test seed\'s period scores for the last quarter, out of order, or on a match with no result', () => {
     const file = bracketTestSeed();
     (file.scope as { sport?: string }).sport = 'FOOTBALL';
@@ -518,10 +496,10 @@ describe('sport data bracket', () => {
     expect(league.events[0].matches?.map((match) => [match.matchNumber, match.regionLabel, match.advancesTo])).toEqual([[1, 'East', null], [2, 'East', null], [1, 'East', null]]);
   });
 
-  it('refuses a bracket, a seed or a play-in place for a sport not played as a bracket', () => {
+  it('refuses a bracket or a seed for a sport not played as a bracket', () => {
     const golf = edited((file) => {
       file.scope.contents.push('BRACKET');
-      file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', seed: 1, isPlayInPlace: true, oddsToWin: 6.5, rounds: [71, 65, 70, 64] };
+      file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', seed: 1, oddsToWin: 6.5, rounds: [71, 65, 70, 64] };
       (file.sportLeagues[0].events[0] as { matches?: unknown[] }).matches = [
         { matchNumber: 1, roundNumber: 1, home: 'pga-a', away: null, isNeutralSite: true, advancesTo: null },
       ];
@@ -530,7 +508,7 @@ describe('sport data bracket', () => {
     expect(problemsOf(golf)).toEqual([
       'scope.contents has BRACKET, but a golf event is not played as a bracket.',
       'PGA TOUR, The RSM Classic: has a bracket, which only a sport played as a bracket has.',
-      'PGA TOUR, The RSM Classic: marks a seed or a play-in place, which only a sport played as a bracket has.',
+      'PGA TOUR, The RSM Classic: marks a seed, which only a sport played as a bracket has.',
     ]);
   });
 });

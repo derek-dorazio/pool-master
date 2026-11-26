@@ -12,7 +12,7 @@ import {
   ContestFormat,
   ContestStatus,
   MatchSide,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   PickOutcome,
   SelectionType,
   UpsetBonusRule,
@@ -402,7 +402,7 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
   /** T1 withdraws before game 1, and a lucky loser takes its place against T8. */
   function withdrawT1(context: ReturnType<typeof setup>) {
     const sportEventId = expectDefined(context.games.matches.get('m1')).sportEventId;
-    Object.assign(expectDefined(context.games.field.get('T1')), { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
+    Object.assign(expectDefined(context.games.field.get('T1')), { status: SportEventParticipantStatus.WITHDRAWN });
     context.games.addTeam(sportEventId, 'Lucky Loser', { id: 'LL' });
     context.games.putMatches([...context.games.matches.values()].map((match) => (match.matchNumber === 1 ? withHomeAway(match, { homeSportEventParticipantId: 'LL' }) : match)));
   }

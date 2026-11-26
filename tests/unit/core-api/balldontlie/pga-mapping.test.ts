@@ -109,7 +109,7 @@ describe('BALLDONTLIE PGA field to participants', () => {
       firstName: 'Scottie',
       lastName: 'Scheffler',
       nationality: 'USA',
-      active: true,
+      status: 'ACTIVE',
       ranking: 1,
       metadata: { competitorId: 5103 },
     });
@@ -139,13 +139,13 @@ describe('BALLDONTLIE PGA field to participants', () => {
 
   it('maps a tour golfer with whether they are active and their world ranking', () => {
     const player = { id: 901, first_name: 'Retired', last_name: 'Golfer', display_name: 'Retired Golfer', country: null, country_code: null, owgr: null, active: false };
-    expect(toTourParticipant(player)).toMatchObject({ externalId: '901', name: 'Retired Golfer', active: false, ranking: undefined, metadata: {} });
-    expect(toTourParticipant({ ...player, owgr: 12, active: true })).toMatchObject({ active: true, ranking: 12 });
+    expect(toTourParticipant(player)).toMatchObject({ externalId: '901', name: 'Retired Golfer', status: 'WITHDRAWN', ranking: undefined, metadata: {} });
+    expect(toTourParticipant({ ...player, owgr: 12, active: true })).toMatchObject({ status: 'ACTIVE', ranking: 12 });
   });
 
   it('maps a tour golfer the vendor sends with only an id and a name as active, unranked and unnamed beyond that, since the list is read with active=true', () => {
     expect(toTourParticipant({ id: 902, display_name: 'Bare Golfer' })).toMatchObject({
-      externalId: '902', name: 'Bare Golfer', active: true, ranking: undefined, firstName: undefined, lastName: undefined, nationality: undefined,
+      externalId: '902', name: 'Bare Golfer', status: 'ACTIVE', ranking: undefined, firstName: undefined, lastName: undefined, nationality: undefined,
     });
   });
 });

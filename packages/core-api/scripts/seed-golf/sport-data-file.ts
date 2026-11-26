@@ -84,15 +84,8 @@ const FieldEntrySchema = z.object({
    * entry is unseeded, as a tennis draw's players outside its 32 seeds are (#704).
    */
   seed: z.number().int().positive().nullable().optional(),
-  /** A bracket sport's only: this place stands for a play-in pairing ("Texas / Xavier"), whose winner is named after release. */
-  isPlayInPlace: z.boolean().optional(),
   // Test data only (RESULTS):
   oddsToWin: z.number().positive().optional(),
-  /**
-   * A play-in place's winner (the NBA play-in's 8 seed): a key from the same sport league's
-   * players, not in the field. Set on the place after release, before any result.
-   */
-  playInWinner: z.string().min(1).optional(),
   /** Strokes per round played. A withdrawal's last entry is the partial round. */
   rounds: z.array(z.number().int().positive()).optional(),
   /** MC: missed the cut after round 2. WD: withdrew during their last round. */
@@ -389,17 +382,11 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
       else if (!contents.has(SportDataContent.BRACKET)) problems.push(`${where}: has a bracket, but the scope's contents leave out BRACKET.`);
       else for (const problem of bracketProblems(event, matches)) problems.push(`${where}: bracket: ${problem}.`);
     }
-    if (!playsBracket && event.field.some((entry) => entry.isPlayInPlace !== undefined || entry.seed !== undefined)) {
-      problems.push(`${where}: marks a seed or a play-in place, which only a sport played as a bracket has.`);
+    if (!playsBracket && event.field.some((entry) => entry.seed !== undefined)) {
+      problems.push(`${where}: marks a seed, which only a sport played as a bracket has.`);
     }
-    const fieldKeys = new Set(event.field.map((entry) => entry.player));
     for (const entry of event.field) {
       if (!playerKeys.has(entry.player)) problems.push(`${where}: ${entry.player} is not in ${league.name}'s players.`);
-      if (entry.playInWinner !== undefined) {
-        if (entry.isPlayInPlace !== true) problems.push(`${where}: ${entry.player} names a play-in winner, but is not a play-in place.`);
-        if (!playerKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is not in ${league.name}'s players.`);
-        if (fieldKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is already in the field.`);
-      }
       if (results === SeedResults.STROKE_ROUNDS) {
         if (entry.oddsToWin === undefined || entry.rounds === undefined) {
           problems.push(`${where}: ${entry.player} needs oddsToWin and rounds in test data.`);
