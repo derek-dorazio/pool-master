@@ -2531,7 +2531,6 @@ model SportEventParticipantStanding {
   displayPosition         String?                   @map("display_position") @db.VarChar(20)
   status                  ParticipantStandingStatus @default(ACTIVE)
   asOf                    DateTime?                 @map("as_of") @db.Timestamptz
-  currentRound            Int?                      @map("current_round")
   createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
 

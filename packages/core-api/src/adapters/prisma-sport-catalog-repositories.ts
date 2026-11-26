@@ -932,7 +932,6 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
           displayPosition: standing.displayPosition,
           status: standing.status,
           asOf: standing.asOf,
-          currentRound: standing.currentRound,
           createdAt: standing.createdAt,
           updatedAt: standing.updatedAt,
         },

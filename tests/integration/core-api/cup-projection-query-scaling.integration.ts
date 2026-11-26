@@ -87,7 +87,6 @@ function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?:
       await prisma.sportEventParticipantStanding.create({
         data: {
           sportEventParticipantId: row.id,
-          currentRound: 1,
           asOf: new Date(),
           golf: { create: { eventScoreToPar: tied ? 0 : scoreToPar, eventStrokes: 72 + (tied ? 0 : scoreToPar), currentRoundThru: 9 } },
         },

@@ -112,13 +112,13 @@ describe('field row mappers', () => {
     });
   });
 
-  it('nests a scored row\'s valuation, its standing with golf detail, each round with golf, and its race result', () => {
+  it('nests a scored row\'s valuation, its standing with golf detail and its current round read off its rounds, each round with golf, and its race result', () => {
     const view = {
       entry: { ...entry, status: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 },
       participant: scottie,
       valuation: { id: 'v-1', sportEventTierId: 'tier-a', tierOrderIndex: 0, tierAssignedSource: 'MANUAL', price: 12000, priceAssignedSource: 'UPLOAD' },
       standing: {
-        standing: { id: 's-1', position: 1, displayPosition: 'T1', status: 'ACTIVE', asOf: new Date('2026-04-12T20:00:00.000Z'), currentRound: 4 },
+        standing: { id: 's-1', position: 1, displayPosition: 'T1', status: 'ACTIVE', asOf: new Date('2026-04-12T20:00:00.000Z') },
         golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 18 },
       },
       rounds: [
@@ -139,7 +139,8 @@ describe('field row mappers', () => {
       displayPosition: 'T1',
       status: 'ACTIVE',
       asOf: '2026-04-12T20:00:00.000Z',
-      currentRound: 4,
+      // The highest round it has a score in, read off its rounds.
+      currentRound: 2,
       golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 18 },
     });
     expect(dto.rounds).toEqual([
@@ -154,7 +155,7 @@ describe('field row mappers', () => {
       entry,
       participant: scottie,
       valuation: null,
-      standing: { standing: { id: 's-1', position: null, displayPosition: null, status: 'ACTIVE', asOf: null, currentRound: null }, golf: null },
+      standing: { standing: { id: 's-1', position: null, displayPosition: null, status: 'ACTIVE', asOf: null }, golf: null },
       rounds: [],
       raceResult: null,
       affiliatedWithSportLeague: true,

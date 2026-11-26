@@ -94,7 +94,6 @@ describe('Golf round scores — admin correction surface', () => {
     await getPrisma().sportEventParticipantStanding.create({
       data: {
         sportEventParticipantId: rory.sep.id,
-        currentRound: 1,
         status: 'COMPLETE',
         golf: { create: { eventScoreToPar: -3, eventStrokes: 69, currentRoundThru: 18 } },
       },
@@ -109,7 +108,7 @@ describe('Golf round scores — admin correction surface', () => {
     expect(byName.get('Rory McIlroy')).toMatchObject({
       rounds: [expect.objectContaining({ round: expect.objectContaining({ roundNumber: 1, status: 'COMPLETED' }), golf: expect.objectContaining({ strokes: 69, scoreToPar: -3 }) })],
       standing: {
-        standing: expect.objectContaining({ currentRound: 1, status: 'COMPLETE' }),
+        standing: expect.objectContaining({ status: 'COMPLETE' }),
         golf: expect.objectContaining({ eventScoreToPar: -3, eventStrokes: 69 }),
       },
     });
@@ -180,7 +179,6 @@ describe('Golf round scores — admin correction surface', () => {
       include: { golf: true },
     });
     expect(standing).toMatchObject({
-      currentRound: 1,
       status: 'COMPLETE',
       golf: { eventScoreToPar: -4, eventStrokes: 68, currentRoundThru: 18 },
     });

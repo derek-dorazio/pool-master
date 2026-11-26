@@ -7,9 +7,8 @@
  * - completes the match with its winner and scores,
  * - puts the winner on the side of the match it advances to,
  * - and rewrites every team's core standing from the bracket: champion 1, runner-up 2, teams out in
- *   the same round sharing a place below everyone who went further, a team that lost ELIMINATED,
- *   and `currentRound` the latest round the team has a match in. A week of games that forms no
- *   bracket (#768) ranks no team: a team is COMPLETE once its game is played or cancelled.
+ *   the same round sharing a place below everyone who went further, and a team that lost
+ *   ELIMINATED. A week of games that forms no bracket (#768) ranks no team: a team is COMPLETE once its game is played or cancelled.
  *
  * A result can be changed, or cleared, until the match its winner advanced to has a result of its
  * own (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED): changing an early winner then would leave the later
@@ -175,7 +174,6 @@ export function gameStandings(matches: readonly SportEventRoundMatch[], asOf: Da
       status: match.status === MatchStatus.COMPLETED || match.status === MatchStatus.CANCELLED
         ? ParticipantStandingStatus.COMPLETE
         : ParticipantStandingStatus.ACTIVE,
-      currentRound: match.roundNumber,
       asOf,
     })));
 }
@@ -224,7 +222,6 @@ export function bracketStandings(matches: readonly SportEventRoundMatch[], asOf:
     status: team.lostInRound !== null
       ? ParticipantStandingStatus.ELIMINATED
       : team.champion ? ParticipantStandingStatus.COMPLETE : ParticipantStandingStatus.ACTIVE,
-    currentRound: team.roundReached,
     asOf,
   }));
 }

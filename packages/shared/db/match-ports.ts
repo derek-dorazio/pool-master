@@ -95,8 +95,6 @@ export interface BracketStandingWrite {
   position: number | null;
   displayPosition: string | null;
   status: ParticipantStandingStatus;
-  /** The latest round the team has a match in. */
-  currentRound: number | null;
   asOf: Date;
 }
 

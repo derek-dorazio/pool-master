@@ -44,7 +44,8 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
           displayPosition: standing.standing.displayPosition,
           status: standing.standing.status,
           asOf: standing.standing.asOf?.toISOString() ?? null,
-          currentRound: standing.standing.currentRound,
+          // The highest round it has a score in (#2047): read off its rounds, never stored.
+          currentRound: view.rounds.length === 0 ? null : Math.max(...view.rounds.map(({ round }) => round.roundNumber)),
           golf: standing.golf
             ? {
                 eventScoreToPar: standing.golf.eventScoreToPar,

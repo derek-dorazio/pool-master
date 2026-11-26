@@ -175,7 +175,7 @@ describe('golf standings — cut, withdrawal and the current round', () => {
     ], 'balldontlie', 4);
 
     const ana = await standingOf(store, anaEntry.id);
-    expect(ana.standing).toMatchObject({ status: 'ELIMINATED', currentRound: 2, position: null, displayPosition: null });
+    expect(ana.standing).toMatchObject({ status: 'ELIMINATED', position: null, displayPosition: null });
     expect(ana.golf).toMatchObject({ eventScoreToPar: 5, eventStrokes: 149 });
     expect((await standingOf(store, benEntry.id)).standing).toMatchObject({ position: 1, displayPosition: '1' });
   });
@@ -197,13 +197,13 @@ describe('golf standings — cut, withdrawal and the current round', () => {
 
     await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1, { thru: undefined })], 'balldontlie', 4);
     expect(await standingOf(store, anaEntry.id)).toMatchObject({
-      standing: { status: 'COMPLETE', currentRound: 1 },
+      standing: { status: 'COMPLETE' },
       golf: { currentRoundThru: 18 },
     });
 
     await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 2, 0, { status: 'IN_PROGRESS', thru: 0, strokes: 0 })], 'balldontlie', 4);
     expect(await standingOf(store, anaEntry.id)).toMatchObject({
-      standing: { status: 'IN_PROGRESS', currentRound: 2 },
+      standing: { status: 'IN_PROGRESS' },
       golf: { currentRoundThru: 0, eventScoreToPar: -1 },
     });
   });
@@ -265,7 +265,7 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 72, scoreToPar: 0 });
 
     expect(await standingOf(store, anaEntry.id)).toMatchObject({
-      standing: { currentRound: 3, status: 'IN_PROGRESS' },
+      standing: { status: 'IN_PROGRESS' },
       golf: { eventScoreToPar: -1, currentRoundThru: 6 },
     });
   });
