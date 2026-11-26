@@ -117,7 +117,7 @@ describe('RootAdminProfilesPage', () => {
     expect(within(added).getAllByText('4 tiers of 8, capped')).toHaveLength(2);
 
     await userEvent.click(seeded);
-    expect(await screen.findByText('Tier 1 is the top seeds, tier 2 the 2 to 4 seeds, and tier 3 every other playoff team.')).toBeInTheDocument();
+    expect(await screen.findByText('Tier 1 is the 1 seeds, tier 2 the 2 to 4 seeds, and tier 3 every other playoff team.')).toBeInTheDocument();
     expect(screen.getByText('Three tiers by playoff seed.')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByTestId('root-admin-tier-profile-dialog')).not.toBeInTheDocument());

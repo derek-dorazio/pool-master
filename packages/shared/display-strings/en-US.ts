@@ -1594,7 +1594,7 @@ export const enUS = {
   tierProfile: {
     PLAYOFF_SEEDS_1_4_REST: {
       name: 'Playoff seeds: 1, 2-4, 5+',
-      description: 'Tier 1 is the top seeds, tier 2 the 2 to 4 seeds, and tier 3 every other playoff team.',
+      description: 'Tier 1 is the 1 seeds, tier 2 the 2 to 4 seeds, and tier 3 every other playoff team.',
     },
     REGION_SEEDS_EACH: {
       name: 'Seed lines: 1, 2, 3, 4',
@@ -1605,8 +1605,8 @@ export const enUS = {
       description: 'Tier 1 is the 1 to 4 seeds in every region, tier 2 the 5 to 8 seeds, tier 3 the 9 to 12 seeds, and tier 4 the rest.',
     },
     SEEDS_1_2_REST: {
-      name: 'Division seeds: 1, 2, 3+',
-      description: 'Tier 1 is the division winners, tier 2 the second-place teams, and tier 3 every other playoff team.',
+      name: 'Playoff seeds: 1, 2, 3+',
+      description: 'Tier 1 is the 1 seeds, tier 2 the 2 seeds, and tier 3 every other playoff team.',
     },
     SEEDS_2_4_REST: {
       name: 'Playoff seeds: 1-2, 3-4, 5+',
@@ -1626,59 +1626,59 @@ export const enUS = {
     },
     TIERS_2_OF_2: {
       name: '2 tiers of 2',
-      description: 'Teams or players are ranked by their odds, then split into two tiers of two; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into two tiers of two; the last tier takes everyone left.',
     },
     TIERS_3_OF_3: {
       name: '3 tiers of 3',
-      description: 'Teams or players are ranked by their odds, then split into three tiers of three; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into three tiers of three; the last tier takes everyone left.',
     },
     TIERS_4_OF_16: {
       name: '4 tiers of 16',
-      description: 'Teams or players are ranked by their odds, then split into four tiers of 16; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into four tiers of 16; the last tier takes everyone left.',
     },
     TIERS_4_OF_3: {
       name: '4 tiers of 3',
-      description: 'Teams or players are ranked by their odds, then split into four tiers of three; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into four tiers of three; the last tier takes everyone left.',
     },
     TIERS_4_OF_4: {
       name: '4 tiers of 4',
-      description: 'Teams or players are ranked by their odds, then split into four tiers of four; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into four tiers of four; the last tier takes everyone left.',
     },
     TIERS_4_OF_4_BY_ODDS: {
       name: '4 tiers of 4, by odds',
-      description: 'Teams or players are ranked by their odds, then split into four tiers of four; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their ranking where there are no odds, then split into four tiers of four; the last tier takes everyone left.',
     },
     TIERS_4_OF_6: {
       name: '4 tiers of 6',
-      description: 'Teams or players are ranked by their odds, then split into four tiers of six; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into four tiers of six; the last tier takes everyone left.',
     },
     TIERS_4_OF_8_BY_ODDS: {
       name: '4 tiers of 8, by odds',
-      description: 'Teams or players are ranked by their odds, then split into four tiers of eight; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their ranking where there are no odds, then split into four tiers of eight; the last tier takes everyone left.',
     },
     TIERS_5_OF_10: {
       name: '5 tiers of 10',
-      description: 'Teams or players are ranked by their odds, then split into five tiers of ten; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into five tiers of ten; the last tier takes everyone left.',
     },
     TIERS_5_OF_8: {
       name: '5 tiers of 8',
-      description: 'Teams or players are ranked by their odds, then split into five tiers of eight; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into five tiers of eight; the last tier takes everyone left.',
     },
     TIERS_6_OF_10: {
       name: '6 tiers of 10',
-      description: 'Teams or players are ranked by their odds, then split into six tiers of ten; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into six tiers of ten; the last tier takes everyone left.',
     },
     TIERS_6_OF_2: {
       name: '6 tiers of 2',
-      description: 'Teams or players are ranked by their odds, then split into six tiers of two; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into six tiers of two; the last tier takes everyone left.',
     },
     TIERS_6_OF_8: {
       name: '6 tiers of 8',
-      description: 'Teams or players are ranked by their odds, then split into six tiers of eight; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into six tiers of eight; the last tier takes everyone left.',
     },
     TIERS_7_OF_2: {
       name: '7 tiers of 2',
-      description: 'Teams or players are ranked by their odds, then split into seven tiers of two; the last tier takes everyone left.',
+      description: 'Teams or players are ranked by their odds, or their seed where there are no odds, then split into seven tiers of two; the last tier takes everyone left.',
     },
   },
   pricingProfile: {
