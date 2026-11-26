@@ -161,7 +161,7 @@ describe('Saving the field grid (#1252)', () => {
     const { event, field } = await eventWithField(SMALL_FIELD);
     const prisma = getPrisma();
     const [first, second] = field;
-    const tier = await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 } });
+    const tier = await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } });
     const before = await prisma.sportEventParticipantValuation.create({
       data: { sportEventParticipantId: expectDefined(first).id, sportEventTierId: tier.id, tierOrderIndex: 0, tierAssignedSource: ValuationSource.MANUAL, price: 500, priceAssignedSource: ValuationSource.MANUAL },
     });
@@ -181,8 +181,8 @@ describe('Saving the field grid (#1252)', () => {
     const prisma = getPrisma();
     const row = expectDefined(field[0]);
     const [tierA, tierB] = await Promise.all([
-      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 } }),
-      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'B', label: 'Tier B', tierNumber: 2 } }),
+      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } }),
+      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'B', tierNumber: 2 } }),
     ]);
     await prisma.sportEventParticipantValuation.create({
       data: { sportEventParticipantId: row.id, sportEventTierId: tierA.id, tierOrderIndex: 0, tierAssignedSource: ValuationSource.AUTO_ODDS, price: 500, priceAssignedSource: ValuationSource.AUTO_ODDS },
@@ -208,7 +208,7 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
   it('assigns every row a tier in a fixed number of queries, keeping a row\'s price, id and creation time', async () => {
     const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
-      const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 } });
+      const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } });
       const priced = await getPrisma().sportEventParticipantValuation.create({
         data: { sportEventParticipantId: expectDefined(field[0]).id, price: 700, priceAssignedSource: ValuationSource.AUTO_ODDS },
       });
@@ -232,7 +232,7 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
   it('prices every row and saves the event\'s pricing values in a fixed number of queries, keeping a row\'s tier', async () => {
     const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
-      const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 } });
+      const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } });
       await getPrisma().sportEventParticipantValuation.create({
         data: { sportEventParticipantId: expectDefined(field[0]).id, sportEventTierId: tier.id, tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL },
       });

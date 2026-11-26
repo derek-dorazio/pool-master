@@ -12,7 +12,7 @@ import {
   teardownIntegrationTests,
   withBackgroundJobsFailing,
   integrationBackgroundJobs, integrationSportEventServices, integrationSyncFindings } from '../helpers';
-import { Sport } from '@poolmaster/shared/domain';
+import { PeriodUnit, Sport } from '@poolmaster/shared/domain';
 import {
   GolfScoreError,
   type GolfScoreRowInput,
@@ -24,7 +24,7 @@ import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../supp
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
 import { sportRowKeys } from '../../support/sport-rows';
-import { linkTestSlot } from '../../support/test-slots';
+import { linkTestSlot, setEventSlotPeriods } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
@@ -56,6 +56,8 @@ async function createField(suffix: string) {
   });
   // The admin score correction writes only on a test event (#2074).
   await linkTestSlot(prisma, created);
+  // A round of it is 18 holes, its slot's period count (#2047).
+  await setEventSlotPeriods(prisma, created.id, { unit: PeriodUnit.HOLE, count: 18 });
   // The provider's id for the event, which a live-score sync names it by (#2004).
   const event = { ...created, externalId: `golf-round-scores-${created.id}` };
   await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: event.externalId });
@@ -295,7 +297,7 @@ describe('Golf round scores — admin correction surface', () => {
   it.each([
     ['0 strokes', { strokes: 0 }],
     ['negative strokes', { strokes: -1 }],
-    ['a thru above 18', { thru: 19 }],
+    ['a negative thru', { thru: -1 }],
   ])('a PATCH with %s is refused with 400 and leaves the stored round as it was', async (_label, payload) => {
     const { event, rory } = await createField(`patch-bounds-${Object.keys(payload)[0]}-${Object.values(payload)[0]}`);
     await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
@@ -318,9 +320,9 @@ describe('Golf round scores — admin correction surface', () => {
 
   it.each([
     ['upload', '0 strokes', { strokes: 0 }, ''],
-    ['upload', 'a thru above 18', { thru: 19 }, ''],
+    ['upload', 'a negative thru', { thru: -1 }, ''],
     ['preview', '0 strokes', { strokes: 0 }, '/preview'],
-    ['preview', 'a thru above 18', { thru: 19 }, '/preview'],
+    ['preview', 'a negative thru', { thru: -1 }, '/preview'],
   ])('%s: a row with %s is refused with 400 and writes nothing', async (operation, _label, overrides, suffix) => {
     const { event, rory } = await createField(`${operation}-bounds-${Object.keys(overrides)[0]}`);
     const admin = await createTestUser({ isRootAdmin: true });
@@ -334,6 +336,34 @@ describe('Golf round scores — admin correction surface', () => {
 
     expect(res.statusCode).toBe(400);
     expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+  });
+});
+
+describe('Golf round scores — holes completed are bounded by the round\'s slot', () => {
+  it('refuses a correction and an upload with more holes completed than the round\'s 18 with 422 ROUND_THRU_BEYOND_HOLES, leaving the stored round as it was', async () => {
+    const { event, rory } = await createField('thru-beyond-holes');
+    await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
+    const admin = await createTestUser({ isRootAdmin: true });
+
+    const patch = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores/${rory.sep.id}`,
+      headers: admin.headers,
+      payload: { thru: 19 },
+    });
+    const upload = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores`,
+      headers: admin.headers,
+      payload: { rows: [row(rory.participant.id, { strokes: 66, thru: 19 })] },
+    });
+
+    expect([patch.statusCode, patch.json<{ error: { code: string } }>().error.code, upload.statusCode, upload.json<{ error: { code: string } }>().error.code]).toEqual([422, 'ROUND_THRU_BEYOND_HOLES', 422, 'ROUND_THRU_BEYOND_HOLES']);
+    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
+      where: { sportEventParticipantId: rory.sep.id },
+      include: { golf: true },
+    });
+    expect(round.golf).toMatchObject({ strokes: 68, thru: 18 });
   });
 });
 

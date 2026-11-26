@@ -89,7 +89,7 @@ async function readySyncedDraft(store: InMemorySportEvents, sportLeagueId: strin
     ...overrides,
   });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
-  await store.addTiers(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
+  await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }]);
   const tierId = store.tierRows.find((tier) => tier.sportEventId === event.id)?.id ?? '';
   const entries = ['a', 'b', 'c'].map((name) => {
     const participantId = `participant-${event.id}-${name}`;

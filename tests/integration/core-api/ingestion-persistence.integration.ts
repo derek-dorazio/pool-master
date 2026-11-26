@@ -380,16 +380,15 @@ describe('IngestionPersistence', () => {
 
   // plans/147 — sync never creates a SportEvent: a provider event names no series or sport
   // league, so a created row would have to guess its tour.
-  it('updates the event linked to a provider event and writes no row for a provider event nothing is linked to', async () => {
+  // #1247, #2047 — one read for every linked event. The provider's word changes no event row:
+  // its field size is counted over its field rows, so each linked event is recorded unchanged.
+  it('records each linked event of a feed unchanged and leaves its row as it was, creating none for an unlinked one', async () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    const startDate = new Date('2026-06-04T12:00:00.000Z');
-    const linked = await linkedProviderEvent(prisma, {
-      providerId: 'balldontlie',
-      externalId: 'integration-linked-sync',
-      name: 'Linked Sync Open',
-      startDate,
-    });
+    const startDate = new Date('2026-06-18T12:00:00.000Z');
+    const link = (externalId: string) => linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: `Batch ${externalId}`, startDate });
+    const first = await link('integration-batch-first');
+    const second = await link('integration-batch-second');
     const providerEvent = (externalId: string) => ({
       externalId,
       providerId: 'balldontlie',
@@ -397,69 +396,24 @@ describe('IngestionPersistence', () => {
       name: `Provider ${externalId}`,
       startDate,
       status: 'SCHEDULED' as const,
-      participantCount: 80,
       fieldLocked: false,
       providerSlots: [],
     });
 
     const result = await persistence.persistEventsWithDiagnostics([
-      providerEvent('integration-linked-sync'),
-      providerEvent('integration-unlinked-sync'),
+      providerEvent('integration-batch-first'),
+      providerEvent('integration-batch-unlinked'),
+      providerEvent('integration-batch-second'),
     ]);
 
-    expect(result.count).toBe(1);
-    expect((await prisma.sportEvent.findUniqueOrThrow({ where: { id: linked.id } })).participantCount).toBe(80);
-    await expect(prisma.sportEvent.count({
-      where: providerEventWhere('balldontlie', 'integration-unlinked-sync'),
-    })).resolves.toBe(0);
-  });
-
-  // #1247 — one read for every linked event and one transaction for the changed ones, with the
-  // same rows and dispositions the one-event-at-a-time sync wrote.
-  it('syncs a feed of linked, unlinked, changed and unchanged events into the right rows and dispositions', async () => {
-    const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    const startDate = new Date('2026-06-18T12:00:00.000Z');
-    const link = async (externalId: string, participantCount: number) => {
-      const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: `Batch ${externalId}`, startDate });
-      return prisma.sportEvent.update({ where: { id: event.id }, data: { participantCount } });
-    };
-    const grown = await link('integration-batch-grown', 60);
-    const same = await link('integration-batch-same', 80);
-    const shrunk = await link('integration-batch-shrunk', 90);
-    const providerEvent = (externalId: string, participantCount: number) => ({
-      externalId,
-      providerId: 'balldontlie',
-      sport: Sport.GOLF,
-      name: `Provider ${externalId}`,
-      startDate,
-      status: 'SCHEDULED' as const,
-      participantCount,
-      fieldLocked: false,
-      providerSlots: [],
-    });
-
-    const result = await persistence.persistEventsWithDiagnostics([
-      providerEvent('integration-batch-grown', 80),
-      providerEvent('integration-batch-unlinked', 80),
-      providerEvent('integration-batch-same', 80),
-      providerEvent('integration-batch-shrunk', 70),
-    ]);
-
-    expect(result.count).toBe(3);
-    expect(result.writeDiagnostics.summary).toMatchObject({ total: 3, updated: 2, unchanged: 1, created: 0 });
+    expect(result.count).toBe(2);
+    expect(result.writeDiagnostics.summary).toMatchObject({ total: 2, updated: 0, unchanged: 2, created: 0 });
     expect(result.writeDiagnostics.rows.map((row) => [row.externalId, row.disposition, row.internalId])).toEqual([
-      ['integration-batch-grown', 'UPDATED', grown.id],
-      ['integration-batch-same', 'UNCHANGED', same.id],
-      ['integration-batch-shrunk', 'UPDATED', shrunk.id],
+      ['integration-batch-first', 'UNCHANGED', first.id],
+      ['integration-batch-second', 'UNCHANGED', second.id],
     ]);
-    const stored = await prisma.sportEvent.findMany({
-      where: { id: { in: [grown.id, same.id, shrunk.id] } },
-      select: { id: true, participantCount: true, updatedAt: true },
-    });
-    const byId = new Map(stored.map((row) => [row.id, row]));
-    expect([grown.id, same.id, shrunk.id].map((id) => byId.get(id)?.participantCount)).toEqual([80, 80, 70]);
-    expect(byId.get(same.id)?.updatedAt).toEqual(same.updatedAt);
+    const stored = await prisma.sportEvent.findMany({ where: { id: { in: [first.id, second.id] } }, orderBy: { name: 'asc' } });
+    expect(stored).toEqual([first, second]);
     await expect(prisma.sportEvent.count({
       where: providerEventWhere('balldontlie', 'integration-batch-unlinked'),
     })).resolves.toBe(0);
@@ -508,8 +462,8 @@ describe('IngestionPersistence', () => {
   });
 
   // #118, #435 — the field sync never writes a linked event's header, rounds or status (the
-  // events sync keeps those, #1727). It may refresh the field size, and nothing else.
-  it('leaves a linked event\'s stored name, start, rounds and status as they were, and refreshes only its field size',
+  // events sync keeps those, #1727).
+  it('leaves a linked event\'s stored name, start, rounds and status as they were',
     async () => {
       const prisma = getPrisma();
       const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
@@ -521,8 +475,6 @@ describe('IngestionPersistence', () => {
         name: 'Admin Open',
         startDate,
       });
-      await prisma.sportEvent.update({ where: { id: created.id }, data: { participantCount: 60 } });
-
       await persistence.persistEventsWithDiagnostics([{
         externalId,
         providerId: 'balldontlie',
@@ -531,7 +483,6 @@ describe('IngestionPersistence', () => {
         startDate: new Date('2026-07-01T12:00:00.000Z'),
         status: 'IN_PROGRESS',
         rounds: 5,
-        participantCount: 80,
         fieldLocked: true,
         providerSlots: [],
       }]);
@@ -542,7 +493,6 @@ describe('IngestionPersistence', () => {
         startDate,
         rounds: created.rounds,
         status: created.status,
-        participantCount: 80,
       });
     },
   );

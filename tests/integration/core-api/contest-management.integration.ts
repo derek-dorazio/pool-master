@@ -169,13 +169,12 @@ describe('Contest management integration', () => {
       data: {
         sportEventId,
         tierKey: 'A',
-        label: 'Tier A',
         tierNumber: 1,
       },
     });
     for (const [index, tierKey] of ['B', 'C', 'D', 'E', 'F'].entries()) {
       await prisma.sportEventTier.create({
-        data: { sportEventId, tierKey, label: `Tier ${tierKey}`, tierNumber: index + 2 },
+        data: { sportEventId, tierKey, tierNumber: index + 2 },
       });
     }
     await prisma.sportEventParticipantValuation.create({

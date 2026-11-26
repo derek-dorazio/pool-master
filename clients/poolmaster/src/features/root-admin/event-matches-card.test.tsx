@@ -121,7 +121,7 @@ const MATCHES = [
 function seed(matches: SportEventRoundMatchDto[] = MATCHES) {
   getEventMock.mockResolvedValue({ data: { event: tournament } });
   listSportLeaguesMock.mockResolvedValue({
-    data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Men\'s Basketball', matchPeriodLayout: null })] },
+    data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Men\'s Basketball' })] },
   });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: [duke, vermont, houston, texas] } });
   getEventBracketMock.mockResolvedValue({ data: { matches } });

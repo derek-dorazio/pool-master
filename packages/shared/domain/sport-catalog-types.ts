@@ -6,8 +6,9 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { ProviderCode, HomeAway, MatchEnding, MatchPeriodLayout, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, HomeAway, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
+import type { SlotPeriods } from './slot-periods';
 
 /**
  * A sport league's link to one provider's league (#1997), with the names the screens show. A
@@ -60,12 +61,6 @@ export interface SportLeague extends DomainEntity {
   /** The pricing profile its events' fields are priced with after a sync (#1844). Every league names one. */
   platformPricingProfileId: string;
   /**
-   * The periods its games are played in, when not its sport's (#786: men's college basketball's
-   * halves); null plays the sport's layout. Read through `matchPeriodsOf`. Reference data, set
-   * where the league is seeded.
-   */
-  matchPeriodLayout: MatchPeriodLayout | null;
-  /**
    * The first round whose matches are single games a squares pool can be played on; null when
    * every round's are (#787: the Champions League's two-legged ties and MLS's best-of-three
    * series are one match each). Read through `isSquaresRound`. Reference data, set where the
@@ -113,6 +108,8 @@ export interface SportEventRoundSlot {
    * score is then a tie; where it cannot, only a shoot-out decides a level score (#2046).
    */
   canEndTied: boolean;
+  /** What a game of the slot is played in (#2047), from its definition; null for a game kept by no period. */
+  periods: SlotPeriods | null;
   /**
    * The match whose Game is the slot's tiebreaker game (#2048): the one Game whose combined score
    * every contest covering the slot guesses. Null until the slot has a scheduled Game.
@@ -158,7 +155,7 @@ export interface SportEventParticipantStanding extends DomainEntity {
 export interface SportEventTier extends DomainEntity {
   sportEventId: string;
   tierKey: string;
-  label: string;
+  /** 1 is the top tier; its words are `tierLabel(tierNumber)` (#2047). */
   tierNumber: number;
 }
 

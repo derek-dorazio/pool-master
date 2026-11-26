@@ -239,7 +239,7 @@ describe('SportEventParticipantService — changing the field', () => {
     async function tiered() {
       const context = setup();
       const { store, sport, event } = context;
-      await store.addTiers(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }, { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
+      await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }, { tierKey: 'tier-2', tierNumber: 2 }]);
       const [tier1, tier2] = await store.tierRepo().findBySportEvent(event.id);
       const add = (name: string) => store.addToField(event.id, store.addParticipant(sport.id, name).id);
       return { ...context, tier1, tier2, add };
@@ -288,7 +288,7 @@ describe('SportEventParticipantService — changing the field', () => {
 
     it('refuses a tier move once the event is released (409 SPORT_EVENT_TIERS_LOCKED)', async () => {
       const { store, service, sport, event } = setup(Sport.GOLF, SportEventStatus.SCHEDULED);
-      await store.addTiers(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
+      await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }]);
       const entry = store.addToField(event.id, store.addParticipant(sport.id, 'A').id);
 
       await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: entry.id, tierKey: 'tier-1' }]))

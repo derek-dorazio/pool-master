@@ -96,7 +96,7 @@ function eventStatus(scope: NflScope, games: readonly NflGame[]): SportEvent['st
 }
 
 /** One event for a scope's games, which must be at least one. */
-export function toNflSportEvent(scope: NflScope, games: readonly NflGame[], participantCount?: number): SportEvent {
+export function toNflSportEvent(scope: NflScope, games: readonly NflGame[]): SportEvent {
   const times = games.map((game) => Date.parse(required(game.date, game.id, 'date')));
   const status = eventStatus(scope, games);
   return {
@@ -109,7 +109,6 @@ export function toNflSportEvent(scope: NflScope, games: readonly NflGame[], part
     status,
     // A week's games are one round; the playoffs are four.
     rounds: scope.kind === NflScopeKind.WEEK ? 1 : NFL_POSTSEASON_ROUNDS,
-    participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     providerSlots: slotPlaysOf(games.map((game, index) => ({ code: nflSlotCodeOf(game), start: times[index] }))),
   };

@@ -1,13 +1,13 @@
 import {
-  MATCH_PERIOD_LAYOUTS,
-  MatchPeriodLayout,
   MatchStatus,
+  PeriodUnit,
   SQUARES_GRID_SIZE,
   assertNever,
-  isMatchUnplayed, isSquaresRound, pluralize 
+  isMatchUnplayed, isSquaresRound, pluralize,
 } from '@poolmaster/shared/domain';
 import { displayString, type DisplayForm } from '@poolmaster/shared/display-strings';
 import type {
+  SlotPeriodsDto,
   SportEventRoundMatchDto,
   SportEventParticipantDto,
   SquaresBoardResponse,
@@ -38,23 +38,27 @@ export function winningPeriodsByPlace(winners: readonly SquaresWinnerDto[]): Rea
   return byPlace;
 }
 
-/** The word for a numbered period of the game's layout: Quarter 2, Half 1, Period 3. */
-function periodNumberKey(layout: MatchPeriodLayout): 'word.quarterNumber' | 'word.halfNumber' | 'word.periodNumber' {
-  switch (layout) {
-    case MatchPeriodLayout.QUARTERS:
+/** The display string of a numbered period of the unit: Quarter 2, Half 1, Inning 7. */
+function periodNumberKey(unit: PeriodUnit): 'word.quarterNumber' | 'word.halfNumber' | 'word.periodNumber' | 'word.inningNumber' | 'word.holeNumber' {
+  switch (unit) {
+    case PeriodUnit.QUARTER:
       return 'word.quarterNumber';
-    case MatchPeriodLayout.HALVES:
+    case PeriodUnit.HALF:
       return 'word.halfNumber';
-    case MatchPeriodLayout.THREE_PERIODS:
+    case PeriodUnit.PERIOD:
       return 'word.periodNumber';
+    case PeriodUnit.INNING:
+      return 'word.inningNumber';
+    case PeriodUnit.HOLE:
+      return 'word.holeNumber';
     default:
-      return assertNever(layout, 'match period layout');
+      return assertNever(unit, 'period unit');
   }
 }
 
 /** A period's short name, from the display strings: Q2, H1, P3. */
-function periodShortName(periodNumber: number, layout: MatchPeriodLayout) {
-  return displayString(periodNumberKey(layout), { n: periodNumber }, undefined, { form: 'short' });
+function periodShortName(periodNumber: number, periods: SlotPeriodsDto) {
+  return displayString(periodNumberKey(periods.unit), { n: periodNumber }, undefined, { form: 'short' });
 }
 
 /**
@@ -62,10 +66,10 @@ function periodShortName(periodNumber: number, layout: MatchPeriodLayout) {
  * Q3), and Final for the last, overtime included. `finalForm: 'short'` gives the last one's short
  * form (F), for a box that wears several tags.
  */
-export function squaresMomentTag(periodNumber: number, layout: MatchPeriodLayout, finalForm: DisplayForm = 'name') {
-  return periodNumber >= MATCH_PERIOD_LAYOUTS[layout].count
+export function squaresMomentTag(periodNumber: number, periods: SlotPeriodsDto, finalForm: DisplayForm = 'name') {
+  return periodNumber >= periods.count
     ? displayString('word.finalPeriod', undefined, undefined, { form: finalForm })
-    : periodShortName(periodNumber, layout);
+    : periodShortName(periodNumber, periods);
 }
 
 /** "4 of 10 boxes": how many of the boxes it may claim an entry holds. */
@@ -87,12 +91,12 @@ export type SquaresMomentRow = {
 };
 
 /** Every scoring moment of the game in order, each with its winner once scored. */
-export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'winners' | 'periodLayout'>): SquaresMomentRow[] {
-  return Array.from({ length: MATCH_PERIOD_LAYOUTS[board.periodLayout].count }, (_, index) => {
+export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'winners' | 'periods'>): SquaresMomentRow[] {
+  return Array.from({ length: board.periods.count }, (_, index) => {
     const periodNumber = index + 1;
     return {
       periodNumber,
-      tag: squaresMomentTag(periodNumber, board.periodLayout),
+      tag: squaresMomentTag(periodNumber, board.periods),
       winner: board.winners.find((winner) => winner.periodNumber === periodNumber) ?? null,
     };
   });
@@ -151,9 +155,9 @@ export type SquaresScoreByPeriod = {
 };
 
 /** The period being played: the one after the last whose score is in, while the game is live. */
-function livePeriodNumber(game: SportEventRoundMatchDto, layout: MatchPeriodLayout) {
+function livePeriodNumber(game: SportEventRoundMatchDto, periods: SlotPeriodsDto) {
   return game.status === MatchStatus.IN_PROGRESS
-    ? Math.min(game.periodScores.length + 1, MATCH_PERIOD_LAYOUTS[layout].count)
+    ? Math.min(game.periodScores.length + 1, periods.count)
     : null;
 }
 
@@ -163,9 +167,9 @@ function livePeriodNumber(game: SportEventRoundMatchDto, layout: MatchPeriodLayo
  * from the score now, and the last period runs to the final score, overtime included. Before
  * kickoff every period and total is null.
  */
-export function squaresScoreByPeriod(game: SportEventRoundMatchDto, layout: MatchPeriodLayout): SquaresScoreByPeriod {
-  const count = MATCH_PERIOD_LAYOUTS[layout].count;
-  const live = livePeriodNumber(game, layout);
+export function squaresScoreByPeriod(game: SportEventRoundMatchDto, periods: SlotPeriodsDto): SquaresScoreByPeriod {
+  const { count } = periods;
+  const live = livePeriodNumber(game, periods);
   const endScores = new Map(game.periodScores.map((score) => [score.periodNumber, score]));
   const line = (side: 'home' | 'away'): SquaresPeriodScoreLine => {
     const scoreNow = side === 'home' ? game.homeScore : game.awayScore;
@@ -178,17 +182,17 @@ export function squaresScoreByPeriod(game: SportEventRoundMatchDto, layout: Matc
       const runsToScoreNow = periodNumber === live || (periodNumber === count && game.status === MatchStatus.COMPLETED);
       return runsToScoreNow ? scoreNow : null;
     };
-    const periods = Array.from({ length: count }, (_, index) => {
+    const sidePeriods = Array.from({ length: count }, (_, index) => {
       const end = endOf(index + 1);
       const before = index === 0 ? 0 : endOf(index);
       return end === null || before === null ? null : end - before;
     });
     const lastRecorded = game.periodScores.at(-1);
     const recordedTotal = lastRecorded ? (side === 'home' ? lastRecorded.homeScore : lastRecorded.awayScore) : null;
-    return { periods, total: scoreNow ?? recordedTotal };
+    return { periods: sidePeriods, total: scoreNow ?? recordedTotal };
   };
   return {
-    periodNames: Array.from({ length: count }, (_, index) => periodShortName(index + 1, layout)),
+    periodNames: Array.from({ length: count }, (_, index) => periodShortName(index + 1, periods)),
     away: line('away'),
     home: line('home'),
     livePeriodNumber: live,
@@ -207,8 +211,8 @@ export type SquaresLiveBox = {
  * score's last digit and the column of the home score's. Null unless the digits are drawn and the
  * game is live with a score.
  */
-export function squaresLiveBox(board: Pick<SquaresBoardResponse, 'digits' | 'game' | 'periodLayout'>): SquaresLiveBox | null {
-  const periodNumber = livePeriodNumber(board.game, board.periodLayout);
+export function squaresLiveBox(board: Pick<SquaresBoardResponse, 'digits' | 'game' | 'periods'>): SquaresLiveBox | null {
+  const periodNumber = livePeriodNumber(board.game, board.periods);
   const { homeScore, awayScore } = board.game;
   if (periodNumber === null || board.digits === null || homeScore === null || awayScore === null) {
     return null;

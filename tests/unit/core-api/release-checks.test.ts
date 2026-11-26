@@ -8,9 +8,9 @@ const READY = {
   startDate: new Date('2026-01-18T12:00:00.000Z'),
   now: NOW,
   scheduledRoundCount: 4,
-  loadedParticipantCount: 120,
+  participantCount: 120,
   untieredParticipantCount: 0,
-  emptyTierLabels: [],
+  emptyTierNumbers: [],
   isPriced: true,
   unpricedParticipantCount: 0,
   bracketBlockers: null,
@@ -44,7 +44,7 @@ describe('describeFailedReleaseCheck (#1823)', () => {
     expect(words({ key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: false, value: 0 })).toEqual(['its rounds are not scheduled']);
     expect(words({ key: ReleaseCheckKey.FIELD_LOADED, passed: false, value: 0 })).toEqual(['its field is not loaded']);
     expect(words({ key: ReleaseCheckKey.TIERS_ASSIGNED, passed: false, value: 3 })).toEqual(['3 active participant(s) have no tier']);
-    expect(words({ key: ReleaseCheckKey.TIERS_FILLED, passed: false, value: ['Tier 5', 'Tier 6'] })).toEqual(['Tier 5 has no golfers', 'Tier 6 has no golfers']);
+    expect(words({ key: ReleaseCheckKey.TIERS_FILLED, passed: false, value: [5, 6] })).toEqual(['Tier 5 has no golfers', 'Tier 6 has no golfers']);
     expect(words({ key: ReleaseCheckKey.PRICES_ASSIGNED, passed: false, value: null })).toEqual(['its prices have not been assigned']);
     expect(words({ key: ReleaseCheckKey.PRICES_ASSIGNED, passed: false, value: 4 })).toEqual(['4 active participant(s) have no price']);
     expect(words({ key: ReleaseCheckKey.BRACKET_COMPLETE, passed: false, value: ['its bracket is not loaded'] })).toEqual(['its bracket is not loaded']);

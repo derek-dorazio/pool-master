@@ -1,4 +1,4 @@
-import { enumLabel, profileWords } from '@poolmaster/shared/display-strings';
+import { enumLabel, profileWords, tierLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -137,7 +137,7 @@ export function EventSettingsDialog({
     {
       id: 'tiers',
       label: 'Tiers',
-      value: tiersQuery.data === undefined ? '…' : tiersQuery.data.length === 0 ? 'None' : [...tiersQuery.data].sort((a, b) => a.tierNumber - b.tierNumber).map((tier) => tier.label).join(' · '),
+      value: tiersQuery.data === undefined ? '…' : tiersQuery.data.length === 0 ? 'None' : [...tiersQuery.data].sort((a, b) => a.tierNumber - b.tierNumber).map((tier) => tierLabel(tier.tierNumber)).join(' · '),
       testId: `${testId}-tiers`,
     },
     { id: 'platformPricingProfile', label: 'Pricing profile', value: platformPricingProfileName, testId: `${testId}-pricing-profile` },

@@ -57,7 +57,7 @@ import {
   gameNumbered,
   gameScoreOf,
   getSportDefinition,
-  matchPeriodsOf,
+  periodNoun,
   rankSortedScores,
   eventPlaysMatches,
   runningPeriodScores,
@@ -68,7 +68,7 @@ import {
   type SportEvent,
   type SportEventRoundMatch,
   type SportEventRoundMatchGame,
-  type SportMatchPeriods,
+  type SlotPeriods,
   hasPeriodScores,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
@@ -256,7 +256,7 @@ export class MatchResultService {
     const scoreProblem = describeScoreProblem(input, {
       inBracket: !formsNoBracket(bracket, linksOn),
       canEndTied: match.slot.canEndTied,
-    }) ?? describeWalkoverPeriods(match, ending) ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
+    }) ?? describeWalkoverPeriods(match, ending) ?? describeFinalBelowPeriods(match, input, match.slot.periods);
     if (scoreProblem) {
       this.deps.logger?.warn({ sportEventId, ...place, scoreProblem }, 'Refused a match result with invalid scores');
       throw new SportEventError(`${describeMatchPlace(place, { sentenceStart: true })}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
@@ -361,7 +361,7 @@ export class MatchResultService {
     if (problem) {
       this.deps.logger?.warn({ sportEventId, ...place, periodNumber, problem }, 'Refused a period score out of step with the game\'s other scores');
       throw new SportEventError(
-        `The score at the end of ${periods.label.one} ${periodNumber} of the ${describeMatchPlace(place)} cannot be saved: ${problem}.`,
+        `The score at the end of ${periodNoun(periods.unit).one} ${periodNumber} of the ${describeMatchPlace(place)} cannot be saved: ${problem}.`,
         'MATCH_PERIOD_SCORE_INVALID',
         422,
       );
@@ -385,13 +385,15 @@ export class MatchResultService {
     sportEventId: string,
     place: MatchPlace,
     periodNumber: number,
-  ): Promise<{ sportEvent: SportEvent; match: SportEventRoundMatch; periods: SportMatchPeriods }> {
+  ): Promise<{ sportEvent: SportEvent; match: SportEventRoundMatch; periods: SlotPeriods }> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
-    const periods = matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null);
-    if (!periods) {
-      this.deps.logger?.warn({ sportEventId, sport: sportEvent.sport }, 'Refused a period score for a sport without periods');
+    const match = this.requireMatch(sportEventId, await this.deps.matches.findBySportEvent(sportEventId), place);
+    // The game's periods are its slot's (#2047).
+    const periods = match.slot.periods;
+    if (periods === null) {
+      this.deps.logger?.warn({ sportEventId, ...place }, 'Refused a period score for a game whose slot keeps no score by period');
       throw new SportEventError(
-        `A ${getSportDefinition(sportEvent.sport).name.toLowerCase()} game keeps no score by period.`,
+        `${describeMatchPlace(place, { sentenceStart: true })} keeps no score by period.`,
         'MATCH_PERIOD_INVALID',
         422,
       );
@@ -399,12 +401,11 @@ export class MatchResultService {
     if (periodNumber >= periods.count) {
       this.deps.logger?.warn({ sportEventId, ...place, periodNumber }, 'Refused a score for the last period or past it');
       throw new SportEventError(
-        `A game has ${periods.count} ${periods.label.many}, and the score at the end of the last is the final score: enter it as the game's result.`,
+        `A game has ${periods.count} ${periodNoun(periods.unit).many}, and the score at the end of the last is the final score: enter it as the game's result.`,
         'MATCH_PERIOD_INVALID',
         422,
       );
     }
-    const match = this.requireMatch(sportEventId, await this.deps.matches.findBySportEvent(sportEventId), place);
     if (match.status === MatchStatus.CANCELLED) {
       this.deps.logger?.warn({ sportEventId, ...place }, 'Refused a period score for a cancelled game');
       throw new SportEventError(`${describeMatchPlace(place, { sentenceStart: true })} was cancelled, so it has no score.`, 'MATCH_CANCELLED', 409);
@@ -596,7 +597,7 @@ export function describePeriodScoreProblem(
   match: SportEventRoundMatch,
   periodNumber: number,
   score: PeriodScoreInput,
-  periods: SportMatchPeriods,
+  periods: SlotPeriods,
 ): string | null {
   if (match.status === MatchStatus.COMPLETED && match.ending === MatchEnding.WALKOVER) return 'it was a walkover, which has no score';
   const of = (totals: PeriodScoreInput, sideNumber: number) => totals.find((each) => each.sideNumber === sideNumber)?.score ?? 0;
@@ -605,10 +606,10 @@ export function describePeriodScoreProblem(
   for (const other of runningRegularPeriods(gameOne)) {
     const totals = [...other.totals].map(([sideNumber, total]) => ({ sideNumber, score: total }));
     if (other.periodNumber < periodNumber && below(score, totals)) {
-      return `a side's score is lower than at the end of ${periods.label.one} ${other.periodNumber}`;
+      return `a side's score is lower than at the end of ${periodNoun(periods.unit).one} ${other.periodNumber}`;
     }
     if (other.periodNumber > periodNumber && below(totals, score)) {
-      return `a side's score is higher than at the end of ${periods.label.one} ${other.periodNumber}`;
+      return `a side's score is higher than at the end of ${periodNoun(periods.unit).one} ${other.periodNumber}`;
     }
   }
   const final = gameOne === null ? [] : match.sides.flatMap(({ sideNumber }) => {
@@ -654,11 +655,11 @@ function describeWalkoverPeriods(match: SportEventRoundMatch, ending: MatchEndin
 function describeFinalBelowPeriods(
   match: SportEventRoundMatch,
   { sides }: MatchResultInput,
-  periods: SportMatchPeriods | undefined,
+  periods: SlotPeriods | null,
 ): string | null {
   const finals = sides.flatMap(({ sideNumber, score }) => (score === null ? [] : [{ sideNumber, score }]));
   if (finals.length < sides.length || !periods || match.slot.seriesGames !== 1) return null;
   const higher = runningRegularPeriods(gameNumbered(match, 1))
     .find((period) => finals.some((side) => (period.totals.get(side.sideNumber) ?? 0) > side.score));
-  return higher ? `a side's final score is lower than at the end of ${periods.label.one} ${higher.periodNumber}` : null;
+  return higher ? `a side's final score is lower than at the end of ${periodNoun(periods.unit).one} ${higher.periodNumber}` : null;
 }

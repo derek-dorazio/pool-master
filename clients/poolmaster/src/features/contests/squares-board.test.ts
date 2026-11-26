@@ -22,29 +22,29 @@ const LIVE_DIGITS: NonNullable<SquaresBoardResponse['digits']> = {
 
 describe('squares board helpers', () => {
   it('tags a quarters game\'s winning boxes Q1, Q2, Q3 and Final, a halves game\'s H1 and Final, and a hockey game\'s P1, P2 and Final', () => {
-    expect([1, 2, 3, 4].map((period) => squaresMomentTag(period, 'QUARTERS'))).toEqual(['Q1', 'Q2', 'Q3', 'Final']);
-    expect([1, 2].map((period) => squaresMomentTag(period, 'HALVES'))).toEqual(['H1', 'Final']);
-    expect([1, 2, 3].map((period) => squaresMomentTag(period, 'THREE_PERIODS'))).toEqual(['P1', 'P2', 'Final']);
+    expect([1, 2, 3, 4].map((period) => squaresMomentTag(period, { unit: 'QUARTER', count: 4 }))).toEqual(['Q1', 'Q2', 'Q3', 'Final']);
+    expect([1, 2].map((period) => squaresMomentTag(period, { unit: 'HALF', count: 2 }))).toEqual(['H1', 'Final']);
+    expect([1, 2, 3].map((period) => squaresMomentTag(period, { unit: 'PERIOD', count: 3 }))).toEqual(['P1', 'P2', 'Final']);
   });
 
   it('reads every period tag from the display strings\' short forms, and the last period\'s from its name unless asked for its short form', () => {
     const short = { form: 'short' } as const;
-    expect([1, 2, 3, 4].map((period) => squaresMomentTag(period, 'QUARTERS'))).toEqual([
+    expect([1, 2, 3, 4].map((period) => squaresMomentTag(period, { unit: 'QUARTER', count: 4 }))).toEqual([
       displayString('word.quarterNumber', { n: 1 }, undefined, short),
       displayString('word.quarterNumber', { n: 2 }, undefined, short),
       displayString('word.quarterNumber', { n: 3 }, undefined, short),
       displayString('word.finalPeriod'),
     ]);
-    expect(squaresMomentTag(1, 'HALVES')).toBe(displayString('word.halfNumber', { n: 1 }, undefined, short));
-    expect(squaresMomentTag(2, 'THREE_PERIODS')).toBe(displayString('word.periodNumber', { n: 2 }, undefined, short));
-    expect(squaresMomentTag(4, 'QUARTERS', 'short')).toBe(displayString('word.finalPeriod', undefined, undefined, short));
-    expect(squaresMomentTag(4, 'QUARTERS', 'short')).toBe('F');
-    expect(squaresMomentTag(2, 'QUARTERS', 'short')).toBe('Q2');
+    expect(squaresMomentTag(1, { unit: 'HALF', count: 2 })).toBe(displayString('word.halfNumber', { n: 1 }, undefined, short));
+    expect(squaresMomentTag(2, { unit: 'PERIOD', count: 3 })).toBe(displayString('word.periodNumber', { n: 2 }, undefined, short));
+    expect(squaresMomentTag(4, { unit: 'QUARTER', count: 4 }, 'short')).toBe(displayString('word.finalPeriod', undefined, undefined, short));
+    expect(squaresMomentTag(4, { unit: 'QUARTER', count: 4 }, 'short')).toBe('F');
+    expect(squaresMomentTag(2, { unit: 'QUARTER', count: 4 }, 'short')).toBe('Q2');
   });
 
   it('lists every scoring moment in order with its winner once scored and none before', () => {
     const winner = { periodNumber: 2, homeScore: 10, awayScore: 3, rowIndex: 3, columnIndex: 0, contestEntryId: null, entryName: null };
-    const rows = squaresMomentRows({ winners: [winner], periodLayout: 'QUARTERS' });
+    const rows = squaresMomentRows({ winners: [winner], periods: { unit: 'QUARTER', count: 4 } });
     expect(rows.map((row) => [row.tag, row.winner])).toEqual([['Q1', null], ['Q2', winner], ['Q3', null], ['Final', null]]);
   });
 
@@ -90,7 +90,7 @@ describe('squares board helpers', () => {
   });
 
   it('leaves every period and total of the score table blank before kickoff', () => {
-    const score = squaresScoreByPeriod(squaresGameFixture(), 'QUARTERS');
+    const score = squaresScoreByPeriod(squaresGameFixture(), { unit: 'QUARTER', count: 4 });
     expect(score.periodNames).toEqual(['Q1', 'Q2', 'Q3', 'Q4']);
     expect(score.home).toEqual({ periods: [null, null, null, null], total: null });
     expect(score.away).toEqual({ periods: [null, null, null, null], total: null });
@@ -104,7 +104,7 @@ describe('squares board helpers', () => {
       awayScore: 17,
       periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 7 }, { periodNumber: 2, homeScore: 10, awayScore: 14 }],
     });
-    const score = squaresScoreByPeriod(game, 'QUARTERS');
+    const score = squaresScoreByPeriod(game, { unit: 'QUARTER', count: 4 });
     expect(score.away).toEqual({ periods: [7, 7, 3, null], total: 17 });
     expect(score.home).toEqual({ periods: [3, 7, 0, null], total: 10 });
     expect(score.livePeriodNumber).toBe(3);
@@ -121,7 +121,7 @@ describe('squares board helpers', () => {
         { periodNumber: 3, homeScore: 17, awayScore: 17 },
       ],
     });
-    const score = squaresScoreByPeriod(game, 'QUARTERS');
+    const score = squaresScoreByPeriod(game, { unit: 'QUARTER', count: 4 });
     expect(score.home).toEqual({ periods: [3, 7, 7, 10], total: 27 });
     expect(score.away).toEqual({ periods: [7, 7, 3, 7], total: 24 });
     expect(score.livePeriodNumber).toBeNull();
@@ -134,18 +134,18 @@ describe('squares board helpers', () => {
       awayScore: 20,
       periodScores: [1, 2, 3].map((periodNumber) => ({ periodNumber, homeScore: 14, awayScore: 14 })),
     });
-    expect(squaresScoreByPeriod(game, 'QUARTERS').livePeriodNumber).toBe(4);
+    expect(squaresScoreByPeriod(game, { unit: 'QUARTER', count: 4 }).livePeriodNumber).toBe(4);
   });
 
   it('finds the box winning the live period at the row of the away score\'s last digit and the column of the home score\'s', () => {
     const game = squaresGameFixture({ status: 'IN_PROGRESS', homeScore: 10, awayScore: 17, periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 7 }] });
-    expect(squaresLiveBox({ digits: LIVE_DIGITS, game, periodLayout: 'QUARTERS' })).toEqual({ periodNumber: 2, rowIndex: 3, columnIndex: 0 });
+    expect(squaresLiveBox({ digits: LIVE_DIGITS, game, periods: { unit: 'QUARTER', count: 4 } })).toEqual({ periodNumber: 2, rowIndex: 3, columnIndex: 0 });
   });
 
   it('finds no live box before the draw, before kickoff or once the game is over', () => {
     const live = squaresGameFixture({ status: 'IN_PROGRESS', homeScore: 10, awayScore: 17 });
-    expect(squaresLiveBox({ digits: null, game: live, periodLayout: 'QUARTERS' })).toBeNull();
-    expect(squaresLiveBox({ digits: LIVE_DIGITS, game: squaresGameFixture(), periodLayout: 'QUARTERS' })).toBeNull();
-    expect(squaresLiveBox({ digits: LIVE_DIGITS, game: squaresGameFixture({ status: 'COMPLETED', homeScore: 10, awayScore: 17 }), periodLayout: 'QUARTERS' })).toBeNull();
+    expect(squaresLiveBox({ digits: null, game: live, periods: { unit: 'QUARTER', count: 4 } })).toBeNull();
+    expect(squaresLiveBox({ digits: LIVE_DIGITS, game: squaresGameFixture(), periods: { unit: 'QUARTER', count: 4 } })).toBeNull();
+    expect(squaresLiveBox({ digits: LIVE_DIGITS, game: squaresGameFixture({ status: 'COMPLETED', homeScore: 10, awayScore: 17 }), periods: { unit: 'QUARTER', count: 4 } })).toBeNull();
   });
 });

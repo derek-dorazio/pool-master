@@ -342,6 +342,36 @@
       "key": "useEventRoundLabels",
       "now": 0,
       "reason": "retired by #2200"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "MatchPeriodLayout",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "matchPeriodsOf",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "loadedParticipantCount",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "GOLF_HOLES_PER_ROUND",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "HOLES_IN_ROUND",
+      "now": 0,
+      "reason": "retired by #2047"
     }
   ]
 }

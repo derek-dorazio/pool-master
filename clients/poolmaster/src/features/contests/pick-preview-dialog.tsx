@@ -33,7 +33,7 @@ import { tiebreakerLabel } from './pick-em-week';
 import { RosterContestEntryLineupSection } from './roster-contest-entry-lineup-section';
 
 /** The event a preview draws: its field, tiers, prices and games are the ones members pick from. */
-export type PickPreviewEvent = Pick<SportEventDto, 'id' | 'loadedParticipantCount' | 'name' | 'pricing' | 'sport' | 'sportLeagueId'>;
+export type PickPreviewEvent = Pick<SportEventDto, 'id' | 'participantCount' | 'name' | 'pricing' | 'sport' | 'sportLeagueId'>;
 
 const PREVIEW_ERROR = 'We could not draw the picks page. Please try again.';
 

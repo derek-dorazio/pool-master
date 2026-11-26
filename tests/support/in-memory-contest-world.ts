@@ -267,6 +267,7 @@ export class InMemoryContestWorld {
       status: SportEventStatus.SCHEDULED,
       createdAt: T0,
       updatedAt: T0,
+      slotDefinitions: [],
       ...sportPlay(overrides.sport ?? Sport.GOLF),
       ...overrides,
     } as SportEvent;
@@ -281,7 +282,6 @@ export class InMemoryContestWorld {
       id: this.nextId('tier'),
       sportEventId,
       tierKey: `tier-${index + 1}`,
-      label: `Tier ${index + 1}`,
       tierNumber: index + 1,
       createdAt: T0,
       updatedAt: T0,

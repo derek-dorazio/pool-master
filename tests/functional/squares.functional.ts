@@ -19,7 +19,7 @@ import {
   recordEventMatchResult,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, isAtPlace, MATCH_PERIOD_LAYOUTS, matchPlaceOf, MatchPeriodLayout, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, isAtPlace, matchPlaceOf, PeriodUnit, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { SquaresBoardResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
@@ -221,18 +221,18 @@ describe('SDK Functional: Super Bowl squares', () => {
 });
 
 // Each league's squares preset on its own final: men's college basketball played in two halves,
-// women's in quarters (#786). Squares are only on football and March Madness (#2164). Men's
-// college basketball sets its halves on the league; the women's takes the sport's. Each test seed loads with every game played but the final; one entry holds the top
-// row, the other the left column, and every scoring moment lands in the top row.
+// women's in quarters (#786), each read from the final's slot (#2047). Squares are only on football
+// and March Madness (#2164). Each test seed loads with every game played but the final; one entry
+// holds the top row, the other the left column, and every scoring moment lands in the top row.
 const LEAGUE_FINALS = [
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Basketball', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: MatchPeriodLayout.HALVES },
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Basketball', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS, leagueLayout: null },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Basketball', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', periods: { unit: PeriodUnit.HALF, count: 2 } },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Basketball', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', periods: { unit: PeriodUnit.QUARTER, count: 4 } },
 ] as const;
 
 describe('SDK Functional: squares on each league\'s final, scored at the end of each of its periods', () => {
-  it.each(LEAGUE_FINALS.map((row) => [row.league, row.layout, row] as const))(
+  it.each(LEAGUE_FINALS.map((row) => [row.league, row.periods.unit, row] as const))(
     '%s, %s: the league\'s squares preset runs on its final, takes a score for each period but the last, and settles a winner for every period',
-    async (_league, layout, row) => {
+    async (_league, _unit, row) => {
       const admin = await buildRegisteredUser({ displayName: 'College Squares Director' });
       await promoteToRootAdmin(admin);
       const a = admin.client;
@@ -249,13 +249,12 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
 
       const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: row.sport } })).data).sportLeagues
         .find((league) => league.name === row.league));
-      expect(sportLeague.matchPeriodLayout).toBe(row.leagueLayout);
       const loaded = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: sportLeague.id } })).data).events
         .find((each) => each.name === event.name));
       created.sportEventIds.add(loaded.id);
       const final = expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: loaded.id } })).data).matches
         .find((match) => isAtPlace(match, finalPlace)));
-      expect(final.status).toBe('SCHEDULED');
+      expect([final.status, final.slot.periods]).toEqual(['SCHEDULED', row.periods]);
 
       const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'College Squares Commissioner', leagueName: `College Squares ${tag}` });
       const member = await buildRegisteredUser({ displayName: 'College Squares Member' });
@@ -290,13 +289,13 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
         if (index > 0) await claimSquaresBox({ client: member.client, path: { contestId, rowIndex: index, columnIndex: 0 }, body: { contestEntryId: leftColumn } });
       }
       const drawn = expectMatchesSchema(SquaresBoardResponseSchema, (await drawSquaresNumbers({ client: commissioner.client, path: { contestId } })).data);
-      expect(drawn.periodLayout).toBe(layout);
+      expect(drawn.periods).toEqual(row.periods);
       const digits = expectDefined(drawn.digits ?? undefined);
       const homeFor = (column: number) => expectDefined(digits.columnDigits[column]);
       const awayFor = (rowIndex: number) => expectDefined(digits.rowDigits[rowIndex]);
 
       // Every moment lands in the top row: the away score's last digit is row 0's, each period in a new column.
-      const { count } = MATCH_PERIOD_LAYOUTS[layout];
+      const { count } = row.periods;
       expect((await transitionEvent({ client: a, path: { eventId: final.sportEventId }, body: { toStatus: 'IN_PROGRESS' } })).response?.status).toBe(200);
       for (let periodNumber = 1; periodNumber < count; periodNumber += 1) {
         const score = { homeScore: 10 * periodNumber + homeFor(periodNumber), awayScore: 10 * periodNumber + awayFor(0) };

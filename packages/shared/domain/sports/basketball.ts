@@ -1,4 +1,4 @@
-import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
+import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -21,9 +21,6 @@ export const basketballSportDefinition: SportDefinition = {
   defaultRounds: 6,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  // Quarters, as the NBA, the WNBA and women's college basketball play; men's college basketball
-  // plays halves (its sport league's `matchPeriodLayout`).
-  matchPeriodLayout: MatchPeriodLayout.QUARTERS,
   pickEm: { tiePicks: false, againstTheSpread: true },
   // A six-round bracket reads First Round, Second Round, Sweet 16, Elite Eight, Final Four,
   // National Championship; a shorter one keeps the names counted back from its final.

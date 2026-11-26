@@ -5,7 +5,7 @@
  */
 import { legacyMatch } from '../../support/match-sides';
 import { expect } from '@jest/globals';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, PeriodUnit, Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto } from '@poolmaster/shared/dto';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import { createChampionshipHandlers } from '../../../packages/core-api/src/modules/championship/handler';
@@ -211,6 +211,7 @@ describe('squares handlers', () => {
     contest: { id: 'c1', status: ContestStatus.OPEN },
     game: legacyMatch({ id: 'game-1', slot: weekRoundSlot() }),
     digits: null,
+    periods: { unit: PeriodUnit.QUARTER, count: 4 },
   };
   const service = {
     getBoard: jest.fn((..._args: unknown[]) => Promise.resolve(board)),

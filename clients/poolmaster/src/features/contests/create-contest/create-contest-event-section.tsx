@@ -110,7 +110,7 @@ function EventChoices({
               <Text className="block" variant="caption">
                 {event.contestEligible ? 'Starts' : 'Started'} {formatDateTimeDisplay(event.startDate, displayPreferences)}
                 {' · '}
-                {countParticipants(event.participantCount ?? 0, sportVocabulary(sport).participant)}
+                {countParticipants(event.participantCount, sportVocabulary(sport).participant)}
                 {' · '}
                 {pluralize(event.tierCount, 'tier')}
               </Text>

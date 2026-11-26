@@ -21,7 +21,6 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     status: 'SCHEDULED',
     // Far ahead, so the mapper's own clock always reads it as not yet started.
     startDate: new Date('2999-04-12T16:00:00.000Z'),
-    participantCount: 144,
     slotDefinitions: [],
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
@@ -35,12 +34,12 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
 }
 
 /** A root admin's summary, with the admin counts; `adminCounts: null` is everyone else's. */
-function summary(sportEvent: SportEvent, loadedParticipantCount: number, untieredParticipantCount = 0): SportEventSummary {
+function summary(sportEvent: SportEvent, participantCount: number, untieredParticipantCount = 0): SportEventSummary {
   return {
     event: sportEvent,
-    loadedParticipantCount,
+    participantCount,
     tierCount: 0,
-    adminCounts: { untieredParticipantCount, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
+    adminCounts: { untieredParticipantCount, unpricedParticipantCount: 0, emptyTierNumbers: [], contestCount: 0 },
     slots: [],
   };
 }
@@ -85,7 +84,7 @@ describe('SportEvent contest openings and tier lock on the wire (#1929)', () => 
 describe('SportEvent readiness on the wire', () => {
   it('is contest-eligible once released with a loaded field and before it starts', () => {
     expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({
-      loadedParticipantCount: 72,
+      participantCount: 72,
       readinessStatus: 'CONTEST_ELIGIBLE',
       contestEligible: true,
     });
@@ -101,9 +100,9 @@ describe('SportEvent readiness on the wire', () => {
     });
   });
 
-  it('is pending while no participant is loaded, even when the provider reports a field size', () => {
+  it('is pending, with a field size of 0, while no participant is loaded', () => {
     expect(mapSportEventToDto(summary(event(), 0))).toMatchObject({
-      participantCount: 144,
+      participantCount: 0,
       readinessStatus: 'PENDING_FIELD',
       readinessReasons: ['FIELD_NOT_LOADED'],
       contestEligible: false,
@@ -128,7 +127,7 @@ describe('SportEvent readiness on the wire', () => {
 
   // The Season and the sport league are always present: an event has exactly one of each (#2010).
   it('carries the event\'s slot definitions in play order, its Season with that Season\'s championship year, and its sport league', () => {
-    const slotted = event({ slotDefinitions: [{ id: 'afc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false }, { id: 'nfc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false }] });
+    const slotted = event({ slotDefinitions: [{ id: 'afc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null }, { id: 'nfc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null }] });
     expect(mapSportEventToDto(summary(slotted, 1))).toMatchObject({
       slotDefinitionIds: ['afc-championship', 'nfc-championship'],
       sportLeagueSeasonId: 'season-2026',
@@ -174,8 +173,8 @@ describe('the contests on an event on the wire (#1889)', () => {
 
 describe('SportEvent admin counts on the wire (#1198)', () => {
   it('carries null admin counts for a read that did not count them, keeping the field size and tier count', () => {
-    expect(mapSportEventToDto({ event: event(), loadedParticipantCount: 72, tierCount: 6, adminCounts: null, slots: [] })).toMatchObject({
-      loadedParticipantCount: 72,
+    expect(mapSportEventToDto({ event: event(), participantCount: 72, tierCount: 6, adminCounts: null, slots: [] })).toMatchObject({
+      participantCount: 72,
       tierCount: 6,
       adminCounts: null,
       contestEligible: true,
@@ -185,8 +184,8 @@ describe('SportEvent admin counts on the wire (#1198)', () => {
 
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
-    const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: ['Tier 6'], contestCount: 2 };
-    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, tierCount: 6, adminCounts, slots: [] })).toMatchObject({
+    const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [6], contestCount: 2 };
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), participantCount: 0, tierCount: 6, adminCounts, slots: [] })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
       adminCounts,
@@ -211,7 +210,7 @@ describe('the event\'s rounds and tiers on the wire', () => {
 
     expect(mapSportEventRoundToDto(round)).toEqual({
       id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT.toISOString(), scheduledEndAt: AT.toISOString(),
-      slot: { seasonSlotId: round.slot.seasonSlotId, name: 'Super Bowl', slotKind: SlotKind.FINAL, weekNumber: null },
+      slot: { seasonSlotId: round.slot.seasonSlotId, name: 'Super Bowl', slotKind: SlotKind.FINAL, weekNumber: null, periods: null },
       status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null,
     });
     expect(mapSportEventRoundToDto({ ...round, scheduledEndAt: null }).scheduledEndAt).toBeNull();
@@ -227,9 +226,9 @@ describe('the event\'s rounds and tiers on the wire', () => {
     expect(mapSportEventRoundToDto(round)).toMatchObject({ status: RoundStatus.COMPLETED, resultCount: 8, completedAt: AT.toISOString() });
   });
 
-  it('sends a tier\'s key, label and number', () => {
-    expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 } as never))
-      .toEqual({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 });
+  it('sends a tier\'s key and number, with no stored name', () => {
+    expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', tierKey: 'A', tierNumber: 1 } as never))
+      .toEqual({ id: 't1', sportEventId: 'e1', tierKey: 'A', tierNumber: 1 });
   });
 });
 

@@ -14,7 +14,6 @@ import {
   SportEventStatus,
   SurvivorWeekOutcome,
   survivorLivesOf,
-  matchPeriodsOf,
   hasEverySquaresScoringMoment,
   squaresScoringMoments,
   squaresWinners,
@@ -344,7 +343,8 @@ export class ContestSettlementService {
       this.deps.squares.findDraw(contest.id),
     ]);
     const game = games.find((candidate) => candidate.id === contest.squaresGameMatchId);
-    const periodCount = matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null)?.count;
+    // The game's periods are its slot's (#2047).
+    const periodCount = game?.slot.periods?.count;
     let standingsUpserted = 0;
     if (game?.status === MatchStatus.COMPLETED && draw && periodCount !== undefined) {
       const moments = squaresScoringMoments(game, periodCount);

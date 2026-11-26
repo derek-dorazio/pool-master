@@ -35,7 +35,6 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     name: 'The Masters',
     status: 'SCHEDULED',
     startDate: new Date('2999-04-09T12:00:00.000Z'),
-    participantCount: 88,
     slotDefinitions: [],
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
@@ -47,7 +46,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     ...overrides,
   };
 }
-const summary = { event: sportEvent(), loadedParticipantCount: 88, tierCount: 0, adminCounts: null, slots: [] };
+const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, adminCounts: null, slots: [] };
 const fieldRow = {
   entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', status: SportEventParticipantStatus.ACTIVE, createdAt: AT, updatedAt: AT },
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },

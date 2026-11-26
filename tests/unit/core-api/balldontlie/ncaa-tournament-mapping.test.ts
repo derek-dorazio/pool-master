@@ -49,7 +49,7 @@ describe('NCAA tournament scopes', () => {
 
 describe('an NCAA men\'s tournament as an event', () => {
   it('is complete once its championship is listed and every game is final, spanning the First Four to the championship', () => {
-    expect(toNcaaTournamentEvent(SEASON_2025, bracket2025, 68)).toEqual({
+    expect(toNcaaTournamentEvent(SEASON_2025, bracket2025)).toEqual({
       externalId: 'ncaab-2025-tournament',
       providerId: 'balldontlie',
       sport: Sport.BASKETBALL,
@@ -58,7 +58,6 @@ describe('an NCAA men\'s tournament as an event', () => {
       endDate: new Date('2026-04-07T01:20:00.000Z'),
       status: 'COMPLETED',
       rounds: 7,
-      participantCount: 68,
       fieldLocked: true,
       providerSlots: [
         { code: 'POST:1', startsAt: new Date('2026-03-17T23:40:00.000Z'), endsAt: new Date('2026-03-17T23:40:00.000Z') },
@@ -175,7 +174,7 @@ describe('NCAA men\'s tournament game scores', () => {
 
 describe('the NCAA women\'s tournament, whose bracket numbers the First Four round 0 and the championship round 6', () => {
   it('is an event of its own, seven rounds long from its round 0 First Four, and complete once its round 6 championship is final', () => {
-    expect(toNcaaTournamentEvent(WOMENS_2025, womens2025, 64)).toEqual({
+    expect(toNcaaTournamentEvent(WOMENS_2025, womens2025)).toEqual({
       externalId: 'ncaaw-2025-tournament',
       providerId: 'balldontlie',
       sport: Sport.BASKETBALL,
@@ -184,7 +183,6 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
       endDate: new Date('2026-04-05T19:00:00.000Z'),
       status: 'COMPLETED',
       rounds: 7,
-      participantCount: 64,
       fieldLocked: true,
       providerSlots: [
         { code: 'POST:0', startsAt: new Date('2026-03-18T23:00:00.000Z'), endsAt: new Date('2026-03-18T23:00:00.000Z') },

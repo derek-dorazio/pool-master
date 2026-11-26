@@ -14,7 +14,7 @@ const meta = {
       homeScore: 10,
       awayScore: 17,
       periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 7 }, { periodNumber: 2, homeScore: 10, awayScore: 14 }],
-    }), 'QUARTERS'),
+    }), { unit: 'QUARTER', count: 4 }),
   },
   decorators: [(Story) => <div className="max-w-sm"><Story /></div>],
 } satisfies Meta<typeof SquaresScoreTable>;
@@ -26,4 +26,4 @@ type Story = StoryObj<typeof meta>;
 export const Live: Story = {};
 
 /** Before kickoff: every period and total a dash. */
-export const NotStarted: Story = { args: { score: squaresScoreByPeriod(squaresGameFixture(), 'QUARTERS') } };
+export const NotStarted: Story = { args: { score: squaresScoreByPeriod(squaresGameFixture(), { unit: 'QUARTER', count: 4 }) } };

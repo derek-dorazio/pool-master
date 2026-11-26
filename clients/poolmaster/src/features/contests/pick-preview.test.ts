@@ -110,7 +110,7 @@ describe('previewRulesFor', () => {
 });
 
 describe('pickPreviewUnavailableReason', () => {
-  const ready = { loadedParticipantCount: 90, pricing: null };
+  const ready = { participantCount: 90, pricing: null };
   const reason = (overrides: Partial<Parameters<typeof pickPreviewUnavailableReason>[0]>) => pickPreviewUnavailableReason({
     event: ready,
     participant: golfer,
@@ -135,7 +135,7 @@ describe('pickPreviewUnavailableReason', () => {
   });
 
   it('turns the preview off while the field is not loaded, the tiers are not set, or a budget field is not priced', () => {
-    expect(reason({ event: { loadedParticipantCount: 0, pricing: null } })).toBe('This event\'s golfers aren\'t loaded yet, so there is nothing to pick from.');
+    expect(reason({ event: { participantCount: 0, pricing: null } })).toBe('This event\'s golfers aren\'t loaded yet, so there is nothing to pick from.');
     expect(reason({ tierCount: 0 })).toContain('tiers aren\'t set yet');
     expect(reason({ selectionType: 'BUDGET_PICK' })).toBe('This event\'s golfers aren\'t priced yet.');
   });

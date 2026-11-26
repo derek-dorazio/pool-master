@@ -72,21 +72,20 @@ describe('buildRoundScorePatch', () => {
     expect(buildRoundScorePatch(row, { scoreToPar: '1.5' }, EASTERN)).toBeNull();
   });
 
-  it('never sends 0 strokes or a thru above 18, which the server would refuse with a 400, and marks the row invalid', () => {
+  it('never sends 0 strokes, which the server would refuse with a 400, and marks the row invalid, but leaves the round\'s hole count to the server', () => {
     expect(buildRoundScorePatch(row, { strokes: '0' }, EASTERN)).toBeNull();
-    expect(buildRoundScorePatch(row, { thru: '19' }, EASTERN)).toBeNull();
     expect(rowHasInvalid({ strokes: '0' }, EASTERN)).toBe(true);
-    expect(rowHasInvalid({ thru: '25' }, EASTERN)).toBe(true);
+    expect(rowHasInvalid({ thru: '25' }, EASTERN)).toBe(false);
     expect(rowHasInvalid({ strokes: '1', thru: '0' }, EASTERN)).toBe(false);
   });
 });
 
 describe('isStrokes and isThru', () => {
-  it('accept strokes of 1 or more and thru from 0 to 18, and reject anything outside', () => {
+  it('accept strokes of 1 or more and thru of 0 or more, and reject anything else', () => {
     expect(['1', '68', ' 72 '].map(isStrokes)).toEqual([true, true, true]);
     expect(['0', '-1', '', '1.5'].map(isStrokes)).toEqual([false, false, false, false]);
-    expect(['0', '9', '18'].map(isThru)).toEqual([true, true, true]);
-    expect(['19', '25', '-1', ''].map(isThru)).toEqual([false, false, false, false]);
+    expect(['0', '9', '18', '19'].map(isThru)).toEqual([true, true, true, true]);
+    expect(['-1', '', '1.5'].map(isThru)).toEqual([false, false, false]);
   });
 });
 

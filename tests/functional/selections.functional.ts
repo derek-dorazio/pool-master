@@ -411,7 +411,6 @@ async function seedTieredDraftFixture(options: {
     data: {
       sportEventId: event.id,
       tierKey: 'tier-1',
-      label: 'Tier 1',
       tierNumber: 1,
     },
   });
@@ -488,7 +487,6 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
       data: {
         sportEventId: event.id,
         tierKey: `tier-${tierIndex + 1}`,
-        label: `Tier ${tierIndex + 1}`,
         tierNumber: tierIndex + 1,
       },
     });

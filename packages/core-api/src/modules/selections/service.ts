@@ -26,6 +26,7 @@
  * converted, and the attempt landed "a Prisma mock in a logger slot".
  */
 
+import { tierLabel } from '@poolmaster/shared/display-strings';
 import { randomBytes } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import {
@@ -910,7 +911,7 @@ export class SelectionService {
   private buildPickHistory(input: {
     picks: readonly ContestEntryPickWithParticipant[];
     contestEntryById: ReadonlyMap<string, ContestEntry>;
-    tierByParticipantId: ReadonlyMap<string, { tierId: string; tierName: string; tierNumber: number }>;
+    tierByParticipantId: ReadonlyMap<string, { tierId: string; tierNumber: number }>;
     priceBySportEventParticipantId: ReadonlyMap<string, number | undefined>;
     engine: SelectionEngine;
   }): PickHistoryRow[] {
@@ -942,7 +943,7 @@ export class SelectionService {
         teamAffiliation: pick.participant.teamAffiliation ?? undefined,
         price: input.priceBySportEventParticipantId.get(pick.sportEventParticipantId),
         tierId: tier?.tierId,
-        tierName: tier?.tierName,
+        tierName: tier === undefined ? undefined : tierLabel(tier.tierNumber),
         isAutoPicked: pick.isAutoPicked,
         pickedAt: pick.pickedAt,
       };
@@ -1043,7 +1044,7 @@ function rejectionError(
     case SelectionRejectCode.TIER_MISSING:
       return selectionErrors.tierMissing(request.participantId);
     case SelectionRejectCode.TIER_NOT_FOUND:
-      return selectionErrors.tierNotFound(rejection.tierLabel, request.contestId);
+      return selectionErrors.tierNotFound(rejection.tierNumber, request.contestId);
   }
 }
 

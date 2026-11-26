@@ -184,7 +184,7 @@ function isComplete(league: PlayoffsLeague, games: readonly PlayoffGame[]): bool
 }
 
 /** One season's playoffs as an event, from its games, which must be at least one. */
-export function toPlayoffsEvent(league: PlayoffsLeague, season: number, games: readonly PlayoffGame[], participantCount?: number): SportEvent {
+export function toPlayoffsEvent(league: PlayoffsLeague, season: number, games: readonly PlayoffGame[]): SportEvent {
   const times = games.map((game) => game.start);
   const status = eventStatusOf(games.map((game) => PROGRESS_BY_STATE[game.state]), isComplete(league, games));
   return {
@@ -195,7 +195,6 @@ export function toPlayoffsEvent(league: PlayoffsLeague, season: number, games: r
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
     status,
-    participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     // The vendor names no round, so a game's code takes its series' round in the bracket (`playoffSeries`).
     providerSlots: slotPlaysOf(playoffSeries(games).flatMap((series) => series.games.map(({ game }) => ({

@@ -102,7 +102,7 @@ function roundsOf(knockout: readonly FifaMatch[]): { count: number; of: (match: 
 }
 
 /** One event for an edition's knockout matches, which must be at least one. */
-export function toWorldCupEvent(scope: WorldCupScope, matches: readonly FifaMatch[], participantCount?: number): SportEvent {
+export function toWorldCupEvent(scope: WorldCupScope, matches: readonly FifaMatch[]): SportEvent {
   const rounds = roundsOf(matches)?.count;
   const times = matches.map((match) => Date.parse(required(match.datetime, FIFA_WC_MATCHES_PATH, matchName(match), 'datetime')));
   const status = eventStatusOf(matches.map((match) => PROGRESS_BY_STATE[match.status_state]), true);
@@ -115,7 +115,6 @@ export function toWorldCupEvent(scope: WorldCupScope, matches: readonly FifaMatc
     endDate: new Date(Math.max(...times)),
     status,
     ...(rounds !== undefined && { rounds }),
-    participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     // A knockout match's code is its stage's place in the vendor's order of the edition's stages.
     providerSlots: slotPlaysOf(matches.flatMap((match, index) => (match.stage?.order === undefined

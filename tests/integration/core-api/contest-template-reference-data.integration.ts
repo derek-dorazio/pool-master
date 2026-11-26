@@ -733,9 +733,25 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  it('plays men\'s college basketball in two halves and leaves every other seeded sport league on its sport\'s periods (#786)', async () => {
-    const leagues = await getPrisma().sportLeague.findMany({ where: { matchPeriodLayout: { not: null } }, select: { name: true, matchPeriodLayout: true } });
-    expect(leagues).toEqual([{ name: 'NCAA Men\'s Basketball', matchPeriodLayout: 'HALVES' }]);
+  it('gives each seeded league\'s slot definitions their period unit and count, one family each: quarters, halves, periods, innings, holes, and none for a race (#786, #2047)', async () => {
+    const slots = await getPrisma().sportLeagueCompetitionSlot.findMany({
+      where: { sportLeague: { name: { in: ['NFL', 'NBA', 'NCAA Men\'s Basketball', 'NHL', 'MLB', 'PGA TOUR', 'Formula 1'] } } },
+      select: { periodUnit: true, periodCount: true, sportLeague: { select: { name: true } } },
+    });
+    const periodsByLeague = new Map<string, Set<string>>();
+    for (const slot of slots) {
+      const periods = slot.periodUnit === null ? 'none' : `${slot.periodUnit} x ${String(slot.periodCount)}`;
+      periodsByLeague.set(slot.sportLeague.name, new Set([...(periodsByLeague.get(slot.sportLeague.name) ?? []), periods]));
+    }
+    expect(Object.fromEntries([...periodsByLeague].map(([league, periods]) => [league, [...periods]]))).toEqual({
+      'NFL': ['QUARTER x 4'],
+      'NBA': ['QUARTER x 4'],
+      'NCAA Men\'s Basketball': ['HALF x 2'],
+      'NHL': ['PERIOD x 3'],
+      'MLB': ['INNING x 9'],
+      'PGA TOUR': ['HOLE x 18'],
+      'Formula 1': ['none'],
+    });
   });
 
   it('calls the NCAA Division I tennis championships leagues and leaves every other seeded sport league on its sport\'s noun (#834)', async () => {

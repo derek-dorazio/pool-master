@@ -43,7 +43,6 @@ function linkedRow(overrides: Record<string, unknown> & { sport?: Sport } = {}) 
     endDate: null,
     status: 'SCHEDULED',
     rounds: 4,
-    participantCount: null,
     releaseAt: new Date('2026-05-01T20:00:00.000Z'),
     fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
     fieldLocked: false,
@@ -117,9 +116,10 @@ function fieldSyncPrisma(options: {
 
 describe('IngestionPersistence', () => {
   // plans/147 — sync never creates a SportEvent: a provider event names no series or sport
-  // league, so a created row would have to guess its tour. A linked event is updated; an
-  // unlinked one is skipped and logged, and no row is written for it.
-  it('pool-master-rop.68.1.4, plans/147: reports the update of a linked event and skips a provider event no event is linked to', async () => {
+  // league, so a created row would have to guess its tour. A linked event is reported unchanged,
+  // since its field size is counted over its field rows (#2047); an unlinked one is skipped and
+  // logged, and no row is written for either.
+  it('reports a linked event unchanged, writing no event row, and skips a provider event no event is linked to', async () => {
     const existingStartDate = new Date('2026-06-04T12:00:00.000Z');
     const existingReleaseAt = new Date('2026-05-21T12:00:00.000Z');
     const existingFieldLocksAt = new Date('2026-06-03T16:00:00.000Z');
@@ -135,14 +135,13 @@ describe('IngestionPersistence', () => {
             endDate: new Date('2026-06-07T22:00:00.000Z'),
             status: 'SCHEDULED',
             rounds: 4,
-            participantCount: 72,
             releaseAt: existingReleaseAt,
             fieldLocksAt: existingFieldLocksAt,
             fieldLocked: false,
             providerSlots: [],
           }]),
-      sportEvent: { update: jest.fn().mockResolvedValueOnce({ id: 'sport-event-1' }) },
-      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
+      sportEvent: { update: jest.fn() },
+      $transaction: jest.fn(),
     };
     const logger = fakeLogger();
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), logger);
@@ -157,7 +156,6 @@ describe('IngestionPersistence', () => {
         endDate: new Date('2026-06-07T22:00:00.000Z'),
         status: 'SCHEDULED',
         rounds: 4,
-        participantCount: 80,
         fieldLocked: false,
         providerSlots: [],
       },
@@ -171,7 +169,6 @@ describe('IngestionPersistence', () => {
         endDate: new Date('2026-06-14T22:00:00.000Z'),
         status: 'SCHEDULED',
         rounds: 4,
-        participantCount: 80,
         fieldLocked: false,
         providerSlots: [],
       },
@@ -185,29 +182,25 @@ describe('IngestionPersistence', () => {
       writeDiagnostics: {
         summary: {
           total: 1,
-          unchanged: 0,
+          unchanged: 1,
           created: 0,
-          updated: 1,
+          updated: 0,
           deleted: 0,
         },
         rows: [
           expect.objectContaining({
             entityType: 'SportEvent',
-            disposition: 'UPDATED',
+            disposition: 'UNCHANGED',
             internalId: 'sport-event-1',
-            before: expect.objectContaining({
-              name: 'Old Weekend 1 Name',
-              participantCount: 72,
-            }),
-            after: expect.objectContaining({
-              name: 'Old Weekend 1 Name',
-              participantCount: 80,
-            }),
+            before: expect.objectContaining({ name: 'Old Weekend 1 Name' }),
+            after: expect.objectContaining({ name: 'Old Weekend 1 Name' }),
           }),
         ],
       },
     });
     expect(result.writeDiagnostics.rows).toHaveLength(1);
+    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({ externalId: 'golf-weekend-2' }),
       'Skipped provider event with no linked sport event',
@@ -249,7 +242,6 @@ describe('IngestionPersistence', () => {
         endDate: null,
         status: 'SCHEDULED',
         rounds: null,
-        participantCount: null,
         releaseAt: new Date('2026-05-01T20:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
         fieldLocked: true,
@@ -455,7 +447,6 @@ describe('IngestionPersistence', () => {
         endDate: null,
         status: 'SCHEDULED',
         rounds: null,
-        participantCount: null,
         releaseAt: new Date('2026-05-01T20:00:00.000Z'),
         fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
         fieldLocked: true,
@@ -502,7 +493,7 @@ describe('IngestionPersistence', () => {
     };
     const prisma = fieldSyncPrisma({
       externalId: 'golfer-01',
-      eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null, participantCount: null },
+      eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null },
       linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1', status: 'ACTIVE', ranking: 7, oddsToWin: 8.5, seedNumber: 1,
@@ -522,55 +513,49 @@ describe('IngestionPersistence', () => {
     expect(domainEvents.handedOutSportEventIds).toEqual([]);
   });
 
-  it('reads every linked event of a feed in one query and writes only the changed ones in one transaction (#1247)', async () => {
+  it('reads every linked event of a feed in one query and writes no event row, reporting each linked one unchanged (#1247, #2047)', async () => {
     const prisma = {
       sportEventProviderMapping: eventReads([
-        linkedRow({ participantCount: 60 }),
-        { ...linkedRow({ participantCount: 80 }), id: 'sport-event-2', externalId: 'golf-unchanged' },
+        linkedRow(),
+        { ...linkedRow(), id: 'sport-event-2', externalId: 'golf-second' },
       ]),
-      sportEvent: { update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }) },
-      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
-    };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
-    const changed = { ...buildInProgressEvent(), participantCount: 80 };
-
-    const result = await persistence.persistEventsWithDiagnostics([
-      changed,
-      { ...changed, externalId: 'golf-unchanged' },
-      { ...changed, externalId: 'golf-unlinked' },
-    ]);
-
-    expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledTimes(1);
-    expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { OR: [{ provider: { code: ProviderCode.BALLDONTLIE }, externalId: { in: ['provider-event-1', 'golf-unchanged', 'golf-unlinked'] } }] },
-    }));
-    expect(prisma.sportEventProviderMapping.findFirst).not.toHaveBeenCalled();
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
-    expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 80 } });
-    expect(result.writeDiagnostics.rows.map((row) => row.disposition)).toEqual(['UPDATED', 'UNCHANGED']);
-  });
-
-  it('takes a feed that names the same event twice at its last copy, writing and reporting that event once', async () => {
-    const prisma = {
-      sportEventProviderMapping: eventReads([linkedRow({ participantCount: 60 })]),
-      sportEvent: { update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }) },
-      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
+      sportEvent: { update: jest.fn() },
+      $transaction: jest.fn(),
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
     const event = buildInProgressEvent();
 
     const result = await persistence.persistEventsWithDiagnostics([
-      { ...event, participantCount: 70 },
-      { ...event, participantCount: 90 },
+      event,
+      { ...event, externalId: 'golf-second' },
+      { ...event, externalId: 'golf-unlinked' },
     ]);
+
+    expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { OR: [{ provider: { code: ProviderCode.BALLDONTLIE }, externalId: { in: ['provider-event-1', 'golf-second', 'golf-unlinked'] } }] },
+    }));
+    expect(prisma.sportEventProviderMapping.findFirst).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
+    expect(result.writeDiagnostics.rows.map((row) => row.disposition)).toEqual(['UNCHANGED', 'UNCHANGED']);
+  });
+
+  it('takes a feed that names the same event twice once, reporting that event once', async () => {
+    const prisma = {
+      sportEventProviderMapping: eventReads([linkedRow()]),
+      sportEvent: { update: jest.fn() },
+      $transaction: jest.fn(),
+    };
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
+    const event = buildInProgressEvent();
+
+    const result = await persistence.persistEventsWithDiagnostics([event, { ...event, name: 'Renamed' }]);
 
     expect(result.count).toBe(1);
     expect(prisma.sportEventProviderMapping.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { OR: [{ provider: { code: ProviderCode.BALLDONTLIE }, externalId: { in: [event.externalId] } }] },
     }));
-    expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
-    expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 90 } });
     expect(result.writeDiagnostics.rows).toHaveLength(1);
   });
 
@@ -586,24 +571,25 @@ describe('IngestionPersistence', () => {
   });
 
   // #118, #435 — the stored header, rounds and status of a linked event are not the feed's to
-  // change here. Sync may refresh the field size, and nothing else.
-  it('reports a linked event\'s stored header unchanged and only its participantCount updated', async () => {
+  // change here.
+  it('reports a linked event\'s stored header, rounds and status unchanged whatever the feed sends', async () => {
     const prisma = {
-      sportEventProviderMapping: eventReads([linkedRow({ name: 'Admin Open', rounds: 4, participantCount: 60 })]),
-      sportEvent: { update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }) },
-      $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
+      sportEventProviderMapping: eventReads([linkedRow({ name: 'Admin Open', rounds: 4 })]),
+      sportEvent: { update: jest.fn() },
+      $transaction: jest.fn(),
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
 
     const result = await persistence.persistEventsWithDiagnostics([
-      { ...buildInProgressEvent(), name: 'Provider Open', rounds: 5, participantCount: 80, startDate: new Date('2026-07-01T12:00:00.000Z') },
+      { ...buildInProgressEvent(), name: 'Provider Open', rounds: 5, startDate: new Date('2026-07-01T12:00:00.000Z') },
     ]);
 
     expect(result.writeDiagnostics.rows[0]).toMatchObject({
-      disposition: 'UPDATED',
-      before: expect.objectContaining({ name: 'Admin Open', rounds: 4, participantCount: 60 }),
-      after: expect.objectContaining({ name: 'Admin Open', rounds: 4, participantCount: 80 }),
+      disposition: 'UNCHANGED',
+      before: expect.objectContaining({ name: 'Admin Open', rounds: 4 }),
+      after: expect.objectContaining({ name: 'Admin Open', rounds: 4 }),
     });
+    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
   });
 
 });

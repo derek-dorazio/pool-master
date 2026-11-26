@@ -19,7 +19,7 @@ export const GolfRoundScoreRowSchema = z.object({
   playerName: z.string().optional(),
   strokes: z.number().int().min(1).nullable().describe('Null when only the score to par is known; such a row is not stored.'),
   scoreToPar: z.number().int(),
-  thru: z.number().int().min(0).max(18).optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored.'),
+  thru: z.number().int().min(0).optional().describe('Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored.'),
   status: GolfRoundStatusDtoSchema,
   completedAt: z.iso.datetime().optional(),
 }).describe('One golfer\'s result for one round. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event\'s field.');
@@ -65,7 +65,7 @@ export type GolfRoundScorePreviewResponse = z.infer<typeof GolfRoundScorePreview
 export const UpdateGolfRoundScoreRequestSchema = z.object({
   strokes: z.number().int().min(1).optional(),
   scoreToPar: z.number().int().optional(),
-  thru: z.number().int().min(0).max(18).nullable().optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started.'),
+  thru: z.number().int().min(0).nullable().optional().describe('Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. Null clears it, for a golfer who has not started.'),
   status: GolfRoundStatusDtoSchema.optional(),
   completedAt: z.iso.datetime().nullable().optional().describe('Null clears it.'),
 }).describe('A correction to one golfer\'s round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored.');

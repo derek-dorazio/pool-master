@@ -34,7 +34,7 @@
  */
 
 import { z } from 'zod';
-import { describeMatchPlace, getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
+import { describeMatchPlace, getSportDefinition, ProviderCode, MatchEnding, MatchSide, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -416,7 +416,7 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
     for (const key of unplacedFieldMembers(event, matches)) {
       problems.push(`${where}: ${key} is in the field but in no match, and the release refuses a field member left out of the games.`);
     }
-    for (const problem of periodScoreProblems(file.scope.sport, matches)) problems.push(`${where}: ${problem}.`);
+    for (const problem of periodScoreProblems(matches)) problems.push(`${where}: ${problem}.`);
     for (const problem of tieProblems(event, matches)) problems.push(`${where}: ${problem}.`);
   }
 }
@@ -463,19 +463,17 @@ function tieProblems(event: SportDataEvent, matches: readonly SportDataMatch[]):
   });
 }
 
-/** What is wrong with the matches' period scores: a sport without periods, the last period or past it, or a period twice or out of order. */
-function periodScoreProblems(sport: string, matches: readonly SportDataMatch[]): string[] {
-  // The sport's layout: a sport league that plays fewer periods (#786) has its own checked by the server as the scores go in.
-  const periods = isSport(sport) ? matchPeriodsOf(sport, null) : undefined;
+/**
+ * What is wrong with the matches' period scores: no result, or a period twice or out of order.
+ * Whether the game's slot keeps a score by period, and how many it has, is the server's to check
+ * as the scores go in: a game's periods are its slot's (#2047).
+ */
+function periodScoreProblems(matches: readonly SportDataMatch[]): string[] {
   return matches.flatMap((match) => {
     const scores = match.periodScores ?? [];
     if (scores.length === 0) return [];
-    if (!periods) return [`${describeMatchPlace(match)} carries period scores, but its sport keeps no score by period`];
     const problems: string[] = [];
     if (match.result === undefined) problems.push(`${describeMatchPlace(match)} carries period scores but no result, and they are entered with its result`);
-    if (scores.some((score) => score.periodNumber >= periods.count)) {
-      problems.push(`${describeMatchPlace(match)} has a score for ${periods.label.one} ${periods.count} or later, which is the result's final score`);
-    }
     if (scores.some((score, index) => index > 0 && score.periodNumber <= scores[index - 1].periodNumber)) {
       problems.push(`${describeMatchPlace(match)}'s period scores are not in period order, once each`);
     }

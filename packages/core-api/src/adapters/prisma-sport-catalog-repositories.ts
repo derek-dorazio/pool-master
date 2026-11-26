@@ -66,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -588,20 +588,20 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return slotsByEvent;
   }
 
-  async findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>> {
+  async findEmptyTierNumbers(sportEventIds: readonly string[]): Promise<Map<string, number[]>> {
     const rows = await this.prisma.sportEventTier.findMany({
       where: {
         sportEventId: { in: [...sportEventIds] },
         valuations: { none: { sportEventParticipant: { status: SportEventParticipantStatus.ACTIVE } } },
       },
-      select: { sportEventId: true, label: true },
+      select: { sportEventId: true, tierNumber: true },
       orderBy: { tierNumber: 'asc' },
     });
-    const labels = new Map<string, string[]>(sportEventIds.map((id) => [id, []]));
+    const numbers = new Map<string, number[]>(sportEventIds.map((id) => [id, []]));
     for (const row of rows) {
-      labels.get(row.sportEventId)?.push(row.label);
+      numbers.get(row.sportEventId)?.push(row.tierNumber);
     }
-    return labels;
+    return numbers;
   }
 
   async findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts> {
@@ -1119,7 +1119,7 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
       const removed = existing.filter((tier) => !keep.has(tier.tierKey));
       const changed = tiers.flatMap((tier) => {
         const before = existingByKey.get(tier.tierKey);
-        return before && (before.label !== tier.label || before.tierNumber !== tier.tierNumber) ? [{ id: before.id, tier }] : [];
+        return before && before.tierNumber !== tier.tierNumber ? [{ id: before.id, tier }] : [];
       });
       const added = tiers.filter((tier) => !existingByKey.has(tier.tierKey));
       // Park every number that moves or goes away below zero in one statement first (tier numbers
@@ -1129,11 +1129,11 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
       if (parkedIds.length > 0) {
         await tx.sportEventTier.updateMany({ where: { id: { in: parkedIds } }, data: { tierNumber: { multiply: -1 } } });
       }
-      // Each changed tier takes its own label and number, so these stay one statement apiece;
+      // Each changed tier takes its own number, so these stay one statement apiece;
       // valuations point at a tier, so a tier cannot be deleted and inserted again instead.
       for (const { id, tier } of changed) {
-        // poolmaster-allow-query-in-loop: only the tiers whose label or number changed, of an event's handful
-        await tx.sportEventTier.update({ where: { id }, data: { label: tier.label, tierNumber: tier.tierNumber } });
+        // poolmaster-allow-query-in-loop: only the tiers whose number changed, of an event's handful
+        await tx.sportEventTier.update({ where: { id }, data: { tierNumber: tier.tierNumber } });
       }
       if (added.length > 0) {
         await tx.sportEventTier.createMany({ data: added.map((tier) => ({ sportEventId, ...tierColumns(tier) })) });
@@ -1296,7 +1296,6 @@ function toSportLeague(row: SportLeagueRow): SportLeague {
     autoReleaseDaysBeforeStart: row.autoReleaseDaysBeforeStart,
     platformTierProfileId: row.platformTierProfileId,
     platformPricingProfileId: row.platformPricingProfileId,
-    matchPeriodLayout: row.matchPeriodLayout,
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,
     displayOrder: row.displayOrder,
@@ -1317,7 +1316,7 @@ const SPORT_EVENT_INCLUDE = {
   sportLeagueSeason: {
     select: {
       championshipYear: true,
-      sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, ...SPORT_LEAGUE_SPORT_SELECT, ...SYNC_PROVIDER_SELECT } },
+      sportLeague: { select: { squaresFromRound: true, participantType: true, scoringFamily: true, ...SPORT_LEAGUE_SPORT_SELECT, ...SYNC_PROVIDER_SELECT } },
     },
   },
   providerMappings: {
@@ -1325,7 +1324,7 @@ const SPORT_EVENT_INCLUDE = {
     orderBy: { provider: { name: 'asc' } },
   },
   // The slot definitions it covers (#2010): where contest templates are offered on it.
-  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, ...SLOT_PLACE_SELECT } } } } } },
+  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1344,15 +1343,13 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     status: row.status,
     rounds: row.rounds ?? undefined,
     roundsPar: row.roundsPar ?? undefined,
-    participantCount: row.participantCount ?? undefined,
     slotDefinitions: row.slots
       .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)
-      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied })),
+      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition) })),
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
     sportLeagueId: row.sportLeagueId,
-    ...(row.sportLeagueSeason.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.sportLeagueSeason.sportLeague.matchPeriodLayout }),
     ...(row.sportLeagueSeason.sportLeague.squaresFromRound !== null && { squaresFromRound: row.sportLeagueSeason.sportLeague.squaresFromRound }),
     participantType: row.sportLeagueSeason.sportLeague.participantType,
     scoringFamily: row.sportLeagueSeason.sportLeague.scoringFamily,
@@ -1418,7 +1415,7 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
 }
 
 function tierColumns(tier: SportEventTierDefinition) {
-  return { tierKey: tier.tierKey, label: tier.label, tierNumber: tier.tierNumber };
+  return { tierKey: tier.tierKey, tierNumber: tier.tierNumber };
 }
 
 function toTier(row: Prisma.SportEventTierGetPayload<object>): SportEventTier {

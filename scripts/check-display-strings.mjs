@@ -35,6 +35,7 @@ export const SPORT_WORD_ROLES_FILE = 'packages/shared/display-strings/sport-word
 export const SOURCE_LOCALE = 'en-US';
 const SOURCE = /^(packages|clients)\/.+\.(ts|tsx)$/;
 const EXEMPT = /(\.(test|spec|stories)\.tsx?$)|(\/generated\/)|(\/src\/test\/)/;
+const LANGUAGE_MODULE = /\/[a-z]{2}-[A-Z]{2}\.ts$/;
 const PLURAL = /_(zero|one|two|few|many|other)$/;
 const RULE = 'rules/ux-rules.md §16 *Display Strings*';
 
@@ -273,6 +274,9 @@ async function main() {
   const sources = listSources(repoRoot);
   const outside = sources.filter((path) => !path.startsWith(DISPLAY_STRINGS_DIR));
   const texts = outside.map(read);
+  // A helper in display-strings/ (slot-label, tier-label) is a reader of its keys; the language
+  // modules that declare them are not.
+  const helperTexts = sources.filter((path) => path.startsWith(DISPLAY_STRINGS_DIR) && !LANGUAGE_MODULE.test(path)).map(read);
   const source = DISPLAY_STRING_MODULES[SOURCE_LOCALE];
 
   const mapsByPath = {};
@@ -284,7 +288,7 @@ async function main() {
   const failures = [
     ...unregisteredEnums(declared, registeredEnumNames(read(MODULE_TYPES_FILE))),
     ...Object.entries(DISPLAY_STRING_MODULES).flatMap(([locale, module]) => completenessFailures(locale, module, enumValues, errorCodes)),
-    ...unusedKeyFailures(source, texts, SPORT_WORD_ROLES),
+    ...unusedKeyFailures(source, [...texts, ...helperTexts], SPORT_WORD_ROLES),
     ...Object.entries(DISPLAY_STRING_MODULES)
       .filter(([locale]) => locale !== SOURCE_LOCALE)
       .flatMap(([locale, module]) => parityFailures(locale, module, source)),

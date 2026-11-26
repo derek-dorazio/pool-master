@@ -116,7 +116,8 @@ describe('BalldontlieAdapter (NHL)', () => {
 
       const detail = await harness.adapter.getEventDetails('nhl-2024-postseason');
 
-      expect(detail).toMatchObject({ externalId: 'nhl-2024-postseason', sport: Sport.HOCKEY, status: 'COMPLETED', participantCount: 16, fieldLocked: true });
+      expect(detail).toMatchObject({ externalId: 'nhl-2024-postseason', sport: Sport.HOCKEY, status: 'COMPLETED', fieldLocked: true });
+      expect(detail?.participants).toHaveLength(16);
       expect(detail?.participants[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', metadata: { abbreviation: 'WSH' } });
       expect(requestLine(harness.api)).toEqual(['/nhl/v1/games?seasons=2024&postseason=true&per_page=100', '/nhl/v1/standings?season=2024']);
     });
@@ -160,7 +161,7 @@ describe('BalldontlieAdapter (NHL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await expect(harness.adapter.getEventDetails('nhl-2025-postseason')).resolves.toMatchObject({ status: 'IN_PROGRESS', participantCount: 8 });
+      await expect(harness.adapter.getEventDetails('nhl-2025-postseason')).resolves.toMatchObject({ status: 'IN_PROGRESS' });
     });
 
     it('gives nothing for a postseason the vendor has no games in yet', async () => {
@@ -205,7 +206,8 @@ describe('BalldontlieAdapter (NHL)', () => {
     const detail = await harness.adapter.getEventDetails('nhl-2025-postseason');
     const result = await harness.adapter.getLiveScores('nhl-2025-postseason');
 
-    expect(detail).toMatchObject({ externalId: 'nhl-2025-postseason', status: 'IN_PROGRESS', participantCount: 8, startDate: new Date('2026-04-18T00:00:00Z') });
+    expect(detail).toMatchObject({ externalId: 'nhl-2025-postseason', status: 'IN_PROGRESS', startDate: new Date('2026-04-18T00:00:00Z') });
+    expect(detail?.participants).toHaveLength(8);
     expect(result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []).toEqual(['2025030111', '2025030121', '2025030131']);
   });
 

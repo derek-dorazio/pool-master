@@ -81,39 +81,47 @@ function done(roundNumber: number, completedAt: Date): RoundSpec {
   return { roundNumber, status: ParticipantRoundStatus.COMPLETED, completedAt };
 }
 
+const HOLES_PER_ROUND = 18;
+
 describe('lastFinishedRound', () => {
   it('is nothing while any golfer still in the event is playing the only round started', () => {
     expect(lastFinishedRound([
       golfer('a', [done(1, ROUND_1_DONE)]),
       golfer('b', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 14 }]),
-    ])).toBeNull();
+    ], HOLES_PER_ROUND)).toBeNull();
   });
 
   it('is the round every golfer has completed, finished when the last of them did', () => {
     expect(lastFinishedRound([
       golfer('a', [done(1, after(ROUND_1_DONE, -90))]),
       golfer('b', [done(1, ROUND_1_DONE)]),
-    ])).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
+    ], HOLES_PER_ROUND)).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
   });
 
   it('reads a round with no completion time as finished when its score was last written, as an admin entering scores leaves it', () => {
     expect(lastFinishedRound([
       golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, completedAt: null, updatedAt: ROUND_1_DONE }]),
       golfer('b', [done(1, after(ROUND_1_DONE, -30))]),
-    ])).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
+    ], HOLES_PER_ROUND)).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
   });
 
-  it('counts a round with all 18 holes scored as finished before its status catches up', () => {
+  it('counts a round with every one of its holes scored as finished before its status catches up, and not one a hole short', () => {
     expect(lastFinishedRound([
       golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 18, completedAt: null, updatedAt: ROUND_1_DONE }]),
-    ])?.roundNumber).toBe(1);
+    ], HOLES_PER_ROUND)?.roundNumber).toBe(1);
+    expect(lastFinishedRound([
+      golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 17, completedAt: null, updatedAt: ROUND_1_DONE }]),
+    ], HOLES_PER_ROUND)).toBeNull();
+    expect(lastFinishedRound([
+      golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 9, completedAt: null, updatedAt: ROUND_1_DONE }]),
+    ], 9)?.roundNumber).toBe(1);
   });
 
   it('is the last round the whole field finished while the next one is under way', () => {
     expect(lastFinishedRound([
       golfer('a', [done(1, ROUND_1_DONE), done(2, ROUND_2_DONE)]),
       golfer('b', [done(1, ROUND_1_DONE), { roundNumber: 2, status: ParticipantRoundStatus.IN_PROGRESS, thru: 9 }]),
-    ])).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
+    ], HOLES_PER_ROUND)).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
   });
 
   it('leaves out golfers who are out of the event: cut, withdrawn or removed from the field', () => {
@@ -122,7 +130,7 @@ describe('lastFinishedRound', () => {
       golfer('cut', [done(1, ROUND_1_DONE), { roundNumber: 2, status: ParticipantRoundStatus.MISSED_CUT, completedAt: ROUND_2_DONE }], { standing: ParticipantStandingStatus.ELIMINATED }),
       golfer('withdrew', [{ roundNumber: 1, status: ParticipantRoundStatus.DNF, thru: 7 }], { standing: ParticipantStandingStatus.WITHDRAWN }),
       golfer('removed', [], { withdrawn: true }),
-    ])?.roundNumber).toBe(3);
+    ], HOLES_PER_ROUND)?.roundNumber).toBe(3);
   });
 });
 

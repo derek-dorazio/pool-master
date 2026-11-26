@@ -5,6 +5,7 @@
  * scoring rules, payout structure, and scheduling.
  */
 
+import { tierLabel } from '@poolmaster/shared/display-strings';
 import type { FastifyBaseLogger } from 'fastify';
 import { countsEventGames, describeContestProgress, type ContestProgress } from './contest-progress';
 import type {
@@ -1756,11 +1757,11 @@ export class ContestService {
       picksByEntryId.set(pick.entryId, [...(picksByEntryId.get(pick.entryId) ?? []), pick]);
     }
 
-    const tierLabelBySportEventParticipantId = new Map<string, string>();
+    const tierNumberBySportEventParticipantId = new Map<string, number>();
     const priceBySportEventParticipantId = new Map<string, number>();
     for (const valuation of input.valuations) {
-      if (valuation.tierLabel !== null) {
-        tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
+      if (valuation.tierNumber !== null) {
+        tierNumberBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierNumber);
       }
       if (valuation.price !== null) {
         priceBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.price);
@@ -1785,7 +1786,7 @@ export class ContestService {
       }
       const entryPicks = picksByEntryId.get(entryId) ?? [];
       const lineup = {
-        tiers: buildEntryTierSelections(entryPicks, tierLabelBySportEventParticipantId),
+        tiers: buildEntryTierSelections(entryPicks, tierNumberBySportEventParticipantId),
         spent: entryPicks.reduce((total, pick) => total + (priceBySportEventParticipantId.get(pick.sportEventParticipantId) ?? 0), 0),
       };
       const tiebreakerValue = entry.tiebreakerValue ?? null;
@@ -2016,9 +2017,9 @@ export class ContestService {
       return;
     }
 
-    const loadedParticipantCount = (await this.deps.sportEvents.countParticipants([firstSportEventId]))
+    const participantCount = (await this.deps.sportEvents.countParticipants([firstSportEventId]))
       .get(firstSportEventId) ?? 0;
-    if (loadedParticipantCount > 0) {
+    if (participantCount > 0) {
       return;
     }
 
@@ -2185,11 +2186,12 @@ function toContestEntryParticipantRow(pick: ContestEntryPickWithParticipant): Co
 
 function buildEntryTierSelections(
   picks: readonly ContestEntryPickWithParticipant[],
-  tierLabelBySportEventParticipantId: Map<string, string>,
+  tierNumberBySportEventParticipantId: Map<string, number>,
 ): ContestEntryCompletedTierSelection[] {
   const groups = new Map<string, string[]>();
   for (const pick of picks) {
-    const tierName = tierLabelBySportEventParticipantId.get(pick.sportEventParticipantId) ?? 'Selections';
+    const tierNumber = tierNumberBySportEventParticipantId.get(pick.sportEventParticipantId);
+    const tierName = tierNumber === undefined ? 'Selections' : tierLabel(tierNumber);
     const participants = groups.get(tierName) ?? [];
     participants.push(pick.participant.participantName);
     groups.set(tierName, participants);

@@ -81,6 +81,7 @@ import type { SportEventParticipantService, SportEventParticipantView } from '..
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { lastFinishedMatchRound } from '../scoring-families/head-to-head/finished-rounds';
 import { lastFinishedRound } from '../scoring-families/stroke-play/finished-rounds';
+import { holesPerRound } from '../scoring-families/stroke-play/unplayed-rounds';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 import { errorMessage } from '../../core/error-message';
 
@@ -213,7 +214,7 @@ export class LiveStandings implements DueNotifications {
       if (sportEvent.status !== SportEventStatus.IN_PROGRESS || !eventStoresGolfRoundScores(sportEvent)) continue;
       // With no round count there is no telling the last round, and a one-round event has none to report between.
       if (sportEvent.rounds === undefined || sportEvent.rounds < 2) continue;
-      const finished = lastFinishedRound(await fieldOf(sportEvent.id));
+      const finished = lastFinishedRound(await fieldOf(sportEvent.id), holesPerRound(sportEvent));
       if (!finished || finished.roundNumber >= sportEvent.rounds || !isDue(finished.finishedAt)) continue;
       const roundNumber = finished.roundNumber;
       due.push({

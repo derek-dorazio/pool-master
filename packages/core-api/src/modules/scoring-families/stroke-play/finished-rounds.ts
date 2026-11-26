@@ -16,16 +16,16 @@ export interface FinishedRound {
 /**
  * The highest round the whole field still in the event has finished, or null before any is. A
  * golfer's round finished at its `completedAt`, else when its score was last written: an admin
- * entering a final score need not stamp a time.
+ * entering a final score need not stamp a time. `holes` is the event's `holesPerRound`.
  */
-export function lastFinishedRound(field: readonly SportEventParticipantView[]): FinishedRound | null {
+export function lastFinishedRound(field: readonly SportEventParticipantView[], holes: number | null): FinishedRound | null {
   const playing = field.filter((row) => !isOutOfEvent(row));
   const roundNumbers = [...new Set(playing.flatMap((row) => row.rounds.map((round) => round.round.roundNumber)))]
     .sort((left, right) => right - left);
   for (const roundNumber of roundNumbers) {
     const finished = playing
       .map((row) => row.rounds.find((round) => round.round.roundNumber === roundNumber))
-      .filter((round): round is ParticipantRoundView => round !== undefined && isRoundFinished(round));
+      .filter((round): round is ParticipantRoundView => round !== undefined && isRoundFinished(round, holes));
     if (finished.length === playing.length) {
       const finishedAt = Math.max(...finished.map((round) => (round.round.completedAt ?? round.round.updatedAt).getTime()));
       return { roundNumber, finishedAt: new Date(finishedAt) };

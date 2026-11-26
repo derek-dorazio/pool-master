@@ -79,14 +79,14 @@ export interface SportEventAdminCounts {
   /** Active participants with no price: a DRAFT event can't be released while any remain (#93). */
   unpricedParticipantCount: number;
   /** Labels of the tiers no active participant is in, in tier order: a DRAFT event can't be released while any remain. */
-  emptyTierLabels: string[];
+  emptyTierNumbers: number[];
   contestCount: number;
 }
 
 /** An event with the counts every reader needs, and a root admin's own counts when asked for. */
 export interface SportEventSummary {
   event: SportEvent;
-  loadedParticipantCount: number;
+  participantCount: number;
   tierCount: number;
   /** The Season slots it covers (#2004), in play order; empty for an event with none yet. */
   slots: SportLeagueSeasonSlot[];
@@ -766,9 +766,9 @@ export class SportEventService {
       startDate: event.startDate,
       now: this.now(),
       scheduledRoundCount: facts.scheduledRoundCount,
-      loadedParticipantCount: summary.loadedParticipantCount,
+      participantCount: summary.participantCount,
       untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
-      emptyTierLabels: summary.adminCounts.emptyTierLabels,
+      emptyTierNumbers: summary.adminCounts.emptyTierNumbers,
       isPriced: event.pricingConfig !== undefined,
       unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
       bracketBlockers,
@@ -870,13 +870,13 @@ export class SportEventService {
       const tiers = tiersByEvent.get(event.id) ?? [];
       return {
         event,
-        loadedParticipantCount: 0,
+        participantCount: 0,
         tierCount: tiers.length,
         slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
         adminCounts: {
           untieredParticipantCount: 0,
           unpricedParticipantCount: 0,
-          emptyTierLabels: tiers.map((tier) => tier.label),
+          emptyTierNumbers: tiers.map((tier) => tier.tierNumber),
           contestCount: 0,
         },
       };
@@ -910,7 +910,7 @@ export class SportEventService {
     ]);
     return events.map((event) => ({
       event,
-      loadedParticipantCount: participants.get(event.id) ?? 0,
+      participantCount: participants.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
       slots: slots.get(event.id) ?? [],
       adminCounts: null,
@@ -924,7 +924,7 @@ export class SportEventService {
       this.summarize(events),
       this.deps.sportEvents.countUntieredActiveParticipants(ids),
       this.deps.sportEvents.countUnpricedActiveParticipants(ids),
-      this.deps.sportEvents.findEmptyTierLabels(ids),
+      this.deps.sportEvents.findEmptyTierNumbers(ids),
       this.deps.sportEvents.countContests(ids),
     ]);
     return summaries.map((summary) => ({
@@ -932,7 +932,7 @@ export class SportEventService {
       adminCounts: {
         untieredParticipantCount: untiered.get(summary.event.id) ?? 0,
         unpricedParticipantCount: unpriced.get(summary.event.id) ?? 0,
-        emptyTierLabels: emptyTiers.get(summary.event.id) ?? [],
+        emptyTierNumbers: emptyTiers.get(summary.event.id) ?? [],
         contestCount: contests.get(summary.event.id) ?? 0,
       },
     }));

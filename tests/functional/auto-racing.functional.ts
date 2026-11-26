@@ -255,7 +255,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     const fourTiers = await replaceEventTiers({
       client: a,
       path: { eventId },
-      body: { tiers: [1, 2, 3, 4].map((n) => ({ tierKey: `tier-${n}`, label: `Tier ${n}`, tierNumber: n })) },
+      body: { tiers: [1, 2, 3, 4].map((n) => ({ tierKey: `tier-${n}`, tierNumber: n })) },
     });
     expect(fourTiers.response?.status).toBe(200);
     expect(expectDefined(fourTiers.data).tiers).toHaveLength(4);

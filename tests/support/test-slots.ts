@@ -7,6 +7,7 @@
  */
 import { randomInt } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
+import type { PeriodUnit } from '@poolmaster/shared/domain';
 import { competitionFor, seasonCompetitionFor, type TestCompetition } from './competitions';
 
 type Db = Pick<PrismaClient, 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition'>;
@@ -212,4 +213,20 @@ export async function oneEventSlotId(prisma: Parameters<typeof linkTestSlot>[0] 
   if (slots.length !== 1) throw new Error(`Sport event ${sportEventId} has ${String(slots.length)} slots, not one.`);
   // poolmaster-allow-position: the event's one slot
   return slots[0].id;
+}
+
+/**
+ * Gives the slot definition behind an event's slot its periods (#2047): eighteen holes a golf
+ * round, four quarters a football game. A test definition is made with none, as a race's is.
+ */
+export async function setEventSlotPeriods(
+  prisma: Pick<PrismaClient, 'sportEventSlot' | 'sportLeagueCompetitionSlot'>,
+  sportEventId: string,
+  periods: { unit: PeriodUnit; count: number },
+): Promise<void> {
+  const slots = await prisma.sportEventSlot.findMany({ where: { sportEventId }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } } });
+  await prisma.sportLeagueCompetitionSlot.updateMany({
+    where: { id: { in: slots.map((slot) => slot.seasonSlot.sportLeagueCompetitionSlotId) } },
+    data: { periodUnit: periods.unit, periodCount: periods.count },
+  });
 }

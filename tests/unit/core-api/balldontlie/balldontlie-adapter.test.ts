@@ -152,7 +152,8 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
 
       const detail = await harness.adapter.getEventDetails('41');
 
-      expect(detail).toMatchObject({ externalId: '41', name: 'BMW Championship', participantCount: 4, rounds: 4, fieldLocked: true });
+      expect(detail).toMatchObject({ externalId: '41', name: 'BMW Championship', rounds: 4, fieldLocked: true });
+      expect(detail?.participants).toHaveLength(4);
       expect(detail?.participants.map((participant) => [participant.externalId, participant.name, participant.ranking])).toEqual([
         ['10', 'Michael Brennan', 35],
         ['75', 'Russell Henley', 9],

@@ -65,7 +65,7 @@ export class EplReader {
     if (matches.length === 0) return null;
     const teams = await this.client.get(EPL_TEAMS_PATH, { season: scope.season }, soccerTeamListSchema);
     const participants = toEplFieldParticipants(matches, teams.data);
-    return { ...toEplMatchweekEvent(scope, matches, participants.length), participants, games: toEplScheduledGames(matches) };
+    return { ...toEplMatchweekEvent(scope, matches), participants, games: toEplScheduledGames(matches) };
   }
 
   /** The teams of the season under way. */
