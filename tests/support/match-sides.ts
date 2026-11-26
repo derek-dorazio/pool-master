@@ -19,6 +19,8 @@ import {
   type SportEventRoundMatchGame,
   type SportEventRoundMatchGameSideResult,
   type SportEventRoundMatchSide,
+  matchCompletedAt,
+  matchIsNeutralSite,
 } from '@poolmaster/shared/domain';
 import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
 import { mapSportEventRoundMatchToDto } from '../../packages/core-api/src/mappers/sport-event-matches.mapper';
@@ -52,6 +54,10 @@ export interface HomeAwayFields {
   periodScores?: readonly RunningPeriod[];
   /** Ignored: the column is gone (#2046). */
   resultSource?: unknown;
+  /** Each Game's neutral-site flag (#2047): the match keeps none. */
+  isNeutralSite?: boolean;
+  /** A COMPLETED single game's or series' completion time, on its Games (#2047). */
+  completedAt?: Date | null;
 }
 
 /** A match's own fields with the old home-and-away ones; every field but the place has a default. */
@@ -68,7 +74,7 @@ export function legacyMatch(row: LegacyMatchRow): SportEventRoundMatch {
   const {
     homeSportEventParticipantId = null, awaySportEventParticipantId = null, winnerSide = null, homeScore = null, awayScore = null,
     homeShootoutScore = null, awayShootoutScore = null, homeSpread = null, advancesToSide = null, periodScores = [],
-    games, ...rest
+    isNeutralSite = false, completedAt = null, games, ...rest
   } = row;
   const match = omitKeys(rest, ['resultSource']);
   const base = {
@@ -76,13 +82,11 @@ export function legacyMatch(row: LegacyMatchRow): SportEventRoundMatch {
     roundNumber: 1,
     slot: roundSlot(SlotKind.TOURNAMENT),
     matchNumber: 1,
-    isNeutralSite: false,
     scheduledDate: null,
     status: MatchStatus.SCHEDULED,
     ending: MatchEnding.PLAYED,
     advancesToMatchId: null,
     regionLabel: null,
-    completedAt: null,
     createdAt: T0,
     updatedAt: T0,
     ...match,
@@ -99,11 +103,11 @@ export function legacyMatch(row: LegacyMatchRow): SportEventRoundMatch {
     ...base,
     advancesToSideNumber: advancesToSide === null ? null : sideNumberOfMatchSide(advancesToSide),
     sides,
-    games: games ?? gamesOf(base, sides, { homeScore, awayScore, homeShootoutScore, awayShootoutScore, periodScores }),
+    games: games ?? gamesOf({ ...base, isNeutralSite, completedAt }, sides, { homeScore, awayScore, homeShootoutScore, awayShootoutScore, periodScores }),
   };
 }
 
-type MatchBase = Pick<SportEventRoundMatch, 'id' | 'sportEventId' | 'roundNumber' | 'slot' | 'isNeutralSite' | 'scheduledDate' | 'status' | 'completedAt'>;
+type MatchBase = Pick<SportEventRoundMatch, 'id' | 'sportEventId' | 'roundNumber' | 'slot' | 'scheduledDate' | 'status'> & { isNeutralSite: boolean; completedAt: Date | null };
 
 function gamesOf(
   match: MatchBase,
@@ -121,6 +125,7 @@ function gamesOf(
     sportEventSlotId: `event-slot-${String(match.roundNumber)}`,
     gameNumber,
     scheduledDate: gameNumber === 1 ? match.scheduledDate : null,
+    isNeutralSite: match.isNeutralSite,
     status,
     completedAt,
     movedToGameId: null,
@@ -161,7 +166,7 @@ export function homeAwayOf(match: SportEventRoundMatch): SportEventRoundMatchDto
 export function withHomeAway(match: SportEventRoundMatch, fields: HomeAwayFields & Partial<Omit<SportEventRoundMatch, 'sides' | 'games'>>): SportEventRoundMatch {
   const view = homeAwayOf(match);
   // A single game's Game 1 takes the match's status, as a result writes it.
-  const rebuildsGames = ['homeScore', 'awayScore', 'homeShootoutScore', 'awayShootoutScore', 'periodScores', 'status'].some((key) => key in fields);
+  const rebuildsGames = ['homeScore', 'awayScore', 'homeShootoutScore', 'awayShootoutScore', 'periodScores', 'status', 'isNeutralSite', 'completedAt'].some((key) => key in fields);
   const { games } = match;
   const own = omitKeys(match, ['sides', 'games', 'advancesToSideNumber']);
   const rebuilt = legacyMatch({
@@ -176,6 +181,8 @@ export function withHomeAway(match: SportEventRoundMatch, fields: HomeAwayFields
     homeShootoutScore: view.homeShootoutScore,
     awayShootoutScore: view.awayShootoutScore,
     periodScores: view.periodScores,
+    isNeutralSite: matchIsNeutralSite(match),
+    completedAt: matchCompletedAt(match),
     ...(rebuildsGames ? {} : { games }),
     ...fields,
   });

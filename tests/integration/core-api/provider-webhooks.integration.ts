@@ -71,7 +71,7 @@ async function linkedEvent(input: {
     await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);
     const round = await prisma.sportEventRound.findFirstOrThrow({ where: { sportEventId: event.id } });
     const match = await prisma.sportEventRoundMatch.create({
-      data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false },
+      data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1 },
     });
     const [game, provider] = await Promise.all([
       prisma.sportEventRoundMatchGame.create({

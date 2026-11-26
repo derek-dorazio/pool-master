@@ -787,11 +787,10 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
 
   async findResultFacts(sportEventId: string): Promise<Map<string, RoundResultFacts>> {
     const [matches, participantRounds] = await Promise.all([
-      this.prisma.sportEventRoundMatch.groupBy({
-        by: ['sportEventRoundId', 'status'],
+      // A match keeps no completion time (#2047): its Games' are read with it.
+      this.prisma.sportEventRoundMatch.findMany({
         where: { sportEventId },
-        _count: { _all: true },
-        _max: { completedAt: true },
+        select: { sportEventRoundId: true, status: true, games: { select: { completedAt: true } } },
       }),
       this.prisma.sportEventParticipantRound.groupBy({
         by: ['sportEventRoundId', 'status'],
@@ -808,8 +807,17 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
       facts.set(roundId, created);
       return created;
     };
-    for (const group of matches) {
-      factsOf(group.sportEventRoundId).matches.push({ status: group.status, count: group._count._all, lastCompletedAt: group._max.completedAt });
+    for (const match of matches) {
+      const roundFacts = factsOf(match.sportEventRoundId);
+      let group = roundFacts.matches.find((each) => each.status === match.status);
+      if (group === undefined) {
+        group = { status: match.status, count: 0, lastCompletedAt: null };
+        roundFacts.matches.push(group);
+      }
+      group.count += 1;
+      for (const { completedAt } of match.games) {
+        if (completedAt !== null && (group.lastCompletedAt === null || completedAt > group.lastCompletedAt)) group.lastCompletedAt = completedAt;
+      }
     }
     for (const group of participantRounds) {
       factsOf(group.sportEventRoundId).participantRounds.push({ status: group.status, count: group._count._all, lastCompletedAt: group._max.completedAt });

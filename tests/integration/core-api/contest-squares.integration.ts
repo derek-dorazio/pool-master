@@ -270,7 +270,8 @@ describe('PrismaSquaresRepository finding the boards the automatic draw is due o
     const [underWay, over, cancelled] = await Promise.all([seedSquaresContest(), seedSquaresContest(), seedSquaresContest()]);
     const prisma = getPrisma();
     await prisma.sportEventRoundMatch.update({ where: { id: underWay.gameId }, data: { status: 'IN_PROGRESS' } });
-    await prisma.sportEventRoundMatch.update({ where: { id: over.gameId }, data: { status: 'COMPLETED', completedAt: new Date() } });
+    await prisma.sportEventRoundMatch.update({ where: { id: over.gameId }, data: { status: 'COMPLETED' } });
+    await prisma.sportEventRoundMatchGame.updateMany({ where: { sportEventRoundMatchId: over.gameId }, data: { status: 'COMPLETED', completedAt: new Date() } });
     await prisma.sportEventRoundMatch.update({ where: { id: cancelled.gameId }, data: { status: 'CANCELLED' } });
 
     const due = await new PrismaSquaresRepository(getAppPrisma()).findDueForAutoDraw(KICKOFF);

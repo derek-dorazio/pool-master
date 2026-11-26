@@ -150,7 +150,7 @@ describe('ScheduledEventReader — play under way and notifications (#1499)', ()
     ] as const) {
       const round = await getPrisma().sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(getPrisma(), event.id), roundNumber: 1, scheduledDate: new Date('2026-04-26T12:00:00.000Z') } });
       await getPrisma().sportEventRoundMatch.createMany({
-        data: matches.map((match, index) => ({ sportEventId: event.id, sportEventRoundId: round.id, matchNumber: index + 1, isNeutralSite: false, ...match })),
+        data: matches.map((match, index) => ({ sportEventId: event.id, sportEventRoundId: round.id, matchNumber: index + 1, ...match })),
       });
     }
 

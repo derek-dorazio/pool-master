@@ -1,10 +1,11 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, HomeAway, JobTrigger, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, Sport, gameNumbered, matchSpread, shootoutScoreOf, sideParticipantId, gameScoreOf } from '@poolmaster/shared/domain';
+import { BackgroundJobType, HomeAway, JobTrigger, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, matchCompletedAt, matchIsNeutralSite, Sport, gameNumbered, matchSpread, shootoutScoreOf, sideParticipantId, gameScoreOf } from '@poolmaster/shared/domain';
 import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { MatchResultWrite, MatchSideWrite, SportEventRoundMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
+  PrismaSportEventRoundMatchGameRepository,
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
@@ -42,6 +43,7 @@ function repos() {
     rounds: new PrismaSportEventRoundRepository(getAppPrisma()),
     field: new PrismaSportEventParticipantRepository(getAppPrisma()),
     matches: new PrismaSportEventRoundMatchRepository(getAppPrisma()),
+    games: new PrismaSportEventRoundMatchGameRepository(getAppPrisma()),
   };
 }
 
@@ -259,8 +261,27 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     await repos().matches.update(first.id, { scheduledDate: null, isNeutralSite: false });
 
     const [edited] = await repos().matches.findBySportEvent(event.id);
-    expect(edited).toMatchObject({ scheduledDate: null, isNeutralSite: false });
+    expect([edited.scheduledDate, matchIsNeutralSite(edited)]).toEqual([null, false]);
     expect(sideParticipantId(edited, 2)).toBe(entryOf('Duke').id);
+  });
+
+  it('sets a series to a neutral site on every one of its Games, so the match reads neutral once its Game 2 exists', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+    const gameOne = gameOneOf(first);
+    await repos().games.applySync({
+      providerCode: 'BALLDONTLIE',
+      created: [{ id: randomUUID(), sportEventId: event.id, sportEventRoundMatchId: first.id, sportEventSlotId: gameOne.sportEventSlotId, gameNumber: 2, isNeutralSite: false }],
+      mapped: [], moved: [], scores: [],
+    });
+    await repos().matches.update(first.id, { isNeutralSite: false });
+
+    await repos().matches.update(first.id, { isNeutralSite: true });
+
+    const edited = expectDefined(await repos().matches.findById(first.id));
+    expect(edited.games.map((game) => [game.gameNumber, game.isNeutralSite])).toEqual([[1, true], [2, true]]);
+    expect(matchIsNeutralSite(edited)).toBe(true);
   });
 
   it('changes where each side plays Game 1 without moving either team off its side, as a provider listing the teams the other way round does', async () => {
@@ -417,7 +438,7 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     });
 
     const [completed, , filled] = await repos().matches.findBySportEvent(event.id);
-    expect(completed).toMatchObject({ status: MatchStatus.COMPLETED, completedAt: RECORDED_AT });
+    expect([completed.status, matchCompletedAt(completed)]).toEqual([MatchStatus.COMPLETED, RECORDED_AT]);
     expect(completed.sides.map((side) => side.outcome)).toEqual(SIDE_ONE_WINS);
     expect(gameOneOf(completed)).toMatchObject({ status: MatchStatus.COMPLETED, completedAt: RECORDED_AT });
     expect([gameScoreOf(gameOneOf(completed), 1), gameScoreOf(gameOneOf(completed), 2)]).toEqual([81, 70]);
@@ -473,7 +494,8 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
     expect(walkover).toMatchObject({ status: MatchStatus.COMPLETED, ending: MatchEnding.WALKOVER });
     expect(walkover.sides.map((side) => side.outcome)).toEqual(SIDE_TWO_WINS);
     expect(gameScoreOf(gameOneOf(walkover), 2)).toBeNull();
-    expect(cleared).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED, completedAt: null });
+    expect(cleared).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED });
+    expect(matchCompletedAt(cleared)).toBeNull();
   });
 
   it('leaves a series\' Games as they are when its result is written, the result naming no Game 1 score', async () => {
@@ -600,7 +622,7 @@ describe('sport_event_round_matches and match side database checks', () => {
   async function insertMatch(event: { id: string }, values: Record<string, unknown> = {}) {
     const round = await getPrisma().sportEventRound.findFirstOrThrow({ where: { sportEventId: event.id, roundNumber: 1 } });
     return getPrisma().sportEventRoundMatch.create({
-      data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true, ...values },
+      data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, ...values },
     });
   }
 
