@@ -32,7 +32,7 @@ import { sportRowKeys } from '../support/sport-rows';
 // game, the top four seeds coming in on byes. A commissioner runs a contest from the league's
 // default template (one team from each of six tiers, round values doubling 1, 2, 4, 8), a member
 // picks a lineup that includes a seed on a bye, and the settled contest scores each team for the
-// games it won.
+// games it won, a bye counting as a win.
 
 const RUN = `cfp-${Date.now()}`;
 const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
@@ -170,11 +170,11 @@ describe('SDK Functional: College Football Playoff', () => {
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     const points = Object.fromEntries(board.entries.flatMap((entry) => entry.picks)
       .map((pick) => [expectDefined(field.find((row) => row.id === pick.sportEventParticipantId)).participant.name, pick.knockout?.points]));
-    // Indiana's bye scores nothing, then it wins out, 2 + 4 + 8; Miami loses the final, 1 + 2 + 4;
+    // Indiana's bye counts as a win, 1, then it wins out, 2 + 4 + 8; Miami loses the final, 1 + 2 + 4;
     // Oregon and Ole Miss lose the semifinals, 1 + 2; Alabama loses a quarterfinal, 1; James Madison
     // loses in the first round.
     expect(points).toEqual({
-      'Indiana Hoosiers': 14,
+      'Indiana Hoosiers': 15,
       'Oregon Ducks': 3,
       'Ole Miss Rebels': 3,
       'Alabama Crimson Tide': 1,
@@ -185,6 +185,6 @@ describe('SDK Functional: College Football Playoff', () => {
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
-    expect([settled.totalScore, settled.displayPosition]).toEqual([28, '1']);
+    expect([settled.totalScore, settled.displayPosition]).toEqual([29, '1']);
   });
 });

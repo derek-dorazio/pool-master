@@ -244,7 +244,7 @@ play-in tournament is played, as the First Four's are. Those leagues' rounds sho
 names (Conference Finals, NBA Finals), not March Madness's.
 
 The College Football Playoff is a fixed bracket in its own American football sport league: 12
-teams, the top four seeds placed straight into the quarterfinals (a bye scores nothing), the
+teams, the top four seeds placed straight into the quarterfinals (a bye counts as a win), the
 first round at the higher seed's campus and every later game at a bowl site. Its rounds show its
 own names (Quarterfinals, National Championship), not the NFL's. The 2026-27 playoff keeps 12
 teams; a larger field would change its round count and need presets to match.
@@ -262,7 +262,7 @@ Baseball (#789) has one sport league, the MLB postseason, a fixed bracket of 12 
 rounds of series: best-of-three Wild Card Series at the better seed's park, best-of-five
 Division Series, best-of-seven League Championship Series and World Series. Each league's
 teams are seeded 1 to 6, and the top two seeds are placed straight into the Division Series,
-as the CFP's byes are (a bye scores nothing). Each series is one game of the bracket, scored in
+as the CFP's byes are (a bye counts as a win). Each series is one game of the bracket, scored in
 games won, so baseball takes no squares pools. It starts on four tiers of three.
 
 Soccer (#787) has five sport leagues, every bracket fixed: the FIFA World Cup, the FIFA
@@ -272,7 +272,7 @@ match's final score is the score after extra time. A match level after extra tim
 shoot-out too (4-3 pens), and the shoot-out's winner goes through; the score stays level. The
 first half's score, from the feed, feeds squares pools. The third-place match is not part of the
 bracket. The Champions League starts at its knockout play-offs, naming its own rounds: its
-league phase's top eight are placed straight into the Round of 16 (a bye scores nothing), and
+league phase's top eight are placed straight into the Round of 16 (a bye counts as a win), and
 each two-legged tie is one game of the bracket, scored on aggregate, scheduled at the first
 leg, its home side the first leg's host. A tie level on aggregate goes to its shoot-out, as a
 single match does. The Copa América starts at the quarter-finals; every other competition

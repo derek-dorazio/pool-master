@@ -183,8 +183,8 @@ export const ScoredContestEntryPickRaceDtoSchema = z.object({
 export type ScoredContestEntryPickRaceDto = z.infer<typeof ScoredContestEntryPickRaceDtoSchema>;
 
 export const ScoredContestEntryPickKnockoutDtoSchema = z.object({
-  points: z.number().int().nullable().describe('The team\'s points in this contest: each round it won a match in scores that round\'s value, plus the upset bonus when the contest has one on. Null until the bracket has a result.'),
-  wins: z.number().int().min(0).describe('Matches the team has won.'),
+  points: z.number().int().nullable().describe('The team\'s points in this contest: each round it won a match in scores that round\'s value, plus the upset bonus when the contest has one on. A bye counts as a win: a team placed straight into a later round scores each skipped round\'s value once that round is decided, with no upset bonus. Null until the bracket has a result.'),
+  wins: z.number().int().min(0).describe('Matches the team has won, each bye whose skipped round is decided counted as a win.'),
   upsetBonusPoints: z.number().int().min(0).describe('The part of the points that is upset bonus; 0 when the bonus is off.'),
   isAlive: z.boolean().describe('False once the team has lost a match.'),
 }).describe('Head-to-head extension of a scored pick: the team\'s knockout points and how they came about.');

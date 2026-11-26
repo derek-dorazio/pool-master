@@ -140,25 +140,14 @@ describe('knockout round points — round values', () => {
     expect(scores(field, knockout([1, 2]))).toEqual({ Duke: 0, Vermont: 1, Houston: 0, Texas: 0 });
   });
 
-  it('scores a team placed straight into a later round (a bye) nothing for the round it skipped', () => {
-    const field = bracketField(
-      [{ name: 'Duke', seed: 1 }, { name: 'Vermont', seed: 4 }, { name: 'Houston', seed: 2 }],
-      [
-        { matchNumber: 1, round: 1, home: 'Vermont', away: 'Houston', winner: MatchSide.AWAY, advancesTo: 2 },
-        { matchNumber: 2, round: 2, home: 'Duke', away: 'Houston', winner: MatchSide.HOME },
-      ],
-    );
-
-    expect(scores(field, knockout([1, 2]))).toEqual({ Duke: 2, Vermont: 0, Houston: 1 });
-  });
-
   it('leaves a team that won in a round with no value unscored rather than scoring it 0', () => {
     const field = bracketField(SEEDED, [
       { matchNumber: 1, round: 1, home: 'Duke', away: 'Vermont', winner: MatchSide.HOME, advancesTo: 3 },
       { matchNumber: 3, round: 2, home: 'Duke', away: 'Houston', winner: MatchSide.HOME },
     ]);
 
-    expect(scores(field, knockout([1]))).toMatchObject({ Duke: null, Houston: 0 });
+    // Houston, placed straight into round 2, scores round 1's value for its bye; its loss adds nothing.
+    expect(scores(field, knockout([1]))).toMatchObject({ Duke: null, Houston: 1 });
   });
 
   it('leaves every team unscored under another family\'s scoring definition', () => {
@@ -168,6 +157,132 @@ describe('knockout round points — round values', () => {
 
     expect(scores(field, { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [5], didNotFinishPoints: 0 } }))
       .toEqual({ Duke: null, Vermont: null, Houston: null, Texas: null });
+  });
+});
+
+describe('knockout round points — a bye counts as a win', () => {
+  // Duke and Houston are placed straight into round 2; the other four play round 1 for their places.
+  const BYES = [
+    { name: 'Duke', seed: 1 },
+    { name: 'Houston', seed: 2 },
+    { name: 'Texas', seed: 3 },
+    { name: 'Vermont', seed: 4 },
+    { name: 'Iowa', seed: 5 },
+    { name: 'Utah', seed: 6 },
+  ];
+  const ROUND_ONE: MatchInput[] = [
+    { matchNumber: 1, round: 1, home: 'Texas', away: 'Iowa', winner: MatchSide.HOME, advancesTo: 3 },
+    { matchNumber: 2, round: 1, home: 'Vermont', away: 'Utah', winner: MatchSide.AWAY, advancesTo: 4 },
+  ];
+  const detailsOf = (field: SportEventParticipantView[], scoring: ContestScoringSettings) =>
+    Object.fromEntries(family.scoreField(field, TOURNAMENT, scoring).map((row) => [row.name, row.detail]));
+
+  it('scores a team on a bye the skipped round\'s value once every game of that round is decided, and counts the bye as a win', () => {
+    const field = bracketField(BYES, [
+      ...ROUND_ONE,
+      { matchNumber: 3, round: 2, home: 'Duke', away: 'Texas', advancesTo: 5 },
+      { matchNumber: 4, round: 2, home: 'Houston', away: 'Utah', advancesTo: 5 },
+    ]);
+
+    expect(scores(field, knockout([1, 2, 4]))).toEqual({ Duke: 1, Houston: 1, Texas: 1, Vermont: 0, Iowa: 0, Utah: 1 });
+    expect(detailsOf(field, knockout([1, 2, 4]))).toMatchObject({
+      Duke: { wins: 1, upsetBonusPoints: 0, isAlive: true },
+      Houston: { wins: 1, upsetBonusPoints: 0, isAlive: true },
+    });
+  });
+
+  it('scores a team on a bye nothing for the skipped round while any game of that round is still to be played', () => {
+    const field = bracketField(BYES, [
+      { ...ROUND_ONE[0] },
+      { matchNumber: 2, round: 1, home: 'Vermont', away: 'Utah', advancesTo: 4 },
+      { matchNumber: 3, round: 2, home: 'Duke', away: 'Texas', advancesTo: 5 },
+      { matchNumber: 4, round: 2, home: 'Houston', away: null, advancesTo: 5 },
+    ]);
+
+    expect(scores(field, knockout([1, 2, 4]))).toMatchObject({ Duke: 0, Houston: 0, Texas: 1 });
+    expect(detailsOf(field, knockout([1, 2, 4]))).toMatchObject({ Duke: { wins: 0 }, Houston: { wins: 0 } });
+  });
+
+  it('leaves a team on a bye unscored, like every team, until the bracket has a result', () => {
+    const field = bracketField(BYES, [
+      { matchNumber: 1, round: 1, home: 'Texas', away: 'Iowa', advancesTo: 3 },
+      { matchNumber: 2, round: 1, home: 'Vermont', away: 'Utah', advancesTo: 4 },
+      { matchNumber: 3, round: 2, home: 'Duke', away: null, advancesTo: 5 },
+      { matchNumber: 4, round: 2, home: 'Houston', away: null, advancesTo: 5 },
+    ]);
+
+    expect(scores(field, knockout([1, 2, 4]))).toMatchObject({ Duke: null, Houston: null });
+  });
+
+  it('gives a bye no upset bonus, since nobody was beaten, while the bye team\'s later upset wins still earn theirs', () => {
+    const field = bracketField(BYES, [
+      ...ROUND_ONE,
+      { matchNumber: 3, round: 2, home: 'Duke', away: 'Texas', winner: MatchSide.AWAY, advancesTo: 5 },
+      { matchNumber: 4, round: 2, home: 'Houston', away: 'Utah', winner: MatchSide.HOME, advancesTo: 5 },
+    ]);
+
+    const details = detailsOf(field, knockout([1, 2, 4], SEED_DIFFERENCE));
+
+    expect(scores(field, knockout([1, 2, 4], SEED_DIFFERENCE))).toMatchObject({ Duke: 1, Houston: 1 + 2, Texas: 1 + 2 + 2 });
+    expect(details).toMatchObject({
+      Duke: { wins: 1, upsetBonusPoints: 0, isAlive: false },
+      Houston: { wins: 2, upsetBonusPoints: 0, isAlive: true },
+    });
+  });
+
+  it('scores a team on a bye that loses its first game 1 under Straight up values, for the bye alone', () => {
+    const field = bracketField(BYES, [
+      ...ROUND_ONE,
+      { matchNumber: 3, round: 2, home: 'Duke', away: 'Texas', winner: MatchSide.HOME, advancesTo: 5 },
+      { matchNumber: 4, round: 2, home: 'Houston', away: 'Utah', winner: MatchSide.AWAY, advancesTo: 5 },
+    ]);
+
+    expect(scores(field, knockout([1, 1, 1]))).toMatchObject({ Duke: 2, Houston: 1, Utah: 2 });
+    expect(detailsOf(field, knockout([1, 1, 1]))).toMatchObject({ Houston: { wins: 1, isAlive: false } });
+  });
+
+  it('scores a bye team that wins out every round\'s value, the skipped one included', () => {
+    const field = bracketField(BYES, [
+      ...ROUND_ONE,
+      { matchNumber: 3, round: 2, home: 'Duke', away: 'Texas', winner: MatchSide.HOME, advancesTo: 5 },
+      { matchNumber: 4, round: 2, home: 'Houston', away: 'Utah', winner: MatchSide.HOME, advancesTo: 5 },
+      { matchNumber: 5, round: 3, home: 'Duke', away: 'Houston', winner: MatchSide.HOME },
+    ]);
+
+    expect(scores(field, knockout([1, 2, 4]))).toEqual({ Duke: 1 + 2 + 4, Houston: 1 + 2, Texas: 1, Vermont: 0, Iowa: 0, Utah: 1 });
+  });
+
+  it('scores both 1 seeds of an NFL-shaped playoff (14 teams, two byes) round 1\'s value once Wild Card weekend is played', () => {
+    const teams = ['AFC', 'NFC'].flatMap((conference) => [1, 2, 3, 4, 5, 6, 7].map((seed) => ({ name: `${conference}-${String(seed)}`, seed })));
+    const wildCard = ['AFC', 'NFC'].flatMap((conference, index): MatchInput[] => [
+      { matchNumber: index * 3 + 1, round: 1, home: `${conference}-2`, away: `${conference}-7`, winner: MatchSide.HOME },
+      { matchNumber: index * 3 + 2, round: 1, home: `${conference}-3`, away: `${conference}-6`, winner: MatchSide.AWAY },
+      { matchNumber: index * 3 + 3, round: 1, home: `${conference}-4`, away: `${conference}-5`, winner: MatchSide.HOME },
+    ]);
+    const field = bracketField(teams, [
+      ...wildCard,
+      { matchNumber: 7, round: 2, home: 'AFC-1', away: null },
+      { matchNumber: 9, round: 2, home: 'NFC-1', away: null },
+    ]);
+
+    const scored = scores(field, knockout([1, 2, 4, 8], SEED_DIFFERENCE));
+
+    expect([scored['AFC-1'], scored['NFC-1']]).toEqual([1, 1]);
+    expect([scored['AFC-2'], scored['AFC-6'], scored['AFC-4'], scored['AFC-7'], scored['AFC-3']]).toEqual([1, 1 + 3, 1, 0, 0]);
+    expect(detailsOf(field, knockout([1, 2, 4, 8], SEED_DIFFERENCE))).toMatchObject({
+      'AFC-1': { wins: 1, upsetBonusPoints: 0, isAlive: true },
+      'NFC-1': { wins: 1, upsetBonusPoints: 0, isAlive: true },
+    });
+  });
+
+  it('scores a field with no byes exactly as before: each team only for the games it won', () => {
+    const field = bracketField(SEEDED, [
+      { matchNumber: 1, round: 1, home: 'Duke', away: 'Vermont', winner: MatchSide.AWAY, advancesTo: 3 },
+      { matchNumber: 2, round: 1, home: 'Houston', away: 'Texas', winner: MatchSide.HOME, advancesTo: 3 },
+      { matchNumber: 3, round: 2, home: 'Vermont', away: 'Houston', winner: MatchSide.AWAY },
+    ]);
+
+    expect(scores(field, knockout([1, 2]))).toEqual({ Duke: 0, Vermont: 1, Houston: 1 + 2, Texas: 0 });
   });
 });
 

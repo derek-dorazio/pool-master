@@ -4280,7 +4280,7 @@ export type ContestConfigurationRequest = {
          */
         config: {
             /**
-             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
              */
             roundValues: Array<number>;
             /**
@@ -4341,7 +4341,7 @@ export type ContestConfigurationRequest = {
          */
         config: {
             /**
-             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
              */
             roundValues: Array<number>;
             /**
@@ -4402,7 +4402,7 @@ export type ContestConfigurationRequest = {
          */
         config: {
             /**
-             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
              */
             roundValues: Array<number>;
             /**
@@ -4463,7 +4463,7 @@ export type ContestConfigurationRequest = {
          */
         config: {
             /**
-             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
              */
             roundValues: Array<number>;
             /**
@@ -4520,7 +4520,7 @@ export type ContestConfigurationRequest = {
          */
         config: {
             /**
-             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
              */
             roundValues: Array<number>;
             /**
@@ -4577,7 +4577,7 @@ export type ContestConfigurationRequest = {
          */
         config: {
             /**
-             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
              */
             roundValues: Array<number>;
             /**
@@ -4638,7 +4638,7 @@ export type ContestConfigurationRequest = {
          */
         config: {
             /**
-             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
              */
             roundValues: Array<number>;
             /**
@@ -5182,7 +5182,7 @@ export type ContestConfigTemplateDto = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -5243,7 +5243,7 @@ export type ContestConfigTemplateDto = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -5304,7 +5304,7 @@ export type ContestConfigTemplateDto = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -5365,7 +5365,7 @@ export type ContestConfigTemplateDto = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -5422,7 +5422,7 @@ export type ContestConfigTemplateDto = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -5479,7 +5479,7 @@ export type ContestConfigTemplateDto = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -5540,7 +5540,7 @@ export type ContestConfigTemplateDto = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -5976,7 +5976,7 @@ export type ContestConfigTemplateListResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -6037,7 +6037,7 @@ export type ContestConfigTemplateListResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -6098,7 +6098,7 @@ export type ContestConfigTemplateListResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -6159,7 +6159,7 @@ export type ContestConfigTemplateListResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -6216,7 +6216,7 @@ export type ContestConfigTemplateListResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -6273,7 +6273,7 @@ export type ContestConfigTemplateListResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -6334,7 +6334,7 @@ export type ContestConfigTemplateListResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -6430,7 +6430,7 @@ export type UpdateContestConfigTemplateRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -6491,7 +6491,7 @@ export type UpdateContestConfigTemplateRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -6552,7 +6552,7 @@ export type UpdateContestConfigTemplateRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -6613,7 +6613,7 @@ export type UpdateContestConfigTemplateRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -6670,7 +6670,7 @@ export type UpdateContestConfigTemplateRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -6727,7 +6727,7 @@ export type UpdateContestConfigTemplateRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -6788,7 +6788,7 @@ export type UpdateContestConfigTemplateRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -6968,7 +6968,7 @@ export type ContestConfigTemplateResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -7029,7 +7029,7 @@ export type ContestConfigTemplateResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -7090,7 +7090,7 @@ export type ContestConfigTemplateResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -7151,7 +7151,7 @@ export type ContestConfigTemplateResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -7208,7 +7208,7 @@ export type ContestConfigTemplateResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -7265,7 +7265,7 @@ export type ContestConfigTemplateResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -7326,7 +7326,7 @@ export type ContestConfigTemplateResponse = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -14303,7 +14303,7 @@ export type CreateContestRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -14364,7 +14364,7 @@ export type CreateContestRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -14425,7 +14425,7 @@ export type CreateContestRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -14486,7 +14486,7 @@ export type CreateContestRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -14543,7 +14543,7 @@ export type CreateContestRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -14600,7 +14600,7 @@ export type CreateContestRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -14661,7 +14661,7 @@ export type CreateContestRequest = {
              */
             config: {
                 /**
-                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                  */
                 roundValues: Array<number>;
                 /**
@@ -15093,11 +15093,11 @@ export type ScoredContestEntryPickDto = {
      */
     knockout: {
         /**
-         * The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result.
+         * The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. Null until the bracket has a result.
          */
         points: number | null;
         /**
-         * Matches the team has won.
+         * Matches the team has won, each bye whose skipped round is decided counted as a win.
          */
         wins: number;
         /**
@@ -15231,11 +15231,11 @@ export type ContestEntryStandingDto = {
          */
         knockout: {
             /**
-             * The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result.
+             * The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. Null until the bracket has a result.
              */
             points: number | null;
             /**
-             * Matches the team has won.
+             * Matches the team has won, each bye whose skipped round is decided counted as a win.
              */
             wins: number;
             /**
@@ -15685,11 +15685,11 @@ export type ContestLeaderboardResponse = {
              */
             knockout: {
                 /**
-                 * The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result.
+                 * The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. Null until the bracket has a result.
                  */
                 points: number | null;
                 /**
-                 * Matches the team has won.
+                 * Matches the team has won, each bye whose skipped round is decided counted as a win.
                  */
                 wins: number;
                 /**
@@ -24689,7 +24689,7 @@ export type EventPageOfferDto = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -24750,7 +24750,7 @@ export type EventPageOfferDto = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -24811,7 +24811,7 @@ export type EventPageOfferDto = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -24872,7 +24872,7 @@ export type EventPageOfferDto = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -24929,7 +24929,7 @@ export type EventPageOfferDto = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -24986,7 +24986,7 @@ export type EventPageOfferDto = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -25047,7 +25047,7 @@ export type EventPageOfferDto = {
                  */
                 config: {
                     /**
-                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                      */
                     roundValues: Array<number>;
                     /**
@@ -25336,7 +25336,7 @@ export type EventPageDto = {
                      */
                     config: {
                         /**
-                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                          */
                         roundValues: Array<number>;
                         /**
@@ -25397,7 +25397,7 @@ export type EventPageDto = {
                      */
                     config: {
                         /**
-                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                          */
                         roundValues: Array<number>;
                         /**
@@ -25458,7 +25458,7 @@ export type EventPageDto = {
                      */
                     config: {
                         /**
-                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                          */
                         roundValues: Array<number>;
                         /**
@@ -25519,7 +25519,7 @@ export type EventPageDto = {
                      */
                     config: {
                         /**
-                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                          */
                         roundValues: Array<number>;
                         /**
@@ -25576,7 +25576,7 @@ export type EventPageDto = {
                      */
                     config: {
                         /**
-                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                          */
                         roundValues: Array<number>;
                         /**
@@ -25633,7 +25633,7 @@ export type EventPageDto = {
                      */
                     config: {
                         /**
-                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                          */
                         roundValues: Array<number>;
                         /**
@@ -25694,7 +25694,7 @@ export type EventPageDto = {
                      */
                     config: {
                         /**
-                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                         * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                          */
                         roundValues: Array<number>;
                         /**
@@ -25988,7 +25988,7 @@ export type EventPageResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26049,7 +26049,7 @@ export type EventPageResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26110,7 +26110,7 @@ export type EventPageResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26171,7 +26171,7 @@ export type EventPageResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26228,7 +26228,7 @@ export type EventPageResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26285,7 +26285,7 @@ export type EventPageResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26346,7 +26346,7 @@ export type EventPageResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26655,7 +26655,7 @@ export type EventPageListResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26716,7 +26716,7 @@ export type EventPageListResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26777,7 +26777,7 @@ export type EventPageListResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26838,7 +26838,7 @@ export type EventPageListResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26895,7 +26895,7 @@ export type EventPageListResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -26952,7 +26952,7 @@ export type EventPageListResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
@@ -27013,7 +27013,7 @@ export type EventPageListResponse = {
                          */
                         config: {
                             /**
-                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus.
                              */
                             roundValues: Array<number>;
                             /**
