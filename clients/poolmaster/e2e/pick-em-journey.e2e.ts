@@ -6,6 +6,7 @@ import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
+import { bracketLoadMatch } from './helpers/match-sides';
 
 /**
  * #718 — the pick'em pool journey: the root admin sets up two released American football weeks
@@ -198,7 +199,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
       // The week's one game, which is also its last and so its tiebreaker game.
       await postJson(api, headers, `/api/v1/events/${event.id}/bracket`, {
         matches: [
-          { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf(week.home), awaySportEventParticipantId: rowOf(week.away), isNeutralSite: false, scheduledDate: week.start, advancesTo: null },
+          bracketLoadMatch({ matchNumber: 1, roundNumber: 1, home: rowOf(week.home), away: rowOf(week.away), isNeutralSite: false, scheduledDate: week.start, advancesTo: null }),
         ],
       }, 'put');
       const released = await postJson<{ event: { status: string } }>(api, headers, `/api/v1/events/${event.id}/release`, undefined);

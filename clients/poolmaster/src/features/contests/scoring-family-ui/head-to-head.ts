@@ -9,7 +9,7 @@
  */
 
 import {
-  MatchSide,
+  MatchSideOutcome,
   MatchStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantStandingStatus,
@@ -18,6 +18,7 @@ import {
   SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import type { ScoredContestEntryPickDto, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
+import { opposingSide, sideOfTeam } from '@/lib/match-sides';
 import type { LeaderboardContext, LeaderboardDetailCell, LeaderboardDetailColumn, ScoringFamilyUi } from './types';
 
 /** A team's games, from its own side: who it played, whether it won, and the score its way round. */
@@ -34,17 +35,18 @@ interface TeamGame {
 
 function teamGames(games: readonly SportEventRoundMatchDto[], teamId: string): TeamGame[] {
   return games
-    .filter((match) => match.homeSportEventParticipantId === teamId || match.awaySportEventParticipantId === teamId)
-    .map((match) => {
-      const isHome = match.homeSportEventParticipantId === teamId;
-      const own = isHome ? match.homeScore : match.awayScore;
-      const theirs = isHome ? match.awayScore : match.homeScore;
-      return {
+    .flatMap((match) => {
+      const side = sideOfTeam(match, teamId);
+      if (side === undefined) return [];
+      const opponent = opposingSide(match, side.sideNumber);
+      const own = side.score;
+      const theirs = opponent?.score ?? null;
+      return [{
         match,
-        opponentId: isHome ? match.awaySportEventParticipantId : match.homeSportEventParticipantId,
-        won: match.winnerSide === (isHome ? MatchSide.HOME : MatchSide.AWAY),
+        opponentId: opponent?.sportEventParticipantId ?? null,
+        won: side.outcome === MatchSideOutcome.WON,
         score: own === null || theirs === null ? null : `${String(own)}–\u2060${String(theirs)}`,
-      };
+      }];
     })
     .sort((left, right) => left.match.roundNumber - right.match.roundNumber || left.match.matchNumber - right.match.matchNumber);
 }

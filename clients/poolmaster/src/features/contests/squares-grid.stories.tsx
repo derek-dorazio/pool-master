@@ -19,12 +19,12 @@ const winner = (periodNumber: number, homeScore: number, awayScore: number): Squ
   const rowIndex = DRAWN_DIGITS.rowDigits.indexOf(awayScore % 10);
   const columnIndex = DRAWN_DIGITS.columnDigits.indexOf(homeScore % 10);
   const box = BOXES.find((each) => each.rowIndex === rowIndex && each.columnIndex === columnIndex);
-  return { periodNumber, homeScore, awayScore, rowIndex, columnIndex, contestEntryId: box?.contestEntryId ?? null, entryName: box?.entryName ?? null };
+  return { periodNumber, rowScore: awayScore, columnScore: homeScore, rowIndex, columnIndex, contestEntryId: box?.contestEntryId ?? null, entryName: box?.entryName ?? null };
 };
 
 const BEFORE_DRAW: SquaresGridBoard = {
-  awayTeamName: 'Chiefs',
-  homeTeamName: 'Eagles',
+  rowTeamName: 'Chiefs',
+  columnTeamName: 'Eagles',
   boxes: BOXES,
   digits: null,
   entries: NAMES.map((entryName, index) => ({ contestEntryId: `e${index}`, entryName, squadId: `s${index}`, boxCount: 0, periodsWon: 0, displayPosition: null })),

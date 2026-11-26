@@ -14,6 +14,11 @@ import type {
   SquaresBoxDto,
   SquaresWinnerDto,
 } from '@/lib/api';
+import { billedSides, gameOne, regulationPeriodScores, sideOn } from '@/lib/match-sides';
+
+/** The side down the grid's rows and the side across its columns, as the board's contract places them. */
+const SQUARES_ROW_SIDE = 1;
+const SQUARES_COLUMN_SIDE = 2;
 
 /** The grid's positions, top to bottom and left to right. */
 export const SQUARES_POSITIONS = Array.from({ length: SQUARES_GRID_SIZE }, (_, index) => index);
@@ -109,9 +114,13 @@ function sideName(participantId: string | null, namesById: ReadonlyMap<string, s
 
 /** "Chiefs @ Eagles", or "vs" at a neutral site: how a game is named in the picker. */
 export function formatSquaresGameTeams(game: SportEventRoundMatchDto, namesById: ReadonlyMap<string, string>) {
-  const away = sideName(game.awaySportEventParticipantId, namesById);
-  const home = sideName(game.homeSportEventParticipantId, namesById);
-  return `${away} ${game.isNeutralSite ? 'vs' : '@'} ${home}`;
+  const { first, second, isNeutralSite } = billedSides(game);
+  return `${sideName(first?.sportEventParticipantId ?? null, namesById)} ${isNeutralSite ? 'vs' : '@'} ${sideName(second?.sportEventParticipantId ?? null, namesById)}`;
+}
+
+/** Whether any period of the game has its score in. */
+function hasPeriodScore(game: SportEventRoundMatchDto) {
+  return game.games.some((each) => each.sideResults.some((result) => result.periodScores.length > 0));
 }
 
 /** The field's team names by field row. */
@@ -128,10 +137,10 @@ export function squaresGameChoices(games: readonly SportEventRoundMatchDto[], no
   const kickoff = (game: SportEventRoundMatchDto) => (game.scheduledDate === null ? Number.POSITIVE_INFINITY : Date.parse(game.scheduledDate));
   return games
     .filter((game) => isMatchUnplayed(game.status)
-      && game.periodScores.length === 0
+      && !hasPeriodScore(game)
       && isSquaresRound(squaresFromRound, game.roundNumber)
       && (game.scheduledDate === null || Date.parse(game.scheduledDate) > now.getTime()))
-    .sort((left, right) => Number(left.advancesToMatchId !== null) - Number(right.advancesToMatchId !== null)
+    .sort((left, right) => Number(left.advancesTo !== null) - Number(right.advancesTo !== null)
       || kickoff(left) - kickoff(right)
       || left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber);
 }
@@ -148,8 +157,10 @@ export type SquaresPeriodScoreLine = {
 export type SquaresScoreByPeriod = {
   /** Each period's short name: Q1 to Q4, H1 and H2, or P1 to P3. */
   periodNames: string[];
-  away: SquaresPeriodScoreLine;
-  home: SquaresPeriodScoreLine;
+  /** The side down the rows. */
+  row: SquaresPeriodScoreLine;
+  /** The side across the columns. */
+  column: SquaresPeriodScoreLine;
   /** The period being played while the game is live; null before kickoff and once it is over. */
   livePeriodNumber: number | null;
 };
@@ -157,8 +168,13 @@ export type SquaresScoreByPeriod = {
 /** The period being played: the one after the last whose score is in, while the game is live. */
 function livePeriodNumber(game: SportEventRoundMatchDto, periods: SlotPeriodsDto) {
   return game.status === MatchStatus.IN_PROGRESS
-    ? Math.min(game.periodScores.length + 1, periods.count)
+    ? Math.min(regulationPeriodScores(gameOne(game), SQUARES_ROW_SIDE).size + 1, periods.count)
     : null;
+}
+
+/** A side's score in the game now, or null before kickoff. */
+function scoreNowOf(game: SportEventRoundMatchDto, sideNumber: number) {
+  return sideOn(game, sideNumber)?.score ?? null;
 }
 
 /**
@@ -170,14 +186,14 @@ function livePeriodNumber(game: SportEventRoundMatchDto, periods: SlotPeriodsDto
 export function squaresScoreByPeriod(game: SportEventRoundMatchDto, periods: SlotPeriodsDto): SquaresScoreByPeriod {
   const { count } = periods;
   const live = livePeriodNumber(game, periods);
-  const endScores = new Map(game.periodScores.map((score) => [score.periodNumber, score]));
-  const line = (side: 'home' | 'away'): SquaresPeriodScoreLine => {
-    const scoreNow = side === 'home' ? game.homeScore : game.awayScore;
+  const line = (sideNumber: number): SquaresPeriodScoreLine => {
+    const scoreNow = scoreNowOf(game, sideNumber);
+    const endScores = regulationPeriodScores(gameOne(game), sideNumber);
     // The score at the end of each period: the recorded one, else the score now for the live or last period.
     const endOf = (periodNumber: number) => {
       const recorded = endScores.get(periodNumber);
-      if (recorded) {
-        return side === 'home' ? recorded.homeScore : recorded.awayScore;
+      if (recorded !== undefined) {
+        return recorded;
       }
       const runsToScoreNow = periodNumber === live || (periodNumber === count && game.status === MatchStatus.COMPLETED);
       return runsToScoreNow ? scoreNow : null;
@@ -187,14 +203,13 @@ export function squaresScoreByPeriod(game: SportEventRoundMatchDto, periods: Slo
       const before = index === 0 ? 0 : endOf(index);
       return end === null || before === null ? null : end - before;
     });
-    const lastRecorded = game.periodScores.at(-1);
-    const recordedTotal = lastRecorded ? (side === 'home' ? lastRecorded.homeScore : lastRecorded.awayScore) : null;
-    return { periods: sidePeriods, total: scoreNow ?? recordedTotal };
+    const lastRecorded = Math.max(0, ...endScores.keys());
+    return { periods: sidePeriods, total: scoreNow ?? endScores.get(lastRecorded) ?? null };
   };
   return {
     periodNames: Array.from({ length: count }, (_, index) => periodShortName(index + 1, periods)),
-    away: line('away'),
-    home: line('home'),
+    row: line(SQUARES_ROW_SIDE),
+    column: line(SQUARES_COLUMN_SIDE),
     livePeriodNumber: live,
   };
 }
@@ -207,19 +222,20 @@ export type SquaresLiveBox = {
 };
 
 /**
- * The box that would win the period being played if it ended now (#1758): the row of the away
- * score's last digit and the column of the home score's. Null unless the digits are drawn and the
+ * The box that would win the period being played if it ended now (#1758): the row of the row
+ * side's score's last digit and the column of the column side's. Null unless the digits are drawn and the
  * game is live with a score.
  */
 export function squaresLiveBox(board: Pick<SquaresBoardResponse, 'digits' | 'game' | 'periods'>): SquaresLiveBox | null {
   const periodNumber = livePeriodNumber(board.game, board.periods);
-  const { homeScore, awayScore } = board.game;
-  if (periodNumber === null || board.digits === null || homeScore === null || awayScore === null) {
+  const rowScore = scoreNowOf(board.game, SQUARES_ROW_SIDE);
+  const columnScore = scoreNowOf(board.game, SQUARES_COLUMN_SIDE);
+  if (periodNumber === null || board.digits === null || rowScore === null || columnScore === null) {
     return null;
   }
   return {
     periodNumber,
-    rowIndex: board.digits.rowDigits.indexOf(awayScore % 10),
-    columnIndex: board.digits.columnDigits.indexOf(homeScore % 10),
+    rowIndex: board.digits.rowDigits.indexOf(rowScore % 10),
+    columnIndex: board.digits.columnDigits.indexOf(columnScore % 10),
   };
 }

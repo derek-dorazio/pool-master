@@ -14,13 +14,13 @@
  * dates, venue, location and rounds, plus par for a stroke-play sport (golf) and an optional
  * start time for a sport whose cutoff is a set moment (a race's post time). A test seed carries
  * results of the kind its sport is scored by: golf's made-up stroke rounds, a
- * played bracket's match results (entered after release round by round, each play-in place
- * first taking its winner), or a race's real finishing order (entered after release).
+ * played bracket's match results (entered after release round by round), or a race's real
+ * finishing order (entered after release).
  *
- * A sport that plays a bracket (basketball) may also carry each event's bracket: its matches,
- * where each winner moves on to, and the field places that stand for a play-in pairing. The
- * file names each side by a player key from the event's field, and the loader turns that into
- * the field row.
+ * A sport that plays a bracket (basketball) may also carry each event's bracket: its matches on
+ * their two sides, and where each winner moves on to, as the next match and its side (#2184).
+ * The file names each side by a player key from the event's field, and the loader turns that
+ * into the field row. A play-in winner sits straight in the place it won.
  *
  * A test slate is the one file any sport in the registry may have: one sport league's players
  * and no events, loaded as the field of an event already on the site that the run names
@@ -34,7 +34,7 @@
  */
 
 import { z } from 'zod';
-import { describeMatchPlace, getSportDefinition, ProviderCode, MatchEnding, MatchSide, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
+import { describeMatchPlace, getSportDefinition, ProviderCode, HomeAway, MatchEnding, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -106,51 +106,62 @@ const FieldEntrySchema = z.object({
   }).strict().optional(),
 }).strict();
 
+/** Both sides of a match, once each: checked here rather than as a fixed-length array, so clients read a plain list. */
+const bothSides = <T extends z.ZodType<{ sideNumber: number }>>(side: T) => z.array(side)
+  .refine((sides) => sides.length === 2 && new Set(sides.map((each) => each.sideNumber)).size === 2, { message: 'name side 1 and side 2 once each' });
+const SideNumberSchema = z.number().int().min(1).max(2);
+
 const MatchSchema = z.object({
   /** Unique within its round (#2161): the match's place in the round and its display order. */
   matchNumber: z.number().int().min(1),
   roundNumber: z.number().int().min(1),
-  /** A player key from the event's field, or null where an earlier match's winner fills the side. */
-  home: z.string().min(1).nullable(),
-  away: z.string().min(1).nullable(),
+  /**
+   * Side 1 and side 2 (#2184): each a player key from the event's field, or null where an earlier
+   * match's winner fills the side, and where the side plays game 1 (NONE for both at a neutral
+   * site). A synced game has its away team on side 1 and its home team on side 2.
+   */
+  sides: bothSides(z.object({
+    sideNumber: SideNumberSchema,
+    player: z.string().min(1).nullable(),
+    homeAway: z.enum(HomeAway),
+  }).strict()),
   isNeutralSite: z.boolean(),
   /** Tip-off or kickoff, with its UTC offset, once it is announced. A time left out keeps the site's. */
   scheduledAt: z.iso.datetime({ offset: true }).optional(),
   /**
-   * Where the winner moves on to; null for the final. In a reseeded slot, also null for each
-   * match of a round whose winners are placed by seed (the NFL's Wild Card games).
+   * Where the winner moves on to, as the next match and its side; null for the final. In a
+   * reseeded slot, also null for each match of a round whose winners are placed by seed (the
+   * NFL's Wild Card games).
    */
-  advancesTo: z.object({ roundNumber: z.number().int().min(1), matchNumber: z.number().int().min(1), side: z.enum(MatchSide) }).strict().nullable(),
+  advancesTo: z.object({ roundNumber: z.number().int().min(1), matchNumber: z.number().int().min(1), sideNumber: SideNumberSchema }).strict().nullable(),
   /** The region or conference the match is played in ("AFC", "East"); left out for none. */
   regionLabel: z.string().min(1).max(40).optional(),
   /**
-   * Test data only (RESULTS): the match's result, entered after release in round order. `winner`
-   * is the side as the match stands when its result goes in: in a reseeded round, the side the
-   * server's reseed placed the team on, or null for a game of a week left level (#787), which a
-   * week allows and a bracket match never does. `ending` says how a match that stopped early
-   * ended (#704; left out is played to its end): a walkover's scores are null.
+   * Test data only (RESULTS): the match's result, entered after release in round order.
+   * `winnerSideNumber` is the side as the match stands when its result goes in: in a reseeded
+   * round, the side the server's reseed placed the team on, or null for a game of a week left
+   * level (#787), which a week allows and a bracket match never does. Each side's `shootoutScore`
+   * is a level knockout match's shoot-out (#791), in a sport that holds them, apart from the
+   * score after extra time; left out for a match settled in play. `ending` says how a match that
+   * stopped early ended (#704; left out is played to its end): a walkover's scores are null.
    */
   result: z.object({
-    winner: z.enum(MatchSide).nullable(),
-    homeScore: z.number().int().min(0).nullable(),
-    awayScore: z.number().int().min(0).nullable(),
-    /**
-     * A level knockout match's shoot-out (#791), in a sport that holds them: both sides' kicks
-     * scored, apart from the score after extra time. Left out for a match settled in play.
-     */
-    homeShootoutScore: z.number().int().min(0).optional(),
-    awayShootoutScore: z.number().int().min(0).optional(),
+    winnerSideNumber: SideNumberSchema.nullable(),
+    sides: bothSides(z.object({
+      sideNumber: SideNumberSchema,
+      score: z.number().int().min(0).nullable(),
+      shootoutScore: z.number().int().min(0).optional(),
+    }).strict()),
     ending: z.enum(MatchEnding).optional(),
   }).strict().optional(),
   /**
-   * Test data only (RESULTS), for a sport with periods (#772): the score at the end of each period
-   * but the last, as the scoreboard showed it, entered before the match's result. The last
-   * period's score is the result's.
+   * Test data only (RESULTS), for a sport with periods (#772): each side's score at the end of
+   * each period but the last, as the scoreboard showed it, entered before the match's result.
+   * The last period's score is the result's.
    */
   periodScores: z.array(z.object({
     periodNumber: z.number().int().min(1),
-    homeScore: z.number().int().min(0),
-    awayScore: z.number().int().min(0),
+    sides: bothSides(z.object({ sideNumber: SideNumberSchema, score: z.number().int().min(0) }).strict()),
   }).strict()).optional(),
   /**
    * Test data only (RESULTS): the game was postponed out of its week (a Premier League match moved
@@ -307,8 +318,7 @@ function bracketProblems(event: SportDataEvent, matches: readonly SportDataMatch
     matches.map((match) => ({
       matchNumber: match.matchNumber,
       roundNumber: match.roundNumber,
-      homeSportEventParticipantId: match.home,
-      awaySportEventParticipantId: match.away,
+      sides: match.sides.map(({ sideNumber, player, homeAway }) => ({ sideNumber, sportEventParticipantId: player, homeAway })),
       isNeutralSite: match.isNeutralSite,
       scheduledDate: null,
       advancesTo: match.advancesTo,
@@ -443,7 +453,7 @@ function cancelledGameProblems(matches: readonly SportDataMatch[]): string[] {
  */
 function unplacedFieldMembers(event: SportDataEvent, matches: readonly SportDataMatch[]): string[] {
   if (matches.length === 0) return [];
-  const named = new Set(matches.flatMap((match) => [match.home, match.away]));
+  const named = new Set(matches.flatMap((match) => match.sides.map((side) => side.player)));
   return event.field.filter((entry) => !named.has(entry.player)).map((entry) => entry.player);
 }
 
@@ -454,10 +464,11 @@ function unplacedFieldMembers(event: SportDataEvent, matches: readonly SportData
 function tieProblems(event: SportDataEvent, matches: readonly SportDataMatch[]): string[] {
   return matches.flatMap((match) => {
     const result = match.result;
-    if (result?.winner !== null) return [];
+    if (result?.winnerSideNumber !== null) return [];
     if (event.rounds > 1 || match.advancesTo !== null) return [`${describeMatchPlace(match)} has no winner, but a bracket match always has one`];
-    const level = result.homeScore !== null && result.homeScore === result.awayScore;
-    const shootout = result.homeShootoutScore !== undefined || result.awayShootoutScore !== undefined;
+    const scores = result.sides.map((side) => side.score);
+    const level = scores.every((score) => score !== null && score === scores[0]);
+    const shootout = result.sides.some((side) => side.shootoutScore !== undefined);
     if (!level || shootout || result.ending !== undefined) return [`${describeMatchPlace(match)} has no winner, so it needs level scores, played to its end with no shoot-out`];
     return [];
   });

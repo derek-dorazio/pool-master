@@ -148,19 +148,20 @@ export function runningPeriodScores(game: Pick<SportEventRoundMatchGame, 'sideRe
 }
 
 /**
- * The side number the API's HOME and AWAY name (#2046), until the web app reads sides by number
- * (part b): the sync puts the home team on side 2 and the away team on side 1.
+ * The side number a prediction's HOME and AWAY name (#2046): the sync puts the home team on
+ * side 2 and the away team on side 1. Match DTOs name sides by number (#2184); predictions move
+ * to side numbers with #2016.
  */
 export function sideNumberOfMatchSide(side: MatchSide): number {
   return side === MatchSide.HOME ? 2 : 1;
 }
 
-/** The API's HOME or AWAY for a side number: the reverse of `sideNumberOfMatchSide`. */
+/** A prediction's HOME or AWAY for a side number: the reverse of `sideNumberOfMatchSide`. */
 export function matchSideOfSideNumber(sideNumber: number): MatchSide {
   return sideNumber === 2 ? MatchSide.HOME : MatchSide.AWAY;
 }
 
-/** The team on the side the API still calls HOME or AWAY (`sideNumberOfMatchSide`), until part b names sides by number. */
+/** The team on the side a prediction calls HOME or AWAY (`sideNumberOfMatchSide`), until #2016 names it by number. */
 export function teamOnMatchSide(match: MatchWithSides, side: MatchSide): string | null {
   return sideParticipantId(match, sideNumberOfMatchSide(side));
 }

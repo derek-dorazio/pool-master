@@ -8,6 +8,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { oneEventOf } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
+import { withHomeAwayRead } from '../support/match-requests';
 
 // A test seed's results go in as its games are played (#1720): the load leaves every game still to
 // kick off open, so a squares board or a pick can still be made on it, and a later run catches the
@@ -73,7 +74,7 @@ describe('SDK Functional: a test seed\'s results as its games are played', () =>
       .find((row) => row.name === eventName), eventName);
     const event = await readEvent();
     created.sportEventIds.add(event.id);
-    const readMatches = async () => expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches;
+    const readMatches = async () => expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches.map(withHomeAwayRead);
 
     // Loaded ahead of its first kickoff: released, and every game, the Super Bowl too, still to play.
     const unplayed = await readMatches();

@@ -241,219 +241,477 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "nfl-new-england-patriots",
-              "away": "nfl-los-angeles-chargers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-los-angeles-chargers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-england-patriots",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-12T01:15:00Z",
               "advancesTo": null,
               "regionLabel": "AFC",
               "result": {
-                "winner": "HOME",
-                "homeScore": 16,
-                "awayScore": 3
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 16
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "nfl-jacksonville-jaguars",
-              "away": "nfl-buffalo-bills",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-buffalo-bills",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-jacksonville-jaguars",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-11T18:00:00Z",
               "advancesTo": null,
               "regionLabel": "AFC",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 24,
-                "awayScore": 27
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 27
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 24
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "nfl-pittsburgh-steelers",
-              "away": "nfl-houston-texans",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-houston-texans",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-pittsburgh-steelers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-13T01:15:00Z",
               "advancesTo": null,
               "regionLabel": "AFC",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 6,
-                "awayScore": 30
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 30
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 6
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "nfl-chicago-bears",
-              "away": "nfl-green-bay-packers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-green-bay-packers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-chicago-bears",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-11T01:00:00Z",
               "advancesTo": null,
               "regionLabel": "NFC",
               "result": {
-                "winner": "HOME",
-                "homeScore": 31,
-                "awayScore": 27
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 27
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 31
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "nfl-philadelphia-eagles",
-              "away": "nfl-san-francisco-49ers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-san-francisco-49ers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-philadelphia-eagles",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-11T21:30:00Z",
               "advancesTo": null,
               "regionLabel": "NFC",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 19,
-                "awayScore": 23
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 23
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 19
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "nfl-carolina-panthers",
-              "away": "nfl-los-angeles-rams",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-los-angeles-rams",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-carolina-panthers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-10T21:30:00Z",
               "advancesTo": null,
               "regionLabel": "NFC",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 31,
-                "awayScore": 34
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 34
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 31
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": "nfl-denver-broncos",
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-denver-broncos",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-17T21:30:00Z",
               "advancesTo": null,
               "regionLabel": "AFC",
               "result": {
-                "winner": "HOME",
-                "homeScore": 33,
-                "awayScore": 30
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 30
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 33
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-18T20:00:00Z",
               "advancesTo": null,
               "regionLabel": "AFC",
               "result": {
-                "winner": "HOME",
-                "homeScore": 28,
-                "awayScore": 16
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 16
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 28
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": "nfl-seattle-seahawks",
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-seattle-seahawks",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-18T01:00:00Z",
               "advancesTo": null,
               "regionLabel": "NFC",
               "result": {
-                "winner": "HOME",
-                "homeScore": 41,
-                "awayScore": 6
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 6
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 41
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-18T23:30:00Z",
               "advancesTo": null,
               "regionLabel": "NFC",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 17,
-                "awayScore": 20
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 17
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-25T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "AFC",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 7,
-                "awayScore": 10
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 10
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 7
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-01-25T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "NFC",
               "result": {
-                "winner": "HOME",
-                "homeScore": 31,
-                "awayScore": 27
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 27
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 31
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-02-08T23:30:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 13,
-                "awayScore": 29
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 29
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 13
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 3
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 3
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 },
                 {
                   "periodNumber": 2,
-                  "homeScore": 0,
-                  "awayScore": 9
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 9
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 },
                 {
                   "periodNumber": 3,
-                  "homeScore": 0,
-                  "awayScore": 12
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 12
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             }

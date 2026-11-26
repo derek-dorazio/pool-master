@@ -153,173 +153,355 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "nwsl-washington-spirit",
-              "away": "nwsl-racing-louisville-fc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nwsl-racing-louisville-fc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nwsl-washington-spirit",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-08T17:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 1,
-                "homeShootoutScore": 3,
-                "awayShootoutScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1,
+                    "shootoutScore": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1,
+                    "shootoutScore": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "nwsl-portland-thorns-fc",
-              "away": "nwsl-san-diego-wave-fc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nwsl-san-diego-wave-fc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nwsl-portland-thorns-fc",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-09T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "nwsl-orlando-pride",
-              "away": "nwsl-seattle-reign-fc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nwsl-seattle-reign-fc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nwsl-orlando-pride",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-08T01:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "nwsl-kansas-city-current",
-              "away": "nwsl-gotham-fc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nwsl-gotham-fc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nwsl-kansas-city-current",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-09T17:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T17:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-16T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 1
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2025-11-23T01:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 1
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             }

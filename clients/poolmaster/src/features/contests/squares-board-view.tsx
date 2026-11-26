@@ -153,8 +153,8 @@ export function SquaresBoardView({
   const boxCountOf = (contestEntryId: string) => board.boxes.filter((box) => box.contestEntryId === contestEntryId).length;
   const myBoxCount = claimingEntryId === null ? 0 : boxCountOf(claimingEntryId);
   const isOver = board.contestStatus === ContestStatus.COMPLETED || board.game.status === MatchStatus.COMPLETED;
-  const homeTeam = board.homeTeamName ?? 'Home team';
-  const awayTeam = board.awayTeamName ?? 'Away team';
+  const homeTeam = board.columnTeamName ?? 'Home team';
+  const awayTeam = board.rowTeamName ?? 'Away team';
   // A winning box's entry's team, for the winner's (i) (#1564).
   const squadIdByEntryId = new Map(board.entries.map((entry) => [entry.contestEntryId, entry.squadId]));
   const winnerSquadId = (contestEntryId: string | null) => (contestEntryId === null ? undefined : squadIdByEntryId.get(contestEntryId));
@@ -189,7 +189,7 @@ export function SquaresBoardView({
               label: 'Score',
               value: 'score',
               testId: 'squares-tab-score',
-              content: <SquaresScoreTable awayTeamName={awayTeam} homeTeamName={homeTeam} score={squaresScoreByPeriod(board.game, board.periods)} />,
+              content: <SquaresScoreTable rowTeamName={awayTeam} columnTeamName={homeTeam} score={squaresScoreByPeriod(board.game, board.periods)} />,
             },
             {
               label: 'Winners',
@@ -197,8 +197,8 @@ export function SquaresBoardView({
               testId: 'squares-tab-winners',
               content: (
                 <SquaresWinners
-                  awayTeamName={awayTeam}
-                  homeTeamName={homeTeam}
+                  rowTeamName={awayTeam}
+                  columnTeamName={homeTeam}
                   leagueCode={leagueCode}
                   leagueId={contest.leagueId}
                   moments={squaresMomentRows(board)}

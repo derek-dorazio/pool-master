@@ -83,7 +83,7 @@ export interface GamePicksReceiptNotice {
 }
 
 /** What a squares receipt reads of the drawn board. */
-export type DrawnSquaresBoard = Pick<SquaresBoard, 'contest' | 'homeTeamName' | 'awayTeamName' | 'boxes' | 'digits'>;
+export type DrawnSquaresBoard = Pick<SquaresBoard, 'contest' | 'rowTeamName' | 'columnTeamName' | 'boxes' | 'digits'>;
 
 /** The drawn board with the contest's entries and its event, as SquaresService already holds them. */
 export interface DrawnSquares {
@@ -173,8 +173,8 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
           data: {
             receipt: {
               kind: EntryReceiptKind.SQUARES,
-              rowTeam: board.awayTeamName,
-              columnTeam: board.homeTeamName,
+              rowTeam: board.rowTeamName,
+              columnTeam: board.columnTeamName,
               boxes,
             },
           },

@@ -139,7 +139,8 @@ export function resolveBracketPicks<Pick extends BracketPick>(
       for (const matchup of matchups) {
         const match = round.find((candidate) => candidate.matchNumber === matchup.matchNumber);
         if (match) {
-          sides.set(match.id, { home: matchup.homeSportEventParticipantId, away: matchup.awaySportEventParticipantId });
+          const teamOn = (side: MatchSide) => matchup.sides.find((each) => each.sideNumber === sideNumberOfMatchSide(side))?.sportEventParticipantId ?? null;
+          sides.set(match.id, { home: teamOn(MatchSide.HOME), away: teamOn(MatchSide.AWAY) });
         }
       }
     }

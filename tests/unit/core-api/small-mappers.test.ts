@@ -23,7 +23,11 @@ import {
   type EmailMessage,
   type SportConfig,
   type SportEventRoundMatch,
+  HomeAway,
   MatchEnding,
+  MatchSide,
+  MatchSideOutcome,
+  PeriodKind,
   PeriodUnit,
 } from '@poolmaster/shared/domain';
 import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, GAME_PICKS_TIEBREAKER_MAX, SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
@@ -47,13 +51,14 @@ import {
   mapSportLeagueToDto,
   mapSportToDto,
 } from '../../../packages/core-api/src/mappers/sport-catalog.mapper';
-import { mapSportEventRoundMatchToDto, toMatchResultInput } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
+import { mapSportEventRoundMatchToDto } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
 import { toSquaresBoardResponse } from '../../../packages/core-api/src/mappers/squares.mapper';
 import { toSurvivorLeaderboardResponse, toSurvivorLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/survivor-leaderboard.mapper';
 import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import type { PlanEntitlements } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import type { RaceResultPreviewRow } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
 import type { GamePickGame, GamePicksView, GamesPreview } from '../../../packages/core-api/src/modules/selections/prediction-service';
+import { expectDefined } from '../../support/expect-defined';
 import type { SquaresBoard } from '../../../packages/core-api/src/modules/selections/squares-service';
 import type { SelectionGroup } from '../../../packages/core-api/src/modules/selections/types';
 import type { SportLeagueSummary } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
@@ -104,13 +109,39 @@ describe('mapSportLeaguePositionToDto', () => {
 });
 
 describe('mapSportEventRoundMatchToDto', () => {
-  it('sends the scheduled date as ISO and each period score as its number and two scores only', () => {
+  it('sends the scheduled date as ISO, each side with its team, outcome, summed score and spread, and Game 1\'s side results with where each played and their running period scores', () => {
     const dto = mapSportEventRoundMatchToDto(match({
+      status: 'COMPLETED',
+      winnerSide: MatchSide.HOME,
+      homeScore: 10,
+      awayScore: 3,
+      homeSpread: -3.5,
       periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 3 }],
     }));
 
     expect(dto.scheduledDate).toBe(ISO);
-    expect(dto.periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 3 }]);
+    expect(dto.sides).toEqual([
+      { sideNumber: AWAY_SIDE, sportEventParticipantId: 'a', outcome: MatchSideOutcome.LOST, score: 3, spread: 3.5 },
+      { sideNumber: HOME_SIDE, sportEventParticipantId: 'h', outcome: MatchSideOutcome.WON, score: 10, spread: null },
+    ]);
+    expect(dto.games.map((game) => [game.gameNumber, game.isFinal, game.sideResults])).toEqual([[1, true, [
+      { sideNumber: AWAY_SIDE, score: 3, homeAway: HomeAway.AWAY, shootoutScore: null, periodScores: [{ kind: PeriodKind.REGULAR, periodNumber: 1, score: 3 }] },
+      { sideNumber: HOME_SIDE, score: 10, homeAway: HomeAway.HOME, shootoutScore: null, periodScores: [{ kind: PeriodKind.REGULAR, periodNumber: 1, score: 7 }] },
+    ]]]);
+  });
+
+  it('sends a level knockout game\'s shoot-out apart from its score and its periods', () => {
+    const dto = mapSportEventRoundMatchToDto(match({ status: 'COMPLETED', winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4 }));
+
+    expect(expectDefined(dto.games[0]).sideResults.map((result) => [result.sideNumber, result.score, result.shootoutScore, result.periodScores])).toEqual([
+      [AWAY_SIDE, 1, 4, []],
+      [HOME_SIDE, 1, 3, []],
+    ]);
+  });
+
+  it('sends where the winner moves on to as the next match and its side number, and none for the final', () => {
+    expect(mapSportEventRoundMatchToDto(match({ advancesToMatchId: 'm9', advancesToSide: MatchSide.AWAY })).advancesTo).toEqual({ matchId: 'm9', sideNumber: AWAY_SIDE });
+    expect(mapSportEventRoundMatchToDto(match()).advancesTo).toBeNull();
   });
 
   it('sends an unscheduled game\'s date as null', () => {
@@ -122,34 +153,19 @@ describe('mapSportEventRoundMatchToDto', () => {
     expect(mapSportEventRoundMatchToDto(match({ completedAt: null })).completedAt).toBeNull();
   });
 
-  it('sends no shoot-out scores and no period scores for a match that has no Game 1 yet', () => {
+  it('sends no games and no side scores for a match that has no Game 1 yet', () => {
     const dto = mapSportEventRoundMatchToDto({ ...match(), games: [] });
 
-    expect([dto.homeShootoutScore, dto.awayShootoutScore, dto.periodScores]).toEqual([null, null, []]);
+    expect([dto.games, dto.sides.map((side) => side.score)]).toEqual([[], [null, null]]);
   });
 
-  it('sends a side with no result in Game 1 as 0 in each period score', () => {
+  it('sends a side with no result in Game 1 as 0 in the other side\'s running period scores, and no side result of its own', () => {
     const played = match({ periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 3 }] });
     const homeOnly = { ...played, games: played.games.map((game) => ({ ...game, sideResults: game.sideResults.filter((result) => result.sideNumber === HOME_SIDE) })) };
 
-    expect(mapSportEventRoundMatchToDto(homeOnly).periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 0 }]);
-  });
-});
-
-describe('toMatchResultInput', () => {
-  it('puts away on side 1 and home on side 2, a tie as no winner, and omitted shoot-out scores as null', () => {
-    expect(toMatchResultInput({ winnerSide: null, homeScore: 2, awayScore: 2 })).toEqual({
-      winnerSideNumber: null,
-      sides: [{ sideNumber: AWAY_SIDE, score: 2, shootoutScore: null }, { sideNumber: HOME_SIDE, score: 2, shootoutScore: null }],
-    });
-  });
-
-  it('names the home winner as side 2 and keeps the shoot-out scores and the ending', () => {
-    expect(toMatchResultInput({ winnerSide: 'HOME', homeScore: 1, awayScore: 1, homeShootoutScore: 5, awayShootoutScore: 4, ending: MatchEnding.PLAYED })).toEqual({
-      winnerSideNumber: HOME_SIDE,
-      sides: [{ sideNumber: AWAY_SIDE, score: 1, shootoutScore: 4 }, { sideNumber: HOME_SIDE, score: 1, shootoutScore: 5 }],
-      ending: MatchEnding.PLAYED,
-    });
+    expect(expectDefined(mapSportEventRoundMatchToDto(homeOnly).games[0]).sideResults.map((result) => [result.sideNumber, result.periodScores])).toEqual([
+      [HOME_SIDE, [{ kind: PeriodKind.REGULAR, periodNumber: 1, score: 7 }]],
+    ]);
   });
 });
 
@@ -159,8 +175,8 @@ describe('toSquaresBoardResponse', () => {
     maxSquaresPerEntry: 10,
     periods: { unit: PeriodUnit.QUARTER, count: 4 },
     game: match(),
-    homeTeamName: 'Home',
-    awayTeamName: null,
+    rowTeamName: null,
+    columnTeamName: 'Home',
     claimsOpen: true,
     drawOpen: false,
     boxes: [],
@@ -173,7 +189,7 @@ describe('toSquaresBoardResponse', () => {
     const dto = toSquaresBoardResponse(board(null));
 
     expect(dto.digits).toBeNull();
-    expect(dto).toEqual(expect.objectContaining({ contestId: 'c1', contestStatus: ContestStatus.OPEN, awayTeamName: null }));
+    expect(dto).toEqual(expect.objectContaining({ contestId: 'c1', contestStatus: ContestStatus.OPEN, rowTeamName: null, columnTeamName: 'Home' }));
   });
 
   it('sends a drawn board\'s digits as copies with the draw time as ISO', () => {

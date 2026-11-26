@@ -212,6 +212,8 @@ describe('squares handlers', () => {
     game: legacyMatch({ id: 'game-1', slot: weekRoundSlot() }),
     digits: null,
     periods: { unit: PeriodUnit.QUARTER, count: 4 },
+    winners: [],
+    entries: [],
   };
   const service = {
     getBoard: jest.fn((..._args: unknown[]) => Promise.resolve(board)),

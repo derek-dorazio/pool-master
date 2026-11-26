@@ -7,16 +7,16 @@ function points(value: number | null) {
 }
 
 /**
- * The squares game's score by period (#1758): one row per team, the away team first as on the
+ * The squares game's score by period (#1758): one row per team, the row side first as on the
  * board, with each period's points and the total. The period being played is tinted.
  */
 export function SquaresScoreTable({
-  awayTeamName,
-  homeTeamName,
+  rowTeamName,
+  columnTeamName,
   score,
 }: {
-  awayTeamName: string;
-  homeTeamName: string;
+  rowTeamName: string;
+  columnTeamName: string;
   score: SquaresScoreByPeriod;
 }) {
   const liveIndex = score.livePeriodNumber === null ? null : score.livePeriodNumber - 1;
@@ -48,8 +48,8 @@ export function SquaresScoreTable({
         </tr>
       </TableHead>
       <TableBody>
-        {line(awayTeamName, score.away, 'squares-score-away')}
-        {line(homeTeamName, score.home, 'squares-score-home')}
+        {line(rowTeamName, score.row, 'squares-score-away')}
+        {line(columnTeamName, score.column, 'squares-score-home')}
       </TableBody>
     </SimpleTable>
   );

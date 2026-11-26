@@ -372,6 +372,72 @@
       "key": "HOLES_IN_ROUND",
       "now": 0,
       "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "homeSportEventParticipantId",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "awaySportEventParticipantId",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "advancesToSide",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "homeShootoutScore",
+      "now": 6,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "awayShootoutScore",
+      "now": 5,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "resultSource",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "MatchResultSource",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "toMatchResultInput",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "toPeriodScoreInput",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "homeTeamName",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "awayTeamName",
+      "now": 0,
+      "reason": "retired by #2184"
     }
   ]
 }

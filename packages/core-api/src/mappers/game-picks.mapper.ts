@@ -4,7 +4,7 @@
  */
 
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
-import { finalRoundsOfMatches, PredictedResult, type PredictedChoice } from '@poolmaster/shared/domain';
+import { finalRoundsOfMatches, matchSpread, PredictedResult, type PredictedChoice, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   GAME_PICKS_TIEBREAKER_MAX,
   type GamePickGameDto,
@@ -17,7 +17,17 @@ import {
 } from '@poolmaster/shared/dto';
 import type { GamePickGame, GamePicksView, GamePreview, GamesPreview } from '../modules/selections/prediction-service';
 import { selectionErrors } from '../modules/selections/selection-errors';
-import { homeSpreadOf, mapRoundSlotToDto } from './sport-event-matches.mapper';
+import { mapRoundSlotToDto } from './sport-event-matches.mapper';
+
+/**
+ * The spread from the home side, as the game picks DTO still gives it (its home and away sides
+ * move with the prediction side, #2016): side 1's spread is the away side's, so the home side's is
+ * its opposite.
+ */
+function homeSpreadOf(match: Pick<SportEventRoundMatch, 'id' | 'sides'>): number | null {
+  const spread = matchSpread(match);
+  return spread === null ? null : 0 - spread;
+}
 
 function toGamePickGameDto(game: GamePickGame, finalRounds: ReadonlySet<number>): GamePickGameDto {
   const { match, pick, pickScore } = game;

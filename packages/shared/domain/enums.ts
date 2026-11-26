@@ -395,8 +395,9 @@ export const MatchStatusOrder = explicitOrder<MatchStatus>({
 });
 
 /**
- * One side of a match as the API still names it (#698): HOME is side 2 and AWAY side 1
- * (`matchSideNumber`), until the web app reads sides by number (#2046 part b).
+ * One side of a match as a prediction names it (#698): HOME is side 2 and AWAY side 1
+ * (`sideNumberOfMatchSide`). Match DTOs name sides by number (#2184); predictions and game
+ * picks move to side numbers with #2016.
  */
 export const MatchSide = {
   HOME: 'HOME',
@@ -1331,20 +1332,6 @@ export const RoundStatusOrder = explicitOrder<RoundStatus>({
   [RoundStatus.IN_PROGRESS]: 1,
   [RoundStatus.COMPLETED]: 2,
 });
-
-/**
- * Who set a match's result (#1496): the provider its game is linked to, the only writer on a
- * synced event (#2074). A test event's results are written by the test-data loader in its place.
- * No column holds it (#2046 dropped it, PROVIDER being its only value): the API answers PROVIDER
- * for a COMPLETED or CANCELLED match, a match with a result, until the web app stops reading it
- * (#2046 part b).
- */
-export const MatchResultSource = {
-  PROVIDER: 'PROVIDER',
-} as const;
-export type MatchResultSource = (typeof MatchResultSource)[keyof typeof MatchResultSource];
-/** No natural order: A to Z by its display strings. */
-export const MatchResultSourceOrder = alphabeticalOrder('MatchResultSource');
 
 /**
  * Where a provider says a game stands (#1496), as a `GAME` live-score update reports it. Only a

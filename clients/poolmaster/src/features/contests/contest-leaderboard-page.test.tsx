@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from 'rea
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { eventRoundsResponse, TOURNAMENT_ROUND_SLOTS } from './test/round-slots';
+import { homeAwayMatchFixture, type HomeAwayMatchFixture } from './test/match-fixtures';
 import { Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '@/test/sport-play';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -413,12 +414,9 @@ describe('ContestLeaderboardPage', () => {
   }
 
   function primeTeamPicksGames() {
-    const match = (matchNumber: number, roundNumber: number, homeId: string, awayId: string, result: Record<string, unknown>) => ({
+    const match = (matchNumber: number, roundNumber: number, homeId: string, awayId: string, result: HomeAwayMatchFixture) => homeAwayMatchFixture({
       id: `match-${String(roundNumber)}-${String(matchNumber)}`, sportEventId: 'event-1', roundNumber, matchNumber,
-      homeSportEventParticipantId: homeId, awaySportEventParticipantId: awayId, isNeutralSite: true,
-      scheduledDate: '2026-03-21T18:00:00.000Z', status: 'SCHEDULED', winnerSide: null, homeScore: null, awayScore: null,
-      homeShootoutScore: null, awayShootoutScore: null, ending: 'PLAYED', resultSource: null, advancesToMatchId: null,
-      advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], ...result,
+      home: homeId, away: awayId, isNeutralSite: true, scheduledDate: '2026-03-21T18:00:00.000Z', ...result,
     });
     getEventMock.mockResolvedValue({ data: { event: { id: 'event-1', sport: 'BASKETBALL', sportLeagueId: null, rounds: 6 } } });
     getEventBracketMock.mockResolvedValue({ data: { matches: [

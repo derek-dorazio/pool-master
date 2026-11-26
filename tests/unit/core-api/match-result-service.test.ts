@@ -1,10 +1,10 @@
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { BackgroundJobType, isAtPlace, matchPlaceOf, type MatchPlace, MatchEnding, MatchResultSource, PeriodUnit, type SlotPeriods, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, isAtPlace, matchPlaceOf, type MatchPlace, MatchEnding, PeriodUnit, type SlotPeriods, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService, describeScoreProblem, gameStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
-import { homeAwayOf, homeAwayPeriod, homeAwayResult, legacyMatch, placeTeam, type HomeAwayResultRequest } from '../../support/match-sides';
+import { bracketInput, homeAwayOf, homeAwayPeriod, homeAwayResult, legacyMatch, placeTeam, type HomeAwayResultRequest } from '../../support/match-sides';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
@@ -111,10 +111,10 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
   });
   if (sport === Sport.BASKETBALL || sport === Sport.FOOTBALL || sport === Sport.SOCCER) {
     await brackets.loadBracket(event.id, [
-      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: duke.id, awaySportEventParticipantId: vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
-      { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: houston.id, awaySportEventParticipantId: texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
+      bracketInput({ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: duke.id, awaySportEventParticipantId: vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } }),
+      bracketInput({ matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: houston.id, awaySportEventParticipantId: texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } }),
       // Each round numbers its matches from 1 (#2161): the final is round 2's match 1.
-      { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+      bracketInput({ matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null }),
     ]);
   }
   event.status = status;
@@ -150,8 +150,8 @@ async function week() {
       return `game-${sequence}`;
     },
   }).loadBracket(event.id, [
-    { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: bills.id, awaySportEventParticipantId: jets.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
-    { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: chiefs.id, awaySportEventParticipantId: raiders.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
+    bracketInput({ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: bills.id, awaySportEventParticipantId: jets.id, isNeutralSite: false, scheduledDate: null, advancesTo: null }),
+    bracketInput({ matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: chiefs.id, awaySportEventParticipantId: raiders.id, isNeutralSite: false, scheduledDate: null, advancesTo: null }),
   ]);
   event.status = SportEventStatus.SCHEDULED;
   // The games' loading carried a rebuild of its own; each test asserts only the jobs its writes carry.
@@ -178,17 +178,6 @@ describe('MatchResultService.recordResult', () => {
 
     expect(bracket.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 });
     expect(bracket.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 }))).toMatchObject({ homeSportEventParticipantId: vermont.id, awaySportEventParticipantId: null });
-  });
-
-  it('records every result as the feed\'s, a correction included: the feed is the only writer of a synced event\'s results (#2074)', async () => {
-    const { store, service, event } = await setup();
-    const sourceOf = async () => (await store.matchRepo().findBySportEvent(event.id)).map(homeAwayOf).find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))?.resultSource;
-
-    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, awayWins);
-    const first = await sourceOf();
-    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { ...awayWins, awayScore: 81 });
-
-    expect([first, await sourceOf()]).toEqual([MatchResultSource.PROVIDER, MatchResultSource.PROVIDER]);
   });
 
   it('records when the result came in, and moves it with a correction (#1889)', async () => {
@@ -612,9 +601,9 @@ describe('MatchResultService.cancelMatch', () => {
 
     const games = await service.cancelMatch(event.id, { roundNumber: 1, matchNumber: 1 });
 
-    expect(games.map((game) => [game.matchNumber, game.status, game.winnerSide, game.resultSource])).toEqual([
-      [1, MatchStatus.CANCELLED, null, MatchResultSource.PROVIDER],
-      [2, MatchStatus.SCHEDULED, null, null],
+    expect(games.map((game) => [game.matchNumber, game.status, game.winnerSide])).toEqual([
+      [1, MatchStatus.CANCELLED, null],
+      [2, MatchStatus.SCHEDULED, null],
     ]);
   });
 
@@ -885,7 +874,7 @@ describe('MatchResultService on a reseeded bracket', () => {
       id: `m${key}`, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, completedAt: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     }));
     const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];
@@ -977,7 +966,7 @@ describe('MatchResultService on a bracket numbered within each round (#2161)', (
       id, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, completedAt: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     }));
     // Round 1 is one play-in game; the 1 and 2 seeds' byes meet in round 2's match 1.

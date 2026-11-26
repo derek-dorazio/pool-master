@@ -7,8 +7,8 @@ const meta = {
   title: 'Contests/SquaresScoreTable',
   component: SquaresScoreTable,
   args: {
-    awayTeamName: 'Chiefs',
-    homeTeamName: 'Eagles',
+    rowTeamName: 'Chiefs',
+    columnTeamName: 'Eagles',
     score: squaresScoreByPeriod(squaresGameFixture({
       status: 'IN_PROGRESS',
       homeScore: 10,

@@ -27,6 +27,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
+import { withHomeAwayRead } from '../support/match-requests';
 
 // The College Football Playoff end to end over HTTP (#707): the 2025-26 test seed loads into the
 // seeded sport league, its event starting with the league's six tiers, and is played out game by
@@ -75,7 +76,7 @@ function taggedSeed(fileName: string, eventName: string): SportDataFile {
   playoffs.name = eventName;
   for (const player of league.players) player.key = expectDefined(tagged(player.key));
   for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
-  for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+  for (const match of playoffs.matches ?? []) match.sides = match.sides.map((side) => ({ ...side, player: tagged(side.player) }));
   return file;
 }
 
@@ -123,7 +124,7 @@ describe('SDK Functional: College Football Playoff', () => {
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === team), team).id;
-    const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches;
+    const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches.map(withHomeAwayRead);
     // Each top-four seed waits in a quarterfinal for a first-round winner.
     expect(bracket.filter((match) => match.roundNumber === 2).map((match) => match.homeSportEventParticipantId)).toEqual(
       ['Indiana Hoosiers', 'Texas Tech Red Raiders', 'Georgia Bulldogs', 'Ohio State Buckeyes'].map(rowOf),

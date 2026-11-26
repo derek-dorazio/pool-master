@@ -1,4 +1,4 @@
-import { MatchEnding, MatchStatus, SlotKind } from '@poolmaster/shared/domain';
+import { SlotKind } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   LeagueContextResponse,
@@ -6,6 +6,7 @@ import type {
   SquaresBoardResponse,
 } from '@/lib/api';
 import { bracketLeagueContextFixture } from './bracket-fixtures';
+import { homeAwayMatchFixture, type HomeAwayMatchFixture } from './match-fixtures';
 import { roundSlot } from './round-slots';
 
 export const SQUARES_KICKOFF = '2099-02-07T23:30:00.000Z';
@@ -27,38 +28,20 @@ export function squaresContestFixture(overrides: Partial<ContestDto> = {}): Cont
   };
 }
 
-/** One game of the event as the contract carries it. */
-export function squaresGameFixture(overrides: Partial<SportEventRoundMatchDto> = {}): SportEventRoundMatchDto {
-  return {
+/** One game of the event as the contract carries it: the Chiefs on side 1, the Eagles on side 2. */
+export function squaresGameFixture(overrides: HomeAwayMatchFixture = {}): SportEventRoundMatchDto {
+  return homeAwayMatchFixture({
     id: 'game-1',
     sportEventId: 'event-1',
     roundNumber: 4,
     slot: roundSlot(SlotKind.FINAL, 'Super Bowl'),
     matchNumber: 1,
-    homeSportEventParticipantId: 'field-eagles',
-    awaySportEventParticipantId: 'field-chiefs',
+    home: 'field-eagles',
+    away: 'field-chiefs',
     isNeutralSite: true,
     scheduledDate: SQUARES_KICKOFF,
-    status: 'SCHEDULED',
-    winnerSide: null,
-    homeScore: null,
-    awayScore: null,
-    homeShootoutScore: null,
-    awayShootoutScore: null,
-    ending: MatchEnding.PLAYED,
-    resultSource: null,
-    completedAt: null,
-    advancesToMatchId: null,
-    advancesToSide: null,
-    regionLabel: null,
-    homeSpread: null,
-    periodScores: [],
     ...overrides,
-    // As the server's mapper reads it from the status.
-    isUnplayed: overrides.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides.status),
-    // The server's fact: decided once COMPLETED.
-    isFinal: overrides.isFinal ?? overrides.status === MatchStatus.COMPLETED,
-  };
+  });
 }
 
 /** The board of an open contest: two entries, the viewer's entry-1 holding one box. */
@@ -69,8 +52,8 @@ export function squaresBoardFixture(overrides: Partial<SquaresBoardResponse> = {
     maxSquaresPerEntry: 2,
     periods: { unit: 'QUARTER', count: 4 },
     game: squaresGameFixture(),
-    homeTeamName: 'Eagles',
-    awayTeamName: 'Chiefs',
+    columnTeamName: 'Eagles',
+    rowTeamName: 'Chiefs',
     claimsOpen: true,
     drawOpen: true,
     boxes: [

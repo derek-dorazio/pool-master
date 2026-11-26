@@ -13,6 +13,7 @@ import {
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { parseSportDataFile, SportDataContent, TEST_SEED_CONTENTS, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { expectDefined } from '../../support/expect-defined';
+import { homeAwayFileMatch } from '../../support/match-requests';
 
 function seedWithStarts(...startDates: string[]): Pick<SportDataFile, 'sportLeagues'> {
   return {
@@ -145,7 +146,7 @@ describe('every test data file', () => {
   it.each(testFiles)('%s numbers each round\'s matches 1, 2, 3… in its own run, and names each next match by round and number', (name) => {
     for (const league of readDataFile(name).sportLeagues) {
       for (const event of league.events) {
-        const matches = event.matches ?? [];
+        const matches = (event.matches ?? []).map(homeAwayFileMatch);
         for (const roundNumber of new Set(matches.map((match) => match.roundNumber))) {
           const numbers = matches.filter((match) => match.roundNumber === roundNumber).map((match) => match.matchNumber).sort((left, right) => left - right);
           expect(numbers).toEqual(numbers.map((_, index) => index + 1));
@@ -167,7 +168,7 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
   const file = readDataFile('american-football-2026-nfl-playoffs-test.json');
   const [nfl] = file.sportLeagues;
   const [playoffs] = nfl.events;
-  const matches = playoffs.matches ?? [];
+  const matches = (playoffs.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of one NFL playoffs bracket that reseeds, with fourteen teams seeded 1 to 7 in each conference', () => {
     expect(file.scope).toEqual({
@@ -213,7 +214,7 @@ describe('basketball-2025-nba-playoffs-test.json', () => {
   const file = readDataFile('basketball-2025-nba-playoffs-test.json');
   const [nba] = file.sportLeagues;
   const [playoffs] = nba.events;
-  const matches = playoffs.matches ?? [];
+  const matches = (playoffs.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of one fixed four-round NBA playoffs bracket of 16 places, seeded 1 to 8 in each conference', () => {
     expect(file.scope).toEqual({
@@ -249,7 +250,7 @@ describe('basketball-2025-nba-playoffs-test.json', () => {
 describe('basketball-2025-wnba-playoffs-test.json', () => {
   const file = readDataFile('basketball-2025-wnba-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
-  const matches = playoffs.matches ?? [];
+  const matches = (playoffs.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of one fixed three-round WNBA bracket of eight teams seeded 1 to 8, Las Vegas sweeping Phoenix 4-0 in the Finals', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASKETBALL, 2025, ['WNBA']]);
@@ -266,7 +267,7 @@ describe('basketball-2025-wnba-playoffs-test.json', () => {
 describe('american-football-2025-cfp-test.json', () => {
   const file = readDataFile('american-football-2025-cfp-test.json');
   const [playoff] = file.sportLeagues[0].events;
-  const matches = playoff.matches ?? [];
+  const matches = (playoff.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of one fixed four-round College Football Playoff of 12 teams seeded 1 to 12, Indiana beating Miami 27-21 in the National Championship', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.FOOTBALL, 2025, ['NCAA Men\'s Football']]);
@@ -292,7 +293,7 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
   it('is a test seed of the 2026 men\'s and women\'s tournaments, each a six-round bracket of 64 places seeded 1 to 16 in four regions', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASKETBALL, 2026, ['NCAA Men\'s Basketball', 'NCAA Women\'s Basketball']]);
     for (const tournament of [men, women]) {
-      const matches = tournament.matches ?? [];
+      const matches = (tournament.matches ?? []).map(homeAwayFileMatch);
       expect(tournament.rounds).toBe(6);
       expect(tournament.field).toHaveLength(64);
       for (let seed = 1; seed <= 16; seed += 1) expect(tournament.field.filter((entry) => entry.seed === seed)).toHaveLength(4);
@@ -311,15 +312,15 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
   });
 
   it('ends with Michigan beating UConn 69-63 for the men\'s title and UCLA beating South Carolina 79-51 for the women\'s', () => {
-    expect(men.matches?.[62]).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 63, awayScore: 69 } });
-    expect(women.matches?.[62]).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 51, awayScore: 79 } });
+    expect(homeAwayFileMatch(expectDefined(men.matches?.[62]))).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 63, awayScore: 69 } });
+    expect(homeAwayFileMatch(expectDefined(women.matches?.[62]))).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 51, awayScore: 79 } });
   });
 });
 
 describe('hockey-2026-nhl-playoffs-test.json', () => {
   const file = readDataFile('hockey-2026-nhl-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
-  const matches = playoffs.matches ?? [];
+  const matches = (playoffs.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of one fixed four-round Stanley Cup playoffs of 16 teams, seeded 1 to 3 in each division with both wild cards 4', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['NHL']]);
@@ -339,7 +340,7 @@ describe('hockey-2026-nhl-playoffs-test.json', () => {
 describe('hockey-2026-pwhl-playoffs-test.json', () => {
   const file = readDataFile('hockey-2026-pwhl-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
-  const matches = playoffs.matches ?? [];
+  const matches = (playoffs.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of a two-round Walter Cup bracket of four teams, 1 against 3 as Montreal chose, Montreal beating Ottawa 3-1 in the final', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['PWHL']]);
@@ -356,7 +357,7 @@ describe('hockey-2026-ncaa-tournaments-test.json', () => {
 
   it('is a test seed of the men\'s 16-team tournament in four regions seeded 1 to 4, every game at a neutral site', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['NCAA Men\'s Hockey', 'NCAA Women\'s Hockey']]);
-    const matches = men.matches ?? [];
+    const matches = (men.matches ?? []).map(homeAwayFileMatch);
     expect(men.rounds).toBe(4);
     for (let seed = 1; seed <= 4; seed += 1) expect(men.field.filter((entry) => entry.seed === seed)).toHaveLength(4);
     expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
@@ -373,11 +374,11 @@ describe('hockey-2026-ncaa-tournaments-test.json', () => {
   });
 
   it('ends with Denver beating Wisconsin 2-1 for the men\'s title and Wisconsin beating Ohio State 3-2 for the women\'s, each with its first two periods\' scores', () => {
-    expect(men.matches?.[14]).toMatchObject({
+    expect(homeAwayFileMatch(expectDefined(men.matches?.[14]))).toMatchObject({
       roundNumber: 4, advancesTo: null, result: { winner: 'HOME', homeScore: 2, awayScore: 1 },
       periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 1 }, { periodNumber: 2, homeScore: 0, awayScore: 1 }],
     });
-    expect(women.matches?.[6]).toMatchObject({
+    expect(homeAwayFileMatch(expectDefined(women.matches?.[6]))).toMatchObject({
       roundNumber: 3, advancesTo: null, result: { winner: 'AWAY', homeScore: 2, awayScore: 3 },
       periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 2 }, { periodNumber: 2, homeScore: 0, awayScore: 2 }],
     });
@@ -387,7 +388,7 @@ describe('hockey-2026-ncaa-tournaments-test.json', () => {
 describe('baseball-2025-mlb-postseason-test.json', () => {
   const file = readDataFile('baseball-2025-mlb-postseason-test.json');
   const [postseason] = file.sportLeagues[0].events;
-  const matches = postseason.matches ?? [];
+  const matches = (postseason.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of the 2025 MLB postseason, 12 teams seeded 1 to 6 in each league, the top two seeds waiting in the Division Series', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASEBALL, 2025, ['MLB']]);
@@ -417,7 +418,7 @@ describe('soccer international knockout test seeds', () => {
   ] as const)('%s is a test seed of a fixed bracket of neutral-site matches seeded by FIFA ranking, ending with its real final', (fileName, season, league, teams, final) => {
     const file = readDataFile(fileName);
     const [tournament] = file.sportLeagues[0].events;
-    const matches = tournament.matches ?? [];
+    const matches = (tournament.matches ?? []).map(homeAwayFileMatch);
 
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([Sport.SOCCER, season, [league], [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS]]);
     expect(tournament.field.map((entry) => entry.seed)).toEqual(Array.from({ length: teams }, (_, index) => index + 1));
@@ -429,7 +430,7 @@ describe('soccer international knockout test seeds', () => {
 
   it('settles every level match on its shoot-out, and gives a match with a winner none', () => {
     const files = ['soccer-2022-fifa-world-cup-test.json', 'soccer-2023-fifa-womens-world-cup-test.json', 'soccer-2024-uefa-euro-test.json', 'soccer-2024-copa-america-test.json'];
-    const results = files.flatMap((name) => (readDataFile(name).sportLeagues[0].events[0].matches ?? []).map((match) => expectDefined(match.result)));
+    const results = files.flatMap((name) => (readDataFile(name).sportLeagues[0].events[0].matches ?? []).map(homeAwayFileMatch).map((match) => expectDefined(match.result)));
 
     for (const result of results) {
       const level = result.homeScore === result.awayScore;
@@ -444,7 +445,7 @@ describe('soccer international knockout test seeds', () => {
 describe('soccer-2026-uefa-champions-league-test.json', () => {
   const file = readDataFile('soccer-2026-uefa-champions-league-test.json');
   const [knockouts] = file.sportLeagues[0].events;
-  const matches = knockouts.matches ?? [];
+  const matches = (knockouts.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of the 2025-26 knockout phase, the league phase\'s top eight waiting in the Round of 16 on the away side', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2026, ['UEFA Champions League']]);
@@ -472,7 +473,7 @@ describe('soccer-2026-uefa-champions-league-test.json', () => {
 describe('soccer-2025-mls-cup-playoffs-test.json', () => {
   const file = readDataFile('soccer-2025-mls-cup-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
-  const matches = playoffs.matches ?? [];
+  const matches = (playoffs.matches ?? []).map(homeAwayFileMatch);
 
   it('is a test seed of the 2025 MLS Cup playoffs, nine seeds a conference, the 8 and 9 seeds meeting in the wild card round for the 1 seed\'s place', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['MLS']]);
@@ -498,7 +499,7 @@ describe('soccer-2025-nwsl-playoffs-test.json', () => {
   it('is a test seed of the 2025 NWSL playoffs, eight seeds on a fixed bracket, Gotham beating Washington 1-0 in the championship at a neutral site', () => {
     const file = readDataFile('soccer-2025-nwsl-playoffs-test.json');
     const [playoffs] = file.sportLeagues[0].events;
-    const matches = playoffs.matches ?? [];
+    const matches = (playoffs.matches ?? []).map(homeAwayFileMatch);
 
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['NWSL']]);
     expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -516,7 +517,7 @@ describe('soccer-2025-ncaa-tournaments-test.json', () => {
   it('is a test seed of both 2025 NCAA tournaments, six rounds each, the College Cup at a neutral site', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['NCAA Men\'s Soccer', 'NCAA Women\'s Soccer']]);
     for (const tournament of [men, women]) {
-      const matches = tournament.matches ?? [];
+      const matches = (tournament.matches ?? []).map(homeAwayFileMatch);
       expect(tournament.rounds).toBe(6);
       expect(matches).toHaveLength(tournament.field.length - 1);
       expect(matches.every((match) => match.isNeutralSite === match.roundNumber >= 5)).toBe(true);
@@ -525,16 +526,16 @@ describe('soccer-2025-ncaa-tournaments-test.json', () => {
 
   it('starts the men\'s 16 national seeds in the second round on the home side, unseeded teams sharing seed 17, Washington winning the final', () => {
     const seedOf = new Map(men.field.map((entry) => [entry.player, entry.seed]));
-    const secondRound = (men.matches ?? []).filter((match) => match.roundNumber === 2);
+    const secondRound = (men.matches ?? []).map(homeAwayFileMatch).filter((match) => match.roundNumber === 2);
     expect(men.field).toHaveLength(48);
     expect(secondRound.map((match) => seedOf.get(match.home ?? '')).sort((left, right) => (left ?? 0) - (right ?? 0))).toEqual(Array.from({ length: 16 }, (_, index) => index + 1));
     expect(secondRound.every((match) => match.away === null)).toBe(true);
     expect(men.field.filter((entry) => entry.seed === 17)).toHaveLength(32);
-    expect(men.matches?.at(-1)).toMatchObject({ home: null, away: null, result: { winner: 'AWAY', homeScore: 2, awayScore: 3 } });
+    expect(homeAwayFileMatch(expectDefined(men.matches?.at(-1)))).toMatchObject({ home: null, away: null, result: { winner: 'AWAY', homeScore: 2, awayScore: 3 } });
   });
 
   it('splits the women\'s 64 into four brackets of eight seeds, each named for its 1 seed, Florida State winning the final', () => {
-    const matches = women.matches ?? [];
+    const matches = (women.matches ?? []).map(homeAwayFileMatch);
     expect(women.field).toHaveLength(64);
     for (let seed = 1; seed <= 8; seed += 1) expect(women.field.filter((entry) => entry.seed === seed)).toHaveLength(4);
     expect(new Set(matches.filter((match) => match.roundNumber <= 4).map((match) => match.regionLabel)))
@@ -543,7 +544,7 @@ describe('soccer-2025-ncaa-tournaments-test.json', () => {
   });
 
   it('settles every level game on its shoot-out, and gives a game with a winner none', () => {
-    const results = [men, women].flatMap((tournament) => (tournament.matches ?? []).map((match) => expectDefined(match.result)));
+    const results = [men, women].flatMap((tournament) => (tournament.matches ?? []).map(homeAwayFileMatch).map((match) => expectDefined(match.result)));
     for (const result of results) {
       const level = result.homeScore === result.awayScore;
       expect(result.homeShootoutScore !== undefined && result.awayShootoutScore !== undefined).toBe(level);
@@ -590,7 +591,7 @@ describe('american-football-2025-nfl-weeks-test.json', () => {
       ['NFL Week 3', '2025-09-18', '2025-09-22', 1, null],
     ]);
     for (const week of nfl.events) {
-      const games = week.matches ?? [];
+      const games = (week.matches ?? []).map(homeAwayFileMatch);
       expect(games).toHaveLength(16);
       expect(games.every((game) => game.roundNumber === 1 && game.advancesTo === null && game.result !== undefined)).toBe(true);
       // Every team plays once a week, and the field is the teams playing.
@@ -601,7 +602,7 @@ describe('american-football-2025-nfl-weeks-test.json', () => {
   });
 
   it('opens the season with the Eagles\' 24-20 win over the Cowboys, and plays the Chiefs and Chargers in Brazil', () => {
-    const [opener, brazil] = nfl.events[0].matches ?? [];
+    const [opener, brazil] = (nfl.events[0].matches ?? []).map(homeAwayFileMatch);
     expect(opener).toMatchObject({ home: 'nfl-philadelphia-eagles', away: 'nfl-dallas-cowboys', isNeutralSite: false, scheduledAt: '2025-09-05T00:20:00Z', result: { winner: 'HOME', homeScore: 24, awayScore: 20 } });
     expect(brazil).toMatchObject({ home: 'nfl-los-angeles-chargers', away: 'nfl-kansas-city-chiefs', isNeutralSite: true, result: { winner: 'HOME', homeScore: 27, awayScore: 21 } });
   });
@@ -627,8 +628,8 @@ describe('soccer-2025 and soccer-2026-premier-league-weeks-test.json', () => {
     for (const week of weeks) {
       expect(week.rounds).toBe(1);
       expect(week.field).toHaveLength(20);
-      expect((week.matches ?? []).every((game) => game.roundNumber === 1 && game.advancesTo === null && !game.isNeutralSite)).toBe(true);
-      expect((week.matches ?? []).filter((game) => game.cancelled !== true).every((game) => game.periodScores?.length === 1)).toBe(true);
+      expect((week.matches ?? []).map(homeAwayFileMatch).every((game) => game.roundNumber === 1 && game.advancesTo === null && !game.isNeutralSite)).toBe(true);
+      expect((week.matches ?? []).map(homeAwayFileMatch).filter((game) => game.cancelled !== true).every((game) => game.periodScores?.length === 1)).toBe(true);
     }
   });
 
@@ -639,32 +640,32 @@ describe('soccer-2025 and soccer-2026-premier-league-weeks-test.json', () => {
 
   it('names every club of every matchweek\'s field in one of its games, so each week can be released', () => {
     for (const week of weeks) {
-      const named = new Set((week.matches ?? []).flatMap((game) => [game.home, game.away]));
+      const named = new Set((week.matches ?? []).map(homeAwayFileMatch).flatMap((game) => [game.home, game.away]));
       expect([week.name, week.field.filter((entry) => !named.has(entry.player)).map((entry) => entry.player)]).toEqual([week.name, []]);
     }
   });
 
   it('keeps matchweek 31\'s two rescheduled matches, Wolves v Arsenal and Manchester City v Crystal Palace, in their week cancelled with no result, and plays the other eight', () => {
     expect(weeks.map((week) => week.matches?.length)).toEqual(Array.from({ length: 38 }, () => 10));
-    const week31 = weeks[30].matches ?? [];
+    const week31 = (weeks[30].matches ?? []).map(homeAwayFileMatch);
     expect(week31.filter((game) => game.cancelled === true).map((game) => [game.home, game.away, game.result])).toEqual([
       ['pl-wolverhampton-wanderers', 'pl-arsenal', undefined],
       ['pl-manchester-city', 'pl-crystal-palace', undefined],
     ]);
     expect(week31.filter((game) => game.cancelled !== true).every((game) => game.result !== undefined)).toBe(true);
-    expect(weeks.flatMap((week) => week.matches ?? []).filter((game) => game.cancelled === true)).toHaveLength(2);
+    expect(weeks.flatMap((week) => (week.matches ?? []).map(homeAwayFileMatch)).filter((game) => game.cancelled === true)).toHaveLength(2);
   });
 
   it('enters a level match with no winner, opens with Liverpool\'s 4-2 win over Bournemouth and ends with Arsenal\'s 2-1 win at Crystal Palace', () => {
-    const games = weeks.flatMap((week) => week.matches ?? []);
+    const games = weeks.flatMap((week) => (week.matches ?? []).map(homeAwayFileMatch));
     const draws = games.filter((game) => game.result?.winner === null);
     expect(draws.length).toBeGreaterThan(0);
     expect(draws.every((game) => game.result?.homeScore === game.result?.awayScore)).toBe(true);
-    expect(weeks[0].matches?.[0]).toMatchObject({
+    expect(homeAwayFileMatch(expectDefined(weeks[0].matches?.[0]))).toMatchObject({
       home: 'pl-liverpool', away: 'pl-bournemouth', scheduledAt: '2025-08-15T19:00:00Z',
       result: { winner: 'HOME', homeScore: 4, awayScore: 2 }, periodScores: [{ periodNumber: 1, homeScore: 1, awayScore: 0 }],
     });
-    expect(weeks[37].matches).toContainEqual(expect.objectContaining({
+    expect((weeks[37].matches ?? []).map(homeAwayFileMatch)).toContainEqual(expect.objectContaining({
       home: 'pl-crystal-palace', away: 'pl-arsenal', scheduledAt: '2026-05-24T15:00:00Z', result: { winner: 'AWAY', homeScore: 1, awayScore: 2 },
     }));
   });
@@ -682,14 +683,14 @@ describe('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', () => {
       ["FIFA Women's World Cup Matchday 3", '2023-07-30', '2023-08-03', 1, null],
     ]);
     for (const matchday of worldCup.events) {
-      const games = matchday.matches ?? [];
+      const games = (matchday.matches ?? []).map(homeAwayFileMatch);
       expect(games).toHaveLength(16);
       expect(games.every((game) => game.isNeutralSite && game.advancesTo === null && game.periodScores?.length === 1)).toBe(true);
       const sides = games.flatMap((game) => [game.home, game.away]);
       expect(new Set(sides).size).toBe(32);
       expect(new Set(matchday.field.map((entry) => entry.player))).toEqual(new Set(sides));
     }
-    expect(worldCup.events[0].matches?.[0]).toMatchObject({ home: 'wwc-new-zealand', away: 'wwc-norway', scheduledAt: '2023-07-20T07:00:00Z', result: { winner: 'HOME', homeScore: 1, awayScore: 0 } });
+    expect(homeAwayFileMatch(expectDefined(worldCup.events[0].matches?.[0]))).toMatchObject({ home: 'wwc-new-zealand', away: 'wwc-norway', scheduledAt: '2023-07-20T07:00:00Z', result: { winner: 'HOME', homeScore: 1, awayScore: 0 } });
   });
 
   it('ranks its teams as the knockout test seed does, so loading either keeps the other\'s rankings', () => {

@@ -34,7 +34,7 @@ describe('pickEmBoardGames', () => {
   });
 
   it('says a neutral-site game is "vs", a game with no kickoff yet has its time to be set, and a side not decided is to be decided', () => {
-    const [game] = pickEmBoardGames([{ ...week2EventGamesFixture()[1], isNeutralSite: true, scheduledDate: null, homeSportEventParticipantId: null }], teamName, kickoff);
+    const [game] = pickEmBoardGames([week2EventGamesFixture({ 1: { isNeutralSite: true, scheduledDate: null, home: null } })[1]], teamName, kickoff);
 
     expect(game).toMatchObject({ matchup: 'BUF vs To be decided', progress: 'Time to be set' });
   });

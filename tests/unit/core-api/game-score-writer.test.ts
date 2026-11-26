@@ -1,4 +1,4 @@
-import { BackgroundJobType, HomeAway, MatchResultSource, MatchSide, MatchStatus, PeriodKind, ProviderCode, ProviderGameState, type BackgroundJobRequest, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { BackgroundJobType, HomeAway, MatchSide, MatchStatus, PeriodKind, ProviderCode, ProviderGameState, type BackgroundJobRequest, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { MatchStatusWrite, ProviderMappedGame, SportEventRoundMatchGameScoreWrite, SportEventRoundMatchGameSync } from '@poolmaster/shared/db';
 import { writeGameScores, type GameScoreWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-score-writer';
@@ -391,7 +391,7 @@ describe('writeGameScores', () => {
 
   it('writes nothing for a match that already holds a shoot-out result, and corrects one whose shoot-out score changed', async () => {
     const matches = bracket();
-    const settled = { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4, resultSource: MatchResultSource.PROVIDER };
+    const settled = { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4 };
     matches[0] = linked(matches[0], 'g1', settled);
     matches[1] = linked(matches[1], 'g2', { ...settled, homeShootoutScore: 3, awayShootoutScore: 4 });
     const { deps, recordResult } = writer(matches);
@@ -419,7 +419,7 @@ describe('writeGameScores', () => {
 
   it('corrects a completed match whose score the provider set and has since changed', async () => {
     const matches = bracket();
-    matches[0] = linked(matches[0], 'g1', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 21, resultSource: MatchResultSource.PROVIDER });
+    matches[0] = linked(matches[0], 'g1', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 21 });
     const { deps, recordResult } = writer(matches);
 
     await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', 27, 24)]);
@@ -429,7 +429,7 @@ describe('writeGameScores', () => {
 
   it('overwrites a recorded result with the provider\'s final when the two disagree, since the feed is the only writer', async () => {
     const matches = bracket();
-    matches[0] = linked(matches[0], 'g1', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 24, resultSource: MatchResultSource.PROVIDER });
+    matches[0] = linked(matches[0], 'g1', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 24 });
     const { deps, recordResult } = writer(matches);
 
     const result = await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', 27, 24), game('g2', 'PHI', 'DAL', 31, 17)]);
@@ -544,7 +544,7 @@ describe('writeGameScores', () => {
 
     it('records the away side as the winner when the series\' away team wins four, and writes nothing again for a series already holding that result', async () => {
       const decided = series();
-      decided[1] = withHomeAway(decided[1], { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 0, awayScore: 4, resultSource: MatchResultSource.PROVIDER });
+      decided[1] = withHomeAway(decided[1], { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 0, awayScore: 4 });
       const { deps, recordResult } = writer(decided);
       const sweep = ['d1', 'd2', 'd3', 'd4'].map((id, index) => nth(index + 1, game(id, 'DAL', 'PHI', 5, 2)));
 
@@ -584,7 +584,7 @@ describe('writeGameScores', () => {
 
     it('counts no win for a final game with no score, and puts no live score on a series an admin has already decided', async () => {
       const matches = series();
-      matches[1] = withHomeAway(matches[1], { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 0, resultSource: MatchResultSource.PROVIDER });
+      matches[1] = withHomeAway(matches[1], { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 0 });
       const { deps, applyStatuses } = writer(matches);
 
       await writeGameScores(deps, SEVENS, [
