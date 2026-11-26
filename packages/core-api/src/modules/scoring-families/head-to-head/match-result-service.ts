@@ -41,7 +41,7 @@ import {
   MatchSide,
   MatchStatus,
   ParticipantStandingStatus,
-  SlotKind,
+  finalRoundsOfMatches,
   SportEventStatus,
   compareScores,
   getSportDefinition,
@@ -134,6 +134,7 @@ export function gameStandings(matches: readonly SportEventRoundMatch[], asOf: Da
  */
 export function bracketStandings(matches: readonly SportEventRoundMatch[], asOf: Date): BracketStandingWrite[] {
   const highestRound = Math.max(0, ...matches.map((match) => match.roundNumber));
+  const finalRounds = finalRoundsOfMatches(matches);
   const progress = new Map<string, { roundReached: number; lostInRound: number | null; champion: boolean }>();
   for (const match of matches) {
     for (const side of [MatchSide.HOME, MatchSide.AWAY]) {
@@ -143,9 +144,9 @@ export function bracketStandings(matches: readonly SportEventRoundMatch[], asOf:
       team.roundReached = Math.max(team.roundReached, match.roundNumber);
       if (match.status === MatchStatus.COMPLETED && match.winnerSide !== null) {
         if (match.winnerSide === side) {
-          // The final is the match of the FINAL slot (#2006), which sends its winner nowhere. A
+          // The final is the match of the final's round (#2006), which sends its winner nowhere. A
           // winner a reseed has still to place has reached the next round.
-          if (match.advancesToMatchId === null && match.slot.slotKind === SlotKind.FINAL) team.champion = true;
+          if (match.advancesToMatchId === null && finalRounds.has(match.roundNumber)) team.champion = true;
           else if (match.advancesToMatchId === null) team.roundReached = Math.max(team.roundReached, match.roundNumber + 1);
         } else {
           team.lostInRound = match.roundNumber;

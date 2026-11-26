@@ -86,6 +86,7 @@ function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTe
       matchNumber: 1,
       roundNumber: 1,
       slot: weekSlot(1),
+      isFinal: false,
       kickoff: '2099-11-22T18:00:00.000Z',
       status: 'SCHEDULED',
       isNeutralSite: false,

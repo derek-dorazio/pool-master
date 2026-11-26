@@ -176,6 +176,12 @@ const EventSchema = z.object({
    * event on a test slot of it. An event the league has no definition for is not loaded.
    */
   slotKey: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
+  /**
+   * A bracket's slot definition keys, one per round, first to final (#2006): the loader makes the
+   * event on a test slot of each, and plays its round n in the nth. In place of `slotKey`, and as
+   * many as the event has rounds.
+   */
+  roundSlotKeys: z.array(z.string().regex(/^[A-Z][A-Z0-9_]*$/)).min(2).optional(),
   name: z.string().min(1),
   /** The event's real dates. A test seed moves them forward (shiftedEventDates). */
   startDate: IsoDaySchema,
@@ -357,6 +363,12 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
   const playerKeys = new Set(league.players.map((player) => player.key));
   for (const event of league.events) {
     const where = `${league.name}, ${event.name}`;
+    if (event.roundSlotKeys !== undefined && event.slotKey !== undefined) {
+      problems.push(`${where}: names both a slotKey and roundSlotKeys; a bracket over several slots names only its rounds' keys.`);
+    }
+    if (event.roundSlotKeys !== undefined && event.roundSlotKeys.length !== event.rounds) {
+      problems.push(`${where}: names ${event.roundSlotKeys.length} round slot keys for ${event.rounds} rounds.`);
+    }
     if (Number(event.startDate.slice(0, 4)) !== file.scope.season) {
       problems.push(`${where}: starts ${event.startDate}, outside the ${file.scope.season} season.`);
     }

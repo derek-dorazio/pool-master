@@ -42,6 +42,7 @@ function previewGame(matchNumber: number, pick: PreviewGame['pick'] = null): Pre
     matchNumber,
     roundNumber: 1,
     slot: weekSlot(1),
+    isFinal: false,
     kickoff: '2099-09-13T17:00:00.000Z',
     status: 'SCHEDULED',
     isNeutralSite: false,

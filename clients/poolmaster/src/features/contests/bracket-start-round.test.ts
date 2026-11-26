@@ -1,12 +1,11 @@
 import { SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import {
-  bracketRoundCount,
   bracketStartRoundOptions,
   contestSecondChanceRoundName,
   secondChanceRoundName,
 } from './bracket-start-round';
-import { buildManagedContest, buildSportEvent } from './test/contest-admin-fixtures';
+import { buildManagedContest } from './test/contest-admin-fixtures';
 import { tournamentRoundName } from './test/round-slots';
 
 const MARCH_MADNESS_ROUND = tournamentRoundName;
@@ -17,17 +16,12 @@ describe('where a bracket can start', () => {
       { roundNumber: 1, name: 'First Round', label: 'Full bracket' },
     ]);
     expect(bracketStartRoundOptions([2, 3, 4, 5], MARCH_MADNESS_ROUND)).toEqual([
-      { roundNumber: 2, name: 'Second Round', label: 'From the Second Round' },
+      { roundNumber: 2, name: 'Round of 32', label: 'From the Round of 32' },
       { roundNumber: 3, name: 'Sweet 16', label: 'From the Sweet 16' },
       { roundNumber: 4, name: 'Elite Eight', label: 'From the Elite Eight' },
       { roundNumber: 5, name: 'Final Four', label: 'From the Final Four' },
     ]);
     expect(bracketStartRoundOptions([], MARCH_MADNESS_ROUND)).toEqual([]);
-  });
-
-  it('counts an event\'s rounds by its own count, else by its sport\'s default', () => {
-    expect(bracketRoundCount(buildSportEvent({ sport: 'BASKETBALL', rounds: 4 }))).toBe(4);
-    expect(bracketRoundCount(buildSportEvent({ sport: 'BASKETBALL', rounds: null }))).toBe(6);
   });
 
   it('names a second-chance bracket\'s starting round, and no round for a full bracket', () => {

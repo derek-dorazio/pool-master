@@ -5,7 +5,7 @@
  * regions meet (a Final Four, a Super Bowl), carry no region, so they read as one group after the
  * regional rounds. Everything here is derived from the game-pick read; nothing is stored.
  */
-import { PickOutcome, SlotKind } from '@poolmaster/shared/domain';
+import { PickOutcome } from '@poolmaster/shared/domain';
 import { enumLabel, roundLabels } from '@poolmaster/shared/display-strings';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 import type { PickEmGame } from './pick-em-week';
@@ -26,9 +26,9 @@ export interface BracketRound {
   regions: BracketRegionGroup[];
 }
 
-/** Whether a game is played in its event's FINAL slot (#2006): the bracket's final. */
-export function isFinalGame(game: Pick<BracketGame, 'slot'>): boolean {
-  return game.slot.slotKind === SlotKind.FINAL;
+/** Whether a game is the bracket's final, as the API says (#2006). */
+export function isFinalGame(game: Pick<BracketGame, 'isFinal'>): boolean {
+  return game.isFinal;
 }
 
 /** The bracket's games by round and region, in the order the bracket lists them, each round named by its slot. */

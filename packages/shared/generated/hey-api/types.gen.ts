@@ -13320,13 +13320,13 @@ export type SportEventResponse = {
 };
 
 /**
- * A test event, made by hand on a test slot (QA only). Created DRAFT with its league's default round count and tiers, and its slot's dates; commissioners see it once it is released.
+ * A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league's default round count for one slot), its league's tiers, and its slots' dates; commissioners see it once it is released.
  */
 export type CreateSportEventRequest = {
     /**
-     * The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event's league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season; 409 SEASON_SLOT_TAKEN when it already has an event.
+     * The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays the league's default round count in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.
      */
-    seasonSlotId: string;
+    seasonSlotIds: Array<string>;
     name: string;
     venue?: string;
     location?: string;
@@ -17540,7 +17540,7 @@ export type GamePicksResponse = {
         matchNumber: number;
         roundNumber: number;
         /**
-         * The slot the game's round is played in: the round's label and whether the game is the final.
+         * The slot the game's round is played in: the round's label.
          */
         slot: {
             /**
@@ -17560,6 +17560,10 @@ export type GamePicksResponse = {
              */
             weekNumber: number | null;
         };
+        /**
+         * Whether the game is the event's final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket's links end at. Never the last round by number.
+         */
+        isFinal: boolean;
         /**
          * When the game starts: its scheduled time, else its event's start. Its pick locks then.
          */
@@ -17903,7 +17907,7 @@ export type GamePickPreviewResponse = {
         matchNumber: number;
         roundNumber: number;
         /**
-         * The slot the game's round is played in: the round's label and whether the game is the final.
+         * The slot the game's round is played in: the round's label.
          */
         slot: {
             /**
@@ -17923,6 +17927,10 @@ export type GamePickPreviewResponse = {
              */
             weekNumber: number | null;
         };
+        /**
+         * Whether the game is the event's final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket's links end at. Never the last round by number.
+         */
+        isFinal: boolean;
         /**
          * When the game starts: its scheduled time, else its event's start. Its pick locks then.
          */

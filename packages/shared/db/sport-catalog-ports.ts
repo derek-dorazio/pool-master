@@ -804,6 +804,8 @@ export interface SportLeagueSeasonRepository {
   setCurrentSeasons(changes: ReadonlyArray<{ sportLeagueId: string; currentSeasonId: string | null }>): Promise<void>;
   /** One Season slot with its Season and the event on it, or null for an unknown id (#2004). */
   findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null>;
+  /** Season slots by id, each with its Season and the event on it, in one read; an unknown id is left out (#2006). */
+  findSlotsByIds(seasonSlotIds: readonly string[]): Promise<SeasonSlotWithEvent[]>;
   /**
    * Adds a labelled test slot of a definition to a Season (#2004), copying the definition's series
    * format and pairing, in the Season's phase for the definition's phase. Says why when it adds

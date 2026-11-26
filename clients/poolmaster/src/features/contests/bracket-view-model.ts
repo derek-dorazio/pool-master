@@ -109,7 +109,7 @@ function winnerLine(game: BracketGame): BracketLine | null {
 
 /** The entry's pick to win the final, and whether that team is out; null until it is picked. */
 function drawChampion(rounds: readonly BracketRound[]): BracketChampion | null {
-  // The final is the game of the FINAL slot (#2006), never the last round's.
+  // The final is the game the API marks as the final (#2006), never the last round's.
   const finals = rounds.flatMap((round) => round.regions.flatMap((region) => region.games)).filter(isFinalGame);
   const final = finals.length === 1 ? finals[0] : null;
   const winner = final ? winnerLine(final) : null;
@@ -209,7 +209,7 @@ export function splitMiddle(middle: Pick<BracketGroup, 'rounds'>): {
   left: BracketDrawnRound[];
   right: BracketDrawnRound[];
 } {
-  // The final is the game of the FINAL slot (#2006), never the last round's.
+  // The final is the game the API marks as the final (#2006), never the last round's.
   const finalRound = middle.rounds.find((round) => round.games.length === 1 && round.games.every(({ game }) => isFinalGame(game))) ?? null;
   const final = finalRound?.games[0] ?? null;
   const before = middle.rounds.filter((round) => round !== finalRound);

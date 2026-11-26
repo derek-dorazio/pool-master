@@ -42,6 +42,7 @@ function game(matchNumber: number, kickoff: string, away: Team, home: Team, over
     matchNumber,
     roundNumber: 1,
     slot: weekSlot(2),
+    isFinal: false,
     kickoff,
     status: 'SCHEDULED',
     isNeutralSite: false,

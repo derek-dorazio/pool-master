@@ -1053,6 +1053,7 @@ export const enUS = {
     ROUND_SCORE_ROWS_UNRESOLVED: 'Some score rows do not name one participant on the field.',
     ROUND_VALUES_REQUIRED: 'A new round needs both its strokes and its score to par.',
     SEARCH_TERM_REQUIRED: 'Choose a sport league, or type a few more characters.',
+    SEASON_SLOTS_NOT_ONE_SEASON: 'A test event\'s slots must all be in one Season.',
     SEASON_SLOT_NOT_CURRENT: 'That slot is not in the league\'s current Season.',
     SEASON_SLOT_NOT_FOUND: 'Slot not found.',
     SEASON_SLOT_NOT_TEST: 'Events can be made by hand only on a test slot.',

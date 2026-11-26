@@ -41,7 +41,7 @@ import {
   MatchSide,
   type Participant,
   ParticipantStatus,
-  SlotKind,
+  finalRoundNumbers,
   SlotPairing,
   type SportEvent,
   type SportEventRound,
@@ -234,7 +234,7 @@ export class SportEventBracketService {
     ]);
     const problems = findBracketProblems(matches, {
       roundNumbers: new Set(rounds.map((round) => round.roundNumber)),
-      finalRoundNumbers: new Set(rounds.filter((round) => round.slot.slotKind === SlotKind.FINAL).map((round) => round.roundNumber)),
+      finalRoundNumbers: finalRoundsOfInput(matches, rounds),
       fieldIds: new Set(field.map((entry) => entry.id)),
       reseeds: reseedsOf(rounds),
     });
@@ -617,6 +617,15 @@ export class SportEventBracketService {
     }
     return event;
   }
+}
+
+/** The final's rounds of a bracket about to be loaded, by its rounds' slots and its own links (#2006). */
+function finalRoundsOfInput(matches: readonly BracketMatchInput[], rounds: readonly SportEventRound[]): Set<number> {
+  const slotOf = new Map(rounds.map((round) => [round.roundNumber, round.slot]));
+  return finalRoundNumbers(matches.flatMap((match) => {
+    const slot = slotOf.get(match.roundNumber);
+    return slot === undefined ? [] : [{ roundNumber: match.roundNumber, slot, advances: match.advancesTo !== null }];
+  }));
 }
 
 /** Whether a bracket reseeds: its rounds' slots are paired by reseeding rather than fixed links (#2006). */

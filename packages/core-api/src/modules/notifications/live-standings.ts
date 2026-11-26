@@ -52,7 +52,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantRoundStatus,
   SelectionType,
-  SlotKind,
+  finalRoundsOfMatches,
   SportEventStatus,
   type Contest,
   type League,
@@ -301,7 +301,7 @@ export class LiveStandings implements DueNotifications {
     const startsAtRound = rules?.selectionType === SelectionType.BRACKET ? rules.startsAtRound : 1;
     const finished = lastFinishedMatchRound(matches, startsAtRound);
     // A finished final ends the bracket, so it sends no round email.
-    const playedFinal = matches.some((match) => match.roundNumber === finished?.roundNumber && match.slot.slotKind === SlotKind.FINAL);
+    const playedFinal = finished !== null && finalRoundsOfMatches(matches).has(finished.roundNumber);
     if (!finished || playedFinal || !isDue(finished.finishedAt)) return [];
     const roundNumber = finished.roundNumber;
     const roundName = roundLabels(matches);

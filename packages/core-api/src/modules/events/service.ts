@@ -110,8 +110,8 @@ export interface SportEventReadOptions {
 
 /** A test event (#2004): made by hand on a free test slot of its league's current Season. */
 export interface CreateSportEventInput {
-  /** The test slot it covers; its Season and league are the event's, and its dates the event's. */
-  seasonSlotId: string;
+  /** The test slots it covers, in one Season; their Season and league are the event's, and their dates the event's. */
+  seasonSlotIds: readonly string[];
   name: string;
   venue?: string;
   location?: string;
@@ -195,7 +195,7 @@ export interface SportEventServiceDeps {
   sportLeagues: SportLeagueRepository;
   sports: SportRepository;
   /** The Season slot a test event is made on (#2004). */
-  seasons: Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'>;
+  seasons: Pick<SportLeagueSeasonRepository, 'findSlotsByIds' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'>;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
@@ -241,26 +241,41 @@ export class SportEventService {
   }
 
   /**
-   * A test event on a test slot (#2004, plan §2): only a test slot takes an event made by hand,
-   * since the sync makes every other. The slot must be free and in its league's current Season;
-   * the event's dates are the slot's, and it gets its league's default round count. 404
-   * SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST, SEASON_SLOT_NOT_CURRENT; 409
-   * SEASON_SLOT_TAKEN.
+   * A test event on test slots (#2004, plan §2, #2006): only a test slot takes an event made by
+   * hand, since the sync makes every other. Each slot must be free and in its league's current
+   * Season, all of one Season; the event's dates are the slots'. One slot plays the league's
+   * default round count in it; several play a round each, in play order (a test bracket, its
+   * FINAL slot last). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST,
+   * SEASON_SLOT_NOT_CURRENT, SEASON_SLOTS_NOT_ONE_SEASON; 409 SEASON_SLOT_TAKEN.
    */
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
-    const found = await this.deps.seasons.findSlot(input.seasonSlotId);
-    if (found === null) throw new SportEventError(`Season slot ${input.seasonSlotId} was not found.`, 'SEASON_SLOT_NOT_FOUND', 404);
-    const { slot } = found;
-    const { sportLeague, sport } = await this.resolveSportLeague(found.sportLeagueId);
-    const refusal = testEventSlotRefusal(
-      { isTestData: slot.isTestData, sportEventId: found.sportEventId },
-      found.sportLeagueSeasonId === sportLeague.currentSeasonId,
-    );
-    if (refusal !== null) throw TEST_EVENT_SLOT_REFUSALS[refusal](slot.id, sportLeague.name);
+    if (input.seasonSlotIds.length === 0) throw new SportEventError('A test event is made on at least one test slot.', 'SEASON_SLOT_NOT_FOUND', 404);
+    const seasonSlotIds = [...new Set(input.seasonSlotIds)];
+    const byId = new Map((await this.deps.seasons.findSlotsByIds(seasonSlotIds)).map((found) => [found.slot.id, found]));
+    const founds = seasonSlotIds.map((seasonSlotId) => {
+      const found = byId.get(seasonSlotId);
+      if (found === undefined) throw new SportEventError(`Season slot ${seasonSlotId} was not found.`, 'SEASON_SLOT_NOT_FOUND', 404);
+      return found;
+    });
+    const seasonIds = new Set(founds.map((found) => found.sportLeagueSeasonId));
+    const [first] = founds;
+    if (seasonIds.size !== 1) {
+      throw new SportEventError('A test event\'s slots are all of one Season.', 'SEASON_SLOTS_NOT_ONE_SEASON', 422);
+    }
+    const { sportLeague, sport } = await this.resolveSportLeague(first.sportLeagueId);
+    for (const found of founds) {
+      const refusal = testEventSlotRefusal(
+        { isTestData: found.slot.isTestData, sportEventId: found.sportEventId },
+        found.sportLeagueSeasonId === sportLeague.currentSeasonId,
+      );
+      if (refusal !== null) throw TEST_EVENT_SLOT_REFUSALS[refusal](found.slot.id, sportLeague.name);
+    }
+    const slots = founds.map((found) => found.slot);
     // A test slot is always made with a start (createTestSlot), so its dates are never null.
-    const dates = eventDatesFromSlots([slot]);
-    if (dates === null) throw new Error(`Season slot ${slot.id} has no start.`);
-    const rounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    const dates = eventDatesFromSlots(slots);
+    if (dates === null) throw new Error(`Season slots ${input.seasonSlotIds.join(', ')} have no start.`);
+    const rounds = slots.length > 1 ? slots.length : sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    const found = first;
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
       event: {
@@ -274,13 +289,13 @@ export class SportEventService {
         sportLeagueId: sportLeague.id,
         sportLeagueSeasonId: found.sportLeagueSeasonId,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
-        seasonSlotIds: [slot.id],
+        seasonSlotIds: slots.map((slot) => slot.id),
       },
       rounds: dailyRoundSchedule(rounds, dates.startDate),
-    }], [slot]));
+    }], slots));
 
     this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: found.sportLeagueSeasonId, seasonSlotId: slot.id, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: found.sportLeagueSeasonId, seasonSlotIds: slots.map((slot) => slot.id), rounds },
       'Created test sport event',
     );
     return summary;

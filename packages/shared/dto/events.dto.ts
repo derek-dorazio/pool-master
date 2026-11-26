@@ -174,12 +174,12 @@ export const SportEventResponseSchema = z.object({
 export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
 
 export const CreateSportEventRequestSchema = z.object({
-  seasonSlotId: z.uuid().describe('The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event\'s league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season; 409 SEASON_SLOT_TAKEN when it already has an event.'),
+  seasonSlotIds: z.array(z.uuid()).min(1).describe('The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league\'s current Season: they decide the event\'s league, Season and dates. One slot plays the league\'s default round count in it; several play one round in each, in play order (a test bracket\'s rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.'),
   name: z.string().min(1),
   venue: z.string().optional(),
   location: z.string().optional(),
   autoLifecycleEnabled: z.boolean().optional(),
-}).describe('A test event, made by hand on a test slot (QA only). Created DRAFT with its league\'s default round count and tiers, and its slot\'s dates; commissioners see it once it is released.');
+}).describe('A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league\'s default round count for one slot), its league\'s tiers, and its slots\' dates; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
 
 /** The par range an admin may set for an event's rounds. Never above 80, so an unplayed round's 80 strokes is never under par. */

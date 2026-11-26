@@ -7,7 +7,7 @@ import type {
 } from '@/lib/api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { SlotKind } from '@poolmaster/shared/domain';
-import { roundSlot, TOURNAMENT_ROUND_SLOTS } from './round-slots';
+import { TOURNAMENT_ROUND_SLOTS } from './round-slots';
 
 /**
  * Bracket contest fixtures (#721) in the generated contract's shapes: an eight-team basketball
@@ -55,7 +55,8 @@ export function bracketGame(overrides: Partial<Game> & Pick<Game, 'matchNumber' 
   const { matchNumber, roundNumber } = overrides;
   return {
     sportEventRoundMatchId: `match-${matchNumber}`,
-    slot: FIXTURE_ROUND_SLOTS[roundNumber] ?? roundSlot(SlotKind.ROUND_OF_64),
+    slot: FIXTURE_ROUND_SLOTS[roundNumber],
+    isFinal: FIXTURE_ROUND_SLOTS[roundNumber].slotKind === SlotKind.FINAL,
     kickoff: BRACKET_START,
     status: 'SCHEDULED',
     isNeutralSite: true,

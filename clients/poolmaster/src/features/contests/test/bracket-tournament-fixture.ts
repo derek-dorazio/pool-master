@@ -86,6 +86,7 @@ export function tournamentGames({
         matchNumber,
         roundNumber,
         slot: TOURNAMENT_ROUND_SLOTS[roundNumber - 1] ?? TOURNAMENT_ROUND_SLOTS[0],
+        isFinal: roundNumber === TOURNAMENT_ROUND_SLOTS.length,
         kickoff: '2026-03-20T16:00:00.000Z',
         status: played ? 'COMPLETED' : 'SCHEDULED',
         isNeutralSite: true,

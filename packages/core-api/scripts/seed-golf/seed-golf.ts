@@ -740,7 +740,8 @@ class Loader {
       }
       // A test event is made on a test slot of one of the league's slot definitions (#2004): an
       // event the league has no slot for could never be synced, so it is not loaded either.
-      if (event.slotKey === undefined) {
+      const slotKeys = event.roundSlotKeys ?? (event.slotKey === undefined ? [] : [event.slotKey]);
+      if (slotKeys.length === 0) {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'names no slot definition, and the league plays only its own slots' });
         return;
       }
@@ -756,15 +757,20 @@ class Loader {
       }
       if (loadsBracket) this.report({ ...at, subject: LoadSubject.BRACKET, action: LoadAction.ADD, detail: `${matches.length} matches` });
       if (!this.apply) return;
-      const seasonSlotId = await this.testSlotFor(client, input.sportLeagueId, event, event.slotKey);
-      if (seasonSlotId === null) {
-        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `the league has no slot definition ${event.slotKey}` });
-        return;
+      // One test slot per key: a bracket over several slots plays a round in each (#2006).
+      const seasonSlotIds: string[] = [];
+      for (const slotKey of slotKeys) {
+        const seasonSlotId = await this.testSlotFor(client, input.sportLeagueId, event, slotKey);
+        if (seasonSlotId === null) {
+          this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `the league has no slot definition ${slotKey}` });
+          return;
+        }
+        seasonSlotIds.push(seasonSlotId);
       }
       const created = await must(createEvent({
         client,
         body: {
-          seasonSlotId,
+          seasonSlotIds,
           name: event.name,
           ...(event.venue ? { venue: event.venue } : {}),
           ...(event.location ? { location: event.location } : {}),
