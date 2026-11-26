@@ -66,7 +66,7 @@
   "FEED_LABELS": 3,
   "IngestionFeedType": 20,
   "overdueLateness": 3,
-  "RELEASE_CHECK_LABELS": 7,
+  "RELEASE_CHECK_LABELS": 0,
   "PROGRESS_UNITS": 2,
   "squaresFromRound": 30,
   "CupWeight": 84,
