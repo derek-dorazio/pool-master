@@ -384,19 +384,21 @@ above are flagged until they go. Exact columns are `schema.prisma` once each sli
 Definitions (timeless, per league, set by migration)
 SportLeague
  ├─→ SportLeagueConference ─→ SportLeagueConferenceDivision
- ├─→ SportLeaguePhase          (PRESEASON | REGULAR | POSTSEASON; synced or not)
- │     └─→ SportLeaguePhaseSlot (a key, a kind, an optional proper name: WEEK 14, FINAL, a tournament;
- │           │                   its match format, whether a game can end tied, and its period unit and count)
- │           └─→ SportLeaguePhaseSlotProviderMapping (how one provider's games match it; inclusion only)
+ ├─→ SportLeaguePhase          (PRESEASON | REGULAR | POSTSEASON_CONFERENCE | POSTSEASON; synced or not)
+ │     └─→ SportLeagueCompetition (a code typed into migrations: REGULAR, CFP, BOWLS; its order in the phase)
+ │           └─→ SportLeagueCompetitionSlot (a key, a kind, an optional proper name: WEEK 14, FINAL, a tournament;
+ │                 │                 its match format, whether a game can end tied, and its period unit and count)
+ │                 └─→ SportLeagueCompetitionSlotProviderMapping (how one provider's games match it; inclusion only)
  └─→ SportLeaguePosition       (QB, RB...; field eligibility)
 
 Calendar (one real Season)
-SportLeagueSeason ─→ SportLeagueSeasonPhase ─→ SportLeagueSeasonPhaseSlot (dates, status, series format)
+SportLeagueSeason ─→ SportLeagueSeasonPhase (status)
+ │                  └─ SportLeagueSeasonCompetition (status, champion) ─→ SportLeagueSeasonCompetitionSlot (dates, status, series format)
  ├─→ SportLeagueSeasonParticipantTeam (roster row: one per Season and player; team, position, rating)
  └─→ SportLeagueSeasonTeamConference  (one per Season and team: its conference, and division if any)
 
 Events (what the feed reports)
-SportEvent (in one Season) ─→ SportEventSlot ─→ SportLeagueSeasonPhaseSlot   (a slot has at most one event)
+SportEvent (in one Season) ─→ SportEventSlot ─→ SportLeagueSeasonCompetitionSlot   (a slot has at most one event)
  ├─→ SportEventParticipant     (the field: its competitors, teams or players; in a team league
  │                               offering Clutch Cards, also the teams' eligible players)
  └─→ SportEventRound           (a scoring unit on one of its event's slots; HEAD_TO_HEAD | FIELD)
@@ -409,7 +411,7 @@ SportEvent (in one Season) ─→ SportEventSlot ─→ SportLeagueSeasonPhaseSl
 SportEventParticipantStanding  (the event result per field row; FIELD events only)
 
 Contests
-Contest ─→ ContestSeasonSlot ─→ SportLeagueSeasonPhaseSlot   (the only record of what it covers)
+Contest ─→ ContestSeasonSlot ─→ SportLeagueSeasonCompetitionSlot   (the only record of what it covers)
 ```
 
 Platform settings a league picks are `Platform…Profile` tables (tiers, pricing, rating,
@@ -420,8 +422,9 @@ scoring). Every provider id lives in a `…ProviderMapping` table; `Provider` an
 
 | Model | What it is | Not to be confused with |
 |---|---|---|
-| Phase | One part of a league's year: preseason, regular season or postseason. A phase that is not synced gets no slots or events | A Round, which is a scoring unit inside an event |
-| Slot | One position in a phase, found by its key: a week, a playoff round, a recurring tournament. The definition is timeless; the Season slot is the real one with dates and a status | `ContestEntryPick.lineupSlot`, a pick's place in a lineup |
+| Phase | One part of a league's year: preseason, regular season, conference postseason (the conference tournaments and title games) or postseason. A phase that is not synced gets no slots or events | A Round, which is a scoring unit inside an event |
+| Competition | One competition inside a phase, found by its code, ordered within the phase: the regular season, the CFP, the bowls, one conference's tournament. Most phases hold one, coded as the phase. No contest crosses competitions, so a template covering several slots per contest (ALL_LISTED, FROM_SLOT) lists slots of one competition; the Season competition carries its status and, once completed, its champion | A Cup, which counts contests across a Season |
+| Slot | One position in a competition, found by its key: a week, a playoff round, a recurring tournament. The definition is timeless; the Season slot is the real one with dates and a status | `ContestEntryPick.lineupSlot`, a pick's place in a lineup |
 | Season | One real season of a league, with its own date span. The current Season follows one global rule from the dates | A calendar year |
 | Event | A real-world event in one Season, covering one or more of its slots (a week of games, a tournament, a whole postseason) | A Slot: an event can span several |
 | Round | A scoring unit of an event, on one of its slots, played head to head or as a field | A slot (a tournament's four rounds are all on one slot) |

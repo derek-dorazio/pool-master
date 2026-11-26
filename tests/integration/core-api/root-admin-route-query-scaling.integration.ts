@@ -335,7 +335,7 @@ async function seedSlotNameChoices(slots: number) {
   const [seasonId] = await syncSeasonsTo(prisma, sportLeague.id, sportLeagueProviderMappingId, [2027]);
   for (let index = 0; index < slots; index += 1) {
     const slotDefinitionId = await nameSlotDefinitionFor(prisma, { sportLeagueId: sportLeague.id, sportLeagueProviderMappingId, pattern: `open ${String(index)}`, seasonIds: [seasonId], covered: false });
-    await prisma.sportLeaguePhaseSlotProviderMapping.create({ data: { sportLeagueId: sportLeague.id, sportLeaguePhaseSlotId: slotDefinitionId, sportLeagueProviderMappingId, matchType: 'NAME_PATTERN', providerValue: `the open ${String(index)}` } });
+    await prisma.sportLeagueCompetitionSlotProviderMapping.create({ data: { sportLeagueId: sportLeague.id, sportLeagueCompetitionSlotId: slotDefinitionId, sportLeagueProviderMappingId, matchType: 'NAME_PATTERN', providerValue: `the open ${String(index)}` } });
   }
   const providerRow = await prisma.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
   const finding = await prisma.providerSyncFinding.create({
@@ -487,7 +487,7 @@ async function seedLeaguePositions(positions: number) {
 }
 
 /**
- * A basketball league of its own with a regular phase of `slots` weeks, each matched to its
+ * A basketball league of its own with a regular phase's one competition of `slots` weeks, each matched to its
  * provider by calendar week (#2002).
  */
 async function seedLeagueStructure(slots: number) {
@@ -496,10 +496,11 @@ async function seedLeagueStructure(slots: number) {
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `League Page Structure ${randomUUID().slice(0, 8)}` } });
   const mappingId = await syncLeagueTo(prisma, sportLeague.id, 'nba');
   const phase = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: sportLeague.id, phase: 'REGULAR', isSynced: true } });
+  const competition = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: sportLeague.id, sportLeaguePhaseId: phase.id, code: 'REGULAR', orderIndex: 1 } });
   for (let week = 1; week <= slots; week += 1) {
-    await prisma.sportLeaguePhaseSlot.create({
+    await prisma.sportLeagueCompetitionSlot.create({
       data: {
-        sportLeagueId: sportLeague.id, sportLeaguePhaseId: phase.id, key: `WEEK_${String(week)}`, slotKind: 'WEEK', weekNumber: week,
+        sportLeagueId: sportLeague.id, sportLeagueCompetitionId: competition.id, key: `WEEK_${String(week)}`, slotKind: 'WEEK', weekNumber: week,
         awardsTrophy: false, squaresEligible: true, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
         matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4,
         providerMappings: { create: { sportLeagueProviderMappingId: mappingId, matchType: 'CALENDAR_WEEK' } },
@@ -635,7 +636,8 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       seed: seedLeagueStructure,
       call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/structure`, rootAdmin),
       rowsShown: (response) => okBody(response, SportLeagueStructureResponseSchema).phases
-        .flatMap((phase) => phase.slots)
+        .flatMap((phase) => phase.competitions)
+        .flatMap((competition) => competition.slots)
         .filter((slot) => slot.providerMappings.length === 1).length,
     });
   });

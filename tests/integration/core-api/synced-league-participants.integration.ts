@@ -158,7 +158,7 @@ describe('Removing a test slot (#2075)', () => {
     const response = await getApp().inject({ method: 'DELETE', url: `/api/v1/sport-leagues/${sportLeagueId}/test-slots/${removed.slotId}`, headers: withoutJsonBodyHeaders(headers) });
 
     expect(response.statusCode).toBe(204);
-    await expect(getPrisma().sportLeagueSeasonPhaseSlot.count({ where: { id: removed.slotId } })).resolves.toBe(0);
+    await expect(getPrisma().sportLeagueSeasonCompetitionSlot.count({ where: { id: removed.slotId } })).resolves.toBe(0);
     await expect(getPrisma().sportEvent.count({ where: { id: removed.eventId } })).resolves.toBe(0);
     await expect(getPrisma().participant.findMany({ where: { sportLeagueId }, select: { id: true }, orderBy: { id: 'asc' } }))
       .resolves.toEqual([shared, bystander].sort().map((id) => ({ id })));
@@ -170,7 +170,7 @@ describe('Removing a test slot (#2075)', () => {
     const sportLeagueId = await golfLeague();
     const otherLeagueId = await golfLeague();
     const slotId = await testSlotId(getPrisma(), sportLeagueId, new Date('2084-08-01T12:00:00.000Z'));
-    await getPrisma().sportLeagueSeasonPhaseSlot.update({ where: { id: slotId }, data: { isTestData: false, label: null } });
+    await getPrisma().sportLeagueSeasonCompetitionSlot.update({ where: { id: slotId }, data: { isTestData: false, label: null } });
     const otherSlotId = await testSlotId(getPrisma(), otherLeagueId, new Date('2084-08-01T12:00:00.000Z'));
 
     const synced = await getApp().inject({ method: 'DELETE', url: `/api/v1/sport-leagues/${sportLeagueId}/test-slots/${slotId}`, headers: withoutJsonBodyHeaders(headers) });
@@ -179,6 +179,6 @@ describe('Removing a test slot (#2075)', () => {
     expect(synced.statusCode).toBe(422);
     expect(synced.json()).toMatchObject({ error: { code: 'SEASON_SLOT_NOT_TEST' } });
     expect(elsewhere.statusCode).toBe(404);
-    await expect(getPrisma().sportLeagueSeasonPhaseSlot.count({ where: { id: { in: [slotId, otherSlotId] } } })).resolves.toBe(2);
+    await expect(getPrisma().sportLeagueSeasonCompetitionSlot.count({ where: { id: { in: [slotId, otherSlotId] } } })).resolves.toBe(2);
   });
 });

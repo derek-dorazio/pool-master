@@ -13,6 +13,7 @@ import { registerSchema } from './schema-registry';
 import {
   AutoReleaseCheckOutcome,
   LeaguePhase,
+  SeasonCompetitionStatus,
   MatchFormat,
   PeriodUnit,
   SeasonSlotStatus,
@@ -388,17 +389,24 @@ export const SportLeagueSlotDefinitionDtoSchema = z.object({
 }).describe('One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it.');
 export type SportLeagueSlotDefinitionDto = z.infer<typeof SportLeagueSlotDefinitionDtoSchema>;
 
+const SportLeagueCompetitionDefinitionDtoSchema = z.object({
+  id: z.uuid(),
+  code: z.string().describe('A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it.'),
+  orderIndex: z.number().int().min(1).describe('Its place among its phase\'s competitions, from 1.'),
+  slots: z.array(SportLeagueSlotDefinitionDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.'),
+}).describe('One competition of a phase (#2153): what the phase\'s slots are played as. No contest crosses competitions.');
+
 export const SportLeaguePhaseDefinitionDtoSchema = z.object({
   id: z.uuid(),
   phase: z.enum(LeaguePhase),
   isSynced: z.boolean().describe('Whether the league\'s sync reads the phase. An unsynced phase has no slots.'),
-  slots: z.array(SportLeagueSlotDefinitionDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.'),
+  competitions: z.array(SportLeagueCompetitionDefinitionDtoSchema).describe('By their order in the phase.'),
 }).describe('One phase definition of a sport league.');
 export type SportLeaguePhaseDefinitionDto = z.infer<typeof SportLeaguePhaseDefinitionDtoSchema>;
 
 export const SportLeagueStructureResponseSchema = z.object({
-  phases: z.array(SportLeaguePhaseDefinitionDtoSchema).describe('In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.'),
-}).describe('A sport league\'s phase and slot definitions, set by migration.');
+  phases: z.array(SportLeaguePhaseDefinitionDtoSchema).describe('In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON.'),
+}).describe('A sport league\'s phase, competition and slot definitions, set by migration.');
 export type SportLeagueStructureResponse = z.infer<typeof SportLeagueStructureResponseSchema>;
 
 // --- A sport league's Seasons (#2003) --------------------------------------------
@@ -450,20 +458,31 @@ const SportLeagueSeasonSlotResponseSchema = z.object({
 }).describe('One Season slot.');
 export type SportLeagueSeasonSlotResponse = z.infer<typeof SportLeagueSeasonSlotResponseSchema>;
 
-const SportLeagueSeasonPhaseSlotDtoSchema = SportLeagueSeasonSlotDtoSchema.extend({
+const SportLeagueSeasonCompetitionSlotDtoSchema = SportLeagueSeasonSlotDtoSchema.extend({
   sportEventId: z.uuid().nullable().describe('The event covering it; null while it is free, as a test slot is before its test event is made on it.'),
   takesTestEvent: z.boolean().describe('Whether a test event can be made on it now (createEvent): a free test slot of its league\'s current Season.'),
   placedByWindow: z.boolean().describe('Whether the league\'s selected provider places its games by date window (DATE_WINDOW).'),
   needsDates: z.boolean().describe('Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).'),
 }).describe('One slot of one Season, as its Season lists it.');
-export type SportLeagueSeasonPhaseSlotDto = z.infer<typeof SportLeagueSeasonPhaseSlotDtoSchema>;
+export type SportLeagueSeasonCompetitionSlotDto = z.infer<typeof SportLeagueSeasonCompetitionSlotDtoSchema>;
+
+const SportLeagueSeasonCompetitionDtoSchema = z.object({
+  id: z.uuid(),
+  sportLeagueCompetitionId: z.uuid().describe('The competition definition it plays (SportLeagueCompetitionDefinitionDto).'),
+  code: z.string().describe('Its definition\'s code, such as REGULAR or CFP.'),
+  orderIndex: z.number().int().min(1).describe('Its definition\'s place in its phase.'),
+  status: z.enum(SeasonCompetitionStatus).describe('How far it has got this Season.'),
+  championParticipantId: z.uuid().nullable().describe('Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.'),
+  slots: z.array(SportLeagueSeasonCompetitionSlotDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition\'s synced slot.'),
+  slotsNeedingDates: z.number().int().min(0).describe('How many of its slots need dates (needsDates).'),
+}).describe('One competition of one Season (#2153).');
 
 export const SportLeagueSeasonPhaseDtoSchema = z.object({
   id: z.uuid(),
   phase: z.enum(LeaguePhase),
   isSynced: z.boolean().describe('Whether the league\'s sync reads the phase. An unsynced phase has no slots.'),
-  slots: z.array(SportLeagueSeasonPhaseSlotDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition\'s synced slot.'),
-  slotsNeedingDates: z.number().int().min(0).describe('How many of its slots need dates (needsDates).'),
+  status: z.enum(SeasonCompetitionStatus).describe('How far the phase has got this Season.'),
+  competitions: z.array(SportLeagueSeasonCompetitionDtoSchema).describe('By their order in the phase.'),
 }).describe('One phase of one Season.');
 export type SportLeagueSeasonPhaseDto = z.infer<typeof SportLeagueSeasonPhaseDtoSchema>;
 
@@ -475,8 +494,8 @@ export const SportLeagueSeasonDtoSchema = z.object({
   endsAt: DateTimeSchema.describe('Its span\'s last moment.'),
   isCurrent: z.boolean().describe('Whether it is the sport league\'s current Season (SportLeagueDto.currentSeasonId).'),
   providerMappings: z.array(SportLeagueSeasonProviderMappingDtoSchema).describe('Each provider\'s id for it, by provider name.'),
-  phases: z.array(SportLeagueSeasonPhaseDtoSchema).describe('In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.'),
-  slotsNeedingDates: z.number().int().min(0).describe('How many of its slots need dates (needsDates), across its phases.'),
+  phases: z.array(SportLeagueSeasonPhaseDtoSchema).describe('In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON.'),
+  slotsNeedingDates: z.number().int().min(0).describe('How many of its slots need dates (needsDates), across its competitions.'),
 }).describe('One Season of a sport league, added by migration.');
 export type SportLeagueSeasonDto = z.infer<typeof SportLeagueSeasonDtoSchema>;
 
@@ -540,14 +559,16 @@ registerSchema('SportLeaguePositionDto', SportLeaguePositionDtoSchema);
 registerSchema('SportLeaguePositionListResponse', SportLeaguePositionListResponseSchema);
 registerSchema('SlotProviderMappingDto', SlotProviderMappingDtoSchema);
 registerSchema('SportLeagueSlotDefinitionDto', SportLeagueSlotDefinitionDtoSchema);
+registerSchema('SportLeagueCompetitionDefinitionDto', SportLeagueCompetitionDefinitionDtoSchema);
 registerSchema('SportLeaguePhaseDefinitionDto', SportLeaguePhaseDefinitionDtoSchema);
 registerSchema('SportLeagueStructureResponse', SportLeagueStructureResponseSchema);
 registerSchema('SportLeagueSeasonProviderMappingDto', SportLeagueSeasonProviderMappingDtoSchema);
 registerSchema('SlotWindowDto', SlotWindowDtoSchema);
 registerSchema('SportLeagueSeasonSlotDto', SportLeagueSeasonSlotDtoSchema);
-registerSchema('SportLeagueSeasonPhaseSlotDto', SportLeagueSeasonPhaseSlotDtoSchema);
+registerSchema('SportLeagueSeasonCompetitionSlotDto', SportLeagueSeasonCompetitionSlotDtoSchema);
 registerSchema('CreateTestSlotRequest', CreateTestSlotRequestSchema);
 registerSchema('SportLeagueSeasonSlotResponse', SportLeagueSeasonSlotResponseSchema);
+registerSchema('SportLeagueSeasonCompetitionDto', SportLeagueSeasonCompetitionDtoSchema);
 registerSchema('SportLeagueSeasonPhaseDto', SportLeagueSeasonPhaseDtoSchema);
 registerSchema('SportLeagueSeasonDto', SportLeagueSeasonDtoSchema);
 registerSchema('SportLeagueSeasonListResponse', SportLeagueSeasonListResponseSchema);

@@ -58,7 +58,7 @@ const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT
 const UNPLACED_NAME_KIND: Record<ProviderSeasonImport['unplacedNames'][number]['reason'], ProviderSyncFindingKind> = {
   UNMATCHED: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED,
   AMBIGUOUS: ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS,
-  SEASON_PHASE_MISSING: ProviderSyncFindingKind.SLOT_SEASON_PHASE_MISSING,
+  SEASON_COMPETITION_MISSING: ProviderSyncFindingKind.SLOT_SEASON_COMPETITION_MISSING,
 };
 
 export interface LeagueEventsSyncOptions {
@@ -267,7 +267,7 @@ export class LeagueEventsSync {
    * One Season: its slate is imported and its linked events kept current, and each code of the
    * slate no slot mapping includes raises one INFO SLOT_VALUE_UNMAPPED finding per league, Provider
    * and code (#2005); a tournament its name places nowhere raises SLOT_NAME_UNMATCHED (INFO),
-   * SLOT_NAME_AMBIGUOUS or SLOT_SEASON_PHASE_MISSING (ERROR) per league, Provider and normalized name (#2011).
+   * SLOT_NAME_AMBIGUOUS or SLOT_SEASON_COMPETITION_MISSING (ERROR) per league, Provider and normalized name (#2011).
    * Games with no code that no slot's window holds, inside the Season's span, raise one INFO
    * GAMES_UNPLACED per league, Provider and Season, placed games dated outside the Season a WARNING, and date-window slots still needing
    * dates a WARNING per Season (#2012). The findings' subjects dedupe them across syncs, and a

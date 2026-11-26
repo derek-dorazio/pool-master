@@ -10,6 +10,7 @@ export function LeagueSlotDialog({ onClose, slot }: { onClose: () => void; slot:
   const testId = 'root-admin-league-structure-slot';
   const facts: Fact[] = [
     { id: 'phase', label: 'Phase', value: enumLabel('LeaguePhase', slot.phase) },
+    { id: 'competition', label: 'Competition', value: slot.competitionCode },
     { id: 'kind', label: 'Kind', value: enumLabel('SlotKind', slot.slotKind) },
     { id: 'key', label: 'Key', value: slot.key },
     { id: 'format', label: 'Format', value: enumLabel('MatchFormat', slot.matchFormat) },

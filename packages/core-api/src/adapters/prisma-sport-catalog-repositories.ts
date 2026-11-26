@@ -76,6 +76,7 @@ import { toRaceResult } from './prisma-race-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 import { SPORT_EVENT_SPORT_SELECT, SPORT_LEAGUE_SPORT_SELECT, sportEventSportWhere, sportOfEvent, sportUrlSegmentOfEvent } from './sport-of';
 import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
+import { SLOT_PLACE_SELECT, slotPlaceOf } from './slot-place-select';
 
 /** The statuses the lifecycle scheduler moves an event on from. */
 const AUTO_LIFECYCLE_STATUSES: readonly AutoLifecycleStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED];
@@ -228,9 +229,11 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         participantCount: await tx.participant.count({ where: { sportLeagueId: id } }),
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
-      // A Season's phases restrict their phase definition's delete, and its slots their slot
-      // definition's, so the league's cascade cannot take them: they go first, slots before phases.
-      await tx.sportLeagueSeasonPhaseSlot.deleteMany({ where: { sportLeagueId: id } });
+      // A Season's phases restrict their phase definition's delete, its competitions their
+      // competition's and its slots their slot definition's, so the league's cascade cannot take
+      // them: they go first, slots before competitions before phases.
+      await tx.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { sportLeagueId: id } });
+      await tx.sportLeagueSeasonCompetition.deleteMany({ where: { sportLeagueId: id } });
       await tx.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: id } });
       // A muted list is checked when set, not a foreign key, and a league saves its whole list
       // back: an id left in it would make that save fail. Prisma cannot remove an array element.
@@ -342,7 +345,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         }),
         ...(filters.sportLeagueSeasonId !== undefined && { sportLeagueSeasonId: filters.sportLeagueSeasonId }),
         ...(filters.slotDefinitionIds !== undefined && {
-          slots: { some: { seasonSlot: { sportLeaguePhaseSlotId: { in: [...filters.slotDefinitionIds] } } } },
+          slots: { some: { seasonSlot: { sportLeagueCompetitionSlotId: { in: [...filters.slotDefinitionIds] } } } },
         }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
         ...(filters.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
@@ -379,10 +382,10 @@ export class PrismaSportEventRepository implements SportEventRepository {
         })),
       });
       if (mappings.length > 0) await tx.sportEventProviderMapping.createMany({ data: mappings });
-      const slots = inputs.flatMap((input, index) => (input.seasonSlotIds ?? []).map((sportLeagueSeasonPhaseSlotId) => ({
+      const slots = inputs.flatMap((input, index) => (input.seasonSlotIds ?? []).map((sportLeagueSeasonCompetitionSlotId) => ({
         sportEventId: ids[index],
         sportLeagueSeasonId: input.sportLeagueSeasonId,
-        sportLeagueSeasonPhaseSlotId,
+        sportLeagueSeasonCompetitionSlotId,
       })));
       if (slots.length > 0) await tx.sportEventSlot.createMany({ data: slots });
     });
@@ -481,7 +484,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     })).map((row) => row.participantId);
     const results = await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       ...(sportEventId === null ? [] : this.eventDeletes(sportEventId)),
-      this.prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { id: seasonSlotId, isTestData: true } }),
+      this.prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { id: seasonSlotId, isTestData: true } }),
       // After the field rows went in the same transaction, so "no field" counts this event's as gone.
       this.prisma.participant.deleteMany({ where: { id: { in: fieldIds }, isTestData: true, sportEventParticipants: { none: {} } } }),
     ]));
@@ -570,7 +573,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     if (sportEventIds.length === 1) {
       const [onlyId] = sportEventIds;
       // One event's slots need no link back to it: two reads, the slots and their definitions.
-      const slots = await this.prisma.sportLeagueSeasonPhaseSlot.findMany({
+      const slots = await this.prisma.sportLeagueSeasonCompetitionSlot.findMany({
         where: { eventSlot: { sportEventId: onlyId } },
         select: SEASON_SLOT_SELECT,
       });
@@ -1326,7 +1329,7 @@ const SPORT_EVENT_INCLUDE = {
     orderBy: { provider: { name: 'asc' } },
   },
   // The slot definitions it covers (#2010): where contest templates are offered on it.
-  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, phase: { select: { phase: true } } } } } } } },
+  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, ...SLOT_PLACE_SELECT } } } } } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1347,7 +1350,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     roundsPar: row.roundsPar ?? undefined,
     participantCount: row.participantCount ?? undefined,
     slotDefinitions: row.slots
-      .map(({ seasonSlot: { definition } }) => ({ ...definition, phase: definition.phase.phase }))
+      .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)
       .map((definition) => ({ id: definition.id, slotKind: definition.slotKind })),
     sportLeagueSeasonId: row.sportLeagueSeasonId,

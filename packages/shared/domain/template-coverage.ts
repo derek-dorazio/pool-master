@@ -1,17 +1,21 @@
 /**
  * Contest template coverage (#2010, plan §7 and §9c): a template lists the slot definitions it
  * covers and a coverage mode, and a contest covers the template's definitions ∩ the chosen
- * event's or Season's slots, as the mode allows (resolved when a contest copies its slots, #2014). Every rule here reads slot facts (phase kind,
- * slot kind, match format), never a name.
+ * event's or Season's slots, as the mode allows (resolved when a contest copies its slots, #2014).
+ * Every rule here reads slot facts (competition, phase kind, slot kind, match format), never a name.
  */
-import { LeaguePhaseOrder, MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
+import { MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
 import type { ContestTemplateSlot } from './contest-management-types';
-import { compareByEnumOrder } from './enum-order';
-import { compareSlotDefinitions } from './sport-league-structure';
+import { compareSlotDefinitions, compareSlotPlaces } from './sport-league-structure';
 
-/** Why a template's listed slots are refused (#2010). */
+/** Why a template's listed slots are refused (#2010, #2153). */
 export const TemplateCoverageProblem = {
-  /** ALL_LISTED covers one event: its definitions must all be one event's (one phase, and one TOURNAMENT slot at most). */
+  /**
+   * No contest crosses competitions (#2153): ALL_LISTED and FROM_SLOT list slots of one competition.
+   * ONE_SLOT is exempt, as each of its contests covers a single slot.
+   */
+  SPANS_COMPETITIONS: 'SPANS_COMPETITIONS',
+  /** ALL_LISTED covers one event: a TOURNAMENT slot (an event of its own) is listed alone. */
   ALL_LISTED_SPANS_EVENTS: 'ALL_LISTED_SPANS_EVENTS',
   /** A bracket lists a slot where a side need not advance: a field, or a week of a season's games. */
   BRACKET_OUTSIDE_KNOCKOUT: 'BRACKET_OUTSIDE_KNOCKOUT',
@@ -28,18 +32,20 @@ function isBracketSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat
 }
 
 /**
- * The first problem with a template's listed slots, or null when they are fine. ALL_LISTED covers
- * one event's slots, so every definition is in one phase and a TOURNAMENT slot (an event of its
- * own) is listed alone; a bracket lists only slots where one side always advances.
+ * The first problem with a template's listed slots, or null when they are fine. ALL_LISTED and
+ * FROM_SLOT list slots of one competition (a ONE_SLOT contest covers one slot, so never crosses); ALL_LISTED covers one event's slots, so a TOURNAMENT slot (an event of
+ * its own) is listed alone; a bracket lists only slots where one side always advances.
  */
 export function templateCoverageProblem(
   template: { coverageMode: TemplateCoverageMode; selectionType: SelectionType },
-  slots: readonly Pick<ContestTemplateSlot, 'sportLeaguePhaseId' | 'phase' | 'slotKind' | 'matchFormat'>[],
+  slots: readonly Pick<ContestTemplateSlot, 'sportLeagueCompetitionId' | 'slotKind' | 'matchFormat'>[],
 ): TemplateCoverageProblem | null {
+  if (template.coverageMode !== TemplateCoverageMode.ONE_SLOT && new Set(slots.map((slot) => slot.sportLeagueCompetitionId)).size > 1) {
+    return TemplateCoverageProblem.SPANS_COMPETITIONS;
+  }
   if (template.coverageMode === TemplateCoverageMode.ALL_LISTED) {
-    const phases = new Set(slots.map((slot) => slot.sportLeaguePhaseId));
     const tournaments = slots.filter((slot) => slot.slotKind === SlotKind.TOURNAMENT).length;
-    if (phases.size > 1 || (tournaments > 0 && slots.length > 1)) {
+    if (tournaments > 0 && slots.length > 1) {
       return TemplateCoverageProblem.ALL_LISTED_SPANS_EVENTS;
     }
   }
@@ -54,12 +60,12 @@ export function isWeekEvent(event: { slotDefinitions: readonly { slotKind: SlotK
   return event.slotDefinitions.length > 0 && event.slotDefinitions.every((definition) => definition.slotKind === SlotKind.WEEK);
 }
 
-const byPhase = compareByEnumOrder(LeaguePhaseOrder);
+type CoveredSlot = Pick<ContestTemplateSlot, 'phase' | 'competitionOrderIndex' | 'slotKind' | 'weekNumber' | 'key'>;
 
-/** Slot definitions in play order (#2010): phases as a Season plays them, then within each phase. */
-export function compareCoveredSlots(
-  left: Pick<ContestTemplateSlot, 'phase' | 'slotKind' | 'weekNumber' | 'key'>,
-  right: Pick<ContestTemplateSlot, 'phase' | 'slotKind' | 'weekNumber' | 'key'>,
-): number {
-  return byPhase(left.phase, right.phase) || compareSlotDefinitions(left, right);
+/**
+ * Slot definitions in play order (#2010, #2153): phases as a Season plays them, then each phase's
+ * competitions by their order, then within each competition.
+ */
+export function compareCoveredSlots(left: CoveredSlot, right: CoveredSlot): number {
+  return compareSlotPlaces(left, right) || compareSlotDefinitions(left, right);
 }

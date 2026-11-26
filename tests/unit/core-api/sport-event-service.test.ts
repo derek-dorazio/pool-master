@@ -579,7 +579,7 @@ describe('SportEventService.importProviderSeason by tournament name', () => {
 
     const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
 
-    expect(result.unplacedNames).toEqual([{ normalizedName: 'masters tournament', name: 'Masters Tournament 2027', reason: 'SEASON_PHASE_MISSING' }]);
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'masters tournament', name: 'Masters Tournament 2027', reason: 'SEASON_COMPETITION_MISSING' }]);
     expect(result.created).toEqual([]);
     expect(result.unmatched).toEqual([]);
     expect(store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters')).toEqual([]);

@@ -500,9 +500,9 @@ describe('SportLeagueService — adding a test slot (#2004)', () => {
     await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SLOT_DEFINITION_NOT_FOUND', statusCode: 404 });
   });
 
-  it('refuses a definition whose phase the current Season lacks with 422 SLOT_PHASE_NOT_IN_SEASON', async () => {
-    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'PHASE_NOT_IN_SEASON' }) } });
-    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SLOT_PHASE_NOT_IN_SEASON', statusCode: 422 });
+  it('refuses a definition whose phase the current Season lacks with 422 SLOT_COMPETITION_NOT_IN_SEASON', async () => {
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'COMPETITION_NOT_IN_SEASON' }) } });
+    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SLOT_COMPETITION_NOT_IN_SEASON', statusCode: 422 });
   });
 });
 

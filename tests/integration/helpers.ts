@@ -1040,14 +1040,15 @@ export async function cleanupTestData(): Promise<void> {
   // Thoroughbred has no template of its own, only horse racing's every-race ones (#1716).
   // Sport rows are migration reference data too and always stay: without them a functional suite
   // run after this lane on the same database finds no sport to load into.
-  // A test's league goes with its Seasons, whose slots and phases hold RESTRICT foreign keys to
-  // the league's slot and phase definitions, so they clear first (#2010: tests put events in
+  // A test's league goes with its Seasons, whose slots, competitions and phases hold RESTRICT
+  // foreign keys to the league's slot, competition and phase definitions, so they clear first (#2010: tests put events in
   // Season slots). A test's Season slot in a seeded league goes too.
   // A test's synced-slot template (`syncSlotsFor`) is no reference data: it goes, so its league does.
   await prisma.contestConfigTemplate.deleteMany({ where: { templateKey: COVERING_TEMPLATE_KEY } });
   const testLeagues = { contestConfigTemplates: { none: {} }, displayOrder: null };
   const testLeagueIds = (await prisma.sportLeague.findMany({ where: testLeagues, select: { id: true } })).map(({ id }) => id);
-  await prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }] } });
+  await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }] } });
+  await prisma.sportLeagueSeasonCompetition.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
   await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
   await prisma.sportLeague.deleteMany({ where: { id: { in: testLeagueIds } } });
 

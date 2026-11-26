@@ -115,6 +115,8 @@ export const ProviderWebhookEventSetOrder = explicitOrder<ProviderWebhookEventSe
 export const LeaguePhase = {
   PRESEASON: 'PRESEASON',
   REGULAR: 'REGULAR',
+  /** The conference tournaments and title games before the league's own postseason (#2153). */
+  POSTSEASON_CONFERENCE: 'POSTSEASON_CONFERENCE',
   POSTSEASON: 'POSTSEASON',
 } as const;
 export type LeaguePhase = (typeof LeaguePhase)[keyof typeof LeaguePhase];
@@ -122,7 +124,25 @@ export type LeaguePhase = (typeof LeaguePhase)[keyof typeof LeaguePhase];
 export const LeaguePhaseOrder = explicitOrder<LeaguePhase>({
   [LeaguePhase.PRESEASON]: 0,
   [LeaguePhase.REGULAR]: 1,
-  [LeaguePhase.POSTSEASON]: 2,
+  [LeaguePhase.POSTSEASON_CONFERENCE]: 2,
+  [LeaguePhase.POSTSEASON]: 3,
+});
+
+/**
+ * How far a Season's competition or phase has got (#2153): its games not begun, under way, or all
+ * final. Slice 14 (#2013) moves it from the Season slots' statuses.
+ */
+export const SeasonCompetitionStatus = {
+  SCHEDULED: 'SCHEDULED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+} as const;
+export type SeasonCompetitionStatus = (typeof SeasonCompetitionStatus)[keyof typeof SeasonCompetitionStatus];
+/** The order a competition moves through. */
+export const SeasonCompetitionStatusOrder = explicitOrder<SeasonCompetitionStatus>({
+  [SeasonCompetitionStatus.SCHEDULED]: 0,
+  [SeasonCompetitionStatus.IN_PROGRESS]: 1,
+  [SeasonCompetitionStatus.COMPLETED]: 2,
 });
 
 /**
@@ -954,12 +974,12 @@ export const ProviderSyncFindingKind = {
    */
   SLOT_NAME_AMBIGUOUS: 'SLOT_NAME_AMBIGUOUS',
   /**
-   * A tournament's normalized name matched one slot definition, but the Season has no phase for
-   * that definition's phase, so no Season slot could be made and the tournament is not synced
-   * (#2011). ERROR, since a tournament the league plays is missing until the Season's phase is
-   * added. Subject: league, Provider and the normalized name, with the feed's name.
+   * A tournament's normalized name matched one slot definition, but the Season has no competition
+   * for that definition's competition, so no Season slot could be made and the tournament is not
+   * synced (#2011, #2153). ERROR, since a tournament the league plays is missing until the Season's
+   * competition is added. Subject: league, Provider and the normalized name, with the feed's name.
    */
-  SLOT_SEASON_PHASE_MISSING: 'SLOT_SEASON_PHASE_MISSING',
+  SLOT_SEASON_COMPETITION_MISSING: 'SLOT_SEASON_COMPETITION_MISSING',
   /**
    * The events sync placed games in a Season slot dated outside the Season's span (#2012): before
    * it starts or after it ends. The games are still written. WARNING, since the Season row's span

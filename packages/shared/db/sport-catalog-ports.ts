@@ -839,11 +839,11 @@ export interface SportLeagueSeasonRepository {
   /**
    * The tournaments the events sync placed by name (#2011), in one transaction: an existing Season
    * slot linked to its tournament's code, or a new Season slot of the definition, in the Season's
-   * phase for the definition's phase, with the definition's series format and pairing, and linked.
-   * A definition whose phase the Season lacks gets no slot, and is answered in `phaseMissing` so
-   * the sync can say so. A link already taken is skipped.
+   * competition for the definition's competition, with the definition's series format and pairing,
+   * and linked. A definition whose competition the Season lacks gets no slot, and is answered in
+   * `competitionMissing` so the sync can say so. A link already taken is skipped.
    */
-  linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<{ phaseMissing: string[] }>;
+  linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<{ competitionMissing: string[] }>;
   /**
    * What the events sync learned of a Season's slots (#2005), in one transaction: the slots already
    * synced events now play (a slot that has an event already keeps it), and each slot's dates from
@@ -904,7 +904,7 @@ export interface SyncedSlotsRecord {
 export type TestSlotCreateResult =
   | { outcome: 'CREATED'; slot: SportLeagueSeasonSlot }
   | { outcome: 'DEFINITION_NOT_FOUND' }
-  | { outcome: 'PHASE_NOT_IN_SEASON' }
+  | { outcome: 'COMPETITION_NOT_IN_SEASON' }
   | { outcome: 'LABEL_TAKEN' };
 
 /** A Season slot as an event create reads it: where it is, and the event already on it. */

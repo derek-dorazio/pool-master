@@ -151,9 +151,9 @@ export interface ProviderSeasonImport {
   /**
    * Each tournament name no NAME_PATTERN mapping placed (#2011), once per normalized name: matched
    * by none, ambiguous (more than one slot, or a slot another tournament already has), or matched
-   * to a slot whose phase the Season lacks.
+   * to a slot whose competition the Season lacks.
    */
-  unplacedNames: Array<{ normalizedName: string; name: string; reason: 'UNMATCHED' | 'AMBIGUOUS' | 'SEASON_PHASE_MISSING' }>;
+  unplacedNames: Array<{ normalizedName: string; name: string; reason: 'UNMATCHED' | 'AMBIGUOUS' | 'SEASON_COMPETITION_MISSING' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -187,7 +187,7 @@ function uniqueViolationTarget(error: unknown): string | null {
 /** The database refusing a second event on one Season slot (#2004): the slot's unique key. */
 function isSlotConflict(error: unknown): boolean {
   const target = uniqueViolationTarget(error);
-  return target !== null && (target.includes('sport_league_season_phase_slot_id') || target.includes('sportLeagueSeasonPhaseSlotId') || target.includes('sport_event_slots_season_slot_key'));
+  return target !== null && (target.includes('sport_league_season_competition_slot_id') || target.includes('sportLeagueSeasonCompetitionSlotId') || target.includes('sport_event_slots_season_slot_key'));
 }
 
 export interface SportEventServiceDeps {
@@ -445,18 +445,18 @@ export class SportEventService {
         unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: placement.outcome });
       }
     }
-    const { phaseMissing } = await this.deps.seasons.linkNameMatchedSlots({
+    const { competitionMissing } = await this.deps.seasons.linkNameMatchedSlots({
       sportLeagueId: input.sportLeagueId,
       sportLeagueSeasonId: input.sportLeagueSeasonId,
       sportLeagueProviderMappingId: input.sportLeagueProviderMappingId,
       links,
       creates,
     });
-    // A matched slot whose phase the Season lacks got no Season slot: said, never dropped silently.
-    const missing = new Set(phaseMissing);
+    // A matched slot whose competition the Season lacks got no Season slot: said, never dropped silently.
+    const missing = new Set(competitionMissing);
     for (const placement of placements) {
       if (placement.outcome === 'CREATE' && missing.has(placement.slotDefinitionId)) {
-        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: 'SEASON_PHASE_MISSING' });
+        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: 'SEASON_COMPETITION_MISSING' });
       }
     }
     this.deps.logger?.info(

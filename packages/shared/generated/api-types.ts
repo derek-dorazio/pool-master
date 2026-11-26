@@ -2001,7 +2001,7 @@ export interface paths {
         get?: never;
         /**
          * Update a contest configuration template
-         * @description Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT) and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.
+         * @description Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT), all in one competition for ALL_LISTED and FROM_SLOT, since no contest crosses competitions (422 CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS), and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.
          */
         put: operations["updateContestConfigTemplate"];
         post?: never;
@@ -2739,7 +2739,7 @@ export interface paths {
         put?: never;
         /**
          * Add a test slot to the current Season
-         * @description A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
+         * @description A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_COMPETITION_NOT_IN_SEASON when the current Season lacks the competition of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
          */
         post: operations["createTestSlot"];
         delete?: never;
@@ -2816,8 +2816,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get a sport league's phase and slot definitions with their provider mappings
-         * @description The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its slot definitions in play order and each slot's provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.
+         * Get a sport league's phases, competitions and slot definitions with their provider mappings
+         * @description The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its competitions in order (#2153) and each competition's slot definitions in play order with their provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.
          */
         get: operations["getSportLeagueStructure"];
         put?: never;
@@ -2836,8 +2836,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List a sport league's Seasons with their provider ids, phases and slots
-         * @description Every Season of the sport league (#2003), latest first, each with whether it is current, each provider's id for it, and its phases and slots in play order, test slots included. Seasons are added by migration, so there is no write. What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. Any signed-in user may read it.
+         * List a sport league's Seasons with their provider ids, phases, competitions and slots
+         * @description Every Season of the sport league (#2003), latest first, each with whether it is current, each provider's id for it, and its phases with their status, each phase's competitions with their status and champion (#2153), and each competition's slots in play order, test slots included. Seasons are added by migration, so there is no write. What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. Any signed-in user may read it.
          */
         get: operations["listSportLeagueSeasons"];
         put?: never;
@@ -7649,7 +7649,7 @@ export interface components {
         ContestTemplateSlotDto: {
             /**
              * Format: uuid
-             * @description The slot definition's id (SportLeaguePhaseSlot).
+             * @description The slot definition's id (SportLeagueCompetitionSlot).
              */
             id: string;
             /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -7665,14 +7665,18 @@ export interface components {
             weekNumber: number | null;
             /**
              * Format: uuid
-             * @description The phase the slot is in.
+             * @description The competition the slot is in (#2153); a template's slots all sit in one.
              */
-            sportLeaguePhaseId: string;
+            sportLeagueCompetitionId: string;
+            /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+            competitionCode: string;
+            /** @description That competition's place in its phase. */
+            competitionOrderIndex: number;
             /**
-             * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
              * @enum {string}
              */
-            phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+            phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
             /**
              * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
              * @enum {string}
@@ -7700,7 +7704,7 @@ export interface components {
             slots: {
                 /**
                  * Format: uuid
-                 * @description The slot definition's id (SportLeaguePhaseSlot).
+                 * @description The slot definition's id (SportLeagueCompetitionSlot).
                  */
                 id: string;
                 /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -7716,14 +7720,18 @@ export interface components {
                 weekNumber: number | null;
                 /**
                  * Format: uuid
-                 * @description The phase the slot is in.
+                 * @description The competition the slot is in (#2153); a template's slots all sit in one.
                  */
-                sportLeaguePhaseId: string;
+                sportLeagueCompetitionId: string;
+                /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                competitionCode: string;
+                /** @description That competition's place in its phase. */
+                competitionOrderIndex: number;
                 /**
-                 * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                 * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
                  * @enum {string}
                  */
-                phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
                 /**
                  * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                  * @enum {string}
@@ -8250,7 +8258,7 @@ export interface components {
                 slots: {
                     /**
                      * Format: uuid
-                     * @description The slot definition's id (SportLeaguePhaseSlot).
+                     * @description The slot definition's id (SportLeagueCompetitionSlot).
                      */
                     id: string;
                     /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -8266,14 +8274,18 @@ export interface components {
                     weekNumber: number | null;
                     /**
                      * Format: uuid
-                     * @description The phase the slot is in.
+                     * @description The competition the slot is in (#2153); a template's slots all sit in one.
                      */
-                    sportLeaguePhaseId: string;
+                    sportLeagueCompetitionId: string;
+                    /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                    competitionCode: string;
+                    /** @description That competition's place in its phase. */
+                    competitionOrderIndex: number;
                     /**
-                     * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
                      * @enum {string}
                      */
-                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
                     /**
                      * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                      * @enum {string}
@@ -8957,7 +8969,7 @@ export interface components {
                 slots: {
                     /**
                      * Format: uuid
-                     * @description The slot definition's id (SportLeaguePhaseSlot).
+                     * @description The slot definition's id (SportLeagueCompetitionSlot).
                      */
                     id: string;
                     /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -8973,14 +8985,18 @@ export interface components {
                     weekNumber: number | null;
                     /**
                      * Format: uuid
-                     * @description The phase the slot is in.
+                     * @description The competition the slot is in (#2153); a template's slots all sit in one.
                      */
-                    sportLeaguePhaseId: string;
+                    sportLeagueCompetitionId: string;
+                    /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                    competitionCode: string;
+                    /** @description That competition's place in its phase. */
+                    competitionOrderIndex: number;
                     /**
-                     * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
                      * @enum {string}
                      */
-                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
                     /**
                      * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                      * @enum {string}
@@ -11637,14 +11653,14 @@ export interface components {
                 providerValue: string | null;
             }[];
         };
-        /** @description One phase definition of a sport league. */
-        SportLeaguePhaseDefinitionDto: {
+        /** @description One competition of a phase (#2153): what the phase's slots are played as. No contest crosses competitions. */
+        SportLeagueCompetitionDefinitionDto: {
             /** Format: uuid */
             id: string;
-            /** @enum {string} */
-            phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
-            /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
-            isSynced: boolean;
+            /** @description A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it. */
+            code: string;
+            /** @description Its place among its phase's competitions, from 1. */
+            orderIndex: number;
             /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
             slots: {
                 /** Format: uuid */
@@ -11700,16 +11716,22 @@ export interface components {
                 }[];
             }[];
         };
-        /** @description A sport league's phase and slot definitions, set by migration. */
-        SportLeagueStructureResponse: {
-            /** @description In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON. */
-            phases: {
+        /** @description One phase definition of a sport league. */
+        SportLeaguePhaseDefinitionDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+            /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
+            isSynced: boolean;
+            /** @description By their order in the phase. */
+            competitions: {
                 /** Format: uuid */
                 id: string;
-                /** @enum {string} */
-                phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
-                /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
-                isSynced: boolean;
+                /** @description A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it. */
+                code: string;
+                /** @description Its place among its phase's competitions, from 1. */
+                orderIndex: number;
                 /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
                 slots: {
                     /** Format: uuid */
@@ -11762,6 +11784,81 @@ export interface components {
                         matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
                         /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
                         providerValue: string | null;
+                    }[];
+                }[];
+            }[];
+        };
+        /** @description A sport league's phase, competition and slot definitions, set by migration. */
+        SportLeagueStructureResponse: {
+            /** @description In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON. */
+            phases: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+                /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
+                isSynced: boolean;
+                /** @description By their order in the phase. */
+                competitions: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it. */
+                    code: string;
+                    /** @description Its place among its phase's competitions, from 1. */
+                    orderIndex: number;
+                    /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
+                    slots: {
+                        /** Format: uuid */
+                        id: string;
+                        /** @description A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS. */
+                        key: string;
+                        /** @enum {string} */
+                        slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                        /** @description The week's number in its phase; set only on a WEEK slot. */
+                        weekNumber: number | null;
+                        /** @description The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind. */
+                        name: string | null;
+                        awardsTrophy: boolean;
+                        /** @description Whether a squares pool can be played on its games. */
+                        squaresEligible: boolean;
+                        /** @enum {string} */
+                        seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                        /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
+                        seriesGames: number;
+                        /** @enum {string} */
+                        pairing: "FIXED" | "RESEEDED";
+                        /**
+                         * @description How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+                         * @enum {string}
+                         */
+                        matchFormat: "HEAD_TO_HEAD" | "FIELD";
+                        /** @description Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out. */
+                        canEndTied: boolean;
+                        /**
+                         * @description What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+                         * @enum {string|null}
+                         */
+                        periodUnit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE" | null;
+                        /** @description How many periods a game has, overtime aside; null exactly when periodUnit is. */
+                        periodCount: number | null;
+                        /** @description By provider, then in the order the sync tries them. */
+                        providerMappings: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            providerId: string;
+                            providerName: string;
+                            /** @description The provider's own code for the league the mapping reads, such as nfl. */
+                            providerLeagueCode: string;
+                            providerLeagueName: string;
+                            /**
+                             * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                             * @enum {string}
+                             */
+                            matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
+                            /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                            providerValue: string | null;
+                        }[];
                     }[];
                 }[];
             }[];
@@ -11856,7 +11953,7 @@ export interface components {
             } | null;
         };
         /** @description One slot of one Season, as its Season lists it. */
-        SportLeagueSeasonPhaseSlotDto: {
+        SportLeagueSeasonCompetitionSlotDto: {
             /** Format: uuid */
             id: string;
             /**
@@ -12007,14 +12104,29 @@ export interface components {
                 } | null;
             };
         };
-        /** @description One phase of one Season. */
-        SportLeagueSeasonPhaseDto: {
+        /** @description One competition of one Season (#2153). */
+        SportLeagueSeasonCompetitionDto: {
             /** Format: uuid */
             id: string;
-            /** @enum {string} */
-            phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
-            /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
-            isSynced: boolean;
+            /**
+             * Format: uuid
+             * @description The competition definition it plays (SportLeagueCompetitionDefinitionDto).
+             */
+            sportLeagueCompetitionId: string;
+            /** @description Its definition's code, such as REGULAR or CFP. */
+            code: string;
+            /** @description Its definition's place in its phase. */
+            orderIndex: number;
+            /**
+             * @description How far it has got this Season.
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+            /**
+             * Format: uuid
+             * @description Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+             */
+            championParticipantId: string | null;
             /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot. */
             slots: {
                 /** Format: uuid */
@@ -12088,46 +12200,42 @@ export interface components {
             /** @description How many of its slots need dates (needsDates). */
             slotsNeedingDates: number;
         };
-        /** @description One Season of a sport league, added by migration. */
-        SportLeagueSeasonDto: {
+        /** @description One phase of one Season. */
+        SportLeagueSeasonPhaseDto: {
             /** Format: uuid */
             id: string;
-            /** @description What screens call the Season, such as 2025-26 or 2026. */
-            name: string;
-            /** @description The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration. */
-            championshipYear: number;
+            /** @enum {string} */
+            phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+            /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
+            isSynced: boolean;
             /**
-             * Format: date-time
-             * @description Its span's first moment, in the league's time zone.
+             * @description How far the phase has got this Season.
+             * @enum {string}
              */
-            startsAt: string;
-            /**
-             * Format: date-time
-             * @description Its span's last moment.
-             */
-            endsAt: string;
-            /** @description Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId). */
-            isCurrent: boolean;
-            /** @description Each provider's id for it, by provider name. */
-            providerMappings: {
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+            /** @description By their order in the phase. */
+            competitions: {
                 /** Format: uuid */
                 id: string;
-                /** Format: uuid */
-                providerId: string;
-                providerName: string;
-                /** @description The provider's own code for the league, such as nfl. */
-                providerLeagueCode: string;
-                /** @description The provider's own id for the Season, as the sync asks the feed for it. */
-                providerSeasonId: string;
-            }[];
-            /** @description In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON. */
-            phases: {
-                /** Format: uuid */
-                id: string;
-                /** @enum {string} */
-                phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
-                /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
-                isSynced: boolean;
+                /**
+                 * Format: uuid
+                 * @description The competition definition it plays (SportLeagueCompetitionDefinitionDto).
+                 */
+                sportLeagueCompetitionId: string;
+                /** @description Its definition's code, such as REGULAR or CFP. */
+                code: string;
+                /** @description Its definition's place in its phase. */
+                orderIndex: number;
+                /**
+                 * @description How far it has got this Season.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+                /**
+                 * Format: uuid
+                 * @description Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+                 */
+                championParticipantId: string | null;
                 /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot. */
                 slots: {
                     /** Format: uuid */
@@ -12201,51 +12309,75 @@ export interface components {
                 /** @description How many of its slots need dates (needsDates). */
                 slotsNeedingDates: number;
             }[];
-            /** @description How many of its slots need dates (needsDates), across its phases. */
-            slotsNeedingDates: number;
         };
-        /** @description A sport league's Seasons. */
-        SportLeagueSeasonListResponse: {
-            /** @description Every Season of the sport league, latest first, never paged. */
-            seasons: {
+        /** @description One Season of a sport league, added by migration. */
+        SportLeagueSeasonDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description What screens call the Season, such as 2025-26 or 2026. */
+            name: string;
+            /** @description The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration. */
+            championshipYear: number;
+            /**
+             * Format: date-time
+             * @description Its span's first moment, in the league's time zone.
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description Its span's last moment.
+             */
+            endsAt: string;
+            /** @description Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId). */
+            isCurrent: boolean;
+            /** @description Each provider's id for it, by provider name. */
+            providerMappings: {
                 /** Format: uuid */
                 id: string;
-                /** @description What screens call the Season, such as 2025-26 or 2026. */
-                name: string;
-                /** @description The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration. */
-                championshipYear: number;
+                /** Format: uuid */
+                providerId: string;
+                providerName: string;
+                /** @description The provider's own code for the league, such as nfl. */
+                providerLeagueCode: string;
+                /** @description The provider's own id for the Season, as the sync asks the feed for it. */
+                providerSeasonId: string;
+            }[];
+            /** @description In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON. */
+            phases: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+                /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
+                isSynced: boolean;
                 /**
-                 * Format: date-time
-                 * @description Its span's first moment, in the league's time zone.
+                 * @description How far the phase has got this Season.
+                 * @enum {string}
                  */
-                startsAt: string;
-                /**
-                 * Format: date-time
-                 * @description Its span's last moment.
-                 */
-                endsAt: string;
-                /** @description Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId). */
-                isCurrent: boolean;
-                /** @description Each provider's id for it, by provider name. */
-                providerMappings: {
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+                /** @description By their order in the phase. */
+                competitions: {
                     /** Format: uuid */
                     id: string;
-                    /** Format: uuid */
-                    providerId: string;
-                    providerName: string;
-                    /** @description The provider's own code for the league, such as nfl. */
-                    providerLeagueCode: string;
-                    /** @description The provider's own id for the Season, as the sync asks the feed for it. */
-                    providerSeasonId: string;
-                }[];
-                /** @description In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON. */
-                phases: {
-                    /** Format: uuid */
-                    id: string;
-                    /** @enum {string} */
-                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
-                    /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
-                    isSynced: boolean;
+                    /**
+                     * Format: uuid
+                     * @description The competition definition it plays (SportLeagueCompetitionDefinitionDto).
+                     */
+                    sportLeagueCompetitionId: string;
+                    /** @description Its definition's code, such as REGULAR or CFP. */
+                    code: string;
+                    /** @description Its definition's place in its phase. */
+                    orderIndex: number;
+                    /**
+                     * @description How far it has got this Season.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+                    /**
+                     * Format: uuid
+                     * @description Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+                     */
+                    championParticipantId: string | null;
                     /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot. */
                     slots: {
                         /** Format: uuid */
@@ -12319,7 +12451,155 @@ export interface components {
                     /** @description How many of its slots need dates (needsDates). */
                     slotsNeedingDates: number;
                 }[];
-                /** @description How many of its slots need dates (needsDates), across its phases. */
+            }[];
+            /** @description How many of its slots need dates (needsDates), across its competitions. */
+            slotsNeedingDates: number;
+        };
+        /** @description A sport league's Seasons. */
+        SportLeagueSeasonListResponse: {
+            /** @description Every Season of the sport league, latest first, never paged. */
+            seasons: {
+                /** Format: uuid */
+                id: string;
+                /** @description What screens call the Season, such as 2025-26 or 2026. */
+                name: string;
+                /** @description The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration. */
+                championshipYear: number;
+                /**
+                 * Format: date-time
+                 * @description Its span's first moment, in the league's time zone.
+                 */
+                startsAt: string;
+                /**
+                 * Format: date-time
+                 * @description Its span's last moment.
+                 */
+                endsAt: string;
+                /** @description Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId). */
+                isCurrent: boolean;
+                /** @description Each provider's id for it, by provider name. */
+                providerMappings: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    providerId: string;
+                    providerName: string;
+                    /** @description The provider's own code for the league, such as nfl. */
+                    providerLeagueCode: string;
+                    /** @description The provider's own id for the Season, as the sync asks the feed for it. */
+                    providerSeasonId: string;
+                }[];
+                /** @description In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON. */
+                phases: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @enum {string} */
+                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+                    /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
+                    isSynced: boolean;
+                    /**
+                     * @description How far the phase has got this Season.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+                    /** @description By their order in the phase. */
+                    competitions: {
+                        /** Format: uuid */
+                        id: string;
+                        /**
+                         * Format: uuid
+                         * @description The competition definition it plays (SportLeagueCompetitionDefinitionDto).
+                         */
+                        sportLeagueCompetitionId: string;
+                        /** @description Its definition's code, such as REGULAR or CFP. */
+                        code: string;
+                        /** @description Its definition's place in its phase. */
+                        orderIndex: number;
+                        /**
+                         * @description How far it has got this Season.
+                         * @enum {string}
+                         */
+                        status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+                        /**
+                         * Format: uuid
+                         * @description Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+                         */
+                        championParticipantId: string | null;
+                        /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot. */
+                        slots: {
+                            /** Format: uuid */
+                            id: string;
+                            /**
+                             * Format: uuid
+                             * @description The slot definition it plays (SportLeagueSlotDefinitionDto).
+                             */
+                            slotDefinitionId: string;
+                            /** @description Its definition's key. */
+                            key: string;
+                            /** @enum {string} */
+                            slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                            weekNumber: number | null;
+                            /** @description Its definition's proper name; null when screens show the word for its kind. */
+                            name: string | null;
+                            /**
+                             * Format: date-time
+                             * @description The earliest start of its Games; null until the sync has matched one.
+                             */
+                            startsAt: string | null;
+                            /**
+                             * Format: date-time
+                             * @description The latest end of its Games; null until the sync has matched one.
+                             */
+                            endsAt: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                            /**
+                             * @description Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+                             * @enum {string}
+                             */
+                            seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                            seriesGames: number;
+                            /** @enum {string} */
+                            pairing: "FIXED" | "RESEEDED";
+                            /** @description A test slot: QA only, never read or written by the sync. */
+                            isTestData: boolean;
+                            /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
+                            label: string | null;
+                            /** @description Its date window, set as data (#2012); null when it has none. */
+                            window: {
+                                /**
+                                 * Format: date-time
+                                 * @description ISO 8601 datetime string.
+                                 */
+                                startsAt: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Exclusive.
+                                 */
+                                endsAt: string;
+                                /**
+                                 * @description TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                                 * @enum {string}
+                                 */
+                                status: "TENTATIVE" | "CONFIRMED";
+                            } | null;
+                            /**
+                             * Format: uuid
+                             * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                             */
+                            sportEventId: string | null;
+                            /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+                            takesTestEvent: boolean;
+                            /** @description Whether the league's selected provider places its games by date window (DATE_WINDOW). */
+                            placedByWindow: boolean;
+                            /** @description Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one). */
+                            needsDates: boolean;
+                        }[];
+                        /** @description How many of its slots need dates (needsDates). */
+                        slotsNeedingDates: number;
+                    }[];
+                }[];
+                /** @description How many of its slots need dates (needsDates), across its competitions. */
                 slotsNeedingDates: number;
             }[];
         };
@@ -22025,7 +22305,7 @@ export interface components {
              * Format: uuid
              * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
              */
-            sportLeaguePhaseSlotId: string;
+            sportLeagueCompetitionSlotId: string;
             /** @description The contest setup the offer starts as: Create contest's ?template=. */
             template: {
                 /**
@@ -22047,7 +22327,7 @@ export interface components {
                 slots: {
                     /**
                      * Format: uuid
-                     * @description The slot definition's id (SportLeaguePhaseSlot).
+                     * @description The slot definition's id (SportLeagueCompetitionSlot).
                      */
                     id: string;
                     /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -22063,14 +22343,18 @@ export interface components {
                     weekNumber: number | null;
                     /**
                      * Format: uuid
-                     * @description The phase the slot is in.
+                     * @description The competition the slot is in (#2153); a template's slots all sit in one.
                      */
-                    sportLeaguePhaseId: string;
+                    sportLeagueCompetitionId: string;
+                    /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                    competitionCode: string;
+                    /** @description That competition's place in its phase. */
+                    competitionOrderIndex: number;
                     /**
-                     * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
                      * @enum {string}
                      */
-                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
                     /**
                      * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                      * @enum {string}
@@ -22497,7 +22781,7 @@ export interface components {
                  * Format: uuid
                  * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
                  */
-                sportLeaguePhaseSlotId: string;
+                sportLeagueCompetitionSlotId: string;
                 /** @description The contest setup the offer starts as: Create contest's ?template=. */
                 template: {
                     /**
@@ -22519,7 +22803,7 @@ export interface components {
                     slots: {
                         /**
                          * Format: uuid
-                         * @description The slot definition's id (SportLeaguePhaseSlot).
+                         * @description The slot definition's id (SportLeagueCompetitionSlot).
                          */
                         id: string;
                         /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -22535,14 +22819,18 @@ export interface components {
                         weekNumber: number | null;
                         /**
                          * Format: uuid
-                         * @description The phase the slot is in.
+                         * @description The competition the slot is in (#2153); a template's slots all sit in one.
                          */
-                        sportLeaguePhaseId: string;
+                        sportLeagueCompetitionId: string;
+                        /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                        competitionCode: string;
+                        /** @description That competition's place in its phase. */
+                        competitionOrderIndex: number;
                         /**
-                         * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                         * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
                          * @enum {string}
                          */
-                        phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                        phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
                         /**
                          * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                          * @enum {string}
@@ -22972,7 +23260,7 @@ export interface components {
                      * Format: uuid
                      * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
                      */
-                    sportLeaguePhaseSlotId: string;
+                    sportLeagueCompetitionSlotId: string;
                     /** @description The contest setup the offer starts as: Create contest's ?template=. */
                     template: {
                         /**
@@ -22994,7 +23282,7 @@ export interface components {
                         slots: {
                             /**
                              * Format: uuid
-                             * @description The slot definition's id (SportLeaguePhaseSlot).
+                             * @description The slot definition's id (SportLeagueCompetitionSlot).
                              */
                             id: string;
                             /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -23010,14 +23298,18 @@ export interface components {
                             weekNumber: number | null;
                             /**
                              * Format: uuid
-                             * @description The phase the slot is in.
+                             * @description The competition the slot is in (#2153); a template's slots all sit in one.
                              */
-                            sportLeaguePhaseId: string;
+                            sportLeagueCompetitionId: string;
+                            /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                            competitionCode: string;
+                            /** @description That competition's place in its phase. */
+                            competitionOrderIndex: number;
                             /**
-                             * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                             * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
                              * @enum {string}
                              */
-                            phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                            phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
                             /**
                              * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                              * @enum {string}
@@ -23458,7 +23750,7 @@ export interface components {
                      * Format: uuid
                      * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
                      */
-                    sportLeaguePhaseSlotId: string;
+                    sportLeagueCompetitionSlotId: string;
                     /** @description The contest setup the offer starts as: Create contest's ?template=. */
                     template: {
                         /**
@@ -23480,7 +23772,7 @@ export interface components {
                         slots: {
                             /**
                              * Format: uuid
-                             * @description The slot definition's id (SportLeaguePhaseSlot).
+                             * @description The slot definition's id (SportLeagueCompetitionSlot).
                              */
                             id: string;
                             /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
@@ -23496,14 +23788,18 @@ export interface components {
                             weekNumber: number | null;
                             /**
                              * Format: uuid
-                             * @description The phase the slot is in.
+                             * @description The competition the slot is in (#2153); a template's slots all sit in one.
                              */
-                            sportLeaguePhaseId: string;
+                            sportLeagueCompetitionId: string;
+                            /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                            competitionCode: string;
+                            /** @description That competition's place in its phase. */
+                            competitionOrderIndex: number;
                             /**
-                             * @description That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                             * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
                              * @enum {string}
                              */
-                            phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                            phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
                             /**
                              * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                              * @enum {string}
@@ -26383,10 +26679,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             /**
-             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
              * @enum {string}
              */
-            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_PHASE_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER";
+            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER";
             /**
              * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
              * @enum {string}
@@ -26503,10 +26799,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_PHASE_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -26578,10 +26874,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_PHASE_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -36111,7 +36407,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description A sport league's phase and slot definitions, set by migration. */
+            /** @description A sport league's phase, competition and slot definitions, set by migration. */
             200: {
                 headers: {
                     [name: string]: unknown;

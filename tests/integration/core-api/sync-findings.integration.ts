@@ -435,7 +435,7 @@ describe('the sync findings routes (contract)', () => {
     expect(ProviderSyncFindingResponseSchema.parse(linkedRes.json()).finding).toMatchObject({ id: finding.id, status: ProviderSyncFindingStatus.RESOLVED });
     expect(takenRes.statusCode).toBe(409);
     expect(ErrorEnvelopeSchema.parse(takenRes.json()).error.code).toBe('SLOT_NAME_PATTERN_TAKEN');
-    expect(await prisma.sportLeaguePhaseSlotProviderMapping.findMany({ where: { sportLeaguePhaseSlotId: open }, select: { providerValue: true } })).toEqual([{ providerValue: 'u.s. open' }]);
+    expect(await prisma.sportLeagueCompetitionSlotProviderMapping.findMany({ where: { sportLeagueCompetitionSlotId: open }, select: { providerValue: true } })).toEqual([{ providerValue: 'u.s. open' }]);
   });
 
   it('offers and links only slots of the mapping the league\'s sync reads, when the league maps two leagues of the finding\'s Provider', async () => {
@@ -460,7 +460,7 @@ describe('the sync findings routes (contract)', () => {
     expect(ProviderSyncFindingSlotChoiceListResponseSchema.parse(choicesRes.json()).slots.map((slot) => slot.slotDefinitionId)).toEqual([read]);
     expect(decoyRes.statusCode).toBe(404);
     expect(linkedRes.statusCode).toBe(200);
-    expect(await prisma.sportLeaguePhaseSlotProviderMapping.findMany({ where: { sportLeaguePhaseSlotId: read }, select: { sportLeagueProviderMappingId: true, providerValue: true }, orderBy: { providerValue: 'asc' } }))
+    expect(await prisma.sportLeagueCompetitionSlotProviderMapping.findMany({ where: { sportLeagueCompetitionSlotId: read }, select: { sportLeagueProviderMappingId: true, providerValue: true }, orderBy: { providerValue: 'asc' } }))
       .toEqual([{ sportLeagueProviderMappingId: selected, providerValue: 'u.s. open' }, { sportLeagueProviderMappingId: selected, providerValue: 'us open' }]);
   });
 

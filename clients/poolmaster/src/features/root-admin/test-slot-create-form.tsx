@@ -38,7 +38,7 @@ export function TestSlotCreateForm({ onCreated, sportLeagueId }: { onCreated: (s
   const logger = getLogger().child({ feature: 'root-admin-test-slot-create' });
   const { timeZone } = useDisplayPreferences();
   const structureQuery = useSportLeagueStructureQuery(sportLeagueId);
-  const definitions = (structureQuery.data ?? []).flatMap((phase) => phase.slots);
+  const definitions = (structureQuery.data ?? []).flatMap((phase) => phase.competitions).flatMap((competition) => competition.slots);
 
   const form = useForm<TestSlotValues>({
     resolver: zodResolver(testSlotSchema),

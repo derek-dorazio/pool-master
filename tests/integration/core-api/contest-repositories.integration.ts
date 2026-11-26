@@ -970,7 +970,7 @@ describe('ContestConfigTemplateRepository', () => {
       },
     });
     await getPrisma().contestConfigTemplateSlot.createMany({
-      data: slotDefinitionIds.map((sportLeaguePhaseSlotId) => ({ sportLeagueId: template.sportLeagueId, templateId: template.id, sportLeaguePhaseSlotId })),
+      data: slotDefinitionIds.map((sportLeagueCompetitionSlotId) => ({ sportLeagueId: template.sportLeagueId, templateId: template.id, sportLeagueCompetitionSlotId })),
     });
     return template;
   }

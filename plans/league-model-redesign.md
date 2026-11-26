@@ -116,8 +116,10 @@ The current model was built one sport at a time and leans on code to look right:
     parses it. `orderIndex`, unique per phase.
   - `conferenceId` (slice 21b): optional, allowed only in POSTSEASON_CONFERENCE. When set
     it labels the competition and only that conference's teams are placed in it.
-  - **No contest crosses competitions**: every slot a template lists sits in one
-    competition. A competition is the unit for brackets, pick'em slates and the bowl slate.
+  - **No contest crosses competitions**: an ALL_LISTED or FROM_SLOT template lists slots of
+    one competition (Derek 2026-11-25). A ONE_SLOT template may list slots of several, since
+    each of its contests covers one slot (PGA TOUR's tournaments and FedEx playoffs, NFL
+    squares). A competition is the unit for brackets, pick'em slates and the bowl slate.
   - Every phase that existed before 6b got one competition coded like the phase.
 - **SportLeagueCompetitionSlot** (named SportLeaguePhaseSlot until 6b; the only change is
   its parent, now the competition): a position within a competition, and the strong key

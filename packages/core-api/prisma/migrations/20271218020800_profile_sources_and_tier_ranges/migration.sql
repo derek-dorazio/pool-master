@@ -155,8 +155,8 @@ JOIN (VALUES
 JOIN "sport_leagues" l ON l."id" = t."sport_league_id"
 WHERE l."url_segment" = 'nfl';
 
-INSERT INTO "contest_config_template_slots" ("sport_league_id", "template_id", "sport_league_phase_slot_id")
-SELECT n."sport_league_id", n."id", s."sport_league_phase_slot_id"
+INSERT INTO "contest_config_template_slots" ("sport_league_id", "template_id", "sport_league_competition_slot_id")
+SELECT n."sport_league_id", n."id", s."sport_league_competition_slot_id"
 FROM "contest_config_templates" n
 JOIN "contest_config_templates" o ON o."sport_league_id" = n."sport_league_id"
   AND o."template_key" = CASE n."template_key" WHEN 'nfl-tiered-pick-3' THEN 'nfl-tiered-doubling' ELSE 'nfl-budget-doubling' END

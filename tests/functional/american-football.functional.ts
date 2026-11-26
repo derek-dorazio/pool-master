@@ -162,7 +162,7 @@ describe('SDK Functional: American football', () => {
     // its test slots instead: an event covering no test slot is one the feed scores.
     const links = await db.sportEventSlot.findMany({
       where: { sportEventId: event.id },
-      select: { sportEventId: true, sportLeagueSeasonId: true, sportLeagueSeasonPhaseSlotId: true },
+      select: { sportEventId: true, sportLeagueSeasonId: true, sportLeagueSeasonCompetitionSlotId: true },
     });
     expect(links.length).toBeGreaterThan(0);
     await db.sportEventSlot.deleteMany({ where: { sportEventId: event.id } });

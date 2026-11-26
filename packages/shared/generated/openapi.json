@@ -10928,7 +10928,7 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "The slot definition's id (SportLeaguePhaseSlot)."
+            "description": "The slot definition's id (SportLeagueCompetitionSlot)."
           },
           "key": {
             "type": "string",
@@ -10966,19 +10966,30 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
-          "sportLeaguePhaseId": {
+          "sportLeagueCompetitionId": {
             "type": "string",
             "format": "uuid",
-            "description": "The phase the slot is in."
+            "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+          },
+          "competitionCode": {
+            "type": "string",
+            "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+          },
+          "competitionOrderIndex": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "That competition's place in its phase."
           },
           "phase": {
             "type": "string",
             "enum": [
               "PRESEASON",
               "REGULAR",
+              "POSTSEASON_CONFERENCE",
               "POSTSEASON"
             ],
-            "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+            "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
           },
           "matchFormat": {
             "type": "string",
@@ -10995,7 +11006,9 @@
           "name",
           "slotKind",
           "weekNumber",
-          "sportLeaguePhaseId",
+          "sportLeagueCompetitionId",
+          "competitionCode",
+          "competitionOrderIndex",
           "phase",
           "matchFormat"
         ],
@@ -11032,7 +11045,7 @@
                 "id": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                  "description": "The slot definition's id (SportLeagueCompetitionSlot)."
                 },
                 "key": {
                   "type": "string",
@@ -11070,19 +11083,30 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 },
-                "sportLeaguePhaseId": {
+                "sportLeagueCompetitionId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The phase the slot is in."
+                  "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+                },
+                "competitionCode": {
+                  "type": "string",
+                  "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+                },
+                "competitionOrderIndex": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "That competition's place in its phase."
                 },
                 "phase": {
                   "type": "string",
                   "enum": [
                     "PRESEASON",
                     "REGULAR",
+                    "POSTSEASON_CONFERENCE",
                     "POSTSEASON"
                   ],
-                  "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                  "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
                 },
                 "matchFormat": {
                   "type": "string",
@@ -11099,7 +11123,9 @@
                 "name",
                 "slotKind",
                 "weekNumber",
-                "sportLeaguePhaseId",
+                "sportLeagueCompetitionId",
+                "competitionCode",
+                "competitionOrderIndex",
                 "phase",
                 "matchFormat"
               ],
@@ -13078,7 +13104,7 @@
                       "id": {
                         "type": "string",
                         "format": "uuid",
-                        "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                        "description": "The slot definition's id (SportLeagueCompetitionSlot)."
                       },
                       "key": {
                         "type": "string",
@@ -13116,19 +13142,30 @@
                         "minimum": -9007199254740991,
                         "maximum": 9007199254740991
                       },
-                      "sportLeaguePhaseId": {
+                      "sportLeagueCompetitionId": {
                         "type": "string",
                         "format": "uuid",
-                        "description": "The phase the slot is in."
+                        "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+                      },
+                      "competitionCode": {
+                        "type": "string",
+                        "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+                      },
+                      "competitionOrderIndex": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "That competition's place in its phase."
                       },
                       "phase": {
                         "type": "string",
                         "enum": [
                           "PRESEASON",
                           "REGULAR",
+                          "POSTSEASON_CONFERENCE",
                           "POSTSEASON"
                         ],
-                        "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                        "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
                       },
                       "matchFormat": {
                         "type": "string",
@@ -13145,7 +13182,9 @@
                       "name",
                       "slotKind",
                       "weekNumber",
-                      "sportLeaguePhaseId",
+                      "sportLeagueCompetitionId",
+                      "competitionCode",
+                      "competitionOrderIndex",
                       "phase",
                       "matchFormat"
                     ],
@@ -15952,7 +15991,7 @@
                     "id": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                      "description": "The slot definition's id (SportLeagueCompetitionSlot)."
                     },
                     "key": {
                       "type": "string",
@@ -15990,19 +16029,30 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     },
-                    "sportLeaguePhaseId": {
+                    "sportLeagueCompetitionId": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "The phase the slot is in."
+                      "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+                    },
+                    "competitionCode": {
+                      "type": "string",
+                      "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+                    },
+                    "competitionOrderIndex": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "That competition's place in its phase."
                     },
                     "phase": {
                       "type": "string",
                       "enum": [
                         "PRESEASON",
                         "REGULAR",
+                        "POSTSEASON_CONFERENCE",
                         "POSTSEASON"
                       ],
-                      "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                      "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
                     },
                     "matchFormat": {
                       "type": "string",
@@ -16019,7 +16069,9 @@
                     "name",
                     "slotKind",
                     "weekNumber",
-                    "sportLeaguePhaseId",
+                    "sportLeagueCompetitionId",
+                    "competitionCode",
+                    "competitionOrderIndex",
                     "phase",
                     "matchFormat"
                   ],
@@ -23338,24 +23390,22 @@
         "additionalProperties": false,
         "description": "One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it."
       },
-      "SportLeaguePhaseDefinitionDto": {
+      "SportLeagueCompetitionDefinitionDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "phase": {
+          "code": {
             "type": "string",
-            "enum": [
-              "PRESEASON",
-              "REGULAR",
-              "POSTSEASON"
-            ]
+            "description": "A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it."
           },
-          "isSynced": {
-            "type": "boolean",
-            "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+          "orderIndex": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Its place among its phase's competitions, from 1."
           },
           "slots": {
             "type": "array",
@@ -23546,17 +23596,34 @@
         },
         "required": [
           "id",
-          "phase",
-          "isSynced",
+          "code",
+          "orderIndex",
           "slots"
         ],
         "additionalProperties": false,
-        "description": "One phase definition of a sport league."
+        "description": "One competition of a phase (#2153): what the phase's slots are played as. No contest crosses competitions."
       },
-      "SportLeagueStructureResponse": {
+      "SportLeaguePhaseDefinitionDto": {
         "type": "object",
         "properties": {
-          "phases": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRESEASON",
+              "REGULAR",
+              "POSTSEASON_CONFERENCE",
+              "POSTSEASON"
+            ]
+          },
+          "isSynced": {
+            "type": "boolean",
+            "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+          },
+          "competitions": {
             "type": "array",
             "items": {
               "type": "object",
@@ -23565,17 +23632,15 @@
                   "type": "string",
                   "format": "uuid"
                 },
-                "phase": {
+                "code": {
                   "type": "string",
-                  "enum": [
-                    "PRESEASON",
-                    "REGULAR",
-                    "POSTSEASON"
-                  ]
+                  "description": "A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it."
                 },
-                "isSynced": {
-                  "type": "boolean",
-                  "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                "orderIndex": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "Its place among its phase's competitions, from 1."
                 },
                 "slots": {
                   "type": "array",
@@ -23766,21 +23831,285 @@
               },
               "required": [
                 "id",
+                "code",
+                "orderIndex",
+                "slots"
+              ],
+              "additionalProperties": false,
+              "description": "One competition of a phase (#2153): what the phase's slots are played as. No contest crosses competitions."
+            },
+            "description": "By their order in the phase."
+          }
+        },
+        "required": [
+          "id",
+          "phase",
+          "isSynced",
+          "competitions"
+        ],
+        "additionalProperties": false,
+        "description": "One phase definition of a sport league."
+      },
+      "SportLeagueStructureResponse": {
+        "type": "object",
+        "properties": {
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "PRESEASON",
+                    "REGULAR",
+                    "POSTSEASON_CONFERENCE",
+                    "POSTSEASON"
+                  ]
+                },
+                "isSynced": {
+                  "type": "boolean",
+                  "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                },
+                "competitions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "code": {
+                        "type": "string",
+                        "description": "A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it."
+                      },
+                      "orderIndex": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "Its place among its phase's competitions, from 1."
+                      },
+                      "slots": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "key": {
+                              "type": "string",
+                              "description": "A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS."
+                            },
+                            "slotKind": {
+                              "type": "string",
+                              "enum": [
+                                "WEEK",
+                                "PLAY_IN",
+                                "ROUND_OF_64",
+                                "ROUND_OF_32",
+                                "ROUND_OF_16",
+                                "QUARTERFINAL",
+                                "SEMIFINAL",
+                                "THIRD_PLACE",
+                                "FINAL",
+                                "TOURNAMENT"
+                              ]
+                            },
+                            "weekNumber": {
+                              "description": "The week's number in its phase; set only on a WEEK slot.",
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "maximum": 9007199254740991
+                            },
+                            "name": {
+                              "description": "The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "awardsTrophy": {
+                              "type": "boolean"
+                            },
+                            "squaresEligible": {
+                              "type": "boolean",
+                              "description": "Whether a squares pool can be played on its games."
+                            },
+                            "seriesFormat": {
+                              "type": "string",
+                              "enum": [
+                                "SINGLE_GAME",
+                                "BEST_OF",
+                                "AGGREGATE"
+                              ]
+                            },
+                            "seriesGames": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE."
+                            },
+                            "pairing": {
+                              "type": "string",
+                              "enum": [
+                                "FIXED",
+                                "RESEEDED"
+                              ]
+                            },
+                            "matchFormat": {
+                              "type": "string",
+                              "enum": [
+                                "HEAD_TO_HEAD",
+                                "FIELD"
+                              ],
+                              "description": "How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked."
+                            },
+                            "canEndTied": {
+                              "type": "boolean",
+                              "description": "Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out."
+                            },
+                            "periodUnit": {
+                              "description": "What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).",
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "enum": [
+                                "QUARTER",
+                                "HALF",
+                                "PERIOD",
+                                "INNING",
+                                "HOLE",
+                                null
+                              ]
+                            },
+                            "periodCount": {
+                              "description": "How many periods a game has, overtime aside; null exactly when periodUnit is.",
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "maximum": 9007199254740991
+                            },
+                            "providerMappings": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "providerId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "providerName": {
+                                    "type": "string"
+                                  },
+                                  "providerLeagueCode": {
+                                    "type": "string",
+                                    "description": "The provider's own code for the league the mapping reads, such as nfl."
+                                  },
+                                  "providerLeagueName": {
+                                    "type": "string"
+                                  },
+                                  "matchType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PROVIDER_CODE",
+                                      "NAME_PATTERN",
+                                      "DATE_WINDOW",
+                                      "CALENDAR_WEEK"
+                                    ],
+                                    "description": "How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW."
+                                  },
+                                  "providerValue": {
+                                    "description": "The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.",
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "providerId",
+                                  "providerName",
+                                  "providerLeagueCode",
+                                  "providerLeagueName",
+                                  "matchType",
+                                  "providerValue"
+                                ],
+                                "additionalProperties": false,
+                                "description": "How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced."
+                              },
+                              "description": "By provider, then in the order the sync tries them."
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "key",
+                            "slotKind",
+                            "weekNumber",
+                            "name",
+                            "awardsTrophy",
+                            "squaresEligible",
+                            "seriesFormat",
+                            "seriesGames",
+                            "pairing",
+                            "matchFormat",
+                            "canEndTied",
+                            "periodUnit",
+                            "periodCount",
+                            "providerMappings"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it."
+                        },
+                        "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "code",
+                      "orderIndex",
+                      "slots"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One competition of a phase (#2153): what the phase's slots are played as. No contest crosses competitions."
+                  },
+                  "description": "By their order in the phase."
+                }
+              },
+              "required": [
+                "id",
                 "phase",
                 "isSynced",
-                "slots"
+                "competitions"
               ],
               "additionalProperties": false,
               "description": "One phase definition of a sport league."
             },
-            "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
+            "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON."
           }
         },
         "required": [
           "phases"
         ],
         "additionalProperties": false,
-        "description": "A sport league's phase and slot definitions, set by migration."
+        "description": "A sport league's phase, competition and slot definitions, set by migration."
       },
       "SportLeagueSeasonProviderMappingDto": {
         "type": "object",
@@ -24002,7 +24331,7 @@
         "additionalProperties": false,
         "description": "One slot of one Season."
       },
-      "SportLeagueSeasonPhaseSlotDto": {
+      "SportLeagueSeasonCompetitionSlotDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -24386,24 +24715,44 @@
         "additionalProperties": false,
         "description": "One Season slot."
       },
-      "SportLeagueSeasonPhaseDto": {
+      "SportLeagueSeasonCompetitionDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "phase": {
+          "sportLeagueCompetitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The competition definition it plays (SportLeagueCompetitionDefinitionDto)."
+          },
+          "code": {
+            "type": "string",
+            "description": "Its definition's code, such as REGULAR or CFP."
+          },
+          "orderIndex": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Its definition's place in its phase."
+          },
+          "status": {
             "type": "string",
             "enum": [
-              "PRESEASON",
-              "REGULAR",
-              "POSTSEASON"
-            ]
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "description": "How far it has got this Season."
           },
-          "isSynced": {
-            "type": "boolean",
-            "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+          "championParticipantId": {
+            "description": "Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           },
           "slots": {
             "type": "array",
@@ -24599,46 +24948,47 @@
         },
         "required": [
           "id",
-          "phase",
-          "isSynced",
+          "sportLeagueCompetitionId",
+          "code",
+          "orderIndex",
+          "status",
+          "championParticipantId",
           "slots",
           "slotsNeedingDates"
         ],
         "additionalProperties": false,
-        "description": "One phase of one Season."
+        "description": "One competition of one Season (#2153)."
       },
-      "SportLeagueSeasonDto": {
+      "SportLeagueSeasonPhaseDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "name": {
+          "phase": {
             "type": "string",
-            "description": "What screens call the Season, such as 2025-26 or 2026."
+            "enum": [
+              "PRESEASON",
+              "REGULAR",
+              "POSTSEASON_CONFERENCE",
+              "POSTSEASON"
+            ]
           },
-          "championshipYear": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration."
-          },
-          "startsAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Its span's first moment, in the league's time zone."
-          },
-          "endsAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Its span's last moment."
-          },
-          "isCurrent": {
+          "isSynced": {
             "type": "boolean",
-            "description": "Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId)."
+            "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
           },
-          "providerMappings": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "description": "How far the phase has got this Season."
+          },
+          "competitions": {
             "type": "array",
             "items": {
               "type": "object",
@@ -24647,54 +24997,37 @@
                   "type": "string",
                   "format": "uuid"
                 },
-                "providerId": {
+                "sportLeagueCompetitionId": {
                   "type": "string",
-                  "format": "uuid"
+                  "format": "uuid",
+                  "description": "The competition definition it plays (SportLeagueCompetitionDefinitionDto)."
                 },
-                "providerName": {
-                  "type": "string"
-                },
-                "providerLeagueCode": {
+                "code": {
                   "type": "string",
-                  "description": "The provider's own code for the league, such as nfl."
+                  "description": "Its definition's code, such as REGULAR or CFP."
                 },
-                "providerSeasonId": {
-                  "type": "string",
-                  "description": "The provider's own id for the Season, as the sync asks the feed for it."
-                }
-              },
-              "required": [
-                "id",
-                "providerId",
-                "providerName",
-                "providerLeagueCode",
-                "providerSeasonId"
-              ],
-              "additionalProperties": false,
-              "description": "A provider's id for one Season."
-            },
-            "description": "Each provider's id for it, by provider name."
-          },
-          "phases": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid"
+                "orderIndex": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "Its definition's place in its phase."
                 },
-                "phase": {
+                "status": {
                   "type": "string",
                   "enum": [
-                    "PRESEASON",
-                    "REGULAR",
-                    "POSTSEASON"
-                  ]
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED"
+                  ],
+                  "description": "How far it has got this Season."
                 },
-                "isSynced": {
-                  "type": "boolean",
-                  "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                "championParticipantId": {
+                  "description": "Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
                 },
                 "slots": {
                   "type": "array",
@@ -24890,41 +25223,62 @@
               },
               "required": [
                 "id",
-                "phase",
-                "isSynced",
+                "sportLeagueCompetitionId",
+                "code",
+                "orderIndex",
+                "status",
+                "championParticipantId",
                 "slots",
                 "slotsNeedingDates"
               ],
               "additionalProperties": false,
-              "description": "One phase of one Season."
+              "description": "One competition of one Season (#2153)."
             },
-            "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
-          },
-          "slotsNeedingDates": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "How many of its slots need dates (needsDates), across its phases."
+            "description": "By their order in the phase."
           }
         },
         "required": [
           "id",
-          "name",
-          "championshipYear",
-          "startsAt",
-          "endsAt",
-          "isCurrent",
-          "providerMappings",
-          "phases",
-          "slotsNeedingDates"
+          "phase",
+          "isSynced",
+          "status",
+          "competitions"
         ],
         "additionalProperties": false,
-        "description": "One Season of a sport league, added by migration."
+        "description": "One phase of one Season."
       },
-      "SportLeagueSeasonListResponse": {
+      "SportLeagueSeasonDto": {
         "type": "object",
         "properties": {
-          "seasons": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "What screens call the Season, such as 2025-26 or 2026."
+          },
+          "championshipYear": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Its span's first moment, in the league's time zone."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Its span's last moment."
+          },
+          "isCurrent": {
+            "type": "boolean",
+            "description": "Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId)."
+          },
+          "providerMappings": {
             "type": "array",
             "items": {
               "type": "object",
@@ -24933,31 +25287,66 @@
                   "type": "string",
                   "format": "uuid"
                 },
-                "name": {
+                "providerId": {
                   "type": "string",
-                  "description": "What screens call the Season, such as 2025-26 or 2026."
+                  "format": "uuid"
                 },
-                "championshipYear": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration."
+                "providerName": {
+                  "type": "string"
                 },
-                "startsAt": {
+                "providerLeagueCode": {
                   "type": "string",
-                  "format": "date-time",
-                  "description": "Its span's first moment, in the league's time zone."
+                  "description": "The provider's own code for the league, such as nfl."
                 },
-                "endsAt": {
+                "providerSeasonId": {
                   "type": "string",
-                  "format": "date-time",
-                  "description": "Its span's last moment."
+                  "description": "The provider's own id for the Season, as the sync asks the feed for it."
+                }
+              },
+              "required": [
+                "id",
+                "providerId",
+                "providerName",
+                "providerLeagueCode",
+                "providerSeasonId"
+              ],
+              "additionalProperties": false,
+              "description": "A provider's id for one Season."
+            },
+            "description": "Each provider's id for it, by provider name."
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
                 },
-                "isCurrent": {
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "PRESEASON",
+                    "REGULAR",
+                    "POSTSEASON_CONFERENCE",
+                    "POSTSEASON"
+                  ]
+                },
+                "isSynced": {
                   "type": "boolean",
-                  "description": "Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId)."
+                  "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
                 },
-                "providerMappings": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED"
+                  ],
+                  "description": "How far the phase has got this Season."
+                },
+                "competitions": {
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -24966,54 +25355,37 @@
                         "type": "string",
                         "format": "uuid"
                       },
-                      "providerId": {
+                      "sportLeagueCompetitionId": {
                         "type": "string",
-                        "format": "uuid"
+                        "format": "uuid",
+                        "description": "The competition definition it plays (SportLeagueCompetitionDefinitionDto)."
                       },
-                      "providerName": {
-                        "type": "string"
-                      },
-                      "providerLeagueCode": {
+                      "code": {
                         "type": "string",
-                        "description": "The provider's own code for the league, such as nfl."
+                        "description": "Its definition's code, such as REGULAR or CFP."
                       },
-                      "providerSeasonId": {
-                        "type": "string",
-                        "description": "The provider's own id for the Season, as the sync asks the feed for it."
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "providerId",
-                      "providerName",
-                      "providerLeagueCode",
-                      "providerSeasonId"
-                    ],
-                    "additionalProperties": false,
-                    "description": "A provider's id for one Season."
-                  },
-                  "description": "Each provider's id for it, by provider name."
-                },
-                "phases": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
+                      "orderIndex": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "Its definition's place in its phase."
                       },
-                      "phase": {
+                      "status": {
                         "type": "string",
                         "enum": [
-                          "PRESEASON",
-                          "REGULAR",
-                          "POSTSEASON"
-                        ]
+                          "SCHEDULED",
+                          "IN_PROGRESS",
+                          "COMPLETED"
+                        ],
+                        "description": "How far it has got this Season."
                       },
-                      "isSynced": {
-                        "type": "boolean",
-                        "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                      "championParticipantId": {
+                        "description": "Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uuid"
                       },
                       "slots": {
                         "type": "array",
@@ -25209,21 +25581,423 @@
                     },
                     "required": [
                       "id",
-                      "phase",
-                      "isSynced",
+                      "sportLeagueCompetitionId",
+                      "code",
+                      "orderIndex",
+                      "status",
+                      "championParticipantId",
                       "slots",
                       "slotsNeedingDates"
                     ],
                     "additionalProperties": false,
+                    "description": "One competition of one Season (#2153)."
+                  },
+                  "description": "By their order in the phase."
+                }
+              },
+              "required": [
+                "id",
+                "phase",
+                "isSynced",
+                "status",
+                "competitions"
+              ],
+              "additionalProperties": false,
+              "description": "One phase of one Season."
+            },
+            "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON."
+          },
+          "slotsNeedingDates": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "How many of its slots need dates (needsDates), across its competitions."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "championshipYear",
+          "startsAt",
+          "endsAt",
+          "isCurrent",
+          "providerMappings",
+          "phases",
+          "slotsNeedingDates"
+        ],
+        "additionalProperties": false,
+        "description": "One Season of a sport league, added by migration."
+      },
+      "SportLeagueSeasonListResponse": {
+        "type": "object",
+        "properties": {
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "What screens call the Season, such as 2025-26 or 2026."
+                },
+                "championshipYear": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration."
+                },
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Its span's first moment, in the league's time zone."
+                },
+                "endsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Its span's last moment."
+                },
+                "isCurrent": {
+                  "type": "boolean",
+                  "description": "Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId)."
+                },
+                "providerMappings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "providerId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "providerName": {
+                        "type": "string"
+                      },
+                      "providerLeagueCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the league, such as nfl."
+                      },
+                      "providerSeasonId": {
+                        "type": "string",
+                        "description": "The provider's own id for the Season, as the sync asks the feed for it."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "providerId",
+                      "providerName",
+                      "providerLeagueCode",
+                      "providerSeasonId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A provider's id for one Season."
+                  },
+                  "description": "Each provider's id for it, by provider name."
+                },
+                "phases": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "phase": {
+                        "type": "string",
+                        "enum": [
+                          "PRESEASON",
+                          "REGULAR",
+                          "POSTSEASON_CONFERENCE",
+                          "POSTSEASON"
+                        ]
+                      },
+                      "isSynced": {
+                        "type": "boolean",
+                        "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "SCHEDULED",
+                          "IN_PROGRESS",
+                          "COMPLETED"
+                        ],
+                        "description": "How far the phase has got this Season."
+                      },
+                      "competitions": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "sportLeagueCompetitionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "description": "The competition definition it plays (SportLeagueCompetitionDefinitionDto)."
+                            },
+                            "code": {
+                              "type": "string",
+                              "description": "Its definition's code, such as REGULAR or CFP."
+                            },
+                            "orderIndex": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "Its definition's place in its phase."
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "SCHEDULED",
+                                "IN_PROGRESS",
+                                "COMPLETED"
+                              ],
+                              "description": "How far it has got this Season."
+                            },
+                            "championParticipantId": {
+                              "description": "Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.",
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "uuid"
+                            },
+                            "slots": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "slotDefinitionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+                                  },
+                                  "key": {
+                                    "type": "string",
+                                    "description": "Its definition's key."
+                                  },
+                                  "slotKind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "WEEK",
+                                      "PLAY_IN",
+                                      "ROUND_OF_64",
+                                      "ROUND_OF_32",
+                                      "ROUND_OF_16",
+                                      "QUARTERFINAL",
+                                      "SEMIFINAL",
+                                      "THIRD_PLACE",
+                                      "FINAL",
+                                      "TOURNAMENT"
+                                    ]
+                                  },
+                                  "weekNumber": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "name": {
+                                    "description": "Its definition's proper name; null when screens show the word for its kind.",
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "startsAt": {
+                                    "description": "The earliest start of its Games; null until the sync has matched one.",
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
+                                  "endsAt": {
+                                    "description": "The latest end of its Games; null until the sync has matched one.",
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "date-time"
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SCHEDULED",
+                                      "IN_PROGRESS",
+                                      "COMPLETED",
+                                      "CANCELLED"
+                                    ]
+                                  },
+                                  "seriesFormat": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SINGLE_GAME",
+                                      "BEST_OF",
+                                      "AGGREGATE"
+                                    ],
+                                    "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+                                  },
+                                  "seriesGames": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "pairing": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FIXED",
+                                      "RESEEDED"
+                                    ]
+                                  },
+                                  "isTestData": {
+                                    "type": "boolean",
+                                    "description": "A test slot: QA only, never read or written by the sync."
+                                  },
+                                  "label": {
+                                    "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "window": {
+                                    "description": "Its date window, set as data (#2012); null when it has none.",
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ],
+                                    "properties": {
+                                      "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "ISO 8601 datetime string."
+                                      },
+                                      "endsAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "Exclusive."
+                                      },
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "TENTATIVE",
+                                          "CONFIRMED"
+                                        ],
+                                        "description": "TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED."
+                                      }
+                                    },
+                                    "required": [
+                                      "startsAt",
+                                      "endsAt",
+                                      "status"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "sportEventId": {
+                                    "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "format": "uuid"
+                                  },
+                                  "takesTestEvent": {
+                                    "type": "boolean",
+                                    "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
+                                  },
+                                  "placedByWindow": {
+                                    "type": "boolean",
+                                    "description": "Whether the league's selected provider places its games by date window (DATE_WINDOW)."
+                                  },
+                                  "needsDates": {
+                                    "type": "boolean",
+                                    "description": "Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one)."
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "slotDefinitionId",
+                                  "key",
+                                  "slotKind",
+                                  "weekNumber",
+                                  "name",
+                                  "startsAt",
+                                  "endsAt",
+                                  "status",
+                                  "seriesFormat",
+                                  "seriesGames",
+                                  "pairing",
+                                  "isTestData",
+                                  "label",
+                                  "window",
+                                  "sportEventId",
+                                  "takesTestEvent",
+                                  "placedByWindow",
+                                  "needsDates"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One slot of one Season, as its Season lists it."
+                              },
+                              "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
+                            },
+                            "slotsNeedingDates": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "How many of its slots need dates (needsDates)."
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "sportLeagueCompetitionId",
+                            "code",
+                            "orderIndex",
+                            "status",
+                            "championParticipantId",
+                            "slots",
+                            "slotsNeedingDates"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One competition of one Season (#2153)."
+                        },
+                        "description": "By their order in the phase."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "phase",
+                      "isSynced",
+                      "status",
+                      "competitions"
+                    ],
+                    "additionalProperties": false,
                     "description": "One phase of one Season."
                   },
-                  "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
+                  "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON."
                 },
                 "slotsNeedingDates": {
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991,
-                  "description": "How many of its slots need dates (needsDates), across its phases."
+                  "description": "How many of its slots need dates (needsDates), across its competitions."
                 }
               },
               "required": [
@@ -56242,7 +57016,7 @@
             "type": "string",
             "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
           },
-          "sportLeaguePhaseSlotId": {
+          "sportLeagueCompetitionSlotId": {
             "type": "string",
             "format": "uuid",
             "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
@@ -56277,7 +57051,7 @@
                     "id": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                      "description": "The slot definition's id (SportLeagueCompetitionSlot)."
                     },
                     "key": {
                       "type": "string",
@@ -56315,19 +57089,30 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     },
-                    "sportLeaguePhaseId": {
+                    "sportLeagueCompetitionId": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "The phase the slot is in."
+                      "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+                    },
+                    "competitionCode": {
+                      "type": "string",
+                      "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+                    },
+                    "competitionOrderIndex": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "That competition's place in its phase."
                     },
                     "phase": {
                       "type": "string",
                       "enum": [
                         "PRESEASON",
                         "REGULAR",
+                        "POSTSEASON_CONFERENCE",
                         "POSTSEASON"
                       ],
-                      "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                      "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
                     },
                     "matchFormat": {
                       "type": "string",
@@ -56344,7 +57129,9 @@
                     "name",
                     "slotKind",
                     "weekNumber",
-                    "sportLeaguePhaseId",
+                    "sportLeagueCompetitionId",
+                    "competitionCode",
+                    "competitionOrderIndex",
                     "phase",
                     "matchFormat"
                   ],
@@ -57823,7 +58610,7 @@
           "id",
           "sportLeagueId",
           "sportLeagueName",
-          "sportLeaguePhaseSlotId",
+          "sportLeagueCompetitionSlotId",
           "template",
           "startsAtRound",
           "sortOrder",
@@ -57956,7 +58743,7 @@
                   "type": "string",
                   "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
                 },
-                "sportLeaguePhaseSlotId": {
+                "sportLeagueCompetitionSlotId": {
                   "type": "string",
                   "format": "uuid",
                   "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
@@ -57991,7 +58778,7 @@
                           "id": {
                             "type": "string",
                             "format": "uuid",
-                            "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                            "description": "The slot definition's id (SportLeagueCompetitionSlot)."
                           },
                           "key": {
                             "type": "string",
@@ -58029,19 +58816,30 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
                           },
-                          "sportLeaguePhaseId": {
+                          "sportLeagueCompetitionId": {
                             "type": "string",
                             "format": "uuid",
-                            "description": "The phase the slot is in."
+                            "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+                          },
+                          "competitionCode": {
+                            "type": "string",
+                            "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+                          },
+                          "competitionOrderIndex": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "That competition's place in its phase."
                           },
                           "phase": {
                             "type": "string",
                             "enum": [
                               "PRESEASON",
                               "REGULAR",
+                              "POSTSEASON_CONFERENCE",
                               "POSTSEASON"
                             ],
-                            "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                            "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
                           },
                           "matchFormat": {
                             "type": "string",
@@ -58058,7 +58856,9 @@
                           "name",
                           "slotKind",
                           "weekNumber",
-                          "sportLeaguePhaseId",
+                          "sportLeagueCompetitionId",
+                          "competitionCode",
+                          "competitionOrderIndex",
                           "phase",
                           "matchFormat"
                         ],
@@ -59537,7 +60337,7 @@
                 "id",
                 "sportLeagueId",
                 "sportLeagueName",
-                "sportLeaguePhaseSlotId",
+                "sportLeagueCompetitionSlotId",
                 "template",
                 "startsAtRound",
                 "sortOrder",
@@ -59691,7 +60491,7 @@
                       "type": "string",
                       "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
                     },
-                    "sportLeaguePhaseSlotId": {
+                    "sportLeagueCompetitionSlotId": {
                       "type": "string",
                       "format": "uuid",
                       "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
@@ -59726,7 +60526,7 @@
                               "id": {
                                 "type": "string",
                                 "format": "uuid",
-                                "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                                "description": "The slot definition's id (SportLeagueCompetitionSlot)."
                               },
                               "key": {
                                 "type": "string",
@@ -59764,19 +60564,30 @@
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
                               },
-                              "sportLeaguePhaseId": {
+                              "sportLeagueCompetitionId": {
                                 "type": "string",
                                 "format": "uuid",
-                                "description": "The phase the slot is in."
+                                "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+                              },
+                              "competitionCode": {
+                                "type": "string",
+                                "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+                              },
+                              "competitionOrderIndex": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991,
+                                "description": "That competition's place in its phase."
                               },
                               "phase": {
                                 "type": "string",
                                 "enum": [
                                   "PRESEASON",
                                   "REGULAR",
+                                  "POSTSEASON_CONFERENCE",
                                   "POSTSEASON"
                                 ],
-                                "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                                "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
                               },
                               "matchFormat": {
                                 "type": "string",
@@ -59793,7 +60604,9 @@
                               "name",
                               "slotKind",
                               "weekNumber",
-                              "sportLeaguePhaseId",
+                              "sportLeagueCompetitionId",
+                              "competitionCode",
+                              "competitionOrderIndex",
                               "phase",
                               "matchFormat"
                             ],
@@ -61272,7 +62085,7 @@
                     "id",
                     "sportLeagueId",
                     "sportLeagueName",
-                    "sportLeaguePhaseSlotId",
+                    "sportLeagueCompetitionSlotId",
                     "template",
                     "startsAtRound",
                     "sortOrder",
@@ -61463,7 +62276,7 @@
                         "type": "string",
                         "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
                       },
-                      "sportLeaguePhaseSlotId": {
+                      "sportLeagueCompetitionSlotId": {
                         "type": "string",
                         "format": "uuid",
                         "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
@@ -61498,7 +62311,7 @@
                                 "id": {
                                   "type": "string",
                                   "format": "uuid",
-                                  "description": "The slot definition's id (SportLeaguePhaseSlot)."
+                                  "description": "The slot definition's id (SportLeagueCompetitionSlot)."
                                 },
                                 "key": {
                                   "type": "string",
@@ -61536,19 +62349,30 @@
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991
                                 },
-                                "sportLeaguePhaseId": {
+                                "sportLeagueCompetitionId": {
                                   "type": "string",
                                   "format": "uuid",
-                                  "description": "The phase the slot is in."
+                                  "description": "The competition the slot is in (#2153); a template's slots all sit in one."
+                                },
+                                "competitionCode": {
+                                  "type": "string",
+                                  "description": "That competition's code, such as REGULAR or CFP; nothing parses it."
+                                },
+                                "competitionOrderIndex": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                  "description": "That competition's place in its phase."
                                 },
                                 "phase": {
                                   "type": "string",
                                   "enum": [
                                     "PRESEASON",
                                     "REGULAR",
+                                    "POSTSEASON_CONFERENCE",
                                     "POSTSEASON"
                                   ],
-                                  "description": "That phase's kind: PRESEASON, REGULAR or POSTSEASON."
+                                  "description": "Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON."
                                 },
                                 "matchFormat": {
                                   "type": "string",
@@ -61565,7 +62389,9 @@
                                 "name",
                                 "slotKind",
                                 "weekNumber",
-                                "sportLeaguePhaseId",
+                                "sportLeagueCompetitionId",
+                                "competitionCode",
+                                "competitionOrderIndex",
                                 "phase",
                                 "matchFormat"
                               ],
@@ -63044,7 +63870,7 @@
                       "id",
                       "sportLeagueId",
                       "sportLeagueName",
-                      "sportLeaguePhaseSlotId",
+                      "sportLeagueCompetitionSlotId",
                       "template",
                       "startsAtRound",
                       "sortOrder",
@@ -73193,13 +74019,13 @@
               "PROVIDER_LEAGUE_UNKNOWN",
               "SLOT_NAME_UNMATCHED",
               "SLOT_NAME_AMBIGUOUS",
-              "SLOT_SEASON_PHASE_MISSING",
+              "SLOT_SEASON_COMPETITION_MISSING",
               "SLOT_OUTSIDE_SEASON",
               "GAMES_UNPLACED",
               "SLOT_DATES_NEEDED",
               "FIELD_HAS_NO_ORDER"
             ],
-            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
+            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
           },
           "severity": {
             "type": "string",
@@ -73576,13 +74402,13 @@
                     "PROVIDER_LEAGUE_UNKNOWN",
                     "SLOT_NAME_UNMATCHED",
                     "SLOT_NAME_AMBIGUOUS",
-                    "SLOT_SEASON_PHASE_MISSING",
+                    "SLOT_SEASON_COMPETITION_MISSING",
                     "SLOT_OUTSIDE_SEASON",
                     "GAMES_UNPLACED",
                     "SLOT_DATES_NEEDED",
                     "FIELD_HAS_NO_ORDER"
                   ],
-                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
+                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
                 },
                 "severity": {
                   "type": "string",
@@ -73812,13 +74638,13 @@
                   "PROVIDER_LEAGUE_UNKNOWN",
                   "SLOT_NAME_UNMATCHED",
                   "SLOT_NAME_AMBIGUOUS",
-                  "SLOT_SEASON_PHASE_MISSING",
+                  "SLOT_SEASON_COMPETITION_MISSING",
                   "SLOT_OUTSIDE_SEASON",
                   "GAMES_UNPLACED",
                   "SLOT_DATES_NEEDED",
                   "FIELD_HAS_NO_ORDER"
                 ],
-                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
+                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
               },
               "severity": {
                 "type": "string",
@@ -83732,7 +84558,7 @@
         "tags": [
           "Contest Config Templates"
         ],
-        "description": "Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT) and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.",
+        "description": "Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT), all in one competition for ALL_LISTED and FROM_SLOT, since no contest crosses competitions (422 CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS), and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.",
         "requestBody": {
           "required": true,
           "content": {
@@ -87475,7 +88301,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.",
+        "description": "A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_COMPETITION_NOT_IN_SEASON when the current Season lacks the competition of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -87785,11 +88611,11 @@
     "/api/v1/sport-leagues/{sportLeagueId}/structure": {
       "get": {
         "operationId": "getSportLeagueStructure",
-        "summary": "Get a sport league's phase and slot definitions with their provider mappings",
+        "summary": "Get a sport league's phases, competitions and slot definitions with their provider mappings",
         "tags": [
           "Sport leagues"
         ],
-        "description": "The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its slot definitions in play order and each slot's provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.",
+        "description": "The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its competitions in order (#2153) and each competition's slot definitions in play order with their provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -87803,7 +88629,7 @@
         ],
         "responses": {
           "200": {
-            "description": "A sport league's phase and slot definitions, set by migration.",
+            "description": "A sport league's phase, competition and slot definitions, set by migration.",
             "content": {
               "application/json": {
                 "schema": {
@@ -87848,11 +88674,11 @@
     "/api/v1/sport-leagues/{sportLeagueId}/seasons": {
       "get": {
         "operationId": "listSportLeagueSeasons",
-        "summary": "List a sport league's Seasons with their provider ids, phases and slots",
+        "summary": "List a sport league's Seasons with their provider ids, phases, competitions and slots",
         "tags": [
           "Sport leagues"
         ],
-        "description": "Every Season of the sport league (#2003), latest first, each with whether it is current, each provider's id for it, and its phases and slots in play order, test slots included. Seasons are added by migration, so there is no write. What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. Any signed-in user may read it.",
+        "description": "Every Season of the sport league (#2003), latest first, each with whether it is current, each provider's id for it, and its phases with their status, each phase's competitions with their status and champion (#2153), and each competition's slots in play order, test slots included. Seasons are added by migration, so there is no write. What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. Any signed-in user may read it.",
         "parameters": [
           {
             "schema": {

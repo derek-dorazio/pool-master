@@ -57,13 +57,28 @@ export interface SportLeagueSlotDefinition {
   providerMappings: SlotProviderMappingDefinition[];
 }
 
-/** One phase definition, with its slots in play order. */
+/**
+ * One competition of a phase (#2153): what the phase's slots are played as. Most phases hold one,
+ * coded as the phase; NCAA Men's Football's POSTSEASON holds the CFP. No contest crosses
+ * competitions.
+ */
+export interface SportLeagueCompetitionDefinition {
+  id: string;
+  /** A readable key unique in the league (REGULAR, CFP); screens show it until a display key exists, nothing parses it. */
+  code: string;
+  /** Its place among its phase's competitions, from 1. */
+  orderIndex: number;
+  /** In play order. */
+  slots: SportLeagueSlotDefinition[];
+}
+
+/** One phase definition, with its competitions in order. */
 export interface SportLeaguePhaseDefinition {
   id: string;
   phase: LeaguePhase;
   /** Whether the league's sync reads the phase; an unsynced phase has no slots. */
   isSynced: boolean;
-  slots: SportLeagueSlotDefinition[];
+  competitions: SportLeagueCompetitionDefinition[];
 }
 
 export interface SportLeagueStructure {
@@ -76,7 +91,7 @@ const bySlotKind = compareByEnumOrder(SlotKindOrder);
 const byMatchType = compareByEnumOrder(SlotProviderMatchTypeOrder);
 
 /**
- * Slots in play order within a phase: by kind (weeks first, the final last), a week by its
+ * Slots in play order within a competition: by kind (weeks first, the final last), a week by its
  * number. Tournaments have no order of their own until a Season dates them (slice 6), so they
  * come by key, which keeps the list stable.
  */
@@ -89,6 +104,17 @@ export function compareSlotDefinitions(
     || left.key.localeCompare(right.key);
 }
 
+/** Where a slot sits in a Season's play (#2153): its phase, then its competition's place in that phase. */
+export interface SlotPlace {
+  phase: LeaguePhase;
+  competitionOrderIndex: number;
+}
+
+/** Phase order, then competition order within the phase: the one order of a league's competitions. */
+export function compareSlotPlaces(left: SlotPlace, right: SlotPlace): number {
+  return byPhase(left.phase, right.phase) || left.competitionOrderIndex - right.competitionOrderIndex;
+}
+
 /** Mappings by provider, then in the order the sync tries them, then by value. */
 function compareMappings(left: SlotProviderMappingDefinition, right: SlotProviderMappingDefinition): number {
   return left.providerName.localeCompare(right.providerName)
@@ -96,16 +122,24 @@ function compareMappings(left: SlotProviderMappingDefinition, right: SlotProvide
     || (left.providerValue ?? '').localeCompare(right.providerValue ?? '');
 }
 
-/** A league's structure in its one order: phases as a Season plays them, each one's slots in play order. */
+/**
+ * A league's structure in its one order: phases as a Season plays them, each one's competitions
+ * by their order, and each competition's slots in play order.
+ */
 export function orderSportLeagueStructure(phases: readonly SportLeaguePhaseDefinition[]): SportLeagueStructure {
   return {
     phases: [...phases]
       .sort((left, right) => byPhase(left.phase, right.phase))
       .map((phase) => ({
         ...phase,
-        slots: [...phase.slots]
-          .sort(compareSlotDefinitions)
-          .map((slot) => ({ ...slot, providerMappings: [...slot.providerMappings].sort(compareMappings) })),
+        competitions: [...phase.competitions]
+          .sort((left, right) => left.orderIndex - right.orderIndex)
+          .map((competition) => ({
+            ...competition,
+            slots: [...competition.slots]
+              .sort(compareSlotDefinitions)
+              .map((slot) => ({ ...slot, providerMappings: [...slot.providerMappings].sort(compareMappings) })),
+          })),
       })),
   };
 }

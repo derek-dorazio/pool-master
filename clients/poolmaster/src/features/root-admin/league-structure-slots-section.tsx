@@ -21,6 +21,10 @@ const slotColumns = [
     meta: { info: 'The phase the slot is in.', type: { kind: 'enum', order: LeaguePhaseOrder, label: (phase) => enumLabel('LeaguePhase', phase as LeaguePhase) } },
     cell: ({ getValue }) => enumLabel('LeaguePhase', getValue()),
   }),
+  columnHelper.accessor('competitionCode', {
+    header: 'Competition',
+    meta: { info: 'The competition of its phase the slot is in, by code. A contest covers slots of one competition only.', type: { kind: 'text' } },
+  }),
   columnHelper.accessor('slotKind', {
     header: 'Kind',
     meta: { info: 'What the slot is in its phase; with a week\'s number, its place in play.', type: { kind: 'enum', order: SlotKindOrder, label: (kind) => enumLabel('SlotKind', kind as SlotKind) } },

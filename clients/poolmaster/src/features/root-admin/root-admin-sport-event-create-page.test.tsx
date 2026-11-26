@@ -7,7 +7,7 @@ import type {
   CreateTestSlotRequest,
   SportLeaguePhaseDefinitionDto,
   SportLeagueSeasonDto,
-  SportLeagueSeasonPhaseSlotDto,
+  SportLeagueSeasonCompetitionSlotDto,
 } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventCreatePage } from './root-admin-sport-event-create-page';
@@ -51,7 +51,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function slot(id: string, overrides: Partial<SportLeagueSeasonPhaseSlotDto> = {}): SportLeagueSeasonPhaseSlotDto {
+function slot(id: string, overrides: Partial<SportLeagueSeasonCompetitionSlotDto> = {}): SportLeagueSeasonCompetitionSlotDto {
   return {
     id, slotDefinitionId: 'def-masters', key: 'MASTERS', slotKind: 'TOURNAMENT', weekNumber: null, name: 'The Masters',
     startsAt: '2026-04-09T12:00:00.000Z', endsAt: '2026-04-12T22:00:00.000Z', status: 'SCHEDULED',
@@ -59,10 +59,13 @@ function slot(id: string, overrides: Partial<SportLeagueSeasonPhaseSlotDto> = {}
   };
 }
 
-function season(id: string, isCurrent: boolean, slots: SportLeagueSeasonPhaseSlotDto[]): SportLeagueSeasonDto {
+function season(id: string, isCurrent: boolean, slots: SportLeagueSeasonCompetitionSlotDto[]): SportLeagueSeasonDto {
   return {
     id, name: id, championshipYear: 2026, startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-12-31T23:59:59.999Z',
-    isCurrent, providerMappings: [], phases: [{ id: `phase-${id}`, phase: 'REGULAR', isSynced: true, slots, slotsNeedingDates: 0 }], slotsNeedingDates: 0,
+    isCurrent, providerMappings: [], slotsNeedingDates: 0, phases: [{
+      id: `phase-${id}`, phase: 'REGULAR', isSynced: true, status: 'SCHEDULED',
+      competitions: [{ id: `competition-${id}`, sportLeagueCompetitionId: 'competition-def', code: 'REGULAR', orderIndex: 1, status: 'SCHEDULED', championParticipantId: null, slots, slotsNeedingDates: 0 }],
+    }],
   };
 }
 
@@ -77,8 +80,8 @@ const SEASONS = [
 
 const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [{
   id: 'phase-def', phase: 'REGULAR', isSynced: true,
-  slots: [{ id: 'def-masters', key: 'MASTERS', slotKind: 'TOURNAMENT', weekNumber: null, name: 'The Masters' }],
-} as SportLeaguePhaseDefinitionDto];
+  competitions: [{ id: 'competition-def', code: 'REGULAR', orderIndex: 1, slots: [{ id: 'def-masters', key: 'MASTERS', slotKind: 'TOURNAMENT', weekNumber: null, name: 'The Masters' }] }],
+} as unknown as SportLeaguePhaseDefinitionDto];
 
 function renderPage(
   entry = '/manage/sports/golf/events/new?sportLeagueId=league-1',
