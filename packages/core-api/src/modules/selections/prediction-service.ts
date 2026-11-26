@@ -59,11 +59,13 @@ import {
   hasSportEventStarted,
   teamOnMatchSide,
   MatchSide,
+  sideNumberOfMatchSide,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
   ContestEntryMatchPredictionChange,
   ContestEntryMatchPredictionRepository,
+  ContestEntryMatchPredictionSidedWrite,
   ContestEntryMatchPredictionWrite,
   ContestEntryRepository,
   ContestRepository,
@@ -241,7 +243,7 @@ const OPENED_CONTEST = { status: ContestStatus.OPEN, drawnAt: undefined } as con
 /** A change to a week's picks, with the picks that stand after it, which its status is judged on. */
 interface WeekChange {
   after: readonly WeekPrediction[];
-  saves: readonly ContestEntryMatchPredictionWrite[];
+  saves: readonly ContestEntryMatchPredictionSidedWrite[];
   clearedMatchIds: readonly string[];
   tiebreakerValue?: number | null;
 }
@@ -285,6 +287,21 @@ interface WeekContext extends WeekSetup {
   season: PredictionSeason | null;
   ownEntry: boolean;
   now: Date;
+}
+
+/**
+ * A pick with the number of the side it picks (#2046): the side its game's predicted sides put its
+ * team on, which in a bracket's later game the entry's earlier picks decide. A tie pick picks no side.
+ */
+function withPickedSide(pick: ContestEntryMatchPredictionWrite, sides: ReadonlyMap<string, PredictedSides>): ContestEntryMatchPredictionSidedWrite {
+  if (!isTeamChoice(pick)) return { ...pick, sideNumber: null };
+  const predicted = sides.get(pick.sportEventRoundMatchId);
+  const side = predicted?.home === pick.sportEventParticipantId ? MatchSide.HOME
+    : predicted?.away === pick.sportEventParticipantId ? MatchSide.AWAY
+      : null;
+  // A saved pick whose team its game does not offer is refused before it is written.
+  if (side === null) throw new Error(`Game ${pick.sportEventRoundMatchId} does not offer team ${pick.sportEventParticipantId}.`);
+  return { ...pick, sideNumber: sideNumberOfMatchSide(side) };
 }
 
 /**
@@ -398,7 +415,7 @@ export class PredictionService {
       }
       return {
         after: resolved.kept,
-        saves: input.picks,
+        saves: input.picks.map((pick) => withPickedSide(pick, resolved.sides)),
         clearedMatchIds: resolved.stranded.map((pick) => pick.sportEventRoundMatchId),
         tiebreakerValue: input.tiebreakerValue,
       };

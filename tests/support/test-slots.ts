@@ -25,6 +25,11 @@ function testDefinitionOf(row: { id: string; sportLeagueCompetitionId: string; c
 
 /** The key of the slot definition a test makes for a league that has none; a test data file names it. */
 export const TEST_DEFINITION_KEY = 'TEST_EVENT';
+/**
+ * The key of a test definition whose games can end level (`canEndTied`, #2046): a week of games
+ * with draws, beside a knockout on TEST_EVENT, whose level games a shoot-out decides.
+ */
+export const LEVEL_TEST_DEFINITION_KEY = 'TEST_WEEK';
 
 /** The league's first slot definition (by key), or its TEST_EVENT definition made now when it has none. */
 async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<TestDefinition> {
@@ -34,7 +39,7 @@ async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<Test
     select: DEFINITION_SELECT,
     orderBy: { key: 'asc' },
   });
-  return existing === null ? createTestDefinition(prisma, sportLeagueId) : testDefinitionOf(existing);
+  return existing === null ? createTestDefinition(prisma, sportLeagueId, TEST_DEFINITION_KEY) : testDefinitionOf(existing);
 }
 
 /**
@@ -42,25 +47,25 @@ async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<Test
  * the league has no definition for yet (a migration's league with no group-stage slots). A test
  * that makes one on a migration's league removes it afterwards (`removeTestDefinition`).
  */
-export async function withTestDefinition(prisma: Db, sportLeagueId: string): Promise<string> {
-  const existing = await prisma.sportLeagueCompetitionSlot.findFirst({ where: { sportLeagueId, key: TEST_DEFINITION_KEY }, select: { id: true } });
-  return (existing ?? await createTestDefinition(prisma, sportLeagueId)).id;
+export async function withTestDefinition(prisma: Db, sportLeagueId: string, key: typeof TEST_DEFINITION_KEY | typeof LEVEL_TEST_DEFINITION_KEY = TEST_DEFINITION_KEY): Promise<string> {
+  const existing = await prisma.sportLeagueCompetitionSlot.findFirst({ where: { sportLeagueId, key }, select: { id: true } });
+  return (existing ?? await createTestDefinition(prisma, sportLeagueId, key)).id;
 }
 
-/** Removes the league's TEST_EVENT definition and the test slots of it, once their events are gone. */
+/** Removes the league's test definitions and the test slots of them, once their events are gone. */
 export async function removeTestDefinition(prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot'>, sportLeagueId: string): Promise<void> {
-  const where = { sportLeagueId, key: TEST_DEFINITION_KEY };
+  const where = { sportLeagueId, key: { in: [TEST_DEFINITION_KEY, LEVEL_TEST_DEFINITION_KEY] } };
   await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { definition: where } });
   await prisma.sportLeagueCompetitionSlot.deleteMany({ where });
 }
 
-async function createTestDefinition(prisma: Db, sportLeagueId: string): Promise<TestDefinition> {
+async function createTestDefinition(prisma: Db, sportLeagueId: string, key: typeof TEST_DEFINITION_KEY | typeof LEVEL_TEST_DEFINITION_KEY): Promise<TestDefinition> {
   const competition = await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR' });
   return testDefinitionOf(await prisma.sportLeagueCompetitionSlot.create({
     data: {
       sportLeagueId,
       sportLeagueCompetitionId: competition.competitionId,
-      key: TEST_DEFINITION_KEY,
+      key,
       slotKind: 'TOURNAMENT',
       awardsTrophy: false,
       squaresEligible: true,
@@ -68,7 +73,7 @@ async function createTestDefinition(prisma: Db, sportLeagueId: string): Promise<
       seriesGames: 1,
       pairing: 'FIXED',
       matchFormat: 'HEAD_TO_HEAD',
-      canEndTied: false,
+      canEndTied: key === LEVEL_TEST_DEFINITION_KEY,
     },
     select: DEFINITION_SELECT,
   }));

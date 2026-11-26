@@ -133,7 +133,9 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === team), team).id;
     const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches;
     const final = expectDefined(bracket.find((match) => match.roundNumber === 4));
-    expect([final.homeSportEventParticipantId, final.winnerSide, final.homeScore, final.awayScore]).toEqual([rowOf('Oklahoma City Thunder'), 'HOME', 4, 3]);
+    // The file gives a series its winner but none of its Games, so the series has no score of
+    // Games won (#2046) until the file gives each Game (#2184).
+    expect([final.homeSportEventParticipantId, final.winnerSide, final.homeScore, final.awayScore]).toEqual([rowOf('Oklahoma City Thunder'), 'HOME', null, null]);
 
     // Loading the same file again changes nothing, the filled play-in places included.
     const again = await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.DRY_RUN });
@@ -190,7 +192,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     expect([settled.totalScore, settled.displayPosition]).toEqual([26, '1']);
   });
 
-  it('loads the played WNBA playoffs as three rounds named by the WNBA, Las Vegas sweeping Phoenix in the Finals', async () => {
+  it('loads the played WNBA playoffs as three rounds named by the WNBA, Las Vegas beating Phoenix in the Finals', async () => {
     const admin = await buildRegisteredUser({ displayName: 'WNBA Director' });
     await promoteToRootAdmin(admin);
 
@@ -203,7 +205,8 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const final = expectDefined(bracket.find((match) => match.roundNumber === 3));
     const winnerRowId = final.winnerSide === 'HOME' ? final.homeSportEventParticipantId : final.awaySportEventParticipantId;
     const winner = expectDefined(field.find((row) => row.id === winnerRowId));
-    expect([winner.participant.name, final.homeScore, final.awayScore]).toEqual(['Las Vegas Aces', 4, 0]);
+    // A series from the file has its winner but no score of Games won (#2046) until #2184.
+    expect([winner.participant.name, final.homeScore, final.awayScore]).toEqual(['Las Vegas Aces', null, null]);
     expect(bracket.every((match) => match.status === 'COMPLETED')).toBe(true);
   });
 

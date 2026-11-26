@@ -43,6 +43,8 @@ export class InMemoryGamePicks {
   readonly field = new Map<string, SportEventParticipant>();
   readonly participants = new Map<string, Participant>();
   readonly predictions = new Map<string, ContestEntryMatchPrediction>();
+  /** The side number each stored pick was written with (#2046), by prediction id; null for a tie pick. */
+  readonly pickedSideNumbers = new Map<string, number | null>();
   /** The background jobs each save wrote with its picks (#1466), as the adapter inserts them in its transaction. */
   readonly writtenJobs: BackgroundJobRequest[] = [];
   private sequence = 0;
@@ -218,10 +220,12 @@ export class InMemoryGamePicks {
           throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');
         }
         for (const matchId of clearedMatchIds) this.predictions.delete(key(contestEntryId, matchId));
-        for (const save of saves) {
+        for (const { sideNumber, ...save } of saves) {
           const existing = this.predictions.get(key(contestEntryId, save.sportEventRoundMatchId));
+          const id = existing?.id ?? `prediction-${contestEntryId}-${save.sportEventRoundMatchId}`;
+          this.pickedSideNumbers.set(id, sideNumber);
           this.predictions.set(key(contestEntryId, save.sportEventRoundMatchId), {
-            id: existing?.id ?? `prediction-${contestEntryId}-${save.sportEventRoundMatchId}`,
+            id,
             contestEntryId,
             ...save,
             pickedAt: when,

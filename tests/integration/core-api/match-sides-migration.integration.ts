@@ -43,9 +43,7 @@ const PUT_BACK = [
   // Game picks named their team.
   'ALTER TABLE "contest_entry_match_predictions" DROP CONSTRAINT "contest_entry_match_predictions_side_fkey", DROP CONSTRAINT "contest_entry_match_predictions_side_with_team_result"',
   'DROP INDEX "contest_entry_match_predictions_sport_event_round_match_id__idx"',
-  'ALTER TABLE "contest_entry_match_predictions" DROP COLUMN "sport_event_round_match_side_id", ADD COLUMN "sport_event_participant_id" UUID',
-  'ALTER TABLE "contest_entry_match_predictions" ADD CONSTRAINT "contest_entry_match_predictions_sport_event_participant_id_fkey" FOREIGN KEY ("sport_event_participant_id") REFERENCES "sport_event_participants"("id")',
-  'CREATE INDEX "contest_entry_match_predictions_sport_event_participant_id_idx" ON "contest_entry_match_predictions"("sport_event_participant_id")',
+  'ALTER TABLE "contest_entry_match_predictions" DROP COLUMN "sport_event_round_match_side_id"',
   'CREATE INDEX "contest_entry_match_predictions_sport_event_round_match_id_idx" ON "contest_entry_match_predictions"("sport_event_round_match_id")',
   // No side rows, no side results, and the keys they hang on.
   'DROP TABLE "sport_event_round_match_game_side_result_period_scores"',
@@ -170,7 +168,7 @@ function readMigrated(tx: Prisma.TransactionClient, sportEventId: string, contes
         },
       },
     }),
-    tx.contestEntryMatchPrediction.findMany({ where: { contestEntryId }, select: { sportEventRoundMatchId: true, predictedResult: true, sportEventRoundMatchSideId: true } }),
+    tx.contestEntryMatchPrediction.findMany({ where: { contestEntryId }, select: { sportEventRoundMatchId: true, predictedResult: true, sportEventParticipantId: true, sportEventRoundMatchSideId: true } }),
   ]);
 }
 
@@ -273,29 +271,34 @@ describe('the match sides migration', () => {
     ]);
   });
 
-  it('points each team pick at the side its team plays, keeps a tie pick with no side, and drops a team pick whose team plays neither side', async () => {
+  it('points each team pick at the side its team plays, or in a later game the side its team reaches through the games before, keeps each pick\'s team and a tie pick with no side, and drops a team pick whose team reaches neither side', async () => {
     const event = await eventWithField();
     const entry = await pickEmEntry(event.eventId);
     const { duke, houston, auburn, florida, kansas } = event.team;
-    const [first, second, third] = [randomUUID(), randomUUID(), randomUUID()];
+    const [first, second, third, final] = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
     const matches: OldMatch[] = [
-      { id: first, number: 1, home: duke, away: houston, neutral: false, status: 'SCHEDULED', winner: null, homeScore: null, awayScore: null },
-      { id: second, number: 2, home: auburn, away: florida, neutral: false, status: 'SCHEDULED', winner: null, homeScore: null, awayScore: null },
+      // The first game's winner goes to the final's away side, the second's to its home side.
+      { id: first, number: 1, home: duke, away: houston, neutral: false, status: 'SCHEDULED', winner: null, homeScore: null, awayScore: null, advancesTo: { id: final, side: 'AWAY' } },
+      { id: second, number: 2, home: auburn, away: florida, neutral: false, status: 'SCHEDULED', winner: null, homeScore: null, awayScore: null, advancesTo: { id: final, side: 'HOME' } },
       { id: third, number: 3, home: florida, away: auburn, neutral: false, status: 'SCHEDULED', winner: null, homeScore: null, awayScore: null },
+      { id: final, number: 4, home: null, away: null, neutral: true, status: 'SCHEDULED', winner: null, homeScore: null, awayScore: null },
     ];
     const picks: OldPick[] = [
       { matchId: first, result: 'TEAM', team: duke },
       { matchId: second, result: 'TIE', team: null },
       // Kansas plays neither side of the third game: no longer a pick of it.
       { matchId: third, result: 'TEAM', team: kansas },
+      // Florida reaches the final's home side through the second game, whose sides are not yet decided by results.
+      { matchId: final, result: 'TEAM', team: florida },
     ];
 
     const [migrated, predictions] = await migrate(event, matches, entry.id, picks);
 
     const sideOf = (matchId: string, sideNumber: number) => expectDefined(migrated.find((match) => match.id === matchId)?.sides.find((side) => side.sideNumber === sideNumber)).id;
     expect([...predictions].sort((one, two) => one.sportEventRoundMatchId.localeCompare(two.sportEventRoundMatchId))).toEqual([
-      { sportEventRoundMatchId: first, predictedResult: 'TEAM', sportEventRoundMatchSideId: sideOf(first, 2) },
-      { sportEventRoundMatchId: second, predictedResult: 'TIE', sportEventRoundMatchSideId: null },
+      { sportEventRoundMatchId: first, predictedResult: 'TEAM', sportEventParticipantId: duke, sportEventRoundMatchSideId: sideOf(first, 2) },
+      { sportEventRoundMatchId: second, predictedResult: 'TIE', sportEventParticipantId: null, sportEventRoundMatchSideId: null },
+      { sportEventRoundMatchId: final, predictedResult: 'TEAM', sportEventParticipantId: florida, sportEventRoundMatchSideId: sideOf(final, 2) },
     ].sort((one, two) => one.sportEventRoundMatchId.localeCompare(two.sportEventRoundMatchId)));
     // Rolled back: the old rows are gone with the transaction.
     expect(await getPrisma().sportEventRoundMatch.count({ where: { sportEventId: event.eventId } })).toBe(0);

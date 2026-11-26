@@ -170,28 +170,39 @@ JOIN "sport_event_round_match_sides" s ON s."sport_event_round_match_id" = m."id
 JOIN "sport_event_round_match_game_side_results" r ON r."sport_event_round_match_game_id" = g."id" AND r."sport_event_round_match_side_id" = s."id"
 WHERE m."home_shootout_score" IS NOT NULL AND m."away_shootout_score" IS NOT NULL;
 
--- A game pick names the side its team plays. A team pick whose team plays neither side is no
--- longer a pick of the game, and goes.
+-- Advancement names the next match's side by number: HOME was side 2, AWAY side 1.
+ALTER TABLE "sport_event_round_matches" ADD COLUMN "advances_to_side_number" INTEGER;
+
+UPDATE "sport_event_round_matches" SET "advances_to_side_number" = CASE "advances_to_side" WHEN 'HOME' THEN 2 ELSE 1 END
+WHERE "advances_to_side" IS NOT NULL;
+
+-- A game pick names the side it picks as well as its team. The side is the one the team plays on,
+-- or in a bracket's later game the one its team reaches: the side a game the team could come
+-- from advances into, through the games before. A team pick whose team reaches neither side (a
+-- reseeded round's game, which no game advances into, or a team out of the game) is no longer a
+-- pick of the game, and goes.
 ALTER TABLE "contest_entry_match_predictions" ADD COLUMN "sport_event_round_match_side_id" UUID;
 
+WITH RECURSIVE "reach" ("side_id", "match_id", "participant_id") AS (
+  SELECT s."id", s."sport_event_round_match_id", s."sport_event_participant_id"
+  FROM "sport_event_round_match_sides" s
+  WHERE s."sport_event_participant_id" IS NOT NULL
+  UNION
+  SELECT target."id", target."sport_event_round_match_id", r."participant_id"
+  FROM "reach" r
+  JOIN "sport_event_round_matches" feeder ON feeder."id" = r."match_id"
+  JOIN "sport_event_round_match_sides" target
+    ON target."sport_event_round_match_id" = feeder."advances_to_match_id" AND target."side_number" = feeder."advances_to_side_number"
+)
 UPDATE "contest_entry_match_predictions" p
-SET "sport_event_round_match_side_id" = s."id"
-FROM "sport_event_round_match_sides" s
-WHERE s."sport_event_round_match_id" = p."sport_event_round_match_id" AND s."sport_event_participant_id" = p."sport_event_participant_id";
+SET "sport_event_round_match_side_id" = r."side_id"
+FROM "reach" r
+WHERE r."match_id" = p."sport_event_round_match_id" AND r."participant_id" = p."sport_event_participant_id";
 
 DELETE FROM "contest_entry_match_predictions" WHERE "predicted_result" = 'TEAM' AND "sport_event_round_match_side_id" IS NULL;
 
--- DropForeignKey
-ALTER TABLE "contest_entry_match_predictions" DROP CONSTRAINT "contest_entry_match_predictions_sport_event_participant_id_fkey";
-
--- DropIndex
-DROP INDEX "contest_entry_match_predictions_sport_event_participant_id_idx";
-
 -- DropIndex
 DROP INDEX "contest_entry_match_predictions_sport_event_round_match_id_idx";
-
--- AlterTable: the old team check goes with its column.
-ALTER TABLE "contest_entry_match_predictions" DROP COLUMN "sport_event_participant_id";
 
 ALTER TABLE "contest_entry_match_predictions" ADD CONSTRAINT "contest_entry_match_predictions_side_with_team_result" CHECK (("predicted_result" = 'TEAM') = ("sport_event_round_match_side_id" IS NOT NULL));
 
@@ -200,12 +211,6 @@ CREATE INDEX "contest_entry_match_predictions_sport_event_round_match_id__idx" O
 
 -- AddForeignKey
 ALTER TABLE "contest_entry_match_predictions" ADD CONSTRAINT "contest_entry_match_predictions_side_fkey" FOREIGN KEY ("sport_event_round_match_id", "sport_event_round_match_side_id") REFERENCES "sport_event_round_match_sides"("sport_event_round_match_id", "id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- Advancement names the next match's side by number: HOME was side 2, AWAY side 1.
-ALTER TABLE "sport_event_round_matches" ADD COLUMN "advances_to_side_number" INTEGER;
-
-UPDATE "sport_event_round_matches" SET "advances_to_side_number" = CASE "advances_to_side" WHEN 'HOME' THEN 2 ELSE 1 END
-WHERE "advances_to_side" IS NOT NULL;
 
 -- DropForeignKey
 ALTER TABLE "sport_event_round_matches" DROP CONSTRAINT "sport_event_round_matches_away_sport_event_participant_id_fkey";

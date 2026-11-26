@@ -1840,6 +1840,10 @@ model ContestEntryMatchPrediction {
   contestEntryId          String                @map("contest_entry_id") @db.Uuid
   sportEventRoundMatchId  String                @map("sport_event_round_match_id") @db.Uuid
   predictedResult         PrismaPredictedResult @default(TEAM) @map("predicted_result")
+  /// The team picked to win; null for a tie pick. In a bracket a later game's side means "the
+  /// winner of the game before", which can win while the team picked is out, so the team is kept
+  /// with its side.
+  sportEventParticipantId String?               @map("sport_event_participant_id") @db.Uuid
   /// The match side picked to win (#2046); null for a tie pick, and only then (database check).
   /// Tie picks go in #2016, which makes it required.
   sportEventRoundMatchSideId String?            @map("sport_event_round_match_side_id") @db.Uuid
@@ -1850,11 +1854,13 @@ model ContestEntryMatchPrediction {
 
   contestEntry          ContestEntry           @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
   sportEventRoundMatch  SportEventRoundMatch   @relation(fields: [sportEventRoundMatchId], references: [id], onDelete: Restrict)
+  sportEventParticipant SportEventParticipant? @relation(fields: [sportEventParticipantId], references: [id], onDelete: Restrict)
   /// The composite key keeps the side one of the predicted match's own (#2046).
   side                  SportEventRoundMatchSide? @relation(fields: [sportEventRoundMatchId, sportEventRoundMatchSideId], references: [sportEventRoundMatchId, id], onDelete: Restrict, map: "contest_entry_match_predictions_side_fkey")
 
   @@unique([contestEntryId, sportEventRoundMatchId])
   @@index([sportEventRoundMatchId, sportEventRoundMatchSideId])
+  @@index([sportEventParticipantId])
   @@map("contest_entry_match_predictions")
 }
 
@@ -2251,6 +2257,7 @@ model SportEventParticipant {
   standing    SportEventParticipantStanding?
   raceResult  SportEventParticipantRaceResult?
   matchSides  SportEventRoundMatchSide[]
+  predictions ContestEntryMatchPrediction[]
 
   @@unique([sportEventId, participantId])
   /// The target of a match side's composite key, which keeps the side's team in its match's event (#2046).

@@ -6,9 +6,9 @@ import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
 // Matches written straight to the database (#2046), for seeds below the repositories: each with
 // its two sides and its Game 1, and a decided one with its outcomes and Game 1's side scores.
 
-/** A decided single-game match: the side number that won and each side's score, side 1's first. */
+/** A decided single-game match: the side number that won (null for a draw) and each side's score, side 1's first. */
 export interface MatchRowResult {
-  winnerSideNumber: number;
+  winnerSideNumber: number | null;
   scores: readonly [number, number];
   completedAt?: Date;
 }
@@ -62,6 +62,7 @@ export async function createMatchRow(prisma: PrismaClient, input: MatchRowCreate
   };
   const outcomeOf = (sideNumber: number) => {
     if (!result) return MatchSideOutcome.PENDING;
+    if (result.winnerSideNumber === null) return MatchSideOutcome.TIED;
     return result.winnerSideNumber === sideNumber ? MatchSideOutcome.WON : MatchSideOutcome.LOST;
   };
   const homeAwayOf = (sideNumber: number) => {
@@ -117,7 +118,7 @@ export async function createMatchRow(prisma: PrismaClient, input: MatchRowCreate
   return { ...match, sides: [...sides].sort((one, two) => one.sideNumber - two.sideNumber) };
 }
 
-/** A single-game match's COMPLETED result as the result writer writes it: each side's outcome and Game 1's side scores. */
+/** A single-game match's COMPLETED result as the result writer writes it: each side's outcome (both TIED in a draw) and Game 1's side scores. */
 export function singleGameResult(match: Pick<SportEventRoundMatch, 'id' | 'games'>, { winnerSideNumber, scores, completedAt = new Date() }: MatchRowResult): MatchResultWrite {
   const gameOne = gameNumbered(match, 1);
   if (!gameOne) throw new Error(`Match ${match.id} has no Game 1`);
@@ -126,7 +127,10 @@ export function singleGameResult(match: Pick<SportEventRoundMatch, 'id' | 'games
     status: MatchStatus.COMPLETED,
     ending: MatchEnding.PLAYED,
     completedAt,
-    outcomes: [1, 2].map((sideNumber) => ({ sideNumber, outcome: sideNumber === winnerSideNumber ? MatchSideOutcome.WON : MatchSideOutcome.LOST })),
+    outcomes: [1, 2].map((sideNumber) => ({
+      sideNumber,
+      outcome: winnerSideNumber === null ? MatchSideOutcome.TIED : sideNumber === winnerSideNumber ? MatchSideOutcome.WON : MatchSideOutcome.LOST,
+    })),
     gameOne: { gameId: gameOne.id, scores: scores.map((score, index) => ({ sideNumber: index + 1, score, shootoutScore: null })) },
   };
 }

@@ -162,6 +162,7 @@ async function submitHomePicks(entryId: string, sportEventId: string, games: rea
       sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(sideParticipantId(game, HOME_SIDE)),
+      sideNumber: HOME_SIDE,
       confidence: null,
     })),
     clearedMatchIds: [],

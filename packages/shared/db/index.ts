@@ -42,6 +42,7 @@ export type {
   ContestEntryMatchPredictionSaveResult,
   ContestEntrySeasonPrediction,
   ContestEntryMatchPredictionWrite,
+  ContestEntryMatchPredictionSidedWrite,
   ContestEntryTotals,
   ContestEntryWithSquad,
   LockedPredictionWeek,

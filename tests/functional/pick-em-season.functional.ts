@@ -1,4 +1,6 @@
 import { deleteTestSportLeagues } from '../support/test-slots';
+import { PrismaSportEventRoundMatchRepository } from '../../packages/core-api/src/adapters';
+import { singleGameResult } from '../support/match-rows';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -394,10 +396,8 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     // records a draw in a knockout), so neither pick on it scores; Purdue wins game 3; Colgate
     // wins game 4, 60 to 50, a total of 110.
     await week2.result(1, 'home');
-    await db.sportEventRoundMatch.update({
-      where: { id: week2.gameId(2) },
-      data: { status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 75, awayScore: 75 },
-    });
+    const matches = new PrismaSportEventRoundMatchRepository(db);
+    await matches.applyResult({ result: singleGameResult(expectDefined(await matches.findById(week2.gameId(2))), { winnerSideNumber: null, scores: [75, 75] }), sideFill: null, standings: [] });
     await week2.result(3, 'home');
     await week2.result(4, 'away', 60, 50);
     // Alice: Duke 1 + Purdue 3. Bob: Duke 4 + Colgate 2. Cara's draft week scores nothing.
