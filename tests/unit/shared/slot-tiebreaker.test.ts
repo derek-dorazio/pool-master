@@ -61,4 +61,9 @@ describe('hasTiebreakerGameStarted', () => {
   it('is false for a game with no start yet that has not been played', () => {
     expect(hasTiebreakerGameStarted(game('a', null), now)).toBe(false);
   });
+
+  it('is true for a postponed game whose first start has passed, until its new start is written, and false once it is', () => {
+    expect(hasTiebreakerGameStarted(game('a', '2027-01-10T19:00:00Z', { status: MatchStatus.POSTPONED }), now)).toBe(true);
+    expect(hasTiebreakerGameStarted(game('a', '2027-01-12T01:15:00Z', { status: MatchStatus.POSTPONED }), now)).toBe(false);
+  });
 });

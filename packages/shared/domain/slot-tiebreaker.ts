@@ -19,29 +19,26 @@ export interface SlotTiebreakerCandidate {
 }
 
 /** Whether the rule can choose the Game: it is still in the slot, not cancelled, and scheduled. */
-export function canBeSlotTiebreaker(game: SlotTiebreakerCandidate): boolean {
+export function canBeSlotTiebreaker<Game extends SlotTiebreakerCandidate>(game: Game): game is Game & { scheduledDate: Date } {
   return !game.moved && game.status !== MatchStatus.CANCELLED && game.scheduledDate !== null;
 }
 
 /** The slot's tiebreaker game by the rule: the latest start, ties to the lower Game id. Null while no Game can be one. */
 export function chooseSlotTiebreakerGame<Game extends SlotTiebreakerCandidate>(games: readonly Game[]): Game | null {
-  let chosen: Game | null = null;
+  let chosen: (Game & { scheduledDate: Date }) | null = null;
   for (const game of games) {
     if (!canBeSlotTiebreaker(game)) continue;
-    if (chosen === null) {
-      chosen = game;
-      continue;
-    }
-    const start = (game.scheduledDate as Date).getTime();
-    const chosenStart = (chosen.scheduledDate as Date).getTime();
-    if (start > chosenStart || (start === chosenStart && game.id < chosen.id)) chosen = game;
+    const start = game.scheduledDate.getTime();
+    if (chosen === null || start > chosen.scheduledDate.getTime() || (start === chosen.scheduledDate.getTime() && game.id < chosen.id)) chosen = game;
   }
   return chosen;
 }
 
 /**
  * Whether the tiebreaker game has started, after which its choice is fixed: it is under way or
- * played, or its scheduled start has passed.
+ * played, or its scheduled start has passed. A postponed game whose first start has passed counts
+ * as started until its new start is written, which goes through the bracket service and runs the
+ * rule again.
  */
 export function hasTiebreakerGameStarted(game: Pick<SlotTiebreakerCandidate, 'scheduledDate' | 'status'>, now: Date): boolean {
   if (!isMatchUnplayed(game.status)) return true;
