@@ -72,7 +72,7 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
     select: { providerLeague: { select: { code: true } } },
   });
   await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, selected?.providerLeague.code ?? (sportOf === Sport.SOCCER ? 'worldcup' : 'ncaab'));
-  await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [
+  await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [
     { roundNumber: 1, scheduledDate: new Date('2027-04-03T22:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-04-05T01:00:00.000Z') },
   ]);

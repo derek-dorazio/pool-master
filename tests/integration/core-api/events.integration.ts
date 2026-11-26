@@ -16,6 +16,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -488,8 +489,8 @@ describe('editing an event moves its round schedule with it', () => {
     });
     await prisma.sportEventRound.createMany({
       data: [
-        { sportEventId: eventId, roundNumber: 1, scheduledDate: new Date('2099-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2099-06-04T22:00:00.000Z') },
-        { sportEventId: eventId, roundNumber: 2, scheduledDate: new Date('2099-06-06T12:00:00.000Z') },
+        { sportEventId: eventId, sportEventSlotId: await oneEventSlotId(prisma, eventId), roundNumber: 1, scheduledDate: new Date('2099-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2099-06-04T22:00:00.000Z') },
+        { sportEventId: eventId, sportEventSlotId: await oneEventSlotId(prisma, eventId), roundNumber: 2, scheduledDate: new Date('2099-06-06T12:00:00.000Z') },
       ],
     });
 

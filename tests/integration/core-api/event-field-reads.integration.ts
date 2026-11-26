@@ -24,6 +24,7 @@ import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cach
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // An event's field against real Postgres (#1163): read in one repository call on one connection,
 // shared by every contest and pick screen on the event for 30 seconds, and read afresh once an
@@ -61,8 +62,8 @@ async function golfEvent() {
     },
   });
   const [round2, round1] = [
-    await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-05-08') } }),
-    await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-05-07') } }),
+    await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 2, scheduledDate: new Date('2026-05-08') } }),
+    await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: new Date('2026-05-07') } }),
   ];
   const golfer = async (name: string, seedNumber: number | null, affiliated: boolean) => {
     const participant = await prisma.participant.create({
@@ -232,8 +233,9 @@ describe('An event\'s field, for every scoring family', () => {
   it('gives each team the bracket matches naming it on either side, in match order, as the event\'s match read gives them', async () => {
     const prisma = getPrisma();
     const { event, field: [duke, unc, kansas, baylor] } = await eventWithField(Sport.BASKETBALL, ['Duke', 'UNC', 'Kansas', 'Baylor']);
+    const sportEventSlotId = await oneEventSlotId(prisma, event.id);
     const [round1, round2] = await Promise.all([1, 2].map((roundNumber) => prisma.sportEventRound.create({
-      data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(`2026-03-${19 + roundNumber}`) },
+      data: { sportEventId: event.id, sportEventSlotId, roundNumber, scheduledDate: new Date(`2026-03-${19 + roundNumber}`) },
     })));
     // Duke is away in match 1 and home in match 2; written match 2 first.
     const match2 = await prisma.sportEventRoundMatch.create({

@@ -28,6 +28,7 @@ import {
   type SportEventRoundMatch,
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
+import { weekRoundSlot } from './round-slots';
 import { expectDefined } from './expect-defined';
 import type { EventFieldReads } from '../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { fieldReads } from './field-reads';
@@ -93,6 +94,7 @@ export class InMemoryGamePicks {
       id: `game-${matchNumber}`,
       sportEventId,
       roundNumber: 1,
+      slot: weekRoundSlot(),
       matchNumber,
       homeSportEventParticipantId: home.id,
       awaySportEventParticipantId: away.id,

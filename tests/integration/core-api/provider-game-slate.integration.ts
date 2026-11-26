@@ -49,7 +49,7 @@ async function syncedWeek() {
     rounds: 1,
     autoLifecycleEnabled: true,
   });
-  await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
+  await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
   const field = { Bears: '', Lions: '', Packers: '', Vikings: '' };
   for (const name of ['Bears', 'Lions', 'Packers', 'Vikings'] as const) {
     // poolmaster-allow-query-in-loop: four test fixture teams
@@ -130,7 +130,7 @@ describe('Provider game slate (#1728)', () => {
         autoLifecycleEnabled: true,
     });
     const WEEK = 7 * 24 * HOUR;
-    await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: new Date(KICKOFF.getTime() + (roundNumber - 1) * WEEK) })));
+    await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: new Date(KICKOFF.getTime() + (roundNumber - 1) * WEEK) })));
     // One conference: seeds 2 to 7 play the Wild Card while the 1 seed waits in the reseeded round.
     const team = (seed: number) => `${externalId}-seed-${seed}`;
     const row = new Map<number, string>();

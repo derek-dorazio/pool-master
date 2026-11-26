@@ -39,6 +39,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -394,7 +395,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
     });
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
   }));
-  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: event.startDate } });
+  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
   const game = await prisma.sportEventRoundMatch.create({
     data: {
       sportEventId: event.id,

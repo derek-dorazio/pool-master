@@ -102,7 +102,7 @@ async function createPopulatedEvent() {
   const { rounds, field, tiers, valuations, golfRounds, golfStandings } = repos();
   const event = await createEvent();
   const [golfer] = await createParticipants(['Populated Golfer']);
-  await createRoundRows(rounds, event.id, [
+  await createRoundRows(getPrisma(), rounds, event, [
     { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
   ]);
@@ -232,10 +232,11 @@ describe('SportEventRoundRepository — writes', () => {
   it('creates every round in one write, keeping each round\'s own end time or none', async () => {
     const { rounds } = repos();
     const event = await createEvent();
+    const seasonSlotId = await linkTestSlot(getPrisma(), event);
 
     await rounds.createMany([
-      { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-04T22:00:00.000Z') },
-      { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
+      { sportEventId: event.id, seasonSlotId, roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-04T22:00:00.000Z') },
+      { sportEventId: event.id, seasonSlotId, roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
     ]);
 
     const created = await rounds.findBySportEvent(event.id);
@@ -245,10 +246,34 @@ describe('SportEventRoundRepository — writes', () => {
     ]);
   });
 
+  it('reads each round with the slot it is played in, its name and kind from the slot\'s definition', async () => {
+    const { rounds } = repos();
+    const event = await createEvent();
+    const seasonSlotId = await linkTestSlot(getPrisma(), event);
+    await rounds.createMany([{ sportEventId: event.id, seasonSlotId, roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
+
+    const [round] = await rounds.findBySportEvent(event.id);
+
+    expect(round.slot).toMatchObject({ seasonSlotId, slotKind: expect.any(String), seriesGames: 1, pairing: 'FIXED' });
+  });
+
+  it('refuses a round in a slot that is not one of its own event\'s: the composite key keeps every round in its event\'s slots', async () => {
+    const { rounds } = repos();
+    const [event, other] = [await createEvent('Round Slot Owner'), await createEvent('Round Slot Other')];
+    const othersSlotId = await linkTestSlot(getPrisma(), other);
+    const { id: othersEventSlotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: other.id }, select: { id: true } });
+
+    await expect(rounds.createMany([{ sportEventId: event.id, seasonSlotId: othersSlotId, roundNumber: 1, scheduledDate: event.startDate }])).rejects.toThrow();
+    await expect(getPrisma().sportEventRound.create({
+      data: { sportEventId: event.id, sportEventSlotId: othersEventSlotId, roundNumber: 1, scheduledDate: event.startDate },
+    })).rejects.toThrow();
+    await expect(rounds.findBySportEvent(event.id)).resolves.toEqual([]);
+  });
+
   it('reschedules all or none: an unknown round number leaves every round where it was', async () => {
     const { rounds } = repos();
     const event = await createEvent();
-    await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
+    await createRoundRows(getPrisma(), rounds, event, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
 
     await expect(rounds.reschedule(event.id, [
       { roundNumber: 1, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
@@ -262,7 +287,7 @@ describe('SportEventRoundRepository — writes', () => {
   it('finds or creates a round by number without disturbing an existing one', async () => {
     const { rounds } = repos();
     const event = await createEvent();
-    await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
+    await createRoundRows(getPrisma(), rounds, event, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
 
     const existing = await rounds.findOrCreate(event.id, 1);
     const created = await rounds.findOrCreate(event.id, 2);
@@ -276,7 +301,7 @@ describe('SportEventRoundRepository — writes', () => {
     const { rounds } = repos();
     const withRounds = await createEvent('With Rounds');
     const without = await createEvent('Without Rounds');
-    await createRoundRows(rounds, withRounds.id, [
+    await createRoundRows(getPrisma(), rounds, withRounds, [
       { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
       { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') },
     ]);
@@ -893,7 +918,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     const league = await syncedLeague(true);
     const event = await draftIn(league.id, 3);
     const { rounds } = repos();
-    await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: event.startDate }, { roundNumber: 2, scheduledDate: event.startDate }]);
+    await createRoundRows(getPrisma(), rounds, event, [{ roundNumber: 1, scheduledDate: event.startDate }, { roundNumber: 2, scheduledDate: event.startDate }]);
     const template = { coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
     await getPrisma().contestConfigTemplate.createMany({
       data: [

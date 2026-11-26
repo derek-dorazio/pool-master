@@ -11,7 +11,7 @@ import { fakeLogger } from '../../support/fake-logger';
 
 const EVENT_ID = 'event-1';
 /** A league that plays single games in every round. */
-const EVENT = { id: EVENT_ID, rounds: null, roundSeriesLengths: [] };
+const EVENT = { id: EVENT_ID, rounds: null, seriesGamesByRound: new Map() };
 
 function linked(match: SportEventRoundMatch, externalGameId: string | null, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
   return { ...match, externalGameId, ...overrides };
@@ -373,7 +373,7 @@ describe('writeGameScores', () => {
 
   describe('a best-of series (one match whose score is games won)', () => {
     /** A league whose two playoff rounds are both best of seven. */
-    const SEVENS = { id: EVENT_ID, rounds: 2, roundSeriesLengths: [7, 7] };
+    const SEVENS = { id: EVENT_ID, rounds: 2, seriesGamesByRound: new Map([[1, 7], [2, 7]]) };
 
     function series(): SportEventRoundMatch[] {
       return bracketMatches(EVENT_ID, [
@@ -458,7 +458,7 @@ describe('writeGameScores', () => {
       const { deps, recordResult } = writer(series());
       const shootout = { ...game('s2', 'BUF', 'KC', 1, 1), homeShootoutScore: 3, awayShootoutScore: 5 };
 
-      await writeGameScores(deps, { id: EVENT_ID, rounds: 2, roundSeriesLengths: [3, 1] }, [game('s1', 'KC', 'BUF', 2, 0), shootout]);
+      await writeGameScores(deps, { id: EVENT_ID, rounds: 2, seriesGamesByRound: new Map([[1, 3], [2, 1]]) }, [game('s1', 'KC', 'BUF', 2, 0), shootout]);
 
       expect(recordResult).toHaveBeenCalledWith(EVENT_ID, 1, { winnerSide: MatchSide.HOME, homeScore: 2, awayScore: 0 });
     });
@@ -468,7 +468,7 @@ describe('writeGameScores', () => {
       matches[2] = { ...matches[2], homeSportEventParticipantId: 'sep-DAL', awaySportEventParticipantId: 'sep-PHI' };
       const { deps, recordResult, applyLiveScores, logger } = writer(matches);
 
-      await writeGameScores(deps, { id: EVENT_ID, rounds: 2, roundSeriesLengths: [3, 3] }, [
+      await writeGameScores(deps, { id: EVENT_ID, rounds: 2, seriesGamesByRound: new Map([[1, 3], [2, 3]]) }, [
         game('s1', 'KC', 'BUF', 2, 0),
         game('s2', 'BUF', 'KC', 2, 0),
         game('s3', 'KC', 'BUF', 1, 0),
@@ -507,7 +507,7 @@ describe('writeGameScores', () => {
       const { deps, recordResult, linkGames } = writer(matches);
 
       // One length for two rounds: the final is a best of seven, the first round single games.
-      await writeGameScores(deps, { id: EVENT_ID, rounds: null, roundSeriesLengths: [7] }, [
+      await writeGameScores(deps, { id: EVENT_ID, rounds: null, seriesGamesByRound: new Map([[1, 7]]) }, [
         game('r1', 'KC', 'BUF', 20, 17),
         ...['f1', 'f2', 'f3', 'f4'].map((id) => game(id, 'PHI', 'KC', 3, 1)),
       ]);

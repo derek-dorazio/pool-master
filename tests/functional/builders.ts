@@ -329,7 +329,7 @@ export async function createTestEvent({ client, body }: { client: Client; body: 
     body: { slotDefinitionId, label: uniqueTestSlotLabel(), startsAt: startDate, ...(endDate !== undefined && { endsAt: endDate }) },
   });
   if (!slot.data) throw new Error(`Could not add a test slot: ${JSON.stringify(slot.error)}`);
-  const created = await createEvent({ client, body: { ...event, seasonSlotId: slot.data.slot.id } });
+  const created = await createEvent({ client, body: { ...event, seasonSlotIds: [slot.data.slot.id] } });
   if (rounds === undefined || !created.data || created.data.event.rounds === rounds) return created;
   const edited = await updateEvent({ client, path: { eventId: created.data.event.id }, body: { rounds } });
   if (!edited.data) throw new Error(`Could not set the test event's rounds: ${JSON.stringify(edited.error)}`);

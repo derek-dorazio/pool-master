@@ -71,7 +71,7 @@ describe('head to head', () => {
 
     const result = await writer.persist(
       { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportEventRoundMatch: { findMany } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
-      { id: 'event-1', rounds: null, roundSeriesLengths: [] },
+      { id: 'event-1', rounds: null, seriesGamesByRound: new Map() },
       { category: 'GAME', externalEventId: 'scope-1', games: [] },
     );
 

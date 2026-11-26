@@ -159,3 +159,19 @@ export async function deleteTestSportLeagues(
   await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: ids } } });
   await prisma.sportLeague.deleteMany({ where: { id: { in: ids } } });
 }
+
+/**
+ * The event's one SportEventSlot row (#2006), the slot a round written straight to the database is
+ * played in: the event's own, else a test slot linked now. Throws for an event of several slots.
+ */
+export async function oneEventSlotId(prisma: Parameters<typeof linkTestSlot>[0] & Pick<PrismaClient, 'sportEvent'>, sportEventId: string): Promise<string> {
+  const find = () => prisma.sportEventSlot.findMany({ where: { sportEventId }, select: { id: true } });
+  let slots = await find();
+  if (slots.length === 0) {
+    await linkTestSlot(prisma, await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { id: true, sportLeagueSeasonId: true, startDate: true } }));
+    slots = await find();
+  }
+  if (slots.length !== 1) throw new Error(`Sport event ${sportEventId} has ${String(slots.length)} slots, not one.`);
+  // poolmaster-allow-position: the event's one slot
+  return slots[0].id;
+}

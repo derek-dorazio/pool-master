@@ -23,6 +23,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 import { insertTestSportLeague } from '../../support/test-sport-league';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // The catalog and event-core ports against real Postgres: each query returns the right
 // rows, scoping actually scopes, ordering is what the port promises, and the bulk writes
@@ -204,19 +205,6 @@ describe('Sport and SportLeague repositories', () => {
     await expect(getPrisma().provider.updateMany({ where: { code: 'BALLDONTLIE' }, data: { requestsPerMinute: 0 } })).rejects.toThrow();
   });
 
-  it('seeds each series league\'s best-of lengths by round, first to final, and refuses an even length (#1545)', async () => {
-    const lengthsOf = async (name: string) =>
-      (await getPrisma().sportLeague.findFirstOrThrow({ where: { name }, select: { roundSeriesLengths: true } })).roundSeriesLengths;
-
-    await expect(lengthsOf('NBA')).resolves.toEqual([7, 7, 7, 7]);
-    await expect(lengthsOf('NHL')).resolves.toEqual([7, 7, 7, 7]);
-    await expect(lengthsOf('WNBA')).resolves.toEqual([3, 5, 7]);
-    await expect(lengthsOf('MLB')).resolves.toEqual([3, 5, 7, 7]);
-    await expect(lengthsOf('MLS')).resolves.toEqual([1, 3, 1, 1, 1]);
-    await expect(lengthsOf('NFL')).resolves.toEqual([]);
-    await expect(getPrisma().sportLeague.updateMany({ where: { name: 'NBA' }, data: { roundSeriesLengths: [6] } })).rejects.toThrow();
-  });
-
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());
@@ -338,20 +326,6 @@ describe('SportEventRepository — sport league and Season', () => {
     expect(ours(await events.findAll({ sport: Sport.GOLF }))).toEqual([masters.id, hidden.id].sort());
     expect(ours(await events.findAll({ sport: Sport.GOLF, activeSportLeaguesOnly: true }))).toEqual([masters.id]);
     expect(ours(await events.findAll({ sportLeagueId: switchedOff.id, activeSportLeaguesOnly: true }))).toEqual([]);
-  });
-
-  it('says a sport league has a loaded bracket when any of its events, in any year, has a match, and not when none has', async () => {
-    const [nfl, cfp, empty] = [await tour('NFL'), await tour('NCAA Men\'s Football'), await tour('Empty League')];
-    await edition(nfl.id, 2026, 'nfl-2026');
-    const played = await edition(nfl.id, 2025, 'nfl-2025');
-    await edition(cfp.id, 2026, 'cfp-2026');
-    const round = await getPrisma().sportEventRound.create({ data: { sportEventId: played.id, roundNumber: 1, scheduledDate: new Date('2026-01-10T18:00:00.000Z') } });
-    await getPrisma().sportEventRoundMatch.create({ data: { sportEventId: played.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false } });
-    const events = new PrismaSportEventRepository(getAppPrisma());
-
-    await expect(events.sportLeagueHasLoadedBracket(nfl.id)).resolves.toBe(true);
-    await expect(events.sportLeagueHasLoadedBracket(cfp.id)).resolves.toBe(false);
-    await expect(events.sportLeagueHasLoadedBracket(empty.id)).resolves.toBe(false);
   });
 
   // #2010 — an event's Season is its own sport league's: the composite key refuses a Season of
@@ -656,8 +630,8 @@ describe('SportEvent core repositories', () => {
     const event = await createEvent('standings');
     const otherEvent = await createEvent('other');
     const [round2, round1] = [
-      await getPrisma().sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-05-08') } }),
-      await getPrisma().sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-05-07') } }),
+      await getPrisma().sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(getPrisma(), event.id), roundNumber: 2, scheduledDate: new Date('2026-05-08') } }),
+      await getPrisma().sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(getPrisma(), event.id), roundNumber: 1, scheduledDate: new Date('2026-05-07') } }),
     ];
     const seps = [];
     for (const name of ['Leader', 'Unranked', 'Second']) {

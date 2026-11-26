@@ -150,7 +150,7 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     const sportLeagueSeasonId = await fixtureSeasonId(getPrisma(), tour.id, 2087);
     await slotsFor(tour, sportLeagueSeasonId, [expectDefined(linked), expectDefined(fresh)]);
     await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: [expectDefined(linked)] });
-    await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, expectDefined(fresh).startDate), name: expectDefined(fresh).name });
+    await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, expectDefined(fresh).startDate)], name: expectDefined(fresh).name });
 
     const result = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: [expectDefined(linked), expectDefined(fresh)] });
 
@@ -192,9 +192,9 @@ describe('Creating one event (#1253)', () => {
   it('creates a second event of the same name in a Season: nothing refuses a name twice, as no event is identified by its name', async () => {
     const tour = await golfTour();
     const { sportEvents } = integrationSportEventServices();
-    const first = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'The Batch Classic' });
+    const first = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'))], name: 'The Batch Classic' });
 
-    const second = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'The Batch Classic' });
+    const second = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z'))], name: 'The Batch Classic' });
 
     expect(second.event.id).not.toBe(first.event.id);
     expect(second.event.sportLeagueSeasonId).toBe(first.event.sportLeagueSeasonId);
@@ -207,8 +207,8 @@ describe('Editing an event\'s tiers (#1253)', () => {
   it('saves a tier list in the same number of queries however many tiers stay as they were', async () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
-    const six = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'Six Tier Open' });
-    const two = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'Two Tier Open' });
+    const six = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'))], name: 'Six Tier Open' });
+    const two = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z'))], name: 'Two Tier Open' });
     await tiers.replaceTiers({ sportEventId: two.event.id, tiers: [tier(1), tier(2)] });
 
     const counts = [];
@@ -226,7 +226,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
   it('reverses, renames, removes and adds tiers in one save, a new tier taking a removed one\'s number and kept tiers keeping their rows', async () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
-    const created = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'Shuffle Open' });
+    const created = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'))], name: 'Shuffle Open' });
     const before = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id } });
     const idByKey = new Map(before.map((row) => [row.tierKey, row.id]));
 

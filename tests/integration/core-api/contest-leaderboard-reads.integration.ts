@@ -25,6 +25,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
 import { sportRowKeys } from '../../support/sport-rows';
+import { oneEventSlotId } from '../../support/test-slots';
 
 // The roster contest leaderboard's reads against real Postgres (#1162): however many events the
 // contest has, its entries come from one query and its picks from one more, and only the picks
@@ -62,8 +63,9 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
       status,
     },
   });
+  const sportEventSlotId = await oneEventSlotId(prisma, event.id);
   const rounds = scoresToPar && await Promise.all([1, 2].map((roundNumber) => prisma.sportEventRound.create({
-    data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) },
+    data: { sportEventId: event.id, sportEventSlotId, roundNumber, scheduledDate: new Date(event.startDate.getTime() + (roundNumber - 1) * DAY) },
   })));
   const field = [];
   for (let golfer = 1; golfer <= PICKS_PER_EVENT; golfer++) {
