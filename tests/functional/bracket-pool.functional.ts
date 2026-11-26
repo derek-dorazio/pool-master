@@ -31,7 +31,7 @@ import {
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
-  MatchResultSource,
+  MatchSideOutcome,
   MatchSide,
   PickOutcome,
   PredictedResult,
@@ -62,6 +62,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import type { TestRoundSlot } from '../support/event-edition';
+import { bracketMatch, readHomeAway, resultBody } from '../support/match-requests';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -180,7 +181,7 @@ async function releasedKnockout(options: {
     client: a,
     path: { eventId },
     body: {
-      matches: options.matches.map((match) => ({
+      matches: options.matches.map((match) => bracketMatch({
         matchNumber: match.matchNumber,
         roundNumber: match.roundNumber,
         homeSportEventParticipantId: match.home === null ? null : row(match.home),
@@ -375,13 +376,15 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const win = async (place: MatchPlace, seed: number, winnerScore = 70, loserScore = 60) => {
       const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
       const game = expectDefined(bracket.find((match) => isAtPlace(match, place)));
-      const winnerSide = game.homeSportEventParticipantId === row(seed) ? MatchSide.HOME : MatchSide.AWAY;
-      expect([game.homeSportEventParticipantId, game.awaySportEventParticipantId]).toContain(row(seed));
+      const { homeSportEventParticipantId, awaySportEventParticipantId } = readHomeAway(game);
+      const winnerSide = homeSportEventParticipantId === row(seed) ? MatchSide.HOME : MatchSide.AWAY;
+      expect([homeSportEventParticipantId, awaySportEventParticipantId]).toContain(row(seed));
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
-      const result = await recordEventMatchResult({ client: a, path: { eventId, ...place }, body: { winnerSide, homeScore, awayScore } });
+      const result = await recordEventMatchResult({ client: a, path: { eventId, ...place }, body: resultBody({ winnerSide, homeScore, awayScore }) });
       expect([result.error, result.response?.status]).toEqual([undefined, 200]);
-      // A test event's result stands in for the feed's (#2074).
-      expect(result.data?.matches.find((match) => isAtPlace(match, place))?.resultSource).toBe(MatchResultSource.PROVIDER);
+      // The winner's side is WON on the match the API answers with, on sides (#2184).
+      const decided = expectDefined(result.data?.matches.find((match) => isAtPlace(match, place)));
+      expect([decided.isFinal, decided.sides.find((side) => side.sportEventParticipantId === row(seed))?.outcome]).toEqual([true, MatchSideOutcome.WON]);
     };
     // Round 1: chalk, except 9 beats 8 in game 2.
     for (const [place, seed] of [[at(1, 1), 1], [at(1, 2), 9], [at(1, 3), 5], [at(1, 4), 4], [at(1, 5), 6], [at(1, 6), 3], [at(1, 7), 7], [at(1, 8), 2]] as const) await win(place, seed);
@@ -517,15 +520,15 @@ describe('SDK Functional: a bracket pool (#721)', () => {
 
     // --- The playoff: Wild Card weekend, the admin's reseed, then the rest -----------------------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 1) }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } });
-    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 2) }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
-    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 3) }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 1) }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 }) });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 2) }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 }) });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 3) }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 }) });
     const proposal = expectMatchesSchema(SportEventRoundMatchupsResponseSchema, (await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } })).data).matches;
     expect((await setEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 }, body: { matches: proposal } })).response?.status).toBe(200);
     // The 1 beats the 7; the 5 beats the 3; the 5 wins the final 23 to 20.
-    await recordEventMatchResult({ client: a, path: { eventId, ...at(2, 1) }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 14 } });
-    await recordEventMatchResult({ client: a, path: { eventId, ...at(2, 2) }, body: { winnerSide: MatchSide.AWAY, homeScore: 16, awayScore: 19 } });
-    await recordEventMatchResult({ client: a, path: { eventId, ...at(3, 1) }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(2, 1) }, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 14 }) });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(2, 2) }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 16, awayScore: 19 }) });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(3, 1) }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 }) });
 
     // Alice: all three Wild Card games (3), the 1 and the 5 in the Divisional round (4), the 5 champion (4).
     // Bob: only the 3 (1) and the 1 in the Divisional round (2); his 2 and his champion 1 are busted.

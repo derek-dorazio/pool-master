@@ -112,7 +112,6 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     ...sportPlay(overrides.sport ?? 'GOLF'),
     // The API answers it from the sport's definition; a test of a shoot-out sets it.
     playsMatches: false,
-    shootout: false,
     isTestData: true,
     slots: [],
     autoLifecycleEnabled: true,

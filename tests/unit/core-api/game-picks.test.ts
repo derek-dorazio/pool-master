@@ -38,8 +38,6 @@ function game(matchNumber: number, overrides: HomeAwayFields & Partial<SportEven
     advancesToSide: null,
     regionLabel: null,
     homeSpread: null,
-
-    resultSource: null,
     completedAt: null,
     periodScores: [],
     createdAt: T0,

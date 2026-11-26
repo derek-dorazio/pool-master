@@ -2573,7 +2573,7 @@ export interface paths {
         get?: never;
         /**
          * Enter a match's result
-         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSideNumber with each side's score level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         put: operations["recordEventMatchResult"];
         post?: never;
@@ -9337,23 +9337,148 @@ export interface components {
          */
         MatchStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /**
-         * @description One side of a match: HOME is side 2 and AWAY side 1, the sides the sync placed the home and away teams on. On a neutral site HOME is the upper line of the bracket.
-         * @enum {string}
-         */
-        MatchSideDto: "HOME" | "AWAY";
-        /**
          * @description How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.
          * @enum {string}
          */
         MatchEndingDto: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
-        /** @description Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server. */
-        SportEventMatchPeriodScoreDto: {
-            /** @description 1 for the first period (quarter, in American football). */
+        /**
+         * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+         * @enum {string}
+         */
+        MatchSideOutcomeDto: "PENDING" | "WON" | "LOST" | "TIED";
+        /**
+         * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+         * @enum {string}
+         */
+        HomeAwayDto: "HOME" | "AWAY" | "NONE";
+        /** @description One side of a match (#2046). */
+        SportEventRoundMatchSideDto: {
+            /** @description The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway. */
+            sideNumber: number;
+            /**
+             * Format: uuid
+             * @description The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+             */
+            sportEventParticipantId: string | null;
+            /**
+             * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+             * @enum {string}
+             */
+            outcome: "PENDING" | "WON" | "LOST" | "TIED";
+            /** @description The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one. */
+            score: number | null;
+            /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it. */
+            spread: number | null;
+        };
+        /** @description One side's running score at the end of one period of play of a game (#772, #2046). */
+        GamePeriodScoreDto: {
+            /**
+             * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+             * @enum {string}
+             */
+            kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+            /** @description 1 for the first period of its kind. */
             periodNumber: number;
-            /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
-            homeScore: number;
-            /** @description The away side's score at the end of the period, earlier periods included. */
-            awayScore: number;
+            /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+            score: number;
+        };
+        /** @description One side's result in one game of a match (#2046). */
+        GameSideResultDto: {
+            /** @description The match side the result is for. */
+            sideNumber: number;
+            /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+            score: number | null;
+            /**
+             * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+             * @enum {string}
+             */
+            homeAway: "HOME" | "AWAY" | "NONE";
+            /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+            shootoutScore: number | null;
+            /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+            periodScores: {
+                /**
+                 * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                 * @enum {string}
+                 */
+                kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                /** @description 1 for the first period of its kind. */
+                periodNumber: number;
+                /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                score: number;
+            }[];
+        };
+        /** @description One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played. */
+        SportEventRoundMatchGameDto: {
+            /** @description 1 for a single game; a best-of series numbers its games in the order they are played. */
+            gameNumber: number;
+            /**
+             * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /** @description True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status. */
+            isFinal: boolean;
+            /**
+             * Format: date-time
+             * @description The game's start; null until it is announced.
+             */
+            scheduledDate: string | null;
+            /** @description Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in. */
+            sideResults: {
+                /** @description The match side the result is for. */
+                sideNumber: number;
+                /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+                score: number | null;
+                /**
+                 * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                 * @enum {string}
+                 */
+                homeAway: "HOME" | "AWAY" | "NONE";
+                /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+                shootoutScore: number | null;
+                /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+                periodScores: {
+                    /**
+                     * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                     * @enum {string}
+                     */
+                    kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                    /** @description 1 for the first period of its kind. */
+                    periodNumber: number;
+                    /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                    score: number;
+                }[];
+            }[];
+        };
+        /** @description Where a match's winner moves on to. */
+        MatchAdvancementDto: {
+            /**
+             * Format: uuid
+             * @description The match the winner moves on to.
+             */
+            matchId: string;
+            /** @description The side of that match the winner fills. */
+            sideNumber: number;
+        };
+        /** @description The team on one side of a match. */
+        MatchSideTeamDto: {
+            /** @description The side: 1 or 2. */
+            sideNumber: number;
+            /**
+             * Format: uuid
+             * @description A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
+             */
+            sportEventParticipantId: string | null;
+        };
+        /** @description One side's result in a match. */
+        MatchSideResultRequest: {
+            /** @description The side: 1 or 2. */
+            sideNumber: number;
+            /** @description The side's score (games won, for a series), or null with the other side's null too. */
+            score: number | null;
+            /** @description The side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the other side's for none. */
+            shootoutScore?: number | null;
         };
         /** @description What a game of a slot is played in (#2047), from its slot definition. */
         SlotPeriodsDto: {
@@ -9429,17 +9554,7 @@ export interface components {
             };
             /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
             matchNumber: number;
-            /**
-             * Format: uuid
-             * @description The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
-             */
-            homeSportEventParticipantId: string | null;
-            /**
-             * Format: uuid
-             * @description The field row on the away side; null until it is decided.
-             */
-            awaySportEventParticipantId: string | null;
-            /** @description True when neither side is at home: screens then say "vs" rather than "@". */
+            /** @description True when neither side is at home: screens then say "vs" rather than "at". */
             isNeutralSite: boolean;
             /**
              * Format: date-time
@@ -9456,55 +9571,88 @@ export interface components {
             /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
             isUnplayed: boolean;
             /**
-             * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
-             * @enum {string|null}
-             */
-            winnerSide: "HOME" | "AWAY" | null;
-            /** @description The home side's score; in a series, games won. */
-            homeScore: number | null;
-            /** @description The away side's score; in a series, games won. */
-            awayScore: number | null;
-            /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
-            homeShootoutScore: number | null;
-            /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
-            awayShootoutScore: number | null;
-            /**
              * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
              * @enum {string}
              */
             ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
             /**
-             * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
-             * @enum {string|null}
-             */
-            resultSource: "PROVIDER" | null;
-            /**
              * Format: date-time
              * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
              */
             completedAt: string | null;
-            /**
-             * Format: uuid
-             * @description The match the winner moves on to; null for the final.
-             */
-            advancesToMatchId: string | null;
-            /**
-             * @description The side of that match the winner fills; null for the final.
-             * @enum {string|null}
-             */
-            advancesToSide: "HOME" | "AWAY" | null;
+            /** @description Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds. */
+            advancesTo: {
+                /**
+                 * Format: uuid
+                 * @description The match the winner moves on to.
+                 */
+                matchId: string;
+                /** @description The side of that match the winner fills. */
+                sideNumber: number;
+            } | null;
             /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
             regionLabel: string | null;
-            /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
-            homeSpread: number | null;
-            /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
-            periodScores: {
-                /** @description 1 for the first period (quarter, in American football). */
-                periodNumber: number;
-                /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
-                homeScore: number;
-                /** @description The away side's score at the end of the period, earlier periods included. */
-                awayScore: number;
+            /** @description Side 1 then side 2. The winner is the side whose outcome is WON. */
+            sides: {
+                /** @description The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway. */
+                sideNumber: number;
+                /**
+                 * Format: uuid
+                 * @description The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+                 */
+                sportEventParticipantId: string | null;
+                /**
+                 * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+                 * @enum {string}
+                 */
+                outcome: "PENDING" | "WON" | "LOST" | "TIED";
+                /** @description The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one. */
+                score: number | null;
+                /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it. */
+                spread: number | null;
+            }[];
+            /** @description The match's games in game-number order: a single game has its game 1 from the moment the match is loaded. */
+            games: {
+                /** @description 1 for a single game; a best-of series numbers its games in the order they are played. */
+                gameNumber: number;
+                /**
+                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status. */
+                isFinal: boolean;
+                /**
+                 * Format: date-time
+                 * @description The game's start; null until it is announced.
+                 */
+                scheduledDate: string | null;
+                /** @description Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in. */
+                sideResults: {
+                    /** @description The match side the result is for. */
+                    sideNumber: number;
+                    /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+                    score: number | null;
+                    /**
+                     * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                     * @enum {string}
+                     */
+                    homeAway: "HOME" | "AWAY" | "NONE";
+                    /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+                    shootoutScore: number | null;
+                    /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+                    periodScores: {
+                        /**
+                         * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                         * @enum {string}
+                         */
+                        kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                        /** @description 1 for the first period of its kind. */
+                        periodNumber: number;
+                        /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                        score: number;
+                    }[];
+                }[];
             }[];
         };
         /** @description An event's bracket. */
@@ -9546,17 +9694,7 @@ export interface components {
                 };
                 /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
-                /**
-                 * Format: uuid
-                 * @description The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
-                 */
-                homeSportEventParticipantId: string | null;
-                /**
-                 * Format: uuid
-                 * @description The field row on the away side; null until it is decided.
-                 */
-                awaySportEventParticipantId: string | null;
-                /** @description True when neither side is at home: screens then say "vs" rather than "@". */
+                /** @description True when neither side is at home: screens then say "vs" rather than "at". */
                 isNeutralSite: boolean;
                 /**
                  * Format: date-time
@@ -9573,55 +9711,88 @@ export interface components {
                 /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
                 isUnplayed: boolean;
                 /**
-                 * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
-                 * @enum {string|null}
-                 */
-                winnerSide: "HOME" | "AWAY" | null;
-                /** @description The home side's score; in a series, games won. */
-                homeScore: number | null;
-                /** @description The away side's score; in a series, games won. */
-                awayScore: number | null;
-                /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
-                homeShootoutScore: number | null;
-                /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
-                awayShootoutScore: number | null;
-                /**
                  * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
                  * @enum {string}
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
-                 * @enum {string|null}
-                 */
-                resultSource: "PROVIDER" | null;
-                /**
                  * Format: date-time
                  * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
                  */
                 completedAt: string | null;
-                /**
-                 * Format: uuid
-                 * @description The match the winner moves on to; null for the final.
-                 */
-                advancesToMatchId: string | null;
-                /**
-                 * @description The side of that match the winner fills; null for the final.
-                 * @enum {string|null}
-                 */
-                advancesToSide: "HOME" | "AWAY" | null;
+                /** @description Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds. */
+                advancesTo: {
+                    /**
+                     * Format: uuid
+                     * @description The match the winner moves on to.
+                     */
+                    matchId: string;
+                    /** @description The side of that match the winner fills. */
+                    sideNumber: number;
+                } | null;
                 /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
                 regionLabel: string | null;
-                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
-                homeSpread: number | null;
-                /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
-                periodScores: {
-                    /** @description 1 for the first period (quarter, in American football). */
-                    periodNumber: number;
-                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
-                    homeScore: number;
-                    /** @description The away side's score at the end of the period, earlier periods included. */
-                    awayScore: number;
+                /** @description Side 1 then side 2. The winner is the side whose outcome is WON. */
+                sides: {
+                    /** @description The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway. */
+                    sideNumber: number;
+                    /**
+                     * Format: uuid
+                     * @description The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+                     */
+                    sportEventParticipantId: string | null;
+                    /**
+                     * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+                     * @enum {string}
+                     */
+                    outcome: "PENDING" | "WON" | "LOST" | "TIED";
+                    /** @description The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one. */
+                    score: number | null;
+                    /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it. */
+                    spread: number | null;
+                }[];
+                /** @description The match's games in game-number order: a single game has its game 1 from the moment the match is loaded. */
+                games: {
+                    /** @description 1 for a single game; a best-of series numbers its games in the order they are played. */
+                    gameNumber: number;
+                    /**
+                     * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /** @description True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status. */
+                    isFinal: boolean;
+                    /**
+                     * Format: date-time
+                     * @description The game's start; null until it is announced.
+                     */
+                    scheduledDate: string | null;
+                    /** @description Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in. */
+                    sideResults: {
+                        /** @description The match side the result is for. */
+                        sideNumber: number;
+                        /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+                        score: number | null;
+                        /**
+                         * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                         * @enum {string}
+                         */
+                        homeAway: "HOME" | "AWAY" | "NONE";
+                        /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+                        shootoutScore: number | null;
+                        /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+                        periodScores: {
+                            /**
+                             * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                             * @enum {string}
+                             */
+                            kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                            /** @description 1 for the first period of its kind. */
+                            periodNumber: number;
+                            /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                            score: number;
+                        }[];
+                    }[];
                 }[];
             }[];
         };
@@ -9664,17 +9835,7 @@ export interface components {
                 };
                 /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
-                /**
-                 * Format: uuid
-                 * @description The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
-                 */
-                homeSportEventParticipantId: string | null;
-                /**
-                 * Format: uuid
-                 * @description The field row on the away side; null until it is decided.
-                 */
-                awaySportEventParticipantId: string | null;
-                /** @description True when neither side is at home: screens then say "vs" rather than "@". */
+                /** @description True when neither side is at home: screens then say "vs" rather than "at". */
                 isNeutralSite: boolean;
                 /**
                  * Format: date-time
@@ -9691,55 +9852,88 @@ export interface components {
                 /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
                 isUnplayed: boolean;
                 /**
-                 * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
-                 * @enum {string|null}
-                 */
-                winnerSide: "HOME" | "AWAY" | null;
-                /** @description The home side's score; in a series, games won. */
-                homeScore: number | null;
-                /** @description The away side's score; in a series, games won. */
-                awayScore: number | null;
-                /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
-                homeShootoutScore: number | null;
-                /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
-                awayShootoutScore: number | null;
-                /**
                  * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
                  * @enum {string}
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
-                 * @enum {string|null}
-                 */
-                resultSource: "PROVIDER" | null;
-                /**
                  * Format: date-time
                  * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
                  */
                 completedAt: string | null;
-                /**
-                 * Format: uuid
-                 * @description The match the winner moves on to; null for the final.
-                 */
-                advancesToMatchId: string | null;
-                /**
-                 * @description The side of that match the winner fills; null for the final.
-                 * @enum {string|null}
-                 */
-                advancesToSide: "HOME" | "AWAY" | null;
+                /** @description Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds. */
+                advancesTo: {
+                    /**
+                     * Format: uuid
+                     * @description The match the winner moves on to.
+                     */
+                    matchId: string;
+                    /** @description The side of that match the winner fills. */
+                    sideNumber: number;
+                } | null;
                 /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
                 regionLabel: string | null;
-                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
-                homeSpread: number | null;
-                /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
-                periodScores: {
-                    /** @description 1 for the first period (quarter, in American football). */
-                    periodNumber: number;
-                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
-                    homeScore: number;
-                    /** @description The away side's score at the end of the period, earlier periods included. */
-                    awayScore: number;
+                /** @description Side 1 then side 2. The winner is the side whose outcome is WON. */
+                sides: {
+                    /** @description The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway. */
+                    sideNumber: number;
+                    /**
+                     * Format: uuid
+                     * @description The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+                     */
+                    sportEventParticipantId: string | null;
+                    /**
+                     * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+                     * @enum {string}
+                     */
+                    outcome: "PENDING" | "WON" | "LOST" | "TIED";
+                    /** @description The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one. */
+                    score: number | null;
+                    /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it. */
+                    spread: number | null;
+                }[];
+                /** @description The match's games in game-number order: a single game has its game 1 from the moment the match is loaded. */
+                games: {
+                    /** @description 1 for a single game; a best-of series numbers its games in the order they are played. */
+                    gameNumber: number;
+                    /**
+                     * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /** @description True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status. */
+                    isFinal: boolean;
+                    /**
+                     * Format: date-time
+                     * @description The game's start; null until it is announced.
+                     */
+                    scheduledDate: string | null;
+                    /** @description Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in. */
+                    sideResults: {
+                        /** @description The match side the result is for. */
+                        sideNumber: number;
+                        /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+                        score: number | null;
+                        /**
+                         * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                         * @enum {string}
+                         */
+                        homeAway: "HOME" | "AWAY" | "NONE";
+                        /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+                        shootoutScore: number | null;
+                        /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+                        periodScores: {
+                            /**
+                             * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                             * @enum {string}
+                             */
+                            kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                            /** @description 1 for the first period of its kind. */
+                            periodNumber: number;
+                            /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                            score: number;
+                        }[];
+                    }[];
                 }[];
             };
         };
@@ -9750,16 +9944,21 @@ export interface components {
                 roundNumber: number;
                 /** @description Unique within its round (#2161): the match's place in the round and its display order. */
                 matchNumber: number;
-                /**
-                 * Format: uuid
-                 * @description A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
-                 */
-                homeSportEventParticipantId: string | null;
-                /**
-                 * Format: uuid
-                 * @description A field row of the event, or null as for the home side.
-                 */
-                awaySportEventParticipantId: string | null;
+                /** @description Side 1 and side 2, once each. A synced game has its away team on side 1 and its home team on side 2. */
+                sides: {
+                    /** @description The side: 1 or 2. */
+                    sideNumber: number;
+                    /**
+                     * Format: uuid
+                     * @description A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
+                     */
+                    sportEventParticipantId: string | null;
+                    /**
+                     * @description Where the side plays game 1: NONE for both sides at a neutral site, else one HOME and one AWAY.
+                     * @enum {string}
+                     */
+                    homeAway: "HOME" | "AWAY" | "NONE";
+                }[];
                 isNeutralSite: boolean;
                 /** Format: date-time */
                 scheduledDate: string | null;
@@ -9769,11 +9968,8 @@ export interface components {
                     roundNumber: number;
                     /** @description A match of that round. */
                     matchNumber: number;
-                    /**
-                     * @description The side of that match the winner fills, which must not name a team.
-                     * @enum {string}
-                     */
-                    side: "HOME" | "AWAY";
+                    /** @description The side of that match the winner fills, which must not name a team. */
+                    sideNumber: number;
                 } | null;
                 /** @description The region or conference the match is played in; omitted or null for none. */
                 regionLabel?: string | null;
@@ -9781,40 +9977,38 @@ export interface components {
         };
         /** @description One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game. */
         UpdateSportEventRoundMatchRequest: {
-            /**
-             * Format: uuid
-             * @description Omitted keeps it; null empties the side. Only until the event is released.
-             */
-            homeSportEventParticipantId?: string | null;
-            /**
-             * Format: uuid
-             * @description Omitted keeps it; null empties the side. Only until the event is released.
-             */
-            awaySportEventParticipantId?: string | null;
+            /** @description Both sides' teams; omitted keeps them, and a null team empties its side. Only until the event is released. */
+            sides?: {
+                /** @description The side: 1 or 2. */
+                sideNumber: number;
+                /**
+                 * Format: uuid
+                 * @description A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
+                 */
+                sportEventParticipantId: string | null;
+            }[];
             isNeutralSite?: boolean;
             /**
              * Format: date-time
              * @description Omitted keeps it; null clears it.
              */
             scheduledDate?: string | null;
-            /** @description The points spread from the home team's side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game. */
-            homeSpread?: number | null;
+            /** @description The points spread on side 1, in half points (-3.5: side 1 favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game. */
+            spread?: number | null;
         };
         /** @description A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores. */
         RecordSportEventRoundMatchResultRequest: {
-            /**
-             * @description The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.
-             * @enum {string|null}
-             */
-            winnerSide: "HOME" | "AWAY" | null;
-            /** @description The home side's score (games won, for a series), or null with the away score null too. */
-            homeScore: number | null;
-            /** @description The away side's score, or null with the home score null too. */
-            awayScore: number | null;
-            /** @description The home side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side's for none. */
-            homeShootoutScore?: number | null;
-            /** @description The away side's kicks scored in a shoot-out; omitted or null with the home side's. */
-            awayShootoutScore?: number | null;
+            /** @description The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie. */
+            winnerSideNumber: number | null;
+            /** @description Side 1 and side 2, once each: both scores or neither. */
+            sides: {
+                /** @description The side: 1 or 2. */
+                sideNumber: number;
+                /** @description The side's score (games won, for a series), or null with the other side's null too. */
+                score: number | null;
+                /** @description The side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the other side's for none. */
+                shootoutScore?: number | null;
+            }[];
             /**
              * @description How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner's may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.
              * @enum {string}
@@ -9823,25 +10017,28 @@ export interface components {
         };
         /** @description Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score. */
         RecordSportEventMatchPeriodScoreRequest: {
-            /** @description The home side's score at the end of the period, earlier periods included. */
-            homeScore: number;
-            /** @description The away side's score at the end of the period, earlier periods included. */
-            awayScore: number;
+            /** @description Side 1 and side 2, once each. */
+            sides: {
+                /** @description The side: 1 or 2. */
+                sideNumber: number;
+                /** @description The side's score at the end of the period, earlier periods included. */
+                score: number;
+            }[];
         };
         /** @description Both sides of one match of a reseeded round. */
         RoundMatchupDto: {
             /** @description A match of the round, numbered within it. */
             matchNumber: number;
-            /**
-             * Format: uuid
-             * @description The field row on the home side.
-             */
-            homeSportEventParticipantId: string;
-            /**
-             * Format: uuid
-             * @description The field row on the away side.
-             */
-            awaySportEventParticipantId: string;
+            /** @description Side 1 and side 2, once each. */
+            sides: {
+                /** @description The side: 1 or 2. The better seed hosts, on side 2. */
+                sideNumber: number;
+                /**
+                 * Format: uuid
+                 * @description The field row on the side.
+                 */
+                sportEventParticipantId: string;
+            }[];
         };
         /** @description The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it. */
         SportEventRoundMatchupsResponse: {
@@ -9849,16 +10046,16 @@ export interface components {
             matches: {
                 /** @description A match of the round, numbered within it. */
                 matchNumber: number;
-                /**
-                 * Format: uuid
-                 * @description The field row on the home side.
-                 */
-                homeSportEventParticipantId: string;
-                /**
-                 * Format: uuid
-                 * @description The field row on the away side.
-                 */
-                awaySportEventParticipantId: string;
+                /** @description Side 1 and side 2, once each. */
+                sides: {
+                    /** @description The side: 1 or 2. The better seed hosts, on side 2. */
+                    sideNumber: number;
+                    /**
+                     * Format: uuid
+                     * @description The field row on the side.
+                     */
+                    sportEventParticipantId: string;
+                }[];
             }[];
         };
         /** @description A reseeded round's teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it. */
@@ -9867,16 +10064,16 @@ export interface components {
             matches: {
                 /** @description A match of the round, numbered within it. */
                 matchNumber: number;
-                /**
-                 * Format: uuid
-                 * @description The field row on the home side.
-                 */
-                homeSportEventParticipantId: string;
-                /**
-                 * Format: uuid
-                 * @description The field row on the away side.
-                 */
-                awaySportEventParticipantId: string;
+                /** @description Side 1 and side 2, once each. */
+                sides: {
+                    /** @description The side: 1 or 2. The better seed hosts, on side 2. */
+                    sideNumber: number;
+                    /**
+                     * Format: uuid
+                     * @description The field row on the side.
+                     */
+                    sportEventParticipantId: string;
+                }[];
             }[];
         };
         /** @description A provider's identifier for a participant — how synced data finds them. */
@@ -13423,8 +13620,6 @@ export interface components {
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
             /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
             playsMatches: boolean;
-            /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
-            shootout: boolean;
             /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
             isTestData: boolean;
             /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -13770,8 +13965,6 @@ export interface components {
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
                 /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
                 playsMatches: boolean;
-                /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
-                shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -14096,8 +14289,6 @@ export interface components {
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
                 /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
                 playsMatches: boolean;
-                /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
-                shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -21564,9 +21755,9 @@ export interface components {
         };
         /** @description A claimed box of the grid. A box not listed is empty. */
         SquaresBoxDto: {
-            /** @description The row position, 0 at the top. Rows are the away team's. */
+            /** @description The row position, 0 at the top. Rows are side 1's. */
             rowIndex: number;
-            /** @description The column position, 0 at the left. Columns are the home team's. */
+            /** @description The column position, 0 at the left. Columns are side 2's. */
             columnIndex: number;
             /**
              * Format: uuid
@@ -21578,9 +21769,9 @@ export interface components {
         };
         /** @description The digits drawn along the two sides of the grid. */
         SquaresDigitsDto: {
-            /** @description The away team's last digit at each row position, top first. */
+            /** @description Side 1's last digit at each row position, top first. */
             rowDigits: number[];
-            /** @description The home team's last digit at each column position, left first. */
+            /** @description Side 2's last digit at each column position, left first. */
             columnDigits: number[];
             /**
              * Format: date-time
@@ -21592,11 +21783,13 @@ export interface components {
         SquaresWinnerDto: {
             /** @description The scoring moment: 1 to the game's period count, the last being the final score, overtime included. */
             periodNumber: number;
-            homeScore: number;
-            awayScore: number;
-            /** @description The winning box's row: where the away score's last digit is. */
+            /** @description Side 1's score at that moment, whose last digit picks the row. */
+            rowScore: number;
+            /** @description Side 2's score at that moment, whose last digit picks the column. */
+            columnScore: number;
+            /** @description The winning box's row: where side 1's last digit is. */
             rowIndex: number;
-            /** @description The winning box's column: where the home score's last digit is. */
+            /** @description The winning box's column: where side 2's last digit is. */
             columnIndex: number;
             /**
              * Format: uuid
@@ -21678,17 +21871,7 @@ export interface components {
                 };
                 /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
-                /**
-                 * Format: uuid
-                 * @description The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
-                 */
-                homeSportEventParticipantId: string | null;
-                /**
-                 * Format: uuid
-                 * @description The field row on the away side; null until it is decided.
-                 */
-                awaySportEventParticipantId: string | null;
-                /** @description True when neither side is at home: screens then say "vs" rather than "@". */
+                /** @description True when neither side is at home: screens then say "vs" rather than "at". */
                 isNeutralSite: boolean;
                 /**
                  * Format: date-time
@@ -21705,70 +21888,103 @@ export interface components {
                 /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
                 isUnplayed: boolean;
                 /**
-                 * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
-                 * @enum {string|null}
-                 */
-                winnerSide: "HOME" | "AWAY" | null;
-                /** @description The home side's score; in a series, games won. */
-                homeScore: number | null;
-                /** @description The away side's score; in a series, games won. */
-                awayScore: number | null;
-                /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
-                homeShootoutScore: number | null;
-                /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
-                awayShootoutScore: number | null;
-                /**
                  * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
                  * @enum {string}
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
-                 * @enum {string|null}
-                 */
-                resultSource: "PROVIDER" | null;
-                /**
                  * Format: date-time
                  * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
                  */
                 completedAt: string | null;
-                /**
-                 * Format: uuid
-                 * @description The match the winner moves on to; null for the final.
-                 */
-                advancesToMatchId: string | null;
-                /**
-                 * @description The side of that match the winner fills; null for the final.
-                 * @enum {string|null}
-                 */
-                advancesToSide: "HOME" | "AWAY" | null;
+                /** @description Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds. */
+                advancesTo: {
+                    /**
+                     * Format: uuid
+                     * @description The match the winner moves on to.
+                     */
+                    matchId: string;
+                    /** @description The side of that match the winner fills. */
+                    sideNumber: number;
+                } | null;
                 /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
                 regionLabel: string | null;
-                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
-                homeSpread: number | null;
-                /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
-                periodScores: {
-                    /** @description 1 for the first period (quarter, in American football). */
-                    periodNumber: number;
-                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
-                    homeScore: number;
-                    /** @description The away side's score at the end of the period, earlier periods included. */
-                    awayScore: number;
+                /** @description Side 1 then side 2. The winner is the side whose outcome is WON. */
+                sides: {
+                    /** @description The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway. */
+                    sideNumber: number;
+                    /**
+                     * Format: uuid
+                     * @description The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+                     */
+                    sportEventParticipantId: string | null;
+                    /**
+                     * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+                     * @enum {string}
+                     */
+                    outcome: "PENDING" | "WON" | "LOST" | "TIED";
+                    /** @description The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one. */
+                    score: number | null;
+                    /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it. */
+                    spread: number | null;
+                }[];
+                /** @description The match's games in game-number order: a single game has its game 1 from the moment the match is loaded. */
+                games: {
+                    /** @description 1 for a single game; a best-of series numbers its games in the order they are played. */
+                    gameNumber: number;
+                    /**
+                     * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /** @description True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status. */
+                    isFinal: boolean;
+                    /**
+                     * Format: date-time
+                     * @description The game's start; null until it is announced.
+                     */
+                    scheduledDate: string | null;
+                    /** @description Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in. */
+                    sideResults: {
+                        /** @description The match side the result is for. */
+                        sideNumber: number;
+                        /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+                        score: number | null;
+                        /**
+                         * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                         * @enum {string}
+                         */
+                        homeAway: "HOME" | "AWAY" | "NONE";
+                        /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+                        shootoutScore: number | null;
+                        /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+                        periodScores: {
+                            /**
+                             * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                             * @enum {string}
+                             */
+                            kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                            /** @description 1 for the first period of its kind. */
+                            periodNumber: number;
+                            /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                            score: number;
+                        }[];
+                    }[];
                 }[];
             };
-            /** @description The home team, across the top; null until it is known. */
-            homeTeamName: string | null;
-            /** @description The away team, down the side; null until it is known. */
-            awayTeamName: string | null;
+            /** @description Side 1's team, down the side; null until it is known. */
+            rowTeamName: string | null;
+            /** @description Side 2's team, across the top; null until it is known. */
+            columnTeamName: string | null;
             /** @description Whether boxes can be claimed and cleared now: the contest is OPEN, its digits are not drawn and the game has not kicked off. */
             claimsOpen: boolean;
             /** @description Whether the digits can be drawn now: not drawn yet, the contest OPEN or live, and the first period's score not in. */
             drawOpen: boolean;
             /** @description Every claimed box, by row then column. */
             boxes: {
-                /** @description The row position, 0 at the top. Rows are the away team's. */
+                /** @description The row position, 0 at the top. Rows are side 1's. */
                 rowIndex: number;
-                /** @description The column position, 0 at the left. Columns are the home team's. */
+                /** @description The column position, 0 at the left. Columns are side 2's. */
                 columnIndex: number;
                 /**
                  * Format: uuid
@@ -21780,9 +21996,9 @@ export interface components {
             }[];
             /** @description The digits; null until they are drawn. */
             digits: {
-                /** @description The away team's last digit at each row position, top first. */
+                /** @description Side 1's last digit at each row position, top first. */
                 rowDigits: number[];
-                /** @description The home team's last digit at each column position, left first. */
+                /** @description Side 2's last digit at each column position, left first. */
                 columnDigits: number[];
                 /**
                  * Format: date-time
@@ -21794,11 +22010,13 @@ export interface components {
             winners: {
                 /** @description The scoring moment: 1 to the game's period count, the last being the final score, overtime included. */
                 periodNumber: number;
-                homeScore: number;
-                awayScore: number;
-                /** @description The winning box's row: where the away score's last digit is. */
+                /** @description Side 1's score at that moment, whose last digit picks the row. */
+                rowScore: number;
+                /** @description Side 2's score at that moment, whose last digit picks the column. */
+                columnScore: number;
+                /** @description The winning box's row: where side 1's last digit is. */
                 rowIndex: number;
-                /** @description The winning box's column: where the home score's last digit is. */
+                /** @description The winning box's column: where side 2's last digit is. */
                 columnIndex: number;
                 /**
                  * Format: uuid

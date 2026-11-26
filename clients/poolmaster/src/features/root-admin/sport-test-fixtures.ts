@@ -75,7 +75,6 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     ...sportPlay(overrides.sport ?? 'GOLF'),
     // The API answers it from the sport's definition; a test of a shoot-out sets it.
     playsMatches: false,
-    shootout: false,
     // A test event: one made on a test slot (#2004).
     isTestData: true,
     slots: [seasonSlotFixture()],

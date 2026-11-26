@@ -1,4 +1,3 @@
-import { MatchStatus } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   ContestEntryDetailResponse,
@@ -8,6 +7,7 @@ import type {
   SportEventParticipantDto,
   SurvivorLeaderboardResponse,
 } from '@/lib/api';
+import { homeAwayMatchFixture, type HomeAwayMatchFixture } from './match-fixtures';
 import { weekSlot } from './round-slots';
 
 /**
@@ -384,36 +384,18 @@ export function pickEmEventFieldFixture(sportEventId: string): SportEventPartici
  * Chiefs and the Cowboys at the Eagles on Sunday, the Bears at the Packers on Monday night.
  * `overrides` are applied by game number.
  */
-export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Partial<SportEventRoundMatchDto>>> = {}): SportEventRoundMatchDto[] {
-  const eventGame = (matchNumber: 1 | 2 | 3, kickoff: string, away: Team, home: Team): SportEventRoundMatchDto => ({
+export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, HomeAwayMatchFixture>> = {}): SportEventRoundMatchDto[] {
+  const eventGame = (matchNumber: 1 | 2 | 3, kickoff: string, away: Team, home: Team): SportEventRoundMatchDto => homeAwayMatchFixture({
     id: `week2-game-${String(matchNumber)}`,
     sportEventId: 'week-2',
     roundNumber: 1,
     slot: weekSlot(2),
     matchNumber,
-    homeSportEventParticipantId: home.sportEventParticipantId,
-    awaySportEventParticipantId: away.sportEventParticipantId,
+    home: home.sportEventParticipantId,
+    away: away.sportEventParticipantId,
     isNeutralSite: false,
     scheduledDate: kickoff,
-    status: 'SCHEDULED',
-    winnerSide: null,
-    homeScore: null,
-    awayScore: null,
-    homeShootoutScore: null,
-    awayShootoutScore: null,
-    ending: 'PLAYED',
-    resultSource: null,
-    completedAt: null,
-    advancesToMatchId: null,
-    advancesToSide: null,
-    regionLabel: null,
-    homeSpread: null,
-    periodScores: [],
     ...overrides[matchNumber],
-    // As the server's mapper reads it from the status.
-    isUnplayed: overrides[matchNumber]?.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides[matchNumber]?.status),
-    // The server's fact: decided once COMPLETED.
-    isFinal: overrides[matchNumber]?.isFinal ?? overrides[matchNumber]?.status === MatchStatus.COMPLETED,
   });
   return [
     eventGame(3, '2099-09-22T00:15:00.000Z', NFL_TEAMS.bears, NFL_TEAMS.packers),

@@ -942,1191 +942,2325 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "ncaam-duke-blue-devils",
-              "away": "ncaam-siena-saints",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-siena-saints",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-duke-blue-devils",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 71,
-                "awayScore": 65
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 65
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 71
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "ncaam-ohio-state-buckeyes",
-              "away": "ncaam-tcu-horned-frogs",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tcu-horned-frogs",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-ohio-state-buckeyes",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T16:15:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "East",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 64,
-                "awayScore": 66
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 66
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 64
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "ncaam-st-johns-red-storm",
-              "away": "ncaam-northern-iowa-panthers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-northern-iowa-panthers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-st-johns-red-storm",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T23:25:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 79,
-                "awayScore": 53
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 53
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 79
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "ncaam-kansas-jayhawks",
-              "away": "ncaam-california-baptist-lancers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-california-baptist-lancers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-kansas-jayhawks",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T02:07:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 68,
-                "awayScore": 60
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 60
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 68
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "ncaam-louisville-cardinals",
-              "away": "ncaam-south-florida-bulls",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-south-florida-bulls",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-louisville-cardinals",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T17:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 83,
-                "awayScore": 79
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 79
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 83
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "ncaam-michigan-state-spartans",
-              "away": "ncaam-north-dakota-state-bison",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-north-dakota-state-bison",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-michigan-state-spartans",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T20:27:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 92,
-                "awayScore": 67
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 67
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 92
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "ncaam-ucla-bruins",
-              "away": "ncaam-ucf-knights",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-ucf-knights",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-ucla-bruins",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T23:31:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 75,
-                "awayScore": 71
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 75
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "ncaam-uconn-huskies",
-              "away": "ncaam-furman-paladins",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-furman-paladins",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-uconn-huskies",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T02:31:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 82,
-                "awayScore": 71
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 82
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 1,
-              "home": "ncaam-florida-gators",
-              "away": "ncaam-prairie-view-am-panthers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-prairie-view-am-panthers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-florida-gators",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T01:25:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "South",
               "result": {
-                "winner": "HOME",
-                "homeScore": 114,
-                "awayScore": 55
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 55
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 114
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 1,
-              "home": "ncaam-clemson-tigers",
-              "away": "ncaam-iowa-hawkeyes",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-iowa-hawkeyes",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-clemson-tigers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T22:50:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 61,
-                "awayScore": 67
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 67
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 61
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 1,
-              "home": "ncaam-vanderbilt-commodores",
-              "away": "ncaam-mcneese-cowboys",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-mcneese-cowboys",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-vanderbilt-commodores",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T19:15:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "South",
               "result": {
-                "winner": "HOME",
-                "homeScore": 78,
-                "awayScore": 68
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 68
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 78
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 1,
-              "home": "ncaam-nebraska-cornhuskers",
-              "away": "ncaam-troy-trojans",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-troy-trojans",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-nebraska-cornhuskers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T16:40:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "HOME",
-                "homeScore": 76,
-                "awayScore": 47
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 47
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 76
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 1,
-              "home": "ncaam-north-carolina-tar-heels",
-              "away": "ncaam-vcu-rams",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-vcu-rams",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-north-carolina-tar-heels",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T22:50:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 78,
-                "awayScore": 82
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 82
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 78
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 1,
-              "home": "ncaam-illinois-fighting-illini",
-              "away": "ncaam-pennsylvania-quakers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-pennsylvania-quakers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-illinois-fighting-illini",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T01:55:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "HOME",
-                "homeScore": 105,
-                "awayScore": 70
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 70
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 105
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "ncaam-saint-marys-gaels",
-              "away": "ncaam-texas-am-aggies",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-texas-am-aggies",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-saint-marys-gaels",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T23:35:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 50,
-                "awayScore": 63
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 63
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 50
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "ncaam-houston-cougars",
-              "away": "ncaam-idaho-vandals",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-idaho-vandals",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-houston-cougars",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T02:15:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "HOME",
-                "homeScore": 78,
-                "awayScore": 47
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 47
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 78
+                  }
+                ]
               }
             },
             {
               "matchNumber": 17,
               "roundNumber": 1,
-              "home": "ncaam-arizona-wildcats",
-              "away": "ncaam-long-island-university-sharks",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-long-island-university-sharks",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-arizona-wildcats",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T17:35:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 92,
-                "awayScore": 58
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 58
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 92
+                  }
+                ]
               }
             },
             {
               "matchNumber": 18,
               "roundNumber": 1,
-              "home": "ncaam-villanova-wildcats",
-              "away": "ncaam-utah-state-aggies",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-utah-state-aggies",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-villanova-wildcats",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T20:10:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "West",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 76,
-                "awayScore": 86
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 86
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 76
+                  }
+                ]
               }
             },
             {
               "matchNumber": 19,
               "roundNumber": 1,
-              "home": "ncaam-wisconsin-badgers",
-              "away": "ncaam-high-point-panthers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-high-point-panthers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-wisconsin-badgers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T17:50:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 82,
-                "awayScore": 83
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 83
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 82
+                  }
+                ]
               }
             },
             {
               "matchNumber": 20,
               "roundNumber": 1,
-              "home": "ncaam-arkansas-razorbacks",
-              "away": "ncaam-hawaii-rainbow-warriors",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-hawaii-rainbow-warriors",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-arkansas-razorbacks",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T20:27:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 97,
-                "awayScore": 78
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 78
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 97
+                  }
+                ]
               }
             },
             {
               "matchNumber": 21,
               "roundNumber": 1,
-              "home": "ncaam-byu-cougars",
-              "away": "ncaam-texas-longhorns",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-texas-longhorns",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-byu-cougars",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T23:35:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 71,
-                "awayScore": 79
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 79
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 71
+                  }
+                ]
               }
             },
             {
               "matchNumber": 22,
               "roundNumber": 1,
-              "home": "ncaam-gonzaga-bulldogs",
-              "away": "ncaam-kennesaw-state-owls",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-kennesaw-state-owls",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-gonzaga-bulldogs",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T02:24:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 73,
-                "awayScore": 64
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 64
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 73
+                  }
+                ]
               }
             },
             {
               "matchNumber": 23,
               "roundNumber": 1,
-              "home": "ncaam-miami-hurricanes",
-              "away": "ncaam-missouri-tigers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-missouri-tigers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-miami-hurricanes",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T02:07:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 80,
-                "awayScore": 66
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 66
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 80
+                  }
+                ]
               }
             },
             {
               "matchNumber": 24,
               "roundNumber": 1,
-              "home": "ncaam-purdue-boilermakers",
-              "away": "ncaam-queens-university-royals",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-queens-university-royals",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-purdue-boilermakers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T23:35:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 104,
-                "awayScore": 71
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 104
+                  }
+                ]
               }
             },
             {
               "matchNumber": 25,
               "roundNumber": 1,
-              "home": "ncaam-michigan-wolverines",
-              "away": "ncaam-howard-bison",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-howard-bison",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-michigan-wolverines",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-19T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 101,
-                "awayScore": 80
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 80
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 101
+                  }
+                ]
               }
             },
             {
               "matchNumber": 26,
               "roundNumber": 1,
-              "home": "ncaam-georgia-bulldogs",
-              "away": "ncaam-saint-louis-billikens",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-saint-louis-billikens",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-georgia-bulldogs",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T02:10:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 77,
-                "awayScore": 102
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 102
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 77
+                  }
+                ]
               }
             },
             {
               "matchNumber": 27,
               "roundNumber": 1,
-              "home": "ncaam-texas-tech-red-raiders",
-              "away": "ncaam-akron-zips",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-akron-zips",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-texas-tech-red-raiders",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T16:40:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 91,
-                "awayScore": 71
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 91
+                  }
+                ]
               }
             },
             {
               "matchNumber": 28,
               "roundNumber": 1,
-              "home": "ncaam-alabama-crimson-tide",
-              "away": "ncaam-hofstra-pride",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-hofstra-pride",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-alabama-crimson-tide",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T19:15:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 90,
-                "awayScore": 70
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 70
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 90
+                  }
+                ]
               }
             },
             {
               "matchNumber": 29,
               "roundNumber": 1,
-              "home": "ncaam-tennessee-volunteers",
-              "away": "ncaam-miami-oh-redhawks",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-miami-oh-redhawks",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-tennessee-volunteers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T20:25:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 78,
-                "awayScore": 56
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 56
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 78
+                  }
+                ]
               }
             },
             {
               "matchNumber": 30,
               "roundNumber": 1,
-              "home": "ncaam-virginia-cavaliers",
-              "away": "ncaam-wright-state-raiders",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-wright-state-raiders",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-virginia-cavaliers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T17:50:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 82,
-                "awayScore": 73
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 73
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 82
+                  }
+                ]
               }
             },
             {
               "matchNumber": 31,
               "roundNumber": 1,
-              "home": "ncaam-kentucky-wildcats",
-              "away": "ncaam-santa-clara-broncos",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-santa-clara-broncos",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-kentucky-wildcats",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T16:15:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 89,
-                "awayScore": 84
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 84
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 89
+                  }
+                ]
               }
             },
             {
               "matchNumber": 32,
               "roundNumber": 1,
-              "home": "ncaam-iowa-state-cyclones",
-              "away": "ncaam-tennessee-state-tigers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaam-tennessee-state-tigers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaam-iowa-state-cyclones",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T19:07:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 108,
-                "awayScore": 74
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 74
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 108
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T21:25:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 81,
-                "awayScore": 58
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 58
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 81
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T21:15:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 67,
-                "awayScore": 65
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 65
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 67
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T18:45:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 69,
-                "awayScore": 77
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 77
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 69
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T01:10:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "East",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 57,
-                "awayScore": 73
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 73
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 57
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T23:10:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 72,
-                "awayScore": 73
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 73
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 72
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T01:02:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 72,
-                "awayScore": 74
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 74
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 72
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T00:15:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 55,
-                "awayScore": 76
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 76
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 55
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T22:10:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 57,
-                "awayScore": 88
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 88
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 57
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T00:11:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 78,
-                "awayScore": 66
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 66
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 78
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T01:45:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "West",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 88,
-                "awayScore": 94
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 94
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 88
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T23:10:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 74,
-                "awayScore": 68
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 68
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 74
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T16:10:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "West",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 69,
-                "awayScore": 79
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 79
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 69
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T16:10:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 95,
-                "awayScore": 72
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 72
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 95
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T02:08:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 65,
-                "awayScore": 90
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 90
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 65
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T22:10:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 79,
-                "awayScore": 72
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 72
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 79
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T18:45:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 63,
-                "awayScore": 82
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 82
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 63
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-27T23:10:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "HOME",
-                "homeScore": 80,
-                "awayScore": 75
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 75
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 80
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T01:55:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "East",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 63,
-                "awayScore": 67
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 67
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 63
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-26T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "South",
               "result": {
-                "winner": "HOME",
-                "homeScore": 77,
-                "awayScore": 71
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 77
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-27T02:05:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "HOME",
-                "homeScore": 65,
-                "awayScore": 55
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 55
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 65
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-27T02:06:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 109,
-                "awayScore": 88
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 88
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 109
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-26T23:10:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "West",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 77,
-                "awayScore": 79
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 79
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 77
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-27T23:35:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 90,
-                "awayScore": 77
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 77
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 90
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T02:35:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 76,
-                "awayScore": 62
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 62
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 76
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-29T21:05:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "East",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 72,
-                "awayScore": 73
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 73
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 72
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T22:09:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "South",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 59,
-                "awayScore": 71
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 59
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-29T00:59:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "West",
               "result": {
-                "winner": "HOME",
-                "homeScore": 79,
-                "awayScore": 64
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 64
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 79
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-29T18:15:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Midwest",
               "result": {
-                "winner": "HOME",
-                "homeScore": 95,
-                "awayScore": 62
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 62
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 95
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-04-04T22:09:00Z",
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 71,
-                "awayScore": 62
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 62
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 71
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-04-05T01:19:00Z",
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 73,
-                "awayScore": 91
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 91
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 73
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 6,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-04-07T00:50:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 63,
-                "awayScore": 69
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 69
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 63
+                  }
+                ]
               }
             }
           ]
@@ -2946,1191 +4080,2325 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "ncaaw-uconn-huskies",
-              "away": "ncaaw-utsa-roadrunners",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-utsa-roadrunners",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-uconn-huskies",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 90,
-                "awayScore": 52
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 52
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 90
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "ncaaw-iowa-state-cyclones",
-              "away": "ncaaw-syracuse-orange",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-syracuse-orange",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-iowa-state-cyclones",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T21:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 63,
-                "awayScore": 72
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 72
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 63
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "ncaaw-maryland-terrapins",
-              "away": "ncaaw-murray-state-racers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-murray-state-racers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-maryland-terrapins",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T19:07:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 99,
-                "awayScore": 67
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 67
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 99
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "ncaaw-north-carolina-tar-heels",
-              "away": "ncaaw-western-illinois-leathernecks",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-western-illinois-leathernecks",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-north-carolina-tar-heels",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T21:39:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 82,
-                "awayScore": 51
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 51
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 82
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "ncaaw-notre-dame-fighting-irish",
-              "away": "ncaaw-fairfield-stags",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-fairfield-stags",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-notre-dame-fighting-irish",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T18:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 79,
-                "awayScore": 60
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 60
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 79
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "ncaaw-ohio-state-buckeyes",
-              "away": "ncaaw-howard-bison",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-howard-bison",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-ohio-state-buckeyes",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T15:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 75,
-                "awayScore": 54
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 54
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 75
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "ncaaw-illinois-fighting-illini",
-              "away": "ncaaw-colorado-buffaloes",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-colorado-buffaloes",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-illinois-fighting-illini",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T01:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 66,
-                "awayScore": 57
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 57
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 66
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "ncaaw-vanderbilt-commodores",
-              "away": "ncaaw-high-point-panthers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-high-point-panthers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-vanderbilt-commodores",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T23:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 102,
-                "awayScore": 61
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 61
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 102
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 1,
-              "home": "ncaaw-south-carolina-gamecocks",
-              "away": "ncaaw-southern-jaguars",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-southern-jaguars",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-south-carolina-gamecocks",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T17:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 103,
-                "awayScore": 34
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 34
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 103
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 1,
-              "home": "ncaaw-clemson-tigers",
-              "away": "ncaaw-usc-trojans",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-usc-trojans",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-clemson-tigers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T19:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 67,
-                "awayScore": 71
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 67
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 1,
-              "home": "ncaaw-michigan-state-spartans",
-              "away": "ncaaw-colorado-state-rams",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-colorado-state-rams",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-michigan-state-spartans",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 65,
-                "awayScore": 62
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 62
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 65
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 1,
-              "home": "ncaaw-oklahoma-sooners",
-              "away": "ncaaw-idaho-vandals",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-idaho-vandals",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-oklahoma-sooners",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T02:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 89,
-                "awayScore": 59
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 59
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 89
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 1,
-              "home": "ncaaw-washington-huskies",
-              "away": "ncaaw-south-dakota-state-jackrabbits",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-south-dakota-state-jackrabbits",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-washington-huskies",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T18:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 72,
-                "awayScore": 54
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 54
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 72
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 1,
-              "home": "ncaaw-tcu-horned-frogs",
-              "away": "ncaaw-uc-san-diego-tritons",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-uc-san-diego-tritons",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-tcu-horned-frogs",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 86,
-                "awayScore": 40
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 40
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 86
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "ncaaw-georgia-lady-bulldogs",
-              "away": "ncaaw-virginia-cavaliers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-virginia-cavaliers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-georgia-lady-bulldogs",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T17:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 73,
-                "awayScore": 82
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 82
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 73
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "ncaaw-iowa-hawkeyes",
-              "away": "ncaaw-fairleigh-dickinson-knights",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-fairleigh-dickinson-knights",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-iowa-hawkeyes",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T20:27:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 58,
-                "awayScore": 48
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 48
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 58
+                  }
+                ]
               }
             },
             {
               "matchNumber": 17,
               "roundNumber": 1,
-              "home": "ncaaw-ucla-bruins",
-              "away": "ncaaw-california-baptist-lancers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-california-baptist-lancers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-ucla-bruins",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-22T02:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 96,
-                "awayScore": 43
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 43
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 96
+                  }
+                ]
               }
             },
             {
               "matchNumber": 18,
               "roundNumber": 1,
-              "home": "ncaaw-oklahoma-state-cowgirls",
-              "away": "ncaaw-princeton-tigers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-princeton-tigers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-oklahoma-state-cowgirls",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 9,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 82,
-                "awayScore": 68
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 68
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 82
+                  }
+                ]
               }
             },
             {
               "matchNumber": 19,
               "roundNumber": 1,
-              "home": "ncaaw-ole-miss-rebels",
-              "away": "ncaaw-gonzaga-bulldogs",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-gonzaga-bulldogs",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-ole-miss-rebels",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T19:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 81,
-                "awayScore": 66
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 66
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 81
+                  }
+                ]
               }
             },
             {
               "matchNumber": 20,
               "roundNumber": 1,
-              "home": "ncaaw-minnesota-golden-gophers",
-              "away": "ncaaw-green-bay-phoenix",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-green-bay-phoenix",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-minnesota-golden-gophers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T22:05:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 10,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 75,
-                "awayScore": 58
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 58
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 75
+                  }
+                ]
               }
             },
             {
               "matchNumber": 21,
               "roundNumber": 1,
-              "home": "ncaaw-baylor-bears",
-              "away": "ncaaw-nebraska-cornhuskers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-nebraska-cornhuskers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-baylor-bears",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T18:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 67,
-                "awayScore": 62
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 62
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 67
+                  }
+                ]
               }
             },
             {
               "matchNumber": 22,
               "roundNumber": 1,
-              "home": "ncaaw-duke-blue-devils",
-              "away": "ncaaw-charleston-cougars",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-charleston-cougars",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-duke-blue-devils",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T15:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 11,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 81,
-                "awayScore": 64
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 64
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 81
+                  }
+                ]
               }
             },
             {
               "matchNumber": 23,
               "roundNumber": 1,
-              "home": "ncaaw-texas-tech-lady-raiders",
-              "away": "ncaaw-villanova-wildcats",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-villanova-wildcats",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-texas-tech-lady-raiders",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T00:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 57,
-                "awayScore": 52
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 52
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 57
+                  }
+                ]
               }
             },
             {
               "matchNumber": 24,
               "roundNumber": 1,
-              "home": "ncaaw-lsu-tigers",
-              "away": "ncaaw-jacksonville-dolphins",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-jacksonville-dolphins",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-lsu-tigers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T22:07:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 12,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 116,
-                "awayScore": 58
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 58
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 116
+                  }
+                ]
               }
             },
             {
               "matchNumber": 25,
               "roundNumber": 1,
-              "home": "ncaaw-texas-longhorns",
-              "away": "ncaaw-missouri-state-lady-bears",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-missouri-state-lady-bears",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-texas-longhorns",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T20:07:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 87,
-                "awayScore": 45
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 45
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 87
+                  }
+                ]
               }
             },
             {
               "matchNumber": 26,
               "roundNumber": 1,
-              "home": "ncaaw-oregon-ducks",
-              "away": "ncaaw-virginia-tech-hokies",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-virginia-tech-hokies",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-oregon-ducks",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-20T17:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 13,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 70,
-                "awayScore": 60
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 60
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 70
+                  }
+                ]
               }
             },
             {
               "matchNumber": 27,
               "roundNumber": 1,
-              "home": "ncaaw-kentucky-wildcats",
-              "away": "ncaaw-james-madison-dukes",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-james-madison-dukes",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-kentucky-wildcats",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T18:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 71,
-                "awayScore": 56
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 56
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 71
+                  }
+                ]
               }
             },
             {
               "matchNumber": 28,
               "roundNumber": 1,
-              "home": "ncaaw-west-virginia-mountaineers",
-              "away": "ncaaw-miami-oh-redhawks",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-miami-oh-redhawks",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-west-virginia-mountaineers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T21:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 14,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 82,
-                "awayScore": 54
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 54
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 82
+                  }
+                ]
               }
             },
             {
               "matchNumber": 29,
               "roundNumber": 1,
-              "home": "ncaaw-alabama-crimson-tide",
-              "away": "ncaaw-rhode-island-rams",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-rhode-island-rams",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-alabama-crimson-tide",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T18:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 68,
-                "awayScore": 55
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 55
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 68
+                  }
+                ]
               }
             },
             {
               "matchNumber": 30,
               "roundNumber": 1,
-              "home": "ncaaw-louisville-cardinals",
-              "away": "ncaaw-vermont-catamounts",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-vermont-catamounts",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-louisville-cardinals",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-21T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 15,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 72,
-                "awayScore": 52
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 52
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 72
+                  }
+                ]
               }
             },
             {
               "matchNumber": 31,
               "roundNumber": 1,
-              "home": "ncaaw-nc-state-wolfpack",
-              "away": "ncaaw-tennessee-lady-volunteers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-tennessee-lady-volunteers",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-nc-state-wolfpack",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-21T00:07:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 76,
-                "awayScore": 61
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 61
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 76
+                  }
+                ]
               }
             },
             {
               "matchNumber": 32,
               "roundNumber": 1,
-              "home": "ncaaw-michigan-wolverines",
-              "away": "ncaaw-holy-cross-crusaders",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ncaaw-holy-cross-crusaders",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ncaaw-michigan-wolverines",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-20T21:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 16,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 83,
-                "awayScore": 48
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 48
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 83
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-23T22:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 98,
-                "awayScore": 45
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 45
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 98
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 66,
-                "awayScore": 74
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 74
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 66
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 83,
-                "awayScore": 73
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 73
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 83
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T23:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 57,
-                "awayScore": 75
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 75
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 57
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-24T00:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 101,
-                "awayScore": 61
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 61
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 101
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T00:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 71,
-                "awayScore": 77
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 77
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 71
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T02:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 59,
-                "awayScore": 62
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 62
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 59
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T18:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 83,
-                "awayScore": 75
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 75
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 83
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-24T02:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 87,
-                "awayScore": 68
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 68
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 87
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T18:07:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 63,
-                "awayScore": 65
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 65
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 63
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T20:07:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 46,
-                "awayScore": 69
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 69
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 46
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 6,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 47,
-                "awayScore": 101
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 101
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 47
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-22T22:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 100,
-                "awayScore": 58
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 58
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 100
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T21:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 7,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 74,
-                "awayScore": 73
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 73
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 74
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-23T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 68,
-                "awayScore": 69
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 69
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 68
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-22T17:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 8,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 63,
-                "awayScore": 92
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 92
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 63
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-27T21:15:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 63,
-                "awayScore": 42
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 42
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 63
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-27T18:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 67,
-                "awayScore": 64
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 64
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 67
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T21:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 94,
-                "awayScore": 68
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 68
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 94
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 79,
-                "awayScore": 69
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 69
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 79
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-27T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 80,
-                "awayScore": 56
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 56
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 80
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T02:12:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 87,
-                "awayScore": 85
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 85
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 87
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 76,
-                "awayScore": 54
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 54
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 76
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-28T16:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 52,
-                "awayScore": 71
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 71
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 52
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-29T17:00:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Fort Worth 1",
               "result": {
-                "winner": "HOME",
-                "homeScore": 70,
-                "awayScore": 52
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 52
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 70
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-31T01:20:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Sacramento 4",
               "result": {
-                "winner": "HOME",
-                "homeScore": 78,
-                "awayScore": 52
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 52
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 78
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-29T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Sacramento 2",
               "result": {
-                "winner": "HOME",
-                "homeScore": 70,
-                "awayScore": 58
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 58
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 70
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-03-30T23:00:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Fort Worth 3",
               "result": {
-                "winner": "HOME",
-                "homeScore": 77,
-                "awayScore": 41
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 41
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 77
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-04-03T23:00:00Z",
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 62,
-                "awayScore": 48
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 48
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 62
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-04-04T01:40:00Z",
               "advancesTo": {
                 "roundNumber": 6,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 44,
-                "awayScore": 51
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 51
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 44
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 6,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-04-05T19:30:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 51,
-                "awayScore": 79
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 79
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 51
+                  }
+                ]
               }
             }
           ]

@@ -75,7 +75,18 @@
     "loadedParticipantCount": "#2047 (10f): participantCount, counted on each read",
     "GOLF_HOLES_PER_ROUND": "#2047 (10f): the round's slot periods",
     "HOLES_IN_ROUND": "#2047 (10f): the round's slot periods",
-    "oddsSourceEventId": "#2047 (10f): the provider participant's typed odds"
+    "oddsSourceEventId": "#2047 (10f): the provider participant's typed odds",
+    "homeSportEventParticipantId": "#2184 (10e-web): the match's sides, side 1 and side 2",
+    "awaySportEventParticipantId": "#2184 (10e-web): the match's sides, side 1 and side 2",
+    "advancesToSide": "#2184 (10e-web): advancesTo, the next match and its side number",
+    "homeShootoutScore": "#2184 (10e-web): each Game side result's shootoutScore; the provider adapter's game update moves to sides with #2182",
+    "awayShootoutScore": "#2184 (10e-web): each Game side result's shootoutScore; the provider adapter's game update moves to sides with #2182",
+    "resultSource": "#2184 (10e-web): gone; the feed is the only source of a result",
+    "MatchResultSource": "#2184 (10e-web): gone; the feed is the only source of a result",
+    "toMatchResultInput": "#2184 (10e-web): result routes take sides, no translation",
+    "toPeriodScoreInput": "#2184 (10e-web): result routes take sides, no translation",
+    "homeTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side",
+    "awayTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -151,5 +162,16 @@
   "loadedParticipantCount": 0,
   "GOLF_HOLES_PER_ROUND": 0,
   "HOLES_IN_ROUND": 0,
-  "oddsSourceEventId": 0
+  "oddsSourceEventId": 0,
+  "homeSportEventParticipantId": 0,
+  "awaySportEventParticipantId": 0,
+  "advancesToSide": 0,
+  "homeShootoutScore": 6,
+  "awayShootoutScore": 5,
+  "resultSource": 0,
+  "MatchResultSource": 0,
+  "toMatchResultInput": 0,
+  "toPeriodScoreInput": 0,
+  "homeTeamName": 0,
+  "awayTeamName": 0
 }

@@ -26,6 +26,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
+import { withHomeAwayRead } from '../support/match-requests';
 
 // The 2026 US Open men's and women's singles end to end over HTTP (#704): the test seed loads each
 // 128-player draw into the ATP and the WTA, its qualifiers in the draw from the start, and plays
@@ -76,7 +77,7 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
     for (const entry of draw.field) {
       entry.player = expectDefined(tagged(entry.player));
     }
-    for (const match of draw.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+    for (const match of draw.matches ?? []) match.sides = match.sides.map((side) => ({ ...side, player: tagged(side.player) }));
   }
   return file;
 }
@@ -128,7 +129,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
       expect(field.filter((row) => row.seedNumber !== null)).toHaveLength(seeded);
       expect(field.filter((row) => row.seedNumber === null)).toHaveLength(128 - seeded);
 
-      const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches;
+      const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches.map(withHomeAwayRead);
       expect(bracket).toHaveLength(127);
       expect(bracket.every((match) => match.status === 'COMPLETED')).toBe(true);
       // Each quarter of the draw is a region through the quarterfinals; the semifinals and final carry none.
@@ -145,7 +146,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
 
     // The men's two retirements keep the sets finished and how the match ended.
     const { event: atp } = await findDraw(admin, file, 0);
-    const atpBracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: atp.id } })).data).matches;
+    const atpBracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: atp.id } })).data).matches.map(withHomeAwayRead);
     expect(atpBracket.filter((match) => match.ending !== 'PLAYED').map((match) => [match.roundNumber, match.ending, match.homeScore, match.awayScore]))
       .toEqual([[1, 'RETIREMENT', 2, 0], [5, 'RETIREMENT', 2, 0]]);
 

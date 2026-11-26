@@ -67,10 +67,12 @@ as each provider serves them, league by league; a player with none is matched by
 name, as before.
 
 **Brackets.** A file of a sport played as a bracket, with `BRACKET` in its `contents`, may
-give each event its `matches`: each match's number, round, its two sides as player keys from
-the event's field (`null` where an earlier match's winner fills the side), whether it is on a
-neutral site, its `scheduledAt`, and `advancesTo` (the match and side its winner
-moves on to; `null` for the final), and its `regionLabel` (the March Madness region or NFL
+give each event its `matches`: each match's number, round, its two `sides` (#2184), side 1 and
+side 2, each with a player key from the event's field (`null` where an earlier match's winner
+fills the side) and its `homeAway` for game 1 (`NONE` for both at a neutral site, else one
+`HOME` and one `AWAY`; a synced game has its away team on side 1), whether it is on a neutral
+site, its `scheduledAt`, and `advancesTo` (the round, match and `sideNumber` its winner moves on
+to; `null` for the final), and its `regionLabel` (the March Madness region or NFL
 conference) where it has one. A bracket played over several slots names each round's slot
 definition key in `roundSlotKeys`, round 1 first and FINAL last, in place of `slotKey`; the run
 makes a test slot of each and plays round n in the nth (#2006). Whether it reseeds is its slots'
@@ -129,15 +131,16 @@ of sport carries:
 
 - **A tournament** (golf): each field entry's made-up `oddsToWin` and `rounds` of strokes.
 - **A bracket** (`american-football-2026-nfl-playoffs-test.json`): `contents` add `BRACKET`, each
-  field entry made-up `oddsToWin` and each match its real `result`. A reseeded round's results
-  name the side the server's reseed puts each team on (the 1 seed at home). A bye is a
+  field entry made-up `oddsToWin` and each match its real `result`: the `winnerSideNumber` and
+  each side's `score` on `sides`. A reseeded round's results name the side the server's reseed
+  puts each team on (the 1 seed at home, on side 2). A bye is a
   team named straight into a later round's match. A match of a sport with periods may carry
-  `periodScores`, the score at the end of each period but the last. A match level after extra
-  time in a sport that settles it by shoot-out carries `homeShootoutScore` and
-  `awayShootoutScore`. A match that stopped early says how in its result's `ending`
+  `periodScores`, each side's score at the end of each period but the last, on `sides`. A match
+  level after extra time in a sport that settles it by shoot-out carries each side's
+  `shootoutScore` in its result. A match that stopped early says how in its result's `ending`
   (`RETIREMENT`, `WALKOVER`, `DEFAULT`), and a walkover's scores are null.
 - **Weeks** (`american-football-2025-nfl-weeks-test.json`): each week its own event, every game
-  a match that links nowhere. A drawn game's `result` has a null `winner`; a game postponed out
+  a match that links nowhere. A drawn game's `result` has a null `winnerSideNumber`; a game postponed out
   of its week stays in it with `cancelled: true` and no result. A season spanning two years
   splits into one file per year its weeks start in.
 - **A race**: each field entry's made-up `oddsToWin` and real `raceResult`, in grid or post
@@ -449,7 +452,7 @@ week is, and every week's field holds all the league's teams:
   three group matchdays, `FIFA Women's World Cup Matchday 1` to `3`, 16 neutral-site matches
   each. It loads into the same sport league as the knockout seed and keeps its FIFA rankings.
 
-A drawn match's result has no `winner` (null), which only a week's game may have. Every match
+A drawn match's result has no winner (`winnerSideNumber` null), which only a week's game may have. Every match
 carries its half-time score. Kickoffs and scores are real, and the odds are made up.
 
 ## Seeded tennis draws

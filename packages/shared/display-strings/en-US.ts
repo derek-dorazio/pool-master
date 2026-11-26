@@ -376,9 +376,6 @@ export const enUS = {
       IN_PROGRESS: 'In progress',
       COMPLETED: 'Completed',
     },
-    MatchResultSource: {
-      PROVIDER: 'Feed',
-    },
     ProviderGameState: {
       SCHEDULED: 'Scheduled',
       IN_PROGRESS: 'In progress',

@@ -32,7 +32,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 import { reseededRounds, roundPlacementBlocker } from './bracket-reseed';
-import type { BracketMatchInput, SportEventBracketService } from './sport-event-bracket-service';
+import type { BracketMatchInput, BracketSideInput, SportEventBracketService } from './sport-event-bracket-service';
 import type { SportEventRoundService } from './sport-event-round-service';
 
 /** What one slate sync did to the event's games, and why when it did nothing. */
@@ -53,11 +53,15 @@ export interface ProviderGameSlateDeps {
   logger?: FastifyBaseLogger;
 }
 
-type Sides = Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>;
-
-/** A stored match's teams as the provider's home and away name them: home on side 2, away on side 1, where the sync created it. */
-function storedSides(match: SportEventRoundMatch): Sides {
-  return { homeSportEventParticipantId: sideParticipantId(match, sideNumberOfMatchSide(MatchSide.HOME)), awaySportEventParticipantId: sideParticipantId(match, sideNumberOfMatchSide(MatchSide.AWAY)) };
+/**
+ * A provider game's home and away teams as a match's sides: the sync puts the away team on side 1
+ * and the home team on side 2, each playing Game 1 where the provider says (NONE at a neutral site).
+ */
+function sidesOfProviderGame(home: string | null, away: string | null, isNeutralSite: boolean): BracketSideInput[] {
+  return [
+    { sideNumber: sideNumberOfMatchSide(MatchSide.AWAY), sportEventParticipantId: away, homeAway: isNeutralSite ? HomeAway.NONE : HomeAway.AWAY },
+    { sideNumber: sideNumberOfMatchSide(MatchSide.HOME), sportEventParticipantId: home, homeAway: isNeutralSite ? HomeAway.NONE : HomeAway.HOME },
+  ].sort((left, right) => left.sideNumber - right.sideNumber);
 }
 
 /** What a provider gives for an event's games: its games so far, and for a fixed-shape playoff its whole bracket. */
@@ -152,12 +156,12 @@ export class ProviderGameSlateService {
       this.deps.games.findByProviderExternalIds(providerCode, providerGameIds),
     ]);
     const heldIds = new Set(held.flatMap((each) => (each.externalId === null ? [] : [each.externalId])));
-    const matchByPair = new Map(matches.map((match) => [pairKey(storedSides(match)), match]));
+    const matchByPair = new Map(matches.map((match) => [pairKey(match), match]));
     const gameAt = new Map(stored.map((each) => [JSON.stringify([each.game.sportEventRoundMatchId, each.game.gameNumber]), each]));
     const created: SportEventRoundMatchGameCreate[] = [];
     const mapped: { sportEventRoundMatchGameId: string; externalId: string }[] = [];
     for (const game of input.games) {
-      const match = matchByPair.get(pairKey({ homeSportEventParticipantId: fieldRowOf(game.homeTeamExternalId), awaySportEventParticipantId: fieldRowOf(game.awayTeamExternalId) }));
+      const match = matchByPair.get(pairKey({ sides: sidesOfProviderGame(fieldRowOf(game.homeTeamExternalId), fieldRowOf(game.awayTeamExternalId), false) }));
       const gameOne = match === undefined ? undefined : gameAt.get(JSON.stringify([match.id, 1]));
       if (match === undefined || gameOne === undefined) continue;
       for (const { providerGameId, gameNumber } of game.games) {
@@ -299,7 +303,7 @@ export class ProviderGameSlateService {
     slate: readonly BracketMatchInput[],
     placed: readonly MatchPlace[],
   ): Promise<ProviderGameSlateOutcome> {
-    const storedByPair = new Map(stored.map((match) => [pairKey(storedSides(match)), match]));
+    const storedByPair = new Map(stored.map((match) => [pairKey(match), match]));
     const updated: MatchPlace[] = [...placed];
     const unmatched: string[] = [];
     for (const game of slate) {
@@ -312,7 +316,7 @@ export class ProviderGameSlateService {
       const gameOne = gameNumbered(match, 1);
       const homeAway = match.sides.map(({ sideNumber, sportEventParticipantId }) => ({
         sideNumber,
-        homeAway: game.isNeutralSite ? HomeAway.NONE : sportEventParticipantId === game.homeSportEventParticipantId ? HomeAway.HOME : HomeAway.AWAY,
+        homeAway: game.sides.find((side) => side.sportEventParticipantId === sportEventParticipantId)?.homeAway ?? HomeAway.NONE,
       }));
       const movesHomeAway = gameOne !== null && homeAway.some((side) => homeAwayOf(gameOne, side.sideNumber) !== side.homeAway);
       const patch = {
@@ -356,8 +360,7 @@ function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExter
     .map(({ game, matchNumber }) => ({
       matchNumber,
       roundNumber: game.roundNumber,
-      homeSportEventParticipantId: fieldRowOf(game.homeTeamExternalId),
-      awaySportEventParticipantId: fieldRowOf(game.awayTeamExternalId),
+      sides: sidesOfProviderGame(fieldRowOf(game.homeTeamExternalId), fieldRowOf(game.awayTeamExternalId), game.isNeutralSite),
       isNeutralSite: game.isNeutralSite,
       scheduledDate: game.scheduledAt,
       advancesTo: null,
@@ -390,11 +393,18 @@ function bracketOf(bracket: readonly ProviderBracketMatch[], fieldRowOf: (teamEx
   return bracket.map((match) => ({
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
-    homeSportEventParticipantId: match.homeTeamExternalId === null ? null : fieldRowOf(match.homeTeamExternalId),
-    awaySportEventParticipantId: match.awayTeamExternalId === null ? null : fieldRowOf(match.awayTeamExternalId),
+    sides: sidesOfProviderGame(
+      match.homeTeamExternalId === null ? null : fieldRowOf(match.homeTeamExternalId),
+      match.awayTeamExternalId === null ? null : fieldRowOf(match.awayTeamExternalId),
+      match.isNeutralSite,
+    ),
     isNeutralSite: match.isNeutralSite,
     scheduledDate: match.scheduledAt,
-    advancesTo: match.advancesTo,
+    advancesTo: match.advancesTo === null ? null : {
+      roundNumber: match.advancesTo.roundNumber,
+      matchNumber: match.advancesTo.matchNumber,
+      sideNumber: sideNumberOfMatchSide(match.advancesTo.side),
+    },
     regionLabel: match.regionLabel,
   }));
 }
@@ -411,8 +421,8 @@ function gameOneId(game: ProviderScheduledGame): string {
 }
 
 /** A match's two teams, whichever side each is on. */
-function pairKey(match: Sides): string {
-  return [match.homeSportEventParticipantId ?? '-', match.awaySportEventParticipantId ?? '-'].sort().join('|');
+function pairKey(match: { sides: readonly { sportEventParticipantId: string | null }[] }): string {
+  return match.sides.map((side) => side.sportEventParticipantId ?? '-').sort().join('|');
 }
 
 function sameTime(left: Date | null, right: Date | null): boolean {
@@ -430,11 +440,9 @@ function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly 
     const next = match.advancesToMatchId === null ? undefined : storedById.get(match.advancesToMatchId);
     const advancesAlike = slot.advancesTo === null
       ? match.advancesToMatchId === null
-      : next !== undefined && isAtPlace(next, slot.advancesTo) && match.advancesToSideNumber === sideNumberOfMatchSide(slot.advancesTo.side);
-    const sides = storedSides(match);
+      : next !== undefined && isAtPlace(next, slot.advancesTo) && match.advancesToSideNumber === slot.advancesTo.sideNumber;
     return advancesAlike
-      && sides.homeSportEventParticipantId === slot.homeSportEventParticipantId
-      && sides.awaySportEventParticipantId === slot.awaySportEventParticipantId
+      && slot.sides.every((side) => sideParticipantId(match, side.sideNumber) === side.sportEventParticipantId)
       && matchIsNeutralSite(match) === slot.isNeutralSite
       && match.regionLabel === (slot.regionLabel ?? null);
   });
@@ -443,6 +451,6 @@ function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly 
 /** Whether the stored matches pair the same teams as the provider's games, kickoffs and sides aside. */
 function samePairings(stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): boolean {
   if (stored.length !== slate.length) return false;
-  const storedPairs = new Set(stored.map((match) => pairKey(storedSides(match))));
+  const storedPairs = new Set(stored.map((match) => pairKey(match)));
   return slate.every((match) => storedPairs.has(pairKey(match)));
 }

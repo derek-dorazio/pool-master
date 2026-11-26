@@ -3,7 +3,8 @@
  * the root admin's counts, the dates a body's ISO strings become, what each write answers with,
  * and the status each provider sync refusal is sent with.
  */
-import { legacyMatch, homeAwayResult, homeAwayPeriod } from '../../support/match-sides';
+import { legacyMatch, homeAwayPeriod } from '../../support/match-sides';
+import { periodBody, resultBody } from '../../support/match-requests';
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
 import { Sport, SportEventStatus, SportEventParticipantStatus, type SportEvent, type SportEventOverview, MatchSide } from '@poolmaster/shared/domain';
@@ -113,7 +114,7 @@ function fakes() {
       listBracket: fn([]),
       loadBracket: fn([]),
       updateMatch: fn(legacyMatch({ id: 'm1', slot: weekRoundSlot() })),
-      proposeRoundMatchups: fn([{ matchNumber: 1 }]),
+      proposeRoundMatchups: fn([{ matchNumber: 1, sides: [{ sideNumber: 1, sportEventParticipantId: 'row-a' }, { sideNumber: 2, sportEventParticipantId: 'row-b' }] }]),
       setRoundMatchups: fn([]),
     },
   };
@@ -466,15 +467,15 @@ describe('bracket', () => {
     const periodParams = { ...matchParams, periodNumber: 2 };
 
     for (const [handler, request] of [
-      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 65 } })],
-      [handlers.recordEventMatchPeriodScore, stubRequest({ params: periodParams, body: { homeScore: 7, awayScore: 3 } })],
+      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 65 }) })],
+      [handlers.recordEventMatchPeriodScore, stubRequest({ params: periodParams, body: periodBody({ homeScore: 7, awayScore: 3 }) })],
       [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
     ] as const) {
       expect((await callHandler(handler, request)).body).toEqual({ matches: [] });
     }
-    // The request's home and away reach the service as side 2 and side 1 (#2046).
+    // The request's sides reach the service as they are.
     expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, place, 2, homeAwayPeriod({ homeScore: 7, awayScore: 3 }));
-    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, place, homeAwayResult({ winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 65 }));
+    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, place, resultBody({ winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 65 }));
     expect(services.matchResults.cancelMatch).toHaveBeenCalledWith(EVENT_ID, place);
   });
 
@@ -485,7 +486,7 @@ describe('bracket', () => {
     const proposed = await callHandler(handlers.proposeEventRoundMatchups, stubRequest({ params: roundParams }));
     const set = await callHandler(handlers.setEventRoundMatchups, stubRequest({ params: roundParams, body: { matches: [] } }));
 
-    expect(proposed.body).toEqual({ matches: [{ matchNumber: 1 }] });
+    expect(proposed.body).toEqual({ matches: [{ matchNumber: 1, sides: [{ sideNumber: 1, sportEventParticipantId: 'row-a' }, { sideNumber: 2, sportEventParticipantId: 'row-b' }] }] });
     expect(services.bracket.setRoundMatchups).toHaveBeenCalledWith(EVENT_ID, 2, []);
     expect(set.body).toEqual({ matches: [] });
   });
@@ -503,8 +504,8 @@ describe('admin result writes on a test event only (#2074)', () => {
     const writes = [
       [handlers.loadEventBracket, stubRequest({ params, body: { matches: [] } })],
       [handlers.updateEventBracketMatch, stubRequest({ params: matchParams, body: { isNeutralSite: true } })],
-      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { homeScore: 70, awayScore: 65 } })],
-      [handlers.recordEventMatchPeriodScore, stubRequest({ params: { ...matchParams, periodNumber: 2 }, body: { homeScore: 7, awayScore: 3 } })],
+      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: resultBody({ winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 65 }) })],
+      [handlers.recordEventMatchPeriodScore, stubRequest({ params: { ...matchParams, periodNumber: 2 }, body: periodBody({ homeScore: 7, awayScore: 3 }) })],
       [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
       [handlers.setEventRoundMatchups, stubRequest({ params: roundParams, body: { matches: [] } })],
       [handlers.applyGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } })],

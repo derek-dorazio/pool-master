@@ -2,7 +2,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { expect } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, ContestStatus, HomeAway, MatchResultSource, MatchSide, MatchStatus, ProviderGameState, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, HomeAway, MatchSide, MatchStatus, ProviderGameState, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import {
   PrismaSportEventRoundMatchRepository,
@@ -126,7 +126,7 @@ function neutralSides(sideOne: string | null, sideTwo: string | null) {
   ];
 }
 
-/** The event's matches as the API shows them until the DTOs move to sides: side 2 the home side, side 1 the away side. */
+/** The event's matches read in home and away: side 2 the home side, side 1 the away side, as the sync places them. */
 async function viewsOf(matches: PrismaSportEventRoundMatchRepository, sportEventId: string) {
   return (await matches.findBySportEvent(sportEventId)).map(homeAwayOf);
 }
@@ -234,7 +234,7 @@ describe('game scores from a provider', () => {
     const [first, second, final] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 67 });
     // A live score decides nothing: no winner, no result source.
-    expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 40, awayScore: 38, resultSource: null });
+    expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 40, awayScore: 38 });
     expect(final.homeSportEventParticipantId).toBe(entryOf('Duke').id);
   });
 
@@ -267,7 +267,7 @@ describe('game scores from a provider', () => {
     expect(live).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 40, awayScore: 44, winnerSide: null });
     expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
     const [first, , final] = await viewsOf(matches, event.id);
-    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: 66, awayScore: 71, winnerSide: MatchSide.AWAY, resultSource: MatchResultSource.PROVIDER });
+    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: 66, awayScore: 71, winnerSide: MatchSide.AWAY });
     expect(final.homeSportEventParticipantId).toBe(entryOf('Houston').id);
   });
 
@@ -283,7 +283,7 @@ describe('game scores from a provider', () => {
     expect(again).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
     const [semifinal, , theFinal] = await viewsOf(matches, event.id);
     expect(semifinal).toMatchObject({
-      status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4, resultSource: MatchResultSource.PROVIDER,
+      status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4,
     });
     expect(theFinal.homeSportEventParticipantId).toBe(entryOf('Houston').id);
   });
@@ -312,9 +312,9 @@ describe('game scores from a provider', () => {
 
     const again = await publish(externalId, [final]);
 
-    expect(fromProvider).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
+    expect(fromProvider).toMatchObject({ homeScore: 70, awayScore: 67 });
     expect(again).toMatchObject({ updatesPersisted: 1 });
-    expect((await viewsOf(matches, event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
+    expect((await viewsOf(matches, event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 67 });
   });
 
   it('links each game nobody linked to the match its teams play, records the final, and keeps the link for the next sync', async () => {
@@ -376,7 +376,7 @@ describe('game scores from a provider', () => {
 
     expect(result).toMatchObject({ updatesPersisted: 2 });
     const [first, second, nbaFinal] = await viewsOf(matches, event.id);
-    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 1, resultSource: MatchResultSource.PROVIDER });
+    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 1 });
     expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 1, awayScore: 0 });
     expect(nbaFinal).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: null });
     // Not all at Game 1: each game is its own Game, scored from the match's sides.

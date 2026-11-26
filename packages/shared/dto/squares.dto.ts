@@ -24,26 +24,26 @@ export const SQUARES_DRAW_CLOSED = 'SQUARES_DRAW_CLOSED';
 const gridIndex = z.number().int().min(0).max(SQUARES_GRID_SIZE - 1);
 
 export const SquaresBoxDtoSchema = z.object({
-  rowIndex: gridIndex.describe('The row position, 0 at the top. Rows are the away team\'s.'),
-  columnIndex: gridIndex.describe('The column position, 0 at the left. Columns are the home team\'s.'),
+  rowIndex: gridIndex.describe('The row position, 0 at the top. Rows are side 1\'s.'),
+  columnIndex: gridIndex.describe('The column position, 0 at the left. Columns are side 2\'s.'),
   contestEntryId: z.uuid().describe('The entry holding the box.'),
   entryName: z.string().describe('The entry\'s name, which is its squad\'s.'),
 }).describe('A claimed box of the grid. A box not listed is empty.');
 export type SquaresBoxDto = z.infer<typeof SquaresBoxDtoSchema>;
 
 export const SquaresDigitsDtoSchema = z.object({
-  rowDigits: z.array(z.number().int().min(0).max(9)).length(SQUARES_GRID_SIZE).describe('The away team\'s last digit at each row position, top first.'),
-  columnDigits: z.array(z.number().int().min(0).max(9)).length(SQUARES_GRID_SIZE).describe('The home team\'s last digit at each column position, left first.'),
+  rowDigits: z.array(z.number().int().min(0).max(9)).length(SQUARES_GRID_SIZE).describe('Side 1\'s last digit at each row position, top first.'),
+  columnDigits: z.array(z.number().int().min(0).max(9)).length(SQUARES_GRID_SIZE).describe('Side 2\'s last digit at each column position, left first.'),
   drawnAt: z.iso.datetime().describe('When the digits were drawn: claiming closed then.'),
 }).describe('The digits drawn along the two sides of the grid.');
 export type SquaresDigitsDto = z.infer<typeof SquaresDigitsDtoSchema>;
 
 export const SquaresWinnerDtoSchema = z.object({
   periodNumber: z.number().int().min(1).describe('The scoring moment: 1 to the game\'s period count, the last being the final score, overtime included.'),
-  homeScore: z.number().int().min(0),
-  awayScore: z.number().int().min(0),
-  rowIndex: gridIndex.describe('The winning box\'s row: where the away score\'s last digit is.'),
-  columnIndex: gridIndex.describe('The winning box\'s column: where the home score\'s last digit is.'),
+  rowScore: z.number().int().min(0).describe('Side 1\'s score at that moment, whose last digit picks the row.'),
+  columnScore: z.number().int().min(0).describe('Side 2\'s score at that moment, whose last digit picks the column.'),
+  rowIndex: gridIndex.describe('The winning box\'s row: where side 1\'s last digit is.'),
+  columnIndex: gridIndex.describe('The winning box\'s column: where side 2\'s last digit is.'),
   contestEntryId: z.uuid().nullable().describe('The entry holding the winning box; null when nobody claimed it ("No winner").'),
   entryName: z.string().nullable().describe('That entry\'s name; null with no entry.'),
 }).describe('One scoring moment\'s winning box.');
@@ -65,8 +65,8 @@ export const SquaresBoardResponseSchema = z.object({
   maxSquaresPerEntry: z.number().int().min(1).max(SQUARES_PER_ENTRY_MAX).describe('How many boxes one entry may claim.'),
   periods: SlotPeriodsDtoSchema.describe('The periods the game is played in, its slot\'s (four quarters, or two halves in men\'s college basketball): a scoring moment ends each period, the last being the final score.'),
   game: SportEventRoundMatchDtoSchema.describe('The game the contest is played on, with its score at the end of each period and its final result.'),
-  homeTeamName: z.string().nullable().describe('The home team, across the top; null until it is known.'),
-  awayTeamName: z.string().nullable().describe('The away team, down the side; null until it is known.'),
+  rowTeamName: z.string().nullable().describe('Side 1\'s team, down the side; null until it is known.'),
+  columnTeamName: z.string().nullable().describe('Side 2\'s team, across the top; null until it is known.'),
   claimsOpen: z.boolean().describe('Whether boxes can be claimed and cleared now: the contest is OPEN, its digits are not drawn and the game has not kicked off.'),
   drawOpen: z.boolean().describe('Whether the digits can be drawn now: not drawn yet, the contest OPEN or live, and the first period\'s score not in.'),
   boxes: z.array(SquaresBoxDtoSchema).describe('Every claimed box, by row then column.'),

@@ -417,225 +417,513 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "nfl-philadelphia-eagles",
-              "away": "nfl-dallas-cowboys",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-dallas-cowboys",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-philadelphia-eagles",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-05T00:20:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 24,
-                "awayScore": 20
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 24
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "nfl-los-angeles-chargers",
-              "away": "nfl-kansas-city-chiefs",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-kansas-city-chiefs",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-los-angeles-chargers",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2025-09-06T00:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 27,
-                "awayScore": 21
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 21
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 27
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "nfl-atlanta-falcons",
-              "away": "nfl-tampa-bay-buccaneers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-tampa-bay-buccaneers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-atlanta-falcons",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 20,
-                "awayScore": 23
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 23
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 20
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "nfl-cleveland-browns",
-              "away": "nfl-cincinnati-bengals",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-cincinnati-bengals",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-cleveland-browns",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 16,
-                "awayScore": 17
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 17
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 16
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "nfl-indianapolis-colts",
-              "away": "nfl-miami-dolphins",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-miami-dolphins",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-indianapolis-colts",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 33,
-                "awayScore": 8
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 8
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 33
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "nfl-jacksonville-jaguars",
-              "away": "nfl-carolina-panthers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-carolina-panthers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-jacksonville-jaguars",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 26,
-                "awayScore": 10
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 10
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 26
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "nfl-new-england-patriots",
-              "away": "nfl-las-vegas-raiders",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-las-vegas-raiders",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-england-patriots",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 13,
-                "awayScore": 20
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 13
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "nfl-new-orleans-saints",
-              "away": "nfl-arizona-cardinals",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-arizona-cardinals",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-orleans-saints",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 13,
-                "awayScore": 20
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 13
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 1,
-              "home": "nfl-new-york-jets",
-              "away": "nfl-pittsburgh-steelers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-pittsburgh-steelers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-york-jets",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 32,
-                "awayScore": 34
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 34
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 32
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 1,
-              "home": "nfl-washington-commanders",
-              "away": "nfl-new-york-giants",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-new-york-giants",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-washington-commanders",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 21,
-                "awayScore": 6
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 6
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 21
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 1,
-              "home": "nfl-denver-broncos",
-              "away": "nfl-tennessee-titans",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-tennessee-titans",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-denver-broncos",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T20:05:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 20,
-                "awayScore": 12
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 12
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 20
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 1,
-              "home": "nfl-seattle-seahawks",
-              "away": "nfl-san-francisco-49ers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-san-francisco-49ers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-seattle-seahawks",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T20:05:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 13,
-                "awayScore": 17
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 17
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 13
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 1,
-              "home": "nfl-green-bay-packers",
-              "away": "nfl-detroit-lions",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-detroit-lions",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-green-bay-packers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T20:25:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 27,
-                "awayScore": 13
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 13
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 27
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 1,
-              "home": "nfl-los-angeles-rams",
-              "away": "nfl-houston-texans",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-houston-texans",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-los-angeles-rams",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-07T20:25:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 14,
-                "awayScore": 9
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 9
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 14
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "nfl-buffalo-bills",
-              "away": "nfl-baltimore-ravens",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-baltimore-ravens",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-buffalo-bills",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-08T00:20:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 41,
-                "awayScore": 40
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 40
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 41
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "nfl-chicago-bears",
-              "away": "nfl-minnesota-vikings",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-minnesota-vikings",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-chicago-bears",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-09T00:15:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 24,
-                "awayScore": 27
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 27
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 24
+                  }
+                ]
               }
             }
           ]
@@ -816,225 +1104,513 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "nfl-green-bay-packers",
-              "away": "nfl-washington-commanders",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-washington-commanders",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-green-bay-packers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-12T00:15:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 27,
-                "awayScore": 18
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 18
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 27
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "nfl-baltimore-ravens",
-              "away": "nfl-cleveland-browns",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-cleveland-browns",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-baltimore-ravens",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 41,
-                "awayScore": 17
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 17
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 41
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "nfl-cincinnati-bengals",
-              "away": "nfl-jacksonville-jaguars",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-jacksonville-jaguars",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-cincinnati-bengals",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 31,
-                "awayScore": 27
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 27
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 31
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "nfl-dallas-cowboys",
-              "away": "nfl-new-york-giants",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-new-york-giants",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-dallas-cowboys",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 40,
-                "awayScore": 37
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 37
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 40
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "nfl-detroit-lions",
-              "away": "nfl-chicago-bears",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-chicago-bears",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-detroit-lions",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 52,
-                "awayScore": 21
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 21
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 52
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "nfl-miami-dolphins",
-              "away": "nfl-new-england-patriots",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-new-england-patriots",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-miami-dolphins",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 27,
-                "awayScore": 33
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 33
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 27
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "nfl-new-orleans-saints",
-              "away": "nfl-san-francisco-49ers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-san-francisco-49ers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-orleans-saints",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 21,
-                "awayScore": 26
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 26
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 21
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "nfl-new-york-jets",
-              "away": "nfl-buffalo-bills",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-buffalo-bills",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-york-jets",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 10,
-                "awayScore": 30
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 30
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 10
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 1,
-              "home": "nfl-pittsburgh-steelers",
-              "away": "nfl-seattle-seahawks",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-seattle-seahawks",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-pittsburgh-steelers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 17,
-                "awayScore": 31
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 31
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 17
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 1,
-              "home": "nfl-tennessee-titans",
-              "away": "nfl-los-angeles-rams",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-los-angeles-rams",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-tennessee-titans",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 19,
-                "awayScore": 33
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 33
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 19
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 1,
-              "home": "nfl-arizona-cardinals",
-              "away": "nfl-carolina-panthers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-carolina-panthers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-arizona-cardinals",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T20:05:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 27,
-                "awayScore": 22
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 22
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 27
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 1,
-              "home": "nfl-indianapolis-colts",
-              "away": "nfl-denver-broncos",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-denver-broncos",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-indianapolis-colts",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T20:05:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 29,
-                "awayScore": 28
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 28
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 29
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 1,
-              "home": "nfl-kansas-city-chiefs",
-              "away": "nfl-philadelphia-eagles",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-philadelphia-eagles",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-kansas-city-chiefs",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T20:25:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 17,
-                "awayScore": 20
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 17
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 1,
-              "home": "nfl-minnesota-vikings",
-              "away": "nfl-atlanta-falcons",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-atlanta-falcons",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-minnesota-vikings",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-15T00:20:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 6,
-                "awayScore": 22
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 22
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 6
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "nfl-houston-texans",
-              "away": "nfl-tampa-bay-buccaneers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-tampa-bay-buccaneers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-houston-texans",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-15T23:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 19,
-                "awayScore": 20
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 19
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "nfl-las-vegas-raiders",
-              "away": "nfl-los-angeles-chargers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-los-angeles-chargers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-las-vegas-raiders",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-16T02:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 9,
-                "awayScore": 20
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 9
+                  }
+                ]
               }
             }
           ]
@@ -1215,225 +1791,513 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "nfl-buffalo-bills",
-              "away": "nfl-miami-dolphins",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-miami-dolphins",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-buffalo-bills",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-19T00:15:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 31,
-                "awayScore": 21
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 21
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 31
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "nfl-carolina-panthers",
-              "away": "nfl-atlanta-falcons",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-atlanta-falcons",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-carolina-panthers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 30,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 30
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "nfl-cleveland-browns",
-              "away": "nfl-green-bay-packers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-green-bay-packers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-cleveland-browns",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 13,
-                "awayScore": 10
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 10
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 13
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "nfl-jacksonville-jaguars",
-              "away": "nfl-houston-texans",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-houston-texans",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-jacksonville-jaguars",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 17,
-                "awayScore": 10
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 10
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 17
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "nfl-minnesota-vikings",
-              "away": "nfl-cincinnati-bengals",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-cincinnati-bengals",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-minnesota-vikings",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 48,
-                "awayScore": 10
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 10
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 48
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "nfl-new-england-patriots",
-              "away": "nfl-pittsburgh-steelers",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-pittsburgh-steelers",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-england-patriots",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 14,
-                "awayScore": 21
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 21
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 14
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "nfl-philadelphia-eagles",
-              "away": "nfl-los-angeles-rams",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-los-angeles-rams",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-philadelphia-eagles",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 33,
-                "awayScore": 26
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 26
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 33
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "nfl-tampa-bay-buccaneers",
-              "away": "nfl-new-york-jets",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-new-york-jets",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-tampa-bay-buccaneers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 29,
-                "awayScore": 27
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 27
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 29
+                  }
+                ]
               }
             },
             {
               "matchNumber": 9,
               "roundNumber": 1,
-              "home": "nfl-tennessee-titans",
-              "away": "nfl-indianapolis-colts",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-indianapolis-colts",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-tennessee-titans",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 20,
-                "awayScore": 41
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 41
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 20
+                  }
+                ]
               }
             },
             {
               "matchNumber": 10,
               "roundNumber": 1,
-              "home": "nfl-washington-commanders",
-              "away": "nfl-las-vegas-raiders",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-las-vegas-raiders",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-washington-commanders",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T17:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 41,
-                "awayScore": 24
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 24
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 41
+                  }
+                ]
               }
             },
             {
               "matchNumber": 11,
               "roundNumber": 1,
-              "home": "nfl-los-angeles-chargers",
-              "away": "nfl-denver-broncos",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-denver-broncos",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-los-angeles-chargers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T20:05:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 23,
-                "awayScore": 20
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 20
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 23
+                  }
+                ]
               }
             },
             {
               "matchNumber": 12,
               "roundNumber": 1,
-              "home": "nfl-seattle-seahawks",
-              "away": "nfl-new-orleans-saints",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-new-orleans-saints",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-seattle-seahawks",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T20:05:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 44,
-                "awayScore": 13
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 13
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 44
+                  }
+                ]
               }
             },
             {
               "matchNumber": 13,
               "roundNumber": 1,
-              "home": "nfl-chicago-bears",
-              "away": "nfl-dallas-cowboys",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-dallas-cowboys",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-chicago-bears",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T20:25:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 31,
-                "awayScore": 14
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 14
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 31
+                  }
+                ]
               }
             },
             {
               "matchNumber": 14,
               "roundNumber": 1,
-              "home": "nfl-san-francisco-49ers",
-              "away": "nfl-arizona-cardinals",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-arizona-cardinals",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-san-francisco-49ers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T20:25:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 16,
-                "awayScore": 15
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 15
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 16
+                  }
+                ]
               }
             },
             {
               "matchNumber": 15,
               "roundNumber": 1,
-              "home": "nfl-new-york-giants",
-              "away": "nfl-kansas-city-chiefs",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-kansas-city-chiefs",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-new-york-giants",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-22T00:20:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 9,
-                "awayScore": 22
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 22
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 9
+                  }
+                ]
               }
             },
             {
               "matchNumber": 16,
               "roundNumber": 1,
-              "home": "nfl-baltimore-ravens",
-              "away": "nfl-detroit-lions",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "nfl-detroit-lions",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "nfl-baltimore-ravens",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-23T00:15:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "AWAY",
-                "homeScore": 30,
-                "awayScore": 38
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 38
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 30
+                  }
+                ]
               }
             }
           ]

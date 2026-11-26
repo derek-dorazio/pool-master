@@ -265,377 +265,767 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "euro-spain",
-              "away": "euro-georgia",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-georgia",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-spain",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-06-30T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 4,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 4
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "euro-germany",
-              "away": "euro-denmark",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-denmark",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-germany",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-06-29T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "euro-portugal",
-              "away": "euro-slovenia",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-slovenia",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-portugal",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-01T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 0,
-                "awayScore": 0,
-                "homeShootoutScore": 3,
-                "awayShootoutScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0,
+                    "shootoutScore": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0,
+                    "shootoutScore": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "euro-france",
-              "away": "euro-belgium",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-belgium",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-france",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-01T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "euro-romania",
-              "away": "euro-netherlands",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-netherlands",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-romania",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-02T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 3
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "euro-austria",
-              "away": "euro-turkey",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-turkey",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-austria",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-02T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "euro-england",
-              "away": "euro-slovakia",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-slovakia",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-england",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-06-30T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "euro-switzerland",
-              "away": "euro-italy",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "euro-italy",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "euro-switzerland",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-06-29T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-05T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-05T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 0,
-                "homeShootoutScore": 3,
-                "awayShootoutScore": 5
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0,
+                    "shootoutScore": 5
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0,
+                    "shootoutScore": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-06T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-06T16:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 1,
-                "homeShootoutScore": 5,
-                "awayShootoutScore": 3
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1,
+                    "shootoutScore": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1,
+                    "shootoutScore": 5
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-09T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 2,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 2
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-10T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2024-07-14T19:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             }

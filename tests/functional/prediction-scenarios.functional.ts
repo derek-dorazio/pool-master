@@ -37,6 +37,7 @@ import { LEVEL_TEST_DEFINITION_KEY, removeTestDefinition, TEST_DEFINITION_KEY, w
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { enterSeedRound, EVERY_GAME_PLAYED, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
+import { fileScoreOn, fileTeamOn, fileWinnerSide, type HomeAwayRead, withHomeAwayRead } from '../support/match-requests';
 
 // One bracket pool and one playoff survivor pool on every playoff league's last-season test seed
 // (#785, #786), through the SDK: the College Football Playoff with its four byes, the NFL reseeded
@@ -172,8 +173,9 @@ async function loadCopy(row: PlayoffLeague, tag: string, season: number, without
   return { eventId, field };
 }
 
-async function bracketOf(eventId: string): Promise<SportEventRoundMatchDto[]> {
-  return expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: admin.client, path: { eventId } })).data).matches;
+/** The event's bracket, each match read in home and away beside its sides. */
+async function bracketOf(eventId: string): Promise<(SportEventRoundMatchDto & HomeAwayRead)[]> {
+  return expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: admin.client, path: { eventId } })).data).matches.map(withHomeAwayRead);
 }
 
 /** The played event's winners and losers of each round, by team name, and the final's total points. */
@@ -340,11 +342,11 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
     const matches = seed.matches ?? [];
     const winnerName = (matchNumber: number) => {
       const match = expectDefined(matches.find((each) => each.matchNumber === matchNumber));
-      return players.get(expectDefined(expectDefined(match.result).winner === MatchSide.HOME ? match.home : match.away));
+      return players.get(expectDefined(fileTeamOn(match, expectDefined(fileWinnerSide(match)))));
     };
     const last = expectDefined(matches.at(-1));
-    const lastTotal = expectDefined(expectDefined(last.result).homeScore) + expectDefined(expectDefined(last.result).awayScore);
-    const homeWins = matches.filter((match) => expectDefined(match.result).winner === MatchSide.HOME).length;
+    const lastTotal = expectDefined(fileScoreOn(last, MatchSide.HOME)) + expectDefined(fileScoreOn(last, MatchSide.AWAY));
+    const homeWins = matches.filter((match) => fileWinnerSide(match) === MatchSide.HOME).length;
 
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Pick\'em Scenario Perfect', leagueName: `Pick'em Scenario ${tag}` });
     const other = await buildRegisteredUser({ displayName: 'Pick\'em Scenario Home' });
@@ -410,7 +412,8 @@ async function soccerWeek(week: PlayoffLeague, tag: string, season: number) {
   const winnerName = (matchNumber: number) => {
     const result = expectDefined(expectDefined(matches.find((each) => each.matchNumber === matchNumber)).result);
     const match = expectDefined(matches.find((each) => each.matchNumber === matchNumber));
-    return result.winner === null ? null : expectDefined(players.get(expectDefined(result.winner === MatchSide.HOME ? match.home : match.away)));
+    const winnerSide = fileWinnerSide({ ...match, result });
+    return winnerSide === null ? null : expectDefined(players.get(expectDefined(fileTeamOn(match, winnerSide))));
   };
   const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Soccer Week Perfect', leagueName: `Soccer Week ${tag}` });
   const other = await buildRegisteredUser({ displayName: 'Soccer Week Other' });
@@ -425,8 +428,8 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
     async (_event, week) => {
       const tag = `${RUN}-${week.event}-pick-em`.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
       const { eventId, seed, matches, nameOfRow, winnerName, commissioner, other, league } = await soccerWeek(week, tag, SEASON[SelectionType.PICK_EM]);
-      const draws = matches.filter((match) => expectDefined(match.result).winner === null).length;
-      const homeWins = matches.filter((match) => expectDefined(match.result).winner === MatchSide.HOME).length;
+      const draws = matches.filter((match) => expectDefined(match.result).winnerSideNumber === null).length;
+      const homeWins = matches.filter((match) => fileWinnerSide(match) === MatchSide.HOME).length;
       expect(draws).toBeGreaterThan(0);
 
       const contest = await createContest({

@@ -27,6 +27,7 @@ import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
 import { syncLeagueTo } from '../support/league-sync';
+import { dtoSideTeam, withHomeAwayRead } from '../support/match-requests';
 
 // Loading a test data file through the real admin API: a test seed a commissioner can build
 // contests on, its players bound to their feed ids, a test slate, and a second run that changes nothing.
@@ -373,7 +374,7 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     for (const event of nfl.events) {
       event.name = playoffs;
       for (const entry of event.field) entry.player = expectDefined(tagged(entry.player));
-      for (const match of event.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+      for (const match of event.matches ?? []) match.sides = match.sides.map((side) => ({ ...side, player: tagged(side.player) }));
     }
     return file;
   }
@@ -402,7 +403,7 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
       expectDefined(matches.find((match) => isAtPlace(match, { roundNumber, matchNumber })));
     const sides = ([roundNumber, matchNumber]: readonly [number, number]) => {
       const match = at(roundNumber, matchNumber);
-      return [match.homeSportEventParticipantId, match.awaySportEventParticipantId].map((id) => (id === null ? null : nameOf.get(id)));
+      return [dtoSideTeam(match, 2), dtoSideTeam(match, 1)].map((id) => (id === null ? null : nameOf.get(id)));
     };
 
     expect(matches.every((match) => match.status === MatchStatus.COMPLETED)).toBe(true);
@@ -416,7 +417,7 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     // A second reseed places the conference championships: the better seed left hosts.
     expect(([[3, 1], [3, 2]] as const).map(sides)).toEqual([['Denver Broncos', 'New England Patriots'], ['Seattle Seahawks', 'Los Angeles Rams']]);
     expect(sides([4, 1])).toEqual(['New England Patriots', 'Seattle Seahawks']);
-    expect(at(4, 1)).toMatchObject({ winnerSide: MatchSide.AWAY, homeScore: 13, awayScore: 29, isNeutralSite: true });
+    expect(withHomeAwayRead(at(4, 1))).toMatchObject({ winnerSide: MatchSide.AWAY, homeScore: 13, awayScore: 29, isNeutralSite: true });
 
     expect(changes(await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED }))).toEqual([]);
   });

@@ -10,14 +10,10 @@
 
 import { finalRoundsOfMatches, isMatchUnplayed, matchSideOfSideNumber, MatchSide, MatchStatus, sideNumberOfMatchSide, sideParticipantId, winnerParticipantId, type SportEventRoundMatch, hasPeriodScores } from '@poolmaster/shared/domain';
 
-/**
- * Both sides of one match of a reseeded round, as the admin sets them: the host on the home side,
- * side 2 (#2046 part b names them by side).
- */
+/** Both sides of one match of a reseeded round, as the admin sets them: the host on the home side, side 2. */
 export interface RoundMatchup {
   matchNumber: number;
-  homeSportEventParticipantId: string;
-  awaySportEventParticipantId: string;
+  sides: readonly { sideNumber: number; sportEventParticipantId: string }[];
 }
 
 /** One team entering a reseeded round: its field row, its seed and the region it plays in. */
@@ -201,7 +197,13 @@ export function proposeRoundMatchups(
   const matchups = round.flatMap((match) => {
     const sides = placed.get(match.matchNumber);
     return sides?.home && sides.away
-      ? [{ matchNumber: match.matchNumber, homeSportEventParticipantId: sides.home, awaySportEventParticipantId: sides.away }]
+      ? [{
+        matchNumber: match.matchNumber,
+        sides: [
+          { sideNumber: sideNumberOfMatchSide(MatchSide.AWAY), sportEventParticipantId: sides.away },
+          { sideNumber: sideNumberOfMatchSide(MatchSide.HOME), sportEventParticipantId: sides.home },
+        ].sort((left, right) => left.sideNumber - right.sideNumber),
+      }]
       : [];
   });
   return { matchups: problems.length > 0 ? [] : matchups, problems };
@@ -236,10 +238,10 @@ export function findRoundMatchupProblems(
     const match = byNumber.get(matchup.matchNumber);
     if (!match) continue;
     for (const side of SIDES) {
-      const rowId = side === MatchSide.HOME ? matchup.homeSportEventParticipantId : matchup.awaySportEventParticipantId;
+      const rowId = matchup.sides.find((each) => each.sideNumber === sideNumberOfMatchSide(side))?.sportEventParticipantId;
       const where = `match ${matchup.matchNumber} ${side.toLowerCase()}`;
-      const team = teams.get(rowId);
-      if (!team) {
+      const team = rowId === undefined ? undefined : teams.get(rowId);
+      if (rowId === undefined || !team) {
         problems.push(`${where} names a team that is not left in round ${roundNumber}`);
         continue;
       }

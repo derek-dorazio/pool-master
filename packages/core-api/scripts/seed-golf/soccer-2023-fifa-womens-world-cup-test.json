@@ -261,377 +261,767 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "wwc-switzerland",
-              "away": "wwc-spain",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-spain",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-switzerland",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-05T05:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 5
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 5
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 4
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 4
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "wwc-netherlands",
-              "away": "wwc-south-africa",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-south-africa",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-netherlands",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-06T02:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "wwc-japan",
-              "away": "wwc-norway",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-norway",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-japan",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-05T08:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 3,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "wwc-sweden",
-              "away": "wwc-united-states",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-united-states",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-sweden",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-06T09:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 0,
-                "awayScore": 0,
-                "homeShootoutScore": 5,
-                "awayShootoutScore": 4
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0,
+                    "shootoutScore": 4
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0,
+                    "shootoutScore": 5
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "wwc-australia",
-              "away": "wwc-denmark",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-denmark",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-australia",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-07T10:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "wwc-france",
-              "away": "wwc-morocco",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-morocco",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-france",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-08T11:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 4,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 4
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 3,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 3
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "wwc-england",
-              "away": "wwc-nigeria",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-nigeria",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-england",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-07T07:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 0,
-                "awayScore": 0,
-                "homeShootoutScore": 4,
-                "awayShootoutScore": 2
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0,
+                    "shootoutScore": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0,
+                    "shootoutScore": 4
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "wwc-colombia",
-              "away": "wwc-jamaica",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wwc-jamaica",
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wwc-colombia",
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-08T08:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-11T01:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-11T07:30:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-12T07:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 0,
-                "awayScore": 0,
-                "homeShootoutScore": 7,
-                "awayShootoutScore": 6
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0,
+                    "shootoutScore": 6
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0,
+                    "shootoutScore": 7
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-12T10:30:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-15T08:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-16T10:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 3
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2023-08-20T10:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             }

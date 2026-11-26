@@ -81,7 +81,6 @@ export type SharedEnums = {
   IngestionJobStatus: Enums.IngestionJobStatus;
   ParticipantRoundStatus: Enums.ParticipantRoundStatus;
   RoundStatus: Enums.RoundStatus;
-  MatchResultSource: Enums.MatchResultSource;
   ProviderGameState: Enums.ProviderGameState;
   SportEventParticipantStatus: Enums.SportEventParticipantStatus;
   ParticipantStandingStatus: Enums.ParticipantStandingStatus;

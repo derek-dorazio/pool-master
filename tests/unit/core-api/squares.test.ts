@@ -294,7 +294,8 @@ describe('SquaresService reading the board', () => {
     const board = await context.service.getBoard(context.contest.id, context.actor('Alice'));
 
     expect(board.game.id).toBe(context.game.id);
-    expect([board.awayTeamName, board.homeTeamName]).toEqual(['Away 1', 'Home 1']);
+    // Side 1, the away team, runs down the side; side 2, the home team, across the top.
+    expect([board.rowTeamName, board.columnTeamName]).toEqual(['Away 1', 'Home 1']);
     expect(gameReads.mock.calls).toEqual([[context.game.id]]);
     const teams = homeAwayOf(context.game);
     // Its two sides' field rows, side 1 (away) first.

@@ -1,4 +1,4 @@
-import { MatchEnding, SlotKind } from '@poolmaster/shared/domain';
+import { SlotKind } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,6 +9,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { EventRoundsTab } from './event-rounds-tab';
 import { EventTabOutlet } from './test/event-tab-outlet';
 import { fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { homeAwayMatchFixture, type HomeAwayMatchFixture } from '@/features/contests/test/match-fixtures';
 import { roundSlot } from '@/features/contests/test/round-slots';
 
 // The Event page's Matches grid and each match's dialog (#1890). Results come only from the feed
@@ -75,47 +76,28 @@ const vermont = fieldEntryFixture({ id: 'sep-2', participantId: 'p-2', seedNumbe
 const houston = fieldEntryFixture({ id: 'sep-3', participantId: 'p-3', seedNumber: null, participant: participantFixture({ id: 'p-3', name: 'Houston' }) });
 const texas = fieldEntryFixture({ id: 'sep-4', participantId: 'p-4', seedNumber: 15, participant: participantFixture({ id: 'p-4', name: 'Texas' }) });
 
-function match(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
-  return {
+function match(overrides: HomeAwayMatchFixture & Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
+  return homeAwayMatchFixture({
     sportEventId: 'evt-1',
     slot: overrides.roundNumber === 2 ? roundSlot(SlotKind.FINAL, 'Final') : roundSlot(SlotKind.SEMIFINAL, 'Semifinals'),
-    homeSportEventParticipantId: null,
-    awaySportEventParticipantId: null,
     isNeutralSite: true,
-    scheduledDate: null,
-    status: 'SCHEDULED',
-    isUnplayed: true,
-    isFinal: false,
-    winnerSide: null,
-    homeScore: null,
-    awayScore: null,
-    homeShootoutScore: null,
-    awayShootoutScore: null,
-    ending: MatchEnding.PLAYED,
-    resultSource: null,
-    completedAt: null,
-    advancesToMatchId: null,
-    advancesToSide: null,
-    regionLabel: null,
-    homeSpread: null,
-    periodScores: [],
     ...overrides,
-  };
+  });
 }
 
 const MATCHES = [
   match({
-    id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2',
-    status: 'COMPLETED', isUnplayed: false, isFinal: true, winnerSide: 'HOME', homeScore: 80, awayScore: 61, resultSource: 'PROVIDER', completedAt: '2026-03-20T22:00:00.000Z',
+    id: 'm-1', matchNumber: 1, roundNumber: 1, home: 'sep-1', away: 'sep-2',
+    status: 'COMPLETED', winnerSide: 'HOME', homeScore: 80, awayScore: 61, completedAt: '2026-03-20T22:00:00.000Z',
   }),
   match({
-    id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', isNeutralSite: false,
-    status: 'COMPLETED', isUnplayed: false, isFinal: true, winnerSide: 'AWAY', homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, resultSource: 'PROVIDER',
+    id: 'm-2', matchNumber: 2, roundNumber: 1, home: 'sep-3', away: 'sep-4', isNeutralSite: false,
+    status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4,
   }),
-  match({ id: 'm-3', matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: 'sep-1' }),
+  match({ id: 'm-3', matchNumber: 1, roundNumber: 2, home: 'sep-1' }),
   match({
-    id: 'm-4', matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: 'sep-2', awaySportEventParticipantId: 'sep-4',
-    status: 'COMPLETED', isUnplayed: false, isFinal: true, homeScore: 70, awayScore: 70, resultSource: 'PROVIDER',
+    id: 'm-4', matchNumber: 2, roundNumber: 2, home: 'sep-2', away: 'sep-4',
+    status: 'COMPLETED', homeScore: 70, awayScore: 70,
   }),
 ];
 
@@ -181,16 +163,32 @@ describe('The Event page\'s Matches grid', () => {
     expect(await screen.findByTestId('root-admin-event-matches-state-error')).toBeInTheDocument();
   });
 
-  it('opens a final match\'s details with its winner, the feed as its source and when it was settled, and offers Settle again', async () => {
+  it('opens a final match\'s details with its winner and when it was settled, and offers Settle again', async () => {
     seed();
     renderPage();
 
     const dialog = await openMatch(1, 1);
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-score')).toHaveTextContent('80–61');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('(1) Duke');
-    expect(within(dialog).getByTestId('root-admin-event-match-dialog-source')).toHaveTextContent('Feed');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-settled')).not.toHaveTextContent('Not yet');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-settle-again')).toBeInTheDocument();
+  });
+
+  it('shows each side with how it came out, and each game with each side\'s score, shoot-out and where it played, with no Edit', async () => {
+    seed();
+    renderPage();
+
+    const neutral = await openMatch(1, 1);
+    expect(within(neutral).getByTestId('root-admin-event-match-dialog-side-1')).toHaveTextContent('(16) VermontLost');
+    expect(within(neutral).getByTestId('root-admin-event-match-dialog-side-2')).toHaveTextContent('(1) DukeWon');
+    expect(within(neutral).getByTestId('root-admin-event-match-dialog-game-1')).toHaveTextContent('Final · (16) Vermont 61 · (1) Duke 80');
+    expect(within(neutral).getByTestId('root-admin-event-match-dialog-game-1')).toHaveTextContent('(16) Vermont: Neutral site · (1) Duke: Neutral site');
+    expect(within(neutral).queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    const away = await openMatch(1, 2);
+    expect(within(away).getByTestId('root-admin-event-match-dialog-game-1')).toHaveTextContent('(15) Texas 1 (4 shoot-out) · Houston 1 (3 shoot-out)');
+    expect(within(away).getByTestId('root-admin-event-match-dialog-game-1')).toHaveTextContent('(15) Texas: Away · Houston: Home');
   });
 
   it('names the away side the winner when the away side won', async () => {
@@ -209,7 +207,7 @@ describe('The Event page\'s Matches grid', () => {
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('Tie');
   });
 
-  it('shows an unplayed match as not announced, not decided and with no result, and offers no Settle again', async () => {
+  it('shows an unplayed match as not announced, not decided and not settled, and offers no Settle again', async () => {
     seed();
     renderPage();
 
@@ -217,7 +215,6 @@ describe('The Event page\'s Matches grid', () => {
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-starts')).toHaveTextContent('Not announced');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-score')).toHaveTextContent('None yet');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('Not decided');
-    expect(within(dialog).getByTestId('root-admin-event-match-dialog-source')).toHaveTextContent('No result yet');
     expect(within(dialog).getByTestId('root-admin-event-match-dialog-settled')).toHaveTextContent('Not yet');
     expect(within(dialog).queryByTestId('root-admin-event-match-dialog-settle-again')).not.toBeInTheDocument();
   });

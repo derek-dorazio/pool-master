@@ -52,6 +52,7 @@ import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { bracketMatch, dtoSideTeam, matchEdit, readHomeAway, resultBody } from '../support/match-requests';
 
 // A pick'em week scored against the spread end to end over HTTP (#720). An admin releases a week of
 // four unlinked basketball games and sets three spreads; a straight-up pool against the spread is
@@ -156,7 +157,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
       client: a,
       path: { eventId },
       body: {
-        matches: [0, 1, 2, 3].map((index) => ({
+        matches: [0, 1, 2, 3].map((index) => bracketMatch({
           matchNumber: index + 1,
           roundNumber: 1,
           homeSportEventParticipantId: rowOf(expectDefined(TEAMS[index * 2])),
@@ -172,13 +173,13 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
 
     const setSpread = (matchNumber: number, homeSpread: number | null) =>
-      updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber }, body: { homeSpread } });
+      updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber }, body: matchEdit({ homeSpread }) });
     for (const [matchNumber, homeSpread] of [[1, -3.5], [2, 6.5], [3, -3]] as const) {
       const set = await setSpread(matchNumber, homeSpread);
-      expect([set.error, set.data?.match.homeSpread]).toEqual([undefined, homeSpread]);
+      expect([set.error, set.data && readHomeAway(set.data.match).homeSpread]).toEqual([undefined, homeSpread]);
     }
     expectFunctionalError(
-      await updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 4 }, body: { homeSpread: 2.25 } }),
+      await updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 4 }, body: matchEdit({ homeSpread: 2.25 }) }),
       { status: 400, code: 'FST_ERR_VALIDATION' },
     );
     const games = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
@@ -186,7 +187,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const pick = (matchNumber: number, side: Side) => ({
       sportEventRoundMatchId: game(matchNumber).id,
       predictedResult: PredictedResult.TEAM,
-      sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
+      sportEventParticipantId: expectDefined(dtoSideTeam(game(matchNumber), side === 'home' ? 2 : 1)),
     });
 
     // --- A pool against the spread waits on the last spread -------------------------------------
@@ -207,7 +208,9 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
       },
     });
     expectFunctionalError(await createAts(), { status: 422, code: 'CONTEST_EVENT_SPREAD_MISSING' });
-    expect((await setSpread(4, 0)).data?.match.homeSpread).toBe(0);
+    const levelSpread = expectDefined((await setSpread(4, 0)).data).match;
+    // Side 1 holds the spread (#2184): a pick'em even game is 0 either way.
+    expect([readHomeAway(levelSpread).homeSpread, levelSpread.sides.map((side) => side.spread)]).toEqual([0, [0, null]]);
     const contest = await createAts();
     expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
@@ -237,7 +240,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
       const recorded = await recordEventMatchResult({
         client: a,
         path: { eventId, roundNumber: 1, matchNumber },
-        body: { winnerSide: homeScore > awayScore ? MatchSide.HOME : MatchSide.AWAY, homeScore, awayScore },
+        body: resultBody({ winnerSide: homeScore > awayScore ? MatchSide.HOME : MatchSide.AWAY, homeScore, awayScore }),
       });
       expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
     }

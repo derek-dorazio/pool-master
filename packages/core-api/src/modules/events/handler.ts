@@ -49,8 +49,6 @@ import {
   mapGolfRoundScorePreviewToDto,
   mapRaceResultPreviewToDto,
   mapSportEventRoundMatchToDto,
-  toMatchResultInput,
-  toPeriodScoreInput,
   mapSportEventParticipantToDto,
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
@@ -421,7 +419,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<{ Params: { eventId: string } & MatchPlace; Body: RecordSportEventRoundMatchResultRequest }>,
     ): Promise<SportEventBracketResponse> => {
       await sportEvents.requireTestEvent(request.params.eventId);
-      const matches = await matchResults.recordResult(request.params.eventId, matchPlaceOf(request.params), toMatchResultInput(request.body));
+      const matches = await matchResults.recordResult(request.params.eventId, matchPlaceOf(request.params), request.body);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
@@ -430,7 +428,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     ): Promise<SportEventBracketResponse> => {
       const { eventId, periodNumber } = request.params;
       await sportEvents.requireTestEvent(eventId);
-      const matches = await matchResults.recordPeriodScore(eventId, matchPlaceOf(request.params), periodNumber, toPeriodScoreInput(request.body));
+      const matches = await matchResults.recordPeriodScore(eventId, matchPlaceOf(request.params), periodNumber, request.body.sides);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
@@ -445,7 +443,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     proposeEventRoundMatchups: async (
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number } }>,
     ): Promise<SportEventRoundMatchupsResponse> => {
-      return { matches: await bracket.proposeRoundMatchups(request.params.eventId, request.params.roundNumber) };
+      return { matches: (await bracket.proposeRoundMatchups(request.params.eventId, request.params.roundNumber)).map(({ matchNumber, sides }) => ({ matchNumber, sides: [...sides] })) };
     },
 
     setEventRoundMatchups: async (

@@ -506,8 +506,7 @@ its stored Games, never at Game 1. Two cases raise a WARNING finding and keep go
   the mapping. Voiding the picks on the old Game is #2016's.
 **The feed is the only writer** (#2074): a
 provider final overwrites whatever the match holds, a result written by hand before included,
-and the API shows every result's `resultSource` as `PROVIDER` (a cancelled match's too); nothing
-stores it. A level knockout game takes its winner from the shoot-out wherever its slot's games
+and so the API carries no result source on a match (#2184); nothing stores one. A level knockout game takes its winner from the shoot-out wherever its slot's games
 cannot end level.
 
 **Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
