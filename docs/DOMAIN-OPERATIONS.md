@@ -689,8 +689,9 @@ Children of an event; always reached through it.
 
 ### SportEventParticipant — the Participant↔SportEvent edge
 
-Carries `ranking` (the rank that applied at this event), `seedNumber`, `oddsToWin`, and an
-`inactiveReason` of `WITHDRAWN` or `ELIMINATED` (null: inactive, no reason recorded).
+Carries `ranking` (the rank that applied at this event), `seedNumber`, `oddsToWin`, and a
+`status`: `ACTIVE` while it competes, or `WITHDRAWN`, `ELIMINATED` (a missed cut or a knock-out)
+or `DISQUALIFIED` once it is out (#2184).
 
 | Operation | Role | Notes |
 |---|---|---|
