@@ -137,7 +137,7 @@ WHERE p."code" = 'STANDARD_BY_SEED';
 UPDATE "sport_leagues"
 SET "platform_tier_profile_id" = (SELECT "id" FROM "platform_tier_profiles" WHERE "code" = 'PLAYOFF_SEEDS_1_4_REST'),
     "platform_pricing_profile_id" = (SELECT "id" FROM "platform_pricing_profiles" WHERE "code" = 'STANDARD_BY_SEED')
-WHERE "url_segment" = 'nfl';
+WHERE "id" = 'f91f2566-1978-4171-a706-ae417c4d601a';
 
 -- The NFL's tiered and budget templates become one pair: three teams, every one counting. Each
 -- new template covers the slots the old default of its kind covered.
@@ -152,8 +152,7 @@ JOIN (VALUES
    'Every team has a price: pick three whose prices fit under the salary cap. A win scores 1 point on Wild Card weekend, doubling each round to 8 for the Super Bowl.',
    2, '{"scoring": {"config": {"upsetBonus": {"rule": "NONE"}, "roundValues": [1, 2, 4, 8]}, "participantScoringDefinitionId": "KNOCKOUT_ROUND_POINTS"}, "rosterSize": 3, "countedScores": 3, "selectionType": "BUDGET_PICK", "maxEntriesPerSquad": 1}')
 ) AS n("old_key", "template_key", "name", "description", "sort_order", "config_json") ON n."old_key" = t."template_key"
-JOIN "sport_leagues" l ON l."id" = t."sport_league_id"
-WHERE l."url_segment" = 'nfl';
+WHERE t."sport_league_id" = 'f91f2566-1978-4171-a706-ae417c4d601a';
 
 INSERT INTO "contest_config_template_slots" ("sport_league_id", "template_id", "sport_league_competition_slot_id")
 SELECT n."sport_league_id", n."id", s."sport_league_competition_slot_id"
@@ -162,13 +161,36 @@ JOIN "contest_config_templates" o ON o."sport_league_id" = n."sport_league_id"
   AND o."template_key" = CASE n."template_key" WHEN 'nfl-tiered-pick-3' THEN 'nfl-tiered-doubling' ELSE 'nfl-budget-doubling' END
 JOIN "contest_config_template_slots" s ON s."template_id" = o."id"
 WHERE n."template_key" IN ('nfl-tiered-pick-3', 'nfl-budget-pick-3')
-  AND n."sport_league_id" = (SELECT "id" FROM "sport_leagues" WHERE "url_segment" = 'nfl');
+  AND n."sport_league_id" = 'f91f2566-1978-4171-a706-ae417c4d601a';
+
+-- What named an old template names the new one of its kind instead: an event page's offer (its
+-- template is ON DELETE RESTRICT, so an offer an admin added would stop the delete) and a
+-- contest's configuration (a link a later slice makes required).
+UPDATE "event_page_offers" o
+SET "template_id" = n."id", "updated_at" = CURRENT_TIMESTAMP
+FROM "contest_config_templates" old_t
+JOIN (VALUES
+  ('nfl-tiered-doubling', 'nfl-tiered-pick-3'), ('nfl-tiered-doubling-upset-bonus', 'nfl-tiered-pick-3'),
+  ('nfl-budget-doubling', 'nfl-budget-pick-3'), ('nfl-budget-doubling-upset-bonus', 'nfl-budget-pick-3')
+) AS k("old_key", "new_key") ON k."old_key" = old_t."template_key"
+JOIN "contest_config_templates" n ON n."sport_league_id" = old_t."sport_league_id" AND n."template_key" = k."new_key"
+WHERE o."template_id" = old_t."id" AND old_t."sport_league_id" = 'f91f2566-1978-4171-a706-ae417c4d601a';
+
+UPDATE "contest_configurations" c
+SET "template_id" = n."id"
+FROM "contest_config_templates" old_t
+JOIN (VALUES
+  ('nfl-tiered-doubling', 'nfl-tiered-pick-3'), ('nfl-tiered-doubling-upset-bonus', 'nfl-tiered-pick-3'),
+  ('nfl-budget-doubling', 'nfl-budget-pick-3'), ('nfl-budget-doubling-upset-bonus', 'nfl-budget-pick-3')
+) AS k("old_key", "new_key") ON k."old_key" = old_t."template_key"
+JOIN "contest_config_templates" n ON n."sport_league_id" = old_t."sport_league_id" AND n."template_key" = k."new_key"
+WHERE c."template_id" = old_t."id" AND old_t."sport_league_id" = 'f91f2566-1978-4171-a706-ae417c4d601a';
 
 DELETE FROM "contest_config_templates"
 WHERE "template_key" IN ('nfl-tiered-doubling', 'nfl-tiered-doubling-upset-bonus', 'nfl-budget-doubling', 'nfl-budget-doubling-upset-bonus')
-  AND "sport_league_id" = (SELECT "id" FROM "sport_leagues" WHERE "url_segment" = 'nfl');
+  AND "sport_league_id" = 'f91f2566-1978-4171-a706-ae417c4d601a';
 
 -- Each new template is its kind's default, now that the old defaults are gone.
 UPDATE "contest_config_templates" SET "is_default" = true
 WHERE "template_key" IN ('nfl-tiered-pick-3', 'nfl-budget-pick-3')
-  AND "sport_league_id" = (SELECT "id" FROM "sport_leagues" WHERE "url_segment" = 'nfl');
+  AND "sport_league_id" = 'f91f2566-1978-4171-a706-ae417c4d601a';

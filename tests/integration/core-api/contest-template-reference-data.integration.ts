@@ -820,7 +820,10 @@ describe('Every seeded contest template, whatever its sport', () => {
   async function activeTemplates() {
     return getPrisma().contestConfigTemplate.findMany({
       where: { active: true },
-      include: { sportLeague: { include: { platformTierProfile: { include: { _count: { select: { ranges: true } } } }, sport: true } } },
+      include: {
+        sportLeague: { include: { platformTierProfile: { include: { _count: { select: { ranges: true } } } }, sport: true } },
+        slots: { select: { sportLeagueCompetitionSlotId: true } },
+      },
       orderBy: [{ sportLeague: { sport: { sport: 'asc' } } }, { templateKey: 'asc' }],
     });
   }
@@ -903,9 +906,10 @@ describe('Every seeded contest template, whatever its sport', () => {
     expect(problems).toEqual([]);
   });
 
-  it('gives every tiered template a budget twin in its league, the same roster size, counted scores and scoring, but the shrink-only list of those not yet twinned', async () => {
+  it('gives every tiered template a budget twin in its league, over the same slots with the same roster size, counted scores and scoring, but the shrink-only list of those not yet twinned', async () => {
     const templates = await activeTemplates();
     const rulesOf = (template: (typeof templates)[number]) => ContestRulesWithEntryLimitSchema.parse(template.configJson);
+    const slotsOf = (template: (typeof templates)[number]) => template.slots.map((slot) => slot.sportLeagueCompetitionSlotId).sort().join(',');
 
     const untwinned = templates.flatMap((template) => {
       const rules = rulesOf(template);
@@ -913,7 +917,7 @@ describe('Every seeded contest template, whatever its sport', () => {
       const profile = template.sportLeague.platformTierProfile;
       const held = getTieredRosterSize(getTiersInPlay(profile.tierCount ?? profile._count.ranges, rules.tiersUsed), rules.picksPerTier);
       const twinned = templates.some((other) => {
-        if (other.sportLeagueId !== template.sportLeagueId) return false;
+        if (other.sportLeagueId !== template.sportLeagueId || slotsOf(other) !== slotsOf(template)) return false;
         const budget = rulesOf(other);
         return budget.selectionType === SelectionType.BUDGET_PICK
           && budget.rosterSize === held
