@@ -105,11 +105,11 @@ export interface PredictionEngine {
   readonly takesTiePicks: boolean;
 
   /**
-   * The game whose total points the entry's tiebreaker guesses (#717): a bracket's final, a week's
-   * last game by kickoff; null while there is none. The tiebreaker locks, and is revealed, with
-   * that game's pick, and every entry gives one to submit.
+   * The game whose total points the entry's tiebreaker guesses (#717): the game its slot names as
+   * the slot's tiebreaker (#2048), a bracket's from its FINAL slot; null while there is none. The
+   * tiebreaker locks, and is revealed, with that game's pick, and every entry gives one to submit.
    */
-  tiebreakerGame(input: { games: readonly SportEventRoundMatch[]; eventStart: Date }): SportEventRoundMatch | null;
+  tiebreakerGame(input: { games: readonly SportEventRoundMatch[] }): SportEventRoundMatch | null;
 
   /**
    * The teams each game offers the entry, and which of its picks stand: the game's own two teams

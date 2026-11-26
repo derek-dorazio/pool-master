@@ -78,7 +78,7 @@ const T0 = new Date('2026-01-01T00:00:00.000Z');
 
 /** A round's slot as the round read gives it (#2006). */
 function roundSlotOf({ id, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot): SportEventRoundSlot {
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing };
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, tiebreakerMatchId: null };
 }
 
 /** The profiles every in-memory sport league names (#1844); `platformTierProfileRepo` and `platformPricingProfileRepo` serve them. */

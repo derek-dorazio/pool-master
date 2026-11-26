@@ -108,6 +108,11 @@ export interface SportEventRoundSlot {
   seriesGames: number;
   /** Whether the slot's matches are set by fixed links or reseeded. */
   pairing: SlotPairing;
+  /**
+   * The match whose Game is the slot's tiebreaker game (#2048): the one Game whose combined score
+   * every contest covering the slot guesses. Null until the slot has a scheduled Game.
+   */
+  tiebreakerMatchId: string | null;
 }
 
 /** What a match reads of its round's slot (#2006): its label's facts and its kind. */

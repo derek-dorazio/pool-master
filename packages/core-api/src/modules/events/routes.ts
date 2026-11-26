@@ -37,6 +37,7 @@ import { createSportEventServices, eventFieldCache, type SportEventServices } fr
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
 import { PublicReadPath } from '../../core/public-cache';
+import type { SlotTiebreakerService } from './slot-tiebreaker-service';
 
 export interface EventsModuleOptions {
   /** The app's one status-change path, with its follow-ups (#1946). */
@@ -56,6 +57,8 @@ export interface EventsModuleOptions {
   /** The Event page's sync rows (#1889): which providers' webhooks drive their live scores. */
   /** The providers whose webhooks are on now. */
   webhookProviderIds: () => readonly string[];
+  /** Each slot's tiebreaker game (#2048), built once with the app's findings and domain events. */
+  slotTiebreakers: Pick<SlotTiebreakerService, 'listSlotTiebreakers' | 'chooseTiebreakerGame'>;
 }
 
 const TAGS = ['Events'];
@@ -112,6 +115,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       reader: new PrismaSportLeaguePageReader(prisma),
         webhookProviderIds: opts.webhookProviderIds,
     }),
+    slotTiebreakers: opts.slotTiebreakers,
   });
   const write = { onRequest: requireRootAdmin };
 
@@ -614,6 +618,43 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SportEventBracketResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     handler: handler.loadEventBracket,
+  });
+
+  fastify.get('/:eventId/slots/tiebreakers', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport event\'s slot tiebreaker games',
+      description: 'Each slot the event covers, with its tiebreaker game (#2048): the one Game whose combined score every contest covering the slot guesses, '
+        + 'chosen by the rule (the latest scheduled start, ties to the lower Game id) or by a root admin, and every Game played in the slot with whether it can be chosen now. '
+        + 'A fixed number of reads however many slots and Games. 404 EVENT_NOT_FOUND. Root admin only.',
+      operationId: 'listEventSlotTiebreakers',
+      params: EVENT_PARAMS,
+      response: { 200: schemaRef('SportEventSlotTiebreakersResponse'), ...errors(401, 403, 404) },
+    },
+    handler: handler.listEventSlotTiebreakers,
+  });
+
+  fastify.put('/:eventId/slots/:seasonSlotId/tiebreaker-game', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Choose a slot\'s tiebreaker game',
+      description: 'A root admin chooses which of the slot\'s Games every contest covering it guesses the combined score of (#2048), on a synced or a test event alike. '
+        + 'The choice and who made it are kept and logged, and the rule leaves it alone until it starts; a cancelled or moved game is replaced by the rule\'s choice with a finding. '
+        + 'Choosing the game already chosen records the choice. 404 EVENT_NOT_FOUND, and SEASON_SLOT_NOT_FOUND for a slot the event does not cover. '
+        + '422 TIEBREAKER_GAME_NOT_IN_SLOT for a Game played elsewhere, TIEBREAKER_GAME_NOT_ELIGIBLE for one cancelled, moved or with no start. '
+        + '409 TIEBREAKER_GAME_STARTED once the slot\'s game, or the one asked for, has started. Root admin only.',
+      operationId: 'chooseEventSlotTiebreakerGame',
+      params: {
+        type: 'object',
+        required: ['eventId', 'seasonSlotId'],
+        properties: { eventId: uuid, seasonSlotId: uuid },
+      },
+      body: schemaRef('ChooseSlotTiebreakerGameRequest'),
+      response: { 200: schemaRef('SportEventSlotTiebreakerResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.chooseEventSlotTiebreakerGame,
   });
 
   fastify.patch('/:eventId/bracket/rounds/:roundNumber/matches/:matchNumber', {

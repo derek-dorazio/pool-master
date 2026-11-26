@@ -1,3 +1,5 @@
+import { PrismaSlotTiebreakerRepository } from '../../../packages/core-api/src/adapters/prisma-slot-tiebreaker-repository';
+import { SlotTiebreakerService } from '../../../packages/core-api/src/modules/events/slot-tiebreaker-service';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId, testSlotId } from '../../support/test-slots';
 import { syncSlotsFor } from '../../support/sync-slots';
@@ -379,6 +381,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     domainEvents: testDomainEvents(),
     leaderboards: new RecordingLeaderboardRebuilds(),
     webhookProviderIds: providerRows.webhookProviderIds,
+    slotTiebreakers: new SlotTiebreakerService({ slots: new PrismaSlotTiebreakerRepository(prisma), findings: integrationSyncFindings(prisma), domainEvents: testDomainEvents() }),
   });
   await app.ready();
 

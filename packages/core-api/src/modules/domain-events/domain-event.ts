@@ -23,6 +23,12 @@ export const DomainEventType = {
    */
   SPORT_EVENT_RESULTS_CHANGED: 'SPORT_EVENT_RESULTS_CHANGED',
   /**
+   * A sport event's games were loaded, rescheduled, paired or moved to another event: what its
+   * slots' tiebreaker games are chosen from (#2048). Said by every bracket write that loads or
+   * edits matches, and by the score sync when it marks a game moved. A score is not one.
+   */
+  SPORT_EVENT_GAMES_CHANGED: 'SPORT_EVENT_GAMES_CHANGED',
+  /**
    * A game of a sport event was decided: its result is in, a period score came after it, or it was
    * cancelled. Said by the match result write, an admin's or a provider's alike.
    */
@@ -70,6 +76,11 @@ export interface SportEventRescheduled {
 
 export interface SportEventResultsChanged {
   type: typeof DomainEventType.SPORT_EVENT_RESULTS_CHANGED;
+  sportEventId: string;
+}
+
+export interface SportEventGamesChanged {
+  type: typeof DomainEventType.SPORT_EVENT_GAMES_CHANGED;
   sportEventId: string;
 }
 
@@ -132,7 +143,7 @@ export interface ParticipantProviderMapped {
 }
 
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventResultsChanged | GameDecided | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced | ParticipantProviderMapped;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventResultsChanged | SportEventGamesChanged | GameDecided | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced | ParticipantProviderMapped;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;

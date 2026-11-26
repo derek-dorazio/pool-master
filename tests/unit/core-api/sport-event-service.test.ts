@@ -1,3 +1,4 @@
+import { SlotTiebreakerService } from '../../../packages/core-api/src/modules/events/slot-tiebreaker-service';
 import { expect, jest } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import { BackgroundJobType, SlotKind, SlotWindowStatus, Sport, SportEventStatus, type SportEvent, type SportLeague } from '@poolmaster/shared/domain';
@@ -1200,6 +1201,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
       ingestion: stubInstance(IngestionService, {}),
       leaderboards: new RecordingLeaderboardRebuilds(),
       eventOverviews: stubInstance(SportLeaguePageService, {}),
+      slotTiebreakers: stubInstance(SlotTiebreakerService, {}),
     });
     return { store, service, sportLeague, notice, handlers };
   }
@@ -1270,6 +1272,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
       ingestion: stubInstance(IngestionService, {}),
       leaderboards: new RecordingLeaderboardRebuilds(),
       eventOverviews: stubInstance(SportLeaguePageService, {}),
+      slotTiebreakers: stubInstance(SlotTiebreakerService, {}),
     });
     const countContests = jest.spyOn(context.sportEvents, 'countContests');
     return { ...context, handlers, listBracket, countContests };

@@ -67,6 +67,8 @@ import type {
   SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import { SportEventError } from '../../events/errors';
+import { combineJobsForWrite } from '../../background-jobs/background-job-queue';
+import { DomainEventType, type DomainEvents } from '../../domain-events';
 import type { LiveScoreGameFinding, LiveScorePersistenceResult } from '../../ingestion/core/score-publisher';
 import { summarizeSyncWriteRows, type SyncWriteDetailRow } from '../../ingestion/core/sync-write-diagnostics';
 import type { LiveScoreTargetEvent } from '../scoring-family-module';
@@ -81,6 +83,8 @@ export interface GameScoreWriterDeps {
   playIns: PlayInFillDeps['playIns'];
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   results: Pick<MatchResultService, 'recordResult'>;
+  /** What follows a Game moved out of its event (#2048): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -169,7 +173,11 @@ export async function writeGameScores(
     const score = gameScoreOf(feed, match, sidesOf, teamsOf, stored, now);
     return score === null ? [] : [{ id: gameId, ...score }];
   });
-  await deps.games.applySync({ providerCode, created: placement.created, mapped: placement.mapped, moved: placement.moved, scores });
+  // A move takes a Game out of its event's slot, so that event's slots choose their tiebreaker games again.
+  const moves = combineJobsForWrite(...await Promise.all([...placement.movedFromEventIds]
+    .map((movedFromEventId) => deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_GAMES_CHANGED, sportEventId: movedFromEventId }))));
+  await deps.games.applySync({ providerCode, created: placement.created, mapped: placement.mapped, moved: placement.moved, scores }, moves.jobs);
+  moves.queued();
 
   const series = seriesStandings(deps, sportEventId, placed, placement.overLength, storedGames, scores);
   const finals: FinalResult[] = [
@@ -272,6 +280,8 @@ interface GamePlacement {
   created: SportEventRoundMatchGameCreate[];
   mapped: { sportEventRoundMatchGameId: string; externalId: string }[];
   moved: { id: string; movedToGameId: string }[];
+  /** The events the moved Games were played in: their slots choose their tiebreaker games again (#2048). */
+  movedFromEventIds: Set<string>;
   findings: LiveScoreGameFinding[];
   ambiguous: GameScoreUpdate[];
   /** Each series' games numbered past its length, by match: the feed and the bracket disagree. */
@@ -294,7 +304,7 @@ function placeUnmappedGames(
   teamsOf: ReadonlyMap<string, string>,
   sportEventId: string,
 ): GamePlacement {
-  const placement: GamePlacement = { placed: [], created: [], mapped: [], moved: [], findings: [], ambiguous: [], overLength: new Map() };
+  const placement: GamePlacement = { placed: [], created: [], mapped: [], moved: [], movedFromEventIds: new Set(), findings: [], ambiguous: [], overLength: new Map() };
   if (games.length === 0) return placement;
   const matchesByTeams = groupByTeams(matches, (match) => [sidesOf.get(match.homeSportEventParticipantId), sidesOf.get(match.awaySportEventParticipantId)]);
   const gamesByTeams = groupByTeams(games, (game) => [teamsOf.get(game.homeTeamExternalId), teamsOf.get(game.awayTeamExternalId)]);
@@ -330,6 +340,7 @@ function placeUnmappedGames(
       const movedFrom = elsewhere.get(feed.providerGameId);
       if (movedFrom !== undefined) {
         placement.moved.push({ id: movedFrom.id, movedToGameId: gameId });
+        placement.movedFromEventIds.add(movedFrom.sportEventId);
         placement.findings.push({ kind: ProviderSyncFindingKind.GAME_MOVED, providerValue: feed.providerGameId });
       } else if (stored?.externalId != null) {
         placement.findings.push({ kind: ProviderSyncFindingKind.GAME_ID_REISSUED, providerValue: feed.providerGameId });

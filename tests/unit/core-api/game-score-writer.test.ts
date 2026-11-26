@@ -1,4 +1,4 @@
-import { MatchResultSource, MatchSide, MatchStatus, ProviderCode, ProviderGameState, type SportEventRoundMatch, type SportEventRoundMatchGame } from '@poolmaster/shared/domain';
+import { BackgroundJobType, MatchResultSource, MatchSide, MatchStatus, ProviderCode, ProviderGameState, type SportEventRoundMatch, type BackgroundJobRequest, type SportEventRoundMatchGame } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { MatchLiveScoreWrite, ProviderMappedGame, SportEventRoundMatchGameSync } from '@poolmaster/shared/db';
 import { writeGameScores, type GameScoreWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-score-writer';
@@ -7,6 +7,7 @@ import { bracketMatches } from '../../support/bracket-fixtures';
 import { bracketRoundSlots } from '../../support/round-slots';
 import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
+import { testDomainEvents } from '../../support/domain-events';
 
 // A provider's final for a match's Game is written through the admin's result path (#1496); a
 // provider game id is the Game it is mapped to (#2007).
@@ -53,7 +54,7 @@ function nth(gameNumber: number, each: GameScoreUpdate): GameScoreUpdate {
 }
 
 /** The provider ids one sync mapped, as `[Game id, provider id]`. */
-function mappedOf(applySync: jest.Mock<Promise<void>, [SportEventRoundMatchGameSync]>): [string, string][] {
+function mappedOf(applySync: jest.Mock<Promise<void>, [SportEventRoundMatchGameSync, (readonly BackgroundJobRequest[])?]>): [string, string][] {
   return applySync.mock.calls.flatMap(([sync]) => sync.mapped.map((each): [string, string] => [each.sportEventRoundMatchGameId, each.externalId]));
 }
 
@@ -65,7 +66,7 @@ function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[
     .filter((id) => !unmappedTeams.includes(id))
     .map((externalId) => ({ id: `map-${externalId}`, providerId, externalId, participantId: externalId.replace('bdl-', 'p-') })));
   const logger = fakeLogger();
-  const applySync = jest.fn<Promise<void>, [SportEventRoundMatchGameSync]>().mockResolvedValue();
+  const applySync = jest.fn<Promise<void>, [SportEventRoundMatchGameSync, (readonly BackgroundJobRequest[])?]>().mockResolvedValue();
   const applyLiveScores = jest.fn<Promise<void>, [readonly MatchLiveScoreWrite[]]>().mockResolvedValue();
   const games = {
     findBySportEvent: jest.fn(async (): Promise<ProviderMappedGame[]> => matches.map((match) => ({ game: gameOne(match), externalId: LINKS.get(match.id) ?? null }))),
@@ -79,6 +80,7 @@ function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[
     eventParticipants: { findByIds },
     mappings: { findByProviderExternalIds },
     results: { recordResult },
+    domainEvents: testDomainEvents(),
     now: () => NOW,
     logger,
   } as unknown as GameScoreWriterDeps;
@@ -259,6 +261,19 @@ describe('writeGameScores', () => {
     expect(mappedOf(applySync)).toEqual([['m1-g1', 'p-1']]);
     expect(applySync.mock.calls[0]?.[0].moved).toEqual([{ id: 'week-11-g1', movedToGameId: 'm1-g1' }]);
     expect(result.gameFindings).toEqual([{ kind: 'GAME_MOVED', providerValue: 'p-1' }]);
+  });
+
+  it('writes the job running the tiebreaker rule of the event a game moved out of, with the move, and none for a sync that moves nothing', async () => {
+    const matches = bracket().map((match) => linked(match, null));
+    const oldGame = { ...gameOne(matches[0] ?? expectDefined(undefined, 'match')), id: 'week-11-g1', sportEventId: 'week-11' };
+    const moving = writer(matches, [], [{ game: oldGame, externalId: 'p-1' }]);
+    const still = writer(bracket());
+
+    await writeGameScores(moving.deps, EVENT, [game('p-1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED)]);
+    await writeGameScores(still.deps, EVENT, [game('g1', 'KC', 'BUF', 7, 3, ProviderGameState.IN_PROGRESS)]);
+
+    expect(moving.applySync.mock.calls[0]?.[1]?.map((job) => [job.type, job.payload])).toEqual([[BackgroundJobType.REFRESH_SLOT_TIEBREAKERS, { sportEventId: 'week-11' }]]);
+    expect(still.applySync.mock.calls.flatMap(([, jobs]) => jobs ?? [])).toEqual([]);
   });
 
   it('maps nothing, and logs it, when a game\'s place is a Game whose own id is still in the batch: two provider games for one Game', async () => {

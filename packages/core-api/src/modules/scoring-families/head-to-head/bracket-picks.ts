@@ -30,7 +30,7 @@ import {
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { proposeRoundMatchups, reseededRounds } from '../../events/bracket-reseed';
-import { gameTotalPoints } from './game-picks';
+import { gameTotalPoints, slotTiebreakerGame } from './game-picks';
 import { byeEntries, upsetBonusFor } from './score-team';
 
 /** One bracket pick: the team an entry says wins one game. */
@@ -287,9 +287,19 @@ export function bracketFinal(bracket: readonly SportEventRoundMatch[]): SportEve
   return finals.length === 1 ? finals[0] : null;
 }
 
-/** The final's combined score, both teams together, once it is played: what the tiebreaker guesses. */
+/**
+ * The bracket's tiebreaker game (#2048): the game its final's slot names as its tiebreaker, which
+ * the slot rule makes the championship once it is scheduled. Null while that slot names none of
+ * the final's round.
+ */
+export function bracketTiebreakerGame(bracket: readonly SportEventRoundMatch[]): SportEventRoundMatch | null {
+  const finalRounds = finalRoundsOfMatches(bracket);
+  return slotTiebreakerGame(bracket.filter((match) => finalRounds.has(match.roundNumber)));
+}
+
+/** The tiebreaker game's combined score, both teams together, once it is played: what the tiebreaker guesses. */
 export function finalTotalPoints(bracket: readonly SportEventRoundMatch[]): number | null {
-  return gameTotalPoints(bracketFinal(bracket));
+  return gameTotalPoints(bracketTiebreakerGame(bracket));
 }
 
 export interface PredictionStandingInput {

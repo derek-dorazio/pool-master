@@ -52991,6 +52991,434 @@
         "additionalProperties": false,
         "description": "A dry run of a race result. Nothing is written."
       },
+      "SlotTiebreakerGameDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Game: what a root admin chooses."
+          },
+          "sportEventRoundMatchId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id)."
+          },
+          "gameNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "1 for a single game; a series' games in the order they are played."
+          },
+          "scheduledDate": {
+            "description": "When the Game starts; null until the schedule gives it a time.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "POSTPONED"
+            ],
+            "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+          },
+          "moved": {
+            "type": "boolean",
+            "description": "Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen."
+          },
+          "choosable": {
+            "type": "boolean",
+            "description": "Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started."
+          }
+        },
+        "required": [
+          "id",
+          "sportEventRoundMatchId",
+          "gameNumber",
+          "scheduledDate",
+          "status",
+          "moved",
+          "choosable"
+        ],
+        "additionalProperties": false,
+        "description": "One of a slot's Games."
+      },
+      "SportEventSlotTiebreakerDto": {
+        "type": "object",
+        "properties": {
+          "seasonSlotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id)."
+          },
+          "tiebreakerGameId": {
+            "description": "The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "chosenAt": {
+            "description": "When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "chosenByUserId": {
+            "description": "The root admin who chose it; null while the rule chose it, or once that account is gone.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "editable": {
+            "type": "boolean",
+            "description": "Whether it can be changed: no game is chosen yet, or the chosen one has not started."
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Game: what a root admin chooses."
+                },
+                "sportEventRoundMatchId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id)."
+                },
+                "gameNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "1 for a single game; a series' games in the order they are played."
+                },
+                "scheduledDate": {
+                  "description": "When the Game starts; null until the schedule gives it a time.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED",
+                    "POSTPONED"
+                  ],
+                  "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                },
+                "moved": {
+                  "type": "boolean",
+                  "description": "Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen."
+                },
+                "choosable": {
+                  "type": "boolean",
+                  "description": "Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started."
+                }
+              },
+              "required": [
+                "id",
+                "sportEventRoundMatchId",
+                "gameNumber",
+                "scheduledDate",
+                "status",
+                "moved",
+                "choosable"
+              ],
+              "additionalProperties": false,
+              "description": "One of a slot's Games."
+            },
+            "description": "Every Game played in the slot, by match and game number."
+          }
+        },
+        "required": [
+          "seasonSlotId",
+          "tiebreakerGameId",
+          "chosenAt",
+          "chosenByUserId",
+          "editable",
+          "games"
+        ],
+        "additionalProperties": false,
+        "description": "One slot's tiebreaker game and the Games it could be."
+      },
+      "SportEventSlotTiebreakersResponse": {
+        "type": "object",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "seasonSlotId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id)."
+                },
+                "tiebreakerGameId": {
+                  "description": "The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "chosenAt": {
+                  "description": "When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "chosenByUserId": {
+                  "description": "The root admin who chose it; null while the rule chose it, or once that account is gone.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "editable": {
+                  "type": "boolean",
+                  "description": "Whether it can be changed: no game is chosen yet, or the chosen one has not started."
+                },
+                "games": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The Game: what a root admin chooses."
+                      },
+                      "sportEventRoundMatchId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id)."
+                      },
+                      "gameNumber": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "1 for a single game; a series' games in the order they are played."
+                      },
+                      "scheduledDate": {
+                        "description": "When the Game starts; null until the schedule gives it a time.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "SCHEDULED",
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "CANCELLED",
+                          "POSTPONED"
+                        ],
+                        "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                      },
+                      "moved": {
+                        "type": "boolean",
+                        "description": "Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen."
+                      },
+                      "choosable": {
+                        "type": "boolean",
+                        "description": "Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "sportEventRoundMatchId",
+                      "gameNumber",
+                      "scheduledDate",
+                      "status",
+                      "moved",
+                      "choosable"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One of a slot's Games."
+                  },
+                  "description": "Every Game played in the slot, by match and game number."
+                }
+              },
+              "required": [
+                "seasonSlotId",
+                "tiebreakerGameId",
+                "chosenAt",
+                "chosenByUserId",
+                "editable",
+                "games"
+              ],
+              "additionalProperties": false,
+              "description": "One slot's tiebreaker game and the Games it could be."
+            },
+            "description": "Each slot the event covers; empty for an event with none."
+          }
+        },
+        "required": [
+          "slots"
+        ],
+        "additionalProperties": false
+      },
+      "ChooseSlotTiebreakerGameRequest": {
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "One of the slot's Games (SlotTiebreakerGameDto.id) that is `choosable`."
+          }
+        },
+        "required": [
+          "gameId"
+        ],
+        "additionalProperties": false
+      },
+      "SportEventSlotTiebreakerResponse": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "object",
+            "properties": {
+              "seasonSlotId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id)."
+              },
+              "tiebreakerGameId": {
+                "description": "The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "chosenAt": {
+                "description": "When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "chosenByUserId": {
+                "description": "The root admin who chose it; null while the rule chose it, or once that account is gone.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "editable": {
+                "type": "boolean",
+                "description": "Whether it can be changed: no game is chosen yet, or the chosen one has not started."
+              },
+              "games": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The Game: what a root admin chooses."
+                    },
+                    "sportEventRoundMatchId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id)."
+                    },
+                    "gameNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "1 for a single game; a series' games in the order they are played."
+                    },
+                    "scheduledDate": {
+                      "description": "When the Game starts; null until the schedule gives it a time.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "CANCELLED",
+                        "POSTPONED"
+                      ],
+                      "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                    },
+                    "moved": {
+                      "type": "boolean",
+                      "description": "Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen."
+                    },
+                    "choosable": {
+                      "type": "boolean",
+                      "description": "Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "sportEventRoundMatchId",
+                    "gameNumber",
+                    "scheduledDate",
+                    "status",
+                    "moved",
+                    "choosable"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One of a slot's Games."
+                },
+                "description": "Every Game played in the slot, by match and game number."
+              }
+            },
+            "required": [
+              "seasonSlotId",
+              "tiebreakerGameId",
+              "chosenAt",
+              "chosenByUserId",
+              "editable",
+              "games"
+            ],
+            "additionalProperties": false,
+            "description": "One slot's tiebreaker game and the Games it could be."
+          }
+        },
+        "required": [
+          "slot"
+        ],
+        "additionalProperties": false
+      },
       "SquaresBoxDto": {
         "type": "object",
         "properties": {
@@ -73725,7 +74153,8 @@
               "SYNC_EVENT_GAMES_AND_TIERS",
               "ACTIVATE_EVENT_CONTESTS",
               "FOLLOW_POSTPONED_EVENT_CONTESTS",
-              "RESOLVE_MAPPED_PARTICIPANT_FINDINGS"
+              "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
+              "REFRESH_SLOT_TIEBREAKERS"
             ],
             "description": "The job's handler. Its kind follows from it."
           },
@@ -74033,7 +74462,8 @@
                     "SYNC_EVENT_GAMES_AND_TIERS",
                     "ACTIVATE_EVENT_CONTESTS",
                     "FOLLOW_POSTPONED_EVENT_CONTESTS",
-                    "RESOLVE_MAPPED_PARTICIPANT_FINDINGS"
+                    "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
+                    "REFRESH_SLOT_TIEBREAKERS"
                   ],
                   "description": "The job's handler. Its kind follows from it."
                 },
@@ -74300,7 +74730,8 @@
                   "SYNC_EVENT_GAMES_AND_TIERS",
                   "ACTIVATE_EVENT_CONTESTS",
                   "FOLLOW_POSTPONED_EVENT_CONTESTS",
-                  "RESOLVE_MAPPED_PARTICIPANT_FINDINGS"
+                  "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
+                  "REFRESH_SLOT_TIEBREAKERS"
                 ],
                 "description": "The job's handler. Its kind follows from it."
               },
@@ -74567,7 +74998,8 @@
               "FIELD_HAS_NO_ORDER",
               "GAME_UNKNOWN",
               "GAME_ID_REISSUED",
-              "GAME_MOVED"
+              "GAME_MOVED",
+              "TIEBREAKER_GAME_REPLACED"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
           },
@@ -74953,7 +75385,8 @@
                     "FIELD_HAS_NO_ORDER",
                     "GAME_UNKNOWN",
                     "GAME_ID_REISSUED",
-                    "GAME_MOVED"
+                    "GAME_MOVED",
+                    "TIEBREAKER_GAME_REPLACED"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
                 },
@@ -75192,7 +75625,8 @@
                   "FIELD_HAS_NO_ORDER",
                   "GAME_UNKNOWN",
                   "GAME_ID_REISSUED",
-                  "GAME_MOVED"
+                  "GAME_MOVED",
+                  "TIEBREAKER_GAME_REPLACED"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
               },
@@ -87718,6 +88152,181 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportEventBracketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/tiebreakers": {
+      "get": {
+        "operationId": "listEventSlotTiebreakers",
+        "summary": "List a sport event's slot tiebreaker games",
+        "tags": [
+          "Events"
+        ],
+        "description": "Each slot the event covers, with its tiebreaker game (#2048): the one Game whose combined score every contest covering the slot guesses, chosen by the rule (the latest scheduled start, ties to the lower Game id) or by a root admin, and every Game played in the slot with whether it can be chosen now. A fixed number of reads however many slots and Games. 404 EVENT_NOT_FOUND. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventSlotTiebreakersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiebreaker-game": {
+      "put": {
+        "operationId": "chooseEventSlotTiebreakerGame",
+        "summary": "Choose a slot's tiebreaker game",
+        "tags": [
+          "Events"
+        ],
+        "description": "A root admin chooses which of the slot's Games every contest covering it guesses the combined score of (#2048), on a synced or a test event alike. The choice and who made it are kept and logged, and the rule leaves it alone until it starts; a cancelled or moved game is replaced by the rule's choice with a finding. Choosing the game already chosen records the choice. 404 EVENT_NOT_FOUND, and SEASON_SLOT_NOT_FOUND for a slot the event does not cover. 422 TIEBREAKER_GAME_NOT_IN_SLOT for a Game played elsewhere, TIEBREAKER_GAME_NOT_ELIGIBLE for one cancelled, moved or with no start. 409 TIEBREAKER_GAME_STARTED once the slot's game, or the one asked for, has started. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChooseSlotTiebreakerGameRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventSlotTiebreakerResponse"
                 }
               }
             }

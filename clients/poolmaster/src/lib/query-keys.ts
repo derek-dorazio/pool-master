@@ -256,6 +256,9 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'contests'] as const,
       rounds: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'rounds'] as const,
+      // The Slots tab's tiebreaker games (#2048), under the event so any event write refreshes them.
+      slotTiebreakers: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'slot-tiebreakers'] as const,
       field: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'field'] as const,
       tiers: (eventId: QueryKeyId) =>

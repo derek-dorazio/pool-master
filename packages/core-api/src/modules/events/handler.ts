@@ -62,6 +62,9 @@ import { SportProviderNotFoundError } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { SportEventError } from './errors';
 import type { SportEventServices } from './wiring';
+import type { SlotTiebreakerService } from './slot-tiebreaker-service';
+import type { ChooseSlotTiebreakerGameRequest, SportEventSlotTiebreakerResponse, SportEventSlotTiebreakersResponse } from '@poolmaster/shared/dto';
+import { toSportEventSlotTiebreakerDto } from '../../mappers/slot-tiebreaker.mapper';
 import type { SportLeaguePageService } from '../sport-catalog/sport-league-page';
 import type { SportEventOverviewResponse } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { mapSportEventOverviewToDto } from '../../mappers/sport-catalog.mapper';
@@ -98,6 +101,8 @@ export interface EventHandlerDeps {
   leaderboards: Pick<LeaderboardRebuilds, 'eventsChanged'>;
   /** The Event page's header and sync rows (#1889), by the League page's rules. */
   eventOverviews: Pick<SportLeaguePageService, 'getEventOverview'>;
+  /** Each slot's tiebreaker game (#2048): the Slots tab reads it and a root admin chooses it. */
+  slotTiebreakers: Pick<SlotTiebreakerService, 'listSlotTiebreakers' | 'chooseTiebreakerGame'>;
 }
 
 /**
@@ -105,7 +110,7 @@ export interface EventHandlerDeps {
  * contract code and status and reaches the caller through the global error handler; only
  * the provider-sync errors, which carry neither, are mapped here.
  */
-export function createEventHandlers({ services, eventLifecycle, ingestion, leaderboards, eventOverviews }: EventHandlerDeps) {
+export function createEventHandlers({ services, eventLifecycle, ingestion, leaderboards, eventOverviews, slotTiebreakers }: EventHandlerDeps) {
   const { sportEvents, rounds, field, tiers, golfScores, raceResults, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
@@ -384,6 +389,19 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
         scheduledDate: match.scheduledDate === null ? null : new Date(match.scheduledDate),
       })));
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
+    },
+
+    listEventSlotTiebreakers: async (request: FastifyRequest<{ Params: { eventId: string } }>): Promise<SportEventSlotTiebreakersResponse> => {
+      await requireEvent(request.params.eventId);
+      return { slots: (await slotTiebreakers.listSlotTiebreakers(request.params.eventId)).map(toSportEventSlotTiebreakerDto) };
+    },
+
+    chooseEventSlotTiebreakerGame: async (
+      request: FastifyRequest<{ Params: { eventId: string; seasonSlotId: string }; Body: ChooseSlotTiebreakerGameRequest }>,
+    ): Promise<SportEventSlotTiebreakerResponse> => {
+      await requireEvent(request.params.eventId);
+      const slot = await slotTiebreakers.chooseTiebreakerGame(request.params.eventId, request.params.seasonSlotId, request.body.gameId, request.authUser?.userId ?? '');
+      return { slot: toSportEventSlotTiebreakerDto(slot) };
     },
 
     updateEventBracketMatch: async (

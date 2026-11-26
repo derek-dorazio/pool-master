@@ -18,7 +18,7 @@ import {
   type SportEventRoundSlot,
   type TeamChoice,
 } from '@poolmaster/shared/domain';
-import { bracketRoundSlots } from './round-slots';
+import { bracketRoundSlots, withSlotTiebreakers } from './round-slots';
 
 const T0 = new Date('2027-01-01T00:00:00.000Z');
 
@@ -38,7 +38,7 @@ export interface BracketMatchSpec {
 export function bracketMatches(sportEventId: string, specs: readonly BracketMatchSpec[], slotOf?: (roundNumber: number) => SportEventRoundSlot): SportEventRoundMatch[] {
   const rounds = Math.max(0, ...specs.map((spec) => spec.round));
   const slots = bracketRoundSlots(rounds);
-  return specs.map((spec) => ({
+  return withSlotTiebreakers(specs.map((spec) => ({
     id: `m${spec.matchNumber}`,
     sportEventId,
     roundNumber: spec.round,
@@ -63,7 +63,7 @@ export function bracketMatches(sportEventId: string, specs: readonly BracketMatc
     periodScores: [],
     createdAt: T0,
     updatedAt: T0,
-  }));
+  })));
 }
 
 const { HOME, AWAY } = MatchSide;

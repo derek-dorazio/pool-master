@@ -39,6 +39,8 @@ import { historyModule } from './modules/history/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
 import { contestConfigTemplatesModule } from './modules/contest-config-templates/routes';
 import { eventsModule } from './modules/events/routes';
+import { SlotTiebreakerService } from './modules/events/slot-tiebreaker-service';
+import { PrismaSlotTiebreakerRepository } from './adapters/prisma-slot-tiebreaker-repository';
 import { sportsModule } from './modules/sports/routes';
 import { sportLeaguesModule } from './modules/sport-leagues/routes';
 import { platformPricingProfilesModule, platformTierProfilesModule } from './modules/profiles/routes';
@@ -233,6 +235,13 @@ export function buildApp(options: BuildAppOptions = {}) {
     providers: providerSettings,
     participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), domainEvents, app.log),
     slotNamePatterns: new PrismaSlotNamePatternRepository(prisma),
+    logger: app.log,
+  });
+  // Each event slot's tiebreaker game (#2048): the rule's job and the Slots tab both write through it.
+  const slotTiebreakers = new SlotTiebreakerService({
+    slots: new PrismaSlotTiebreakerRepository(prisma),
+    findings: syncFindings,
+    domainEvents,
     logger: app.log,
   });
   // A Provider that keeps rate limiting raises a finding on each league it syncs (#2038).
@@ -442,6 +451,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
       FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(syncFindings),
+      REFRESH_SLOT_TIEBREAKERS: (payload) => slotTiebreakers.refresh(payload.sportEventId),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -488,6 +498,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     leaderboards,
     services: sportEventServices,
     webhookProviderIds,
+    slotTiebreakers,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, {

@@ -4,7 +4,7 @@
  * as played in different slots. Test code only.
  */
 import { createHash } from 'node:crypto';
-import { SlotKind, SlotPairing, type SportEventRoundSlot } from '@poolmaster/shared/domain';
+import { MatchStatus, SlotKind, SlotPairing, chooseSlotTiebreakerGame, compareMatchPlaces, type SportEventRoundMatch, type SportEventRoundSlot } from '@poolmaster/shared/domain';
 
 /** A Season slot id for a name, the same each run: a UUID, as the wire's slot id is. */
 function slotIdOf(name: string): string {
@@ -20,6 +20,7 @@ export function roundSlot(slotKind: SlotKind, overrides: Partial<SportEventRound
     weekNumber: null,
     seriesGames: 1,
     pairing: SlotPairing.FIXED,
+    tiebreakerMatchId: null,
     ...overrides,
   };
 }
@@ -48,6 +49,7 @@ export function eventSlotRowStub(seasonSlotId = 'season-slot-tournament') {
       windowStartsAt: null, windowEndsAt: null, windowStatus: null,
       definition: { key: 'TOURNAMENT', slotKind: 'TOURNAMENT' as const, weekNumber: null, name: null },
     },
+    tiebreakerGame: null,
   };
 }
 
@@ -62,4 +64,23 @@ export function namedSlotOfRound(roundNumber: number, names: readonly string[]):
     seasonSlotId: slotIdOf(`round-${String(roundNumber)}`),
     name: names[roundNumber - 1] ?? null,
   });
+}
+
+/**
+ * Games as the stored rows read once the slot rule has run (#2048): each slot names its
+ * tiebreaker game, the rule's choice among its timed games. A fixture slot with no timed game
+ * stands for one whose games are all scheduled together later, so it names its last game in
+ * game order (a bracket's final). Test code only.
+ */
+export function withSlotTiebreakers<Match extends Pick<SportEventRoundMatch, 'id' | 'sportEventId' | 'slot' | 'scheduledDate' | 'status' | 'roundNumber' | 'matchNumber'>>(matches: readonly Match[]): Match[] {
+  // A fixture's events may share a slot id, so each event's slot is its own.
+  const slotKey = (match: Match) => JSON.stringify([match.sportEventId, match.slot.seasonSlotId]);
+  const chosenBySlot = new Map<string, string | null>();
+  for (const slotId of new Set(matches.map(slotKey))) {
+    const inSlot = matches.filter((match) => slotKey(match) === slotId);
+    const chosen = chooseSlotTiebreakerGame(inSlot.map((match) => ({ id: match.id, scheduledDate: match.scheduledDate, status: match.status, moved: false })));
+    const playable = inSlot.filter((match) => match.status !== MatchStatus.CANCELLED).sort(compareMatchPlaces);
+    chosenBySlot.set(slotId, chosen?.id ?? playable.at(-1)?.id ?? null);
+  }
+  return matches.map((match) => ({ ...match, slot: { ...match.slot, tiebreakerMatchId: chosenBySlot.get(slotKey(match)) ?? null } }));
 }

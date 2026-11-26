@@ -162,8 +162,8 @@ export interface SportEventRoundMatchGameRepository {
   findBySportEvent(sportEventId: string, providerCode: ProviderCode): Promise<ProviderMappedGame[]>;
   /** The Games the provider's game ids are mapped to, in any event: one per id at most. */
   findByProviderExternalIds(providerCode: ProviderCode, externalIds: readonly string[]): Promise<ProviderMappedGame[]>;
-  /** One score sync's writes, all or none. */
-  applySync(sync: SportEventRoundMatchGameSync): Promise<void>;
+  /** One score sync's writes, all or none, with the jobs that follow them. */
+  applySync(sync: SportEventRoundMatchGameSync, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Records when a provider's notification about each of these Games arrived (#1499). */
   recordProviderNotification(gameIds: readonly string[], receivedAt: Date): Promise<void>;
 }

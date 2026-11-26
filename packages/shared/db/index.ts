@@ -111,6 +111,7 @@ export type {
   SportEventRoundMatchRepository,
   SportEventRoundMatchWrite,
 } from './match-ports';
+export type { SlotTiebreakerGame, SlotTiebreakerRepository, SlotTiebreakerState, SlotTiebreakerWrite } from './slot-tiebreaker-ports';
 export type {
   ParticipantMatchQuery,
   ParticipantRanking,
