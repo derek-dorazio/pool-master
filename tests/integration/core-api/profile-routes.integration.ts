@@ -80,7 +80,7 @@ function pricingWrite(name: string, overrides: Partial<PlatformPricingProfileWri
 
 /** The rows a source list is stored as, for a seed written straight to the database. */
 function sourceRows(sources: readonly FieldOrderBasis[]) {
-  return { create: sources.map((source, orderIndex) => ({ source, orderIndex })) };
+  return { create: sources.map((basis, orderIndex) => ({ basis, orderIndex })) };
 }
 
 /** A golf sport league naming these profiles, so they are in use. */

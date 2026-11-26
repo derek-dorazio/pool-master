@@ -92,7 +92,7 @@ describe('The migration to tier and pricing profiles', () => {
 
   it('gives every existing profile the sources odds, seed, rank, and the NFL a seed-ranges tier profile and Standard prices by seed, both starting with seed (#2160)', async () => {
     const prisma = getPrisma();
-    const sourcesOf = (rows: { source: string }[]) => rows.map(({ source }) => source);
+    const sourcesOf = (rows: { basis: string }[]) => rows.map(({ basis }) => basis);
     const nfl = await prisma.sportLeague.findFirstOrThrow({
       where: { urlSegment: 'nfl' },
       include: {
@@ -165,7 +165,7 @@ describe('PrismaPlatformTierProfileRepository', () => {
     const profile = written(await repo.create({ code: uniqueCode(), name: uniqueName('Twice'), ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
     made.platformTierProfileIds.add(profile.id);
 
-    await expect(getPrisma().platformTierProfileSource.create({ data: { platformTierProfileId: profile.id, orderIndex: 5, source: 'ODDS' } })).rejects.toThrow();
+    await expect(getPrisma().platformTierProfileSource.create({ data: { platformTierProfileId: profile.id, orderIndex: 5, basis: 'ODDS' } })).rejects.toThrow();
   });
 
   it('reads the first source of the pricing profile each league naming a tier profile has, and none for a profile no league names', async () => {

@@ -25,7 +25,7 @@ CREATE TABLE "platform_tier_profile_sources" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "platform_tier_profile_id" UUID NOT NULL,
     "order_index" INTEGER NOT NULL,
-    "source" "PrismaFieldOrderBasis" NOT NULL,
+    "basis" "PrismaFieldOrderBasis" NOT NULL,
 
     CONSTRAINT "platform_tier_profile_sources_pkey" PRIMARY KEY ("id")
 );
@@ -46,7 +46,7 @@ CREATE TABLE "platform_pricing_profile_sources" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "platform_pricing_profile_id" UUID NOT NULL,
     "order_index" INTEGER NOT NULL,
-    "source" "PrismaFieldOrderBasis" NOT NULL,
+    "basis" "PrismaFieldOrderBasis" NOT NULL,
 
     CONSTRAINT "platform_pricing_profile_sources_pkey" PRIMARY KEY ("id")
 );
@@ -55,7 +55,7 @@ CREATE TABLE "platform_pricing_profile_sources" (
 CREATE UNIQUE INDEX "platform_tier_profile_sources_order_key" ON "platform_tier_profile_sources"("platform_tier_profile_id", "order_index");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "platform_tier_profile_sources_source_key" ON "platform_tier_profile_sources"("platform_tier_profile_id", "source");
+CREATE UNIQUE INDEX "platform_tier_profile_sources_basis_key" ON "platform_tier_profile_sources"("platform_tier_profile_id", "basis");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "platform_tier_profile_ranges_platform_tier_profile_id_tier__key" ON "platform_tier_profile_ranges"("platform_tier_profile_id", "tier_number");
@@ -64,7 +64,7 @@ CREATE UNIQUE INDEX "platform_tier_profile_ranges_platform_tier_profile_id_tier_
 CREATE UNIQUE INDEX "platform_pricing_profile_sources_order_key" ON "platform_pricing_profile_sources"("platform_pricing_profile_id", "order_index");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "platform_pricing_profile_sources_source_key" ON "platform_pricing_profile_sources"("platform_pricing_profile_id", "source");
+CREATE UNIQUE INDEX "platform_pricing_profile_sources_basis_key" ON "platform_pricing_profile_sources"("platform_pricing_profile_id", "basis");
 
 -- AddForeignKey
 ALTER TABLE "platform_tier_profile_sources" ADD CONSTRAINT "platform_tier_profile_sources_platform_tier_profile_id_fkey" FOREIGN KEY ("platform_tier_profile_id") REFERENCES "platform_tier_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -91,15 +91,15 @@ ALTER TABLE "platform_tier_profile_ranges" ADD CONSTRAINT "platform_tier_profile
 );
 
 -- Every existing profile orders as today: odds, then seed, then rank.
-INSERT INTO "platform_tier_profile_sources" ("platform_tier_profile_id", "order_index", "source")
-SELECT p."id", s."order_index", s."source"::"PrismaFieldOrderBasis"
+INSERT INTO "platform_tier_profile_sources" ("platform_tier_profile_id", "order_index", "basis")
+SELECT p."id", s."order_index", s."basis"::"PrismaFieldOrderBasis"
 FROM "platform_tier_profiles" p
-CROSS JOIN (VALUES (0, 'ODDS'), (1, 'SEED'), (2, 'RANKING')) AS s("order_index", "source");
+CROSS JOIN (VALUES (0, 'ODDS'), (1, 'SEED'), (2, 'RANKING')) AS s("order_index", "basis");
 
-INSERT INTO "platform_pricing_profile_sources" ("platform_pricing_profile_id", "order_index", "source")
-SELECT p."id", s."order_index", s."source"::"PrismaFieldOrderBasis"
+INSERT INTO "platform_pricing_profile_sources" ("platform_pricing_profile_id", "order_index", "basis")
+SELECT p."id", s."order_index", s."basis"::"PrismaFieldOrderBasis"
 FROM "platform_pricing_profiles" p
-CROSS JOIN (VALUES (0, 'ODDS'), (1, 'SEED'), (2, 'RANKING')) AS s("order_index", "source");
+CROSS JOIN (VALUES (0, 'ODDS'), (1, 'SEED'), (2, 'RANKING')) AS s("order_index", "basis");
 
 -- An event's stored tier layout names its type; every layout stored so far was equal groups.
 UPDATE "sport_events"
@@ -116,10 +116,10 @@ FROM "platform_tier_profiles" p
 CROSS JOIN (VALUES (1, 1, 1), (2, 2, 4), (3, 5, NULL::integer)) AS r("tier_number", "from_value", "to_value")
 WHERE p."code" = 'PLAYOFF_SEEDS_1_4_REST';
 
-INSERT INTO "platform_tier_profile_sources" ("platform_tier_profile_id", "order_index", "source")
-SELECT p."id", s."order_index", s."source"::"PrismaFieldOrderBasis"
+INSERT INTO "platform_tier_profile_sources" ("platform_tier_profile_id", "order_index", "basis")
+SELECT p."id", s."order_index", s."basis"::"PrismaFieldOrderBasis"
 FROM "platform_tier_profiles" p
-CROSS JOIN (VALUES (0, 'SEED'), (1, 'ODDS'), (2, 'RANKING')) AS s("order_index", "source")
+CROSS JOIN (VALUES (0, 'SEED'), (1, 'ODDS'), (2, 'RANKING')) AS s("order_index", "basis")
 WHERE p."code" = 'PLAYOFF_SEEDS_1_4_REST';
 
 -- The standard prices, with the field ordered by seed first, so a seeded league's tier and pricing
@@ -128,10 +128,10 @@ INSERT INTO "platform_pricing_profiles" ("code", "name", "salary_cap", "unit", "
 SELECT 'STANDARD_BY_SEED', 'Standard, by seed', "salary_cap", "unit", "top_share_percent", "floor_share_percent", "steepness", CURRENT_TIMESTAMP
 FROM "platform_pricing_profiles" WHERE "code" = 'STANDARD';
 
-INSERT INTO "platform_pricing_profile_sources" ("platform_pricing_profile_id", "order_index", "source")
-SELECT p."id", s."order_index", s."source"::"PrismaFieldOrderBasis"
+INSERT INTO "platform_pricing_profile_sources" ("platform_pricing_profile_id", "order_index", "basis")
+SELECT p."id", s."order_index", s."basis"::"PrismaFieldOrderBasis"
 FROM "platform_pricing_profiles" p
-CROSS JOIN (VALUES (0, 'SEED'), (1, 'ODDS'), (2, 'RANKING')) AS s("order_index", "source")
+CROSS JOIN (VALUES (0, 'SEED'), (1, 'ODDS'), (2, 'RANKING')) AS s("order_index", "basis")
 WHERE p."code" = 'STANDARD_BY_SEED';
 
 UPDATE "sport_leagues"

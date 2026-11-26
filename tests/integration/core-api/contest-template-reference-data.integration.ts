@@ -932,14 +932,14 @@ describe('Every seeded contest template, whatever its sport', () => {
     const leagues = await getPrisma().sportLeague.findMany({
       select: {
         name: true,
-        platformTierProfile: { select: { code: true, sources: { orderBy: { orderIndex: 'asc' }, take: 1, select: { source: true } } } },
-        platformPricingProfile: { select: { code: true, sources: { orderBy: { orderIndex: 'asc' }, take: 1, select: { source: true } } } },
+        platformTierProfile: { select: { code: true, sources: { orderBy: { orderIndex: 'asc' }, take: 1, select: { basis: true } } } },
+        platformPricingProfile: { select: { code: true, sources: { orderBy: { orderIndex: 'asc' }, take: 1, select: { basis: true } } } },
       },
     });
 
     const disagreeing = leagues.flatMap(({ name, platformTierProfile: tiers, platformPricingProfile: prices }) => {
-      const tierFirst = tiers.sources.at(0)?.source;
-      const priceFirst = prices.sources.at(0)?.source;
+      const tierFirst = tiers.sources.at(0)?.basis;
+      const priceFirst = prices.sources.at(0)?.basis;
       return tierFirst !== undefined && tierFirst === priceFirst ? [] : [`${name}: ${tiers.code} starts with ${tierFirst ?? 'nothing'}, ${prices.code} with ${priceFirst ?? 'nothing'}`];
     });
 

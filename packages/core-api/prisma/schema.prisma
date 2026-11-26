@@ -1292,12 +1292,12 @@ model PlatformTierProfileSource {
   platformTierProfileId String                @map("platform_tier_profile_id") @db.Uuid
   /// The source's place in the list, from 0.
   orderIndex            Int                   @map("order_index")
-  source                PrismaFieldOrderBasis
+  basis                 PrismaFieldOrderBasis
 
   platformTierProfile PlatformTierProfile @relation(fields: [platformTierProfileId], references: [id], onDelete: Cascade)
 
   @@unique([platformTierProfileId, orderIndex], map: "platform_tier_profile_sources_order_key")
-  @@unique([platformTierProfileId, source], map: "platform_tier_profile_sources_source_key")
+  @@unique([platformTierProfileId, basis], map: "platform_tier_profile_sources_basis_key")
   @@map("platform_tier_profile_sources")
 }
 
@@ -1349,12 +1349,12 @@ model PlatformPricingProfileSource {
   platformPricingProfileId String                @map("platform_pricing_profile_id") @db.Uuid
   /// The source's place in the list, from 0.
   orderIndex               Int                   @map("order_index")
-  source                   PrismaFieldOrderBasis
+  basis                    PrismaFieldOrderBasis
 
   platformPricingProfile PlatformPricingProfile @relation(fields: [platformPricingProfileId], references: [id], onDelete: Cascade)
 
   @@unique([platformPricingProfileId, orderIndex], map: "platform_pricing_profile_sources_order_key")
-  @@unique([platformPricingProfileId, source], map: "platform_pricing_profile_sources_source_key")
+  @@unique([platformPricingProfileId, basis], map: "platform_pricing_profile_sources_basis_key")
   @@map("platform_pricing_profile_sources")
 }
 

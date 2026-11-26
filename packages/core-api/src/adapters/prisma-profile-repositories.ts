@@ -14,14 +14,14 @@ import type {
 import { TierProfileType, type FieldOrderBasis, type PlatformPricingProfile, type PlatformTierProfile } from '@poolmaster/shared/domain';
 
 /** A profile's sources in list order, and a tier profile's ranges by tier: every read loads them with the profile. */
-const SOURCES_IN_ORDER = { orderBy: { orderIndex: 'asc' }, select: { source: true } } as const;
+const SOURCES_IN_ORDER = { orderBy: { orderIndex: 'asc' }, select: { basis: true } } as const;
 const TIER_PROFILE_INCLUDE = {
   sources: SOURCES_IN_ORDER,
   ranges: { orderBy: { tierNumber: 'asc' }, select: { tierNumber: true, fromValue: true, toValue: true } },
 } as const satisfies Prisma.PlatformTierProfileInclude;
 const PRICING_PROFILE_INCLUDE = { sources: SOURCES_IN_ORDER } as const satisfies Prisma.PlatformPricingProfileInclude;
 /** The first source of a profile, for the first-source check across a league's two profiles. */
-const FIRST_SOURCE = { where: { orderIndex: 0 }, select: { source: true } } as const;
+const FIRST_SOURCE = { where: { orderIndex: 0 }, select: { basis: true } } as const;
 
 type PlatformTierProfileRow = Prisma.PlatformTierProfileGetPayload<{ include: typeof TIER_PROFILE_INCLUDE }>;
 type PlatformPricingProfileRow = Prisma.PlatformPricingProfileGetPayload<{ include: typeof PRICING_PROFILE_INCLUDE }>;
@@ -35,7 +35,7 @@ function toPlatformTierProfile(row: PlatformTierProfileRow): PlatformTierProfile
     id: row.id,
     code: row.code,
     name: row.name,
-    sources: row.sources.map(({ source }) => source),
+    sources: row.sources.map(({ basis }) => basis),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -65,15 +65,15 @@ function toPlatformPricingProfile(row: PlatformPricingProfileRow): PlatformPrici
     topSharePercent: row.topSharePercent,
     floorSharePercent: row.floorSharePercent,
     steepness: row.steepness,
-    sources: row.sources.map(({ source }) => source),
+    sources: row.sources.map(({ basis }) => basis),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
 }
 
 /** A source list as its rows, each at its place. */
-function sourceRows(sources: readonly FieldOrderBasis[]): Array<{ orderIndex: number; source: FieldOrderBasis }> {
-  return sources.map((source, orderIndex) => ({ orderIndex, source }));
+function sourceRows(sources: readonly FieldOrderBasis[]): Array<{ orderIndex: number; basis: FieldOrderBasis }> {
+  return sources.map((basis, orderIndex) => ({ orderIndex, basis }));
 }
 
 /**
@@ -142,7 +142,7 @@ export class PrismaPlatformTierProfileRepository implements PlatformTierProfileR
       where: { platformTierProfileId: id },
       select: { platformPricingProfile: { select: { sources: FIRST_SOURCE } } },
     });
-    return leagues.flatMap((league) => league.platformPricingProfile.sources.map(({ source }) => source));
+    return leagues.flatMap((league) => league.platformPricingProfile.sources.map(({ basis }) => basis));
   }
 
   async create(input: PlatformTierProfileWrite): Promise<PlatformTierProfile | ProfileTaken> {
@@ -204,7 +204,7 @@ export class PrismaPlatformPricingProfileRepository implements PlatformPricingPr
       where: { platformPricingProfileId: id },
       select: { platformTierProfile: { select: { sources: FIRST_SOURCE } } },
     });
-    return leagues.flatMap((league) => league.platformTierProfile.sources.map(({ source }) => source));
+    return leagues.flatMap((league) => league.platformTierProfile.sources.map(({ basis }) => basis));
   }
 
   async create(input: PlatformPricingProfileWrite): Promise<PlatformPricingProfile | ProfileTaken> {

@@ -1,7 +1,7 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { explicitOrderValues, FieldOrderBasisOrder, type FieldOrderBasis } from '@poolmaster/shared/domain';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
-import { Button, FormField, Select } from '@/features/shared/ui';
+import { Button, FormField, Select, Text } from '@/features/shared/ui';
 
 /**
  * A profile's sources (#2160): the values a field is put in order by, first deciding, each later
@@ -36,7 +36,7 @@ export function ProfileSourcesField({
       <ol className="space-y-2" data-testid={testId}>
         {value.map((source, index) => (
           <li className="flex flex-wrap items-center gap-2" data-testid={`${testId}-${source}`} key={source}>
-            <span className="min-w-20 text-sm text-foreground">{index + 1}. {enumLabel('FieldOrderBasis', source)}</span>
+            <Text className="min-w-20" size="sm" tone="default">{index + 1}. {enumLabel('FieldOrderBasis', source)}</Text>
             <Button aria-label={`Move ${enumLabel('FieldOrderBasis', source)} up`} data-testid={`${testId}-${source}-up`} disabled={index === 0} onClick={() => move(index, index - 1)} size="xs" type="button" variant="icon"><ArrowUp aria-hidden size={14} /></Button>
             <Button aria-label={`Move ${enumLabel('FieldOrderBasis', source)} down`} data-testid={`${testId}-${source}-down`} disabled={index === value.length - 1} onClick={() => move(index, index + 1)} size="xs" type="button" variant="icon"><ArrowDown aria-hidden size={14} /></Button>
             <Button aria-label={`Remove ${enumLabel('FieldOrderBasis', source)}`} data-testid={`${testId}-${source}-remove`} disabled={value.length === 1} onClick={() => onChange(value.filter((other) => other !== source))} size="xs" type="button" variant="icon"><X aria-hidden size={14} /></Button>
