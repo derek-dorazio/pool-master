@@ -32,13 +32,13 @@ export type PlanEntitlementsDto = z.infer<typeof PlanEntitlementsDtoSchema>;
 
 const PlanFeatureGroupDtoSchema = z.object({
   group: z.enum(PlanFeatureGroup),
-  features: z.array(z.enum(PlanFeature)).min(1).describe('The features in the group, in `PlanFeature` order.'),
+  features: z.array(z.enum(PlanFeature)).min(1).describe('The features in the group, in `PlanFeatureOrder` (A to Z by their names).'),
 }).describe('One group of plan features (#2110): the plan pages list a group\'s features under its name, or count them on one line.');
 export type PlanFeatureGroupDto = z.infer<typeof PlanFeatureGroupDtoSchema>;
 
 export const LeaguePlanListResponseSchema = z.object({
   plans: z.array(PlanEntitlementsDtoSchema).describe('Every plan, lowest first, for comparing them.'),
-  featureGroups: z.array(PlanFeatureGroupDtoSchema).describe('Every feature group that has features, in `PlanFeatureGroup` declaration order: which group each feature is in, so the app never keeps that list itself.'),
+  featureGroups: z.array(PlanFeatureGroupDtoSchema).describe('Every feature group that has features, in `PlanFeatureGroupOrder` (emails, championships, history): which group each feature is in, so the app never keeps that list itself.'),
   previewPeriodMonths: z.number().int().min(1).describe(
     'How many months of Premium every new league is gifted from signup (#986), before it moves to Free.',
   ),

@@ -2328,7 +2328,7 @@
                 "RECORD_BOOK"
               ]
             },
-            "description": "The features in the group, in `PlanFeature` order."
+            "description": "The features in the group, in `PlanFeatureOrder` (A to Z by their names)."
           }
         },
         "required": [
@@ -2471,7 +2471,7 @@
                       "RECORD_BOOK"
                     ]
                   },
-                  "description": "The features in the group, in `PlanFeature` order."
+                  "description": "The features in the group, in `PlanFeatureOrder` (A to Z by their names)."
                 }
               },
               "required": [
@@ -2481,7 +2481,7 @@
               "additionalProperties": false,
               "description": "One group of plan features (#2110): the plan pages list a group's features under its name, or count them on one line."
             },
-            "description": "Every feature group that has features, in `PlanFeatureGroup` declaration order: which group each feature is in, so the app never keeps that list itself."
+            "description": "Every feature group that has features, in `PlanFeatureGroupOrder` (emails, championships, history): which group each feature is in, so the app never keeps that list itself."
           },
           "previewPeriodMonths": {
             "type": "integer",

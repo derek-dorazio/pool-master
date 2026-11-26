@@ -1285,7 +1285,7 @@ export type PlanEntitlementsDto = {
 export type PlanFeatureGroupDto = {
     group: 'EMAILS' | 'CHAMPIONSHIPS' | 'HISTORY';
     /**
-     * The features in the group, in `PlanFeature` order.
+     * The features in the group, in `PlanFeatureOrder` (A to Z by their names).
      */
     features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
 };
@@ -1325,12 +1325,12 @@ export type LeaguePlanListResponse = {
         commissionerSelectable: boolean;
     }>;
     /**
-     * Every feature group that has features, in `PlanFeatureGroup` declaration order: which group each feature is in, so the app never keeps that list itself.
+     * Every feature group that has features, in `PlanFeatureGroupOrder` (emails, championships, history): which group each feature is in, so the app never keeps that list itself.
      */
     featureGroups: Array<{
         group: 'EMAILS' | 'CHAMPIONSHIPS' | 'HISTORY';
         /**
-         * The features in the group, in `PlanFeature` order.
+         * The features in the group, in `PlanFeatureOrder` (A to Z by their names).
          */
         features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
     }>;

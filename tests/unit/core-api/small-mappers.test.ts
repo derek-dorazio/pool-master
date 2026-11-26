@@ -5,11 +5,15 @@
 import { expect } from '@jest/globals';
 import type { LeaguePaymentRecord, PayerPaymentRecord } from '@poolmaster/shared/db';
 import {
+  compareByEnumOrder,
   ContestStatus,
+  explicitOrderValues,
   LeaguePaymentKind,
   LeaguePlan,
   PlanCap,
   PlanFeature,
+  PlanFeatureGroupOrder,
+  PlanFeatureOrder,
   PredictedResult,
   ProviderCode,
   Sport,
@@ -250,11 +254,13 @@ describe('auth mappers', () => {
 });
 
 describe('toPlanFeatureGroupDtos', () => {
-  it('puts every plan feature in exactly one group, each group\'s features in PlanFeature order', () => {
+  it('lists the groups in their declared order and each group\'s features in PlanFeatureOrder, every feature in exactly one group', () => {
     const groups = toPlanFeatureGroupDtos();
 
+    expect(groups.map((entry) => entry.group)).toEqual(explicitOrderValues(PlanFeatureGroupOrder));
     expect(groups.map((entry) => entry.group)).toEqual(['EMAILS', 'CHAMPIONSHIPS', 'HISTORY']);
-    expect(groups.flatMap((entry) => entry.features)).toEqual(Object.values(PlanFeature));
+    for (const { features } of groups) expect(features).toEqual([...features].sort(compareByEnumOrder(PlanFeatureOrder)));
+    expect(groups.flatMap((entry) => entry.features).sort()).toEqual(Object.values(PlanFeature).sort());
   });
 });
 
