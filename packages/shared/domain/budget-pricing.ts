@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { DomainEntity } from './types';
+import type { FieldOrderBasis } from './enums';
 
 /**
  * Budget pricing (#93): how an event's field is priced for budget contests.
@@ -57,6 +58,8 @@ export type EventPricingConfig = z.infer<typeof EventPricingConfigSchema>;
 export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfile {
   /** The profile's key: what migrations, seed scripts and test data find it by, never its name. */
   code: string;
+  /** The values the field is ordered by before it is priced, first deciding (#2160). */
+  sources: FieldOrderBasis[];
 }
 
 /** A profile as an event stores the values it was priced with. */

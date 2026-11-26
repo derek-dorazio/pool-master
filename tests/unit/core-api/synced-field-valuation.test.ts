@@ -118,7 +118,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     await valuation.afterFieldLoad(SYNCED);
 
     expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
-      profileName: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
+      profileName: '6 tiers of 10', type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
     });
   });
 
@@ -261,7 +261,7 @@ describe('fieldValuationReport — what the field sync run shows', () => {
   it('reports a field with no order as a warning that no tiers or prices were made', () => {
     expect(fieldValuationReport({ outcome: 'SKIPPED', reason: 'NO_ORDER' })).toEqual({
       stats: {},
-      warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: no participant has odds, a seed or a rank to put it in order.' }],
+      warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: no participant has a value for any source its league\'s profiles list to put it in order.' }],
     });
   });
 

@@ -85,6 +85,7 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.SLOT_OUTSIDE_SEASON]: [],
   [ProviderSyncFindingKind.GAMES_UNPLACED]: [],
   [ProviderSyncFindingKind.SLOT_DATES_NEEDED]: [],
+  [ProviderSyncFindingKind.FIELD_HAS_NO_ORDER]: [],
 };
 
 /**

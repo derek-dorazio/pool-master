@@ -597,6 +597,7 @@ enum PrismaProviderSyncFindingKind {
   SLOT_OUTSIDE_SEASON
   GAMES_UNPLACED
   SLOT_DATES_NEEDED
+  FIELD_HAS_NO_ORDER
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -1239,27 +1240,82 @@ enum PrismaPlatformTierProfileLastTier {
   CAPPED
 }
 
+/// A value a field can be put in order by (#1807, #2160): odds to win, seed or rank.
+enum PrismaFieldOrderBasis {
+  ODDS
+  SEED
+  RANKING
+}
+
+/// How a tier profile lays a field out in tiers (#2160).
+enum PrismaTierProfileType {
+  /// Tiers of one size, filled in the field's order.
+  EQUAL_GROUPS
+  /// Each tier the seeds or ranks its range holds (`PlatformTierProfileRange`).
+  RANGES
+}
+
 /// A tier layout, defined once for the platform (#1844): each sport league names one, and a new
 /// event of the league starts with its tiers and is auto-tiered by it. Nothing is set per sport.
-/// A field too small to reach the last tier is split evenly over the tiers, a rule fixed in code.
+/// The field is put in order by the profile's sources (#2160), then laid out by its type. A
+/// database check keeps the EQUAL_GROUPS columns set on EQUAL_GROUPS rows and null on RANGES rows.
+/// On EQUAL_GROUPS, a field too small to reach the last tier is split evenly over the tiers, a
+/// rule fixed in code.
 model PlatformTierProfile {
-  id          String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// The profile's key (#2000): migrations, seed scripts and test data find a profile by it, never
   /// by its name. Upper case letters, digits and underscores; set when the profile is made.
-  code        String                            @unique @db.VarChar(50)
-  name        String                            @unique @db.VarChar(50)
-  tierCount   Int                               @map("tier_count")
-  /// Participants auto-tiering puts in each tier before the last.
-  tierSize    Int                               @map("tier_size")
-  lastTier    PrismaPlatformTierProfileLastTier @default(ALL_REMAINING) @map("last_tier")
-  /// The most the last tier takes when it is CAPPED; null when it takes all remaining.
-  lastTierMax Int?                              @map("last_tier_max")
-  createdAt   DateTime                          @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime                          @updatedAt @map("updated_at") @db.Timestamptz
+  code        String                             @unique @db.VarChar(50)
+  name        String                             @unique @db.VarChar(50)
+  type        PrismaTierProfileType
+  /// EQUAL_GROUPS only: how many tiers a new event starts with. A RANGES profile has one per range.
+  tierCount   Int?                               @map("tier_count")
+  /// EQUAL_GROUPS only: participants auto-tiering puts in each tier before the last.
+  tierSize    Int?                               @map("tier_size")
+  /// EQUAL_GROUPS only.
+  lastTier    PrismaPlatformTierProfileLastTier? @map("last_tier")
+  /// EQUAL_GROUPS only: the most the last tier takes when it is CAPPED; null when it takes all remaining.
+  lastTierMax Int?                               @map("last_tier_max")
+  createdAt   DateTime                           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime                           @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeagues SportLeague[]
+  sources      PlatformTierProfileSource[]
+  ranges       PlatformTierProfileRange[]
 
   @@map("platform_tier_profiles")
+}
+
+/// One value a tier profile orders the field by (#2160), at its place in the profile's list: the
+/// first every participant has orders the field, and the later ones break ties.
+model PlatformTierProfileSource {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platformTierProfileId String                @map("platform_tier_profile_id") @db.Uuid
+  /// The source's place in the list, from 0.
+  orderIndex            Int                   @map("order_index")
+  basis                 PrismaFieldOrderBasis
+
+  platformTierProfile PlatformTierProfile @relation(fields: [platformTierProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([platformTierProfileId, orderIndex], map: "platform_tier_profile_sources_order_key")
+  @@unique([platformTierProfileId, basis], map: "platform_tier_profile_sources_basis_key")
+  @@map("platform_tier_profile_sources")
+}
+
+/// One tier of a RANGES tier profile (#2160): the seeds or ranks, in its first source's values,
+/// the tier takes.
+model PlatformTierProfileRange {
+  id                    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platformTierProfileId String @map("platform_tier_profile_id") @db.Uuid
+  tierNumber            Int    @map("tier_number")
+  fromValue             Int    @map("from_value")
+  /// Null: everyone from `fromValue` on, which only the last tier may be.
+  toValue               Int?   @map("to_value")
+
+  platformTierProfile PlatformTierProfile @relation(fields: [platformTierProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([platformTierProfileId, tierNumber])
+  @@map("platform_tier_profile_ranges")
 }
 
 /// A set of budget pricing values (#93), defined once for the platform (#1844): each sport league
@@ -1282,8 +1338,25 @@ model PlatformPricingProfile {
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeagues SportLeague[]
+  sources      PlatformPricingProfileSource[]
 
   @@map("platform_pricing_profiles")
+}
+
+/// One value a pricing profile orders the field by before pricing it (#2160), at its place in the
+/// profile's list: the first every participant has orders the field, and the later ones break ties.
+model PlatformPricingProfileSource {
+  id                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platformPricingProfileId String                @map("platform_pricing_profile_id") @db.Uuid
+  /// The source's place in the list, from 0.
+  orderIndex               Int                   @map("order_index")
+  basis                    PrismaFieldOrderBasis
+
+  platformPricingProfile PlatformPricingProfile @relation(fields: [platformPricingProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([platformPricingProfileId, orderIndex], map: "platform_pricing_profile_sources_order_key")
+  @@unique([platformPricingProfileId, basis], map: "platform_pricing_profile_sources_basis_key")
+  @@map("platform_pricing_profile_sources")
 }
 
 /// Which participants are currently affiliated with which sport league, plus

@@ -1,11 +1,17 @@
 import { expect } from '@jest/globals';
 import {
+  EqualGroupsLayoutSchema,
   EventTierConfigSchema,
-  TierLayoutValuesSchema,
+  FieldOrderBasis,
   PlatformTierProfileLastTier,
+  TierProfileType,
   findTierLayoutProblem,
+  placeInRanges,
   placeInTiers,
-  type TierLayoutValues,
+  tierCountOf,
+  type EqualGroupsLayout,
+  type TierProfileValues,
+  type TierRange,
 } from '@poolmaster/shared/domain';
 
 // The tier layout a sport league's profile names (#1844), and how it places an ordered field:
@@ -13,8 +19,21 @@ import {
 // its cap, and an even spread, larger tiers first, for a field too small or an event whose tier
 // count an admin changed.
 
-const SIX_OF_TEN: TierLayoutValues = { tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
-const SIX_OF_TEN_CAPPED: TierLayoutValues = { ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 };
+const SIX_OF_TEN: EqualGroupsLayout = { type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
+const SIX_OF_TEN_CAPPED: EqualGroupsLayout = { ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 };
+
+const ODDS_FIRST = [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING];
+
+function range(tierNumber: number, fromValue: number, toValue: number | null): TierRange {
+  return { tierNumber, fromValue, toValue };
+}
+
+/** The NFL's playoff seed profile (#2160): tier 1 is seed 1, tier 2 seeds 2 to 4, tier 3 seed 5 on. */
+const SEED_RANGES = {
+  type: TierProfileType.RANGES,
+  sources: [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.RANKING],
+  ranges: [range(1, 1, 1), range(2, 2, 4), range(3, 5, null)],
+} satisfies TierProfileValues;
 
 /** How many places land in each of `tierCount` tiers, and how many in none. */
 function sizes(tierIndexes: ReadonlyArray<number | null>, tierCount: number) {
@@ -85,19 +104,67 @@ describe('findTierLayoutProblem — a tier layout\'s values agree', () => {
     ['caps the last tier with no maximum', { ...SIX_OF_TEN_CAPPED, lastTierMax: null }, 'A capped last tier needs the most it takes.'],
     ['takes everyone left but names a maximum', { ...SIX_OF_TEN, lastTierMax: 15 }, 'A last tier that takes everyone left has no cap.'],
   ])('answers a layout that %s with %p', (_case, layout, problem) => {
-    expect(findTierLayoutProblem(layout)).toBe(problem);
+    expect(findTierLayoutProblem({ ...layout, sources: ODDS_FIRST })).toBe(problem);
+  });
+
+  it.each([
+    ['takes seed 1, seeds 2 to 4 and the rest, by seed first', SEED_RANGES, null],
+    ['orders by odds first, which no range holds', { ...SEED_RANGES, sources: ODDS_FIRST }, 'Ranges are seeds or ranks, so a ranges profile orders by seed or rank first.'],
+    ['lists its tiers out of order', { ...SEED_RANGES, ranges: [SEED_RANGES.ranges[1], SEED_RANGES.ranges[0], SEED_RANGES.ranges[2]] }, 'List the ranges by tier, from tier 1, one each.'],
+    ['ends a range before it starts', { ...SEED_RANGES, ranges: [range(1, 3, 1), range(2, 4, 4), range(3, 5, null)] }, 'Tier 1\'s range ends before it starts.'],
+    ['leaves a gap between two tiers', { ...SEED_RANGES, ranges: [range(1, 1, 1), range(2, 3, 4), range(3, 5, null)] }, 'Tier 2 must start right after tier 1 ends, with no gap or overlap.'],
+    ['overlaps two tiers', { ...SEED_RANGES, ranges: [range(1, 1, 2), range(2, 2, 4), range(3, 5, null)] }, 'Tier 2 must start right after tier 1 ends, with no gap or overlap.'],
+    ['leaves a tier before the last open-ended', { ...SEED_RANGES, ranges: [range(1, 1, null), range(2, 2, 4)] }, 'Only the last tier can take everyone from its first value on.'],
+  ])('answers a ranges layout that %s with %p', (_case, values, problem) => {
+    expect(findTierLayoutProblem(values as TierProfileValues)).toBe(problem);
   });
 });
 
-describe('TierLayoutValuesSchema and EventTierConfigSchema', () => {
+describe('placeInRanges — each participant in the tier whose range holds its value, not its place in the order', () => {
+  it('puts a 14-team, two-conference playoff field in seed tiers: both 1 seeds in tier 1, six in tier 2, six in tier 3', () => {
+    // Each conference seeds 1 to 7, so each seed is held by two teams.
+    const seeds = [1, 2, 3, 4, 5, 6, 7].flatMap((seed) => [seed, seed]);
+
+    const tiers = placeInRanges(SEED_RANGES.ranges, 3, seeds);
+
+    expect(sizes(tiers, 3)).toEqual({ inTier: [2, 6, 6], inNone: 0 });
+  });
+
+  it('places by value whatever the order: two 1 seeds both land in tier 1 though one is listed last', () => {
+    expect(placeInRanges(SEED_RANGES.ranges, 3, [1, 2, 5, 1])).toEqual([0, 1, 2, 0]);
+  });
+
+  it('leaves a participant with no value, or a value no range holds, in no tier', () => {
+    const fromTwo = [range(1, 2, 4), range(2, 5, null)];
+
+    expect(placeInRanges(fromTwo, 2, [null, 1, undefined, 3])).toEqual([null, null, null, 0]);
+  });
+
+  it('puts a range beyond an event\'s tier count in its last tier, when an admin left the event fewer tiers', () => {
+    expect(placeInRanges(SEED_RANGES.ranges, 2, [1, 3, 7])).toEqual([0, 1, 1]);
+  });
+
+  it('counts a ranges layout\'s tiers by its ranges and an equal-groups layout\'s by its tier count', () => {
+    expect(tierCountOf(SEED_RANGES)).toBe(3);
+    expect(tierCountOf(SIX_OF_TEN)).toBe(6);
+  });
+});
+
+describe('EqualGroupsLayoutSchema and EventTierConfigSchema', () => {
   it('refuses a layout of no tiers, more than twenty, or tiers of no one', () => {
-    expect(TierLayoutValuesSchema.safeParse({ ...SIX_OF_TEN, tierCount: 0 }).success).toBe(false);
-    expect(TierLayoutValuesSchema.safeParse({ ...SIX_OF_TEN, tierCount: 21 }).success).toBe(false);
-    expect(TierLayoutValuesSchema.safeParse({ ...SIX_OF_TEN, tierSize: 0 }).success).toBe(false);
-    expect(TierLayoutValuesSchema.safeParse(SIX_OF_TEN).success).toBe(true);
+    expect(EqualGroupsLayoutSchema.safeParse({ ...SIX_OF_TEN, tierCount: 0 }).success).toBe(false);
+    expect(EqualGroupsLayoutSchema.safeParse({ ...SIX_OF_TEN, tierCount: 21 }).success).toBe(false);
+    expect(EqualGroupsLayoutSchema.safeParse({ ...SIX_OF_TEN, tierSize: 0 }).success).toBe(false);
+    expect(EqualGroupsLayoutSchema.safeParse(SIX_OF_TEN).success).toBe(true);
   });
 
   it('reads back an event\'s recorded layout with the profile it came from', () => {
     expect(EventTierConfigSchema.parse({ profileName: '6 tiers of 10', ...SIX_OF_TEN_CAPPED })).toEqual({ profileName: '6 tiers of 10', ...SIX_OF_TEN_CAPPED });
+  });
+
+  it('reads back an event\'s recorded ranges layout with its ranges', () => {
+    const recorded = { profileName: 'Playoff seeds 1, 2-4, rest', type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
+
+    expect(EventTierConfigSchema.parse(recorded)).toEqual(recorded);
   });
 });

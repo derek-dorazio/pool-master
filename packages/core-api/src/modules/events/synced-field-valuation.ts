@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository } from '@poolmaster/shared/db';
-import { FieldOrderBasis } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SportEventTierService, SyncedFieldValuation } from './sport-event-tier-service';
 
 /** What a field sync's run reports of the tiering and pricing that followed it. */
@@ -51,17 +51,11 @@ export class SyncedFieldValuationService {
   }
 }
 
-/** How each order basis reads in a stat's name: "Tiers Made From Odds". */
-const BASIS_WORD: Record<FieldOrderBasis, string> = {
-  [FieldOrderBasis.ODDS]: 'Odds',
-  [FieldOrderBasis.SEED]: 'Seed',
-  [FieldOrderBasis.RANKING]: 'Rank',
-};
-
 /**
  * The run's stats for one outcome, each a camel-case key the sync run screens show as words:
  * `tiersMadeFromOdds: 6` reads "Tiers Made From Odds: 6" (the tier count), `pricesMadeFromOdds: 64`
- * the participants priced. A failure is a warning on the run.
+ * the participants priced; the source's word is its display label. A failure is a warning on the run,
+ * and a field no listed source orders is also a FIELD_HAS_NO_ORDER finding (`SyncedFieldFollowUps`).
  */
 export function fieldValuationReport(outcome: FieldValuationOutcome): FieldValuationReport {
   if (outcome.outcome === 'FAILED') {
@@ -69,14 +63,14 @@ export function fieldValuationReport(outcome: FieldValuationOutcome): FieldValua
   }
   if (outcome.outcome === 'SKIPPED') {
     if (outcome.reason === 'NO_ORDER') {
-      return { stats: {}, warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: no participant has odds, a seed or a rank to put it in order.' }] };
+      return { stats: {}, warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: no participant has a value for any source its league\'s profiles list to put it in order.' }] };
     }
     return { stats: outcome.reason === 'LOCKED' ? { tiersAndPricesLocked: 1 } : {}, warnings: [] };
   }
   const stats: Record<string, number> = {};
   const warnings: FieldValuationReport['warnings'] = [];
   const { tiers, prices } = outcome;
-  if (tiers.result === 'MADE') stats[`tiersMadeFrom${BASIS_WORD[tiers.basis]}`] = tiers.tierCount;
+  if (tiers.result === 'MADE') stats[`tiersMadeFrom${enumLabel('FieldOrderBasis', tiers.basis)}`] = tiers.tierCount;
   if (tiers.result === 'UNCHANGED') stats['tiersUnchanged'] = tiers.tierCount;
   if (tiers.result === 'KEPT_AS_EDITED') {
     stats['tiersKeptAsEdited'] = 1;
@@ -87,7 +81,7 @@ export function fieldValuationReport(outcome: FieldValuationOutcome): FieldValua
   if (tiers.result === 'NO_TIERS') {
     warnings.push({ code: 'EVENT_HAS_NO_TIERS', message: 'The event has no tiers, so its field was not tiered.' });
   }
-  if (prices.result === 'MADE') stats[`pricesMadeFrom${BASIS_WORD[prices.basis]}`] = prices.pricedCount;
+  if (prices.result === 'MADE') stats[`pricesMadeFrom${enumLabel('FieldOrderBasis', prices.basis)}`] = prices.pricedCount;
   if (prices.result === 'UNCHANGED') stats['pricesUnchanged'] = prices.pricedCount;
   if (prices.result === 'KEPT_AS_EDITED') {
     stats['pricesKeptAsEdited'] = 1;

@@ -134,6 +134,8 @@ export type SharedEnums = {
   TrophyKind: Enums.TrophyKind;
   YearReviewStatus: Enums.YearReviewStatus;
   PlatformTierProfileLastTier: Enums.PlatformTierProfileLastTier;
+  FieldOrderBasis: Enums.FieldOrderBasis;
+  TierProfileType: Enums.TierProfileType;
   ChampionshipTile: Enums.ChampionshipTile;
 };
 

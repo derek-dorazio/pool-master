@@ -8,7 +8,7 @@ import {
   type BudgetPricingProfile,
   type EventPricingConfig,
 } from '@poolmaster/shared/domain';
-import { autoAssignEventPrices } from '@/lib/api';
+import { autoAssignEventPrices, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
@@ -75,6 +75,7 @@ export function PriceAssignAction({
   disabled,
   eventId,
   field,
+  overview,
   sportLeagueId,
 }: {
   /** The values the tournament was last priced with, if any: the dialog starts from them. */
@@ -83,6 +84,8 @@ export function PriceAssignAction({
   eventId: string;
   /** The event's field: its active participants are priced, in the order the dialog names (#1807). */
   field: readonly EventFieldEntry[];
+  /** The event's overview: the order the server decided for its field, which the dialog names. */
+  overview: SportEventOverviewDto | undefined;
   /** The event's sport league, whose pricing profile the dialog starts on when the event was never priced. */
   sportLeagueId: string;
 }) {
@@ -164,7 +167,7 @@ export function PriceAssignAction({
       <ConfirmDialog
         confirmLabel={current ? 'Replace prices' : 'Assign prices'}
         confirmTestId="root-admin-tier-auto-prices-confirm"
-        description={`${describeFieldOrder(field)} Every active participant is priced in that order, the order tiers use too, the first dearest. Manual prices are replaced; tiers are untouched. You can price again until the event is released.`}
+        description={`${describeFieldOrder(overview, activeParticipantCount > 0)} Every active participant is priced in that order, the order tiers use too, the first dearest. Manual prices are replaced; tiers are untouched. You can price again until the event is released.`}
         error={
           mutation.isError
             ? extractErrorMessage(mutation.error, { fallback: 'We could not assign prices.' })

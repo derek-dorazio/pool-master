@@ -20,6 +20,7 @@ import {
   passingReleaseChecks,
   platformPricingProfilesFixture,
   sportEventFixture,
+  sportEventOverviewFixture,
   sportEventRoundFixture,
   providerMappingFixture,
   sportLeagueFixture,
@@ -125,24 +126,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
   });
 }
 
-function eventOverview(overrides: Partial<SportEventOverviewDto> = {}): SportEventOverviewDto {
-  return {
-    syncHealth: 'OFF',
-    syncs: [
-      { kind: 'FIELD', health: 'OFF', mode: 'SCHEDULE', lastRun: null },
-      { kind: 'SCORES', health: 'OFF', mode: 'SCHEDULE', lastRun: null },
-    ],
-    issues: [],
-    releaseMode: 'MANUAL',
-    releaseAt: null,
-    releaseAtKind: null,
-    tierOrderBasis: 'ODDS',
-    tierOrderCoversField: true,
-    fieldFeed: [],
-    eventPagePath: null,
-    ...overrides,
-  };
-}
+const eventOverview = sportEventOverviewFixture;
 
 function leagueOverview(overrides: Partial<SportLeagueOverviewDto> = {}): SportLeagueOverviewDto {
   return {

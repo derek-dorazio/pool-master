@@ -533,7 +533,7 @@ describe('SDK Functional: Root Admin', () => {
       await updateContestConfigTemplate({ client: user.client, path: { templateId: bracket.id }, body: { slotDefinitionIds: [week.id] } }),
       { status: 422, code: 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT' },
     );
-    const tiered = await templateOf('nfl-tiered-doubling');
+    const tiered = await templateOf('nfl-tiered-pick-3');
     expectFunctionalError(
       // A regular-season week and the Super Bowl sit in two competitions, which no contest crosses.
       await updateContestConfigTemplate({ client: user.client, path: { templateId: tiered.id }, body: { slotDefinitionIds: [week.id, final.id] } }),

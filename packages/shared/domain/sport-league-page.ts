@@ -3,6 +3,7 @@
  * read whole and never paged.
  */
 import type {
+  FieldOrderBasis,
   ParticipantAddedBy,
   ProviderCode,
   ParticipantType,
@@ -15,7 +16,6 @@ import type {
   SportLeagueSyncMode,
 } from './enums';
 import type { AutoReleaseCheck, SportLeagueIssue } from './sport-league-overview';
-import type { FieldOrderBasis } from './field-ordering';
 
 /** A sync's latest run, as the Syncs card shows it. */
 export interface SportLeagueSyncLastRun {
@@ -100,10 +100,12 @@ export interface SportEventOverview {
   releaseMode: SportEventReleaseMode;
   releaseAt: Date | null;
   releaseAtKind: SportEventReleaseAtKind | null;
-  /** The value that orders its active field for tiers and prices; null while it has no active field, or no participant has odds, a seed or a rank. */
+  /** The value that orders its active field for tiers and prices; null while it has no active field, or no participant has any of `tierOrderSources`. */
   tierOrderBasis: FieldOrderBasis | null;
   /** False when no value covers the whole active field, so `tierOrderBasis` is the first value anyone has. */
   tierOrderCoversField: boolean;
+  /** The league's tier profile's sources, in order (#2160). */
+  tierOrderSources: FieldOrderBasis[];
   /** One per field row, active or withdrawn. */
   fieldFeed: SportEventFieldFeedRow[];
   /** The address of the event page offering its series (`/play/<sport>/<page>`); null when none does. */

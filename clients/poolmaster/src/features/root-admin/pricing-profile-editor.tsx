@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
+import { useController, useForm } from 'react-hook-form';
+import { explicitOrderValues, FieldOrderBasisOrder, findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
 import { PlatformPricingProfileWriteRequestSchema } from '@poolmaster/shared/dto';
 import { createPlatformPricingProfile, updatePlatformPricingProfile, type PlatformPricingProfileDto, type PlatformPricingProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, useMutationActionWorkflow } from '@/features/shared/ui';
@@ -37,13 +37,14 @@ const NUMBER_FIELDS = [
   { key: 'steepness', label: 'Steepness', step: 'any' },
 ] as const;
 
-const NEW_PROFILE: PlatformPricingProfileWriteRequest = { code: '', name: '', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+const NEW_PROFILE: PlatformPricingProfileWriteRequest = { code: '', name: '', sources: explicitOrderValues(FieldOrderBasisOrder), salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 function formValuesOf(profile: PlatformPricingProfileDto | null): PlatformPricingProfileWriteRequest {
   return profile
     ? {
       code: profile.code,
       name: profile.name,
+      sources: [...profile.sources],
       salaryCap: profile.salaryCap,
       unit: profile.unit,
       topSharePercent: profile.topSharePercent,
@@ -80,6 +81,7 @@ export function PlatformPricingProfileEditor(dialog: ProfileEditorProps<Platform
   });
   const { errors } = form.formState;
   const clearError = clearsSaveError(save);
+  const sources = useController({ control: form.control, name: 'sources' });
 
   return (
     <ProfileFormModal
@@ -87,18 +89,12 @@ export function PlatformPricingProfileEditor(dialog: ProfileEditorProps<Platform
       errorFallback="We could not save the pricing profile."
       form={form}
       formValues={formValuesOf(profile)}
+      identity={{ errors, onEdit: clearError, register: (field) => form.register(field, { onChange: clearError }), sources: sources.field }}
+      kind="pricing"
       save={save}
-      saveTestId="root-admin-pricing-profile-editor-save"
-      testId="root-admin-pricing-profile-dialog"
       newTitle="New pricing profile"
     >
-      <div className="space-y-4">
-        <FormField error={errors.code?.message} id="pricing-profile-code" label="Code">
-          <Input data-testid="root-admin-pricing-profile-editor-code" id="pricing-profile-code" {...form.register('code', { onChange: clearError })} />
-        </FormField>
-        <FormField error={errors.name?.message} id="pricing-profile-name" label="Name">
-          <Input data-testid="root-admin-pricing-profile-editor-name" id="pricing-profile-name" {...form.register('name', { onChange: clearError })} />
-        </FormField>
+      <>
         <div className="grid gap-4 sm:grid-cols-2">
           {NUMBER_FIELDS.map((field) => (
             <FormField error={errors[field.key]?.message} id={`pricing-profile-${field.key}`} key={field.key} label={field.label}>
@@ -112,7 +108,7 @@ export function PlatformPricingProfileEditor(dialog: ProfileEditorProps<Platform
             </FormField>
           ))}
         </div>
-      </div>
+      </>
     </ProfileFormModal>
   );
 }

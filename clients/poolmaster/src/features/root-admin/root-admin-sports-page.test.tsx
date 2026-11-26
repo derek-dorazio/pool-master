@@ -394,6 +394,29 @@ describe('RootAdminSportsPage', () => {
     expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toBeInTheDocument();
   });
 
+  it('shows a refusal of profiles that start with different sources under the pricing profile, not above the form', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: mlb } });
+    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PLATFORM_TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_PLATFORM_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
+    updateSportLeagueMock.mockResolvedValue({
+      error: { error: { code: 'PROFILE_FIRST_SOURCES_DIFFER', message: 'Tier profile 6 tiers of 5 starts with SEED and pricing profile Standard starts with ODDS.' } },
+      response: { status: 422 },
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
+    await userEvent.click(await screen.findByTestId('root-admin-sport-league-settings-edit'));
+    await screen.findByRole('option', { name: '6 tiers of 5' });
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-settings-tier-profile-input'), '6 tiers of 5');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-save'));
+
+    expect(await screen.findByText('The tier profile and the pricing profile must start with the same order source.')).toBeInTheDocument();
+    expect(screen.getAllByText('The tier profile and the pricing profile must start with the same order source.')).toHaveLength(1);
+    expect(screen.getByTestId('root-admin-sport-league-settings-pricing-profile-input')).toBeInTheDocument();
+  });
+
   it('says so in the settings dialog when the sport league cannot be read', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     getSportLeagueMock.mockResolvedValue({ error: { error: { code: 'SPORT_LEAGUE_NOT_FOUND', message: 'No such sport league.' } }, response: { status: 404 } });

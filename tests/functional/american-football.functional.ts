@@ -22,6 +22,7 @@ import {
   applyEventGolfRoundScores,
   updateEventParticipantGolfRoundScore,
   applyEventRaceResults,
+  autoAssignEventTiers,
   submitContestEntry,
   selectContestPick,
   transitionEvent,
@@ -108,6 +109,13 @@ describe('SDK Functional: American football', () => {
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === team), team).id;
 
+    // --- The NFL's tiers are seed ranges (#2160): a per-event tier size has no meaning there -------
+    // Tiers are edited only before release, so the event is a draft for this one call.
+    await getFunctionalPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'DRAFT' } });
+    const sized = await autoAssignEventTiers({ client: a, path: { eventId: event.id }, body: { tierSize: 4 } });
+    expect([sized.response?.status, sized.error?.error.code]).toEqual([422, 'TIER_SIZE_NOT_FOR_RANGES']);
+    await getFunctionalPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'SCHEDULED' } });
+
     // --- The Super Bowl's quarter scores (#772): Seattle, the away side, 3-0, 9-0 and 12-0 --------
     const superBowlOf = async () => expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches
       .find((match) => match.matchNumber === 13));
@@ -189,12 +197,12 @@ describe('SDK Functional: American football', () => {
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
-      'nfl-budget-doubling', 'nfl-budget-doubling-upset-bonus',
+      'nfl-budget-pick-3',
       'nfl-random-draw-doubling', 'nfl-random-draw-doubling-upset-bonus',
-      'nfl-tiered-doubling', 'nfl-tiered-doubling-upset-bonus',
+      'nfl-tiered-pick-3',
     ]);
     const tiered = expectDefined(templates.find((template) => template.isDefault), 'the NFL default');
-    expect(tiered.templateKey).toBe('nfl-tiered-doubling');
+    expect(tiered.templateKey).toBe('nfl-tiered-pick-3');
 
     const contest = await createContest({
       client: commissioner.client,
@@ -205,8 +213,8 @@ describe('SDK Functional: American football', () => {
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
-    // One team from each seed line: the tiers follow the seeds, best first.
-    const lineup = ['Seattle Seahawks', 'New England Patriots', 'Jacksonville Jaguars', 'Pittsburgh Steelers', 'Los Angeles Rams', 'Buffalo Bills', 'Los Angeles Chargers'];
+    // One team from each of the NFL's seed tiers (#2160): a 1 seed, a 2 to 4 seed, and a 5 seed or below.
+    const lineup = ['Seattle Seahawks', 'New England Patriots', 'Los Angeles Rams'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const team of lineup) {
       expect((await selectContestPick({ client: member.client, path: { contestId, entryId, sportEventParticipantId: rowOf(team) } })).response?.status).toBe(200);
@@ -218,21 +226,16 @@ describe('SDK Functional: American football', () => {
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     const points = Object.fromEntries(board.entries.flatMap((entry) => entry.picks)
       .map((pick) => [expectDefined(field.find((row) => row.id === pick.sportEventParticipantId)).participant.name, pick.knockout?.points]));
-    // The Seahawks' bye scores nothing, then 2 + 4 + 8; the Patriots 1 + 2 + 4; the Rams 1 + 2; the
-    // Bills 1; the three Wild Card losers 0.
+    // The Seahawks' bye scores nothing, then 2 + 4 + 8; the Patriots 1 + 2 + 4; the Rams 1 + 2.
     expect(points).toEqual({
       'Seattle Seahawks': 14,
       'New England Patriots': 7,
-      'Jacksonville Jaguars': 0,
-      'Pittsburgh Steelers': 0,
       'Los Angeles Rams': 3,
-      'Buffalo Bills': 1,
-      'Los Angeles Chargers': 0,
     });
 
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
-    expect([settled.totalScore, settled.displayPosition]).toEqual([25, '1']);
+    expect([settled.totalScore, settled.displayPosition]).toEqual([24, '1']);
   });
 });

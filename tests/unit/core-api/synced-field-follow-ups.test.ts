@@ -120,7 +120,35 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
     await service.run({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'week-2' });
     await service.run({ ...PAYLOAD, sportEventId: 'deleted-event' });
 
-    expect(findings.checkEventOfSource).not.toHaveBeenCalled();
+    expect(findings.checkEventOfSource).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'GAMES_NOT_SYNCED' }));
+  });
+
+  it('raises a FIELD_HAS_NO_ORDER finding on the event when no source its league\'s profiles list orders the field', async () => {
+    const { service, findings } = followUps({ valuation: { outcome: 'SKIPPED', reason: 'NO_ORDER' } });
+
+    await service.run(PAYLOAD);
+
+    expect(findings.checkEventOfSource).toHaveBeenCalledWith({
+      kind: 'FIELD_HAS_NO_ORDER', sportLeagueId: 'nfl', sportEventId: 'sport-event-1', providerSourceId: 'balldontlie', found: true,
+    });
+  });
+
+  it('resolves the event\'s FIELD_HAS_NO_ORDER finding once a valuation orders the field', async () => {
+    const { service, findings } = followUps();
+
+    await service.run(PAYLOAD);
+
+    expect(findings.checkEventOfSource).toHaveBeenCalledWith(expect.objectContaining({ kind: 'FIELD_HAS_NO_ORDER', found: false }));
+  });
+
+  it('leaves the FIELD_HAS_NO_ORDER finding alone when the event is locked or the valuation failed, since neither says whether the field has an order', async () => {
+    for (const valuation of [{ outcome: 'SKIPPED', reason: 'LOCKED' }, { outcome: 'FAILED', message: 'boom' }] as const) {
+      const { service, findings } = followUps({ valuation });
+
+      await service.run(PAYLOAD);
+
+      expect(findings.checkEventOfSource).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'FIELD_HAS_NO_ORDER' }));
+    }
   });
 
   it('leaves no Activity row when the provider listed no games and the tiers and prices are unchanged', async () => {

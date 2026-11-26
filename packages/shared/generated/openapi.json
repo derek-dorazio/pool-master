@@ -22122,7 +22122,7 @@
             ]
           },
           "tierOrderBasis": {
-            "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.",
+            "description": "The value that orders its active field for automatic tiers and prices: the first of tierOrderSources every participant has, else the first anyone has. Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.",
             "type": [
               "string",
               "null"
@@ -22137,6 +22137,18 @@
           "tierOrderCoversField": {
             "type": "boolean",
             "description": "False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last."
+          },
+          "tierOrderSources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ODDS",
+                "SEED",
+                "RANKING"
+              ]
+            },
+            "description": "The sources its sport league's tier profile orders a field by, in order (#2160); its pricing profile starts with the same one. Names what a field with no order lacks."
           },
           "fieldFeed": {
             "type": "array",
@@ -22191,6 +22203,7 @@
           "releaseAtKind",
           "tierOrderBasis",
           "tierOrderCoversField",
+          "tierOrderSources",
           "fieldFeed",
           "eventPagePath"
         ],
@@ -22659,7 +22672,7 @@
                 ]
               },
               "tierOrderBasis": {
-                "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.",
+                "description": "The value that orders its active field for automatic tiers and prices: the first of tierOrderSources every participant has, else the first anyone has. Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.",
                 "type": [
                   "string",
                   "null"
@@ -22674,6 +22687,18 @@
               "tierOrderCoversField": {
                 "type": "boolean",
                 "description": "False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last."
+              },
+              "tierOrderSources": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ODDS",
+                    "SEED",
+                    "RANKING"
+                  ]
+                },
+                "description": "The sources its sport league's tier profile orders a field by, in order (#2160); its pricing profile starts with the same one. Names what a field with no order lacks."
               },
               "fieldFeed": {
                 "type": "array",
@@ -22728,6 +22753,7 @@
               "releaseAtKind",
               "tierOrderBasis",
               "tierOrderCoversField",
+              "tierOrderSources",
               "fieldFeed",
               "eventPagePath"
             ],
@@ -26772,58 +26798,137 @@
           },
           "tierLayout": {
             "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "tierCount": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 20,
-                "description": "How many tiers a new event starts with."
-              },
-              "tierSize": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 500,
-                "description": "How many participants auto-tiering puts in each tier before the last."
-              },
-              "lastTier": {
-                "type": "string",
-                "enum": [
-                  "ALL_REMAINING",
-                  "CAPPED"
-                ],
-                "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
-              },
-              "lastTierMax": {
-                "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+            "anyOf": [
+              {
                 "type": [
-                  "integer",
+                  "object",
                   "null"
                 ],
-                "minimum": 1,
-                "maximum": 500
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "EQUAL_GROUPS"
+                    ]
+                  },
+                  "tierCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "How many tiers a new event starts with."
+                  },
+                  "tierSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "description": "How many participants auto-tiering puts in each tier before the last."
+                  },
+                  "lastTier": {
+                    "type": "string",
+                    "enum": [
+                      "ALL_REMAINING",
+                      "CAPPED"
+                    ],
+                    "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                  },
+                  "lastTierMax": {
+                    "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 500
+                  },
+                  "profileName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "The tier profile the layout came from.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "tierCount",
+                  "tierSize",
+                  "lastTier",
+                  "lastTierMax",
+                  "profileName"
+                ],
+                "additionalProperties": false
               },
-              "profileName": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 50,
-                "description": "The tier profile the layout came from.",
-                "x-transform": [
-                  "trim"
-                ]
+              {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "RANGES"
+                    ]
+                  },
+                  "ranges": {
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "tierNumber": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 20,
+                          "description": "The tier, from 1."
+                        },
+                        "fromValue": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000,
+                          "description": "The lowest seed or rank the tier takes."
+                        },
+                        "toValue": {
+                          "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 1000
+                        }
+                      },
+                      "required": [
+                        "tierNumber",
+                        "fromValue",
+                        "toValue"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The seeds or ranks one tier takes."
+                    },
+                    "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                  },
+                  "profileName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "The tier profile the layout came from.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "ranges",
+                  "profileName"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "tierCount",
-              "tierSize",
-              "lastTier",
-              "lastTierMax",
-              "profileName"
-            ],
-            "additionalProperties": false
+            ]
           },
           "readinessStatus": {
             "type": "string",
@@ -27784,58 +27889,137 @@
                 },
                 "tierLayout": {
                   "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "tierCount": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 20,
-                      "description": "How many tiers a new event starts with."
-                    },
-                    "tierSize": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 500,
-                      "description": "How many participants auto-tiering puts in each tier before the last."
-                    },
-                    "lastTier": {
-                      "type": "string",
-                      "enum": [
-                        "ALL_REMAINING",
-                        "CAPPED"
-                      ],
-                      "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
-                    },
-                    "lastTierMax": {
-                      "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                  "anyOf": [
+                    {
                       "type": [
-                        "integer",
+                        "object",
                         "null"
                       ],
-                      "minimum": 1,
-                      "maximum": 500
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "EQUAL_GROUPS"
+                          ]
+                        },
+                        "tierCount": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 20,
+                          "description": "How many tiers a new event starts with."
+                        },
+                        "tierSize": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 500,
+                          "description": "How many participants auto-tiering puts in each tier before the last."
+                        },
+                        "lastTier": {
+                          "type": "string",
+                          "enum": [
+                            "ALL_REMAINING",
+                            "CAPPED"
+                          ],
+                          "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                        },
+                        "lastTierMax": {
+                          "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 500
+                        },
+                        "profileName": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "description": "The tier profile the layout came from.",
+                          "x-transform": [
+                            "trim"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "tierCount",
+                        "tierSize",
+                        "lastTier",
+                        "lastTierMax",
+                        "profileName"
+                      ],
+                      "additionalProperties": false
                     },
-                    "profileName": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 50,
-                      "description": "The tier profile the layout came from.",
-                      "x-transform": [
-                        "trim"
-                      ]
+                    {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "RANGES"
+                          ]
+                        },
+                        "ranges": {
+                          "minItems": 1,
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tierNumber": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 20,
+                                "description": "The tier, from 1."
+                              },
+                              "fromValue": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 1000,
+                                "description": "The lowest seed or rank the tier takes."
+                              },
+                              "toValue": {
+                                "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 1,
+                                "maximum": 1000
+                              }
+                            },
+                            "required": [
+                              "tierNumber",
+                              "fromValue",
+                              "toValue"
+                            ],
+                            "additionalProperties": false,
+                            "description": "The seeds or ranks one tier takes."
+                          },
+                          "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                        },
+                        "profileName": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "description": "The tier profile the layout came from.",
+                          "x-transform": [
+                            "trim"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "ranges",
+                        "profileName"
+                      ],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": [
-                    "tierCount",
-                    "tierSize",
-                    "lastTier",
-                    "lastTierMax",
-                    "profileName"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 "readinessStatus": {
                   "type": "string",
@@ -28750,58 +28934,137 @@
               },
               "tierLayout": {
                 "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "tierCount": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 20,
-                    "description": "How many tiers a new event starts with."
-                  },
-                  "tierSize": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 500,
-                    "description": "How many participants auto-tiering puts in each tier before the last."
-                  },
-                  "lastTier": {
-                    "type": "string",
-                    "enum": [
-                      "ALL_REMAINING",
-                      "CAPPED"
-                    ],
-                    "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
-                  },
-                  "lastTierMax": {
-                    "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                "anyOf": [
+                  {
                     "type": [
-                      "integer",
+                      "object",
                       "null"
                     ],
-                    "minimum": 1,
-                    "maximum": 500
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "EQUAL_GROUPS"
+                        ]
+                      },
+                      "tierCount": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 20,
+                        "description": "How many tiers a new event starts with."
+                      },
+                      "tierSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 500,
+                        "description": "How many participants auto-tiering puts in each tier before the last."
+                      },
+                      "lastTier": {
+                        "type": "string",
+                        "enum": [
+                          "ALL_REMAINING",
+                          "CAPPED"
+                        ],
+                        "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                      },
+                      "lastTierMax": {
+                        "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 500
+                      },
+                      "profileName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50,
+                        "description": "The tier profile the layout came from.",
+                        "x-transform": [
+                          "trim"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "tierCount",
+                      "tierSize",
+                      "lastTier",
+                      "lastTierMax",
+                      "profileName"
+                    ],
+                    "additionalProperties": false
                   },
-                  "profileName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 50,
-                    "description": "The tier profile the layout came from.",
-                    "x-transform": [
-                      "trim"
-                    ]
+                  {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "RANGES"
+                        ]
+                      },
+                      "ranges": {
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "tierNumber": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 20,
+                              "description": "The tier, from 1."
+                            },
+                            "fromValue": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 1000,
+                              "description": "The lowest seed or rank the tier takes."
+                            },
+                            "toValue": {
+                              "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "maximum": 1000
+                            }
+                          },
+                          "required": [
+                            "tierNumber",
+                            "fromValue",
+                            "toValue"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The seeds or ranks one tier takes."
+                        },
+                        "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                      },
+                      "profileName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50,
+                        "description": "The tier profile the layout came from.",
+                        "x-transform": [
+                          "trim"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "ranges",
+                      "profileName"
+                    ],
+                    "additionalProperties": false
                   }
-                },
-                "required": [
-                  "tierCount",
-                  "tierSize",
-                  "lastTier",
-                  "lastTierMax",
-                  "profileName"
-                ],
-                "additionalProperties": false
+                ]
               },
               "readinessStatus": {
                 "type": "string",
@@ -30094,7 +30357,7 @@
         "type": "object",
         "properties": {
           "tierSize": {
-            "description": "Participants per tier but the last, instead of the sport league's tier profile's; the last tier takes the rest, or up to the profile's cap. Omitted: an event with its profile's tier count gets the profile's tier size (10 for golf's six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).",
+            "description": "Participants per tier but the last, instead of the sport league's tier profile's; the last tier takes the rest, or up to the profile's cap. Omitted: an event with its profile's tier count gets the profile's tier size (10 for golf's six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5). 422 TIER_SIZE_NOT_FOR_RANGES when the league's tier profile is RANGES: its ranges place the field, so a tier size has nothing to set.",
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
@@ -30196,56 +30459,132 @@
         "description": "The values an event's field was priced with for budget contests."
       },
       "EventTierConfig": {
-        "type": "object",
-        "properties": {
-          "tierCount": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 20,
-            "description": "How many tiers a new event starts with."
-          },
-          "tierSize": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 500,
-            "description": "How many participants auto-tiering puts in each tier before the last."
-          },
-          "lastTier": {
-            "type": "string",
-            "enum": [
-              "ALL_REMAINING",
-              "CAPPED"
+        "description": "The tier layout an event's field was last auto-tiered with.",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "EQUAL_GROUPS"
+                ]
+              },
+              "tierCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "description": "How many tiers a new event starts with."
+              },
+              "tierSize": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500,
+                "description": "How many participants auto-tiering puts in each tier before the last."
+              },
+              "lastTier": {
+                "type": "string",
+                "enum": [
+                  "ALL_REMAINING",
+                  "CAPPED"
+                ],
+                "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+              },
+              "lastTierMax": {
+                "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 500
+              },
+              "profileName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The tier profile the layout came from.",
+                "x-transform": [
+                  "trim"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "tierCount",
+              "tierSize",
+              "lastTier",
+              "lastTierMax",
+              "profileName"
             ],
-            "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+            "additionalProperties": false
           },
-          "lastTierMax": {
-            "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
-            "type": [
-              "integer",
-              "null"
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "RANGES"
+                ]
+              },
+              "ranges": {
+                "minItems": 1,
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "tierNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 20,
+                      "description": "The tier, from 1."
+                    },
+                    "fromValue": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000,
+                      "description": "The lowest seed or rank the tier takes."
+                    },
+                    "toValue": {
+                      "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 1000
+                    }
+                  },
+                  "required": [
+                    "tierNumber",
+                    "fromValue",
+                    "toValue"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The seeds or ranks one tier takes."
+                },
+                "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+              },
+              "profileName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The tier profile the layout came from.",
+                "x-transform": [
+                  "trim"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "ranges",
+              "profileName"
             ],
-            "minimum": 1,
-            "maximum": 500
-          },
-          "profileName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "The tier profile the layout came from.",
-            "x-transform": [
-              "trim"
-            ]
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "tierCount",
-          "tierSize",
-          "lastTier",
-          "lastTierMax",
-          "profileName"
-        ],
-        "additionalProperties": false,
-        "description": "The tier layout an event's field was last auto-tiered with."
+        ]
       },
       "AutoAssignSportEventPricesRequest": {
         "type": "object",
@@ -73683,7 +74022,8 @@
               "SLOT_SEASON_COMPETITION_MISSING",
               "SLOT_OUTSIDE_SEASON",
               "GAMES_UNPLACED",
-              "SLOT_DATES_NEEDED"
+              "SLOT_DATES_NEEDED",
+              "FIELD_HAS_NO_ORDER"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
           },
@@ -74065,7 +74405,8 @@
                     "SLOT_SEASON_COMPETITION_MISSING",
                     "SLOT_OUTSIDE_SEASON",
                     "GAMES_UNPLACED",
-                    "SLOT_DATES_NEEDED"
+                    "SLOT_DATES_NEEDED",
+                    "FIELD_HAS_NO_ORDER"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
                 },
@@ -74300,7 +74641,8 @@
                   "SLOT_SEASON_COMPETITION_MISSING",
                   "SLOT_OUTSIDE_SEASON",
                   "GAMES_UNPLACED",
-                  "SLOT_DATES_NEEDED"
+                  "SLOT_DATES_NEEDED",
+                  "FIELD_HAS_NO_ORDER"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
               },
@@ -74971,262 +75313,17 @@
         "description": "Every user on the platform, for the Customers › Users grid."
       },
       "PlatformTierProfileWriteRequest": {
-        "type": "object",
-        "properties": {
-          "tierCount": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 20,
-            "description": "How many tiers a new event starts with."
-          },
-          "tierSize": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 500,
-            "description": "How many participants auto-tiering puts in each tier before the last."
-          },
-          "lastTier": {
-            "type": "string",
-            "enum": [
-              "ALL_REMAINING",
-              "CAPPED"
-            ],
-            "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
-          },
-          "lastTierMax": {
-            "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 500
-          },
-          "code": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "pattern": "^[A-Z][A-Z0-9_]*$",
-            "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
-            "x-transform": [
-              "trim"
-            ]
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
-            "x-transform": [
-              "trim"
-            ]
-          }
-        },
-        "required": [
-          "tierCount",
-          "tierSize",
-          "lastTier",
-          "lastTierMax",
-          "code",
-          "name"
-        ],
-        "additionalProperties": false,
-        "description": "A tier profile's code, name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 PLATFORM_TIER_PROFILE_INVALID otherwise."
-      },
-      "PlatformTierProfileDto": {
-        "type": "object",
-        "properties": {
-          "tierCount": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 20,
-            "description": "How many tiers a new event starts with."
-          },
-          "tierSize": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 500,
-            "description": "How many participants auto-tiering puts in each tier before the last."
-          },
-          "lastTier": {
-            "type": "string",
-            "enum": [
-              "ALL_REMAINING",
-              "CAPPED"
-            ],
-            "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
-          },
-          "lastTierMax": {
-            "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 500
-          },
-          "code": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "pattern": "^[A-Z][A-Z0-9_]*$",
-            "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
-            "x-transform": [
-              "trim"
-            ]
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
-            "x-transform": [
-              "trim"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sportLeagueCount": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "How many sport leagues name the profile. One any league names can't be deleted."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          }
-        },
-        "required": [
-          "tierCount",
-          "tierSize",
-          "lastTier",
-          "lastTierMax",
-          "code",
-          "name",
-          "id",
-          "sportLeagueCount",
-          "createdAt",
-          "updatedAt"
-        ],
-        "additionalProperties": false,
-        "description": "A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers."
-      },
-      "PlatformTierProfileListResponse": {
-        "type": "object",
-        "properties": {
-          "platformTierProfiles": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "tierCount": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 20,
-                  "description": "How many tiers a new event starts with."
-                },
-                "tierSize": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 500,
-                  "description": "How many participants auto-tiering puts in each tier before the last."
-                },
-                "lastTier": {
-                  "type": "string",
-                  "enum": [
-                    "ALL_REMAINING",
-                    "CAPPED"
-                  ],
-                  "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
-                },
-                "lastTierMax": {
-                  "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 1,
-                  "maximum": 500
-                },
-                "code": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 50,
-                  "pattern": "^[A-Z][A-Z0-9_]*$",
-                  "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
-                  "x-transform": [
-                    "trim"
-                  ]
-                },
-                "name": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 50,
-                  "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
-                  "x-transform": [
-                    "trim"
-                  ]
-                },
-                "id": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "sportLeagueCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "How many sport leagues name the profile. One any league names can't be deleted."
-                },
-                "createdAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "updatedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                }
-              },
-              "required": [
-                "tierCount",
-                "tierSize",
-                "lastTier",
-                "lastTierMax",
-                "code",
-                "name",
-                "id",
-                "sportLeagueCount",
-                "createdAt",
-                "updatedAt"
-              ],
-              "additionalProperties": false,
-              "description": "A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers."
-            },
-            "description": "Every tier profile, by name."
-          }
-        },
-        "required": [
-          "platformTierProfiles"
-        ],
-        "additionalProperties": false,
-        "description": "Every tier profile."
-      },
-      "PlatformTierProfileResponse": {
-        "type": "object",
-        "properties": {
-          "platformTierProfile": {
+        "description": "A tier profile's code, name, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.",
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "EQUAL_GROUPS"
+                ]
+              },
               "tierCount": {
                 "type": "integer",
                 "minimum": 1,
@@ -75275,6 +75372,200 @@
                   "trim"
                 ]
               },
+              "sources": {
+                "minItems": 1,
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ODDS",
+                    "SEED",
+                    "RANKING"
+                  ]
+                },
+                "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+              }
+            },
+            "required": [
+              "type",
+              "tierCount",
+              "tierSize",
+              "lastTier",
+              "lastTierMax",
+              "code",
+              "name",
+              "sources"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "RANGES"
+                ]
+              },
+              "ranges": {
+                "minItems": 1,
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "tierNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 20,
+                      "description": "The tier, from 1."
+                    },
+                    "fromValue": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000,
+                      "description": "The lowest seed or rank the tier takes."
+                    },
+                    "toValue": {
+                      "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 1000
+                    }
+                  },
+                  "required": [
+                    "tierNumber",
+                    "fromValue",
+                    "toValue"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The seeds or ranks one tier takes."
+                },
+                "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "pattern": "^[A-Z][A-Z0-9_]*$",
+                "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "sources": {
+                "minItems": 1,
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ODDS",
+                    "SEED",
+                    "RANKING"
+                  ]
+                },
+                "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+              }
+            },
+            "required": [
+              "type",
+              "ranges",
+              "code",
+              "name",
+              "sources"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "PlatformTierProfileDto": {
+        "description": "A tier layout each sport league can name: a new event of the league starts with its tiers, and auto-tiering puts the field in order by the profile's sources, then fills the tiers: EQUAL_GROUPS, tierSize in each tier but the last (a field too small to reach the last tier is split evenly); RANGES, each participant in the tier whose range holds their seed or rank.",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "EQUAL_GROUPS"
+                ]
+              },
+              "tierCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "description": "How many tiers a new event starts with."
+              },
+              "tierSize": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500,
+                "description": "How many participants auto-tiering puts in each tier before the last."
+              },
+              "lastTier": {
+                "type": "string",
+                "enum": [
+                  "ALL_REMAINING",
+                  "CAPPED"
+                ],
+                "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+              },
+              "lastTierMax": {
+                "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 500
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "pattern": "^[A-Z][A-Z0-9_]*$",
+                "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "sources": {
+                "minItems": 1,
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ODDS",
+                    "SEED",
+                    "RANKING"
+                  ]
+                },
+                "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+              },
               "id": {
                 "type": "string",
                 "format": "uuid"
@@ -75297,19 +75588,610 @@
               }
             },
             "required": [
+              "type",
               "tierCount",
               "tierSize",
               "lastTier",
               "lastTierMax",
               "code",
               "name",
+              "sources",
               "id",
               "sportLeagueCount",
               "createdAt",
               "updatedAt"
             ],
-            "additionalProperties": false,
-            "description": "A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers."
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "RANGES"
+                ]
+              },
+              "ranges": {
+                "minItems": 1,
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "tierNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 20,
+                      "description": "The tier, from 1."
+                    },
+                    "fromValue": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000,
+                      "description": "The lowest seed or rank the tier takes."
+                    },
+                    "toValue": {
+                      "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 1000
+                    }
+                  },
+                  "required": [
+                    "tierNumber",
+                    "fromValue",
+                    "toValue"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The seeds or ranks one tier takes."
+                },
+                "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "pattern": "^[A-Z][A-Z0-9_]*$",
+                "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "sources": {
+                "minItems": 1,
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ODDS",
+                    "SEED",
+                    "RANKING"
+                  ]
+                },
+                "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sportLeagueCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "How many sport leagues name the profile. One any league names can't be deleted."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              }
+            },
+            "required": [
+              "type",
+              "ranges",
+              "code",
+              "name",
+              "sources",
+              "id",
+              "sportLeagueCount",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "PlatformTierProfileListResponse": {
+        "type": "object",
+        "properties": {
+          "platformTierProfiles": {
+            "type": "array",
+            "items": {
+              "description": "A tier layout each sport league can name: a new event of the league starts with its tiers, and auto-tiering puts the field in order by the profile's sources, then fills the tiers: EQUAL_GROUPS, tierSize in each tier but the last (a field too small to reach the last tier is split evenly); RANGES, each participant in the tier whose range holds their seed or rank.",
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "EQUAL_GROUPS"
+                      ]
+                    },
+                    "tierCount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 20,
+                      "description": "How many tiers a new event starts with."
+                    },
+                    "tierSize": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 500,
+                      "description": "How many participants auto-tiering puts in each tier before the last."
+                    },
+                    "lastTier": {
+                      "type": "string",
+                      "enum": [
+                        "ALL_REMAINING",
+                        "CAPPED"
+                      ],
+                      "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                    },
+                    "lastTierMax": {
+                      "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 500
+                    },
+                    "code": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "pattern": "^[A-Z][A-Z0-9_]*$",
+                      "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    },
+                    "sources": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "ODDS",
+                          "SEED",
+                          "RANKING"
+                        ]
+                      },
+                      "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "sportLeagueCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "How many sport leagues name the profile. One any league names can't be deleted."
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "tierCount",
+                    "tierSize",
+                    "lastTier",
+                    "lastTierMax",
+                    "code",
+                    "name",
+                    "sources",
+                    "id",
+                    "sportLeagueCount",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "RANGES"
+                      ]
+                    },
+                    "ranges": {
+                      "minItems": 1,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tierNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 20,
+                            "description": "The tier, from 1."
+                          },
+                          "fromValue": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 1000,
+                            "description": "The lowest seed or rank the tier takes."
+                          },
+                          "toValue": {
+                            "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 1000
+                          }
+                        },
+                        "required": [
+                          "tierNumber",
+                          "fromValue",
+                          "toValue"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The seeds or ranks one tier takes."
+                      },
+                      "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                    },
+                    "code": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "pattern": "^[A-Z][A-Z0-9_]*$",
+                      "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    },
+                    "sources": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "ODDS",
+                          "SEED",
+                          "RANKING"
+                        ]
+                      },
+                      "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "sportLeagueCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "How many sport leagues name the profile. One any league names can't be deleted."
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "ranges",
+                    "code",
+                    "name",
+                    "sources",
+                    "id",
+                    "sportLeagueCount",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "description": "Every tier profile, by name."
+          }
+        },
+        "required": [
+          "platformTierProfiles"
+        ],
+        "additionalProperties": false,
+        "description": "Every tier profile."
+      },
+      "PlatformTierProfileResponse": {
+        "type": "object",
+        "properties": {
+          "platformTierProfile": {
+            "description": "A tier layout each sport league can name: a new event of the league starts with its tiers, and auto-tiering puts the field in order by the profile's sources, then fills the tiers: EQUAL_GROUPS, tierSize in each tier but the last (a field too small to reach the last tier is split evenly); RANGES, each participant in the tier whose range holds their seed or rank.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "EQUAL_GROUPS"
+                    ]
+                  },
+                  "tierCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "How many tiers a new event starts with."
+                  },
+                  "tierSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "description": "How many participants auto-tiering puts in each tier before the last."
+                  },
+                  "lastTier": {
+                    "type": "string",
+                    "enum": [
+                      "ALL_REMAINING",
+                      "CAPPED"
+                    ],
+                    "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                  },
+                  "lastTierMax": {
+                    "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 500
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
+                    "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  },
+                  "sources": {
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "ODDS",
+                        "SEED",
+                        "RANKING"
+                      ]
+                    },
+                    "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+                  },
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sportLeagueCount": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "How many sport leagues name the profile. One any league names can't be deleted."
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 datetime string."
+                  },
+                  "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 datetime string."
+                  }
+                },
+                "required": [
+                  "type",
+                  "tierCount",
+                  "tierSize",
+                  "lastTier",
+                  "lastTierMax",
+                  "code",
+                  "name",
+                  "sources",
+                  "id",
+                  "sportLeagueCount",
+                  "createdAt",
+                  "updatedAt"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "RANGES"
+                    ]
+                  },
+                  "ranges": {
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "tierNumber": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 20,
+                          "description": "The tier, from 1."
+                        },
+                        "fromValue": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000,
+                          "description": "The lowest seed or rank the tier takes."
+                        },
+                        "toValue": {
+                          "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 1000
+                        }
+                      },
+                      "required": [
+                        "tierNumber",
+                        "fromValue",
+                        "toValue"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The seeds or ranks one tier takes."
+                    },
+                    "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
+                    "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  },
+                  "sources": {
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "ODDS",
+                        "SEED",
+                        "RANKING"
+                      ]
+                    },
+                    "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+                  },
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sportLeagueCount": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "How many sport leagues name the profile. One any league names can't be deleted."
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 datetime string."
+                  },
+                  "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 datetime string."
+                  }
+                },
+                "required": [
+                  "type",
+                  "ranges",
+                  "code",
+                  "name",
+                  "sources",
+                  "id",
+                  "sportLeagueCount",
+                  "createdAt",
+                  "updatedAt"
+                ],
+                "additionalProperties": false
+              }
+            ]
           }
         },
         "required": [
@@ -75369,6 +76251,20 @@
             "x-transform": [
               "trim"
             ]
+          },
+          "sources": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ODDS",
+                "SEED",
+                "RANKING"
+              ]
+            },
+            "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
           }
         },
         "required": [
@@ -75378,10 +76274,11 @@
           "floorSharePercent",
           "steepness",
           "name",
-          "code"
+          "code",
+          "sources"
         ],
         "additionalProperties": false,
-        "description": "A pricing profile's code, name and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other."
+        "description": "A pricing profile's code, name, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one."
       },
       "PlatformPricingProfileDto": {
         "type": "object",
@@ -75435,6 +76332,20 @@
               "trim"
             ]
           },
+          "sources": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ODDS",
+                "SEED",
+                "RANKING"
+              ]
+            },
+            "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -75464,13 +76375,14 @@
           "steepness",
           "name",
           "code",
+          "sources",
           "id",
           "sportLeagueCount",
           "createdAt",
           "updatedAt"
         ],
         "additionalProperties": false,
-        "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them."
+        "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is put in order by its sources and priced with its values, and the price dialog offers them."
       },
       "PlatformPricingProfileListResponse": {
         "type": "object",
@@ -75529,6 +76441,20 @@
                     "trim"
                   ]
                 },
+                "sources": {
+                  "minItems": 1,
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "ODDS",
+                      "SEED",
+                      "RANKING"
+                    ]
+                  },
+                  "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+                },
                 "id": {
                   "type": "string",
                   "format": "uuid"
@@ -75558,13 +76484,14 @@
                 "steepness",
                 "name",
                 "code",
+                "sources",
                 "id",
                 "sportLeagueCount",
                 "createdAt",
                 "updatedAt"
               ],
               "additionalProperties": false,
-              "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them."
+              "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is put in order by its sources and priced with its values, and the price dialog offers them."
             },
             "description": "Every pricing profile, by name."
           }
@@ -75630,6 +76557,20 @@
                   "trim"
                 ]
               },
+              "sources": {
+                "minItems": 1,
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ODDS",
+                    "SEED",
+                    "RANKING"
+                  ]
+                },
+                "description": "The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once."
+              },
               "id": {
                 "type": "string",
                 "format": "uuid"
@@ -75659,13 +76600,14 @@
               "steepness",
               "name",
               "code",
+              "sources",
               "id",
               "sportLeagueCount",
               "createdAt",
               "updatedAt"
             ],
             "additionalProperties": false,
-            "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them."
+            "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is put in order by its sources and priced with its values, and the price dialog offers them."
           }
         },
         "required": [
@@ -85326,7 +86268,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.",
+        "description": "Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's tier profile lists: a field is never ordered by name. 422 TIER_SIZE_NOT_FOR_RANGES when a tier size is sent for a league whose tier profile is RANGES.",
         "requestBody": {
           "required": true,
           "content": {
@@ -85390,6 +86332,16 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -85502,7 +86454,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.",
+        "description": "Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name.",
         "requestBody": {
           "required": true,
           "content": {
@@ -87212,7 +88164,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "The current Season is never set here: the daily recompute sets it (#2003). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.",
+        "description": "The current Season is never set here: the daily recompute sets it (#2003). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). 422 PROFILE_FIRST_SOURCES_DIFFER when the league's tier and pricing profiles, as the update leaves them, start with different sources (#2160). Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -88369,7 +89321,7 @@
         "tags": [
           "Tier profiles"
         ],
-        "description": "Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create, 422 PROFILE_FIRST_SOURCES_DIFFER when the first source would differ from the first source of the pricing profile a sport league naming it has. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
@@ -88769,7 +89721,7 @@
         "tags": [
           "Pricing profiles"
         ],
-        "description": "Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create, 422 PROFILE_FIRST_SOURCES_DIFFER when the first source would differ from the first source of the tier profile a sport league naming it has. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {

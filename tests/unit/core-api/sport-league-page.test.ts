@@ -49,7 +49,8 @@ const at = (iso: string) => new Date(iso);
 function league(overrides: Partial<SportLeaguePageLeague> = {}): SportLeaguePageLeague {
   return {
     id: 'mlb', sport: Sport.BASEBALL, isActive: true,
-    syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, ...overrides,
+    syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7,
+    tierSources: [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING], ...overrides,
   };
 }
 
@@ -245,6 +246,16 @@ describe('buildSportEventOverview', () => {
     }), context);
 
     expect(overview).toMatchObject({ tierOrderBasis: FieldOrderBasis.ODDS, tierOrderCoversField: true });
+  });
+
+  it('orders by the league tier profile\'s own first source, seed, though every participant has odds, and says the sources', () => {
+    const sources = [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.RANKING];
+    const overview = buildSportEventOverview(eventPageFacts({
+      league: league({ tierSources: sources }),
+      field: [fieldRow({ oddsToWin: 5, seedNumber: 2 }), fieldRow({ id: 'sep2', oddsToWin: 12, seedNumber: 1 })],
+    }), context);
+
+    expect(overview).toMatchObject({ tierOrderBasis: FieldOrderBasis.SEED, tierOrderCoversField: true, tierOrderSources: sources });
   });
 
   it('names the first value anyone has when none covers the field, and no basis with no active field', () => {

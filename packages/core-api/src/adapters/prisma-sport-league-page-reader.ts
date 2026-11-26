@@ -352,11 +352,17 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       select: {
         id: true, isActive: true, ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true,
         sport: { select: { sport: true } },
+        platformTierProfile: { select: { sources: { orderBy: { orderIndex: 'asc' }, select: { basis: true } } } },
       },
     });
     if (row === null) return null;
-    const { sport, selectedProviderMapping, ...league } = row;
-    return { ...league, sport: sport.sport, syncProviderId: syncProviderIdOf({ selectedProviderMapping }) };
+    const { sport, selectedProviderMapping, platformTierProfile, ...league } = row;
+    return {
+      ...league,
+      sport: sport.sport,
+      syncProviderId: syncProviderIdOf({ selectedProviderMapping }),
+      tierSources: platformTierProfile.sources.map(({ basis }) => basis),
+    };
   }
 }
 

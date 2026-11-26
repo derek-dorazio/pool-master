@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
-import type { ProfileRepository } from '@poolmaster/shared/db';
-import { PlatformTierProfileLastTier, type PlatformPricingProfile, type PlatformTierProfile } from '@poolmaster/shared/domain';
+import type { PlatformPricingProfileWrite, PlatformTierProfileWrite, ProfileRepository } from '@poolmaster/shared/db';
+import { FieldOrderBasis, PlatformTierProfileLastTier, TierProfileType, type PlatformPricingProfile, type PlatformTierProfile } from '@poolmaster/shared/domain';
 import {
   PLATFORM_PRICING_PROFILE_KIND,
   ProfileService,
@@ -14,18 +14,26 @@ import { fakeLogger } from '../../support/fake-logger';
 
 const T0 = new Date('2026-01-01T00:00:00.000Z');
 
-type TierWrite = Omit<PlatformTierProfile, 'id' | 'createdAt' | 'updatedAt'>;
-type PricingWrite = Omit<PlatformPricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
+type TierWrite = PlatformTierProfileWrite;
+type PricingWrite = PlatformPricingProfileWrite;
+type EqualGroupsWrite = Extract<TierWrite, { type: typeof TierProfileType.EQUAL_GROUPS }>;
 
-const SIX_OF_TEN: TierWrite = { code: 'TIERS_6_OF_10', name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
-const STANDARD: PricingWrite = { code: 'STANDARD', name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+const ODDS_FIRST = [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING];
+const SEED_FIRST = [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.RANKING];
 
-/** Profiles in a list, each league naming one by id in `uses`. */
+const SIX_OF_TEN: EqualGroupsWrite = { code: 'TIERS_6_OF_10', name: '6 tiers of 10', sources: ODDS_FIRST, type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
+const STANDARD: PricingWrite = { code: 'STANDARD', name: 'Standard', sources: ODDS_FIRST, salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+
+/**
+ * Profiles in a list, each league naming one by id in `uses`; `paired` holds, by profile id, the
+ * first sources of the other kind's profiles its leagues name.
+ */
 function memoryProfiles<TProfile extends { id: string; code: string; name: string }, TWrite extends { code: string; name: string }>(
   build: (id: string, write: TWrite) => TProfile,
 ) {
   const rows: TProfile[] = [];
   const uses = new Map<string, number>();
+  const paired = new Map<string, FieldOrderBasis[]>();
   let sequence = 0;
   const repo: ProfileRepository<TProfile, TWrite> = {
     findAll: async () => [...rows].sort((left, right) => left.name.localeCompare(right.name)),
@@ -33,6 +41,7 @@ function memoryProfiles<TProfile extends { id: string; code: string; name: strin
     findBySportLeague: async () => null,
     countSportLeagues: async () => new Map(uses),
     countSportLeaguesNaming: async (id) => uses.get(id) ?? 0,
+    findPairedFirstSources: async (id) => paired.get(id) ?? [],
     // The unique indexes on code and name, as the adapter answers them.
     create: async (write) => {
       if (rows.some((row) => row.code === write.code)) return 'codeTaken';
@@ -56,17 +65,17 @@ function memoryProfiles<TProfile extends { id: string; code: string; name: strin
       return used;
     },
   };
-  return { repo, rows, uses };
+  return { repo, rows, uses, paired };
 }
 
 function tierService() {
-  const store = memoryProfiles<PlatformTierProfile, TierWrite>((id, write) => ({ id, ...write, createdAt: T0, updatedAt: T0 }));
+  const store = memoryProfiles<PlatformTierProfile, TierWrite>((id, write) => ({ id, ...write, sources: [...write.sources], createdAt: T0, updatedAt: T0 }));
   const logger = fakeLogger();
   return { ...store, logger, service: new ProfileService({ profiles: store.repo, kind: PLATFORM_TIER_PROFILE_KIND, logger }) };
 }
 
 function pricingService() {
-  const store = memoryProfiles<PlatformPricingProfile, PricingWrite>((id, write) => ({ id, ...write, createdAt: T0, updatedAt: T0 }));
+  const store = memoryProfiles<PlatformPricingProfile, PricingWrite>((id, write) => ({ id, ...write, sources: [...write.sources], createdAt: T0, updatedAt: T0 }));
   return { ...store, service: new ProfileService({ profiles: store.repo, kind: PLATFORM_PRICING_PROFILE_KIND }) };
 }
 
@@ -142,6 +151,44 @@ describe('ProfileService — tier profiles', () => {
     expect(rows.find((row) => row.id === profile.id)).toMatchObject(SIX_OF_TEN);
   });
 
+  it('creates a ranges profile ordered by seed first, with its ranges', async () => {
+    const { service } = tierService();
+    const ranges = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }];
+
+    const created = await service.create({ code: 'PLAYOFF_SEEDS_1_4_REST', name: 'Playoff seeds', sources: SEED_FIRST, type: TierProfileType.RANGES, ranges });
+
+    expect(created.profile).toMatchObject({ type: 'RANGES', sources: SEED_FIRST, ranges });
+  });
+
+  it('refuses (422 PLATFORM_TIER_PROFILE_INVALID) a ranges profile with a gap between two tiers, creating nothing', async () => {
+    const { service, rows } = tierService();
+    const ranges = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 3, toValue: null }];
+
+    await expect(service.create({ code: 'GAPPED', name: 'Gapped', sources: SEED_FIRST, type: TierProfileType.RANGES, ranges }))
+      .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_INVALID', statusCode: 422 });
+    expect(rows).toEqual([]);
+  });
+
+  it('refuses (422 PROFILE_FIRST_SOURCES_DIFFER) a new first source a league naming the profile does not start its pricing profile with, changing nothing', async () => {
+    const { service, rows, paired } = tierService();
+    const { profile } = await service.create(SIX_OF_TEN);
+    paired.set(profile.id, [FieldOrderBasis.ODDS]);
+
+    await expect(service.update(profile.id, { ...SIX_OF_TEN, sources: SEED_FIRST }))
+      .rejects.toMatchObject({ code: 'PROFILE_FIRST_SOURCES_DIFFER', statusCode: 422 });
+    expect(rows[0]?.sources).toEqual(ODDS_FIRST);
+  });
+
+  it('accepts reordering the sources after the first, and a new first source while no league names the profile', async () => {
+    const { service, paired } = tierService();
+    const { profile } = await service.create(SIX_OF_TEN);
+    const free = await service.create({ ...SIX_OF_TEN, code: 'FREE', name: 'Free' });
+    paired.set(profile.id, [FieldOrderBasis.ODDS]);
+
+    await expect(service.update(profile.id, { ...SIX_OF_TEN, sources: [FieldOrderBasis.ODDS, FieldOrderBasis.RANKING] })).resolves.toMatchObject({ profile: { sources: ['ODDS', 'RANKING'] } });
+    await expect(service.update(free.profile.id, { ...SIX_OF_TEN, code: 'FREE', name: 'Free', sources: SEED_FIRST })).resolves.toMatchObject({ profile: { sources: SEED_FIRST } });
+  });
+
   it('deletes a profile no sport league names', async () => {
     const { service, rows, logger } = tierService();
     const { profile } = await service.create(SIX_OF_TEN);
@@ -191,5 +238,13 @@ describe('ProfileService — pricing profiles', () => {
     await expect(service.create({ ...STANDARD, name: 'Standard 2' })).rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_CODE_TAKEN', statusCode: 409 });
     await expect(service.get('profile-gone')).rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_NOT_FOUND', statusCode: 404 });
     await expect(service.delete(profile.id)).rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_IN_USE', statusCode: 409 });
+  });
+
+  it('refuses (422 PROFILE_FIRST_SOURCES_DIFFER) a pricing profile\'s new first source its leagues\' tier profiles do not start with', async () => {
+    const { service, paired } = pricingService();
+    const { profile } = await service.create(STANDARD);
+    paired.set(profile.id, [FieldOrderBasis.ODDS, FieldOrderBasis.ODDS]);
+
+    await expect(service.update(profile.id, { ...STANDARD, sources: SEED_FIRST })).rejects.toMatchObject({ code: 'PROFILE_FIRST_SOURCES_DIFFER', statusCode: 422 });
   });
 });
