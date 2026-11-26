@@ -39,7 +39,7 @@ import {
   toContestRulesValues,
   type ContestRulesValues,
 } from './contest-rules-form';
-import { useEventRoundName } from './use-bracket-round-label';
+import { useEventRoundLabels } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
@@ -106,7 +106,7 @@ function EditContestForm({
   const values = form.watch();
   // A bracket starts at the full bracket or a later round; once its event is under way, only a
   // later round, as a second-chance bracket (#721).
-  const roundName = useEventRoundName(selectionType === SelectionType.BRACKET ? event : null);
+  const roundName = useEventRoundLabels(selectionType === SelectionType.BRACKET ? event.id : '');
   const bracketStartRounds = selectionType === SelectionType.BRACKET
     ? bracketStartRoundOptions(bracketStartRoundsOf(event), roundName)
     : [];

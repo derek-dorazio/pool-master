@@ -1,6 +1,6 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { MatchEnding, MatchStatus, Sport, SportEventStatus, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchStatus, SlotKind, Sport, SportEventStatus, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
@@ -9,6 +9,7 @@ import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import type { SportEventParticipantView } from '@poolmaster/shared/db';
+import { roundSlot } from '../../support/round-slots';
 
 // The field's rules against an in-memory store: the one read every field screen uses,
 // seeding from the sport league, adding anyone, the all-or-none grid save, and removal.
@@ -323,7 +324,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const { store, service, sport, event } = setup(Sport.BASKETBALL);
     const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id);
     store.matchRows.push({
-      id: 'match-1', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
+      id: 'match-1', sportEventId: event.id, roundNumber: 1, slot: roundSlot(SlotKind.FINAL), matchNumber: 1,
       homeSportEventParticipantId: null, awaySportEventParticipantId: duke.id, isNeutralSite: true,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),

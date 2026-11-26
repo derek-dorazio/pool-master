@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEvent, getEventBracket, listEventRounds, listEventTiers } from '@/lib/api';
+import { getEvent, getEventBracket, listEventTiers } from '@/lib/api';
+import { sportEventRoundsQueryOptions } from '@/features/contests/use-bracket-round-label';
 import type {
   SportEventDto,
   SportEventRoundMatchDto,
-  SportEventRoundDto,
   SportEventTierDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
@@ -66,18 +66,7 @@ export function useSportEventTiersQuery(eventId: string) {
 }
 
 export function useSportEventRoundsQuery(eventId: string) {
-  return useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.rounds(eventId),
-    queryFn: async (): Promise<SportEventRoundDto[]> => {
-      const response = await listEventRounds({ path: { eventId } });
-      if (!response.data?.rounds) {
-        throwApiError(response.error, 'Event rounds response is missing data.');
-      }
-      return response.data.rounds;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  return useQuery(sportEventRoundsQueryOptions(eventId));
 }
 
 /** A bracket event's matches in match-number order (#698); empty until its bracket is loaded. */

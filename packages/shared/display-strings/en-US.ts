@@ -153,10 +153,6 @@ export const enUS = {
       WALKOVER: { name: 'Walkover', short: 'w/o' },
       DEFAULT: { name: 'Default', short: 'def.' },
     },
-    BracketAdvancement: {
-      FIXED: 'Fixed',
-      RESEED_BY_SEED: 'Reseed by seed',
-    },
     MatchPeriodLayout: {
       QUARTERS: 'Quarters',
       HALVES: 'Halves',
@@ -184,6 +180,12 @@ export const enUS = {
       CREATE: 'New',
       UPDATE: 'Changed',
       UNCHANGED: 'Unchanged',
+    },
+    GolfRoundScoreChange: {
+      CREATE: 'New',
+      UPDATE: 'Changed',
+      UNCHANGED: 'Unchanged',
+      SKIPPED: 'Not stored (no strokes)',
     },
     SelectionType: {
       TIERED: 'Tiered',
@@ -253,6 +255,16 @@ export const enUS = {
     AutoReleaseCheckOutcome: {
       RELEASED: 'Released',
       HELD: 'Held',
+    },
+    ReleaseCheckKey: {
+      NOT_STARTED: 'Not started',
+      ROUNDS_SCHEDULED: 'Rounds scheduled',
+      FIELD_LOADED: 'Field loaded',
+      TIERS_ASSIGNED: 'Every participant in a tier',
+      TIERS_FILLED: 'No empty tier',
+      PRICES_ASSIGNED: 'Prices made',
+      BRACKET_COMPLETE: 'Bracket complete',
+      CONTEST_SETUPS_ON: 'Contest template on',
     },
     SportLeagueSyncHealth: {
       OK: 'OK',
@@ -433,6 +445,10 @@ export const enUS = {
       AUTO_ODDS: 'Auto odds',
       AUTO_SEED: 'Auto seed',
       AUTO_RANKING: 'Auto ranking',
+      MANUAL: 'Manual',
+    },
+    FieldValueSetBy: {
+      AUTO: 'Auto',
       MANUAL: 'Manual',
     },
     GolfCategoryKey: {
@@ -693,6 +709,13 @@ export const enUS = {
       CONTEST_EXPANDED: 'Contest expanded',
       LEAGUE_PLAN_PREVIEW_ENDING: 'Premium preview period ending',
       CONTEST_REOPENED: 'Event postponed, picks open again',
+    },
+    EmailAudience: {
+      MEMBERS: 'Members',
+      COMMISSIONERS: 'Commissioners',
+      ROOT_ADMINS: 'Root admins',
+      PEOPLE_INVITED: 'People invited',
+      ACCOUNT_HOLDERS: 'Account holders',
     },
     EmailMessageStatus: {
       QUEUED: 'Sending email',
@@ -960,6 +983,7 @@ export const enUS = {
     EVENT_PARTICIPANT_NOT_FOUND: 'They are not on this event\'s field.',
     EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: 'This is not a play-in place, so it cannot take a play-in winner.',
     EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED: 'Some rows do not name exactly one participant on the field.',
+    EVENT_ROUNDS_FROM_SLOTS: 'This event plays a round in each of its slots, so its round count comes from them.',
     EVENT_SCORING_FAMILY_MISMATCH: 'This event is not scored this way.',
     FIELD_HAS_NO_ORDER: 'No one in the field has a value for any of this league\'s order sources, so it cannot be put in tiers or priced.',
     FST_ERR_VALIDATION: 'The request is not valid. Check the details and try again.',
@@ -1067,6 +1091,7 @@ export const enUS = {
     ROUND_SCORE_ROWS_UNRESOLVED: 'Some score rows do not name one participant on the field.',
     ROUND_VALUES_REQUIRED: 'A new round needs both its strokes and its score to par.',
     SEARCH_TERM_REQUIRED: 'Choose a sport league, or type a few more characters.',
+    SEASON_SLOTS_NOT_ONE_SEASON: 'A test event\'s slots must all be in one Season.',
     SEASON_SLOT_NOT_CURRENT: 'That slot is not in the league\'s current Season.',
     SEASON_SLOT_NOT_FOUND: 'Slot not found.',
     SEASON_SLOT_NOT_TEST: 'Events can be made by hand only on a test slot.',
@@ -1096,10 +1121,8 @@ export const enUS = {
     SPORT_EVENT_SEEDS_LOCKED: 'This event has been released, so its seeds are locked.',
     SPORT_EVENT_START_NOT_PLACEHOLDER: 'This event already has a real start time.',
     SPORT_EVENT_TIERS_LOCKED: 'This event has been released, so its tiers and prices are locked.',
-    SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED: 'An event already has its bracket, so how winners advance cannot change.',
     SPORT_LEAGUE_HAS_NO_SEASON: 'This league has no Season yet.',
     SPORT_LEAGUE_IN_USE: 'This league is in use, so it cannot be deleted.',
-    SPORT_LEAGUE_NOT_BRACKET: 'This league plays no bracket.',
     SPORT_LEAGUE_NOT_FOUND: 'Sport league not found.',
     SPORT_LEAGUE_NOT_SYNCED: 'No provider syncs this league\'s events.',
     SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS: 'Some rows do not name one participant.',
@@ -1290,9 +1313,11 @@ export const enUS = {
     // How many games a slot's meeting is played over, beside its series format.
     seriesGames_one: '{{count}} game',
     seriesGames_other: '{{count}} games',
-    raceNumber: 'Race {{n}}',
-    singleRace: 'Race',
     roundHeading: 'Round',
+    // A squad's year line names each cup it won a trophy in, keyed by CupTrophy code (#1993).
+    cupTrophyLineCHAMPION: '{{cup}} champion',
+    cupTrophyLineRUNNER_UP: '{{cup}} runner-up',
+    cupTrophyLineTHIRD: '{{cup}} 3rd place',
     // How auto-assigned tiers and prices put a field in order (#2160), by the league's profile's
     // sources, keyed by FieldOrderBasis code: each source's name, how a participant without it is
     // said to lack it, and the order.

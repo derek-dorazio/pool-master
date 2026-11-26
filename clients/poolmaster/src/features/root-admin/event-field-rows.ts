@@ -1,20 +1,5 @@
-import { explicitOrder, ValuationSource } from '@poolmaster/shared/domain';
+import { FieldValueSetBy, ValuationSource } from '@poolmaster/shared/domain';
 import type { SportEventOverviewDto, SportEventParticipantDto, SportEventTierDto } from '@/lib/api';
-
-/** Who last set a row's tier or price: automatic tiering and pricing, or a root admin's correction. */
-export const FieldValueSetBy = {
-  AUTO: 'AUTO',
-  MANUAL: 'MANUAL',
-} as const;
-export type FieldValueSetBy = (typeof FieldValueSetBy)[keyof typeof FieldValueSetBy];
-
-/** Auto first, then the corrections. */
-export const FieldValueSetByOrder = explicitOrder<FieldValueSetBy>({ [FieldValueSetBy.AUTO]: 0, [FieldValueSetBy.MANUAL]: 1 });
-
-export const FIELD_VALUE_SET_BY_LABELS: Record<FieldValueSetBy, string> = {
-  [FieldValueSetBy.AUTO]: 'Auto',
-  [FieldValueSetBy.MANUAL]: 'Manual',
-};
 
 /** One row of the Event page's Field grid: the field row, with its tier, feed facts and set-by read flat. */
 export type EventFieldRow = {

@@ -30,6 +30,7 @@ import type { SquaresService } from '../../../packages/core-api/src/modules/sele
 import { buildLeague } from '../../factories';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
 import { platinumEntitlements } from '../../support/plan-entitlements';
+import { weekRoundSlot } from '../../support/round-slots';
 
 const boom = new Error('database down');
 
@@ -207,7 +208,7 @@ describe('event page handler errors', () => {
 describe('squares handlers', () => {
   const board = {
     contest: { id: 'c1', status: ContestStatus.OPEN },
-    game: { scheduledDate: null, periodScores: [] },
+    game: { scheduledDate: null, periodScores: [], slot: weekRoundSlot() },
     digits: null,
   };
   const service = {

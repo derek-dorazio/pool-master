@@ -108,11 +108,6 @@ export function teamUsedInWeek(gamePicks: Pick<GamePicksResponse, 'survivor'>, t
   return gamePicks.survivor?.usedTeams?.find((used) => used.participantId === team.participantId)?.weekNumber ?? null;
 }
 
-/** Whether the survivor entry picked the team in another week it submitted, so cannot pick it again. */
-export function isTeamUsed(gamePicks: Pick<GamePicksResponse, 'survivor'>, team: PickEmTeam): boolean {
-  return teamUsedInWeek(gamePicks, team) !== null;
-}
-
 /** The team a survivor week's pick names, or null with none shown. */
 export function survivorPickTeam(gamePicks: Pick<GamePicksResponse, 'games'>): PickEmTeam | null {
   for (const game of gamePicks.games) {

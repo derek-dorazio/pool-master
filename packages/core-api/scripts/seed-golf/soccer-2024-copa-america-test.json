@@ -107,7 +107,7 @@
       "events": [
         {
           "key": "copa-america-2024",
-          "slotKey": "FINAL",
+          "roundSlotKeys": ["QUARTERFINAL", "SEMIFINAL", "FINAL"],
           "name": "Copa América",
           "startDate": "2024-07-05",
           "endDate": "2024-07-15",

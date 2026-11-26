@@ -306,7 +306,6 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findEmptyTierLabels: noCounts(),
     countContests: noCounts(),
     countBySportLeagues: noCounts(),
-    sportLeagueHasLoadedBracket: jest.fn().mockResolvedValue(false),
     summarizeByProviders: noCounts(),
     findLiveNotifiedEvents: many(),
     recordProviderNotification: nothing(),

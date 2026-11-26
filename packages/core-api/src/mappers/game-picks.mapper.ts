@@ -4,7 +4,7 @@
  */
 
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
-import { PredictedResult, type PredictedChoice } from '@poolmaster/shared/domain';
+import { finalRoundsOfMatches, PredictedResult, type PredictedChoice } from '@poolmaster/shared/domain';
 import {
   GAME_PICKS_TIEBREAKER_MAX,
   type GamePickGameDto,
@@ -17,13 +17,16 @@ import {
 } from '@poolmaster/shared/dto';
 import type { GamePickGame, GamePicksView, GamePreview, GamesPreview } from '../modules/selections/prediction-service';
 import { selectionErrors } from '../modules/selections/selection-errors';
+import { mapRoundSlotToDto } from './sport-event-matches.mapper';
 
-function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
+function toGamePickGameDto(game: GamePickGame, finalRounds: ReadonlySet<number>): GamePickGameDto {
   const { match, pick, pickScore } = game;
   return {
     sportEventRoundMatchId: match.id,
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
+    slot: mapRoundSlotToDto(match.slot),
+    isFinal: finalRounds.has(match.roundNumber),
     kickoff: game.kickoff.toISOString(),
     status: match.status,
     isNeutralSite: match.isNeutralSite,
@@ -49,6 +52,7 @@ function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
 }
 
 export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
+  const finalRounds = finalRoundsOfMatches(view.games.map(({ match }) => match));
   return {
     contestId: view.contestId,
     entryId: view.entryId,
@@ -70,7 +74,7 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
     tiebreakerMax: GAME_PICKS_TIEBREAKER_MAX,
     points: view.points,
     maxPossiblePoints: view.maxPossiblePoints,
-    games: view.games.map(toGamePickGameDto),
+    games: view.games.map((game) => toGamePickGameDto(game, finalRounds)),
   };
 }
 
@@ -98,12 +102,14 @@ export function toGamePickWrites(request: SaveGamePicksRequest | GamePickPreview
   }));
 }
 
-function toGamePickPreviewGameDto(game: GamePreview): GamePickPreviewGameDto {
+function toGamePickPreviewGameDto(game: GamePreview, finalRounds: ReadonlySet<number>): GamePickPreviewGameDto {
   const { match, pick } = game;
   return {
     sportEventRoundMatchId: match.id,
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
+    slot: mapRoundSlotToDto(match.slot),
+    isFinal: finalRounds.has(match.roundNumber),
     kickoff: game.kickoff.toISOString(),
     status: match.status,
     isNeutralSite: match.isNeutralSite,
@@ -122,6 +128,7 @@ function toGamePickPreviewGameDto(game: GamePreview): GamePickPreviewGameDto {
 
 /** A game setup's pick preview (#1612): its games, with the trial picks that stand. */
 export function toGamePickPreviewResponse(preview: GamesPreview): GamePickPreviewResponse {
+  const finalRounds = finalRoundsOfMatches(preview.games.map(({ match }) => match));
   return {
     sportEventId: preview.sportEventId,
     selectionType: preview.selectionType,
@@ -132,6 +139,6 @@ export function toGamePickPreviewResponse(preview: GamesPreview): GamePickPrevie
     gameCount: preview.gameCount,
     tiebreakerMatchId: preview.tiebreakerMatchId,
     tiebreakerMax: GAME_PICKS_TIEBREAKER_MAX,
-    games: preview.games.map(toGamePickPreviewGameDto),
+    games: preview.games.map((game) => toGamePickPreviewGameDto(game, finalRounds)),
   };
 }

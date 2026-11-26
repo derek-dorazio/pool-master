@@ -2,10 +2,9 @@ import {
   SelectionType,
   type RoundName,
   formatBracketStartLabel,
-  getSportDefinition,
   isSecondChanceBracket,
 } from '@poolmaster/shared/domain';
-import type { ContestManagementDetailDto, SportEventDto } from '@/lib/api';
+import type { ContestManagementDetailDto } from '@/lib/api';
 
 /** One round a bracket can start at, as the commissioner chooses it. */
 export interface BracketStartRoundOption {
@@ -14,11 +13,6 @@ export interface BracketStartRoundOption {
   name: string;
   /** The choice as it reads: "Full bracket", "From the Sweet 16". */
   label: string;
-}
-
-/** How many rounds an event's bracket has: the event's own count, else its sport's default. */
-export function bracketRoundCount(event: Pick<SportEventDto, 'rounds' | 'sport'>) {
-  return event.rounds ?? getSportDefinition(event.sport).defaultRounds;
 }
 
 /** The rounds a bracket can start at (the API's `startsAtRounds`), each named as the commissioner chooses it. */

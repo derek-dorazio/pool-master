@@ -21,7 +21,7 @@
  * games would, is left for a later sync, never guessed at. A match whose side a result fills is
  * linked on the next sync.
  *
- * A best-of series (#1545: the NBA's best of seven, `SportLeague.roundSeriesLengths`) is one match
+ * A best-of series (#1545: the NBA's best of seven, its round's slot `seriesGames`) is one match
  * of several games, and its score is games won. It links no game: its games are the batch's games
  * between its two teams, who meet in one series a playoff, read afresh each sync. So a series
  * league's reader hands over every game of the event each time. Each final game's winner adds a
@@ -31,7 +31,7 @@
  * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
  * with that winner (`play-in-fill.ts`), so the game links to the place's match in the same sync.
  */
-import { requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, seriesWinsNeeded, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventRoundMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -79,8 +79,8 @@ export async function writeGameScores(
   const sportEventId = event.id;
   const loaded = await deps.matches.findBySportEvent(sportEventId);
   await fillPlayInPlaces(deps, sportEventId, loaded, games);
-  const roundCount = event.rounds ?? loaded.reduce((most, match) => Math.max(most, match.roundNumber), 0);
-  const seriesLengthOf = (match: SportEventRoundMatch): number => roundSeriesLength(event.roundSeriesLengths, match.roundNumber, roundCount);
+  // A match is played over its slot's best-of length (#2006).
+  const seriesLengthOf = (match: SportEventRoundMatch): number => match.slot.seriesGames;
   const seriesMatches = loaded.filter((match): match is SidedMatch => seriesLengthOf(match) > 1 && hasBothSides(match));
   const linkedGameIds = new Set(loaded.flatMap((match) => (match.externalGameId === null ? [] : [match.externalGameId])));
   const unlinkedGames = games.filter((game) => !linkedGameIds.has(game.externalGameId));
@@ -429,3 +429,4 @@ function hasResult(match: SportEventRoundMatch, result: MatchResultFromGame): bo
     && match.homeShootoutScore === (result.homeShootoutScore ?? null)
     && match.awayShootoutScore === (result.awayShootoutScore ?? null);
 }
+

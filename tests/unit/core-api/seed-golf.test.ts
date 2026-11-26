@@ -157,7 +157,8 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
       ...sportPlay(Sport.FOOTBALL),
       contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
     });
-    expect(nfl.bracketAdvancement).toBe('RESEED_BY_SEED');
+    // Each round is played in its own postseason slot, all of which reseed (#2006).
+    expect(playoffs.roundSlotKeys).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([4, '2026-01-10', '2026-02-08']);
     expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]);
   });
@@ -200,7 +201,7 @@ describe('basketball-2025-nba-playoffs-test.json', () => {
       ...sportPlay(Sport.BASKETBALL),
       contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
     });
-    expect(nba.bracketAdvancement).toBeUndefined();
+    expect(playoffs.roundSlotKeys).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([4, '2025-04-19', '2025-06-22']);
     expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]);
   });
@@ -248,7 +249,7 @@ describe('american-football-2025-cfp-test.json', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.FOOTBALL, 2025, ['NCAA Men\'s Football']]);
     expect([playoff.rounds, playoff.startDate, playoff.endDate]).toEqual([4, '2025-12-19', '2026-01-19']);
     expect(playoff.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-    expect(file.sportLeagues[0].bracketAdvancement).toBe('FIXED');
+    expect(playoff.roundSlotKeys).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect(matches[10]).toMatchObject({ roundNumber: 4, home: null, away: null, advancesTo: null, result: { winner: 'HOME', homeScore: 27, awayScore: 21 } });
   });
 

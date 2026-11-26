@@ -1,4 +1,4 @@
-import { MatchEnding, MatchStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchStatus, SlotKind } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   LeagueContextResponse,
@@ -6,6 +6,7 @@ import type {
   SquaresBoardResponse,
 } from '@/lib/api';
 import { bracketLeagueContextFixture } from './bracket-fixtures';
+import { roundSlot } from './round-slots';
 
 export const SQUARES_KICKOFF = '2099-02-07T23:30:00.000Z';
 
@@ -32,6 +33,7 @@ export function squaresGameFixture(overrides: Partial<SportEventRoundMatchDto> =
     id: 'game-1',
     sportEventId: 'event-1',
     roundNumber: 4,
+    slot: roundSlot(SlotKind.FINAL, 'Super Bowl'),
     matchNumber: 13,
     homeSportEventParticipantId: 'field-eagles',
     awaySportEventParticipantId: 'field-chiefs',

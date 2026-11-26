@@ -1,22 +1,18 @@
-import { displayString } from '@poolmaster/shared/display-strings';
-import { useQuery } from '@tanstack/react-query';
+import { displayString, roundLabels } from '@poolmaster/shared/display-strings';
 import { useMemo, useState } from 'react';
-import { getSportDefinition } from '@poolmaster/shared/domain';
-import { listEventRounds } from '@/lib/api';
 import {
   Notice,
   SegmentedControl,
   formatDateDisplay,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { QueryKeys } from '@/lib/query-keys';
-import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
+import { extractErrorMessage } from '@/lib/errors';
+import type { SportEventDto } from '@/lib/api';
 import { golfRoundScoreRows } from './sport-admin-utils';
 import { GolfRoundScoreCorrectionsCard } from './golf-round-score-corrections-card';
 import { GolfRoundScoreUploadCard } from './golf-round-score-upload-card';
 import { ScoreSyncNotice } from './score-sync-notice';
-import { useSportEventFieldQuery } from './use-sport-event';
+import { useSportEventFieldQuery, useSportEventRoundsQuery } from './use-sport-event';
 
 /**
  * Stroke play's results (plans/124 §6.3): an event's round scores, one round at a time. Owns the
@@ -27,20 +23,8 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
   const displayPreferences = useDisplayPreferences();
   const eventId = tournament.id;
   const [round, setRound] = useState(1);
-  const { roundLabel } = getSportDefinition(tournament.sport);
 
-  const roundsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.rounds(eventId),
-    queryFn: async (): Promise<SportEventRoundDto[]> => {
-      const response = await listEventRounds({ path: { eventId } });
-      if (!response.data?.rounds) {
-        throwApiError(response.error, 'Golf tournament rounds response is missing data.');
-      }
-      return response.data.rounds;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  const roundsQuery = useSportEventRoundsQuery(eventId);
 
   // #236: the field carries each golfer's per-round golf results, so one read serves
   // the CSV template and the chosen round's corrections.
@@ -51,16 +35,17 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
     const byNumber = new Map(
       (roundsQuery.data ?? []).map((r) => [r.roundNumber, r]),
     );
+    const nameOfRound = roundLabels(roundsQuery.data ?? []);
     return Array.from({ length: total }, (_, index) => {
       const number = index + 1;
       const scheduled = byNumber.get(number)?.scheduledDate;
-      const label = roundLabel(number, total);
+      const label = nameOfRound(number);
       return {
         value: String(number),
         label: scheduled ? `${label} — ${formatDateDisplay(scheduled, displayPreferences)}` : label,
       };
     });
-  }, [displayPreferences, roundLabel, roundsQuery.data, tournament.rounds]);
+  }, [displayPreferences, roundsQuery.data, tournament.rounds]);
 
   const fieldPlayers = useMemo(
     () => (fieldQuery.data ?? []).map((entry) => ({

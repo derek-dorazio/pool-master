@@ -4,14 +4,12 @@ import { drawBracket } from './bracket-view-model';
 import { emptyBracketGames } from './test/bracket-fixtures';
 import { midTournamentGames, tournamentGames } from './test/bracket-tournament-fixture';
 
-const ROUND_NAMES = ['First Round', 'Round of 32', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
-const roundLabel = (roundNumber: number) => ROUND_NAMES[roundNumber - 1] ?? `Round ${roundNumber}`;
 
 const meta = {
   title: 'Contests/BracketView',
   component: BracketView,
   args: {
-    drawing: drawBracket(midTournamentGames(), roundLabel),
+    drawing: drawBracket(midTournamentGames()),
     isOwnEntry: true,
     picking: null,
     tiebreaker: 'Tiebreaker: 148 total points in the final.',
@@ -30,18 +28,18 @@ export const MidTournament: Story = {};
 
 /** Before the first game: every pick still to play, nothing marked. */
 export const BeforeTipOff: Story = {
-  args: { drawing: drawBracket(tournamentGames({ playedRounds: 0 }), roundLabel), tiebreaker: undefined },
+  args: { drawing: drawBracket(tournamentGames({ playedRounds: 0 })), tiebreaker: undefined },
 };
 
 /** The champion went out: the trophy greys and the name is struck through. */
 export const ChampionOut: Story = {
-  args: { drawing: drawBracket(tournamentGames({ playedRounds: 5, realUpsets: [[5, 'Duke']] }), roundLabel) },
+  args: { drawing: drawBracket(tournamentGames({ playedRounds: 5, realUpsets: [[5, 'Duke']] })) },
 };
 
 /** The pick page: an empty bracket, each first-round team a choice and later lines waiting. */
 export const Picking: Story = {
   args: {
-    drawing: drawBracket(emptyBracketGames(), (roundNumber) => ['Sweet 16', 'Elite Eight', 'Final Four'][roundNumber - 1] ?? ''),
+    drawing: drawBracket(emptyBracketGames()),
     picking: { isBusy: false, onPick: () => undefined },
     tiebreaker: undefined,
   },

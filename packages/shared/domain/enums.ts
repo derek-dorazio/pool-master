@@ -431,20 +431,6 @@ export const MatchEndingOrder = explicitOrder<MatchEnding>({
 });
 
 /**
- * How a sport league's bracket winners reach their next match (#722). FIXED: each match names
- * the match and side its winner moves on to (March Madness, the NBA). RESEED_BY_SEED: after a
- * round whose matches name no next match, the admin places the teams left in each region, the
- * best seed hosting the worst (the NFL after Wild Card weekend).
- */
-export const BracketAdvancement = {
-  FIXED: 'FIXED',
-  RESEED_BY_SEED: 'RESEED_BY_SEED',
-} as const;
-export type BracketAdvancement = (typeof BracketAdvancement)[keyof typeof BracketAdvancement];
-/** No natural order: A to Z by its display strings. */
-export const BracketAdvancementOrder = alphabeticalOrder('BracketAdvancement');
-
-/**
  * The periods one game of a sport league is played in (#786): QUARTERS for American football, the
  * NBA, the WNBA and women's college basketball; HALVES for men's college basketball; THREE_PERIODS
  * for hockey (#788). A sport league with none set plays its sport's layout
@@ -522,6 +508,23 @@ export const RaceResultChangeOrder = explicitOrder<RaceResultChange>({
   [RaceResultChange.CREATE]: 0,
   [RaceResultChange.UPDATE]: 1,
   [RaceResultChange.UNCHANGED]: 2,
+});
+
+/** What applying one row of a golf round-score upload would do to the golfer's stored round. */
+export const GolfRoundScoreChange = {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  UNCHANGED: 'UNCHANGED',
+  /** The row has no strokes, so applying stores nothing for it. */
+  SKIPPED: 'SKIPPED',
+} as const;
+export type GolfRoundScoreChange = (typeof GolfRoundScoreChange)[keyof typeof GolfRoundScoreChange];
+/** The order the values are declared in. */
+export const GolfRoundScoreChangeOrder = explicitOrder<GolfRoundScoreChange>({
+  [GolfRoundScoreChange.CREATE]: 0,
+  [GolfRoundScoreChange.UPDATE]: 1,
+  [GolfRoundScoreChange.UNCHANGED]: 2,
+  [GolfRoundScoreChange.SKIPPED]: 3,
 });
 
 /**
@@ -812,6 +815,41 @@ export type AutoReleaseCheckOutcome = (typeof AutoReleaseCheckOutcome)[keyof typ
 export const AutoReleaseCheckOutcomeOrder = explicitOrder<AutoReleaseCheckOutcome>({
   [AutoReleaseCheckOutcome.RELEASED]: 0,
   [AutoReleaseCheckOutcome.HELD]: 1,
+});
+
+/**
+ * Which ready check a DRAFT sport event must pass before it is released for contests (#1823):
+ * each is passed or failed on the value it carries (`release-checks.ts`).
+ */
+export const ReleaseCheckKey = {
+  /** Its start is still ahead: a started event can no longer be released. Value: the start. */
+  NOT_STARTED: 'NOT_STARTED',
+  /** Its rounds are scheduled. Value: how many rounds it has. */
+  ROUNDS_SCHEDULED: 'ROUNDS_SCHEDULED',
+  /** Its field is loaded. Value: how many participants are in it. */
+  FIELD_LOADED: 'FIELD_LOADED',
+  /** Every active field participant is in a tier. Value: how many are not. */
+  TIERS_ASSIGNED: 'TIERS_ASSIGNED',
+  /** No tier is empty: no entry could pick from one. Value: the empty tiers' labels. */
+  TIERS_FILLED: 'TIERS_FILLED',
+  /** Prices are assigned and every active field participant has one. Value: how many have none, or null before prices are assigned. */
+  PRICES_ASSIGNED: 'PRICES_ASSIGNED',
+  /** Its bracket is complete. Only an event played as matches has it. Value: what is missing, in words. */
+  BRACKET_COMPLETE: 'BRACKET_COMPLETE',
+  /** Its sport league offers at least one active contest setup, so a contest can be made on it. Value: how many. */
+  CONTEST_SETUPS_ON: 'CONTEST_SETUPS_ON',
+} as const;
+export type ReleaseCheckKey = (typeof ReleaseCheckKey)[keyof typeof ReleaseCheckKey];
+/** Check order: the order the checks are judged and listed in. */
+export const ReleaseCheckKeyOrder = explicitOrder<ReleaseCheckKey>({
+  [ReleaseCheckKey.NOT_STARTED]: 0,
+  [ReleaseCheckKey.ROUNDS_SCHEDULED]: 1,
+  [ReleaseCheckKey.FIELD_LOADED]: 2,
+  [ReleaseCheckKey.TIERS_ASSIGNED]: 3,
+  [ReleaseCheckKey.TIERS_FILLED]: 4,
+  [ReleaseCheckKey.PRICES_ASSIGNED]: 5,
+  [ReleaseCheckKey.BRACKET_COMPLETE]: 6,
+  [ReleaseCheckKey.CONTEST_SETUPS_ON]: 7,
 });
 
 /**
@@ -1492,6 +1530,21 @@ export const ValuationSourceOrder = explicitOrder<ValuationSource>({
   [ValuationSource.MANUAL]: 3,
 });
 
+/**
+ * Who last set a field row's tier or price, as the root admin's Field grid shows it: automatic
+ * tiering and pricing, or a root admin's correction (read from the row's ValuationSource).
+ */
+export const FieldValueSetBy = {
+  AUTO: 'AUTO',
+  MANUAL: 'MANUAL',
+} as const;
+export type FieldValueSetBy = (typeof FieldValueSetBy)[keyof typeof FieldValueSetBy];
+/** Auto first, then the corrections. */
+export const FieldValueSetByOrder = explicitOrder<FieldValueSetBy>({
+  [FieldValueSetBy.AUTO]: 0,
+  [FieldValueSetBy.MANUAL]: 1,
+});
+
 export const GolfCategoryKey = {
   SENIOR: 'SENIOR',
   ROOKIE: 'ROOKIE',
@@ -1962,6 +2015,24 @@ export const EmailTemplateKey = {
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 /** No natural order: A to Z by its display strings. */
 export const EmailTemplateKeyOrder = alphabeticalOrder('EmailTemplateKey');
+
+/** Who a system email goes to, as the root admin's Notifications page lists it. */
+export const EmailAudience = {
+  MEMBERS: 'MEMBERS',
+  COMMISSIONERS: 'COMMISSIONERS',
+  ROOT_ADMINS: 'ROOT_ADMINS',
+  PEOPLE_INVITED: 'PEOPLE_INVITED',
+  ACCOUNT_HOLDERS: 'ACCOUNT_HOLDERS',
+} as const;
+export type EmailAudience = (typeof EmailAudience)[keyof typeof EmailAudience];
+/** The widest group first, then the people who run leagues and the site. */
+export const EmailAudienceOrder = explicitOrder<EmailAudience>({
+  [EmailAudience.ACCOUNT_HOLDERS]: 0,
+  [EmailAudience.MEMBERS]: 1,
+  [EmailAudience.PEOPLE_INVITED]: 2,
+  [EmailAudience.COMMISSIONERS]: 3,
+  [EmailAudience.ROOT_ADMINS]: 4,
+});
 
 /**
  * The emails EMAIL_CONFIG has a switch for. Account emails (the password reset and the

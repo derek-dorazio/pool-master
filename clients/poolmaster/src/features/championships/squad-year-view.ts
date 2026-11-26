@@ -1,5 +1,5 @@
-import { TrophyKind } from '@poolmaster/shared/domain';
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { type CupTrophy, TrophyKind } from '@poolmaster/shared/domain';
+import { displayString, enumLabel, type DisplayStringKey } from '@poolmaster/shared/display-strings';
 import type { ChampionshipStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadTrophyDto, SquadYearDto } from '@/lib/api';
 import { historyCupsOnShow, historyYearTitle } from './championship-view';
 import { formatCupPoints, formatCupPointsCount, formatPlace } from '@/features/shared/ui';
@@ -57,13 +57,22 @@ export function squadYearsPlaced(years: SquadYearDto[]): SquadYearDto[] {
   return years.filter((year) => (year.championship?.standing.played ?? 0) > 0 || cupsPlacedOnShow(year.cups).length > 0);
 }
 
+/** A cup won with a trophy, as the year line says it: one sentence per trophy, so no label's case is changed (#1993). */
+const CUP_TROPHY_LINE = {
+  CHAMPION: 'word.cupTrophyLineCHAMPION',
+  RUNNER_UP: 'word.cupTrophyLineRUNNER_UP',
+  THIRD: 'word.cupTrophyLineTHIRD',
+} as const satisfies Record<CupTrophy, DisplayStringKey>;
+
 /** A year's line in the strip: its championship place, then each cup on show it placed in, with its trophy or place. */
 export function describeSquadYearLine(year: SquadYearDto): { title: string; detail: string } {
   const parts = [
     ...(year.championship && year.championship.standing.played > 0
       ? [`Championship ${formatPlace(year.championship.standing)} of ${year.championship.squadCount}`]
       : []),
-    ...cupsPlacedOnShow(year.cups).map((cup) => `${cup.name} ${cup.standing.trophy === null ? formatPlace(cup.standing) : enumLabel('CupTrophy', cup.standing.trophy).toLowerCase()}`),
+    ...cupsPlacedOnShow(year.cups).map((cup) => (cup.standing.trophy === null
+      ? `${cup.name} ${formatPlace(cup.standing)}`
+      : displayString(CUP_TROPHY_LINE[cup.standing.trophy], { cup: cup.name }))),
   ];
   return { title: historyYearTitle(year), detail: parts.join(' · ') };
 }

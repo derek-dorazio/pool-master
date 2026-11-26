@@ -2,12 +2,13 @@ import { deleteTestSportLeagues, TEST_DEFINITION_KEY } from '../support/test-slo
 import {
   getEventBracket,
   listEventParticipants,
+  listEventRounds,
   listParticipants,
   listSportLeagues,
 } from '@poolmaster/shared/generated/hey-api';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BracketAdvancement, MatchSide, MatchStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
@@ -18,7 +19,7 @@ import {
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents, createTestEvent } from './builders';
+import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents, createTestEvent, roundSlotDefinitionIds } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { sportLeagueRowDefaults } from '../support/league-profiles';
@@ -104,7 +105,7 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; bracketAdvancement: BracketAdvancement } | undefined> {
+async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string } | undefined> {
   const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport } })).data);
   return sportLeagues.find((league) => league.name === name);
 }
@@ -371,8 +372,6 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     for (const player of nfl.players) player.key = expectDefined(tagged(player.key));
     for (const event of nfl.events) {
       event.name = playoffs;
-      // A league a test adds plays one test definition (TEST_EVENT), not the file's slot keys.
-      event.slotKey = TEST_DEFINITION_KEY;
       for (const entry of event.field) entry.player = expectDefined(tagged(entry.player));
       for (const match of event.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
     }
@@ -381,13 +380,20 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
 
   it('releases the playoffs with reseeded Divisional and conference rounds and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
     await addSportLeague(league, Sport.FOOTBALL);
-    const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
-    // The league starts on the default bracket rule, and the file's reseeding is set on it.
-    expect(counts(applied)).toEqual({ 'SPORT_LEAGUE UPDATE': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
-
     const stored = expectDefined(await leagueNamed(league, Sport.FOOTBALL));
-    expect(stored.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
+    // As the NFL's migration gives it: a postseason definition per round, each reseeded, the Super Bowl FINAL.
+    await roundSlotDefinitionIds(stored.id, [
+      { slotKind: 'ROUND_OF_16', pairing: 'RESEEDED' },
+      { slotKind: 'QUARTERFINAL', pairing: 'RESEEDED' },
+      { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' },
+      { slotKind: 'FINAL', pairing: 'RESEEDED' },
+    ]);
+    const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
+    expect(counts(applied)).toEqual({ 'SPORT_LEAGUE SKIP': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
     const event = expectDefined((await eventsOf(stored.id, 2026)).find((row) => row.name === playoffs));
+    // The event plays round n in the file's nth round slot.
+    const rounds = expectDefined((await listEventRounds({ client: admin.client, path: { eventId: event.id } })).data).rounds;
+    expect(rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     const nameOf = new Map([...(await fieldOf(event.id)).entries()].map(([name, row]) => [row.id, name]));
     const { matches } = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data);
     const byNumber = new Map(matches.map((match) => [match.matchNumber, match]));

@@ -18,6 +18,7 @@ import type { ContestFinalStandings } from '../../../packages/core-api/src/modul
 import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
 import { sportRowKeys } from '../../support/sport-rows';
+import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -424,8 +425,9 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
         rounds: 4,
       },
     });
+    const sportEventSlotId = await oneEventSlotId(prisma, event.id);
     const eventRounds = await Promise.all([1, 2, 3, 4].map((roundNumber) => prisma.sportEventRound.create({
-      data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(Date.UTC(2026, 4, 27 + roundNumber, 12)) },
+      data: { sportEventId: event.id, sportEventSlotId, roundNumber, scheduledDate: new Date(Date.UTC(2026, 4, 27 + roundNumber, 12)) },
     })));
     // The leader played all four rounds at 70 on par 72, so every round's par is derivable.
     const leader = await createSettlementParticipant({ sportId: sport.id, sportEventId: event.id, name: `Leader ${suffix}`, scoreToPar: -8, strokes: 280 });

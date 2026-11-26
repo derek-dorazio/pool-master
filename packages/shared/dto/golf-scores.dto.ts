@@ -5,6 +5,7 @@
  * scored is read back through SportEventParticipantDto's rounds and standing.
  */
 import { z } from 'zod';
+import { GolfRoundScoreChange } from '../domain/enums';
 import { registerSchema } from './schema-registry';
 import { GolfRoundUpdateSchema } from './live-score.dto';
 import { UploadRowResolutionDtoSchema } from './sport-catalog.dto';
@@ -29,7 +30,7 @@ export const GolfRoundScoreUploadRequestSchema = z.object({
 }).describe('A round of golf scores.');
 export type GolfRoundScoreUploadRequest = z.infer<typeof GolfRoundScoreUploadRequestSchema>;
 
-export const GolfRoundScoreChangeDtoSchema = z.enum(['CREATE', 'UPDATE', 'UNCHANGED', 'SKIPPED'])
+export const GolfRoundScoreChangeDtoSchema = z.enum(GolfRoundScoreChange)
   .describe('What applying the row would do to the golfer\'s stored round. SKIPPED: the row has no strokes, so applying stores nothing for it.');
 
 export const GolfRoundScoreValuesDtoSchema = z.object({

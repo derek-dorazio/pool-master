@@ -17,6 +17,7 @@ import { upsetBonusFor } from '../../../packages/core-api/src/modules/scoring-fa
 import type { FieldScoringEvent } from '../../../packages/core-api/src/modules/scoring-families/scoring-family-module';
 import type { SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { bracketRoundSlots } from '../../support/round-slots';
 
 // Knockout round points (#699): what each team scores from the bracket's results under a
 // contest's round values and upset bonus, and when a team is left unscored.
@@ -65,6 +66,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     id: `match-${input.matchNumber}`,
     sportEventId: event.id,
     roundNumber: input.round,
+    slot: bracketRoundSlots(2)[input.round - 1],
     matchNumber: input.matchNumber,
     homeSportEventParticipantId: idOf(input.home),
     awaySportEventParticipantId: idOf(input.away),

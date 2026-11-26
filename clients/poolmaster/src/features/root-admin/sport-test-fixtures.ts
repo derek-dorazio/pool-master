@@ -19,6 +19,8 @@ import type {
 } from '@/lib/api';
 import { QueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '@/lib/query-keys';
+import { SlotKind } from '@poolmaster/shared/domain';
+import { roundSlot } from '@/features/contests/test/round-slots';
 
 /** The Standard pricing profile's id, which `sportLeagueFixture` names. */
 export const STANDARD_PLATFORM_PRICING_PROFILE_ID = '00000000-0000-4000-8000-0000000000b2';
@@ -113,6 +115,8 @@ export function sportEventRoundFixture(overrides: Partial<SportEventRoundDto> = 
     id: `round-${roundNumber}`,
     sportEventId: 'event-1',
     roundNumber,
+    // A tournament's rounds share its one slot, so each reads by number.
+    slot: roundSlot(SlotKind.TOURNAMENT, 'The Masters'),
     scheduledDate: `2026-05-0${6 + roundNumber}T12:00:00.000Z`,
     scheduledEndAt: null,
     status: 'SCHEDULED',
@@ -360,8 +364,6 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     autoReleaseDaysBeforeStart: 7,
     platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
     platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
-    bracketAdvancement: 'FIXED',
-    roundNames: [],
     matchPeriodLayout: null,
     squaresFromRound: null,
     noun: null,

@@ -44,13 +44,13 @@ export type SharedEnums = {
   MatchStatus: Enums.MatchStatus;
   MatchSide: Enums.MatchSide;
   MatchEnding: Enums.MatchEnding;
-  BracketAdvancement: Enums.BracketAdvancement;
   MatchPeriodLayout: Enums.MatchPeriodLayout;
   SportLeagueNoun: Enums.SportLeagueNoun;
   RaceResultStatus: Enums.RaceResultStatus;
   RaceResultRowError: Enums.RaceResultRowError;
   RaceResultOrderError: Enums.RaceResultOrderError;
   RaceResultChange: Enums.RaceResultChange;
+  GolfRoundScoreChange: Enums.GolfRoundScoreChange;
   SelectionType: Enums.SelectionType;
   TemplateCoverageMode: Enums.TemplateCoverageMode;
   PickEmMode: Enums.PickEmMode;
@@ -63,6 +63,7 @@ export type SharedEnums = {
   ProviderSyncRunStatus: Enums.ProviderSyncRunStatus;
   ProviderSyncKind: Enums.ProviderSyncKind;
   AutoReleaseCheckOutcome: Enums.AutoReleaseCheckOutcome;
+  ReleaseCheckKey: Enums.ReleaseCheckKey;
   SportLeagueSyncHealth: Enums.SportLeagueSyncHealth;
   SportLeagueIssueType: Enums.SportLeagueIssueType;
   ProviderSyncFindingSeverity: Enums.ProviderSyncFindingSeverity;
@@ -92,6 +93,7 @@ export type SharedEnums = {
   TimeFormat: Enums.TimeFormat;
   ColorScheme: Enums.ColorScheme;
   ValuationSource: Enums.ValuationSource;
+  FieldValueSetBy: Enums.FieldValueSetBy;
   GolfCategoryKey: Enums.GolfCategoryKey;
   GolfCutRuleType: Enums.GolfCutRuleType;
   TeamIconKey: Enums.TeamIconKey;
@@ -114,6 +116,7 @@ export type SharedEnums = {
   LeaguePaymentKind: Enums.LeaguePaymentKind;
   PlanCap: Enums.PlanCap;
   EmailTemplateKey: Enums.EmailTemplateKey;
+  EmailAudience: Enums.EmailAudience;
   EmailMessageStatus: Enums.EmailMessageStatus;
   EmailTemplateStatus: Enums.EmailTemplateStatus;
   BackgroundJobType: Enums.BackgroundJobType;

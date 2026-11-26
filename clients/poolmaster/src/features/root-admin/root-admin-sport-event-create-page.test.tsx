@@ -186,7 +186,7 @@ describe('RootAdminSportEventCreatePage', () => {
 
     await waitFor(() => expect(createEventMock).toHaveBeenCalledTimes(1));
     const body = (createEventMock.mock.calls[0][0] as { body: CreateSportEventRequest }).body;
-    expect(body).toEqual({ seasonSlotId: 'free', name: 'Spring Classic', venue: 'Augusta National', autoLifecycleEnabled: false });
+    expect(body).toEqual({ seasonSlotIds: ['free'], name: 'Spring Classic', venue: 'Augusta National', autoLifecycleEnabled: false });
     expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
   });
 

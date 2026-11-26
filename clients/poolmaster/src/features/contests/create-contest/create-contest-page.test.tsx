@@ -1,4 +1,4 @@
-import { SUPPORTED_SPORTS, SelectionType } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, SelectionType, SlotKind } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -9,6 +9,8 @@ import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { FormatIllustration } from '@/features/contest-types/illustrations';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CreateContestPage } from './create-contest-page';
+import { eventRoundsResponse, roundSlot, TOURNAMENT_ROUND_SLOTS } from '../test/round-slots';
+import type { SportEventRoundSlotDto } from '@/lib/api';
 import { WEEK_SLOT_ID, openingsUnderWay, sportSlotId, templateSlotFixture, withEventOpenings } from '../test/contest-admin-fixtures';
 
 /**
@@ -36,6 +38,7 @@ const {
   getSportLeagueMock,
   listContestConfigTemplatesMock,
   listEventParticipantsMock,
+  listEventRoundsMock,
   listEventsMock,
   listSportLeaguesMock,
   listSportLeaguesUsedMock,
@@ -59,6 +62,7 @@ const {
     getSportLeagueMock: vi.fn(),
     listContestConfigTemplatesMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
+    listEventRoundsMock: vi.fn(),
     listEventsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     listSportLeaguesUsedMock: vi.fn(),
@@ -73,6 +77,7 @@ bindApiMocks({
   getSportLeague: getSportLeagueMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEventParticipants: listEventParticipantsMock,
+  listEventRounds: listEventRoundsMock,
   listEvents: vi.fn(async (options: Record<string, unknown>) => withEventOpenings<unknown>(await (listEventsMock as (options: unknown) => unknown)(options)) as never),
   listSportLeagues: listSportLeaguesMock,
   listSportLeaguesUsed: listSportLeaguesUsedMock,
@@ -338,16 +343,17 @@ const MARCH_MADNESS_UNDER_WAY = {
 
 /**
  * The golf reads, plus basketball's events (one contest-ready tournament of three rounds unless
- * told otherwise) with no presets of their own unless given, and a sport league with no round
- * names of its own unless given, as the reads answer when Basketball is chosen.
+ * told otherwise) with no presets of their own unless given, and each event's rounds played in a
+ * 64-team tournament's slots unless told otherwise, as the reads answer when Basketball is chosen.
  */
 function primeBasketballMocks(
   events: Array<Record<string, unknown>> = [basketballEvent()],
-  roundNames: string[] = [],
+  roundSlots: readonly SportEventRoundSlotDto[] = TOURNAMENT_ROUND_SLOTS,
   templates: Array<Record<string, unknown>> = [],
 ) {
   primeCommonMocks();
-  getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'ncaa-men', name: 'NCAA Men', roundNames } } });
+  getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'ncaa-men', name: 'NCAA Men' } } });
+  listEventRoundsMock.mockImplementation((options: { path: { eventId: string } }) => Promise.resolve(eventRoundsResponse(options.path.eventId, roundSlots)));
   const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
   listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'BASKETBALL'
     ? Promise.resolve({ data: { events } })
@@ -381,6 +387,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     getLeagueByCodeMock.mockReset();
     getSportLeagueMock.mockReset();
     listContestConfigTemplatesMock.mockReset();
+    listEventRoundsMock.mockReset();
     listEventsMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
@@ -778,7 +785,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
     fireEvent.click(screen.getByTestId('contest-event-bb-live'));
-    await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Second Round'));
+    await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Round of 32'));
     fireEvent.click(screen.getByTestId('contest-event-bb-1'));
 
     await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('Full bracket'));
@@ -803,12 +810,12 @@ describe('Commissioner tools › Contests › Create contest', () => {
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
 
     const startsAt = screen.getByTestId('contest-bracket-starts-at-round');
-    expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'From the Second Round',
+    await waitFor(() => expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'From the Round of 32',
       'From the Sweet 16',
       'From the Elite Eight',
       'From the Final Four',
-    ]);
+    ]));
     fireEvent.change(startsAt, { target: { value: '3' } });
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
 
@@ -827,10 +834,10 @@ describe('Commissioner tools › Contests › Create contest', () => {
     });
   });
 
-  it('names the starting rounds by the event\'s sport league\'s own round names where it has them', async () => {
+  it('names the starting rounds by the slots the event\'s rounds are played in', async () => {
     primeBasketballMocks(
       [basketballEvent(MARCH_MADNESS_UNDER_WAY)],
-      ['First Round', 'Round of 32', 'Sweet Sixteen', 'Regional Final', 'National Semifinal', 'Title Game'],
+      TOURNAMENT_ROUND_SLOTS.map((slot, index) => ({ ...slot, name: ['First Round', 'Round of 32', 'Sweet Sixteen', 'Regional Final', 'National Semifinal', 'Title Game'][index] ?? null })),
     );
     renderCreateContestPage();
     await waitForStartingChoices();
@@ -840,7 +847,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
 
     expect(await screen.findByRole('option', { name: 'From the Sweet Sixteen' })).toBeInTheDocument();
-    expect(getSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'ncaa-men' } }));
+    expect(listEventRoundsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'bb-live' } }));
   });
 
   it('lists a knockout under way only for a bracket, offers only its later rounds, and creates a second-chance bracket from the second round', async () => {
@@ -856,7 +863,8 @@ describe('Commissioner tools › Contests › Create contest', () => {
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
     expect(screen.getByTestId('contest-event-bb-live')).toHaveTextContent('Under way');
     const startsAt = screen.getByTestId('contest-bracket-starts-at-round');
-    expect(startsAt).toHaveDisplayValue('From the Second Round');
+    // The rounds' names come with the event's rounds read.
+    await waitFor(() => expect(startsAt).toHaveDisplayValue('From the Round of 32'));
     expect(screen.queryByRole('option', { name: 'Full bracket' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
     await submitOnceReady();
@@ -893,7 +901,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     ];
 
     it('offers a knockout that has not started only its full-bracket setups, starting on the default with no round left to choose', async () => {
-      primeBasketballMocks([basketballEvent({ rounds: 6 })], [], BRACKET_TEMPLATES);
+      primeBasketballMocks([basketballEvent({ rounds: 6 })], TOURNAMENT_ROUND_SLOTS, BRACKET_TEMPLATES);
       renderCreateContestPage();
       await waitForStartingChoices();
 
@@ -908,7 +916,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     });
 
     it('offers a knockout under way only its second-chance setups, starting on one at its own round, and creates it from that round', async () => {
-      primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)], [], BRACKET_TEMPLATES);
+      primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)], TOURNAMENT_ROUND_SLOTS, BRACKET_TEMPLATES);
       createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-second-chance' } } });
       renderCreateContestPage();
       await waitForStartingChoices();
@@ -919,7 +927,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
       expect(screen.queryByTestId('contest-template-ncaa-men-bracket-doubling')).not.toBeInTheDocument();
       expect(screen.queryByTestId('contest-template-ncaa-men-bracket-doubling-upset-bonus')).not.toBeInTheDocument();
-      expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16');
+      await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16'));
       expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
       fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
       await submitOnceReady();
@@ -932,7 +940,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     });
 
     it('moves to the second-chance setup when the commissioner switches from a knockout that has not started to one under way', async () => {
-      primeBasketballMocks([basketballEvent({ rounds: 6 }), basketballEvent(MARCH_MADNESS_UNDER_WAY)], [], BRACKET_TEMPLATES);
+      primeBasketballMocks([basketballEvent({ rounds: 6 }), basketballEvent(MARCH_MADNESS_UNDER_WAY)], TOURNAMENT_ROUND_SLOTS, BRACKET_TEMPLATES);
       renderCreateContestPage();
       await waitForStartingChoices();
 
@@ -942,7 +950,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       fireEvent.click(screen.getByTestId('contest-event-bb-live'));
 
       await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
-      expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16');
+      await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16'));
       expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
     });
     describe('a bracket chosen on the contest types page that its event cannot start', () => {
@@ -950,7 +958,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       const NBA_PLAYOFFS = basketballEvent({ id: 'bb-nba', name: 'NBA Playoffs', rounds: 4, sportLeagueId: 'nba', startDate: '2099-04-18T16:00:00.000Z' });
 
       function primeRequestedBracket(events: Array<Record<string, unknown>>, query = '') {
-        primeBasketballMocks(events, [], BRACKET_TEMPLATES);
+        primeBasketballMocks(events, TOURNAMENT_ROUND_SLOTS, BRACKET_TEMPLATES);
         const byQuery = listContestConfigTemplatesMock.getMockImplementation() as (options: TemplateQuery) => Promise<{ data: { templates: unknown[] } }>;
         listContestConfigTemplatesMock.mockImplementation(async (options: TemplateQuery) => (options.query?.slotDefinitionIds
           ? byQuery(options)
@@ -1694,7 +1702,12 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
 
   function primeFootballMocks() {
     primeCommonMocks();
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL', roundNames: ['Wild Card', 'Divisional', 'Conference Championship', 'Super Bowl'] } } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL' } } });
+    // The playoff's rounds are named by their slots.
+    listEventRoundsMock.mockResolvedValue(eventRoundsResponse('nfl-playoffs', [
+      roundSlot(SlotKind.ROUND_OF_16, 'Wild Card'), roundSlot(SlotKind.QUARTERFINAL, 'Divisional'),
+      roundSlot(SlotKind.SEMIFINAL, 'Conference Championship'), roundSlot(SlotKind.FINAL, 'Super Bowl'),
+    ]));
     const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
     listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'FOOTBALL'
       ? Promise.resolve({ data: { events: [PLAYOFFS_UNDER_WAY] } })
@@ -1725,7 +1738,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
   afterEach(() => {
     for (const mock of [
       createContestMock, getEventBracketMock, getLeagueByCodeMock, getSportLeagueMock,
-      listContestConfigTemplatesMock, listEventParticipantsMock, listEventsMock,
+      listContestConfigTemplatesMock, listEventParticipantsMock, listEventRoundsMock, listEventsMock,
     ]) {
       mock.mockReset();
     }
@@ -1859,7 +1872,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
   /** One NFL week to set a contest up on; the template list answers by the kind of event asked for. */
   function primeNflWeekMocks() {
     primeCommonMocks();
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL', roundNames: [] } } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL' } } });
     const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
     listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'FOOTBALL'
       ? Promise.resolve({ data: { events: [NFL_WEEK] } })

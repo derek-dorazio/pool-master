@@ -213,7 +213,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
 
     await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
     expect(screen.getByText('MATCHED')).toBeInTheDocument();
-    expect(screen.getByText('UPDATE')).toBeInTheDocument();
+    expect(screen.getByText('Changed')).toBeInTheDocument();
 
     await waitFor(() =>
       expect(screen.getByTestId('root-admin-golf-scores-upload-apply')).toBeEnabled(),
@@ -354,5 +354,26 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     await waitFor(() => expect(screen.getAllByText('Something went wrong. Please try again.')).toHaveLength(2));
     // Rounds fall back to numbered options from tournament.rounds.
     expect(screen.getByRole('radio', { name: 'Round 1' })).toBeInTheDocument();
+  });
+
+  it('says the field could not load, shows the round\'s scores as failed and leaves the upload usable', async () => {
+    seed();
+    listEventParticipantsMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Field offline' } },
+      response: { status: 500 },
+    });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-golf-scores-field-error')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-golf-scores-upload-textarea')).toBeInTheDocument();
+  });
+
+  it('says a tournament with no rounds has none scheduled, and offers no round tools', async () => {
+    seed({ tournament: { rounds: 0 } });
+    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-golf-scores-no-rounds')).toHaveTextContent('This tournament has no rounds scheduled yet.');
+    expect(screen.queryByTestId('root-admin-golf-scores-upload-textarea')).not.toBeInTheDocument();
   });
 });

@@ -1367,7 +1367,7 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/events',
         headers: rootAdmin.headers,
         payload: {
-          seasonSlotId: testSlotRes.json<SportLeagueSeasonSlotResponse>().slot.id,
+          seasonSlotIds: [testSlotRes.json<SportLeagueSeasonSlotResponse>().slot.id],
           name: `Z3L Contract Open ${stamp}`,
           venue: 'Contract Links',
           location: 'Testshire',

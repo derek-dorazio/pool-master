@@ -15,8 +15,10 @@ import {
   type KnockoutRoundPointsSettings,
   type ParticipantContestScoringRule,
   type SportEventRoundMatch,
+  type SportEventRoundSlot,
   type TeamChoice,
 } from '@poolmaster/shared/domain';
+import { bracketRoundSlots } from './round-slots';
 
 const T0 = new Date('2027-01-01T00:00:00.000Z');
 
@@ -29,11 +31,18 @@ export interface BracketMatchSpec {
   advancesTo?: { matchNumber: number; side: MatchSide };
 }
 
-export function bracketMatches(sportEventId: string, specs: readonly BracketMatchSpec[]): SportEventRoundMatch[] {
+/**
+ * The bracket's games, each round in a slot of its own (#2006): the last round in the FINAL slot,
+ * the one before in the SEMIFINAL, unless `slotOf` names a round's slot.
+ */
+export function bracketMatches(sportEventId: string, specs: readonly BracketMatchSpec[], slotOf?: (roundNumber: number) => SportEventRoundSlot): SportEventRoundMatch[] {
+  const rounds = Math.max(0, ...specs.map((spec) => spec.round));
+  const slots = bracketRoundSlots(rounds);
   return specs.map((spec) => ({
     id: `m${spec.matchNumber}`,
     sportEventId,
     roundNumber: spec.round,
+    slot: slotOf?.(spec.round) ?? slots[spec.round - 1],
     matchNumber: spec.matchNumber,
     homeSportEventParticipantId: spec.home,
     awaySportEventParticipantId: spec.away,

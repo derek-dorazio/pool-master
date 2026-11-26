@@ -7,7 +7,7 @@
 import {
   isRoundComplete,
   ParticipantRoundStatus,
-  type SportDefinition,
+  type RoundName,
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantDto } from '@/lib/api';
 
@@ -53,19 +53,17 @@ export function resolveCurrentRound(
 }
 
 /**
- * The current-round header cue, or null when there is no round to name yet. The round's name
- * is the sport's own (`roundLabel`), given the number of rounds the field shows: every caller
- * passes `resolveRoundNumbers(participants).length`, so a round reads the same everywhere.
+ * The current-round header cue, or null when there is no round to name yet. The round is named
+ * by the slot it is played in (`useEventRoundLabels`, #2006), so it reads the same everywhere.
  */
 export function formatCurrentRoundLabel(
   round: LeaderboardRound | null,
-  sport: SportDefinition,
-  roundCount: number,
+  roundName: RoundName,
 ): string | null {
   if (round === null) {
     return null;
   }
-  return `${sport.roundLabel(round.roundNumber, roundCount)} — ${round.isComplete ? 'Complete' : 'In Progress'}`;
+  return `${roundName(round.roundNumber)} — ${round.isComplete ? 'Complete' : 'In Progress'}`;
 }
 
 /**
