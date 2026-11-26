@@ -33,6 +33,7 @@ const FIELD: ReadonlyArray<{ name: string; seed: number }> = [
   { name: 'Texas', seed: 16 },
 ];
 const TOURNAMENT_START = '2099-03-19T16:00:00.000Z';
+const FINAL_START = '2099-03-21T20:00:00.000Z';
 const ROUND_VALUES = '1, 2';
 const TIEBREAKER = 141;
 
@@ -190,7 +191,8 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
       matches: [
         { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Duke'], awaySportEventParticipantId: fieldRowIds['Texas'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' } },
         { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: fieldRowIds['Houston'], awaySportEventParticipantId: fieldRowIds['Vermont'], isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'AWAY' } },
-        { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+        // The final is scheduled, so the rule names it the slot's tiebreaker game (#2048).
+        { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: FINAL_START, advancesTo: null },
       ],
     }, 'put');
     const released = await postJson<{ event: { status: string } }>(api, headers, `/api/v1/events/${eventId}/release`, undefined);

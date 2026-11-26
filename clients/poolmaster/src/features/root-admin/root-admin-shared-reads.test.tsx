@@ -6,16 +6,18 @@ import { bindApiMocks } from '@/test/msw-api';
 import { QueryKeys } from '@/lib/query-keys';
 import { useProvidersQuery } from './use-providers-query';
 import { useUpdateSportLeague } from './use-update-sport-league';
-import { fieldWriteKeys } from './use-sport-event';
+import { fieldWriteKeys, useSportEventSlotTiebreakersQuery } from './use-sport-event';
 
-const { listProvidersMock, updateSportLeagueMock } = vi.hoisted(() => ({
+const { listProvidersMock, updateSportLeagueMock, listEventSlotTiebreakersMock } = vi.hoisted(() => ({
   listProvidersMock: vi.fn(),
   updateSportLeagueMock: vi.fn(),
+  listEventSlotTiebreakersMock: vi.fn(),
 }));
 
 bindApiMocks({
   listProviders: listProvidersMock,
   updateSportLeague: updateSportLeagueMock,
+  listEventSlotTiebreakers: listEventSlotTiebreakersMock,
 });
 
 function wrapperFor(queryClient: QueryClient) {
@@ -43,6 +45,32 @@ describe('useProvidersQuery', () => {
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(listProvidersMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('useSportEventSlotTiebreakersQuery', () => {
+  beforeEach(() => listEventSlotTiebreakersMock.mockReset());
+
+  it('reads the event\'s slots with their tiebreaker games', async () => {
+    listEventSlotTiebreakersMock.mockResolvedValue({ data: { slots: [{ sportEventSlotId: 'slot-1' }] } });
+    const { result } = renderHook(() => useSportEventSlotTiebreakersQuery('evt-1'), { wrapper: wrapperFor(newClient()) });
+
+    await waitFor(() => expect(result.current.data).toEqual([{ sportEventSlotId: 'slot-1' }]));
+  });
+
+  it('fails with the API\'s error when the read answers without slots', async () => {
+    listEventSlotTiebreakersMock.mockResolvedValue({ error: { error: { code: 'EVENT_NOT_FOUND', message: 'No such event.' } } });
+    const { result } = renderHook(() => useSportEventSlotTiebreakersQuery('evt-1'), { wrapper: wrapperFor(newClient()) });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it('reads nothing until the page names an event', () => {
+    const { result } = renderHook(() => useSportEventSlotTiebreakersQuery(''), { wrapper: wrapperFor(newClient()) });
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(listEventSlotTiebreakersMock).not.toHaveBeenCalled();
   });
 });
 
