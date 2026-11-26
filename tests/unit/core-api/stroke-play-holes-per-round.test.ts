@@ -1,9 +1,9 @@
-import { PeriodUnit, SlotKind } from '@poolmaster/shared/domain';
+import { MatchFormat, PeriodUnit, SlotKind } from '@poolmaster/shared/domain';
 import { holesPerRound } from '../../../packages/core-api/src/modules/scoring-families/stroke-play/unplayed-rounds';
 
 // A stroke-play round's holes are the period count of the slot its rounds are played in (#2047).
 function slot(id: string, count: number | null) {
-  return { id, slotKind: SlotKind.TOURNAMENT, canEndTied: false, periods: count === null ? null : { unit: PeriodUnit.HOLE, count } };
+  return { id, slotKind: SlotKind.TOURNAMENT, canEndTied: false, periods: count === null ? null : { unit: PeriodUnit.HOLE, count }, matchFormat: MatchFormat.FIELD };
 }
 
 describe('holesPerRound', () => {

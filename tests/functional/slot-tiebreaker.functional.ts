@@ -47,7 +47,7 @@ afterAll(async () => {
 describe('SDK Functional: a slot\'s tiebreaker game', () => {
   it('lets a root admin choose a game before it starts, keeps who chose it and when, and refuses a started game, a game of no slot of the event and a slot the event does not cover', async () => {
     const db = getFunctionalPrisma();
-    await db.sport.upsert({ where: { sport: Sport.FOOTBALL }, create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' }, update: {} });
+    await db.sport.upsert({ where: { sport: Sport.FOOTBALL }, create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) }, update: {} });
     const admin = await buildRegisteredUser({ displayName: 'Tiebreaker Admin' });
     await promoteToRootAdmin(admin);
     const a = admin.client;

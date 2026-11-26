@@ -3,8 +3,8 @@
  * open, not yet (unreleased, no field, a bracket's teams unknown), or closed (past the setup's
  * cutoff).
  */
-import { sportPlay } from '../../support/sport-play';
-import { ContestOpening, SelectionType, SportEventStatus, Sport, TournamentFormat } from '@poolmaster/shared/domain';
+import { sportEventSlots, sportPlay } from '../../support/sport-play';
+import { ContestOpening, SelectionType, SportEventStatus, Sport } from '@poolmaster/shared/domain';
 import {
   contestOpening,
   eventContestOpenings,
@@ -26,7 +26,7 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
     sport: Sport.FOOTBALL,
     sportLeagueId: 'league-1',
     championshipYear: 2027,
-    tournamentFormat: TournamentFormat.MATCHES,
+    playsMatches: true,
     participantCount: 14,
     rounds: 4,
     salaryCap: null,
@@ -102,7 +102,7 @@ describe('contestOpening', () => {
 
 describe('eventContestOpenings, the event list\'s openings per selection type (#1929)', () => {
   function facts(overrides: Partial<EventOpeningFacts> = {}): EventOpeningFacts {
-    return { sport: Sport.BASKETBALL, status: SportEventStatus.SCHEDULED, startDate: LATER, participantCount: 64, ...sportPlay(overrides.sport ?? Sport.BASKETBALL), ...overrides };
+    return { sport: Sport.BASKETBALL, status: SportEventStatus.SCHEDULED, startDate: LATER, participantCount: 64, ...sportPlay(overrides.sport ?? Sport.BASKETBALL), slotDefinitions: sportEventSlots(overrides.sport ?? Sport.BASKETBALL), ...overrides };
   }
   const byType = (rows: EventContestOpening[]) => Object.fromEntries(rows.map((row) => [row.selectionType, row])) as Record<SelectionType, EventContestOpening>;
 

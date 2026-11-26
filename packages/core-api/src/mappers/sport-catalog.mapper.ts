@@ -45,7 +45,6 @@ export function mapSportToDto(sport: SportConfig): SportDto {
     sport: sport.sport,
     urlSegment: sport.urlSegment,
     displayOrder: sport.displayOrder,
-    tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
     updatedAt: sport.updatedAt.toISOString(),
   };

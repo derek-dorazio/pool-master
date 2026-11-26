@@ -11,7 +11,7 @@
  */
 import { randomInt } from 'node:crypto';
 import type { Prisma, PrismaClient, PrismaSlotKind, PrismaSlotPairing } from '@prisma/client';
-import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport, type PeriodUnit } from '@poolmaster/shared/domain';
+import { requireProviderCodeOfSourceId, Sport, type PeriodUnit } from '@poolmaster/shared/domain';
 import { competitionFor, seasonCompetitionFor } from './competitions';
 import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
@@ -226,7 +226,7 @@ export async function putEventInSlot(
 
 /** A sport's row, made on first use (cleanupTestData clears the sports table). */
 function sportRow(prisma: Db, sport: Sport) {
-  return prisma.sport.upsert({ where: { sport }, create: { sport, ...sportRowKeys(sport), tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
+  return prisma.sport.upsert({ where: { sport }, create: { sport, ...sportRowKeys(sport) }, update: {} });
 }
 
 /**

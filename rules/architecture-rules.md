@@ -91,7 +91,7 @@ Required implications:
 
 ### Validity / Compatibility Matrices Source of Truth
 
-Small enumerated compatibility matrices — `(tournamentFormat × contestFormat) → valid?`,
+Small enumerated compatibility matrices — `(plays matches × contestFormat) → valid?`,
 provider × sport, selection-mode-per-contest-format — **live in code as TypeScript const
 maps, not in the database.** The criteria for that choice, its tradeoffs, and the rejected
 alternatives are in [ADR-0007](../docs/adr/0007-small-validity-matrices-live-in-code.md).
@@ -424,8 +424,8 @@ family, never by finding guards scattered through the code:
   slot definition rows. Seasons, their names and championship years are Season rows. Each is
   read from the row or from the API's answer, never worked out again in code. Every event
   carries its league's family and participant type, so a reader of either reads the event's
-  own value (`eventSportDefinition(event)`, `eventPlaysMatches(event)`), never
-  `getSportDefinition(event.sport)`. No event has a parent event; the Clutch Card is a contest
+  own value (`eventSportDefinition(event)`), never `getSportDefinition(event.sport)`. Whether
+  an event plays matches is its slots' match format (`eventPlaysMatches(event)`, #2008). No event has a parent event; the Clutch Card is a contest
   type on the parent league.
 - **The sport registry is frozen and shrinking.** `packages/shared/domain/sports/` is what is
   left of the old design, which kept per-sport facts in code: default tournament format,
@@ -652,7 +652,7 @@ that it was already there.
 - Insert it with `ON CONFLICT ... DO NOTHING` on its natural key, so the migration is idempotent
   and does not overwrite a row an environment has corrected by hand.
 - State every column the table requires, including ones that have a column default, when the
-  default is one the schema warns against relying on (`Sport.tournamentFormat`, #236).
+  default is one the schema warns against relying on (#236).
 - An `id` does not have to be supplied: every uuid `id` carries `DEFAULT gen_random_uuid()`
   (#340), so a reference-data migration can simply omit the column.
 - A row that uses an enum value goes in a later migration than the one that adds the value:

@@ -51,7 +51,7 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
   const event = await prisma.sportEvent.create({

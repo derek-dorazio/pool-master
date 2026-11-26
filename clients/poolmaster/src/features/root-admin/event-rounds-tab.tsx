@@ -1,4 +1,4 @@
-import { eventPlaysMatches, ProviderSyncKind } from '@poolmaster/shared/domain';
+import { ProviderSyncKind } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { DataGrid, QueryState, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -65,7 +65,7 @@ export function EventRoundsTab() {
           }}
         </QueryState>
       </SectionCard>
-      {eventPlaysMatches(event) ? <EventMatchesCard event={event} /> : null}
+      {event.playsMatches ? <EventMatchesCard event={event} /> : null}
       {isSynced || ResultsPanel === null ? null : <ResultsPanel event={event} />}
     </div>
   );

@@ -177,6 +177,8 @@ export interface SportEventSlotDefinition {
   canEndTied: boolean;
   /** What its games are played in (#2047): four quarters, eighteen holes; null for a race or tennis match. */
   periods: SlotPeriods | null;
+  /** Two sides meeting, or a whole field ranked (#2043): whether the event plays matches is read from it (`eventPlaysMatches`). */
+  matchFormat: MatchFormat;
 }
 
 /** One slot definition a contest template covers (#2010), with the facts screens and checks read. */

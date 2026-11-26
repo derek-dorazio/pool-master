@@ -305,7 +305,7 @@ describe('Contract verification (web)', () => {
     await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       update: {},
-      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     });
     await prisma.sportEvent.create({
       data: {
@@ -569,7 +569,6 @@ describe('Contract verification (web)', () => {
       create: {
         sport: Sport.GOLF,
         ...sportRowKeys(Sport.GOLF),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 
@@ -916,7 +915,7 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
       update: {},
     });
     const event = await prisma.sportEvent.create({
@@ -989,7 +988,7 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL) },
       update: {},
     });
     const event = await prisma.sportEvent.create({

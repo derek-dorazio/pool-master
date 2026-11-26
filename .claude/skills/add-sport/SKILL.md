@@ -245,8 +245,8 @@ down: a lesson that was true mid-series may not be by the end.
 
 - **Reading an event's definition off its sport alone.** The participant type and scoring
   family are the sport league's, so anything decided for an event (its family, selection
-  types, scoring definitions, tiers, rounds, whether it plays matches) reads
-  `eventSportDefinition(event)` or `eventPlaysMatches(event)`. Whatever builds an event shape
+  types, scoring definitions, tiers, rounds) reads `eventSportDefinition(event)`, and whether
+  it plays matches reads its slots' match format through `eventPlaysMatches(event)`. Whatever builds an event shape
   for a service (contest setup's event reader) carries the league's two along; the types
   require them, so a reader that drops them does not compile.
 
@@ -254,8 +254,8 @@ down: a lesson that was true mid-series may not be by the end.
   and scoring-family folders is the bug this structure exists to prevent; lint rejects it.
   Put the difference in the definition or the family.
 - **Keying format behaviour off the sport.** What a bracket needs (its release checks, the
-  seed lock at release) follows the tournament format through `sportPlaysMatches`, so the next
-  bracket sport inherits it. Its release checks join the event service's blocker list rather
+  seed lock at release) follows the event's slots' match format through `eventPlaysMatches`,
+  so the next bracket sport inherits it. Its release checks join the event service's blocker list rather
   than adding a second release path.
 - **A `switch` without an exhaustive default.** End it in `default: assertNever(value)`, so the
   next sport fails the build instead of falling through silently.
@@ -320,9 +320,8 @@ down: a lesson that was true mid-series may not be by the end.
   and contest templates come from migrations; a cleanup that empties them breaks every test
   that runs after it, and a database that is not rebuilt between runs. Delete only the rows
   the test made (`rules/testing-rules.md` §9A *Integration Test Isolation and Cleanup*).
-- **Copying an older sport's reference migration.** The sports row's tournament format is
-  `MATCHES` for a sport played in games; the American football migration's `KNOCKOUT_BRACKET`
-  was renamed since, and Postgres refuses it. A league that reads the sport's round names stores
+- **Copying an older sport's reference migration.** The sports row has no tournament format
+  any more: a slot definition's `match_format` says how its games are played. A league that reads the sport's round names stores
   an empty `round_names` array, never null (the column is not null). A new period layout
   (hockey's three periods) is a Postgres enum value too: add it in the enum migration beside the
   sport, and its squares moment labels where the compiler points.

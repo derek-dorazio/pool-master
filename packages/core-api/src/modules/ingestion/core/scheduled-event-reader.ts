@@ -1,12 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
-  getSportDefinition,
+  eventPlaysMatches,
   MatchStatus,
   providerCodeOfSourceId,
   providerSourceIdOf,
   SportEventStatus,
-  TournamentFormat,
   type ProviderCode,
   type Sport,
 } from '@poolmaster/shared/domain';
@@ -110,37 +109,40 @@ export function createScheduledEventReader({
           select: { externalId: true, provider: { select: { code: true } }, sportLeagueProviderMapping: { select: { providerLeague: { select: { code: true } } } } },
         },
       } as const;
-      // A sport played in matches is in play during a match: the one in progress longest. One
-      // played without them, such as golf, is in play during a round: the round started last,
-      // the one under way if any is.
-      const playedInRounds = getSportDefinition(sport).tournamentFormat !== TournamentFormat.MATCHES;
-      const events: LiveScoreEventRef[] = playedInRounds
-        ? (await prisma.sportEvent.findMany({
-            where,
-            select: {
-              ...identity,
-              // An event played in rounds hears of its rounds on the event itself (a golf round's notification).
-              lastProviderNotificationAt: true,
-              roundSchedule: {
-                where: { scheduledDate: { lte: now } },
-                orderBy: { roundNumber: 'desc' },
-                take: 1,
-                select: { scheduledDate: true, scheduledEndAt: true },
-              },
-            },
-          })).flatMap(({ id: _id, roundSchedule, providerMappings, ...event }) => refsOf(providerMappings).map((ref) => ({ ...event, ...ref, playedInRounds, playUnderwaySince: roundUnderwaySince(roundSchedule, now) })))
-        : await matchEventRefs(await prisma.sportEvent.findMany({
-            where,
-            select: {
-              ...identity,
-              matches: {
-                where: { status: MatchStatus.IN_PROGRESS },
-                orderBy: { scheduledDate: { sort: 'asc', nulls: 'last' } },
-                take: 1,
-                select: { scheduledDate: true },
-              },
-            },
-          }));
+      // An event played in matches (#2008: a slot it covers is HEAD_TO_HEAD) is in play during a
+      // match: the one in progress longest. One played without them, such as golf, is in play
+      // during a round: the round started last, the one under way if any is. One read takes both.
+      const rows = await prisma.sportEvent.findMany({
+        where,
+        select: {
+          ...identity,
+          slots: { select: { seasonSlot: { select: { definition: { select: { matchFormat: true } } } } } },
+          // An event played in rounds hears of its rounds on the event itself (a golf round's notification).
+          lastProviderNotificationAt: true,
+          roundSchedule: {
+            where: { scheduledDate: { lte: now } },
+            orderBy: { roundNumber: 'desc' },
+            take: 1,
+            select: { scheduledDate: true, scheduledEndAt: true },
+          },
+          matches: {
+            where: { status: MatchStatus.IN_PROGRESS },
+            orderBy: { scheduledDate: { sort: 'asc', nulls: 'last' } },
+            take: 1,
+            select: { scheduledDate: true },
+          },
+        },
+      });
+      const playsMatches = (row: (typeof rows)[number]) => eventPlaysMatches({ slotDefinitions: row.slots.map(({ seasonSlot }) => seasonSlot.definition) });
+      const roundEvents: LiveScoreEventRef[] = rows
+        .filter((row) => !playsMatches(row))
+        .flatMap(({ roundSchedule, providerMappings, lastProviderNotificationAt }) => refsOf(providerMappings).map((ref) => ({
+          ...ref,
+          lastProviderNotificationAt,
+          playedInRounds: true,
+          playUnderwaySince: roundUnderwaySince(roundSchedule, now),
+        })));
+      const events = [...roundEvents, ...await matchEventRefs(rows.filter(playsMatches))];
       logger?.debug({ sport, feed, providerIds, eventCount: events.length, events }, 'Listed sport events for scheduled ingestion feed');
       return events;
     },

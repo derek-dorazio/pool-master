@@ -1294,7 +1294,6 @@ function toSport(row: Prisma.SportGetPayload<object>): SportConfig {
     sport: row.sport,
     urlSegment: row.urlSegment,
     displayOrder: row.displayOrder,
-    tournamentFormat: row.tournamentFormat,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -1341,7 +1340,7 @@ const SPORT_EVENT_INCLUDE = {
     orderBy: { provider: { name: 'asc' } },
   },
   // The slot definitions it covers (#2010): where contest templates are offered on it.
-  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
+  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, matchFormat: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1363,7 +1362,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     slotDefinitions: row.slots
       .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)
-      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition) })),
+      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition), matchFormat: definition.matchFormat })),
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
     sportLeagueId: row.sportLeagueId,

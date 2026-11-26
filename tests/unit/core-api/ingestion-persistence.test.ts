@@ -312,6 +312,8 @@ describe('IngestionPersistence', () => {
       linkedEvent: {
         id: 'sport-event-1',
         status,
+        // A HEAD_TO_HEAD slot, so the event plays matches and a release locks its seeds (#2008).
+        slots: [{ seasonSlot: { definition: { matchFormat: 'HEAD_TO_HEAD', providerMappings: [] } } }],
         sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: Sport.BASKETBALL } } },
       },
       fieldRow: {
@@ -385,7 +387,7 @@ describe('IngestionPersistence', () => {
       const prisma = fieldSyncPrisma({
         externalId: 'golfer-01',
         eventRow: linkedRow(),
-        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', slots: [{ id: 'event-slot-1' }], sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
+        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', slots: [{ seasonSlot: { definition: { matchFormat: 'FIELD', providerMappings: [{ id: 'date-window-mapping-1' }] } } }], sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
         fieldRow: null,
         createField,
       });

@@ -1132,7 +1132,6 @@ describe('Contract verification (root admin)', () => {
       create: {
         sport: 'GOLF',
         ...sportRowKeys('GOLF'),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
     });
@@ -1200,7 +1199,6 @@ describe('Contract verification (root admin)', () => {
       create: {
         sport: 'GOLF',
         ...sportRowKeys('GOLF'),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
     });
@@ -1644,7 +1642,7 @@ describe('Contract verification (root admin)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF') },
       update: {},
     });
     const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
@@ -1727,12 +1725,12 @@ describe('Contract verification (root admin)', () => {
     const stamp = Date.now().toString().slice(-8);
     const horseRacing = await prisma.sport.upsert({
       where: { sport: 'HORSE_RACING' },
-      create: { sport: 'HORSE_RACING', ...sportRowKeys('HORSE_RACING'), tournamentFormat: 'RACE' },
+      create: { sport: 'HORSE_RACING', ...sportRowKeys('HORSE_RACING') },
       update: {},
     });
     const golf = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF') },
       update: {},
     });
     const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[], { testEvent = true } = {}) => {
