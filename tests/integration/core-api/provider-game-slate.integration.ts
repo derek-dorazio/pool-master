@@ -9,7 +9,7 @@ import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardo
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
-import { fixtureSeasonId } from '../../support/event-edition';
+import { eventRoundSlots, fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // A synced league's game week and fixed-shape playoff take their games from its provider (ADR
@@ -115,7 +115,7 @@ describe('Provider game slate (#1728)', () => {
       update: {},
     });
     const sportLeague = await prisma.sportLeague.create({
-      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}`, bracketAdvancement: 'RESEED_BY_SEED' },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}` },
     });
     await syncLeagueTo(prisma, sportLeague.id, 'nfl');
     const externalId = `nfl-2026-postseason-${randomUUID().slice(0, 6)}`;
@@ -130,7 +130,13 @@ describe('Provider game slate (#1728)', () => {
         autoLifecycleEnabled: true,
     });
     const WEEK = 7 * 24 * HOUR;
-    await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: new Date(KICKOFF.getTime() + (roundNumber - 1) * WEEK) })));
+    // The Divisional round reseeds; each round is its own synced slot, so the event stays synced.
+    const eventSlotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' }, { slotKind: 'FINAL' }], { isTestData: false });
+    const eventSlots = await prisma.sportEventSlot.findMany({ where: { id: { in: eventSlotIds } }, select: { id: true, sportLeagueSeasonCompetitionSlotId: true } });
+    const seasonSlotOf = new Map(eventSlots.map((eventSlot) => [eventSlot.id, eventSlot.sportLeagueSeasonCompetitionSlotId]));
+    await new PrismaSportEventRoundRepository(getAppPrisma()).createMany(eventSlotIds.map((eventSlotId, index) => ({
+      sportEventId: event.id, seasonSlotId: seasonSlotOf.get(eventSlotId) ?? '', roundNumber: index + 1, scheduledDate: new Date(KICKOFF.getTime() + index * WEEK),
+    })));
     // One conference: seeds 2 to 7 play the Wild Card while the 1 seed waits in the reseeded round.
     const team = (seed: number) => `${externalId}-seed-${seed}`;
     const row = new Map<number, string>();

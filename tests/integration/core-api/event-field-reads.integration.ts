@@ -141,6 +141,11 @@ describe('An event\'s field', () => {
       // The event's slot definitions (#2010), where templates are offered.
       ['SELECT sport_event_slots', 1],
       ['SELECT sport_events', 1],
+      // The event's rounds are played in its slot (#2006): the slot's definition and its place in play.
+      ['SELECT sport_league_competition_slots', 1],
+      ['SELECT sport_league_competitions', 1],
+      ['SELECT sport_league_phases', 1],
+      ['SELECT sport_league_season_competition_slots', 1],
       ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
       // The event's sport, read through its league (#2042).

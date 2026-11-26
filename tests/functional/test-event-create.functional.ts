@@ -33,8 +33,9 @@ beforeAll(async () => {
 afterAll(async () => {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
-  await db.sportEventSlot.deleteMany({ where: { sportEventId: { in: eventIds } } });
+  // A round is played in one of its event's slots (#2006), so the rounds go first.
   await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
+  await db.sportEventSlot.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   await deleteTestSportLeagues(db, [...created.sportLeagueIds]);

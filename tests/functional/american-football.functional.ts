@@ -158,14 +158,23 @@ describe('SDK Functional: American football', () => {
     // because it covers a test slot. Cut loose from its test slot, every kept write is
     // 409 SPORT_EVENT_NOT_TEST_DATA and changes nothing; linked again, the write goes through.
     const db = getFunctionalPrisma();
-    // The season already holds the synced slot beside the test one, so the event is cut loose from
-    // its test slots instead: an event covering no test slot is one the feed scores.
+    // The season already holds the synced slot beside each test one, so the event's slot links are
+    // moved onto those synced slots instead: an event covering no test slot is one the feed scores.
+    // Its rounds stay in the same event slots (#2006), so the links move rather than go.
     const links = await db.sportEventSlot.findMany({
       where: { sportEventId: event.id },
-      select: { sportEventId: true, sportLeagueSeasonId: true, sportLeagueSeasonCompetitionSlotId: true },
+      select: { id: true, sportLeagueSeasonCompetitionSlotId: true, seasonSlot: { select: { sportLeagueSeasonId: true, sportLeagueCompetitionSlotId: true } } },
     });
     expect(links.length).toBeGreaterThan(0);
-    await db.sportEventSlot.deleteMany({ where: { sportEventId: event.id } });
+    const synced = await db.sportLeagueSeasonCompetitionSlot.findMany({
+      where: { isTestData: false, OR: links.map(({ seasonSlot }) => seasonSlot) },
+      select: { id: true, sportLeagueCompetitionSlotId: true },
+    });
+    const syncedOf = new Map(synced.map((slot) => [slot.sportLeagueCompetitionSlotId, slot.id]));
+    const moveLinks = (to: (link: (typeof links)[number]) => string) => db.$transaction(
+      links.map((link) => db.sportEventSlot.update({ where: { id: link.id }, data: { sportLeagueSeasonCompetitionSlotId: to(link) } })),
+    );
+    await moveLinks((link) => expectDefined(syncedOf.get(link.seasonSlot.sportLeagueCompetitionSlotId), 'the synced slot beside the test one'));
     const seahawks = rowOf('Seattle Seahawks');
     const matchPath = { eventId: event.id, matchNumber: 13 };
     const refused = await Promise.all([
@@ -182,7 +191,7 @@ describe('SDK Functional: American football', () => {
     ]);
     expect(refused.map((reply) => [reply.response?.status, reply.error?.error.code])).toEqual(refused.map(() => [409, 'SPORT_EVENT_NOT_TEST_DATA']));
     expect(await superBowlOf()).toMatchObject({ isNeutralSite: superBowl.isNeutralSite, status: superBowl.status, periodScores: asLoaded });
-    await db.sportEventSlot.createMany({ data: links });
+    await moveLinks((link) => link.sportLeagueSeasonCompetitionSlotId);
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
 
     // --- A contest from the NFL's default template ----------------------------------------------

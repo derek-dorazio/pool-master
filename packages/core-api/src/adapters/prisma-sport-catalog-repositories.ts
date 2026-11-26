@@ -850,10 +850,11 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
       where: { sportEventId: { in: [...new Set(rounds.map((round) => round.sportEventId))] } },
       select: { id: true, sportEventId: true, sportLeagueSeasonCompetitionSlotId: true },
     });
-    const eventSlotIdOf = new Map(eventSlots.map((row) => [`${row.sportEventId}:${row.sportLeagueSeasonCompetitionSlotId}`, row.id]));
+    // A Season slot is covered by one event at most, so it names its event slot row.
+    const eventSlotOf = new Map(eventSlots.map((row) => [row.sportLeagueSeasonCompetitionSlotId, row]));
     await this.prisma.sportEventRound.createMany({
       data: rounds.map((round) => ({
-        sportEventSlotId: requiredEventSlotId(eventSlotIdOf, round),
+        sportEventSlotId: requiredEventSlotId(eventSlotOf, round),
         sportEventId: round.sportEventId,
         roundNumber: round.roundNumber,
         scheduledDate: round.scheduledDate,
@@ -1383,10 +1384,10 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
 }
 
 /** The event slot row a round to create is played in, refused when its event does not cover that Season slot. */
-function requiredEventSlotId(eventSlotIdOf: ReadonlyMap<string, string>, round: SportEventRoundCreate): string {
-  const id = eventSlotIdOf.get(`${round.sportEventId}:${round.seasonSlotId}`);
-  if (id === undefined) throw new Error(`Sport event ${round.sportEventId} does not cover Season slot ${round.seasonSlotId}.`);
-  return id;
+function requiredEventSlotId(eventSlotOf: ReadonlyMap<string, { id: string; sportEventId: string }>, round: SportEventRoundCreate): string {
+  const eventSlot = eventSlotOf.get(round.seasonSlotId);
+  if (eventSlot?.sportEventId !== round.sportEventId) throw new Error(`Sport event ${round.sportEventId} does not cover Season slot ${round.seasonSlotId}.`);
+  return eventSlot.id;
 }
 
 /** A round with the slot it is played in (#2006). */

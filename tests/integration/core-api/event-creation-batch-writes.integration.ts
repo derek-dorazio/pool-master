@@ -178,13 +178,14 @@ describe('Creating one event (#1253)', () => {
     // test slot is read once with its definition and any event on it, and linked in one insert. The
     // event read back carries the slot definitions it covers (#2010), a second slot read #2089
     // folds into the summary's; the definitions' competitions and phases once each (#2153). No
-    // series is found or created (#2010).
+    // series is found or created (#2010). The rounds go in the event's slot, whose event slot row is
+    // read once for every round, and the slots are read once together, with their events (#2006).
     expect(statementCounts(statements)).toEqual([
       ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
       ['SELECT platform_tier_profile_ranges', 1], ['SELECT platform_tier_profile_sources', 1],
       ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
-      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 2], ['SELECT sport_events', 1], ['SELECT sport_league_competition_slots', 2],
-      ['SELECT sport_league_competitions', 1], ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_competition_slots', 2],
+      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 3], ['SELECT sport_events', 1], ['SELECT sport_league_competition_slots', 3],
+      ['SELECT sport_league_competitions', 1], ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_competition_slots', 3],
       ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));

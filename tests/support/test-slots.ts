@@ -140,25 +140,21 @@ const SYNCED_KEY_PREFIX = 'SYNCED_';
 let syncedPlaceCount = 0;
 
 /**
- * A copy of the league's test definition under a key of its own, in a competition of its own that
- * the Season has: where one synced slot a test makes goes.
+ * A copy of the league's test definition under a key of its own, as a TOURNAMENT (the kind a
+ * competition may hold more than one of), in the same competition: where one synced slot a test
+ * makes goes, since a Season holds one synced slot per definition.
  */
 async function syncedSlotPlaceIn(prisma: Db, sportLeagueId: string, sportLeagueSeasonId: string): Promise<{ definitionId: string; seasonCompetitionId: string }> {
-  const definition = await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({
-    where: { id: (await slotDefinitionOf(prisma, sportLeagueId)).id },
-    omit: { id: true, createdAt: true, updatedAt: true },
-  });
+  const { definitionId: sourceId, seasonCompetitionId } = await testSlotPlaceIn(prisma, sportLeagueId, sportLeagueSeasonId);
+  const definition = await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({ where: { id: sourceId }, omit: { id: true, createdAt: true, updatedAt: true } });
   syncedPlaceCount += 1;
-  // A key and an order index no other test file or worker takes: each file counts from 1 again.
-  const run = randomInt(1, 1_000_000);
-  const code = `${SYNCED_KEY_PREFIX}${String(run)}_${String(syncedPlaceCount)}`;
-  const orderIndex = 1000 + run * 1000 + syncedPlaceCount;
-  const competition = await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR', code, orderIndex });
+  // A key no other test file or worker takes: each file counts from 1 again.
+  const key = `${SYNCED_KEY_PREFIX}${String(randomInt(1, 1_000_000))}_${String(syncedPlaceCount)}`;
   const { id: definitionId } = await prisma.sportLeagueCompetitionSlot.create({
-    data: { ...definition, sportLeagueCompetitionId: competition.competitionId, key: code },
+    data: { ...definition, key, slotKind: 'TOURNAMENT', weekNumber: null, name: null },
     select: { id: true },
   });
-  return { definitionId, seasonCompetitionId: await seasonCompetitionFor(prisma, { sportLeagueId, sportLeagueSeasonId, competition }) };
+  return { definitionId, seasonCompetitionId };
 }
 
 /**

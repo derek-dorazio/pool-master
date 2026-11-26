@@ -19,6 +19,7 @@ import type { ProviderParticipant, SportEventDetail } from '../../../packages/co
 import { linkedProviderEvent } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
+import { deleteTestSportLeagues } from '../../support/test-slots';
 
 // A feed's participants are mapped to its Provider row (#2040), so the suite syncs as BALLDONTLIE.
 const PROVIDER = 'balldontlie';
@@ -35,7 +36,8 @@ afterAll(async () => {
   await prisma.sportEvent.deleteMany({ where: ownEvents });
   await prisma.participantProviderMapping.deleteMany({ where: { participant: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
-  await prisma.sportLeague.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
+  // The events' slots gave the leagues Season phases and competitions, which the shared helper clears first.
+  await deleteTestSportLeagues(prisma, (await prisma.sportLeague.findMany({ where: { name: { startsWith: NAME_PREFIX } }, select: { id: true } })).map(({ id }) => id));
   await teardownIntegrationTests();
 });
 
