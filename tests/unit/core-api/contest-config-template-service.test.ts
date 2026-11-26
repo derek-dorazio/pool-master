@@ -4,7 +4,7 @@
  */
 import type { ContestConfigTemplateRepository } from '@poolmaster/shared/db';
 import type { ContestConfigTemplate, ContestTemplateSlot } from '@poolmaster/shared/domain';
-import { ContestFormat, LeaguePhase, MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from '@poolmaster/shared/domain';
+import { ContestFormat, LeaguePhase, MatchFormat, SelectionType, SlotKind, TemplateCoverageMode, UpsetBonusRule } from '@poolmaster/shared/domain';
 import {
   ContestConfigTemplateCoverageError,
   ContestConfigTemplateNotFoundError,
@@ -313,6 +313,36 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
       await expect(service.updateTemplate('bracket', { coverageMode: TemplateCoverageMode.ONE_SLOT, slotDefinitionIds: ['week-2', 'wild-card'] }))
         .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT' });
       expect(store.get('bracket')?.slots.map((covered) => covered.id)).toEqual(['wild-card', 'final']);
+    });
+
+    describe('knockout round values', () => {
+      const rules = (roundValues: number[]) => ({
+        selectionType: SelectionType.RANDOM_DRAW,
+        picksPerEntry: 1,
+        countedScores: 1,
+        scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS' as const, config: { roundValues, upsetBonus: { rule: UpsetBonusRule.NONE } } },
+      }) as unknown as ContestConfigTemplate['configJson'];
+      const draw = () => template({
+        id: 'draw', sportLeagueId: 'nfl', selectionType: SelectionType.RANDOM_DRAW, coverageMode: TemplateCoverageMode.ALL_LISTED, slots: [nfl[2], nfl[3]],
+        configJson: rules([1, 2]),
+      });
+
+      it('refuses with CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH round values one short of the rounds the template lists, which would score its final nothing, and keeps the stored ones', async () => {
+        const { store, service } = templateStore([draw()], { nfl });
+
+        await expect(service.updateTemplate('draw', { configuration: rules([1]) }))
+          .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH' });
+        expect(store.get('draw')?.configJson).toEqual(rules([1, 2]));
+      });
+
+      it('refuses with CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH listing fewer rounds than the stored round values, and accepts values and slots changed together', async () => {
+        const { store, service } = templateStore([draw()], { nfl });
+
+        await expect(service.updateTemplate('draw', { slotDefinitionIds: ['final'] }))
+          .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH' });
+        await service.updateTemplate('draw', { slotDefinitionIds: ['final'], configuration: rules([5]) });
+        expect(store.get('draw')).toMatchObject({ slots: [{ id: 'final' }], configJson: rules([5]) });
+      });
     });
   });
 });

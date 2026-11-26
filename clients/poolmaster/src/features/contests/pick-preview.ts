@@ -86,7 +86,7 @@ export function pickPreviewUnavailableReason({
   tierCount: number;
 }): string | null {
   if (selectionType === SelectionType.RANDOM_DRAW) {
-    return `Members pick nothing in a random draw: the draw deals each entry its ${participant.many}.`;
+    return `Members pick nothing in a sweepstakes: the draw deals each entry its ${participant.many}.`;
   }
   if (selectionType === SelectionType.SQUARES) {
     return 'Squares has no picks page: members claim boxes on the game\'s grid.';

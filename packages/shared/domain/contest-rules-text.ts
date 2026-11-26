@@ -3,6 +3,7 @@
  * from one place so the two never read differently.
  */
 
+import { enumLabel } from '../display-strings/display-strings';
 import { SURVIVOR_LIVES_DEFAULT, type ContestRules } from './contest-rules';
 import { UpsetBonusRule, type KnockoutRoundPointsSettings } from './contest-scoring';
 import { isPredictionSelectionType } from './contest-validity';
@@ -25,22 +26,9 @@ export function formatDollars(value: number) {
   return DOLLARS.format(value);
 }
 
-/**
- * The name a commissioner and a member read for each way of picking. A `Record` over the enum,
- * so adding a selection type without a name fails the typecheck.
- */
-const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
-  TIERED: 'Tiered',
-  BUDGET_PICK: 'Budget',
-  RANDOM_DRAW: 'Quick pick',
-  PICK_EM: 'Pick’em',
-  BRACKET: 'Bracket',
-  SURVIVOR: 'Survivor',
-  SQUARES: 'Squares',
-};
-
+/** The name a commissioner and a member read for each way of picking: its display string. */
 export function formatSelectionTypeName(selectionType: SelectionType) {
-  return SELECTION_TYPE_NAMES[selectionType];
+  return enumLabel('SelectionType', selectionType);
 }
 
 /** What each pick'em mode is called: whether an entry also ranks its picks by confidence. */

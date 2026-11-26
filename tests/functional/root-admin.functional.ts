@@ -540,15 +540,16 @@ describe('SDK Functional: Root Admin', () => {
       { status: 422, code: 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS' },
     );
 
-    const upsetBonus = await templateOf('nfl-bracket-doubling-upset-bonus');
-    const oldDefault = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { sportLeagueId: nfl.id, selectionType: upsetBonus.selectionType, isDefault: true } });
+    const escalating = await templateOf('nfl-bracket-doubling');
+    const oldDefault = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { sportLeagueId: nfl.id, selectionType: escalating.selectionType, isDefault: true } });
+    expect(oldDefault.id).not.toBe(escalating.id);
     try {
-      const moved = await updateContestConfigTemplate({ client: user.client, path: { templateId: upsetBonus.id }, body: { isDefault: true } });
+      const moved = await updateContestConfigTemplate({ client: user.client, path: { templateId: escalating.id }, body: { isDefault: true } });
 
       expect(moved.data?.template.isDefault).toBe(true);
       expect((await prisma.contestConfigTemplate.findUniqueOrThrow({ where: { id: oldDefault.id } })).isDefault).toBe(false);
     } finally {
-      await prisma.contestConfigTemplate.update({ where: { id: upsetBonus.id }, data: { isDefault: false } });
+      await prisma.contestConfigTemplate.update({ where: { id: escalating.id }, data: { isDefault: false } });
       await prisma.contestConfigTemplate.update({ where: { id: oldDefault.id }, data: { isDefault: true } });
     }
   });

@@ -63,14 +63,14 @@ describe('SDK Functional: event pages (#1007)', () => {
     // --- The page: its bracket offer is the primary, starting at the conference championships --
     const page = await readPage(visitor);
     const primary = expectDefined(page.offers.find((offer) => offer.isPrimary));
-    expect(primary).toMatchObject({ sportLeagueName: 'NFL', startsAtRound: 3, template: { templateKey: 'nfl-bracket-second-chance-doubling' } });
+    expect(primary).toMatchObject({ sportLeagueName: 'NFL', startsAtRound: 3, template: { templateKey: 'nfl-bracket-doubling' } });
     expect([EventPageOfferState.NOT_YET, EventPageOfferState.OPEN]).toContain(primary.state);
     expect(page.offers.filter((offer) => offer.isPrimary)).toHaveLength(1);
 
     // --- The list carries the same page --------------------------------------------------------
     const list = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.FOOTBALL } })).data);
     expect(list.eventPages.find((listed) => listed.urlSegment === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.template.templateKey)
-      .toBe('nfl-bracket-second-chance-doubling');
+      .toBe('nfl-bracket-doubling');
 
     // --- The upcoming list: only pages with a primary edition coming, soonest first (#1202) ------
     const upcoming = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.FOOTBALL, upcoming: true } })).data);

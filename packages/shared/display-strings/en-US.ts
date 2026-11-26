@@ -206,7 +206,7 @@ export const enUS = {
     SelectionType: {
       TIERED: 'Tiered',
       BUDGET_PICK: 'Budget',
-      RANDOM_DRAW: 'Quick pick',
+      RANDOM_DRAW: 'Sweepstakes',
       PICK_EM: 'Pick’em',
       BRACKET: 'Bracket',
       SURVIVOR: 'Survivor',
@@ -919,6 +919,7 @@ export const enUS = {
     CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT: 'Pick slots from this sport league only.',
     CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS: 'Covering all of its slots needs one event\'s slots.',
     CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT: 'A bracket can cover knockout slots only.',
+    CONTEST_CONFIG_TEMPLATE_ROUND_VALUES_MISMATCH: 'Give one round value for each round the slots cover.',
     CONTEST_DELETE_STATUS_INVALID: 'A contest can only be deleted while it is being set up.',
     CONTEST_DRAW_ALREADY_RUN: 'This contest has already been drawn. The draw is final.',
     CONTEST_DRAW_ENTRIES_CHANGED: 'Someone entered or left while the draw was running, so nothing was dealt. Run the draw again.',
@@ -926,7 +927,7 @@ export const enUS = {
     CONTEST_DRAW_FIELD_TOO_SMALL: 'The field isn’t big enough to deal every entry its share, so nothing was dealt.',
     CONTEST_DRAW_NOT_OPEN: 'The draw can only run while the contest is open for entries.',
     CONTEST_DRAW_NO_ENTRIES: 'No one has entered yet. The draw needs at least one entry to deal to.',
-    CONTEST_DRAW_SINGLE_EVENT: 'A quick pick contest covers exactly one event.',
+    CONTEST_DRAW_SINGLE_EVENT: 'A sweepstakes contest covers exactly one event.',
     CONTEST_EDIT_STATUS_INVALID: 'A contest can only be edited while it is being set up.',
     CONTEST_ENTRY_FIELD_NOT_LOADED: 'Entries open once the event\'s field has loaded.',
     CONTEST_ENTRY_LIMIT_REACHED: 'You already have the most entries this contest allows.',
@@ -962,7 +963,7 @@ export const enUS = {
     CONTEST_LEADERBOARD_SCORING_SETTINGS_INVALID: 'The leaderboard is not available: the contest\'s scoring settings are not valid.',
     CONTEST_NOT_DRAFT: 'This contest is already open to the league.',
     CONTEST_NOT_FOUND: 'Contest not found.',
-    CONTEST_NOT_RANDOM_DRAW: 'This contest isn’t a quick pick, so there is no draw to run.',
+    CONTEST_NOT_RANDOM_DRAW: 'This contest isn’t a sweepstakes, so there is no draw to run.',
     CONTEST_OPERATION_INVALID: 'This contest cannot be changed that way.',
     CONTEST_RULES_SELECTION_TYPE_MISMATCH: 'These rules do not match the contest\'s pick type.',
     CONTEST_SCORING_DEFINITION_NOT_ALLOWED: 'That scoring is not offered for this contest.',
@@ -1236,7 +1237,7 @@ export const enUS = {
       contestSetup: 'More scores count than the draw deals each entry. Lower Scores that count, or deal more per entry.',
     },
     CONTEST_DRAW_SINGLE_EVENT: {
-      contestSetup: 'A random draw deals one event’s field, so it can’t take another event.',
+      contestSetup: 'A sweepstakes deals one event’s field, so it can’t take another event.',
     },
     CONTEST_ENTRY_LOCKED: {
       bracketEntry: 'The {{matches}} have started, so this bracket can no longer change.',

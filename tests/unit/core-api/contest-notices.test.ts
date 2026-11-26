@@ -821,14 +821,14 @@ describe('ContestNotices', () => {
       expect(textTo(commissioner.user.id)).toContain('Picks for Masters Pick 6 stay open until it starts.');
     });
 
-    it('tells an open contest its picks are closed when its event is postponed after its start, a drawn quick pick too, and a live season contest whose postponed event is still ahead that its picks are open', async () => {
+    it('tells an open contest its picks are closed when its event is postponed after its start, a drawn sweepstakes too, and a live season contest whose postponed event is still ahead that its picks are open', async () => {
       const kickedOff = world.addSportEvent({ name: 'Game Day', startDate: new Date(NOW.getTime() - HOUR), status: SportEventStatus.POSTPONED });
       const rainedOut = world.addLeague();
       world.addContest(rainedOut.id, { name: 'Rain Out Pool', sportEventIds: [kickedOff.id] });
       const rainedOutCommissioner = member(rainedOut.id, 'Casey', { role: LeagueRole.COMMISSIONER });
       const ahead = world.addSportEvent({ name: 'Later Event', startDate: new Date(NOW.getTime() + 24 * HOUR), status: SportEventStatus.POSTPONED });
       const drawnLeague = world.addLeague();
-      world.addContest(drawnLeague.id, { name: 'Quick Pick Pool', sportEventIds: [ahead.id], drawnAt: NOW });
+      world.addContest(drawnLeague.id, { name: 'Sweepstakes Pool', sportEventIds: [ahead.id], drawnAt: NOW });
       const drawnCommissioner = member(drawnLeague.id, 'Dana', { role: LeagueRole.COMMISSIONER });
       const seasonLeague = world.addLeague();
       world.addContest(seasonLeague.id, { name: 'Season Pool', status: ContestStatus.ACTIVE, sportEventIds: [kickedOff.id, ahead.id] });

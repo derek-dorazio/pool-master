@@ -21,11 +21,15 @@ import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpe
  * far-future date, so nothing depends on the day the suite runs. Not tagged `@smoke`.
  */
 
-/** The field by seed, best first: Duke plays Texas and Houston plays Vermont; the winners meet in the final. */
+/**
+ * The field by seed, best first, one team on each of the league's four seed lines (1-4, 5-8, 9-12,
+ * 13 and up), so every tier has a team: Duke plays Texas and Houston plays Vermont; the winners
+ * meet in the final.
+ */
 const FIELD: ReadonlyArray<{ name: string; seed: number }> = [
   { name: 'Duke', seed: 1 },
-  { name: 'Houston', seed: 2 },
-  { name: 'Vermont', seed: 15 },
+  { name: 'Houston', seed: 8 },
+  { name: 'Vermont', seed: 9 },
   { name: 'Texas', seed: 16 },
 ];
 const TOURNAMENT_START = '2099-03-19T16:00:00.000Z';
@@ -167,7 +171,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
     await postJson(api, headers, `/api/v1/events/${eventId}/participants/upload`, {
       rows: FIELD.map((team) => ({ playerName: teamName(run, team.name), seedNumber: team.seed })),
     });
-    await postJson(api, headers, `/api/v1/events/${eventId}/tiers/auto-assign`, { tierSize: 1 });
+    await postJson(api, headers, `/api/v1/events/${eventId}/tiers/auto-assign`, {});
     await postJson(api, headers, `/api/v1/events/${eventId}/prices/auto-assign`, STANDARD_PRICING);
 
     const { participants } = await (await expectOk(api.get(`/api/v1/events/${eventId}/participants`, { headers }), 'read the field')).json() as {

@@ -76,7 +76,7 @@ const ROSTER_RULES = {
  * An ACTIVE golf roster contest of `selectionType` on a major that started yesterday, its four
  * golfers each a stroke behind the last (with `tied`, all level), dealt into two tiers. Each team
  * has a lineup: the first team the leading two golfers, the second the trailing two, submitted or,
- * in a quick pick, dealt by its draw. Nothing has settled, so it scores live.
+ * in a sweepstakes, dealt by its draw. Nothing has settled, so it scores live.
  */
 function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?: boolean } = {}): LiveContestSeed {
   return async (seeded, index) => {
@@ -274,7 +274,7 @@ describe("a cup's projection costs the same statements for 2 live contests as fo
     await expectConstantQueries(projectionCase(liveRosterContest(SelectionType.BUDGET_PICK)));
   });
 
-  it('GET a cup projection over live quick pick roster contests: the same statements for 2 contests as for 20 (#1315)', async () => {
+  it('GET a cup projection over live sweepstakes roster contests: the same statements for 2 contests as for 20 (#1315)', async () => {
     await expectConstantQueries(projectionCase(liveRosterContest(SelectionType.RANDOM_DRAW)));
   });
 

@@ -1616,12 +1616,12 @@ describe('ContestService', () => {
       expect(sentMessage.text).not.toContain('Tiebreaker');
     });
 
-    it('sends a quick pick entry its dealt picks with no submit time and no tiebreaker line it never gave', async () => {
+    it('sends a sweepstakes entry its dealt picks with no submit time and no tiebreaker line it never gave', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
         sportEventIds: ['event-1'],
-        name: 'Masters Quick Pick',
+        name: 'Masters Sweepstakes',
         status: ContestStatus.OPEN,
       });
       const mailDelivery = {
@@ -1654,7 +1654,7 @@ describe('ContestService', () => {
 
       await deliverQueuedEmail();
       const sentMessage = mailDelivery.send.mock.calls[0][0];
-      expect(sentMessage.subject).toBe('Your quick picks: Masters Quick Pick');
+      expect(sentMessage.subject).toBe('Your sweepstakes picks: Masters Sweepstakes');
       expect(sentMessage.text).toContain('- Pick 1: Rory McIlroy');
       expect(sentMessage.text).toContain('- Pick 2: Tommy Fleetwood');
       expect(sentMessage.text).not.toContain('Submitted:');
@@ -1666,7 +1666,7 @@ describe('ContestService', () => {
         id: 'contest-1',
         leagueId: 'league-1',
         sportEventIds: ['event-1'],
-        name: 'Masters Quick Pick',
+        name: 'Masters Sweepstakes',
         status: ContestStatus.OPEN,
       });
       const mailDelivery = {

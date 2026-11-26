@@ -21,7 +21,7 @@ function renderCard(entry: string) {
   );
 }
 
-const BRACKET = '/league/OFFICE?sport=football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
+const BRACKET = '/league/OFFICE?sport=football&page=championship-weekend&template=template-nfl-bracket-doubling';
 
 afterEach(() => getEventPageMock.mockReset());
 
@@ -39,14 +39,14 @@ describe('Opens soon card', () => {
   it('offers the setup once the contest has opened', async () => {
     const page = championshipWeekendFixture();
     getEventPageMock.mockResolvedValue({
-      data: { eventPage: { ...page, offers: [offerFixture('nfl-bracket-second-chance-doubling', { isPrimary: true })] } },
+      data: { eventPage: { ...page, offers: [offerFixture('nfl-bracket-doubling', { isPrimary: true })] } },
     });
 
     renderCard(BRACKET);
 
     expect(await screen.findByTestId('league-opens-soon-set-up')).toHaveAttribute(
       'href',
-      '/league/OFFICE/admin/contests/new?template=template-nfl-bracket-second-chance-doubling&event=event-nfl-bracket-second-chance-doubling',
+      '/league/OFFICE/admin/contests/new?template=template-nfl-bracket-doubling&event=event-nfl-bracket-doubling',
     );
   });
 
