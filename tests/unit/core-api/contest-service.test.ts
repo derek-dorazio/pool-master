@@ -368,7 +368,6 @@ function buildGolfFieldView(input: {
   eventScoreToPar: number;
   eventStrokes: number;
   status: string;
-  currentRound?: number;
   currentRoundThru?: number;
   rounds?: Array<{
     round: number;
@@ -405,7 +404,6 @@ function buildGolfFieldView(input: {
     valuation: null,
     standing: {
       standing: {
-        currentRound: input.currentRound ?? 2,
         status: input.status,
         position: undefined,
         displayPosition: undefined,
@@ -1112,7 +1110,6 @@ describe('ContestService', () => {
           eventScoreToPar: -5,
           eventStrokes: 139,
           status: 'IN_PROGRESS',
-          currentRound: 2,
           currentRoundThru: 9,
           rounds: [
             { round: 1, strokes: 69, scoreToPar: -3, thru: null, status: 'COMPLETED' },
@@ -1125,7 +1122,6 @@ describe('ContestService', () => {
           eventScoreToPar: -2,
           eventStrokes: 142,
           status: 'COMPLETE',
-          currentRound: 2,
           currentRoundThru: 18,
         }),
         buildGolfFieldView({

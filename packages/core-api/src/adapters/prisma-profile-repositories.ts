@@ -35,6 +35,7 @@ function toPlatformTierProfile(row: PlatformTierProfileRow): PlatformTierProfile
     id: row.id,
     code: row.code,
     name: row.name,
+    description: row.description,
     sources: row.sources.map(({ basis }) => basis),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -60,6 +61,7 @@ function toPlatformPricingProfile(row: PlatformPricingProfileRow): PlatformPrici
     id: row.id,
     code: row.code,
     name: row.name,
+    description: row.description,
     salaryCap: row.salaryCap,
     unit: row.unit,
     topSharePercent: row.topSharePercent,
@@ -235,7 +237,7 @@ function platformTierProfileData(input: PlatformTierProfileWrite) {
   const equalGroups = input.type === TierProfileType.EQUAL_GROUPS
     ? { tierCount: input.tierCount, tierSize: input.tierSize, lastTier: input.lastTier, lastTierMax: input.lastTierMax }
     : { tierCount: null, tierSize: null, lastTier: null, lastTierMax: null };
-  return { code: input.code, name: input.name, type: input.type, ...equalGroups };
+  return { code: input.code, name: input.name, description: input.description, type: input.type, ...equalGroups };
 }
 
 /** A RANGES profile's ranges as rows; an EQUAL_GROUPS profile has none. */
@@ -249,6 +251,7 @@ function platformPricingProfileData(input: PlatformPricingProfileWrite) {
   return {
     code: input.code,
     name: input.name,
+    description: input.description,
     salaryCap: input.salaryCap,
     unit: input.unit,
     topSharePercent: input.topSharePercent,

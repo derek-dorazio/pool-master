@@ -210,6 +210,5 @@ describe('SDK Functional: Reseeded bracket', () => {
     const standingOf = (seed: number) => expectDefined(standings.find((row) => row.sportEventParticipantId === seedRow(seed)));
     expect([standingOf(5).position, standingOf(5).status]).toEqual([1, ParticipantStandingStatus.COMPLETE]);
     expect([standingOf(1).position, standingOf(1).status]).toEqual([2, ParticipantStandingStatus.ELIMINATED]);
-    expect(standingOf(7).currentRound).toBe(2);
   });
 });

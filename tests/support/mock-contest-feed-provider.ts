@@ -377,11 +377,10 @@ function toProviderParticipant(
     teamAffiliation: contestant.teamName,
     status: toFieldStatus(contestant.participantStatus),
     ranking: contestant.ranking,
+    seed: contestant.seed,
+    odds: typeof contestant.odds === 'number' && eventExternalId !== undefined ? { toWin: contestant.odds, eventExternalId } : undefined,
     metadata: {
-      seed: contestant.seed,
       participantStatus: contestant.participantStatus,
-      odds: contestant.odds,
-      oddsSourceEventId: typeof contestant.odds === 'number' ? eventExternalId : undefined,
       ranking: contestant.ranking,
       score: contestant.score,
       result: contestant.result,

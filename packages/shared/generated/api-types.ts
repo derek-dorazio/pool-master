@@ -14857,6 +14857,7 @@ export interface components {
              * @description ISO 8601 datetime string.
              */
             asOf: string | null;
+            /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
             currentRound: number | null;
             /** @description Present for a golf event with scores; null otherwise. */
             golf: {
@@ -15027,6 +15028,7 @@ export interface components {
                  * @description ISO 8601 datetime string.
                  */
                 asOf: string | null;
+                /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                 currentRound: number | null;
                 /** @description Present for a golf event with scores; null otherwise. */
                 golf: {
@@ -15228,6 +15230,7 @@ export interface components {
                      * @description ISO 8601 datetime string.
                      */
                     asOf: string | null;
+                    /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                     currentRound: number | null;
                     /** @description Present for a golf event with scores; null otherwise. */
                     golf: {
@@ -15463,6 +15466,7 @@ export interface components {
                      * @description ISO 8601 datetime string.
                      */
                     asOf: string | null;
+                    /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                     currentRound: number | null;
                     /** @description Present for a golf event with scores; null otherwise. */
                     golf: {
@@ -16531,6 +16535,7 @@ export interface components {
                      * @description ISO 8601 datetime string.
                      */
                     asOf: string | null;
+                    /** @description The highest round the participant has a score in, read off its rounds; null before it has one, and for a participant scored by match or by finish. */
                     currentRound: number | null;
                     /** @description Present for a golf event with scores; null otherwise. */
                     golf: {
@@ -27701,7 +27706,7 @@ export interface components {
                 lastSignInAt: string | null;
             }[];
         };
-        /** @description A tier profile's code, name, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one. */
+        /** @description A tier profile's code, name, description, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one. */
         PlatformTierProfileWriteRequest: {
             /** @enum {string} */
             type: "EQUAL_GROUPS";
@@ -27718,8 +27723,10 @@ export interface components {
             lastTierMax: number | null;
             /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
             code: string;
-            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
             name: string;
+            /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+            description: string;
             /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
             sources: ("ODDS" | "SEED" | "RANKING")[];
         } | {
@@ -27736,8 +27743,10 @@ export interface components {
             }[];
             /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
             code: string;
-            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
             name: string;
+            /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+            description: string;
             /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
             sources: ("ODDS" | "SEED" | "RANKING")[];
         };
@@ -27758,8 +27767,10 @@ export interface components {
             lastTierMax: number | null;
             /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
             code: string;
-            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
             name: string;
+            /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+            description: string;
             /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
             sources: ("ODDS" | "SEED" | "RANKING")[];
             /** Format: uuid */
@@ -27790,8 +27801,10 @@ export interface components {
             }[];
             /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
             code: string;
-            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
             name: string;
+            /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+            description: string;
             /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
             sources: ("ODDS" | "SEED" | "RANKING")[];
             /** Format: uuid */
@@ -27828,8 +27841,10 @@ export interface components {
                 lastTierMax: number | null;
                 /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
                 code: string;
-                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
                 name: string;
+                /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+                description: string;
                 /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
                 sources: ("ODDS" | "SEED" | "RANKING")[];
                 /** Format: uuid */
@@ -27860,8 +27875,10 @@ export interface components {
                 }[];
                 /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
                 code: string;
-                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
                 name: string;
+                /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+                description: string;
                 /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
                 sources: ("ODDS" | "SEED" | "RANKING")[];
                 /** Format: uuid */
@@ -27899,8 +27916,10 @@ export interface components {
                 lastTierMax: number | null;
                 /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
                 code: string;
-                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
                 name: string;
+                /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+                description: string;
                 /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
                 sources: ("ODDS" | "SEED" | "RANKING")[];
                 /** Format: uuid */
@@ -27931,8 +27950,10 @@ export interface components {
                 }[];
                 /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
                 code: string;
-                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
                 name: string;
+                /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+                description: string;
                 /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
                 sources: ("ODDS" | "SEED" | "RANKING")[];
                 /** Format: uuid */
@@ -27951,7 +27972,7 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description A pricing profile's code, name, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one. */
+        /** @description A pricing profile's code, name, description, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one. */
         PlatformPricingProfileWriteRequest: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
@@ -27963,10 +27984,12 @@ export interface components {
             floorSharePercent: number;
             /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
             steepness: number;
-            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
             name: string;
             /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
             code: string;
+            /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+            description: string;
             /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
             sources: ("ODDS" | "SEED" | "RANKING")[];
         };
@@ -27982,10 +28005,12 @@ export interface components {
             floorSharePercent: number;
             /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
             steepness: number;
-            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
             name: string;
             /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
             code: string;
+            /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+            description: string;
             /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
             sources: ("ODDS" | "SEED" | "RANKING")[];
             /** Format: uuid */
@@ -28017,10 +28042,12 @@ export interface components {
                 floorSharePercent: number;
                 /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                 steepness: number;
-                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
                 name: string;
                 /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
                 code: string;
+                /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+                description: string;
                 /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
                 sources: ("ODDS" | "SEED" | "RANKING")[];
                 /** Format: uuid */
@@ -28053,10 +28080,12 @@ export interface components {
                 floorSharePercent: number;
                 /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                 steepness: number;
-                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                /** @description The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet. */
                 name: string;
                 /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
                 code: string;
+                /** @description Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name). */
+                description: string;
                 /** @description The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once. */
                 sources: ("ODDS" | "SEED" | "RANKING")[];
                 /** Format: uuid */

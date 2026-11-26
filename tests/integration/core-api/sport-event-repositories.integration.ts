@@ -117,7 +117,7 @@ async function createPopulatedEvent() {
     strokes: 70, scoreToPar: -2, thru: 18,
   });
   await golfStandings.upsertMany([{
-    sportEventParticipantId: entry.id, currentRound: 1, status: 'COMPLETE', asOf: new Date(),
+    sportEventParticipantId: entry.id, status: 'COMPLETE', asOf: new Date(),
     eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18,
   }]);
   return { event, entry, golfer };
@@ -772,12 +772,12 @@ describe('Golf extension repositories', () => {
     const { event, entry } = await createPopulatedEvent();
 
     await golfStandings.upsertMany([{
-      sportEventParticipantId: entry.id, currentRound: 2, status: 'IN_PROGRESS', asOf: new Date(),
+      sportEventParticipantId: entry.id, status: 'IN_PROGRESS', asOf: new Date(),
       eventScoreToPar: -5, eventStrokes: 139, currentRoundThru: 9,
     }]);
 
     const [byEvent] = await golfStandings.findBySportEvent(event.id);
-    expect(byEvent).toMatchObject({ standing: { currentRound: 2, status: 'IN_PROGRESS' }, golf: { eventScoreToPar: -5, currentRoundThru: 9 } });
+    expect(byEvent).toMatchObject({ standing: { status: 'IN_PROGRESS' }, golf: { eventScoreToPar: -5, currentRoundThru: 9 } });
     expect(byEvent.golf.standingId).toBe(byEvent.standing.id);
     await expect(golfStandings.findBySportEventParticipants([entry.id])).resolves.toHaveLength(1);
   });
@@ -787,8 +787,8 @@ describe('Golf extension repositories', () => {
     const { entry } = await createPopulatedEvent();
 
     await expect(golfStandings.upsertMany([
-      { sportEventParticipantId: entry.id, currentRound: 2, status: 'IN_PROGRESS', asOf: new Date(), eventScoreToPar: -9, eventStrokes: 135, currentRoundThru: 9 },
-      { sportEventParticipantId: randomUUID(), currentRound: 2, status: 'IN_PROGRESS', asOf: new Date(), eventScoreToPar: 0, eventStrokes: 144, currentRoundThru: 9 },
+      { sportEventParticipantId: entry.id, status: 'IN_PROGRESS', asOf: new Date(), eventScoreToPar: -9, eventStrokes: 135, currentRoundThru: 9 },
+      { sportEventParticipantId: randomUUID(), status: 'IN_PROGRESS', asOf: new Date(), eventScoreToPar: 0, eventStrokes: 144, currentRoundThru: 9 },
     ])).rejects.toBeDefined();
 
     const [standing] = await golfStandings.findBySportEventParticipants([entry.id]);

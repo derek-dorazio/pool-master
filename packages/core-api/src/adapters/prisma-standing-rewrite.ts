@@ -13,7 +13,7 @@ import type { StandingRankWrite } from '@poolmaster/shared/db';
 
 type StandingColumns = Pick<
   Prisma.SportEventParticipantStandingUncheckedCreateInput,
-  'position' | 'displayPosition' | 'status' | 'asOf' | 'currentRound'
+  'position' | 'displayPosition' | 'status' | 'asOf'
 >;
 type GolfStandingColumns = Pick<
   Prisma.SportEventParticipantGolfStandingUncheckedCreateInput,
@@ -104,7 +104,6 @@ async function writeStandings(
         displayPosition: before.displayPosition,
         status: before.status,
         asOf: before.asOf,
-        currentRound: before.currentRound,
       }),
       ...rewrite.standing,
       id,

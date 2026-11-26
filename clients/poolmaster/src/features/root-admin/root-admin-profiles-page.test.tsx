@@ -33,7 +33,7 @@ const RANGES_ID = '00000000-0000-4000-8000-0000000000a3';
 type EqualGroupsProfile = Extract<PlatformTierProfileDto, { type: 'EQUAL_GROUPS' }>;
 
 function platformTierProfile(overrides: Partial<EqualGroupsProfile> = {}): EqualGroupsProfile {
-  return { id: GOLF_ID, type: 'EQUAL_GROUPS', code: 'TIERS_6_OF_10', name: '6 tiers of 10', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, sportLeagueCount: 2, ...STAMPS, ...overrides };
+  return { id: GOLF_ID, type: 'EQUAL_GROUPS', code: 'TIERS_6_OF_10', name: '6 tiers of 10', description: 'Six equal tiers of ten, for a golf field.', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, sportLeagueCount: 2, ...STAMPS, ...overrides };
 }
 
 /** The NFL's seed profile: tier 1 the 1 seeds, tier 2 seeds 2 to 4, tier 3 the rest. */
@@ -43,6 +43,7 @@ function seedRangesProfile(): PlatformTierProfileDto {
     type: 'RANGES',
     code: 'PLAYOFF_SEEDS_1_4_REST',
     name: 'Playoff seeds 1, 2-4, rest',
+    description: 'Three tiers by playoff seed.',
     sources: ['SEED', 'ODDS', 'RANKING'],
     ranges: [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }],
     sportLeagueCount: 0,
@@ -105,7 +106,40 @@ describe('RootAdminProfilesPage', () => {
     expect(within(standard).getByText('$100')).toBeInTheDocument();
   });
 
-  it('opens a tier profile in view with the sport leagues naming it, then Edit saves the whole profile and comes back to the view', async () => {
+  it('shows a seeded tier profile by the name and line its code has, and one added on screen by its own name, with its line not written yet', async () => {
+    seed([platformTierProfile({ id: CAPPED_ID, code: 'TIERS_4_OF_8_CAPPED', name: '4 tiers of 8, capped', tierCount: 4, tierSize: 8, lastTier: 'CAPPED', lastTierMax: 12, sportLeagueCount: 0 }), seedRangesProfile()]);
+    renderPage();
+
+    const seeded = await screen.findByTestId(`root-admin-tier-profile-${RANGES_ID}`);
+    expect(within(seeded).getByText('Playoff seeds 1, 2-4, rest')).toBeInTheDocument();
+    expect(within(seeded).getByText('Playoff seeds: 1, 2-4, 5+')).toBeInTheDocument();
+    const added = screen.getByTestId(`root-admin-tier-profile-${CAPPED_ID}`);
+    expect(within(added).getAllByText('4 tiers of 8, capped')).toHaveLength(2);
+
+    await userEvent.click(seeded);
+    expect(await screen.findByText('Tier 1 is the 1 seeds, tier 2 the 2 to 4 seeds, and tier 3 every other playoff team.')).toBeInTheDocument();
+    expect(screen.getByText('Three tiers by playoff seed.')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-tier-profile-dialog')).not.toBeInTheDocument());
+
+    await userEvent.click(screen.getByTestId(`root-admin-tier-profile-${CAPPED_ID}`));
+    expect(await screen.findByText(/^Not written yet/)).toBeInTheDocument();
+  });
+
+  it('refuses a new pricing profile with no description before it asks the server', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-pricing-profiles-new'));
+    await userEvent.type(await screen.findByTestId('root-admin-pricing-profile-editor-code'), 'BIG');
+    await userEvent.type(screen.getByTestId('root-admin-pricing-profile-editor-name'), 'Big');
+    await userEvent.click(screen.getByTestId('root-admin-pricing-profile-editor-save'));
+
+    expect(await screen.findByText('Say what the profile is for.')).toBeInTheDocument();
+    expect(mocks.createPlatformPricingProfile).not.toHaveBeenCalled();
+  });
+
+  it('opens a tier profile in view with the sport leagues naming it and its description, then Edit saves the whole profile, description included, and comes back to the view', async () => {
     seed();
     mocks.updatePlatformTierProfile.mockResolvedValue({ data: { platformTierProfile: platformTierProfile({ name: '6 tiers of 12', tierSize: 12 }) } });
     renderPage();
@@ -116,7 +150,12 @@ describe('RootAdminProfilesPage', () => {
     expect(within(leagues).getByText('PGA Tour')).toBeInTheDocument();
     expect(within(leagues).queryByText('ATP')).not.toBeInTheDocument();
 
+    expect(screen.getByText('Six equal tiers of ten, for a golf field.')).toBeInTheDocument();
+
     await userEvent.click(screen.getByTestId('root-admin-tier-profile-dialog-edit'));
+    const description = await screen.findByTestId('root-admin-tier-profile-editor-description');
+    await userEvent.clear(description);
+    await userEvent.type(description, 'Six tiers of twelve, for a full golf field.');
     const size = await screen.findByTestId('root-admin-tier-profile-editor-tier-size');
     await userEvent.clear(size);
     await userEvent.type(size, '12');
@@ -127,7 +166,7 @@ describe('RootAdminProfilesPage', () => {
 
     await waitFor(() => expect(mocks.updatePlatformTierProfile).toHaveBeenCalledWith(expect.objectContaining({
       path: { profileId: GOLF_ID },
-      body: { type: 'EQUAL_GROUPS', code: 'TIERS_6_OF_10', name: '6 tiers of 12', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 6, tierSize: 12, lastTier: 'ALL_REMAINING', lastTierMax: null },
+      body: { type: 'EQUAL_GROUPS', code: 'TIERS_6_OF_10', name: '6 tiers of 12', description: 'Six tiers of twelve, for a full golf field.', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 6, tierSize: 12, lastTier: 'ALL_REMAINING', lastTierMax: null },
     })));
     expect(await screen.findByTestId('root-admin-tier-profile-dialog-edit')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-tier-profile-editor-name')).not.toBeInTheDocument();
@@ -146,6 +185,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(await screen.findByTestId('root-admin-tier-profiles-new'));
     await userEvent.type(await screen.findByTestId('root-admin-tier-profile-editor-code'), 'TIERS_5_OF_5_CAPPED');
     await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-name'), '5 of 5, capped');
+    await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-description'), 'Five tiers of five, the last capped.');
     for (const [field, value] of [['tier-count', '5'], ['tier-size', '5']] as const) {
       const input = screen.getByTestId(`root-admin-tier-profile-editor-${field}`);
       await userEvent.clear(input);
@@ -163,7 +203,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-save'));
 
     await waitFor(() => expect(mocks.createPlatformTierProfile).toHaveBeenCalledWith(expect.objectContaining({
-      body: { type: 'EQUAL_GROUPS', code: 'TIERS_5_OF_5_CAPPED', name: '5 of 5, capped', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 5, tierSize: 5, lastTier: 'CAPPED', lastTierMax: 9 },
+      body: { type: 'EQUAL_GROUPS', code: 'TIERS_5_OF_5_CAPPED', name: '5 of 5, capped', description: 'Five tiers of five, the last capped.', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 5, tierSize: 5, lastTier: 'CAPPED', lastTierMax: 9 },
     })));
     expect(await screen.findByTestId('root-admin-tier-profile-dialog-leagues-none')).toBeInTheDocument();
   });
@@ -176,6 +216,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(await screen.findByTestId('root-admin-tier-profiles-new'));
     await userEvent.type(await screen.findByTestId('root-admin-tier-profile-editor-code'), 'PLAYOFF_SEEDS_1_4_REST');
     await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-name'), 'Playoff seeds 1, 2-4, rest');
+    await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-description'), 'Three tiers by playoff seed.');
     await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-sources-SEED-up'));
     await userEvent.selectOptions(screen.getByTestId('root-admin-tier-profile-editor-type'), 'RANGES');
     expect(screen.queryByTestId('root-admin-tier-profile-editor-tier-count')).not.toBeInTheDocument();
@@ -197,6 +238,7 @@ describe('RootAdminProfilesPage', () => {
         type: 'RANGES',
         code: 'PLAYOFF_SEEDS_1_4_REST',
         name: 'Playoff seeds 1, 2-4, rest',
+        description: 'Three tiers by playoff seed.',
         sources: ['SEED', 'ODDS', 'RANKING'],
         ranges: [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }],
       },
@@ -244,6 +286,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(await screen.findByTestId('root-admin-pricing-profiles-new'));
     await userEvent.type(await screen.findByTestId('root-admin-pricing-profile-editor-code'), 'BIG');
     await userEvent.type(screen.getByTestId('root-admin-pricing-profile-editor-name'), 'Big');
+    await userEvent.type(screen.getByTestId('root-admin-pricing-profile-editor-description'), 'Budget prices under a large cap.');
     const cap = screen.getByTestId('root-admin-pricing-profile-editor-salaryCap');
     await userEvent.clear(cap);
     await userEvent.type(cap, '100000');
@@ -258,7 +301,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-pricing-profile-editor-save'));
 
     await waitFor(() => expect(mocks.createPlatformPricingProfile).toHaveBeenCalledWith(expect.objectContaining({
-      body: { code: 'BIG', name: 'Big', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 100000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+      body: { code: 'BIG', name: 'Big', description: 'Budget prices under a large cap.', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 100000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     })));
     expect(await screen.findByTestId('root-admin-pricing-profile-dialog-edit')).toBeInTheDocument();
   });

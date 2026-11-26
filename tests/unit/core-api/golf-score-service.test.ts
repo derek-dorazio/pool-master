@@ -107,7 +107,7 @@ describe('GolfScoreService — apply', () => {
     expect(store.golfRoundRows).toHaveLength(2);
     const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
     expect(standing).toMatchObject({
-      standing: { currentRound: 2, status: 'IN_PROGRESS' },
+      standing: { status: 'IN_PROGRESS' },
       golf: { eventScoreToPar: -6, eventStrokes: 138, currentRoundThru: 9 },
     });
   });

@@ -306,7 +306,7 @@ describe('Entering a race\'s finishing order (#1252)', () => {
       await measure(() => new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).applyResults(event.id, {
         isOfficial: true,
         results: field.map((row, index) => ({ sportEventParticipantId: row.id, finishPosition: index + 1, startPosition: null, resultStatus: RaceResultStatus.FINISHED, riderName: null })),
-        standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.COMPLETE, currentRound: 1, asOf: AS_OF })),
+        standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.COMPLETE, asOf: AS_OF })),
       }));
 
       const rows = await getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { raceResult: true, standing: true } });
@@ -347,7 +347,7 @@ describe('Entering a bracket match\'s result (#1252)', () => {
           gameOne: null,
         },
         sideFill: null,
-        standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, currentRound: 1, asOf: AS_OF })),
+        standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, asOf: AS_OF })),
       }));
 
       const standings = await getPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipantId: { in: field.map((row) => row.id) } } });
@@ -425,7 +425,6 @@ describe('Entering a golf round\'s scores (#1252)', () => {
 
       const written = await measure(() => standings.upsertMany(field.map((row, index) => ({
         sportEventParticipantId: row.id,
-        currentRound: 1,
         status: ParticipantStandingStatus.ACTIVE,
         asOf: AS_OF,
         eventScoreToPar: index - 2,

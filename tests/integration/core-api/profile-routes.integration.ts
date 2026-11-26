@@ -65,17 +65,17 @@ const SEED_RANGES = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 
 
 function tierWrite(name: string, overrides: Partial<EqualGroupsWrite> = {}): EqualGroupsWrite {
   made.platformTierProfileNames.add(name);
-  return { code: codeOf(name), name, type: TierProfileType.EQUAL_GROUPS, sources: ODDS_FIRST, tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, ...overrides };
+  return { code: codeOf(name), name, description: 'A profile for this test.', type: TierProfileType.EQUAL_GROUPS, sources: ODDS_FIRST, tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, ...overrides };
 }
 
 function rangesWrite(name: string, overrides: Partial<RangesWrite> = {}): RangesWrite {
   made.platformTierProfileNames.add(name);
-  return { code: codeOf(name), name, type: TierProfileType.RANGES, sources: SEED_FIRST, ranges: SEED_RANGES, ...overrides };
+  return { code: codeOf(name), name, description: 'A profile for this test.', type: TierProfileType.RANGES, sources: SEED_FIRST, ranges: SEED_RANGES, ...overrides };
 }
 
 function pricingWrite(name: string, overrides: Partial<PlatformPricingProfileWriteRequest> = {}): PlatformPricingProfileWriteRequest {
   made.platformPricingProfileNames.add(name);
-  return { code: codeOf(name), name, sources: ODDS_FIRST, salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...overrides };
+  return { code: codeOf(name), name, description: 'A profile for this test.', sources: ODDS_FIRST, salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...overrides };
 }
 
 /** The rows a source list is stored as, for a seed written straight to the database. */
@@ -159,6 +159,22 @@ describe('Contract verification (tier and pricing profiles)', () => {
     const { platformTierProfile } = PlatformTierProfileResponseSchema.parse(created.json());
     expect(platformTierProfile).toMatchObject({ name, type: 'RANGES', sources: SEED_FIRST, ranges: SEED_RANGES });
     expect(okBody(await get(`/api/v1/tier-profiles/${platformTierProfile.id}`, rootAdmin), PlatformTierProfileResponseSchema).platformTierProfile).toMatchObject({ ranges: SEED_RANGES });
+  });
+
+  it('refuses (400) a tier or pricing profile write with no description, or a blank one, writing nothing (#2194)', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Description Refusals Admin', isRootAdmin: true });
+    const tierName = `No description ${randomUUID().slice(0, 8)}`;
+    const pricingName = `Blank description ${randomUUID().slice(0, 8)}`;
+    const withoutDescription = { ...tierWrite(tierName), description: undefined };
+
+    const responses = [
+      await send('POST', '/api/v1/tier-profiles/', rootAdmin, withoutDescription),
+      await send('POST', '/api/v1/pricing-profiles/', rootAdmin, pricingWrite(pricingName, { description: '   ' })),
+    ];
+
+    expect(responses.map((response) => response.statusCode)).toEqual([400, 400]);
+    await expect(getPrisma().platformTierProfile.count({ where: { name: tierName } })).resolves.toBe(0);
+    await expect(getPrisma().platformPricingProfile.count({ where: { name: pricingName } })).resolves.toBe(0);
   });
 
   it('refuses (422 PLATFORM_TIER_PROFILE_INVALID) a ranges profile ordered by odds first, or with a gap between tiers, writing nothing', async () => {
@@ -273,7 +289,7 @@ async function seedProfiles(kind: 'tier' | 'pricing', rows: number) {
       // Every other profile is ranges, so the list reads both layouts' rows however many there are.
       const { sources, ...write } = index % 2 === 0 ? tierWrite(name) : rangesWrite(name);
       const data = write.type === TierProfileType.RANGES
-        ? { code: write.code, name: write.name, type: write.type, sources: sourceRows(sources), ranges: { create: write.ranges } }
+        ? { code: write.code, name: write.name, description: write.description, type: write.type, sources: sourceRows(sources), ranges: { create: write.ranges } }
         : { ...write, sources: sourceRows(sources) };
       const profile = await prisma.platformTierProfile.create({ data });
       lastSeed.platformTierProfileIds.push(profile.id);
@@ -315,7 +331,7 @@ describe('one profile costs the same statements whatever rows it holds', () => {
       ranges: Array.from({ length: rows }, (_, index) => ({ tierNumber: index + 1, fromValue: index + 1, toValue: index === rows - 1 ? null : index + 1 })),
     });
     const profile = await getPrisma().platformTierProfile.create({
-      data: { code: write.code, name: write.name, type: write.type, sources: sourceRows(sources), ranges: { create: write.ranges } },
+      data: { code: write.code, name: write.name, description: write.description, type: write.type, sources: sourceRows(sources), ranges: { create: write.ranges } },
     });
     return { profileId: profile.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
   }

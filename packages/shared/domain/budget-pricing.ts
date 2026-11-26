@@ -58,6 +58,8 @@ export type EventPricingConfig = z.infer<typeof EventPricingConfigSchema>;
 export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfile {
   /** The profile's key: what migrations, seed scripts and test data find it by, never its name. */
   code: string;
+  /** Plain English for agents and root admins: what the profile is and why it exists (#2194). Not shown to commissioners or members, who read the display strings keyed by `code`. */
+  description: string;
   /** The values the field is ordered by before it is priced, first deciding (#2160). */
   sources: FieldOrderBasis[];
 }

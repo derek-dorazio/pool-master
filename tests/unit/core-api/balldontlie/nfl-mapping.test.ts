@@ -196,7 +196,7 @@ describe('NFL postseason bracket', () => {
   };
 
   it('seeds each conference\'s top seven from the standings, AFC first and best seed first, and leaves out the eighth', () => {
-    expect(field.map((participant) => [participant.metadata['abbreviation'], participant.metadata.seed])).toEqual([
+    expect(field.map((participant) => [participant.metadata['abbreviation'], participant.seed])).toEqual([
       ['KC', 1], ['BUF', 2], ['BAL', 3], ['HOU', 4], ['LAC', 5], ['PIT', 6], ['DEN', 7],
       ['DET', 1], ['PHI', 2], ['TB', 3], ['LAR', 4], ['MIN', 5], ['WAS', 6], ['GB', 7],
     ]);
@@ -243,7 +243,7 @@ describe('NFL postseason bracket', () => {
   });
 
   it('lays out no bracket until both conferences have their seven seeds', () => {
-    expect(toNflPlayoffBracket(field.filter((participant) => participant.metadata.seed !== 7 || participant.metadata['conference'] !== 'NFC'), games)).toBeNull();
+    expect(toNflPlayoffBracket(field.filter((participant) => participant.seed !== 7 || participant.metadata['conference'] !== 'NFC'), games)).toBeNull();
     expect(toNflPlayoffBracket([], games)).toBeNull();
   });
 });

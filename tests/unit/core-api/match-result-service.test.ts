@@ -288,9 +288,9 @@ describe('MatchResultService.recordResult', () => {
 
     await context.service.recordResult(context.event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
 
-    expect(context.standingOf(context.duke.id)).toMatchObject({ position: 1, displayPosition: '1', status: ParticipantStandingStatus.ACTIVE, currentRound: 2, asOf: AS_OF });
-    expect(context.standingOf(context.houston.id)).toMatchObject({ position: 2, displayPosition: 'T2', status: ParticipantStandingStatus.ACTIVE, currentRound: 1 });
-    expect(context.standingOf(context.vermont.id)).toMatchObject({ position: 4, displayPosition: '4', status: ParticipantStandingStatus.ELIMINATED, currentRound: 1 });
+    expect(context.standingOf(context.duke.id)).toMatchObject({ position: 1, displayPosition: '1', status: ParticipantStandingStatus.ACTIVE, asOf: AS_OF });
+    expect(context.standingOf(context.houston.id)).toMatchObject({ position: 2, displayPosition: 'T2', status: ParticipantStandingStatus.ACTIVE });
+    expect(context.standingOf(context.vermont.id)).toMatchObject({ position: 4, displayPosition: '4', status: ParticipantStandingStatus.ELIMINATED });
   });
 
   it('ranks the champion first, the runner-up second and the teams out in the first round tied below them', async () => {
@@ -797,10 +797,10 @@ describe('MatchResultService on a week of games that form no bracket', () => {
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
 
     for (const team of [bills, jets]) {
-      expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.COMPLETE, currentRound: 1 });
+      expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.COMPLETE });
     }
     for (const team of [chiefs, raiders]) {
-      expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.ACTIVE, currentRound: 1 });
+      expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.ACTIVE });
     }
   });
 
@@ -905,8 +905,8 @@ describe('MatchResultService on a reseeded bracket', () => {
     await service.recordResult(event.id, placeOf(1), awayWins);
 
     expect([homeAwayOf(matchOf(3)).awaySportEventParticipantId, homeAwayOf(matchOf(4)).awaySportEventParticipantId]).toEqual([null, null]);
-    expect(standingOf(six.id)).toMatchObject({ status: ParticipantStandingStatus.ACTIVE, currentRound: 2 });
-    expect(standingOf(three.id)).toMatchObject({ status: ParticipantStandingStatus.ELIMINATED, currentRound: 1 });
+    expect(standingOf(six.id)).toMatchObject({ status: ParticipantStandingStatus.ACTIVE });
+    expect(standingOf(three.id)).toMatchObject({ status: ParticipantStandingStatus.ELIMINATED });
   });
 
   it('swaps the placed team when a first-round winner changes before the next round is played', async () => {

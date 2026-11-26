@@ -536,7 +536,6 @@ async function createSettlementParticipant(input: {
   await prisma.sportEventParticipantStanding.create({
     data: {
       sportEventParticipantId: sportEventParticipant.id,
-      currentRound: 4,
       status: input.status ?? 'COMPLETE',
       asOf: new Date('2026-05-31T22:00:00.000Z'),
       golf: {

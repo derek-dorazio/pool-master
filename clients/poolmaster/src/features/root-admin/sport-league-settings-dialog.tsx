@@ -15,7 +15,7 @@ import {
   showToast,
   type Fact,
 } from '@/features/shared/ui';
-import { displayString } from '@poolmaster/shared/display-strings';
+import { displayString, profileWords } from '@poolmaster/shared/display-strings';
 import { extractErrorMessage, hasErrorCode } from '@/lib/errors';
 import { usePlatformPricingProfilesQuery, usePlatformTierProfilesQuery } from './use-profiles';
 import { useProvidersQuery } from './use-providers-query';
@@ -127,9 +127,11 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
   const selected = sportLeague.selectedProviderMapping;
   const selectedLabel = selected === null ? 'No provider' : `${selected.providerName} · ${selected.providerLeagueName}`;
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const platformTierProfileName = platformTierProfilesQuery.data?.find((profile) => profile.id === sportLeague.platformTierProfileId)?.name ?? '…';
+  const platformTierProfile = platformTierProfilesQuery.data?.find((profile) => profile.id === sportLeague.platformTierProfileId);
+  const platformTierProfileName = platformTierProfile ? profileWords('tierProfile', platformTierProfile).name : '…';
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const platformPricingProfileName = platformPricingProfilesQuery.data?.find((profile) => profile.id === sportLeague.platformPricingProfileId)?.name ?? '…';
+  const platformPricingProfile = platformPricingProfilesQuery.data?.find((profile) => profile.id === sportLeague.platformPricingProfileId);
+  const platformPricingProfileName = platformPricingProfile ? profileWords('pricingProfile', platformPricingProfile).name : '…';
 
   const facts: Fact[] = [
     { id: 'status', label: 'Status', value: sportLeague.isActive ? 'On' : 'Off', testId: 'root-admin-sport-league-settings-status' },
@@ -200,7 +202,7 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
               ? <option value={current.platformTierProfileId}>{platformTierProfileName}</option>
               : null}
             {(platformTierProfilesQuery.data ?? []).map((profile) => (
-              <option key={profile.id} value={profile.id}>{profile.name}</option>
+              <option key={profile.id} value={profile.id}>{profileWords('tierProfile', profile).name}</option>
             ))}
           </Select>
         </FormField>
@@ -210,7 +212,7 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
               ? <option value={current.platformPricingProfileId}>{platformPricingProfileName}</option>
               : null}
             {(platformPricingProfilesQuery.data ?? []).map((profile) => (
-              <option key={profile.id} value={profile.id}>{profile.name}</option>
+              <option key={profile.id} value={profile.id}>{profileWords('pricingProfile', profile).name}</option>
             ))}
           </Select>
         </FormField>

@@ -110,14 +110,14 @@ describe('NCAA men\'s basketball teams', () => {
 
   it('lists the bracket\'s decided teams once each, each with its seed, the First Four\'s two teams among them', () => {
     const field = toNcaaFieldParticipants(NCAA_MEN, bracket2025);
-    expect(field.map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-      ['251', 'Texas Longhorns', { seed: 11 }],
-      ['152', 'NC State Wolfpack', { seed: 11 }],
-      ['150', 'Duke Blue Devils', { seed: 1 }],
-      ['2561', 'Siena Saints', { seed: 16 }],
-      ['194', 'Ohio State Buckeyes', { seed: 8 }],
-      ['2628', 'TCU Horned Frogs', { seed: 9 }],
-      ['57', 'Florida Gators', { seed: 1 }],
+    expect(field.map((team) => [team.externalId, team.name, team.seed])).toEqual([
+      ['251', 'Texas Longhorns', 11],
+      ['152', 'NC State Wolfpack', 11],
+      ['150', 'Duke Blue Devils', 1],
+      ['2561', 'Siena Saints', 16],
+      ['194', 'Ohio State Buckeyes', 8],
+      ['2628', 'TCU Horned Frogs', 9],
+      ['57', 'Florida Gators', 1],
     ]);
   });
 
@@ -133,8 +133,8 @@ describe('NCAA men\'s basketball teams', () => {
 
   it('names no team for a side still to be decided, and takes the short name or no seed when that is all the bracket gives', () => {
     const tbdGame: NcaaBracketGame = { ...halfDecided2026, home_team: { id: 9, name: 'Wildcats', full_name: null, seed: null } };
-    expect(toNcaaFieldParticipants(NCAA_MEN, [tbdGame, championship2026]).map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-      ['9', 'Wildcats', {}],
+    expect(toNcaaFieldParticipants(NCAA_MEN, [tbdGame, championship2026]).map((team) => [team.externalId, team.name, team.seed])).toEqual([
+      ['9', 'Wildcats', undefined],
     ]);
   });
 
@@ -203,14 +203,14 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
   });
 
   it('lists the round 0 First Four\'s teams in the field with every round 1 team, each with its seed', () => {
-    expect(toNcaaFieldParticipants(NCAA_WOMEN, womens2025).map((team) => [team.externalId, team.metadata])).toEqual([
-      ['2390', { seed: 16 }],
-      ['2569', { seed: 16 }],
-      ['41', { seed: 1 }],
-      ['2636', { seed: 16 }],
-      ['150', { seed: 3 }],
-      ['2655', { seed: 14 }],
-      ['2579', { seed: 1 }],
+    expect(toNcaaFieldParticipants(NCAA_WOMEN, womens2025).map((team) => [team.externalId, team.seed])).toEqual([
+      ['2390', 16],
+      ['2569', 16],
+      ['41', 1],
+      ['2636', 16],
+      ['150', 3],
+      ['2655', 14],
+      ['2579', 1],
     ]);
   });
 
