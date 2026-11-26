@@ -1178,19 +1178,18 @@ export class InMemorySportEvents {
         this.gameMappings = this.gameMappings.filter((mapping) => !goneGames.has(mapping.sportEventRoundMatchGameId));
         this.matchRows = [
           ...this.matchRows.filter((row) => row.sportEventId !== sportEventId),
-          ...matches.map(({ sides, ...match }) => {
+          ...matches.map(({ sides, isNeutralSite, ...match }) => {
             const stored = sides.map((side) => ({ id: `${match.id}-s${String(side.sideNumber)}`, sideNumber: side.sideNumber, sportEventParticipantId: side.sportEventParticipantId, spread: null, outcome: MatchSideOutcome.PENDING }));
             return stamp({
               ...match,
               sportEventId,
               slot: roundOf(match.roundNumber).slot,
-              completedAt: null,
               status: MatchStatus.SCHEDULED,
               ending: MatchEnding.PLAYED,
               sides: stored,
               games: [stamp({
                 id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${String(match.roundNumber)}`, gameNumber: 1,
-                scheduledDate: match.scheduledDate, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
+                scheduledDate: match.scheduledDate, isNeutralSite, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
                 sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, periodScores: [] })),
               })],
             });
@@ -1208,12 +1207,13 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(jobs ?? []));
         for (const { id, sides } of matches) setTeams(requireRow(id), sides);
       },
-      update: async (id, { sides = [], spread, gameOneHomeAway = [], ...patch }, jobs) => {
+      update: async (id, { sides = [], spread, gameOneHomeAway = [], isNeutralSite, ...patch }, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
         const row = requireRow(id);
         Object.assign(row, patch);
         setTeams(row, sides);
         if (spread !== undefined) row.sides = row.sides.map((side) => (side.sideNumber === 1 ? { ...side, spread } : side));
+        row.games = row.games.map((game) => ({ ...game, isNeutralSite: isNeutralSite ?? game.isNeutralSite }));
         row.games = row.games.map((game) => (game.gameNumber !== 1 ? game : {
           ...game,
           sideResults: game.sideResults.map((result) => ({ ...result, homeAway: gameOneHomeAway.find((each) => each.sideNumber === result.sideNumber)?.homeAway ?? result.homeAway })),
@@ -1221,14 +1221,14 @@ export class InMemorySportEvents {
       },
       applyResult: async ({ result, sideFill, standings, jobs }) => {
         this.backgroundJobs.push(...(jobs ?? []));
-        const { id, outcomes, gameOne, ...values } = result;
+        const { id, outcomes, gameOne, completedAt, ...values } = result;
         const row = requireRow(id);
         Object.assign(row, values);
         row.sides = row.sides.map((side) => ({ ...side, outcome: outcomes.find((each) => each.sideNumber === side.sideNumber)?.outcome ?? side.outcome }));
         if (gameOne !== null) {
           const game = row.games.find((each) => each.id === gameOne.gameId);
           if (!game) throw new Error('unknown game');
-          this.putGame(row, withSideScores(row, { ...game, status: values.status, completedAt: values.completedAt }, gameOne.scores));
+          this.putGame(row, withSideScores(row, { ...game, status: values.status, completedAt }, gameOne.scores));
         }
         if (sideFill) setTeams(requireRow(sideFill.id), [sideFill]);
         for (const { sportEventParticipantId, ...standing } of standings) {

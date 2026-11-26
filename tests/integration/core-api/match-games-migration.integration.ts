@@ -87,11 +87,12 @@ async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[]
     await tx.$executeRawUnsafe('ALTER TABLE "sport_event_slots" DROP CONSTRAINT "sport_event_slots_tiebreaker_game_id_fkey"');
     // The tables as they were before the migration: first the match sides migration (#2046) taken
     // back as far as this one needs: its side results gone with the Games, its sides no longer tied
-    // to the match key this migration replaces, and the match's result columns back.
+    // to the match key this migration replaces, and the match's result columns back, with where it
+    // was played and when it finished, which a later migration (#2047) moved onto its Games.
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_side_result_period_scores"');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_side_results"');
     await tx.$executeRawUnsafe('CREATE TYPE "PrismaMatchSide" AS ENUM (\'HOME\', \'AWAY\')');
-    await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "winner_side" "PrismaMatchSide", ADD COLUMN "home_score" INTEGER, ADD COLUMN "away_score" INTEGER');
+    await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "winner_side" "PrismaMatchSide", ADD COLUMN "home_score" INTEGER, ADD COLUMN "away_score" INTEGER, ADD COLUMN "is_neutral_site" BOOLEAN NOT NULL DEFAULT false, ADD COLUMN "completed_at" TIMESTAMPTZ');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_provider_mappings"');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_games"');
     await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_match_sides" DROP CONSTRAINT "sport_event_round_match_sides_match_fkey"');

@@ -41,6 +41,7 @@ import {
   type SportEvent,
   type SportEventRound,
   requireProviderCodeOfSourceId,
+  latestParticipantRound,
 } from '@poolmaster/shared/domain';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core/sync-write-diagnostics';
 import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from '../ingestion/core/sync-write-diagnostics';
@@ -371,10 +372,8 @@ export class GolfScoreService {
 
     const plans = sportEventParticipantIds.flatMap((sportEventParticipantId) => {
       const entryRounds = roundsByEntry.get(sportEventParticipantId) ?? [];
-      if (entryRounds.length === 0) return [];
-      const current = entryRounds.reduce((latest, result) => (
-        result.participantRound.roundNumber > latest.participantRound.roundNumber ? result : latest
-      ));
+      const current = latestParticipantRound(entryRounds, (result) => result.participantRound);
+      if (current === null) return [];
       const eventScoreToPar = entryRounds.reduce((sum, result) => sum + result.golf.scoreToPar, 0);
       const eventStrokes = entryRounds.reduce((sum, result) => sum + result.golf.strokes, 0);
       // A completed round with no thru reported was played through every hole its slot gives it.

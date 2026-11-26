@@ -3,7 +3,7 @@ import { withHomeAway, homeAwayOf } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { compareMatchPlaces, isAtPlace, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status, HomeAway } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, isAtPlace, matchIsNeutralSite, MatchSide, MatchStatus, SlotKind, SlotPairing, Sport, SportEventStatus, type SportEventStatus as Status, HomeAway } from '@poolmaster/shared/domain';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
@@ -122,6 +122,22 @@ describe('ProviderGameSlateService', () => {
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [...WEEK].reverse() }))
       .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
     expect((await store.matchRepo().findBySportEvent(event.id)).map((match) => match.id)).toEqual(idsBefore);
+  });
+
+  it('writes nothing again for a neutral-site draft whose match already has its Game 2, which took Game 1\'s neutral site', async () => {
+    const { service, event, store } = setup();
+    const neutralWeek = WEEK.map((each) => ({ ...each, isNeutralSite: true }));
+    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek });
+    const [first] = await store.matchRepo().findBySportEvent(event.id);
+    const gameOne = expectDefined(first.games.find((each) => each.gameNumber === 1));
+    await store.gameRepo().applySync({
+      providerCode: 'BALLDONTLIE',
+      created: [{ id: 'game-two', sportEventId: event.id, sportEventRoundMatchId: first.id, sportEventSlotId: gameOne.sportEventSlotId, gameNumber: 2, isNeutralSite: gameOne.isNeutralSite }],
+      mapped: [], moved: [], scores: [],
+    });
+
+    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek }))
+      .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
   });
 
   it('moves only the kickoff on a draft whose pairings are unchanged, keeping every match and the admin\'s spreads', async () => {
@@ -396,7 +412,8 @@ describe('ProviderGameSlateService', () => {
       const at = (roundNumber: number, matchNumber: number) => store.matchRows.find((match) => isAtPlace(match, { roundNumber, matchNumber }));
       expect(at(2, 1)?.advancesToMatchId).toBe(at(3, 1)?.id);
       expect(homeAwayOf(expectDefined(at(2, 2))).advancesToSide).toBe(MatchSide.AWAY);
-      expect(at(3, 1)).toMatchObject({ isNeutralSite: true, regionLabel: null });
+      expect(at(3, 1)).toMatchObject({ regionLabel: null });
+      expect(matchIsNeutralSite(expectDefined(at(3, 1)))).toBe(true);
       expect(at(1, 1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });
 

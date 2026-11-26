@@ -233,7 +233,7 @@ describe('EntryReceipts', () => {
       againstTheSpread: true,
       tiebreakerMatchId: 'game-9',
       tiebreakerValue: 38,
-      games: [{ ...neutral, match: { ...neutral.match, isNeutralSite: true } }, undecided],
+      games: [{ ...neutral, match: { ...neutral.match, games: neutral.match.games.map((game) => ({ ...game, isNeutralSite: true })) } }, undecided],
     }));
 
     const text = textTo(owners[0].id);
