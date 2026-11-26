@@ -17528,6 +17528,34 @@
         "additionalProperties": false,
         "description": "Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server."
       },
+      "SlotPeriodsDto": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "string",
+            "enum": [
+              "QUARTER",
+              "HALF",
+              "PERIOD",
+              "INNING",
+              "HOLE"
+            ],
+            "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+          }
+        },
+        "required": [
+          "unit",
+          "count"
+        ],
+        "additionalProperties": false,
+        "description": "What a game of a slot is played in (#2047), from its slot definition."
+      },
       "SportEventRoundSlotDto": {
         "type": "object",
         "properties": {
@@ -17567,13 +17595,45 @@
             ],
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "periods": {
+            "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "QUARTER",
+                  "HALF",
+                  "PERIOD",
+                  "INNING",
+                  "HOLE"
+                ],
+                "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+              }
+            },
+            "required": [
+              "unit",
+              "count"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "seasonSlotId",
           "name",
           "slotKind",
-          "weekNumber"
+          "weekNumber",
+          "periods"
         ],
         "additionalProperties": false,
         "description": "The slot a round is played in (#2006): what the round is called, and whether it is the final."
@@ -17634,13 +17694,45 @@
                 ],
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
+              },
+              "periods": {
+                "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "QUARTER",
+                      "HALF",
+                      "PERIOD",
+                      "INNING",
+                      "HOLE"
+                    ],
+                    "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                  }
+                },
+                "required": [
+                  "unit",
+                  "count"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
               "seasonSlotId",
               "name",
               "slotKind",
-              "weekNumber"
+              "weekNumber",
+              "periods"
             ],
             "additionalProperties": false,
             "description": "The slot the match's round is played in: the round's label and whether the match is the final."
@@ -17935,13 +18027,45 @@
                       ],
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "periods": {
+                      "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "QUARTER",
+                            "HALF",
+                            "PERIOD",
+                            "INNING",
+                            "HOLE"
+                          ],
+                          "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                        }
+                      },
+                      "required": [
+                        "unit",
+                        "count"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
                     "seasonSlotId",
                     "name",
                     "slotKind",
-                    "weekNumber"
+                    "weekNumber",
+                    "periods"
                   ],
                   "additionalProperties": false,
                   "description": "The slot the match's round is played in: the round's label and whether the match is the final."
@@ -18243,13 +18367,45 @@
                     ],
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
+                  },
+                  "periods": {
+                    "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "QUARTER",
+                          "HALF",
+                          "PERIOD",
+                          "INNING",
+                          "HOLE"
+                        ],
+                        "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                      },
+                      "count": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "count"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
                   "seasonSlotId",
                   "name",
                   "slotKind",
-                  "weekNumber"
+                  "weekNumber",
+                  "periods"
                 ],
                 "additionalProperties": false,
                 "description": "The slot the match's round is played in: the round's label and whether the match is the final."
@@ -20181,19 +20337,6 @@
             "format": "uuid",
             "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
           },
-          "matchPeriodLayout": {
-            "description": "The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "QUARTERS",
-              "HALVES",
-              "THREE_PERIODS",
-              null
-            ]
-          },
           "squaresFromRound": {
             "description": "The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.",
             "type": [
@@ -20280,7 +20423,6 @@
           "autoReleaseDaysBeforeStart",
           "platformTierProfileId",
           "platformPricingProfileId",
-          "matchPeriodLayout",
           "squaresFromRound",
           "noun",
           "participantType",
@@ -20495,19 +20637,6 @@
                   "format": "uuid",
                   "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
                 },
-                "matchPeriodLayout": {
-                  "description": "The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "QUARTERS",
-                    "HALVES",
-                    "THREE_PERIODS",
-                    null
-                  ]
-                },
                 "squaresFromRound": {
                   "description": "The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.",
                   "type": [
@@ -20594,7 +20723,6 @@
                 "autoReleaseDaysBeforeStart",
                 "platformTierProfileId",
                 "platformPricingProfileId",
-                "matchPeriodLayout",
                 "squaresFromRound",
                 "noun",
                 "participantType",
@@ -20777,19 +20905,6 @@
                 "format": "uuid",
                 "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
               },
-              "matchPeriodLayout": {
-                "description": "The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "QUARTERS",
-                  "HALVES",
-                  "THREE_PERIODS",
-                  null
-                ]
-              },
               "squaresFromRound": {
                 "description": "The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.",
                 "type": [
@@ -20876,7 +20991,6 @@
               "autoReleaseDaysBeforeStart",
               "platformTierProfileId",
               "platformPricingProfileId",
-              "matchPeriodLayout",
               "squaresFromRound",
               "noun",
               "participantType",
@@ -31210,13 +31324,45 @@
                 ],
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
+              },
+              "periods": {
+                "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "QUARTER",
+                      "HALF",
+                      "PERIOD",
+                      "INNING",
+                      "HOLE"
+                    ],
+                    "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                  }
+                },
+                "required": [
+                  "unit",
+                  "count"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
               "seasonSlotId",
               "name",
               "slotKind",
-              "weekNumber"
+              "weekNumber",
+              "periods"
             ],
             "additionalProperties": false,
             "description": "The slot the round is played in: its label and whether it is the final."
@@ -31332,13 +31478,45 @@
                       ],
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "periods": {
+                      "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "QUARTER",
+                            "HALF",
+                            "PERIOD",
+                            "INNING",
+                            "HOLE"
+                          ],
+                          "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                        }
+                      },
+                      "required": [
+                        "unit",
+                        "count"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
                     "seasonSlotId",
                     "name",
                     "slotKind",
-                    "weekNumber"
+                    "weekNumber",
+                    "periods"
                   ],
                   "additionalProperties": false,
                   "description": "The slot the round is played in: its label and whether it is the final."
@@ -41124,13 +41302,45 @@
                       ],
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "periods": {
+                      "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "QUARTER",
+                            "HALF",
+                            "PERIOD",
+                            "INNING",
+                            "HOLE"
+                          ],
+                          "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                        }
+                      },
+                      "required": [
+                        "unit",
+                        "count"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
                     "seasonSlotId",
                     "name",
                     "slotKind",
-                    "weekNumber"
+                    "weekNumber",
+                    "periods"
                   ],
                   "additionalProperties": false,
                   "description": "The slot the game's round is played in: the round's label."
@@ -42038,13 +42248,45 @@
                       ],
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "periods": {
+                      "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "QUARTER",
+                            "HALF",
+                            "PERIOD",
+                            "INNING",
+                            "HOLE"
+                          ],
+                          "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                        }
+                      },
+                      "required": [
+                        "unit",
+                        "count"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
                     "seasonSlotId",
                     "name",
                     "slotKind",
-                    "weekNumber"
+                    "weekNumber",
+                    "periods"
                   ],
                   "additionalProperties": false,
                   "description": "The slot the game's round is played in: the round's label."
@@ -52102,10 +52344,10 @@
                   "maximum": 9007199254740991
                 },
                 "thru": {
-                  "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored.",
+                  "description": "Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored.",
                   "type": "integer",
                   "minimum": 0,
-                  "maximum": 18
+                  "maximum": 9007199254740991
                 },
                 "status": {
                   "type": "string",
@@ -52173,10 +52415,10 @@
                       "maximum": 9007199254740991
                     },
                     "thru": {
-                      "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored.",
+                      "description": "Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored.",
                       "type": "integer",
                       "minimum": 0,
-                      "maximum": 18
+                      "maximum": 9007199254740991
                     },
                     "status": {
                       "type": "string",
@@ -52395,13 +52637,13 @@
             "maximum": 9007199254740991
           },
           "thru": {
-            "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started.",
+            "description": "Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. Null clears it, for a golfer who has not started.",
             "type": [
               "integer",
               "null"
             ],
             "minimum": 0,
-            "maximum": 18
+            "maximum": 9007199254740991
           },
           "status": {
             "type": "string",
@@ -53002,14 +53244,33 @@
             "maximum": 100,
             "description": "How many boxes one entry may claim."
           },
-          "periodLayout": {
-            "type": "string",
-            "enum": [
-              "QUARTERS",
-              "HALVES",
-              "THREE_PERIODS"
+          "periods": {
+            "type": "object",
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "QUARTER",
+                  "HALF",
+                  "PERIOD",
+                  "INNING",
+                  "HOLE"
+                ],
+                "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+              }
+            },
+            "required": [
+              "unit",
+              "count"
             ],
-            "description": "The periods the game is played in, its sport league's (QUARTERS, or HALVES for men's college basketball): a scoring moment ends each period, the last being the final score."
+            "additionalProperties": false,
+            "description": "The periods the game is played in, its slot's (four quarters, or two halves in men's college basketball): a scoring moment ends each period, the last being the final score."
           },
           "game": {
             "type": "object",
@@ -53067,13 +53328,45 @@
                     ],
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
+                  },
+                  "periods": {
+                    "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "QUARTER",
+                          "HALF",
+                          "PERIOD",
+                          "INNING",
+                          "HOLE"
+                        ],
+                        "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                      },
+                      "count": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "count"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
                   "seasonSlotId",
                   "name",
                   "slotKind",
-                  "weekNumber"
+                  "weekNumber",
+                  "periods"
                 ],
                 "additionalProperties": false,
                 "description": "The slot the match's round is played in: the round's label and whether the match is the final."
@@ -53527,7 +53820,7 @@
           "contestId",
           "contestStatus",
           "maxSquaresPerEntry",
-          "periodLayout",
+          "periods",
           "game",
           "homeTeamName",
           "awayTeamName",
@@ -86923,7 +87216,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.",
+        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_THRU_BEYOND_HOLES when a row's holes completed are more than the round has (its slot's period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -87035,7 +87328,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.",
+        "description": "Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_THRU_BEYOND_HOLES when thru is more than the round's holes (its slot's period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {

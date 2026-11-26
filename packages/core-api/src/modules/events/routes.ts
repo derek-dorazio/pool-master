@@ -520,7 +520,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Apply a round of golf scores',
-      description: `${TEST_EVENT_ONLY} ` + 'All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.',
+      description: `${TEST_EVENT_ONLY} ` + 'All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_THRU_BEYOND_HOLES when a row\'s holes completed are more than the round has (its slot\'s period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.',
       operationId: 'applyEventGolfRoundScores',
       params: ROUND_PARAMS,
       body: schemaRef('GolfRoundScoreUploadRequest'),
@@ -534,7 +534,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Correct one golfer\'s round',
-      description: `${TEST_EVENT_ONLY} ` + 'Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.',
+      description: `${TEST_EVENT_ONLY} ` + 'Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_THRU_BEYOND_HOLES when thru is more than the round\'s holes (its slot\'s period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event\'s scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event\'s sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.',
       operationId: 'updateEventParticipantGolfRoundScore',
       params: {
         type: 'object',

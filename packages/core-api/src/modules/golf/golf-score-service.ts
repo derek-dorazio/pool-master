@@ -9,9 +9,10 @@
  * event's field with the shared participant-row resolver, the same precedence a sport
  * league's ranking upload uses (#236; each had its own copy before).
  *
- * Nothing is scored after the 18th hole of the event's last scheduled round (#375): a round
- * above `SportEvent.rounds` is skipped by sync and refused to an admin, and a sync update
- * past hole 18 is skipped. Golf playoff holes are not a round and never count toward a score.
+ * Nothing is scored after the last hole of the event's last scheduled round (#375): a round
+ * above `SportEvent.rounds` is skipped by sync and refused to an admin, and a sync update past
+ * the round's last hole (its slot's period count, #2047) is skipped. Golf playoff holes are not a
+ * round and never count toward a score.
  *
  * Every write goes through the golf extension ports, which write a core row and its golf
  * row together (#235 split them). This service keeps its golf name: it writes golf rows.
@@ -38,6 +39,7 @@ import {
   type GolfRoundResult,
   type GolfStandingResult,
   type SportEvent,
+  type SportEventRound,
   requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core/sync-write-diagnostics';
@@ -56,9 +58,6 @@ export class GolfScoreError extends Error {
     this.name = 'GolfScoreError';
   }
 }
-
-/** A golf round is 18 holes; anything past it is a playoff, which is never scored (#118, #375). */
-export const GOLF_HOLES_PER_ROUND = 18;
 
 export interface GolfRoundPersistenceResult {
   updatesReturned: number;
@@ -158,8 +157,8 @@ export class GolfScoreService {
         'Skipping golf round update(s) for round(s) beyond the event\'s scheduled rounds',
       );
     }
-    const roundIdByNumber = new Map((await this.deps.rounds.findBySportEvent(sportEventId)).map((round) => [round.roundNumber, round.id]));
-    const missingRoundNumbers = reportedRoundNumbers.filter((roundNumber) => !beyondScheduleRoundNumbers.includes(roundNumber) && !roundIdByNumber.has(roundNumber));
+    const roundByNumber = new Map((await this.deps.rounds.findBySportEvent(sportEventId)).map((round) => [round.roundNumber, round]));
+    const missingRoundNumbers = reportedRoundNumbers.filter((roundNumber) => !beyondScheduleRoundNumbers.includes(roundNumber) && !roundByNumber.has(roundNumber));
     if (missingRoundNumbers.length > 0) {
       logger?.warn(
         { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId, roundNumbers: missingRoundNumbers } },
@@ -184,11 +183,13 @@ export class GolfScoreService {
         skipped += 1;
         continue;
       }
-      if (round.thru !== undefined && round.thru > GOLF_HOLES_PER_ROUND) {
+      // A round's holes are its slot's periods (#2047): eighteen for a golf tournament.
+      const holes = roundByNumber.get(round.round)?.slot.periods?.count;
+      if (round.thru !== undefined && holes !== undefined && round.thru > holes) {
         // Its to-par may include playoff holes, so no part of it is stored.
         logger?.warn(
-          { action: 'liveScore.golf.holeBeyondEighteenSkipped', data: { sportEventId, externalId: round.participantExternalId, round: round.round, thru: round.thru } },
-          'Skipping golf round update — it reports holes past the 18th, which are a playoff and never scored',
+          { action: 'liveScore.golf.holeBeyondRoundSkipped', data: { sportEventId, externalId: round.participantExternalId, round: round.round, thru: round.thru, holes } },
+          'Skipping golf round update — it reports holes past the round\'s last, which are a playoff and never scored',
         );
         skipped += 1;
         continue;
@@ -217,7 +218,7 @@ export class GolfScoreService {
         skipped += 1;
         continue;
       }
-      const sportEventRoundId = roundIdByNumber.get(round.round);
+      const sportEventRoundId = roundByNumber.get(round.round)?.id;
       if (!sportEventRoundId) {
         if (missingRoundNumbers.includes(round.round)) {
           // Logged once above, with every unscheduled round number.
@@ -463,6 +464,7 @@ export class GolfScoreService {
       );
     }
     const round = await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
+    for (const row of preview) requireThruWithinRound(round, row.row.thru ?? null);
 
     // strokes is NOT NULL in storage: a row with no strokes has nothing to persist,
     // matching the sync path's null-strokes skip.
@@ -514,6 +516,7 @@ export class GolfScoreService {
       );
     }
     const round = storedRound ?? await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
+    requireThruWithinRound(round, patch.thru ?? null);
 
     await this.deps.golfRounds.upsert({
       sportEventParticipantId,
@@ -558,6 +561,18 @@ export class GolfScoreService {
         422,
       );
     }
+  }
+}
+
+/**
+ * Refuses holes completed past the round's last (#375, #2047): a round's holes are its slot's
+ * periods, eighteen for a golf tournament, and playoff holes are no part of a round. A round
+ * whose slot keeps no score by period has no bound.
+ */
+function requireThruWithinRound(round: SportEventRound, thru: number | null): void {
+  const holes = round.slot.periods?.count;
+  if (thru !== null && holes !== undefined && thru > holes) {
+    throw new GolfScoreError(`Round ${round.roundNumber} has ${holes} holes, so ${thru} holes cannot be completed.`, 'ROUND_THRU_BEYOND_HOLES', 422);
   }
 }
 

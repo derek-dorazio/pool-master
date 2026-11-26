@@ -169,11 +169,6 @@ export const enUS = {
       OVERTIME: 'Overtime',
       SHOOTOUT: 'Shoot-out',
     },
-    MatchPeriodLayout: {
-      QUARTERS: 'Quarters',
-      HALVES: 'Halves',
-      THREE_PERIODS: 'Three periods',
-    },
     SportLeagueNoun: {
       LEAGUE: 'League',
     },
@@ -1109,6 +1104,7 @@ export const enUS = {
     ROUND_BEYOND_SCHEDULE: 'That round is beyond the event\'s schedule.',
     ROUND_NOT_FOUND: 'Round not found.',
     ROUND_SCORE_ROWS_UNRESOLVED: 'Some score rows do not name one participant on the field.',
+    ROUND_THRU_BEYOND_HOLES: 'Holes completed cannot be more than the round has. Playoff holes are not part of a round.',
     ROUND_VALUES_REQUIRED: 'A new round needs both its strokes and its score to par.',
     SEARCH_TERM_REQUIRED: 'Choose a sport league, or type a few more characters.',
     SEASON_SLOTS_NOT_ONE_SEASON: 'A test event\'s slots must all be in one Season.',
@@ -1359,6 +1355,8 @@ export const enUS = {
     quarterNumber: { name: 'Quarter {{n}}', short: 'Q{{n}}' },
     halfNumber: { name: 'Half {{n}}', short: 'H{{n}}' },
     periodNumber: { name: 'Period {{n}}', short: 'P{{n}}' },
+    inningNumber: { name: 'Inning {{n}}', short: 'I{{n}}' },
+    holeNumber: { name: 'Hole {{n}}', short: 'H{{n}}' },
     // A game's last scoring moment, overtime included.
     finalPeriod: { name: 'Final', short: 'F' },
     // The periods a game is played in.
@@ -1368,6 +1366,10 @@ export const enUS = {
     half_other: 'halves',
     period_one: 'period',
     period_other: 'periods',
+    inning_one: 'inning',
+    inning_other: 'innings',
+    hole_one: 'hole',
+    hole_other: 'holes',
     // Weeks of a season's pick'em and survivor.
     week: 'Week',
     weekNumber: 'Week {{n}}',

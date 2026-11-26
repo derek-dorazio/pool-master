@@ -362,7 +362,6 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     autoReleaseDaysBeforeStart: 7,
     platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
     platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
-    matchPeriodLayout: null,
     squaresFromRound: null,
     noun: null,
     ...sportPlay(overrides.sport ?? 'GOLF'),

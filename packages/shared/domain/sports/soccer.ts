@@ -1,4 +1,4 @@
-import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
+import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -25,7 +25,6 @@ export const soccerSportDefinition: SportDefinition = {
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // A pick'em pick may be a draw (#792); soccer has no spread to pick against.
   pickEm: { tiePicks: true, againstTheSpread: false },
-  matchPeriodLayout: MatchPeriodLayout.HALVES,
   // A four-round knockout reads Round of 16, Quarter-finals, Semi-finals, Final; a five-round one
   // starts at the Round of 32.
 };

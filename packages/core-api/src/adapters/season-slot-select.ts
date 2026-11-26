@@ -4,18 +4,18 @@
  * date window (#2012).
  */
 import type { Prisma } from '@prisma/client';
-import type { SportEventRoundSlot, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
+import { slotPeriodsOf, type SportEventRoundSlot, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 
 export const SEASON_SLOT_SELECT = {
   id: true, sportLeagueCompetitionSlotId: true, startsAt: true, endsAt: true, status: true,
   seriesFormat: true, seriesGames: true, pairing: true, isTestData: true, label: true,
   windowStartsAt: true, windowEndsAt: true, windowStatus: true,
-  definition: { select: { key: true, slotKind: true, weekNumber: true, name: true, canEndTied: true } },
+  definition: { select: { key: true, slotKind: true, weekNumber: true, name: true, canEndTied: true, periodUnit: true, periodCount: true } },
 } as const satisfies Prisma.SportLeagueSeasonCompetitionSlotSelect;
 
 export type SeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof SEASON_SLOT_SELECT }>;
 
-export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition: { canEndTied: _canEndTied, ...definition }, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
+export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition: { canEndTied: _canEndTied, periodUnit: _periodUnit, periodCount: _periodCount, ...definition }, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
   return {
     ...slot,
     ...definition,
@@ -41,5 +41,6 @@ export const ROUND_EVENT_SLOT_SELECT = {
 /** The slot a round is played in, as `SportEventRound.slot` and `SportEventRoundMatch.slot` carry it. */
 export function toRoundSlot(eventSlot: { seasonSlot: SeasonSlotRow }): SportEventRoundSlot {
   const { id, name, slotKind, weekNumber, seriesGames, pairing } = toSeasonSlot(eventSlot.seasonSlot);
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: eventSlot.seasonSlot.definition.canEndTied };
+  const { definition } = eventSlot.seasonSlot;
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition) };
 }

@@ -22,6 +22,7 @@ import {
   ContestEntryStatus,
   MatchStatus,
   ParticipantStatus,
+  PeriodUnit,
   PredictedResult,
   type BackgroundJobRequest,
   type ContestEntryMatchPrediction,
@@ -98,7 +99,8 @@ export class InMemoryGamePicks {
       id: `game-${matchNumber}`,
       sportEventId,
       roundNumber: 1,
-      slot: weekRoundSlot(),
+      // A football week's game, played in four quarters (#2047).
+      slot: { ...weekRoundSlot(), periods: { unit: PeriodUnit.QUARTER, count: 4 } },
       matchNumber,
       homeSportEventParticipantId: home.id,
       awaySportEventParticipantId: away.id,

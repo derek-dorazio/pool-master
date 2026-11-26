@@ -1,6 +1,6 @@
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { BackgroundJobType, isAtPlace, matchPlaceOf, type MatchPlace, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, isAtPlace, matchPlaceOf, type MatchPlace, MatchEnding, MatchResultSource, PeriodUnit, type SlotPeriods, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService, describeScoreProblem, gameStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
@@ -77,7 +77,9 @@ function gamePeriods(periods: readonly (readonly [number, number, number])[]) {
 
 const noActivation = () => jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
 
-async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PROGRESS }: { sport?: Sport; status?: SportEventStatus } = {}) {
+const FOUR_QUARTERS: SlotPeriods = { unit: PeriodUnit.QUARTER, count: 4 };
+
+async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PROGRESS, periods = FOUR_QUARTERS }: { sport?: Sport; status?: SportEventStatus; periods?: SlotPeriods | null } = {}) {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
   const event = store.addEvent({ sport, status: SportEventStatus.DRAFT, rounds: 2 });
@@ -85,6 +87,8 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
     { roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-03-20T16:00:00.000Z') },
   ]);
+  // A game's periods are its slot's (#2047).
+  for (const round of store.roundRows) round.slot = { ...round.slot, periods };
   const [duke, vermont, houston, texas] = ['Duke', 'Vermont', 'Houston', 'Texas'].map((name, index) => {
     const team = store.addParticipant(sportRow.id, name, { participantType: 'TEAM' });
     return store.addToField(event.id, team.id, { seedNumber: index + 1 });
@@ -128,8 +132,8 @@ async function week() {
   const sportRow = store.addSport(Sport.FOOTBALL);
   const event = store.addEvent({ sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
-  // A regular-season week's games can end level (#792): its slot says so (#2046).
-  for (const round of store.roundRows) round.slot = { ...round.slot, canEndTied: true };
+  // A regular-season week's games can end level (#792), and are played in four quarters: its slot says so (#2046, #2047).
+  for (const round of store.roundRows) round.slot = { ...round.slot, canEndTied: true, periods: FOUR_QUARTERS };
   const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
     store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
   let sequence = 0;
@@ -741,13 +745,12 @@ describe('MatchResultService period scores', () => {
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
   });
 
-  it('refuses (422 MATCH_PERIOD_INVALID) the last quarter, whose score is the final result, and the last half of a league that plays halves', async () => {
+  it('refuses (422 MATCH_PERIOD_INVALID) the last quarter, whose score is the final result, and the last half of a slot played in halves', async () => {
     const football = await week();
     await expect(football.service.recordPeriodScore(football.event.id, { roundNumber: 1, matchNumber: 1 }, 4, { homeScore: 7, awayScore: 0 }))
       .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422 });
 
-    const college = await setup();
-    college.event.matchPeriodLayout = MatchPeriodLayout.HALVES;
+    const college = await setup({ periods: { unit: PeriodUnit.HALF, count: 2 } });
     await college.service.recordPeriodScore(college.event.id, { roundNumber: 1, matchNumber: 1 }, 1, { homeScore: 40, awayScore: 38 });
     await expect(college.service.recordPeriodScore(college.event.id, { roundNumber: 1, matchNumber: 1 }, 2, { homeScore: 70, awayScore: 66 }))
       .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422 });
@@ -769,11 +772,11 @@ describe('MatchResultService period scores', () => {
 });
 
 describe('MatchResultService period scores — refusals and clock', () => {
-  it('refuses (422 MATCH_PERIOD_INVALID) a period score in a sport that keeps none, naming the sport', async () => {
-    const { service, event } = await setup({ sport: Sport.TENNIS });
+  it('refuses (422 MATCH_PERIOD_INVALID) a period score for a game whose slot keeps none, naming the game', async () => {
+    const { service, event } = await setup({ periods: null });
 
     await expect(service.recordPeriodScore(event.id, { roundNumber: 1, matchNumber: 1 }, 1, { homeScore: 1, awayScore: 0 }))
-      .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422, message: 'A tennis game keeps no score by period.' });
+      .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422, message: 'Round 1 match 1 keeps no score by period.' });
   });
 
   it('refuses (422 MATCH_SIDES_NOT_SET) a period score for a game still waiting for a team, and saves nothing', async () => {

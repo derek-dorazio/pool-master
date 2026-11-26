@@ -100,7 +100,7 @@
   "own:packages/core-api/src/modules/events/routes.ts": 2,
   "own:packages/core-api/src/modules/events/synced-field-follow-up-job.ts": 1,
   "own:packages/core-api/src/modules/events/wiring.ts": 4,
-  "own:packages/core-api/src/modules/golf/golf-score-service.ts": 2,
+  "own:packages/core-api/src/modules/golf/golf-score-service.ts": 1,
   "own:packages/core-api/src/modules/history/perpetual-trophies.ts": 2,
   "own:packages/core-api/src/modules/history/records.ts": 1,
   "own:packages/core-api/src/modules/history/service.ts": 1,

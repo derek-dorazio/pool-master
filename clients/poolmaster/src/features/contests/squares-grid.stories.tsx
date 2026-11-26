@@ -29,7 +29,7 @@ const BEFORE_DRAW: SquaresGridBoard = {
   digits: null,
   entries: NAMES.map((entryName, index) => ({ contestEntryId: `e${index}`, entryName, squadId: `s${index}`, boxCount: 0, periodsWon: 0, displayPosition: null })),
   game: squaresGameFixture(),
-  periodLayout: 'QUARTERS',
+  periods: { unit: 'QUARTER', count: 4 },
   winners: [],
 };
 

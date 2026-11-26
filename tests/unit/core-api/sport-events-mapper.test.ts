@@ -210,7 +210,7 @@ describe('the event\'s rounds and tiers on the wire', () => {
 
     expect(mapSportEventRoundToDto(round)).toEqual({
       id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT.toISOString(), scheduledEndAt: AT.toISOString(),
-      slot: { seasonSlotId: round.slot.seasonSlotId, name: 'Super Bowl', slotKind: SlotKind.FINAL, weekNumber: null },
+      slot: { seasonSlotId: round.slot.seasonSlotId, name: 'Super Bowl', slotKind: SlotKind.FINAL, weekNumber: null, periods: null },
       status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null,
     });
     expect(mapSportEventRoundToDto({ ...round, scheduledEndAt: null }).scheduledEndAt).toBeNull();

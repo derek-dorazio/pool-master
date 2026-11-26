@@ -1,4 +1,4 @@
-import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
+import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -21,7 +21,6 @@ export const hockeySportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // Playoff games play overtime to a goal, so none ends in a shoot-out (#791).
-  matchPeriodLayout: MatchPeriodLayout.THREE_PERIODS,
   // A four-round bracket reads Regional Semifinals, Regional Finals, Frozen Four, National
   // Championship; a shorter one keeps the names counted back from its final.
 };

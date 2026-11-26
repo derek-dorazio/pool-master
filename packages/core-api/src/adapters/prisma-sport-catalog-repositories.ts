@@ -1304,7 +1304,6 @@ function toSportLeague(row: SportLeagueRow): SportLeague {
     autoReleaseDaysBeforeStart: row.autoReleaseDaysBeforeStart,
     platformTierProfileId: row.platformTierProfileId,
     platformPricingProfileId: row.platformPricingProfileId,
-    matchPeriodLayout: row.matchPeriodLayout,
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,
     displayOrder: row.displayOrder,
@@ -1325,7 +1324,7 @@ const SPORT_EVENT_INCLUDE = {
   sportLeagueSeason: {
     select: {
       championshipYear: true,
-      sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, ...SPORT_LEAGUE_SPORT_SELECT, ...SYNC_PROVIDER_SELECT } },
+      sportLeague: { select: { squaresFromRound: true, participantType: true, scoringFamily: true, ...SPORT_LEAGUE_SPORT_SELECT, ...SYNC_PROVIDER_SELECT } },
     },
   },
   providerMappings: {
@@ -1359,7 +1358,6 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
     sportLeagueId: row.sportLeagueId,
-    ...(row.sportLeagueSeason.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.sportLeagueSeason.sportLeague.matchPeriodLayout }),
     ...(row.sportLeagueSeason.sportLeague.squaresFromRound !== null && { squaresFromRound: row.sportLeagueSeason.sportLeague.squaresFromRound }),
     participantType: row.sportLeagueSeason.sportLeague.participantType,
     scoringFamily: row.sportLeagueSeason.sportLeague.scoringFamily,

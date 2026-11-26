@@ -2410,7 +2410,7 @@ export interface paths {
         put?: never;
         /**
          * Apply a round of golf scores
-         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.
+         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_THRU_BEYOND_HOLES when a row's holes completed are more than the round has (its slot's period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.
          */
         post: operations["applyEventGolfRoundScores"];
         delete?: never;
@@ -2434,7 +2434,7 @@ export interface paths {
         head?: never;
         /**
          * Correct one golfer's round
-         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.
+         * @description Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_THRU_BEYOND_HOLES when thru is more than the round's holes (its slot's period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.
          */
         patch: operations["updateEventParticipantGolfRoundScore"];
         trace?: never;
@@ -9335,6 +9335,16 @@ export interface components {
             /** @description The away side's score at the end of the period, earlier periods included. */
             awayScore: number;
         };
+        /** @description What a game of a slot is played in (#2047), from its slot definition. */
+        SlotPeriodsDto: {
+            /**
+             * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+             * @enum {string}
+             */
+            unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+            /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+            count: number;
+        };
         /** @description The slot a round is played in (#2006): what the round is called, and whether it is the final. */
         SportEventRoundSlotDto: {
             /**
@@ -9351,6 +9361,16 @@ export interface components {
             slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
             /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
             weekNumber: number | null;
+            /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+            periods: {
+                /**
+                 * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                 * @enum {string}
+                 */
+                unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                count: number;
+            } | null;
         };
         /** @description One game or match of an event, which in a bracket is also a slot naming where its winner goes. */
         SportEventRoundMatchDto: {
@@ -9376,6 +9396,16 @@ export interface components {
                 slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                 /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                 weekNumber: number | null;
+                /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                periods: {
+                    /**
+                     * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                     * @enum {string}
+                     */
+                    unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                    /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                    count: number;
+                } | null;
             };
             /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
             matchNumber: number;
@@ -9483,6 +9513,16 @@ export interface components {
                     slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
+                    /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                    periods: {
+                        /**
+                         * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                         * @enum {string}
+                         */
+                        unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                        /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                        count: number;
+                    } | null;
                 };
                 /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
@@ -9591,6 +9631,16 @@ export interface components {
                     slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
+                    /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                    periods: {
+                        /**
+                         * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                         * @enum {string}
+                         */
+                        unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                        /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                        count: number;
+                    } | null;
                 };
                 /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;
@@ -10452,11 +10502,6 @@ export interface components {
              * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
              */
             platformPricingProfileId: string;
-            /**
-             * @description The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
-             * @enum {string|null}
-             */
-            matchPeriodLayout: "QUARTERS" | "HALVES" | "THREE_PERIODS" | null;
             /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
             squaresFromRound: number | null;
             /**
@@ -10584,11 +10629,6 @@ export interface components {
                  * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
                  */
                 platformPricingProfileId: string;
-                /**
-                 * @description The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
-                 * @enum {string|null}
-                 */
-                matchPeriodLayout: "QUARTERS" | "HALVES" | "THREE_PERIODS" | null;
                 /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
                 squaresFromRound: number | null;
                 /**
@@ -10702,11 +10742,6 @@ export interface components {
                  * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
                  */
                 platformPricingProfileId: string;
-                /**
-                 * @description The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
-                 * @enum {string|null}
-                 */
-                matchPeriodLayout: "QUARTERS" | "HALVES" | "THREE_PERIODS" | null;
                 /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
                 squaresFromRound: number | null;
                 /**
@@ -14287,6 +14322,16 @@ export interface components {
                 slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                 /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                 weekNumber: number | null;
+                /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                periods: {
+                    /**
+                     * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                     * @enum {string}
+                     */
+                    unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                    /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                    count: number;
+                } | null;
             };
             /**
              * Format: date-time
@@ -14334,6 +14379,16 @@ export interface components {
                     slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
+                    /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                    periods: {
+                        /**
+                         * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                         * @enum {string}
+                         */
+                        unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                        /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                        count: number;
+                    } | null;
                 };
                 /**
                  * Format: date-time
@@ -17417,6 +17472,16 @@ export interface components {
                     slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
+                    /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                    periods: {
+                        /**
+                         * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                         * @enum {string}
+                         */
+                        unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                        /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                        count: number;
+                    } | null;
                 };
                 /** @description Whether the game is the event's final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket's links end at. Never the last round by number. */
                 isFinal: boolean;
@@ -17701,6 +17766,16 @@ export interface components {
                     slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
+                    /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                    periods: {
+                        /**
+                         * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                         * @enum {string}
+                         */
+                        unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                        /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                        count: number;
+                    } | null;
                 };
                 /** @description Whether the game is the event's final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket's links end at. Never the last round by number. */
                 isFinal: boolean;
@@ -21104,7 +21179,7 @@ export interface components {
                 /** @description Null when only the score to par is known; such a row is not stored. */
                 strokes: number | null;
                 scoreToPar: number;
-                /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
+                /** @description Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. */
                 thru?: number;
                 /** @enum {string} */
                 status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
@@ -21124,7 +21199,7 @@ export interface components {
                     /** @description Null when only the score to par is known; such a row is not stored. */
                     strokes: number | null;
                     scoreToPar: number;
-                    /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
+                    /** @description Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. */
                     thru?: number;
                     /** @enum {string} */
                     status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
@@ -21176,7 +21251,7 @@ export interface components {
         UpdateGolfRoundScoreRequest: {
             strokes?: number;
             scoreToPar?: number;
-            /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started. */
+            /** @description Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. Null clears it, for a golfer who has not started. */
             thru?: number | null;
             /** @enum {string} */
             status?: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
@@ -21349,11 +21424,16 @@ export interface components {
             contestStatus: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
             /** @description How many boxes one entry may claim. */
             maxSquaresPerEntry: number;
-            /**
-             * @description The periods the game is played in, its sport league's (QUARTERS, or HALVES for men's college basketball): a scoring moment ends each period, the last being the final score.
-             * @enum {string}
-             */
-            periodLayout: "QUARTERS" | "HALVES" | "THREE_PERIODS";
+            /** @description The periods the game is played in, its slot's (four quarters, or two halves in men's college basketball): a scoring moment ends each period, the last being the final score. */
+            periods: {
+                /**
+                 * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                 * @enum {string}
+                 */
+                unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                count: number;
+            };
             /** @description The game the contest is played on, with its score at the end of each period and its final result. */
             game: {
                 /** Format: uuid */
@@ -21378,6 +21458,16 @@ export interface components {
                     slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
                     /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
                     weekNumber: number | null;
+                    /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                    periods: {
+                        /**
+                         * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                         * @enum {string}
+                         */
+                        unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                        /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                        count: number;
+                    } | null;
                 };
                 /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
                 matchNumber: number;

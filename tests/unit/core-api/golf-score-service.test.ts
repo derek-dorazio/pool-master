@@ -1,6 +1,6 @@
 import { sportPlay } from '../../support/sport-play';
 import { testDomainEvents } from '../../support/domain-events';
-import { Sport } from '@poolmaster/shared/domain';
+import { PeriodUnit, Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { eventStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
@@ -216,6 +216,20 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
     expect(store.golfRoundRows).toEqual([]);
   });
 
+  it('refuses holes completed past the round\'s last, its slot\'s 18, with 422 ROUND_THRU_BEYOND_HOLES, as a correction and in an upload, writing no score', async () => {
+    const { store, service, event, anaEntry } = setup({ rounds: 4 });
+    store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 18 });
+
+    await expect(service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 70, scoreToPar: -2, thru: 19 }))
+      .rejects.toMatchObject({ code: 'ROUND_THRU_BEYOND_HOLES', statusCode: 422 });
+    await expect(service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, strokes: 70, scoreToPar: -2, thru: 19, status: 'COMPLETED' }]))
+      .rejects.toMatchObject({ code: 'ROUND_THRU_BEYOND_HOLES', statusCode: 422 });
+    expect(store.golfRoundRows).toEqual([]);
+
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 70, scoreToPar: -2, thru: 18 });
+    expect(store.golfRoundRows.map((round) => round.thru)).toEqual([18]);
+  });
+
   it('refuses to preview a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE', async () => {
     const { service, event } = setup({ rounds: 4 });
 
@@ -393,8 +407,9 @@ describe('GolfScoreService — provider sync', () => {
     );
   });
 
-  it('skips and logs an update past the 18th hole, so playoff holes never reach a round score', async () => {
+  it('skips and logs an update past the round\'s last hole, its slot\'s 18, so playoff holes never reach a round score', async () => {
     const { store, service, event, logger } = await syncSetup();
+    store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 18 });
     await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
 
     const result = await service.persistRoundUpdatesForSportEvent(
@@ -407,7 +422,7 @@ describe('GolfScoreService — provider sync', () => {
     expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
     expect(store.golfRoundRows).toHaveLength(1);
     expect(logger.warn).toHaveBeenCalledWith(
-      { action: 'liveScore.golf.holeBeyondEighteenSkipped', data: { sportEventId: event.id, externalId: 'ext-ben', round: 4, thru: 19 } },
+      { action: 'liveScore.golf.holeBeyondRoundSkipped', data: { sportEventId: event.id, externalId: 'ext-ben', round: 4, thru: 19, holes: 18 } },
       expect.any(String),
     );
   });

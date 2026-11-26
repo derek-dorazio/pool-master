@@ -4,7 +4,6 @@ import type {
   LeaguePhase,
   MatchFormat,
   SlotKind,
-  MatchPeriodLayout,
   ParticipantInactiveReason,
   ParticipantType,
   SelectionType,
@@ -62,12 +61,6 @@ export interface SportEvent extends DomainEntity {
   championshipYear: number;
   /** The event's sport league (#2010): stored, and its Season is the same league's (a composite key). */
   sportLeagueId: string;
-  /**
-   * Its sport league's period layout when it is not its sport's (#786: men's college
-   * basketball's halves), read through the league; absent plays the sport's.
-   * Read through `matchPeriodsOf`.
-   */
-  matchPeriodLayout?: MatchPeriodLayout;
   /**
    * Its sport league's first squares round when not every round's matches are single
    * games (#787), read through the league; absent takes every round. Read

@@ -489,7 +489,7 @@ describe('sport data bracket', () => {
     ]);
   });
 
-  it('refuses a football test seed\'s period scores for the last quarter, out of order, or on a match with no result', () => {
+  it('refuses a test seed\'s period scores out of order or on a match with no result, leaving the period count to the game\'s slot on the server', () => {
     const file = bracketTestSeed();
     (file.scope as { sport?: string }).sport = 'FOOTBALL';
     const matches = file.sportLeagues[0].events[0].matches;
@@ -501,7 +501,6 @@ describe('sport data bracket', () => {
     delete matches[2].result;
     matches[2].periodScores = [{ periodNumber: 1, homeScore: 0, awayScore: 0 }];
     expect(problemsOf(file)).toEqual([
-      'NCAA Men, Tournament: round 1 match 1 has a score for quarter 4 or later, which is the result\'s final score.',
       'NCAA Men, Tournament: round 1 match 2\'s period scores are not in period order, once each.',
       'NCAA Men, Tournament: round 2 match 1 carries period scores but no result, and they are entered with its result.',
     ]);

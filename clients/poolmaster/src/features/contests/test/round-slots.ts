@@ -3,7 +3,7 @@ import type { SportEventRoundDto, SportEventRoundSlotDto } from '@/lib/api';
 
 /** A round's slot as the API sends it (#2006); one Season slot per kind and week. */
 export function roundSlot(slotKind: SlotKind, name: string | null = null, weekNumber: number | null = null): SportEventRoundSlotDto {
-  return { seasonSlotId: `slot-${slotKind}-${String(weekNumber ?? 0)}`, name, slotKind, weekNumber };
+  return { seasonSlotId: `slot-${slotKind}-${String(weekNumber ?? 0)}`, name, slotKind, weekNumber, periods: null };
 }
 
 /** A 64-team tournament's six rounds, first to final, by their slots. */

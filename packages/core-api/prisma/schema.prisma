@@ -409,14 +409,6 @@ enum PrismaPredictedResult {
   TIE
 }
 
-/// The periods a sport league's games are played in, when not its sport's (#786). Mirrors the
-/// domain `MatchPeriodLayout`.
-enum PrismaMatchPeriodLayout {
-  QUARTERS
-  HALVES
-  THREE_PERIODS
-}
-
 /// What screens call a sport league when its sport's noun does not fit (#834). Mirrors the domain
 /// `SportLeagueNoun`.
 enum PrismaSportLeagueNoun {
@@ -1161,10 +1153,6 @@ model SportLeague {
   /// The pricing profile an event of the sport league is priced with after a field sync (#1844),
   /// until an admin prices it with other values. Every league names one.
   platformPricingProfileId   String                   @map("platform_pricing_profile_id") @db.Uuid
-  /// The periods its games are played in, when not its sport's (#786: men's college basketball
-  /// plays halves). Null: the sport's layout. Reference data, set by the migration that seeds the
-  /// league.
-  matchPeriodLayout          PrismaMatchPeriodLayout? @map("match_period_layout")
   /// The first round whose matches are single games a squares pool can be played on, when not
   /// every round's are (#787: a Champions League two-legged tie or an MLS best-of-three series
   /// is one match with no half-time score). Null: every round. Reference data, set by the

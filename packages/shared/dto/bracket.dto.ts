@@ -4,7 +4,7 @@
  * bracket at once and edits one match at a time; results are entered separately (#699).
  */
 import { z } from 'zod';
-import { MatchEnding, MatchResultSource, MatchSide, MatchStatus, SlotKind } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchResultSource, MatchSide, MatchStatus, PeriodUnit, SlotKind } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 
 /** The most matches one bracket holds: a 128-place draw has 127. */
@@ -21,11 +21,18 @@ export const SportEventMatchPeriodScoreDtoSchema = z.object({
 }).describe('Both sides\' running score at the end of one period of play of a game (#772, #2046), summed by the server.');
 export type SportEventMatchPeriodScoreDto = z.infer<typeof SportEventMatchPeriodScoreDtoSchema>;
 
+export const SlotPeriodsDtoSchema = z.object({
+  unit: z.enum(PeriodUnit).describe('What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.'),
+  count: z.number().int().min(1).describe('How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period\'s score is the final score.'),
+}).describe('What a game of a slot is played in (#2047), from its slot definition.');
+export type SlotPeriodsDto = z.infer<typeof SlotPeriodsDtoSchema>;
+
 export const SportEventRoundSlotDtoSchema = z.object({
   seasonSlotId: z.uuid().describe('The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament\'s four, are named by number rather than by the slot.'),
   name: z.string().nullable().describe('The slot\'s proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind\'s word.'),
   slotKind: z.enum(SlotKind).describe('The slot\'s kind. FINAL is the event\'s final: never found by round position.'),
   weekNumber: z.number().int().nullable().describe('A WEEK slot\'s week ("Week 14"); null for every other kind.'),
+  periods: SlotPeriodsDtoSchema.nullable().describe('What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.'),
 }).describe('The slot a round is played in (#2006): what the round is called, and whether it is the final.');
 export type SportEventRoundSlotDto = z.infer<typeof SportEventRoundSlotDtoSchema>;
 
@@ -141,6 +148,7 @@ registerSchema('MatchStatusDto', MatchStatusDtoSchema);
 registerSchema('MatchSideDto', MatchSideDtoSchema);
 registerSchema('MatchEndingDto', MatchEndingDtoSchema);
 registerSchema('SportEventMatchPeriodScoreDto', SportEventMatchPeriodScoreDtoSchema);
+registerSchema('SlotPeriodsDto', SlotPeriodsDtoSchema);
 registerSchema('SportEventRoundSlotDto', SportEventRoundSlotDtoSchema);
 registerSchema('SportEventRoundMatchDto', SportEventRoundMatchDtoSchema);
 registerSchema('SportEventBracketResponse', SportEventBracketResponseSchema);

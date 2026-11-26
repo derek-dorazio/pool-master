@@ -29,7 +29,7 @@ export type SquaresBoxAction = 'claim' | 'clear' | null;
 /** What the grid draws from the board read. */
 export type SquaresGridBoard = Pick<
   SquaresBoardResponse,
-  'awayTeamName' | 'boxes' | 'digits' | 'entries' | 'game' | 'homeTeamName' | 'periodLayout' | 'winners'
+  'awayTeamName' | 'boxes' | 'digits' | 'entries' | 'game' | 'homeTeamName' | 'periods' | 'winners'
 >;
 
 /**
@@ -129,9 +129,9 @@ export function SquaresGrid({
                 const isNow = live !== null && live.rowIndex === rowIndex && live.columnIndex === columnIndex;
                 const isLiveLine = live !== null && (live.rowIndex === rowIndex || live.columnIndex === columnIndex);
                 const numbers = numbersOf(rowIndex, columnIndex);
-                const tags = won.map((periodNumber) => squaresMomentTag(periodNumber, board.periodLayout));
+                const tags = won.map((periodNumber) => squaresMomentTag(periodNumber, board.periods));
                 // Two or more tags take Final's short form ("Q1/F"), so the tag stays inside its box on a phone.
-                const boxTags = won.map((periodNumber) => squaresMomentTag(periodNumber, board.periodLayout, 'short'));
+                const boxTags = won.map((periodNumber) => squaresMomentTag(periodNumber, board.periods, 'short'));
                 const place = `Row ${rowIndex + 1}, column ${columnIndex + 1}`;
                 const facts = [numbers, tags.length > 0 ? `won ${tags.join(', ')}` : null, isNow ? 'winning now' : null]
                   .filter((part) => part !== null);

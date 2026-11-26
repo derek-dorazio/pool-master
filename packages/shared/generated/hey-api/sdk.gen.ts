@@ -1735,7 +1735,7 @@ export const previewEventGolfRoundScores = <ThrowOnError extends boolean = false
 /**
  * Apply a round of golf scores
  *
- * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.
+ * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_THRU_BEYOND_HOLES when a row's holes completed are more than the round has (its slot's period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Returns the field. Root admin only.
  */
 export const applyEventGolfRoundScores = <ThrowOnError extends boolean = false>(options: Options<ApplyEventGolfRoundScoresData, ThrowOnError>): RequestResult<ApplyEventGolfRoundScoresResponses, ApplyEventGolfRoundScoresErrors, ThrowOnError> => (options.client ?? client).post<ApplyEventGolfRoundScoresResponses, ApplyEventGolfRoundScoresErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1750,7 +1750,7 @@ export const applyEventGolfRoundScores = <ThrowOnError extends boolean = false>(
 /**
  * Correct one golfer's round
  *
- * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.
+ * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_THRU_BEYOND_HOLES when thru is more than the round's holes (its slot's period count). 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. 422 ROUND_VALUES_REQUIRED when the golfer has no stored round and the body omits strokes or scoreToPar; the server fills in neither. 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by golf rounds (its scoring family is not stroke play). Refreshes standings. Root admin only.
  */
 export const updateEventParticipantGolfRoundScore = <ThrowOnError extends boolean = false>(options: Options<UpdateEventParticipantGolfRoundScoreData, ThrowOnError>): RequestResult<UpdateEventParticipantGolfRoundScoreResponses, UpdateEventParticipantGolfRoundScoreErrors, ThrowOnError> => (options.client ?? client).patch<UpdateEventParticipantGolfRoundScoreResponses, UpdateEventParticipantGolfRoundScoreErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
