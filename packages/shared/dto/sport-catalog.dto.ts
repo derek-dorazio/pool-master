@@ -42,9 +42,10 @@ import {
   SportLeagueSyncMode,
   TournamentFormat,
   FieldOrderBasis,
+  ReleaseCheckKey,
 } from '../domain/enums';
 import { ScoringFamily } from '../domain/sports/scoring-family';
-import { AUTO_RELEASE_DAYS_MAX, ReleaseCheckKey } from '../domain/release-checks';
+import { AUTO_RELEASE_DAYS_MAX } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
 import { URL_SEGMENT_PATTERN } from '../domain/url-segment';
 

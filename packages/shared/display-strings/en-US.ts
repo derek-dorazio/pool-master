@@ -185,6 +185,12 @@ export const enUS = {
       UPDATE: 'Changed',
       UNCHANGED: 'Unchanged',
     },
+    GolfRoundScoreChange: {
+      CREATE: 'New',
+      UPDATE: 'Changed',
+      UNCHANGED: 'Unchanged',
+      SKIPPED: 'Not stored (no strokes)',
+    },
     SelectionType: {
       TIERED: 'Tiered',
       BUDGET_PICK: 'Budget',
@@ -253,6 +259,16 @@ export const enUS = {
     AutoReleaseCheckOutcome: {
       RELEASED: 'Released',
       HELD: 'Held',
+    },
+    ReleaseCheckKey: {
+      NOT_STARTED: 'Not started',
+      ROUNDS_SCHEDULED: 'Rounds scheduled',
+      FIELD_LOADED: 'Field loaded',
+      TIERS_ASSIGNED: 'Every participant in a tier',
+      TIERS_FILLED: 'No empty tier',
+      PRICES_ASSIGNED: 'Prices made',
+      BRACKET_COMPLETE: 'Bracket complete',
+      CONTEST_SETUPS_ON: 'Contest template on',
     },
     SportLeagueSyncHealth: {
       OK: 'OK',
@@ -433,6 +449,10 @@ export const enUS = {
       AUTO_ODDS: 'Auto odds',
       AUTO_SEED: 'Auto seed',
       AUTO_RANKING: 'Auto ranking',
+      MANUAL: 'Manual',
+    },
+    FieldValueSetBy: {
+      AUTO: 'Auto',
       MANUAL: 'Manual',
     },
     GolfCategoryKey: {
@@ -693,6 +713,13 @@ export const enUS = {
       CONTEST_EXPANDED: 'Contest expanded',
       LEAGUE_PLAN_PREVIEW_ENDING: 'Premium preview period ending',
       CONTEST_REOPENED: 'Event postponed, picks open again',
+    },
+    EmailAudience: {
+      MEMBERS: 'Members',
+      COMMISSIONERS: 'Commissioners',
+      ROOT_ADMINS: 'Root admins',
+      PEOPLE_INVITED: 'People invited',
+      ACCOUNT_HOLDERS: 'Account holders',
     },
     EmailMessageStatus: {
       QUEUED: 'Sending email',
@@ -1293,6 +1320,10 @@ export const enUS = {
     raceNumber: 'Race {{n}}',
     singleRace: 'Race',
     roundHeading: 'Round',
+    // A squad's year line names each cup it won a trophy in, keyed by CupTrophy code (#1993).
+    cupTrophyLineCHAMPION: '{{cup}} champion',
+    cupTrophyLineRUNNER_UP: '{{cup}} runner-up',
+    cupTrophyLineTHIRD: '{{cup}} 3rd place',
     // How auto-assigned tiers and prices put a field in order (#2160), by the league's profile's
     // sources, keyed by FieldOrderBasis code: each source's name, how a participant without it is
     // said to lack it, and the order.

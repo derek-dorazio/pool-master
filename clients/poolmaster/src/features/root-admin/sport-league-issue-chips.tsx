@@ -13,7 +13,7 @@ import {
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { buildSportEventPath } from './manage-navigation';
 import { buildLeagueOpenFindingsPath } from './sync-findings-links';
-import { overdueLateness, RELEASE_CHECK_LABELS, syncFailedText } from './sport-league-overview-text';
+import { overdueLateness, syncFailedText } from './sport-league-overview-text';
 
 import type { SportLeagueIssue } from './sport-league-overview-text';
 
@@ -104,7 +104,7 @@ function IssueItems({ issue, onOpenSyncRun, sportUrlSegment, sportLeagueId }: {
         <SectionRows>
           {issue.items.map((item) => (
             <SectionRow
-              facts={`${when(item.occurredAt)} · ${item.failedChecks.map((key) => RELEASE_CHECK_LABELS[key]).join(', ')} failed`}
+              facts={`${when(item.occurredAt)} · ${item.failedChecks.map((key) => enumLabel('ReleaseCheckKey', key)).join(', ')} failed`}
               key={item.target.id}
               name={item.label}
               testId={`root-admin-sports-issue-event-${item.target.id}`}

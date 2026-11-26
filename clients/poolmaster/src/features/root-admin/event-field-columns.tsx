@@ -1,13 +1,8 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { StatusBadge, Text } from '@/features/shared/ui';
-import {
-  FIELD_VALUE_SET_BY_LABELS,
-  FieldValueSetByOrder,
-  type EventFieldColumnsShown,
-  type EventFieldRow,
-  type FieldValueSetBy,
-} from './event-field-rows';
+import { FieldValueSetByOrder, type FieldValueSetBy } from '@poolmaster/shared/domain';
+import type { EventFieldColumnsShown, EventFieldRow } from './event-field-rows';
 
 const columnHelper = createColumnHelper<EventFieldRow>();
 
@@ -66,11 +61,11 @@ export function eventFieldColumns(shown: EventFieldColumnsShown) {
       header: 'Set by',
       meta: {
         info: 'Auto: tiering and pricing set its tier and price. Manual: a root admin corrected one, which stops that kind following automatic tiering or pricing for this event.',
-        type: { kind: 'enum', order: FieldValueSetByOrder, label: (value) => FIELD_VALUE_SET_BY_LABELS[value as FieldValueSetBy] },
+        type: { kind: 'enum', order: FieldValueSetByOrder, label: (value) => enumLabel('FieldValueSetBy', value as FieldValueSetBy) },
       },
       cell: ({ getValue }) => {
         const setBy = getValue();
-        return setBy === null ? '' : FIELD_VALUE_SET_BY_LABELS[setBy];
+        return setBy === null ? '' : enumLabel('FieldValueSetBy', setBy);
       },
     }),
     ...(shown.lastInFeed ? [columnHelper.accessor('lastInFeedAt', {

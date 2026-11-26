@@ -16,7 +16,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { releaseCheckValueText, releaseTriesText } from './event-release-checks-text';
-import { RELEASE_CHECK_LABELS } from './sport-league-overview-text';
 
 const logger = getLogger().child({ feature: 'root-admin-event-release' });
 
@@ -79,7 +78,7 @@ export function EventReleaseChecksDialog({
                   : <X aria-label="Failed" size={16} />}
                 facts={releaseCheckValueText(check, preferences)}
                 key={check.key}
-                name={RELEASE_CHECK_LABELS[check.key]}
+                name={enumLabel('ReleaseCheckKey', check.key)}
                 note={blocksManualRelease(check.key) ? undefined : 'Automatic release only'}
                 testId={`root-admin-event-release-check-${check.key}`}
               />

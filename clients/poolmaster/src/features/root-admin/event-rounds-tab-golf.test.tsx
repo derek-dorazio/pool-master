@@ -213,7 +213,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
 
     await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
     expect(screen.getByText('MATCHED')).toBeInTheDocument();
-    expect(screen.getByText('UPDATE')).toBeInTheDocument();
+    expect(screen.getByText('Changed')).toBeInTheDocument();
 
     await waitFor(() =>
       expect(screen.getByTestId('root-admin-golf-scores-upload-apply')).toBeEnabled(),
