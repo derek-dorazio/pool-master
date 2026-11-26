@@ -746,14 +746,20 @@ Contest:
   crown their own winner and never count; a contest on one TOURNAMENT slot (one major) is
   ONE_SLOT and counts; squares and sweepstakes
   never count. One global rule, no sport branches. Which cups exist is sport league data,
-  `SportLeagueCupDefinition` (sport league, name, `coverage` ALL_SLOTS | PHASE |
-  LISTED_SLOTS, `phase` only with PHASE by database check) with
-  `SportLeagueCupDefinitionSlot` rows for LISTED_SLOTS, seeded by migration: golf
-  "Season Cup" (ALL_SLOTS) and "Majors Cup" (LISTED_SLOTS); tennis Season and Grand Slam
-  cups; racing a Season Cup; every sport league with REGULAR and POSTSEASON phases a
-  "Regular Season Clutch Cup" and a "Playoff Clutch Cup" (PHASE), which fill once Clutch
-  Cards run there. `Cup` keys on (League, Season, cup definition); a contest counts in every
-  cup whose coverage holds its slot. `Contest.cupWeight` and the `CupWeight` enum are removed
+  `SportLeagueCupDefinition` (sport league, stable `key`, required `nameKind` from the `CupName`
+  enum with `properName` only for NAMED, required agent `description`, `coverage` ALL_SLOTS |
+  LISTED_SLOTS) with `SportLeagueCupDefinitionSlot` rows for LISTED_SLOTS, and the contest
+  types it counts as explicit rows (Derek 2026-11-26: tiered and budget for golf, tennis and
+  racing; only Clutch Card in a Clutch Cup; only Margin Card in a Margin Cup). Seeded by
+  migration: golf "Season Cup" (ALL_SLOTS) and "Majors Cup" (LISTED_SLOTS); tennis Season and
+  Grand Slam cups; racing a Season Cup; one "Clutch Cup" per league that has Clutch Card
+  templates (ALL_SLOTS, one per year; no Regular Season or Playoff split, so no PHASE
+  coverage); a Margin Cup for the NFL and NCAA men's football once Margin Card is built.
+  `Cup` keys on (League, Season, cup definition); a contest counts in a cup when its template
+  `countsInCups`, its contest type is listed and the cup's coverage holds its slot, so it can
+  count in more than one cup (a major in the Season Cup and the Majors Cup). Slice 20f (#2036)
+  is the single source for the detail.
+  `Contest.cupWeight` and the `CupWeight` enum are removed
   (Derek 2026-11-24): every qualifying contest counts ×1. There is no follow setting
   (Derek 2026-11-24): a league has every cup whose coverage holds one of its counted
   contests, shown from its first counted contest (the API returns `isShown`). Finish rows drop `weight`.

@@ -82,7 +82,6 @@ export class PrismaEventPageRepository implements EventPageRepository {
       sportLeagueName: row.sportLeague.name,
       sportLeagueCompetitionSlotId: row.sportLeagueCompetitionSlotId,
       template: mapContestConfigTemplate(row.template),
-      bracketStartRound: row.bracketStartRound,
       sortOrder: row.sortOrder,
       isPrimary: row.isPrimary,
     }));

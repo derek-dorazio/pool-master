@@ -189,7 +189,6 @@ export function createLiveStandings(prisma: PrismaClient, options: {
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     leaderboards: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
     matches: new PrismaSportEventRoundMatchRepository(prisma),
-    configurations: new PrismaContestConfigurationRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     positions: new PrismaStandingsEmailPositionRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),

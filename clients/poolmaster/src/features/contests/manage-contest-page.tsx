@@ -48,8 +48,6 @@ import { firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { DeleteContestDialog } from './delete-contest-dialog';
-import { contestSecondChanceRoundName } from './bracket-start-round';
-import { useEventRoundLabels } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
@@ -121,8 +119,6 @@ export function ManageContestPage() {
   const firstEventId = (contest ? firstContestEvent(contest)?.sportEventId : undefined)
     ?? managedContestQuery.data?.sportEvents.at(0)?.sportEventId;
   const eventQuery = useQuery(sportEventQueryOptions(firstEventId ?? ''));
-  // A bracket's rounds are named for where it starts (#721); other formats read no round names.
-  const roundName = useEventRoundLabels(contest?.selectionType === SelectionType.BRACKET ? eventQuery.data?.id ?? '' : '');
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
@@ -170,9 +166,7 @@ export function ManageContestPage() {
     tierCount,
     sportVocabulary(event.sport).participant,
     configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
-    roundName,
   );
-  const bracketStartRoundName = contestSecondChanceRoundName(configuration, roundName);
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;
   // Events can change until the contest is final, unless its selection type covers one event.
@@ -201,7 +195,6 @@ export function ManageContestPage() {
         contest={contest}
         event={event}
         leagueCode={leagueCode}
-        secondChanceRoundName={bracketStartRoundName}
         teamCount={activeTeamCount}
         tierCount={tierCount}
       />

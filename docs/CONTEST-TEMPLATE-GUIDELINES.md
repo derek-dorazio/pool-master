@@ -36,8 +36,9 @@ They come from the owner's league-by-league template review of November 2026.
 ## Tiered and budget
 
 - **Every tiered template has a budget twin** on the same slots, picks and counting rule
-  *(checked)*. Clutch Card and Margin Card, below, will be the first exceptions; the slice that
-  builds each adds it to the test as a named exception, with its reason.
+  *(checked)*. Clutch Card and Margin Card, below, are tiered only, but each is its own contest
+  type rather than a tiered template, so the twin rule does not reach them and the test needs
+  no exception.
 - **Playoffs of 12 or more teams only** *(checked)*. With fewer teams the tiers are too thin to
   give a real choice. Leagues with an 8-team playoff (WNBA, NWSL) or a 4-team one (PWHL) get
   none. The test reads this as a knockout with a round of 16 or earlier, which agrees with 12 or

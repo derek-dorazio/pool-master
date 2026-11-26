@@ -1,6 +1,5 @@
 import {
   type ContestScoringSettings,
-  type RoundName,
   type SportNoun,
   formatContestRules,
   formatEntriesPerTeamSentence,
@@ -16,15 +15,14 @@ import { SCORING_SETTINGS_UI } from './contest-scoring-settings';
 export function membersWillSeeRules(
   configuration: ContestConfigurationRequest,
   scoring: ContestScoringSettings | null,
-  { participant, roundName, salaryCap, tierCount }: {
+  { participant, salaryCap, tierCount }: {
     participant: SportNoun;
-    roundName?: RoundName;
     salaryCap: number | null;
     tierCount: number;
   },
 ) {
   return [
-    formatContestRules(configuration, tierCount, participant, salaryCap, roundName),
+    formatContestRules(configuration, tierCount, participant, salaryCap),
     scoring ? SCORING_SETTINGS_UI[scoring.participantScoringDefinitionId].describe(scoring, configuration.selectionType) : null,
     `${formatEntriesPerTeamSentence(configuration.maxEntriesPerSquad)}.`,
   ].filter((sentence) => sentence !== null).join(' ');

@@ -18,13 +18,11 @@ export function isMatchRoundDecided(
   return games.length > 0 && games.every((match) => DECIDED_MATCH_STATUSES.includes(match.status));
 }
 
-/** The highest round whose every game is decided, from `fromRound` on, or null before any is. */
+/** The highest round whose every game is decided, or null before any is. */
 export function lastFinishedMatchRound(
   matches: readonly Pick<SportEventRoundMatch, 'roundNumber' | 'status' | 'updatedAt'>[],
-  fromRound = 1,
 ): FinishedRound | null {
   const roundNumbers = [...new Set(matches.map((match) => match.roundNumber))]
-    .filter((roundNumber) => roundNumber >= fromRound)
     .sort((left, right) => right - left);
   for (const roundNumber of roundNumbers) {
     if (isMatchRoundDecided(matches, roundNumber)) {

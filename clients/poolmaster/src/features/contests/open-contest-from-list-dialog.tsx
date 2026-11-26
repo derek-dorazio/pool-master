@@ -1,21 +1,16 @@
-import { SelectionType } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import type { ContestDto } from '@/lib/api';
 import { CheckList, ErrorState, LoadingState, refetchFailed } from '@/features/shared/ui';
-import { contestSecondChanceRoundName } from './bracket-start-round';
 import { firstContestEvent } from './contest-events';
 import { getContestReadinessChecks } from './contest-readiness';
 import { OpenContestDialog } from './open-contest-action';
-import { useEventRoundLabels } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
-import { useManagedContestQuery } from './use-managed-contest-query';
 
 /**
  * "Open to league" from a contest's "⋯" in the contests list (#1648): the same question as the
  * contest's own page, with the page's readiness checks under it, and Open held until they pass.
  * The list carries only each event's name and start, so the dialog reads the contest's first
- * event once it opens, and for a bracket its configuration too, to name a second-chance start
- * (#721). Nothing is read while it is closed. The server's own checks still have the last word.
+ * event once it opens. Nothing is read while it is closed. The server's own checks still have the last word.
  */
 export function OpenContestFromListDialog({
   contest,
@@ -26,16 +21,11 @@ export function OpenContestFromListDialog({
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
-  const isBracket = contest.selectionType === SelectionType.BRACKET;
   const eventQuery = useQuery(sportEventQueryOptions(open ? firstContestEvent(contest)?.sportEventId ?? '' : ''));
-  const managedContestQuery = useManagedContestQuery(open && isBracket ? contest.leagueId : undefined, contest.id);
-  const roundName = useEventRoundLabels(isBracket ? eventQuery.data?.id ?? '' : '');
 
-  const bracketStartRoundName = contestSecondChanceRoundName(managedContestQuery.data?.configuration, roundName);
-  const isLoading = eventQuery.isLoading || managedContestQuery.isLoading;
-  const isError = eventQuery.isError || managedContestQuery.isError;
+  const { isLoading, isError } = eventQuery;
   const checks = eventQuery.data && !isLoading && !isError
-    ? getContestReadinessChecks(eventQuery.data, new Date(), bracketStartRoundName)
+    ? getContestReadinessChecks(eventQuery.data, new Date())
     : null;
 
   return (
@@ -54,7 +44,7 @@ export function OpenContestFromListDialog({
       ) : isError ? (
         <ErrorState
           body="We couldn't check whether this contest is ready."
-          onRetry={refetchFailed(eventQuery, managedContestQuery)}
+          onRetry={refetchFailed(eventQuery)}
           size="plain"
           testId="contest-open-readiness-error"
         />

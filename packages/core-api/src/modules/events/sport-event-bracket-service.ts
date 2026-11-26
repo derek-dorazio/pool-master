@@ -348,7 +348,7 @@ export class SportEventBracketService {
     const rebuild = await this.gamesWrite(sportEventId);
     await this.deps.matches.update(match.id, toPatch(edit), rebuild.jobs);
     rebuild.queued();
-    // A squares grid or a second-chance bracket closes at a game's start (#1170).
+    // A squares grid closes at its game's start (#1170).
     if (edit.scheduledDate !== undefined && edit.scheduledDate?.getTime() !== match.scheduledDate?.getTime()) {
       await this.deps.contests.recheckReminders({ sportEventId }, this.deps.now?.() ?? new Date());
     }

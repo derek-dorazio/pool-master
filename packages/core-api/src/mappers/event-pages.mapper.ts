@@ -10,7 +10,6 @@ export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto
     sportLeagueName: view.offer.sportLeagueName,
     sportLeagueCompetitionSlotId: view.offer.sportLeagueCompetitionSlotId,
     template: mapContestConfigTemplateDto(view.offer.template),
-    startsAtRound: view.startsAtRound,
     sortOrder: view.offer.sortOrder,
     isPrimary: view.offer.isPrimary,
     state: view.state,

@@ -11,7 +11,6 @@ import {
   EmailCategory,
   LeagueMembershipStatus,
   LeagueRole,
-  MatchStatus,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -28,7 +27,6 @@ import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
-import { namedSlotOfRound } from '../../support/round-slots';
 
 const STARTS_AT = new Date('2026-04-09T11:40:00.000Z');
 /** The tests' clock: a week before STARTS_AT. */
@@ -39,7 +37,6 @@ describe('ContestNotices', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let matches: SportEventRoundMatch[];
-  let slotNames: string[];
   let tierCount: number;
   let final: ContestFinalStandings;
   let logger: ReturnType<typeof fakeLogger>;
@@ -53,7 +50,6 @@ describe('ContestNotices', () => {
     outbox = inMemoryEmailMessages();
     optOuts = inMemoryEmailOptOuts();
     matches = [];
-    slotNames = [];
     tierCount = 6;
     final = { scoringDefinitionId: null, entries: [] };
     logger = fakeLogger();
@@ -188,36 +184,6 @@ describe('ContestNotices', () => {
       expect(text).toContain('Picks close: Apr 9, 2026, 7:40 AM EDT');
       expect(outbox.rows[0]?.htmlBody).toContain('src="https://app.example.test/email/formats/tiered.png"');
       expect(text).toContain(`Enter contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
-    });
-
-    it('says a second-chance bracket closes at its starting round, named in the sport league\'s words', async () => {
-      const league = world.addLeague();
-      const tournament = world.addSportEvent({
-        name: 'March Madness',
-        sport: Sport.BASKETBALL,
-        rounds: 6,
-        status: SportEventStatus.IN_PROGRESS,
-        startDate: new Date('2026-03-19T16:00:00.000Z'),
-      });
-      const contest = world.addContest(league.id, { selectionType: SelectionType.BRACKET, sportEventIds: [tournament.id] });
-      world.addConfiguration(contest.id, {
-        selectionType: SelectionType.BRACKET,
-        configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 3 },
-      });
-      slotNames = ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
-      matches = [2, 3].map((roundNumber) => legacyMatch({
-        id: `game-${String(roundNumber)}`,
-        sportEventId: tournament.id,
-        roundNumber, slot: namedSlotOfRound(roundNumber, slotNames),
-        status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
-        scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : STARTS_AT,
-      }));
-      const nora = member(league.id, 'Nora');
-
-      await notices().contestOpened(contest.id);
-
-      expect(textTo(nora.user.id)).toContain('Second-chance bracket from the Sweet 16');
-      expect(textTo(nora.user.id)).toContain('Picks close: Apr 9, 2026, 7:40 AM EDT');
     });
 
     it('sends nothing, and says why, for a contest whose rules are gone', async () => {

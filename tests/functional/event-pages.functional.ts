@@ -5,11 +5,12 @@ import { EventPageListResponseSchema, EventPageResponseSchema } from '@poolmaste
 import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { putEventInSlot } from '../support/event-edition';
+import { oneEventSlotId } from '../support/test-slots';
 import { expectDefined } from '../support/expect-defined';
 
 // The public event pages end to end over HTTP (#1007): a visitor with no session reads
-// Championship Weekend once the NFL Playoffs fill its offer's slot, its bracket offer the primary one
-// that dates the page, finds the page in the list and the upcoming list, and gets a 404 for an
+// Championship Weekend once the NFL Playoffs fill its offer's slot, its squares offer the primary
+// one that dates the page, finds the page in the list and the upcoming list, and gets a 404 for an
 // address no page has. Other suites create NFL events of their own, so the slot the page
 // shows is not asserted here; which slot an offer shows is the event page service's unit tests'.
 
@@ -23,6 +24,7 @@ afterAll(async () => {
   if (createdEventIds.length > 0) {
     const db = getFunctionalPrisma();
     const where = { sportEventId: { in: createdEventIds } };
+    await db.sportEventRoundMatch.deleteMany({ where });
     await db.sportEventRound.deleteMany({ where });
     await db.sportEventTier.deleteMany({ where });
     await db.sportEvent.deleteMany({ where: { id: { in: createdEventIds } } });
@@ -38,7 +40,7 @@ async function readPage(client: Client) {
 }
 
 describe('SDK Functional: event pages (#1007)', () => {
-  it('shows a visitor Championship Weekend with the NFL bracket from the conference championships as its primary offer once the playoffs have an edition', async () => {
+  it('shows a visitor Championship Weekend with NFL Squares as its primary offer once the playoffs have an edition with a game to come', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Event Page Editor' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -58,19 +60,26 @@ describe('SDK Functional: event pages (#1007)', () => {
       select: { sportLeagueCompetitionSlotId: true },
     });
     await putEventInSlot(getFunctionalPrisma(), eventId, offered.sportLeagueCompetitionSlotId);
+    // A squares offer opens on a game still to kick off, until the sync gives the playoffs theirs.
+    const db = getFunctionalPrisma();
+    const round = await db.sportEventRound.findFirst({ where: { sportEventId: eventId }, orderBy: { roundNumber: 'desc' } })
+      ?? await db.sportEventRound.create({ data: { sportEventId: eventId, sportEventSlotId: await oneEventSlotId(db, eventId), roundNumber: 1, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) } });
+    await db.sportEventRoundMatch.create({
+      data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) },
+    });
     const visitor = getSdkClient();
 
-    // --- The page: its bracket offer is the primary, starting at the conference championships --
+    // --- The page: its squares offer is the primary -------------------------------------------
     const page = await readPage(visitor);
     const primary = expectDefined(page.offers.find((offer) => offer.isPrimary));
-    expect(primary).toMatchObject({ sportLeagueName: 'NFL', startsAtRound: 3, template: { templateKey: 'nfl-bracket-doubling' } });
+    expect(primary).toMatchObject({ sportLeagueName: 'NFL', template: { templateKey: 'nfl-squares' } });
     expect([EventPageOfferState.NOT_YET, EventPageOfferState.OPEN]).toContain(primary.state);
     expect(page.offers.filter((offer) => offer.isPrimary)).toHaveLength(1);
 
     // --- The list carries the same page --------------------------------------------------------
     const list = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.FOOTBALL } })).data);
     expect(list.eventPages.find((listed) => listed.urlSegment === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.template.templateKey)
-      .toBe('nfl-bracket-doubling');
+      .toBe('nfl-squares');
 
     // --- The upcoming list: only pages with a primary edition coming, soonest first (#1202) ------
     const upcoming = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.FOOTBALL, upcoming: true } })).data);

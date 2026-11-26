@@ -338,7 +338,7 @@ const MARCH_MADNESS_UNDER_WAY = {
   readinessStatus: 'EVENT_STARTED',
   readinessReasons: ['EVENT_STARTED'],
   contestEligible: false,
-  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3, 4, 5]),
+  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }),
   rounds: 6,
 } as const;
 
@@ -736,7 +736,6 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
 
     expect(await screen.findByTestId('contest-bracket-rules')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('Full bracket');
     expect(screen.getByText('Points for a correct pick')).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4' } });
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('March Madness Bracket'));
@@ -753,7 +752,6 @@ describe('Commissioner tools › Contests › Create contest', () => {
       selectionType: 'BRACKET',
       configuration: {
         selectionType: 'BRACKET',
-        startsAtRound: 1,
         maxEntriesPerSquad: 1,
         scoring: {
           participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
@@ -763,123 +761,21 @@ describe('Commissioner tools › Contests › Create contest', () => {
     });
   });
 
-  it('offers a bracket on an event that has not started only as a full bracket, since its later rounds have no teams yet', async () => {
-    primeBasketballMocks([basketballEvent({ rounds: 6 })]);
-    renderCreateContestPage();
-    await waitForStartingChoices();
-
-    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
-    await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
-    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
-
-    const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
-    expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual(['Full bracket']);
-  });
-
-  it('starts the bracket over at the full bracket when the commissioner switches from a knockout under way to one that has not started', async () => {
-    primeBasketballMocks([basketballEvent({ rounds: 6 }), basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
-    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-bracket' } } });
-    renderCreateContestPage();
-    await waitForStartingChoices();
-
-    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
-    fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
-    await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
-    fireEvent.click(screen.getByTestId('contest-event-bb-live'));
-    await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Round of 32'));
-    fireEvent.click(screen.getByTestId('contest-event-bb-1'));
-
-    await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('Full bracket'));
-    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-    await submitOnceReady();
-
-    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
-    expect(submittedBody()).toMatchObject({
-      sportEventIds: ['bb-1'],
-      configuration: { selectionType: 'BRACKET', startsAtRound: 1 },
-    });
-  });
-
-  it('offers a six-round knockout under way each later round but the final by its round names, and creates a second-chance bracket from the Sweet 16', async () => {
+  it('lists no event for a bracket once its knockout is under way, as a bracket is picked before the first game', async () => {
     primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
-    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-second-chance' } } });
     renderCreateContestPage();
     await waitForStartingChoices();
 
     fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
     fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
-    await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
 
-    const startsAt = screen.getByTestId('contest-bracket-starts-at-round');
-    await waitFor(() => expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'From the Round of 32',
-      'From the Sweet 16',
-      'From the Elite Eight',
-      'From the Final Four',
-    ]));
-    fireEvent.change(startsAt, { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-
-    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('March Madness Live Second-Chance Bracket'));
-    expect(screen.getByTestId('contest-bracket-rules')).toHaveTextContent(
-      'Second-chance bracket from the Sweet 16: pick the winner of every game from the Sweet 16 on, all the way to the final, before its first game.',
-    );
-    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('Second-chance bracket from the Sweet 16');
-    await submitOnceReady();
-
-    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
-    expect(submittedBody()).toMatchObject({
-      name: 'March Madness Live Second-Chance Bracket',
-      selectionType: 'BRACKET',
-      configuration: { selectionType: 'BRACKET', startsAtRound: 3 },
-    });
-  });
-
-  it('names the starting rounds by the slots the event\'s rounds are played in', async () => {
-    primeBasketballMocks(
-      [basketballEvent(MARCH_MADNESS_UNDER_WAY)],
-      TOURNAMENT_ROUND_SLOTS.map((slot, index) => ({ ...slot, name: ['First Round', 'Round of 32', 'Sweet Sixteen', 'Regional Final', 'National Semifinal', 'Title Game'][index] ?? null })),
-    );
-    renderCreateContestPage();
-    await waitForStartingChoices();
-
-    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
-    fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
-    await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
-
-    expect(await screen.findByRole('option', { name: 'From the Sweet Sixteen' })).toBeInTheDocument();
-    expect(listEventRoundsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'bb-live' } }));
-  });
-
-  it('lists a knockout under way only for a bracket, offers only its later rounds, and creates a second-chance bracket from the second round', async () => {
-    primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
-    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-second-chance' } } });
-    renderCreateContestPage();
-    await waitForStartingChoices();
-
-    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
     expect(await screen.findByTestId('create-contest-no-events')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
-
-    await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
-    expect(screen.getByTestId('contest-event-bb-live')).toHaveTextContent('Under way');
-    const startsAt = screen.getByTestId('contest-bracket-starts-at-round');
-    // The rounds' names come with the event's rounds read.
-    await waitFor(() => expect(startsAt).toHaveDisplayValue('From the Round of 32'));
-    expect(screen.queryByRole('option', { name: 'Full bracket' })).not.toBeInTheDocument();
-    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-    await submitOnceReady();
-
-    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
-    expect(submittedBody()).toMatchObject({
-      sportEventIds: ['bb-live'],
-      configuration: { selectionType: 'BRACKET', startsAtRound: 2 },
-    });
+    expect(screen.queryByTestId('contest-event-bb-live')).not.toBeInTheDocument();
   });
 
-  describe('bracket setups the chosen event can start at', () => {
-    const bracketTemplate = (templateKey: string, name: string, startsAtRound: number, overrides: Record<string, unknown> = {}) => ({
-      id: `80200000-0000-4000-8000-0000000001${String(startsAtRound)}${String(templateKey.length)}`,
+  describe('bracket setups', () => {
+    const bracketTemplate = (templateKey: string, name: string, overrides: Record<string, unknown> = {}) => ({
+      id: `80200000-0000-4000-8000-00000000011${String(templateKey.length)}`,
       coverageMode: 'ONE_SLOT',
       slots: [templateSlotFixture(sportSlotId('BASKETBALL'))],
       sportLeagueId: 'ncaa-men',
@@ -892,16 +788,15 @@ describe('Commissioner tools › Contests › Create contest', () => {
       isDefault: false,
       active: true,
       schemaVersion: 1,
-      configuration: { selectionType: 'BRACKET', startsAtRound, maxEntriesPerSquad: 1 },
+      configuration: { selectionType: 'BRACKET', maxEntriesPerSquad: 1 },
       ...overrides,
     });
     const BRACKET_TEMPLATES = [
-      bracketTemplate('ncaa-men-bracket-doubling', 'Bracket: every game, doubling points', 1, { isDefault: true }),
-      bracketTemplate('ncaa-men-bracket-doubling-upset-bonus', 'Bracket: every game, doubling + upset bonus', 1, { sortOrder: 8 }),
-      bracketTemplate('ncaa-men-bracket-second-chance-doubling', 'Bracket: second chance from the Sweet 16', 3, { sortOrder: 9 }),
+      bracketTemplate('ncaa-men-bracket-doubling', 'Bracket: every game, doubling points', { isDefault: true }),
+      bracketTemplate('ncaa-men-bracket-doubling-upset-bonus', 'Bracket: every game, doubling + upset bonus', { sortOrder: 8 }),
     ];
 
-    it('offers a knockout that has not started only its full-bracket setups, starting on the default with no round left to choose', async () => {
+    it('offers a knockout that has not started its bracket setups, starting on the default', async () => {
       primeBasketballMocks([basketballEvent({ rounds: 6 })], TOURNAMENT_ROUND_SLOTS, BRACKET_TEMPLATES);
       renderCreateContestPage();
       await waitForStartingChoices();
@@ -911,51 +806,11 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
       await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling')).toBeChecked());
       expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling-upset-bonus')).toBeInTheDocument();
-      expect(screen.queryByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).not.toBeInTheDocument();
-      expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('Full bracket');
       expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
     });
 
-    it('offers a knockout under way only its second-chance setups, starting on one at its own round, and creates it from that round', async () => {
-      primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)], TOURNAMENT_ROUND_SLOTS, BRACKET_TEMPLATES);
-      createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-second-chance' } } });
-      renderCreateContestPage();
-      await waitForStartingChoices();
-
-      fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
-      fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
-
-      await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
-      expect(screen.queryByTestId('contest-template-ncaa-men-bracket-doubling')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('contest-template-ncaa-men-bracket-doubling-upset-bonus')).not.toBeInTheDocument();
-      await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16'));
-      expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
-      fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-      await submitOnceReady();
-
-      await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
-      expect(submittedBody()).toMatchObject({
-        sportEventIds: ['bb-live'],
-        configuration: { selectionType: 'BRACKET', startsAtRound: 3 },
-      });
-    });
-
-    it('moves to the second-chance setup when the commissioner switches from a knockout that has not started to one under way', async () => {
-      primeBasketballMocks([basketballEvent({ rounds: 6 }), basketballEvent(MARCH_MADNESS_UNDER_WAY)], TOURNAMENT_ROUND_SLOTS, BRACKET_TEMPLATES);
-      renderCreateContestPage();
-      await waitForStartingChoices();
-
-      fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
-      fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
-      await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling')).toBeChecked());
-      fireEvent.click(screen.getByTestId('contest-event-bb-live'));
-
-      await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
-      await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16'));
-      expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
-    });
-    describe('a bracket chosen on the contest types page that its event cannot start', () => {
-      const SECOND_CHANCE = BRACKET_TEMPLATES[2];
+    describe('a bracket chosen on the contest types page', () => {
+      const REQUESTED = BRACKET_TEMPLATES[1];
       const NBA_PLAYOFFS = basketballEvent({ id: 'bb-nba', name: 'NBA Playoffs', rounds: 4, sportLeagueId: 'nba', startDate: '2099-04-18T16:00:00.000Z' });
 
       function primeRequestedBracket(events: Array<Record<string, unknown>>, query = '') {
@@ -964,29 +819,12 @@ describe('Commissioner tools › Contests › Create contest', () => {
         listContestConfigTemplatesMock.mockImplementation(async (options: TemplateQuery) => (options.query?.slotDefinitionIds
           ? byQuery(options)
           : { data: { templates: [...(await byQuery({ query: { slotDefinitionIds: [sportSlotId('GOLF')] } })).data.templates, ...BRACKET_TEMPLATES] } }));
-        renderCreateContestPage(`/league/BIGDAWGS/admin/contests/new?template=${SECOND_CHANCE.id}${query}`);
+        renderCreateContestPage(`/league/BIGDAWGS/admin/contests/new?template=${REQUESTED.id}${query}`);
       }
-
-      it('opens a second chance asked for before the tournament starts on the full-bracket default instead', async () => {
-        primeRequestedBracket([basketballEvent({ rounds: 6 })]);
-
-        await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling')).toBeChecked());
-        expect(screen.getByTestId('contest-sport-BASKETBALL')).toBeChecked();
-        expect(screen.getByTestId('contest-format-BRACKET')).toBeChecked();
-        expect(screen.queryByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).not.toBeInTheDocument();
-      });
-
-      it('starts on the edition and the round an event page asked for, over the template\'s own starting round', async () => {
-        primeRequestedBracket([basketballEvent(MARCH_MADNESS_UNDER_WAY)], '&event=bb-live&startRound=4');
-
-        await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
-        expect(screen.getByTestId('contest-event-bb-live')).toBeChecked();
-        expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Elite Eight');
-      });
 
       it('lets the commissioner move to another event rather than pulling them back to the template\'s', async () => {
         primeRequestedBracket([basketballEvent({ rounds: 6 }), NBA_PLAYOFFS]);
-        await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling')).toBeChecked());
+        await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling-upset-bonus')).toBeChecked());
 
         fireEvent.click(screen.getByTestId('contest-event-bb-nba'));
 
@@ -1033,13 +871,13 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).not.toBeChecked();
   });
 
-  it('says the event has started, so no contest can be made on it, when a second-chance bracket\'s starting round has already started', async () => {
-    primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
+  it('says the event has started, so no contest can be made on it, when the server finds it started after the page listed it', async () => {
+    primeBasketballMocks([basketballEvent({ rounds: 6 })]);
     createContestMock.mockResolvedValue({
       error: {
         error: {
           code: 'SPORT_EVENT_ALREADY_STARTED',
-          message: 'The bracket\'s starting round has already started, so a bracket can no longer start there.',
+          message: 'The event has already started, so a contest can no longer be made on it.',
         },
       },
       status: 422,
@@ -1049,7 +887,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
     fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
-    await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
+    await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
     await submitOnceReady();
 
@@ -1679,7 +1517,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     readinessStatus: 'EVENT_STARTED',
     readinessReasons: ['EVENT_STARTED'],
     contestEligible: false,
-    contestOpenings: openingsUnderWay({ sport: 'FOOTBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3]),
+    contestOpenings: openingsUnderWay({ sport: 'FOOTBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }),
     tierCount: 0,
     rounds: 4,
     sportLeagueId: 'nfl',

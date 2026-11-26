@@ -259,11 +259,6 @@ describe('a full entry\'s pick count, the M of "best N of M"', () => {
     expect(resolveLineupSize({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 4 }, field)).toBe(6);
   });
 
-  it('caps a tiered contest\'s tiers at the tiers it uses', () => {
-    const field = tieredField(['t1', 't2', 't3', 't4']);
-    expect(resolveLineupSize({ selectionType: SelectionType.TIERED, picksPerTier: 1, tiersUsed: 2, countedScores: 2 }, field)).toBe(2);
-  });
-
   it('is unknown for a tiered contest whose event is not tiered yet', () => {
     expect(resolveLineupSize({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, tieredField([null, null]))).toBeNull();
   });

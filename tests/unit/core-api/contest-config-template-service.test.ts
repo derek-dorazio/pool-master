@@ -306,7 +306,7 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     it('refuses a bracket listing a regular-season week with CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT, where a side need not advance', async () => {
       const bracket = template({
         id: 'bracket', sportLeagueId: 'nfl', selectionType: SelectionType.BRACKET, coverageMode: TemplateCoverageMode.ALL_LISTED, slots: [nfl[2], nfl[3]],
-        configJson: { selectionType: SelectionType.BRACKET } as unknown as ContestConfigTemplate['configJson'],
+        configJson: { selectionType: SelectionType.BRACKET },
       });
       const { store, service } = templateStore([bracket], { nfl });
 

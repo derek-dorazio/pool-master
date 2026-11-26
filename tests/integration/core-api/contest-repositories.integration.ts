@@ -373,16 +373,16 @@ describe('ContestRepository', () => {
     expect(current.map((contest) => contest.id)).toEqual([open.id, emptyDraft.id, upcomingDraft.id, live.id]);
   });
 
-  /** Four drafts on the event: brackets from round 1 and round 2, and squares with no game and with one. */
+  /** Three drafts on the event: a bracket, and squares with no game and with one. */
   async function createLateCutoffDrafts(leagueId: string, eventId: string) {
     const prisma = getPrisma();
-    const bracket = async (name: string, startsAtRound: number) => {
+    const bracket = async (name: string) => {
       const contest = await createContestRow(repos().contests, {
         leagueId, seasonYear: 2026, sportEventIds: [eventId], name,
         status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.BRACKET,
       });
       await prisma.contestConfiguration.create({
-        data: { contestId: contest.id, selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET, startsAtRound } },
+        data: { contestId: contest.id, selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET } },
       });
       return contest;
     };
@@ -396,14 +396,13 @@ describe('ContestRepository', () => {
       data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true },
     });
     return {
-      roundOne: await bracket('Full Bracket', 1),
-      secondChance: await bracket('Second Chance', 2),
+      bracket: await bracket('Full Bracket'),
       noGame: await squares('Squares With No Game'),
       withGame: await squares('Late Game Squares', game.id),
     };
   }
 
-  it('keeps a draft closing after its event starts, a bracket from round 2 on or squares with its game, and leaves out a round-1 bracket and squares with no game once the event has started (#1217)', async () => {
+  it('keeps a draft closing after its event starts, squares with its game, and leaves out a bracket and squares with no game once the event has started (#1217)', async () => {
     const { league, event } = await createLeagueAndEvent();
     // The event started June 4 and is still under way.
     const now = new Date('2026-06-05T12:00:00.000Z');
@@ -412,10 +411,10 @@ describe('ContestRepository', () => {
 
     const current = await repos().contests.findCurrentByLeague(league.id, now);
 
-    expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id, drafts.secondChance.id]);
+    expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id]);
   });
 
-  it('counts an event under way before its start date as started, leaving out its round-1 bracket draft and keeping its round-2 one (#1217)', async () => {
+  it('counts an event under way before its start date as started, leaving out its bracket draft and keeping its squares with a game (#1217)', async () => {
     const { league, event } = await createLeagueAndEvent();
     // Before the June 4 start date, but the event is already IN_PROGRESS.
     const now = new Date('2026-06-01T12:00:00.000Z');
@@ -424,10 +423,10 @@ describe('ContestRepository', () => {
 
     const current = await repos().contests.findCurrentByLeague(league.id, now);
 
-    expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id, drafts.secondChance.id]);
+    expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id]);
   });
 
-  it('leaves out every draft with an event finished or cancelled, even a later-round bracket, squares with its game, or a draft whose event has not started (#1217)', async () => {
+  it('leaves out every draft with an event finished or cancelled, even squares with its game, or a draft whose event has not started (#1217)', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const prisma = getPrisma();
     const now = new Date('2026-06-10T12:00:00.000Z');

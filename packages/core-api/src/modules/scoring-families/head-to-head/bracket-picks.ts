@@ -61,17 +61,9 @@ export interface ResolvedBracket<Pick extends BracketPick> {
 
 const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
 
-/**
- * The games a bracket contest picks: the event's games from the contest's starting round on, with
- * cancelled games left out. A second-chance bracket (`startsAtRound` after 1) begins at a round
- * whose teams the results have already decided, so everything below reads that round as its first
- * and its sides as the real teams.
- */
-export function contestBracketGames<Match extends Pick<SportEventRoundMatch, 'status' | 'roundNumber'>>(
-  matches: readonly Match[],
-  startsAtRound: number,
-): Match[] {
-  return matches.filter((match) => match.status !== MatchStatus.CANCELLED && match.roundNumber >= startsAtRound);
+/** The games a bracket contest picks: every game of the event, with cancelled games left out. */
+export function contestBracketGames<Match extends Pick<SportEventRoundMatch, 'status'>>(matches: readonly Match[]): Match[] {
+  return matches.filter((match) => match.status !== MatchStatus.CANCELLED);
 }
 
 function storedSide(match: SportEventRoundMatch, side: MatchSide): string | null {
@@ -177,18 +169,16 @@ export function resolveBracketPicks<Pick extends BracketPick>(
 
 /**
  * Why an event's games cannot be filled in as a bracket, or null when they can: every game must
- * offer two teams once the games before it are picked, so a first-round team still to be decided
- * (for a second-chance bracket, a team of its starting round that the results have not yet decided),
+ * offer two teams once the games before it are picked, so a first-round team still to be decided,
  * a later game no earlier game leads to, or a bracket without a single final is refused. Checked
  * by filling the bracket in with each game's home team.
  */
 export function findBracketProblem(
   bracket: readonly SportEventRoundMatch[],
   seedOf: ReadonlyMap<string, number | null>,
-  startsAtRound = 1,
 ): string | null {
   if (bracket.length === 0) {
-    return startsAtRound > 1 ? `it has no games from round ${startsAtRound} on` : 'it has no games';
+    return 'it has no games';
   }
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
   // The final is the game of the final's round (#2006), never the last round's.
