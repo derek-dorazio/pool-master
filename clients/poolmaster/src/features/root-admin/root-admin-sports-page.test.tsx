@@ -288,10 +288,10 @@ describe('RootAdminSportsPage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent('/manage/sports/baseball/leagues/mlb');
   });
 
-  it('opens a sport league\'s settings from its ⚙ without leaving the grid, showing them before Edit, and closes back to the grid', async () => {
+  it('opens a sport league\'s settings from its ⚙ without leaving the grid, showing them before Edit with its tier profile by the name seeded for its code, and closes back to the grid', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() }) } });
-    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PLATFORM_TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_PLATFORM_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PLATFORM_TIER_PROFILE_ID, code: 'SEEDS_2_4_REST', name: 'Baseball seeds' }, { id: OTHER_PLATFORM_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
     listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
     renderPage();
 
@@ -301,7 +301,7 @@ describe('RootAdminSportsPage', () => {
     expect(screen.getByTestId('root-admin-sport-league-settings-status')).toHaveTextContent('On');
     expect(await screen.findByTestId('root-admin-sport-league-settings-provider')).toHaveTextContent('BALLDONTLIE · PGA TOUR');
     expect(screen.getByTestId('root-admin-sport-league-settings-auto-release')).toHaveTextContent('7 days before start');
-    expect(await screen.findByTestId('root-admin-sport-league-settings-tier-profile')).toHaveTextContent('4 tiers of 3');
+    expect(await screen.findByTestId('root-admin-sport-league-settings-tier-profile')).toHaveTextContent('Playoff seeds: 1-2, 3-4, 5+');
     expect(screen.queryByTestId('root-admin-sport-league-settings-status-input')).not.toBeInTheDocument();
     expect(screen.queryByTestId('location')).not.toBeInTheDocument();
 

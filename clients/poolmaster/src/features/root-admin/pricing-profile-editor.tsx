@@ -37,13 +37,14 @@ const NUMBER_FIELDS = [
   { key: 'steepness', label: 'Steepness', step: 'any' },
 ] as const;
 
-const NEW_PROFILE: PlatformPricingProfileWriteRequest = { code: '', name: '', sources: explicitOrderValues(FieldOrderBasisOrder), salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+const NEW_PROFILE: PlatformPricingProfileWriteRequest = { code: '', name: '', description: '', sources: explicitOrderValues(FieldOrderBasisOrder), salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 function formValuesOf(profile: PlatformPricingProfileDto | null): PlatformPricingProfileWriteRequest {
   return profile
     ? {
       code: profile.code,
       name: profile.name,
+      description: profile.description,
       sources: [...profile.sources],
       salaryCap: profile.salaryCap,
       unit: profile.unit,

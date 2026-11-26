@@ -1,4 +1,4 @@
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, profileWords } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useState } from 'react';
 import { TierProfileType, TierProfileTypeOrder } from '@poolmaster/shared/domain';
@@ -8,6 +8,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { ProfileDeleteDialog } from './profile-delete-dialog';
 import { ProfileDialog, type ProfileDialogState } from './profile-dialog';
+import { profileWordsFacts } from './profile-words';
 import { PlatformTierProfileEditor } from './tier-profile-editor';
 import { describeLastTier, describeRanges, describeSources, describeTierLayout } from './tier-profile-format';
 import { usePlatformTierProfilesQuery } from './use-profiles';
@@ -21,7 +22,12 @@ const columns = [
   }),
   columnHelper.accessor('name', {
     header: 'Name',
-    meta: { info: 'The tier profile\'s name, as a sport league\'s settings offer it.', type: { kind: 'text' } },
+    meta: { info: 'The root admin\'s name for the tier profile. Screens show it only until display strings are seeded for its code.', type: { kind: 'text' } },
+  }),
+  columnHelper.accessor((profile) => profileWords('tierProfile', profile).name, {
+    id: 'shownAs',
+    header: 'Shown as',
+    meta: { info: 'What screens call the tier profile: the name seeded for its code, or its own name until one is.', type: { kind: 'text' } },
   }),
   columnHelper.accessor((profile) => describeSources(profile.sources), {
     id: 'sources',
@@ -96,6 +102,7 @@ export function PlatformTierProfilesSection() {
       </QueryState>
       <ProfileDialog
         facts={(profile) => [
+          ...profileWordsFacts('tierProfile', profile),
           { id: 'sources', label: 'Order by', value: describeSources(profile.sources) },
           { id: 'type', label: 'Tiers by', value: enumLabel('TierProfileType', profile.type) },
           ...(profile.type === TierProfileType.RANGES

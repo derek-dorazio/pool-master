@@ -1266,7 +1266,12 @@ model PlatformTierProfile {
   /// The profile's key (#2000): migrations, seed scripts and test data find a profile by it, never
   /// by its name. Upper case letters, digits and underscores; set when the profile is made.
   code        String                             @unique @db.VarChar(50)
+  /// The root admin's name for the profile. Screens read the display strings keyed by `code`
+  /// (`tierProfile.<CODE>.name`) and fall back to it only until a change seeds them (#2194).
   name        String                             @unique @db.VarChar(50)
+  /// Plain English for agents and root admins: what the profile is and why it exists. Not
+  /// translated and not shown to commissioners or members (#2194).
+  description String                             @db.VarChar(500)
   type        PrismaTierProfileType
   /// EQUAL_GROUPS only: how many tiers a new event starts with. A RANGES profile has one per range.
   tierCount   Int?                               @map("tier_count")
@@ -1326,7 +1331,12 @@ model PlatformPricingProfile {
   /// The profile's key (#2000): migrations, seed scripts and test data find a profile by it, never
   /// by its name. Upper case letters, digits and underscores; set when the profile is made.
   code              String   @unique @db.VarChar(50)
+  /// The root admin's name for the profile. Screens read the display strings keyed by `code`
+  /// (`pricingProfile.<CODE>.name`) and fall back to it only until a change seeds them (#2194).
   name              String   @unique @db.VarChar(50)
+  /// Plain English for agents and root admins: what the profile is and why it exists. Not
+  /// translated and not shown to commissioners or members (#2194).
+  description       String   @db.VarChar(500)
   /// Whole dollars: the cap prices are a share of.
   salaryCap         Int      @map("salary_cap")
   /// Whole dollars: every price is rounded to a multiple of it.

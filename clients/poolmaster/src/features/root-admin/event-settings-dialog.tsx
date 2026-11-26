@@ -1,4 +1,4 @@
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, profileWords } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -108,9 +108,11 @@ export function EventSettingsDialog({
   });
 
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const platformTierProfileName = platformTierProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformTierProfileId)?.name ?? '…';
+  const platformTierProfile = platformTierProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformTierProfileId);
+  const platformTierProfileName = platformTierProfile ? profileWords('tierProfile', platformTierProfile).name : '…';
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const platformPricingProfileName = platformPricingProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformPricingProfileId)?.name ?? '…';
+  const platformPricingProfile = platformPricingProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformPricingProfileId);
+  const platformPricingProfileName = platformPricingProfile ? profileWords('pricingProfile', platformPricingProfile).name : '…';
   const tierOrder = overview === undefined ? '…' : overview.tierOrderBasis === null ? 'No active field' : enumLabel('FieldOrderBasis', overview.tierOrderBasis);
   const testId = 'root-admin-event-settings-dialog';
 

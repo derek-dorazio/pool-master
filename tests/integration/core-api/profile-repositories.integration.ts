@@ -11,6 +11,7 @@ import { SPORT_PLATFORM_TIER_PROFILE_CODE, sportLeagueRowDefaults } from '../../
 import { expectDefined } from '../../support/expect-defined';
 import type { ProfileTaken } from '@poolmaster/shared/db';
 import { sportPlay } from '../../support/sport-play';
+import { enUS, type ProfileDisplayEntry, type ProfileDisplayStrings } from '@poolmaster/shared/display-strings';
 
 const made = { platformTierProfileIds: new Set<string>(), platformPricingProfileIds: new Set<string>(), sportLeagueIds: new Set<string>() };
 
@@ -78,6 +79,27 @@ describe('The migration to tier and pricing profiles', () => {
     expect(mismatched).toEqual([]);
   });
 
+  it('gives every seeded tier and pricing profile a description, and every seeded code its name and line in the display strings (#2194)', async () => {
+    const prisma = getPrisma();
+    const [tiers, pricing] = await Promise.all([
+      prisma.platformTierProfile.findMany({ where: { code: { not: { startsWith: 'TEST_' } } }, select: { code: true, description: true } }),
+      prisma.platformPricingProfile.findMany({ where: { code: { not: { startsWith: 'TEST_' } } }, select: { code: true, description: true } }),
+    ]);
+    const unseeded = (section: 'tierProfile' | 'pricingProfile', rows: Array<{ code: string; description: string }>) => {
+      const words: ProfileDisplayStrings = enUS[section];
+      return rows
+        .filter(({ code, description }) => {
+          const entry: ProfileDisplayEntry | null = Object.hasOwn(words, code) ? words[code] : null;
+          return description.trim() === '' || description.startsWith('Added by a root admin') || entry === null || !entry.name.trim() || !entry.description.trim();
+        })
+        .map(({ code }) => `${section}.${code}`);
+    };
+
+    expect(tiers.length).toBe(22);
+    expect(pricing.length).toBe(3);
+    expect([...unseeded('tierProfile', tiers), ...unseeded('pricingProfile', pricing)]).toEqual([]);
+  });
+
   it('makes each old layout a profile whose last tier takes everyone left, named and coded for its count and size', async () => {
     const profiles = await getPrisma().platformTierProfile.findMany({ where: { code: { in: [...Object.values(SPORT_PLATFORM_TIER_PROFILE_CODE), 'TIERS_6_OF_2', 'TIERS_2_OF_2'] } } });
 
@@ -143,11 +165,11 @@ describe('PrismaPlatformTierProfileRepository', () => {
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
     const name = uniqueName('Capped');
     const code = uniqueCode();
-    const created = written(await repo.create({ code, name, ...EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 }));
+    const created = written(await repo.create({ code, name, description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 }));
     made.platformTierProfileIds.add(created.id);
 
-    await expect(repo.findById(created.id)).resolves.toMatchObject({ code, name, lastTier: 'CAPPED', lastTierMax: 15 });
-    const updated = await repo.update(created.id, { code, name: `${name} b`, ...EQUAL_GROUPS, tierCount: 4, tierSize: 8, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null });
+    await expect(repo.findById(created.id)).resolves.toMatchObject({ code, name, description: 'A profile for this test.', lastTier: 'CAPPED', lastTierMax: 15 });
+    const updated = await repo.update(created.id, { code, name: `${name} b`, description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 4, tierSize: 8, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null });
     expect(updated).toMatchObject({ id: created.id, name: `${name} b`, tierCount: 4, tierSize: 8, lastTier: 'ALL_REMAINING', lastTierMax: null });
     const all = await repo.findAll();
     expect(all.map((profile) => profile.name)).toEqual([...all.map((profile) => profile.name)].sort((left, right) => left.localeCompare(right)));
@@ -158,16 +180,16 @@ describe('PrismaPlatformTierProfileRepository', () => {
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
     const code = uniqueCode();
     const name = uniqueName('Seed ranges');
-    const created = written(await repo.create({ code, name, type: TierProfileType.RANGES, sources: SEED_FIRST, ranges: SEED_RANGES }));
+    const created = written(await repo.create({ code, name, description: 'A profile for this test.', type: TierProfileType.RANGES, sources: SEED_FIRST, ranges: SEED_RANGES }));
     made.platformTierProfileIds.add(created.id);
 
     await expect(repo.findById(created.id)).resolves.toEqual(expect.objectContaining({ type: 'RANGES', sources: SEED_FIRST, ranges: SEED_RANGES }));
     const twoTiers = [{ tierNumber: 1, fromValue: 1, toValue: 2 }, { tierNumber: 2, fromValue: 3, toValue: null }];
-    await expect(repo.update(created.id, { code, name, type: TierProfileType.RANGES, sources: [FieldOrderBasis.RANKING], ranges: twoTiers }))
+    await expect(repo.update(created.id, { code, name, description: 'A profile for this test.', type: TierProfileType.RANGES, sources: [FieldOrderBasis.RANKING], ranges: twoTiers }))
       .resolves.toEqual(expect.objectContaining({ sources: [FieldOrderBasis.RANKING], ranges: twoTiers }));
     await expect(getPrisma().platformTierProfileRange.count({ where: { platformTierProfileId: created.id } })).resolves.toBe(2);
     // Back to equal groups: the ranges go and the columns come back.
-    await expect(repo.update(created.id, { code, name, ...EQUAL_GROUPS, tierCount: 4, tierSize: 4, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }))
+    await expect(repo.update(created.id, { code, name, description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 4, tierSize: 4, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }))
       .resolves.toEqual(expect.objectContaining({ type: 'EQUAL_GROUPS', tierCount: 4 }));
     await expect(getPrisma().platformTierProfileRange.count({ where: { platformTierProfileId: created.id } })).resolves.toBe(0);
   });
@@ -175,13 +197,13 @@ describe('PrismaPlatformTierProfileRepository', () => {
   it('refuses in the database a ranges profile that also sets a tier count, and an equal-groups profile with no tier count', async () => {
     const prisma = getPrisma();
 
-    await expect(prisma.platformTierProfile.create({ data: { code: uniqueCode(), name: uniqueName('Both'), type: 'RANGES', tierCount: 3, tierSize: null, lastTier: null, lastTierMax: null } })).rejects.toThrow();
-    await expect(prisma.platformTierProfile.create({ data: { code: uniqueCode(), name: uniqueName('Neither'), type: 'EQUAL_GROUPS', tierCount: null, tierSize: 3, lastTier: 'ALL_REMAINING', lastTierMax: null } })).rejects.toThrow();
+    await expect(prisma.platformTierProfile.create({ data: { code: uniqueCode(), name: uniqueName('Both'), description: 'A profile for this test.', type: 'RANGES', tierCount: 3, tierSize: null, lastTier: null, lastTierMax: null } })).rejects.toThrow();
+    await expect(prisma.platformTierProfile.create({ data: { code: uniqueCode(), name: uniqueName('Neither'), description: 'A profile for this test.', type: 'EQUAL_GROUPS', tierCount: null, tierSize: 3, lastTier: 'ALL_REMAINING', lastTierMax: null } })).rejects.toThrow();
   });
 
   it('refuses in the database a source listed twice on one profile', async () => {
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
-    const profile = written(await repo.create({ code: uniqueCode(), name: uniqueName('Twice'), ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
+    const profile = written(await repo.create({ code: uniqueCode(), name: uniqueName('Twice'), description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
     made.platformTierProfileIds.add(profile.id);
 
     await expect(getPrisma().platformTierProfileSource.create({ data: { platformTierProfileId: profile.id, orderIndex: 5, basis: 'ODDS' } })).rejects.toThrow();
@@ -191,8 +213,8 @@ describe('PrismaPlatformTierProfileRepository', () => {
     const prisma = getPrisma();
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
     const pricing = new PrismaPlatformPricingProfileRepository(getAppPrisma());
-    const tiers = written(await repo.create({ code: uniqueCode(), name: uniqueName('Paired'), ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
-    const bySeed = written(await pricing.create({ code: uniqueCode(), name: uniqueName('By seed'), sources: SEED_FIRST, ...STANDARD_VALUES }));
+    const tiers = written(await repo.create({ code: uniqueCode(), name: uniqueName('Paired'), description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
+    const bySeed = written(await pricing.create({ code: uniqueCode(), name: uniqueName('By seed'), description: 'A profile for this test.', sources: SEED_FIRST, ...STANDARD_VALUES }));
     made.platformTierProfileIds.add(tiers.id);
     made.platformPricingProfileIds.add(bySeed.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
@@ -209,13 +231,13 @@ describe('PrismaPlatformTierProfileRepository', () => {
   it('refuses a capped last tier with no maximum in the database too', async () => {
     const prisma = getPrisma();
 
-    await expect(prisma.platformTierProfile.create({ data: { code: uniqueCode(), name: uniqueName('No cap'), type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'CAPPED', lastTierMax: null } })).rejects.toThrow();
+    await expect(prisma.platformTierProfile.create({ data: { code: uniqueCode(), name: uniqueName('No cap'), description: 'A profile for this test.', type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'CAPPED', lastTierMax: null } })).rejects.toThrow();
   });
 
   it('reads a sport league\'s tier profile, counts the leagues naming each profile, and answers an unknown league with null', async () => {
     const prisma = getPrisma();
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
-    const profile = written(await repo.create({ code: uniqueCode(), name: uniqueName('Counted'), ...EQUAL_GROUPS, tierCount: 3, tierSize: 3, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
+    const profile = written(await repo.create({ code: uniqueCode(), name: uniqueName('Counted'), description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 3, tierSize: 3, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
     made.platformTierProfileIds.add(profile.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const leagues = await Promise.all([1, 2].map(async (index) => prisma.sportLeague.create({
@@ -233,40 +255,40 @@ describe('PrismaPlatformTierProfileRepository', () => {
   it('answers a create or rename onto a name another tier profile has with nameTaken, writing nothing', async () => {
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
     const layout = { ...EQUAL_GROUPS, tierCount: 3, tierSize: 3, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
-    const first = written(await repo.create({ code: uniqueCode(), name: uniqueName('Taken'), ...layout }));
-    const second = written(await repo.create({ code: uniqueCode(), name: uniqueName('Other'), ...layout }));
+    const first = written(await repo.create({ code: uniqueCode(), name: uniqueName('Taken'), description: 'A profile for this test.', ...layout }));
+    const second = written(await repo.create({ code: uniqueCode(), name: uniqueName('Other'), description: 'A profile for this test.', ...layout }));
     made.platformTierProfileIds.add(first.id);
     made.platformTierProfileIds.add(second.id);
 
-    await expect(repo.create({ code: uniqueCode(), name: first.name, ...layout, tierSize: 4 })).resolves.toBe('nameTaken');
-    await expect(repo.update(second.id, { code: second.code, name: first.name, ...layout })).resolves.toBe('nameTaken');
+    await expect(repo.create({ code: uniqueCode(), name: first.name, description: 'A profile for this test.', ...layout, tierSize: 4 })).resolves.toBe('nameTaken');
+    await expect(repo.update(second.id, { code: second.code, name: first.name, description: 'A profile for this test.', ...layout })).resolves.toBe('nameTaken');
     await expect(repo.findById(second.id)).resolves.toMatchObject({ name: second.name });
   });
 
   it('answers a create or recode onto a code another tier profile has with codeTaken, writing nothing', async () => {
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
     const layout = { ...EQUAL_GROUPS, tierCount: 3, tierSize: 3, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
-    const first = written(await repo.create({ code: uniqueCode(), name: uniqueName('Coded'), ...layout }));
-    const second = written(await repo.create({ code: uniqueCode(), name: uniqueName('Recoded'), ...layout }));
+    const first = written(await repo.create({ code: uniqueCode(), name: uniqueName('Coded'), description: 'A profile for this test.', ...layout }));
+    const second = written(await repo.create({ code: uniqueCode(), name: uniqueName('Recoded'), description: 'A profile for this test.', ...layout }));
     made.platformTierProfileIds.add(first.id);
     made.platformTierProfileIds.add(second.id);
 
-    await expect(repo.create({ code: first.code, name: uniqueName('Fresh'), ...layout })).resolves.toBe('codeTaken');
-    await expect(repo.update(second.id, { code: first.code, name: second.name, ...layout })).resolves.toBe('codeTaken');
+    await expect(repo.create({ code: first.code, name: uniqueName('Fresh'), description: 'A profile for this test.', ...layout })).resolves.toBe('codeTaken');
+    await expect(repo.update(second.id, { code: first.code, name: second.name, description: 'A profile for this test.', ...layout })).resolves.toBe('codeTaken');
     await expect(repo.findById(second.id)).resolves.toMatchObject({ code: second.code });
   });
 
   it('refuses a code that is not capital letters, digits and underscores in the database too', async () => {
     await expect(getPrisma().platformTierProfile.create({
-      data: { code: 'six of ten', name: uniqueName('Bad code'), type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null },
+      data: { code: 'six of ten', name: uniqueName('Bad code'), description: 'A profile for this test.', type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null },
     })).rejects.toThrow(/platform_tier_profiles_code_format/);
   });
 
   it('refuses to delete a profile a sport league names, answering how many name it and keeping it; deletes one none names; answers an unknown one with null', async () => {
     const prisma = getPrisma();
     const repo = new PrismaPlatformTierProfileRepository(getAppPrisma());
-    const used = written(await repo.create({ code: uniqueCode(), name: uniqueName('Used'), ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
-    const unused = written(await repo.create({ code: uniqueCode(), name: uniqueName('Unused'), ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
+    const used = written(await repo.create({ code: uniqueCode(), name: uniqueName('Used'), description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
+    const unused = written(await repo.create({ code: uniqueCode(), name: uniqueName('Unused'), description: 'A profile for this test.', ...EQUAL_GROUPS, tierCount: 2, tierSize: 2, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
     made.platformTierProfileIds.add(used.id);
     made.platformTierProfileIds.add(unused.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
@@ -287,18 +309,18 @@ describe('PrismaPlatformPricingProfileRepository', () => {
     const repo = new PrismaPlatformPricingProfileRepository(getAppPrisma());
     const name = uniqueName('Pricey');
     const code = uniqueCode();
-    const profile = written(await repo.create({ code, name, sources: ODDS_FIRST, ...STANDARD_VALUES, steepness: 2.5 }));
+    const profile = written(await repo.create({ code, name, description: 'A profile for this test.', sources: ODDS_FIRST, ...STANDARD_VALUES, steepness: 2.5 }));
     made.platformPricingProfileIds.add(profile.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), platformPricingProfileId: profile.id, sportId: golf.id, name: uniqueName('Priced tour') } });
     made.sportLeagueIds.add(league.id);
 
-    await expect(repo.findById(profile.id)).resolves.toMatchObject({ code, name, steepness: 2.5 });
+    await expect(repo.findById(profile.id)).resolves.toMatchObject({ code, name, description: 'A profile for this test.', steepness: 2.5 });
     await expect(repo.findBySportLeague(league.id)).resolves.toMatchObject({ id: profile.id });
     await expect(repo.findBySportLeague(randomUUID())).resolves.toBeNull();
-    await expect(repo.update(profile.id, { code, name, sources: SEED_FIRST, ...STANDARD_VALUES, unit: 50 })).resolves.toMatchObject({ unit: 50, steepness: 4, sources: SEED_FIRST });
-    await expect(repo.create({ code: uniqueCode(), name, sources: ODDS_FIRST, ...STANDARD_VALUES })).resolves.toBe('nameTaken');
-    await expect(repo.create({ code, name: uniqueName('Recoded'), sources: ODDS_FIRST, ...STANDARD_VALUES })).resolves.toBe('codeTaken');
+    await expect(repo.update(profile.id, { code, name, description: 'A profile for this test.', sources: SEED_FIRST, ...STANDARD_VALUES, unit: 50 })).resolves.toMatchObject({ unit: 50, steepness: 4, sources: SEED_FIRST });
+    await expect(repo.create({ code: uniqueCode(), name, description: 'A profile for this test.', sources: ODDS_FIRST, ...STANDARD_VALUES })).resolves.toBe('nameTaken');
+    await expect(repo.create({ code, name: uniqueName('Recoded'), description: 'A profile for this test.', sources: ODDS_FIRST, ...STANDARD_VALUES })).resolves.toBe('codeTaken');
     await expect(repo.countSportLeaguesNaming(profile.id)).resolves.toBe(1);
     expect((await repo.countSportLeagues()).get(profile.id)).toBe(1);
     await expect(repo.deleteUnlessUsed(profile.id)).resolves.toBe(1);

@@ -167,8 +167,8 @@ export class InMemorySportEvents {
   sports: SportConfig[] = [];
   sportLeagues: SportLeague[] = [];
   /** The profiles sport leagues name (#1844): golf's six tiers of ten, and Standard pricing. */
-  platformTierProfiles: PlatformTierProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, code: 'TIERS_6_OF_10', name: '6 tiers of 10', sources: [...ODDS_FIRST], type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING' as const, lastTierMax: null })];
-  platformPricingProfiles: PlatformPricingProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', sources: [...ODDS_FIRST], salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
+  platformTierProfiles: PlatformTierProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, code: 'TIERS_6_OF_10', name: '6 tiers of 10', description: 'A profile for this test.', sources: [...ODDS_FIRST], type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING' as const, lastTierMax: null })];
+  platformPricingProfiles: PlatformPricingProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', description: 'A profile for this test.', sources: [...ODDS_FIRST], salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
   events: SportEvent[] = [];
@@ -897,7 +897,7 @@ export class InMemorySportEvents {
     layout: Pick<EqualGroupsLayout, 'tierCount' | 'tierSize'> & Partial<Pick<EqualGroupsLayout, 'lastTier' | 'lastTierMax'>>,
     sources: readonly FieldOrderBasis[] = ODDS_FIRST,
   ): SportLeague {
-    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `TIERS_${layout.tierCount}_OF_${layout.tierSize}`, name: `${layout.tierCount} tiers of ${layout.tierSize}`, sources: [...sources], type: TierProfileType.EQUAL_GROUPS, lastTier: 'ALL_REMAINING' as const, lastTierMax: null, ...layout });
+    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `TIERS_${layout.tierCount}_OF_${layout.tierSize}`, name: `${layout.tierCount} tiers of ${layout.tierSize}`, description: 'A tier profile for this test.', sources: [...sources], type: TierProfileType.EQUAL_GROUPS, lastTier: 'ALL_REMAINING' as const, lastTierMax: null, ...layout });
     this.platformTierProfiles.push(profile);
     return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformTierProfileId: profile.id });
   }
@@ -907,17 +907,17 @@ export class InMemorySportEvents {
    * Standard's values and the same sources, so the league's two profiles start with one source.
    */
   addLeagueWithRangesTierProfile(ranges: TierRange[], sources: readonly FieldOrderBasis[]): SportLeague {
-    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `RANGES_${ranges.length}`, name: `${ranges.length} ranges`, sources: [...sources], type: TierProfileType.RANGES, ranges });
+    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `RANGES_${ranges.length}`, name: `${ranges.length} ranges`, description: 'A tier profile for this test.', sources: [...sources], type: TierProfileType.RANGES, ranges });
     this.platformTierProfiles.push(profile);
     const pricingId = this.id('pricing-profile');
-    this.platformPricingProfiles.push(stamp({ id: pricingId, code: pricingId.toUpperCase().replaceAll('-', '_'), name: `Standard by ${sources[0]}`, sources: [...sources], salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 }));
+    this.platformPricingProfiles.push(stamp({ id: pricingId, code: pricingId.toUpperCase().replaceAll('-', '_'), name: `Standard by ${sources[0]}`, description: 'A pricing profile for this test.', sources: [...sources], salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 }));
     return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformTierProfileId: profile.id, platformPricingProfileId: pricingId });
   }
 
   /** A sport league of its own naming a new pricing profile with these values (#1844). */
   addLeagueWithPlatformPricingProfile(values: BudgetPricingProfile, sources: readonly FieldOrderBasis[] = ODDS_FIRST): SportLeague {
     const id = this.id('pricing-profile');
-    const profile: PlatformPricingProfile = stamp({ id, code: id.toUpperCase().replaceAll('-', '_'), sources: [...sources], ...values });
+    const profile: PlatformPricingProfile = stamp({ id, code: id.toUpperCase().replaceAll('-', '_'), description: 'A pricing profile for this test.', sources: [...sources], ...values });
     this.platformPricingProfiles.push(profile);
     return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformPricingProfileId: profile.id });
   }

@@ -47,6 +47,7 @@ export const NEW_RANGE: RangeRow = { fromValue: 1, toValue: null };
 const NEW_PROFILE: TierProfileFormValues = {
   code: '',
   name: '',
+  description: '',
   sources: ALL_SOURCES,
   type: TierProfileType.EQUAL_GROUPS,
   tierCount: 6,
@@ -58,7 +59,7 @@ const NEW_PROFILE: TierProfileFormValues = {
 
 export function formValuesOf(profile: PlatformTierProfileDto | null): TierProfileFormValues {
   if (profile === null) return NEW_PROFILE;
-  const identity = { code: profile.code, name: profile.name, sources: [...profile.sources] };
+  const identity = { code: profile.code, name: profile.name, description: profile.description, sources: [...profile.sources] };
   return profile.type === TierProfileType.EQUAL_GROUPS
     ? { ...NEW_PROFILE, ...identity, type: profile.type, tierCount: profile.tierCount, tierSize: profile.tierSize, lastTier: profile.lastTier, lastTierMax: profile.lastTierMax }
     : { ...NEW_PROFILE, ...identity, type: profile.type, ranges: profile.ranges.map(({ fromValue, toValue }) => ({ fromValue, toValue })) };
@@ -66,7 +67,7 @@ export function formValuesOf(profile: PlatformTierProfileDto | null): TierProfil
 
 /** The request for the chosen layout: a cap only for a capped last tier, each range numbered by its place. */
 export function requestOf(values: TierProfileFormValues): PlatformTierProfileWriteRequest {
-  const identity = { code: values.code, name: values.name, sources: values.sources };
+  const identity = { code: values.code, name: values.name, description: values.description, sources: values.sources };
   if (values.type === TierProfileType.RANGES) {
     return { ...identity, type: values.type, ranges: values.ranges.map((range, index) => ({ tierNumber: index + 1, fromValue: range.fromValue, toValue: range.toValue })) };
   }

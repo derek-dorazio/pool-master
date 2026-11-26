@@ -804,7 +804,11 @@ sends codes and numbers, never these words.
    message per API error code (`error.<CODE>`), generic words with numbers or plurals in them
    (`word.<key>`: "Week {{n}}", `round_one` / `round_other`), and the words that differ by
    sport, keyed by sport code and role (`sport.<SPORT>.<role>`: `sport.GOLF.participant_one` is
-   golfer). Keys are codes, never names; nothing is keyed by a league.
+   golfer), and what commissioners and members read about a platform profile, keyed by the
+   profile's code (`tierProfile.<CODE>.name` and `.description`, the same for `pricingProfile`,
+   read through `profileWords`, which falls back to the row's name for a code with no entry; see
+   `domain-model-conventions-rules.md` §10 *Naming Disambiguation*, the bullet *A profile or definition row describes itself*). Keys
+   are codes, never names; nothing is keyed by a league.
 2. **What never goes in it.** Proper names: teams, players, tournaments and named slots (Super
    Bowl, The Masters). They are name columns on the model and are never translated. Page
    sentences (How to Play, empty states, button text) stay in the page for now.

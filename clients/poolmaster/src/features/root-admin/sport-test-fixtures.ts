@@ -281,8 +281,8 @@ export const GOLF_SPORT_FIXTURE: SportDto = {
 export function platformPricingProfilesFixture(): PlatformPricingProfileDto[] {
   const stamps = { sportLeagueCount: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' };
   return [
-    { id: '00000000-0000-4000-8000-0000000000b1', code: 'SMALL', name: 'Small', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps, sportLeagueCount: 0 },
-    { id: STANDARD_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps },
+    { id: '00000000-0000-4000-8000-0000000000b1', code: 'SMALL', name: 'Small', description: 'Budget prices under a $5,000 cap, in steps of $10.', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps, sportLeagueCount: 0 },
+    { id: STANDARD_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', description: 'Budget prices under a $50,000 cap, in steps of $100.', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps },
   ];
 }
 
