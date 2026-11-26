@@ -83,7 +83,6 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     advancesToSide: input.advancesTo === undefined ? null : MatchSide.HOME,
     regionLabel: null,
     homeSpread: null,
-    resultSource: null,
     completedAt: null,
     periodScores: [],
     createdAt: new Date('2027-03-18T16:00:00.000Z'),

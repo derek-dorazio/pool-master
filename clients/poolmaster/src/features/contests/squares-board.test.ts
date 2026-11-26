@@ -43,15 +43,15 @@ describe('squares board helpers', () => {
   });
 
   it('lists every scoring moment in order with its winner once scored and none before', () => {
-    const winner = { periodNumber: 2, homeScore: 10, awayScore: 3, rowIndex: 3, columnIndex: 0, contestEntryId: null, entryName: null };
+    const winner = { periodNumber: 2, columnScore: 10, rowScore: 3, rowIndex: 3, columnIndex: 0, contestEntryId: null, entryName: null };
     const rows = squaresMomentRows({ winners: [winner], periods: { unit: 'QUARTER', count: 4 } });
     expect(rows.map((row) => [row.tag, row.winner])).toEqual([['Q1', null], ['Q2', winner], ['Q3', null], ['Final', null]]);
   });
 
   it('keeps every moment a box won when one box wins more than one', () => {
     const won = winningPeriodsByPlace([
-      { periodNumber: 1, homeScore: 0, awayScore: 0, rowIndex: 2, columnIndex: 5, contestEntryId: 'entry-1', entryName: 'A' },
-      { periodNumber: 4, homeScore: 20, awayScore: 10, rowIndex: 2, columnIndex: 5, contestEntryId: 'entry-1', entryName: 'A' },
+      { periodNumber: 1, columnScore: 0, rowScore: 0, rowIndex: 2, columnIndex: 5, contestEntryId: 'entry-1', entryName: 'A' },
+      { periodNumber: 4, columnScore: 20, rowScore: 10, rowIndex: 2, columnIndex: 5, contestEntryId: 'entry-1', entryName: 'A' },
     ]);
     expect(won.get('2:5')).toEqual([1, 4]);
   });
@@ -64,11 +64,11 @@ describe('squares board helpers', () => {
   it('offers only games still to kick off with no quarter scored, the final first and then by kickoff', () => {
     const now = new Date('2099-01-20T00:00:00.000Z');
     const games = [
-      squaresGameFixture({ id: 'played', status: 'COMPLETED', advancesToMatchId: 'final' }),
-      squaresGameFixture({ id: 'kicked-off', scheduledDate: '2099-01-19T20:00:00.000Z', advancesToMatchId: 'final' }),
-      squaresGameFixture({ id: 'scored', periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }], advancesToMatchId: 'final' }),
-      squaresGameFixture({ id: 'late-semi', matchNumber: 12, scheduledDate: '2099-01-26T00:00:00.000Z', advancesToMatchId: 'final' }),
-      squaresGameFixture({ id: 'early-semi', matchNumber: 11, scheduledDate: '2099-01-25T20:00:00.000Z', advancesToMatchId: 'final' }),
+      squaresGameFixture({ id: 'played', status: 'COMPLETED', advancesTo: { matchId: 'final', sideNumber: 1 } }),
+      squaresGameFixture({ id: 'kicked-off', scheduledDate: '2099-01-19T20:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
+      squaresGameFixture({ id: 'scored', periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }], advancesTo: { matchId: 'final', sideNumber: 1 } }),
+      squaresGameFixture({ id: 'late-semi', matchNumber: 12, scheduledDate: '2099-01-26T00:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
+      squaresGameFixture({ id: 'early-semi', matchNumber: 11, scheduledDate: '2099-01-25T20:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
       squaresGameFixture({ id: 'final', matchNumber: 13, scheduledDate: '2099-02-07T23:30:00.000Z' }),
     ];
     expect(squaresGameChoices(games, now).map((game) => game.id)).toEqual(['final', 'early-semi', 'late-semi']);
@@ -77,7 +77,7 @@ describe('squares board helpers', () => {
   it('leaves out games before the sport league\'s first squares round, so a Champions League pool offers only its final', () => {
     const now = new Date('2099-01-20T00:00:00.000Z');
     const games = [
-      squaresGameFixture({ id: 'semi-tie', roundNumber: 4, matchNumber: 11, scheduledDate: '2099-04-28T19:00:00.000Z', advancesToMatchId: 'final' }),
+      squaresGameFixture({ id: 'semi-tie', roundNumber: 4, matchNumber: 11, scheduledDate: '2099-04-28T19:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
       squaresGameFixture({ id: 'final', roundNumber: 5, matchNumber: 13, scheduledDate: '2099-05-30T16:00:00.000Z' }),
     ];
     expect(squaresGameChoices(games, now, 5).map((game) => game.id)).toEqual(['final']);
@@ -92,8 +92,8 @@ describe('squares board helpers', () => {
   it('leaves every period and total of the score table blank before kickoff', () => {
     const score = squaresScoreByPeriod(squaresGameFixture(), { unit: 'QUARTER', count: 4 });
     expect(score.periodNames).toEqual(['Q1', 'Q2', 'Q3', 'Q4']);
-    expect(score.home).toEqual({ periods: [null, null, null, null], total: null });
-    expect(score.away).toEqual({ periods: [null, null, null, null], total: null });
+    expect(score.column).toEqual({ periods: [null, null, null, null], total: null });
+    expect(score.row).toEqual({ periods: [null, null, null, null], total: null });
     expect(score.livePeriodNumber).toBeNull();
   });
 
@@ -105,8 +105,8 @@ describe('squares board helpers', () => {
       periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 7 }, { periodNumber: 2, homeScore: 10, awayScore: 14 }],
     });
     const score = squaresScoreByPeriod(game, { unit: 'QUARTER', count: 4 });
-    expect(score.away).toEqual({ periods: [7, 7, 3, null], total: 17 });
-    expect(score.home).toEqual({ periods: [3, 7, 0, null], total: 10 });
+    expect(score.row).toEqual({ periods: [7, 7, 3, null], total: 17 });
+    expect(score.column).toEqual({ periods: [3, 7, 0, null], total: 10 });
     expect(score.livePeriodNumber).toBe(3);
   });
 
@@ -122,8 +122,8 @@ describe('squares board helpers', () => {
       ],
     });
     const score = squaresScoreByPeriod(game, { unit: 'QUARTER', count: 4 });
-    expect(score.home).toEqual({ periods: [3, 7, 7, 10], total: 27 });
-    expect(score.away).toEqual({ periods: [7, 7, 3, 7], total: 24 });
+    expect(score.column).toEqual({ periods: [3, 7, 7, 10], total: 27 });
+    expect(score.row).toEqual({ periods: [7, 7, 3, 7], total: 24 });
     expect(score.livePeriodNumber).toBeNull();
   });
 

@@ -278,10 +278,10 @@ describe('Squares contest leaderboard', () => {
           periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 0 }, { periodNumber: 2, homeScore: 10, awayScore: 1 }, { periodNumber: 3, homeScore: 17, awayScore: 7 }],
         }),
         winners: [
-          { periodNumber: 1, homeScore: 3, awayScore: 0, rowIndex: 0, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
-          { periodNumber: 2, homeScore: 10, awayScore: 1, rowIndex: 1, columnIndex: 1, contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys' },
-          { periodNumber: 3, homeScore: 17, awayScore: 7, rowIndex: 7, columnIndex: 9, contestEntryId: null, entryName: null },
-          { periodNumber: 4, homeScore: 23, awayScore: 10, rowIndex: 0, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
+          { periodNumber: 1, columnScore: 3, rowScore: 0, rowIndex: 0, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
+          { periodNumber: 2, columnScore: 10, rowScore: 1, rowIndex: 1, columnIndex: 1, contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys' },
+          { periodNumber: 3, columnScore: 17, rowScore: 7, rowIndex: 7, columnIndex: 9, contestEntryId: null, entryName: null },
+          { periodNumber: 4, columnScore: 23, rowScore: 10, rowIndex: 0, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
         ],
       }),
     });
@@ -328,8 +328,8 @@ describe('Squares contest leaderboard', () => {
           { rowIndex: 7, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
         ],
         winners: [
-          { periodNumber: 1, homeScore: 3, awayScore: 7, rowIndex: 7, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
-          { periodNumber: 2, homeScore: 10, awayScore: 14, rowIndex: 4, columnIndex: 1, contestEntryId: null, entryName: null },
+          { periodNumber: 1, columnScore: 3, rowScore: 7, rowIndex: 7, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
+          { periodNumber: 2, columnScore: 10, rowScore: 14, rowIndex: 4, columnIndex: 1, contestEntryId: null, entryName: null },
         ],
       }),
     });

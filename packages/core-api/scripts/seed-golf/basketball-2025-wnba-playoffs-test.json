@@ -189,123 +189,249 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "wnba-minnesota-lynx",
-              "away": "wnba-golden-state-valkyries",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wnba-golden-state-valkyries",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wnba-minnesota-lynx",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T17:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "wnba-phoenix-mercury",
-              "away": "wnba-new-york-liberty",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wnba-new-york-liberty",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wnba-phoenix-mercury",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T21:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "wnba-atlanta-dream",
-              "away": "wnba-indiana-fever",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wnba-indiana-fever",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wnba-atlanta-dream",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-14T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "wnba-las-vegas-aces",
-              "away": "wnba-seattle-storm",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "wnba-seattle-storm",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "wnba-las-vegas-aces",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-15T02:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T21:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 3
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-09-21T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 3,
-                "awayScore": 2
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-04T00:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 4,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 4
+                  }
+                ]
               }
             }
           ]

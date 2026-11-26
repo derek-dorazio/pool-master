@@ -285,383 +285,761 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "mls-chicago-fire-fc",
-              "away": "mls-orlando-city-sc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-orlando-city-sc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-chicago-fire-fc",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-23T00:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 3,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "mls-portland-timbers",
-              "away": "mls-real-salt-lake",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-real-salt-lake",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-portland-timbers",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-23T02:30:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 3,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 2,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 2
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": "mls-fc-cincinnati",
-              "away": "mls-columbus-crew",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-columbus-crew",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-fc-cincinnati",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-27T22:45:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": "mls-inter-miami-cf",
-              "away": "mls-nashville-sc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-nashville-sc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-inter-miami-cf",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-25T00:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": "mls-philadelphia-union",
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-philadelphia-union",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-26T21:30:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": "mls-charlotte-fc",
-              "away": "mls-new-york-city-fc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-new-york-city-fc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-charlotte-fc",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-28T22:45:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 2,
-              "home": "mls-san-diego-fc",
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-san-diego-fc",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-27T01:30:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 2,
-              "home": "mls-minnesota-united-fc",
-              "away": "mls-seattle-sounders-fc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-seattle-sounders-fc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-minnesota-united-fc",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-28T01:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 2,
-              "home": "mls-vancouver-whitecaps-fc",
-              "away": "mls-fc-dallas",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-fc-dallas",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-vancouver-whitecaps-fc",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-26T23:30:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 2,
-              "home": "mls-los-angeles-fc",
-              "away": "mls-austin-fc",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "mls-austin-fc",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "mls-los-angeles-fc",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-10-30T02:30:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T22:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 4
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 4
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T00:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 1
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 3,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-25T03:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 4,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T02:30:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 2,
-                "awayScore": 2,
-                "homeShootoutScore": 4,
-                "awayShootoutScore": 3
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2,
+                    "shootoutScore": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2,
+                    "shootoutScore": 4
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 2,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 2
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-29T23:00:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "regionLabel": "Eastern Conference",
               "result": {
-                "winner": "HOME",
-                "homeScore": 5,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 5
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 2,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 2
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 2,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-11-30T02:00:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "regionLabel": "Western Conference",
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 3
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 3
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 3
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             },
             {
               "matchNumber": 1,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2025-12-06T19:30:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 3,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 1,
-                  "awayScore": 0
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 0
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 1
+                    }
+                  ]
                 }
               ]
             }

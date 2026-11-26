@@ -1,4 +1,4 @@
-import { withHomeAway, homeAwayOf, legacyMatch } from '../../support/match-sides';
+import { bracketInput, homeAwayOf, legacyMatch, withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import { matchIsNeutralSite, matchPlaceOf, MatchEnding, MatchSide, MatchStatus, SlotPairing, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
@@ -67,7 +67,6 @@ function nflPlayoff(): SportEventRoundMatch[] {
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region,
     homeSpread: null,
-    resultSource: null,
     completedAt: null,
     periodScores: [],
     createdAt: new Date('2027-01-01T00:00:00.000Z'),
@@ -86,7 +85,8 @@ function afterWildCard(winners: ReadonlyMap<number, MatchSide>): SportEventRound
 // AFC: the 7 upsets the 2, the 3 and the 5 win; NFC: every home team wins.
 const UPSET_WEEKEND = new Map([[1, MatchSide.AWAY], [2, MatchSide.HOME], [3, MatchSide.AWAY], [4, MatchSide.HOME], [5, MatchSide.HOME], [6, MatchSide.HOME]]);
 
-const pair = (matchNumber: number, home: string, away: string): RoundMatchup => ({ matchNumber, homeSportEventParticipantId: home, awaySportEventParticipantId: away });
+/** A matchup with its host on side 2 and the visitor on side 1. */
+const pair = (matchNumber: number, home: string, away: string): RoundMatchup => ({ matchNumber, sides: [{ sideNumber: 1, sportEventParticipantId: away }, { sideNumber: 2, sportEventParticipantId: home }] });
 
 describe('reseededRounds', () => {
   it('names only the round after the matches that link nowhere: the Divisional round, not the final', () => {
@@ -222,7 +222,7 @@ describe('findRoundMatchupProblems', () => {
 });
 
 describe('findBracketProblems on a league that reseeds', () => {
-  const asInput = (match: SportEventRoundMatch, _index: number, all: readonly SportEventRoundMatch[]): BracketMatchInput => ({
+  const asInput = (match: SportEventRoundMatch, _index: number, all: readonly SportEventRoundMatch[]): BracketMatchInput => (bracketInput({
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
     homeSportEventParticipantId: homeAwayOf(match).homeSportEventParticipantId,
@@ -231,7 +231,7 @@ describe('findBracketProblems on a league that reseeds', () => {
     scheduledDate: null,
     advancesTo: match.advancesToMatchId === null ? null : { ...matchPlaceOf(expectDefined(all.find((next) => next.id === match.advancesToMatchId), 'the next match')), side: homeAwayOf(match).advancesToSide ?? MatchSide.HOME },
     regionLabel: match.regionLabel,
-  });
+  }));
   const matches = nflPlayoff().map(asInput);
   const context = { roundNumbers: new Set([1, 2, 3, 4]), finalRoundNumbers: new Set([4]), fieldIds: new Set(seedOf.keys()) };
 
@@ -309,7 +309,8 @@ describe('proposeRoundMatchups — edge cases', () => {
     const placed = proposeRoundMatchups(bracket, 2, seedOf).matchups;
     const saved = bracket.map((match) => {
       const matchup = placed.find((candidate) => candidate.matchNumber === match.matchNumber);
-      return matchup ? withHomeAway(match, { homeSportEventParticipantId: matchup.homeSportEventParticipantId, awaySportEventParticipantId: matchup.awaySportEventParticipantId }) : match;
+      const teamOn = (sideNumber: number) => matchup?.sides.find((side) => side.sideNumber === sideNumber)?.sportEventParticipantId ?? null;
+      return matchup ? withHomeAway(match, { homeSportEventParticipantId: teamOn(2), awaySportEventParticipantId: teamOn(1) }) : match;
     });
 
     expect(proposeRoundMatchups(saved, 2, seedOf)).toEqual({ matchups: placed, problems: [] });

@@ -24,6 +24,7 @@ import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { enterSeedRound, EVERY_GAME_PLAYED, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
+import { withHomeAwayRead } from '../support/match-requests';
 
 // Playoff survivor end to end over HTTP (#785), on the 2026 NFL playoffs as played: four rounds,
 // the 1 seeds on a bye, the Divisional round and the conference championships placed by reseeding.
@@ -89,7 +90,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
     const rowOf = (key: string) => expectDefined(field.find((row) => row.participant.name === playerName.get(key)), key).id;
     /** A pick of the team in its game of `roundNumber`, as the bracket now stands. */
     const pickOf = async (roundNumber: number, key: string) => {
-      const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
+      const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches.map(withHomeAwayRead);
       const team = rowOf(key);
       const game = expectDefined(bracket.find((match) => match.roundNumber === roundNumber
         && (match.homeSportEventParticipantId === team || match.awaySportEventParticipantId === team)), `${key}'s round ${roundNumber} game`);

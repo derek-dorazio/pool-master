@@ -1,7 +1,8 @@
-import { MatchSide, MatchStatus } from '@poolmaster/shared/domain';
+import { MatchStatus } from '@poolmaster/shared/domain';
 import type { PickEmLeaderboardResponse, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { formatOrdinal, type PeekFact } from '@/features/shared/ui';
 import { logger } from '@/lib/logger';
+import { billedSides, isTied, opposingSide, winningSide } from '@/lib/match-sides';
 
 /**
  * The pick'em season board's pieces (#1751), apart from how they are drawn: each week's cell for
@@ -94,20 +95,23 @@ export function pickEmBoardGames(
     .filter((match) => match.status !== MatchStatus.CANCELLED)
     .sort((left, right) => (Date.parse(left.scheduledDate ?? '') || 0) - (Date.parse(right.scheduledDate ?? '') || 0) || left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber)
     .map((match) => {
-      const home = teamName(match.homeSportEventParticipantId);
-      const away = teamName(match.awaySportEventParticipantId);
-      return { id: match.id, matchup: `${away} ${match.isNeutralSite ? 'vs' : 'at'} ${home}`, progress: gameProgress(match, home, away, formatKickoff), status: match.status };
+      const { first, second, isNeutralSite } = billedSides(match);
+      const matchup = `${teamName(first?.sportEventParticipantId ?? null)} ${isNeutralSite ? 'vs' : 'at'} ${teamName(second?.sportEventParticipantId ?? null)}`;
+      return { id: match.id, matchup, progress: gameProgress(match, teamName, formatKickoff), status: match.status };
     });
 }
 
-function gameProgress(match: SportEventRoundMatchDto, home: string, away: string, formatKickoff: (startsAt: string) => string): string {
-  if (match.status === MatchStatus.COMPLETED && match.homeScore !== null && match.awayScore !== null) {
-    if (match.winnerSide === null) {
-      return `Tie ${String(match.homeScore)}${SCORE_DASH}${String(match.awayScore)}`;
+function gameProgress(match: SportEventRoundMatchDto, teamName: (fieldRowId: string | null) => string, formatKickoff: (startsAt: string) => string): string {
+  if (match.status === MatchStatus.COMPLETED) {
+    const winner = winningSide(match);
+    const loser = winner && opposingSide(match, winner.sideNumber);
+    if (winner && loser && winner.score !== null && loser.score !== null) {
+      return `${teamName(winner.sportEventParticipantId)} ${String(winner.score)}${SCORE_DASH}${String(loser.score)}`;
     }
-    const homeWon = match.winnerSide === MatchSide.HOME;
-    const [winning, losing] = homeWon ? [match.homeScore, match.awayScore] : [match.awayScore, match.homeScore];
-    return `${homeWon ? home : away} ${String(winning)}${SCORE_DASH}${String(losing)}`;
+    const { first, second } = billedSides(match);
+    if (isTied(match) && first?.score != null && second?.score != null) {
+      return `Tie ${String(second.score)}${SCORE_DASH}${String(first.score)}`;
+    }
   }
   if (match.status === MatchStatus.IN_PROGRESS) {
     return 'Playing now';

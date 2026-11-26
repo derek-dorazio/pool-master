@@ -349,419 +349,841 @@
             {
               "matchNumber": 1,
               "roundNumber": 1,
-              "home": "ucl-monaco",
-              "away": "ucl-paris-saint-germain",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-paris-saint-germain",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-monaco",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-17T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 4,
-                "awayScore": 5
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 5
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 4
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 1,
-              "home": "ucl-galatasaray",
-              "away": "ucl-juventus",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-juventus",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-galatasaray",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-17T17:45:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 7,
-                "awayScore": 5
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 5
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 7
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 1,
-              "home": "ucl-benfica",
-              "away": "ucl-real-madrid",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-real-madrid",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-benfica",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-17T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 3
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 1,
-              "home": "ucl-borussia-dortmund",
-              "away": "ucl-atalanta",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-atalanta",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-borussia-dortmund",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-17T20:15:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 3,
-                "awayScore": 4
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 4
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 1,
-              "home": "ucl-qarabag",
-              "away": "ucl-newcastle-united",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-newcastle-united",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-qarabag",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-18T17:45:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 5,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 3,
-                "awayScore": 9
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 9
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 1,
-              "home": "ucl-club-brugge",
-              "away": "ucl-atletico-madrid",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-atletico-madrid",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-club-brugge",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-18T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 6,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 4,
-                "awayScore": 7
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 7
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 4
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 1,
-              "home": "ucl-bod-glimt",
-              "away": "ucl-inter-milan",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-inter-milan",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-bod-glimt",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-18T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 7,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 5,
-                "awayScore": 2
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 5
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 1,
-              "home": "ucl-olympiacos",
-              "away": "ucl-bayer-leverkusen",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-bayer-leverkusen",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": "ucl-olympiacos",
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-02-18T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 2,
                 "matchNumber": 8,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-chelsea",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-chelsea",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-11T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 8,
-                "awayScore": 2
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 8
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-liverpool",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-liverpool",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-10T17:45:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 4
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 4
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-manchester-city",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-manchester-city",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-11T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 5,
-                "awayScore": 1
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 5
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-bayern-munich",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-bayern-munich",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-10T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 2,
-                "awayScore": 10
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 10
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 5,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-barcelona",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-barcelona",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-10T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 3,
-                "awayScore": 8
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 8
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               }
             },
             {
               "matchNumber": 6,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-tottenham-hotspur",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-tottenham-hotspur",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-10T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 3,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 7,
-                "awayScore": 5
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 5
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 7
+                  }
+                ]
               }
             },
             {
               "matchNumber": 7,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-sporting-cp",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-sporting-cp",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-11T20:00:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 3,
-                "awayScore": 5
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 5
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 3
+                  }
+                ]
               }
             },
             {
               "matchNumber": 8,
               "roundNumber": 2,
-              "home": null,
-              "away": "ucl-arsenal",
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": "ucl-arsenal",
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-03-11T17:45:00Z",
               "advancesTo": {
                 "roundNumber": 3,
                 "matchNumber": 4,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 3
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-04-08T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 4,
-                "awayScore": 0
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 0
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 4
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-04-07T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 4,
-                "awayScore": 6
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 6
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 4
+                  }
+                ]
               }
             },
             {
               "matchNumber": 3,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-04-08T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 2,
-                "awayScore": 3
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 2
+                  }
+                ]
               }
             },
             {
               "matchNumber": 4,
               "roundNumber": 3,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-04-07T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 4,
                 "matchNumber": 2,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 0,
-                "awayScore": 1
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 0
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-04-28T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "HOME"
+                "sideNumber": 2
               },
               "result": {
-                "winner": "HOME",
-                "homeScore": 6,
-                "awayScore": 5
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 5
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 6
+                  }
+                ]
               }
             },
             {
               "matchNumber": 2,
               "roundNumber": 4,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "AWAY"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "HOME"
+                }
+              ],
               "isNeutralSite": false,
               "scheduledAt": "2026-04-29T19:00:00Z",
               "advancesTo": {
                 "roundNumber": 5,
                 "matchNumber": 1,
-                "side": "AWAY"
+                "sideNumber": 1
               },
               "result": {
-                "winner": "AWAY",
-                "homeScore": 1,
-                "awayScore": 2
+                "winnerSideNumber": 1,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 2
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1
+                  }
+                ]
               }
             },
             {
               "matchNumber": 1,
               "roundNumber": 5,
-              "home": null,
-              "away": null,
+              "sides": [
+                {
+                  "sideNumber": 1,
+                  "player": null,
+                  "homeAway": "NONE"
+                },
+                {
+                  "sideNumber": 2,
+                  "player": null,
+                  "homeAway": "NONE"
+                }
+              ],
               "isNeutralSite": true,
               "scheduledAt": "2026-05-30T16:00:00Z",
               "advancesTo": null,
               "result": {
-                "winner": "HOME",
-                "homeScore": 1,
-                "awayScore": 1,
-                "homeShootoutScore": 4,
-                "awayShootoutScore": 3
+                "winnerSideNumber": 2,
+                "sides": [
+                  {
+                    "sideNumber": 1,
+                    "score": 1,
+                    "shootoutScore": 3
+                  },
+                  {
+                    "sideNumber": 2,
+                    "score": 1,
+                    "shootoutScore": 4
+                  }
+                ]
               },
               "periodScores": [
                 {
                   "periodNumber": 1,
-                  "homeScore": 0,
-                  "awayScore": 1
+                  "sides": [
+                    {
+                      "sideNumber": 1,
+                      "score": 1
+                    },
+                    {
+                      "sideNumber": 2,
+                      "score": 0
+                    }
+                  ]
                 }
               ]
             }

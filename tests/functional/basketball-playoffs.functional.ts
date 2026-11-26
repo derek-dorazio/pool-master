@@ -27,6 +27,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
+import { withHomeAwayRead } from '../support/match-requests';
 
 // The NBA and WNBA playoffs end to end over HTTP (#706): each test seed loads into its seeded sport
 // league, played out series by series, the play-in tournament's winners seeded 7 and 8. A
@@ -74,7 +75,7 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
     playoffs.name = eventName(league.name);
     for (const player of league.players) player.key = expectDefined(tagged(player.key));
     for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
-    for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+    for (const match of playoffs.matches ?? []) match.sides = match.sides.map((side) => ({ ...side, player: tagged(side.player) }));
   }
   return file;
 }
@@ -127,7 +128,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     ]);
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === team), team).id;
     const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches;
-    const final = expectDefined(bracket.find((match) => match.roundNumber === 4));
+    const final = withHomeAwayRead(expectDefined(bracket.find((match) => match.roundNumber === 4)));
     // The file gives a series its winner but none of its Games, so the series has no score of
     // Games won (#2046) until the file gives each Game (#2184).
     expect([final.homeSportEventParticipantId, final.winnerSide, final.homeScore, final.awayScore]).toEqual([rowOf('Oklahoma City Thunder'), 'HOME', null, null]);
@@ -196,7 +197,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 3]);
     const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
     const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches;
-    const final = expectDefined(bracket.find((match) => match.roundNumber === 3));
+    const final = withHomeAwayRead(expectDefined(bracket.find((match) => match.roundNumber === 3)));
     const winnerRowId = final.winnerSide === 'HOME' ? final.homeSportEventParticipantId : final.awaySportEventParticipantId;
     const winner = expectDefined(field.find((row) => row.id === winnerRowId));
     // A series from the file has its winner but no score of Games won (#2046) until #2184.
@@ -224,7 +225,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
       const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches;
       expect(bracket).toHaveLength(63);
       expect(bracket.every((match) => match.status === 'COMPLETED')).toBe(true);
-      const final = expectDefined(bracket.find((match) => match.roundNumber === 6));
+      const final = withHomeAwayRead(expectDefined(bracket.find((match) => match.roundNumber === 6)));
       const nameOf = (rowId: string | null) => expectDefined(field.find((row) => row.id === rowId)).participant.name;
       const [winnerRow, loserRow] = final.winnerSide === 'HOME'
         ? [final.homeSportEventParticipantId, final.awaySportEventParticipantId]

@@ -13,8 +13,8 @@ export function toSquaresBoardResponse(board: SquaresBoard): SquaresBoardRespons
     maxSquaresPerEntry: board.maxSquaresPerEntry,
     periods: { unit: board.periods.unit, count: board.periods.count },
     game: mapSportEventRoundMatchToDto(board.game),
-    homeTeamName: board.homeTeamName,
-    awayTeamName: board.awayTeamName,
+    rowTeamName: board.rowTeamName,
+    columnTeamName: board.columnTeamName,
     claimsOpen: board.claimsOpen,
     drawOpen: board.drawOpen,
     boxes: board.boxes,
@@ -23,7 +23,8 @@ export function toSquaresBoardResponse(board: SquaresBoard): SquaresBoardRespons
       columnDigits: [...board.digits.columnDigits],
       drawnAt: board.digits.drawnAt.toISOString(),
     },
-    winners: board.winners,
+    // The winners move to sides with #2019: rows are side 1's digits (the away team's), columns side 2's.
+    winners: board.winners.map(({ homeScore, awayScore, ...winner }) => ({ ...winner, rowScore: awayScore, columnScore: homeScore })),
     entries: board.entries,
   };
 }

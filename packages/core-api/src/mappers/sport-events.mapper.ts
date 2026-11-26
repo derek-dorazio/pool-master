@@ -87,7 +87,6 @@ export function mapSportEventToDto({
     sportLeagueId: event.sportLeagueId,
     participantType: event.participantType,
     scoringFamily: event.scoringFamily,
-    shootout: event.slotDefinitions.some((definition) => !definition.canEndTied),
     isTestData: isTestEvent(slots),
     slots: slots.map(mapSportLeagueSeasonSlotToDto),
     autoLifecycleEnabled: event.autoLifecycleEnabled,

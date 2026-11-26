@@ -29,11 +29,11 @@ export type SquaresBoxAction = 'claim' | 'clear' | null;
 /** What the grid draws from the board read. */
 export type SquaresGridBoard = Pick<
   SquaresBoardResponse,
-  'awayTeamName' | 'boxes' | 'digits' | 'entries' | 'game' | 'homeTeamName' | 'periods' | 'winners'
+  'rowTeamName' | 'boxes' | 'digits' | 'entries' | 'game' | 'columnTeamName' | 'periods' | 'winners'
 >;
 
 /**
- * The 10x10 squares board (#711, redesigned in #1758): the home team across the top and the away
+ * The 10x10 squares board (#711, redesigned in #1758): side 2's team across the top and side 1's
  * team down the side in navy bands, their digits beside the board ("?" until drawn). A claimed box
  * shows its entry's initials, so the whole board fits a phone; hovering or tapping it opens the
  * entry's full name and the box's numbers. The viewer's own boxes are shaded and outlined blue, as
@@ -64,10 +64,10 @@ export function SquaresGrid({
   const live = squaresLiveBox(board);
   // From every entry of the contest, not only those holding a box, so a code never changes as others claim.
   const initials = formatEntryInitials(board.entries.map((entry) => ({ id: entry.contestEntryId, name: entry.entryName })));
-  const homeTeam = board.homeTeamName ?? 'Home team';
-  const awayTeam = board.awayTeamName ?? 'Away team';
+  const homeTeam = board.columnTeamName ?? 'Home team';
+  const awayTeam = board.rowTeamName ?? 'Away team';
   const digit = (digits: readonly number[] | undefined, index: number) => (digits ? String(digits[index]) : '?');
-  // The box's numbers once drawn: "Chiefs 7 · Eagles 3", the away team's row first.
+  // The box's numbers once drawn: "Chiefs 7 · Eagles 3", the row side first.
   const numbersOf = (rowIndex: number, columnIndex: number) => (board.digits
     ? `${awayTeam} ${board.digits.rowDigits[rowIndex]} · ${homeTeam} ${board.digits.columnDigits[columnIndex]}`
     : null);

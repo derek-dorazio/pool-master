@@ -45,6 +45,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { AWAY_SIDE, HOME_SIDE } from '../support/match-sides';
 import { rowSideTeam } from '../support/match-rows';
+import { bracketMatch } from '../support/match-requests';
 
 // A confidence pick'em week end to end over HTTP (#716). An admin builds a four-team basketball
 // event and releases it; its final, whose teams are still to be decided, is called off, so the
@@ -147,9 +148,9 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       path: { eventId },
       body: {
         matches: [
-          { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: firstKickoff.toISOString(), advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
-          { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: secondKickoff.toISOString(), advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
-          { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+          bracketMatch({ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: firstKickoff.toISOString(), advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } }),
+          bracketMatch({ matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: secondKickoff.toISOString(), advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } }),
+          bracketMatch({ matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null }),
         ],
       },
     });

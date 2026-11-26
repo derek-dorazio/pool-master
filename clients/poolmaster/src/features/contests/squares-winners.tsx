@@ -10,16 +10,16 @@ import type { SquaresMomentRow } from './squares-board';
  * box with its team's (i), marked as the viewer's with Yours and a tick.
  */
 export function SquaresWinners({
-  awayTeamName,
-  homeTeamName,
+  rowTeamName,
+  columnTeamName,
   leagueCode,
   leagueId,
   moments,
   myEntryIds,
   squadIdOf,
 }: {
-  awayTeamName: string;
-  homeTeamName: string;
+  rowTeamName: string;
+  columnTeamName: string;
   leagueCode: string;
   leagueId: string;
   moments: readonly SquaresMomentRow[];
@@ -47,8 +47,8 @@ export function SquaresWinners({
               <TableHeaderCell scope="row"><Text variant="strong" weight="semibold">{tag}</Text></TableHeaderCell>
               {winner ? (
                 <>
-                  <TableCell>{`${awayTeamName} ${winner.awayScore}, ${homeTeamName} ${winner.homeScore}`}</TableCell>
-                  <TableCell>{`${awayTeamName} ${winner.awayScore % 10} · ${homeTeamName} ${winner.homeScore % 10}`}</TableCell>
+                  <TableCell>{`${rowTeamName} ${winner.rowScore}, ${columnTeamName} ${winner.columnScore}`}</TableCell>
+                  <TableCell>{`${rowTeamName} ${winner.rowScore % 10} · ${columnTeamName} ${winner.columnScore % 10}`}</TableCell>
                   <TableCell>
                     <span className="flex flex-wrap items-center gap-1">
                       <Text variant="strong" weight="semibold">{winner.entryName ?? 'No winner'}</Text>

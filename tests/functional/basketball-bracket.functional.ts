@@ -13,7 +13,7 @@ import {
   updateEventBracketMatch,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
-import { isAtPlace, MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
+import { HomeAway, isAtPlace, MatchSideOutcome, MatchStatus, Sport } from '@poolmaster/shared/domain';
 import {
   AddSportEventParticipantsResponseSchema,
   SportEventBracketResponseSchema,
@@ -130,9 +130,14 @@ describe('SDK Functional: Basketball bracket', () => {
     expect(JSON.stringify(early.error)).toContain('its bracket is not loaded');
     expect(expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches).toEqual([]);
 
+    /** Both sides of a match at a neutral site, side 1 first (#2184). */
+    const neutralSides = (sideOne: string | null, sideTwo: string | null) => [
+      { sideNumber: 1, sportEventParticipantId: sideOne, homeAway: HomeAway.NONE },
+      { sideNumber: 2, sportEventParticipantId: sideTwo, homeAway: HomeAway.NONE },
+    ];
     const firstRound = [
-      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf('Texas'), isNeutralSite: true, scheduledDate: '2099-03-19T16:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
-      { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: '2099-03-19T19:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
+      { matchNumber: 1, roundNumber: 1, sides: neutralSides(rowOf('Texas'), rowOf('Duke')), isNeutralSite: true, scheduledDate: '2099-03-19T16:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, sideNumber: 2 } },
+      { matchNumber: 2, roundNumber: 1, sides: neutralSides(rowOf('Vermont'), rowOf('Houston')), isNeutralSite: true, scheduledDate: '2099-03-19T19:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, sideNumber: 1 } },
     ];
     expectFunctionalError(
       await loadEventBracket({
@@ -144,7 +149,7 @@ describe('SDK Functional: Basketball bracket', () => {
           matches: [
             { ...expectDefined(firstRound[0]), advancesTo: null },
             expectDefined(firstRound[1]),
-            { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+            { matchNumber: 1, roundNumber: 2, sides: neutralSides(null, null), isNeutralSite: true, scheduledDate: null, advancesTo: null },
           ],
         },
       }),
@@ -158,7 +163,7 @@ describe('SDK Functional: Basketball bracket', () => {
       body: {
         matches: [
           ...firstRound,
-          { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+          { matchNumber: 1, roundNumber: 2, sides: neutralSides(null, null), isNeutralSite: true, scheduledDate: null, advancesTo: null },
         ],
       },
     });
@@ -168,8 +173,11 @@ describe('SDK Functional: Basketball bracket', () => {
       [1, 1, MatchStatus.SCHEDULED], [2, 1, MatchStatus.SCHEDULED], [1, 2, MatchStatus.SCHEDULED],
     ]);
     const final = expectDefined(bracket.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 })));
-    expect(bracket.filter((match) => match.advancesToMatchId === final.id).map((match) => match.advancesToSide).sort((left, right) => String(left).localeCompare(String(right))))
-      .toEqual([MatchSide.AWAY, MatchSide.HOME]);
+    // Each game's winner fills a side of the final, by side number; the final's sides wait empty.
+    expect(bracket.filter((match) => match.advancesTo?.matchId === final.id).map((match) => match.advancesTo?.sideNumber ?? 0).sort((left, right) => left - right))
+      .toEqual([1, 2]);
+    expect(final.sides.map((side) => [side.sideNumber, side.sportEventParticipantId, side.outcome])).toEqual([[1, null, MatchSideOutcome.PENDING], [2, null, MatchSideOutcome.PENDING]]);
+    expect(final.games.map((game) => [game.gameNumber, game.isFinal, game.sideResults.map((result) => result.homeAway)])).toEqual([[1, false, [HomeAway.NONE, HomeAway.NONE]]]);
 
     const release = await releaseEvent({ client: a, path: { eventId } });
     expect(release.error).toBeUndefined();
@@ -181,7 +189,7 @@ describe('SDK Functional: Basketball bracket', () => {
       { status: 409, code: 'SPORT_EVENT_BRACKET_LOCKED' },
     );
     expectFunctionalError(
-      await updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { awaySportEventParticipantId: rowOf('Vermont') } }),
+      await updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { sides: [{ sideNumber: 1, sportEventParticipantId: rowOf('Vermont') }, { sideNumber: 2, sportEventParticipantId: rowOf('Duke') }] } }),
       { status: 409, code: 'SPORT_EVENT_BRACKET_LOCKED' },
     );
     expectFunctionalError(
