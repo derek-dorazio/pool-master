@@ -5,7 +5,6 @@ import type { LeaguePlanListResponse, PlanFeatureGroupDto } from '@/lib/api';
 import { describeExpansionPrices } from '@/features/billing/billing-format';
 import { Heading, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { FeatureList } from './feature-list';
-import { FeatureMark } from './feature-mark';
 import type { ComparedPlan } from './plan-comparison';
 import { buildPlanHighlights } from './plan-highlights';
 import { LEAGUE_PLAN_TAGLINE } from './plan-labels';
@@ -54,7 +53,6 @@ export function PlanCards({ expansion, featureGroups, plans, renderAction }: Pla
             <FeatureList
               features={card.lines}
               label={card.adds === null ? 'Included' : `Everything in ${enumLabel('LeaguePlan', card.adds)}, plus`}
-              mark={FeatureMark.INCLUDED}
               testId={`plan-card-${card.plan}-highlights`}
             />
           </div>

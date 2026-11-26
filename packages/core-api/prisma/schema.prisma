@@ -591,6 +591,9 @@ enum PrismaProviderSyncFindingKind {
   GAMES_UNPLACED
   SLOT_DATES_NEEDED
   FIELD_HAS_NO_ORDER
+  GAME_UNKNOWN
+  GAME_ID_REISSUED
+  GAME_MOVED
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -2112,8 +2115,8 @@ model SportEvent {
   // its sport league's tier profile at the time, with any tier size an admin sent instead. Null
   // until the field is first auto-tiered; written with the tiers in one transaction.
   tierConfig                 Json?                          @map("tier_config")
-  // When the event's provider last sent a webhook notification about it (#1499). Null until one
-  // arrives. The scheduler warns when play is underway and none has arrived for a while.
+  // When the event's provider last sent a webhook notification about the event itself (#1499): a
+  // golf round's. Null until one arrives. A game's notification is recorded on its Game (#2007).
   lastProviderNotificationAt DateTime?                      @map("last_provider_notification_at") @db.Timestamptz
   // The latest automatic release check (#1847): when the release job last judged the event,
   // whether it released or held it, and the checks that held it. Null and empty until the first
@@ -2199,6 +2202,7 @@ model SportEventSlot {
 
   /// A slot belongs to at most one event (slot ids are unique, so the Season adds nothing).
   rounds     SportEventRound[]
+  games      SportEventRoundMatchGame[]
 
   @@unique([sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId], map: "sport_event_slots_season_slot_key")
   /// The target of a round's composite key, which keeps the round in one of its own event's slots.
@@ -2302,9 +2306,6 @@ model SportEventRoundMatch {
   /// The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5.
   /// Null until set; half points at most. A pick'em contest scored against the spread reads it.
   homeSpread                  Decimal?                 @map("home_spread") @db.Decimal(4, 1)
-  /// The provider game this match takes its score from (#1496), on its event's own provider; null
-  /// until an admin links it. One game links to at most one match of an event.
-  externalGameId              String?                  @map("external_game_id") @db.VarChar(255)
   /// Who set the result (#1531): an admin, or the linked game's provider; null with no result. A
   /// provider's final never overwrites an admin's result.
   resultSource                PrismaMatchResultSource? @map("result_source")
@@ -2323,15 +2324,76 @@ model SportEventRoundMatch {
   predictions     ContestEntryMatchPrediction[]
   periodScores    SportEventMatchPeriodScore[]
   squaresGames    ContestSquaresGame[]
+  games           SportEventRoundMatchGame[]
 
   // A match is numbered within its round (#2161): each round has its own match 1.
   @@unique([sportEventRoundId, matchNumber])
-  @@unique([sportEventId, externalGameId])
+  /// The target of a Game's composite key, which keeps the Game in its match's event (#2007).
+  @@unique([sportEventId, id], map: "sport_event_round_matches_event_id_key")
   // Two matches cannot feed the same side of the next one.
   @@unique([advancesToMatchId, advancesToSide])
   @@index([homeSportEventParticipantId])
   @@index([awaySportEventParticipantId])
   @@map("sport_event_round_matches")
+}
+
+/// One played game of a Match (#2007): a single game, or one game of a best-of series. Every Match
+/// has a Game 1. Scores are from the Match's home and away sides until side results (#2046) replace
+/// them. Provider game ids live in SportEventRoundMatchGameProviderMapping.
+model SportEventRoundMatchGame {
+  id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventId               String                   @map("sport_event_id") @db.Uuid
+  sportEventRoundMatchId     String                   @map("sport_event_round_match_id") @db.Uuid
+  /// The event slot the game is played in: its match's round's slot.
+  sportEventSlotId           String                   @map("sport_event_slot_id") @db.Uuid
+  /// 1 for a single game; a series' games in the order they are played.
+  gameNumber                 Int                      @map("game_number")
+  scheduledDate              DateTime?                @map("scheduled_date") @db.Timestamptz
+  status                     PrismaMatchStatus        @default(SCHEDULED)
+  winnerSide                 PrismaMatchSide?         @map("winner_side")
+  homeScore                  Int?                     @map("home_score")
+  awayScore                  Int?                     @map("away_score")
+  /// When the game was last written COMPLETED; null for any other status.
+  completedAt                DateTime?                @map("completed_at") @db.Timestamptz
+  /// The Game a provider moved this one to (another week's): set once, never re-parented. This
+  /// Game keeps its picks; the provider's id moves to the new Game.
+  movedToGameId              String?                  @map("moved_to_game_id") @db.Uuid
+  /// When a provider last sent a webhook notification about this game (#1499). Null until one
+  /// arrives. The scheduler warns when play is under way and none has arrived for a while.
+  lastProviderNotificationAt DateTime?                @map("last_provider_notification_at") @db.Timestamptz
+  createdAt                  DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+
+  match            SportEventRoundMatch                     @relation(fields: [sportEventId, sportEventRoundMatchId], references: [sportEventId, id], onDelete: Cascade, map: "sport_event_round_match_games_match_fkey")
+  eventSlot        SportEventSlot                           @relation(fields: [sportEventId, sportEventSlotId], references: [sportEventId, id], onDelete: Restrict, map: "sport_event_round_match_games_event_slot_fkey")
+  movedTo          SportEventRoundMatchGame?                @relation("SportEventRoundMatchGameMovedTo", fields: [movedToGameId], references: [id], onDelete: SetNull)
+  movedFrom        SportEventRoundMatchGame[]               @relation("SportEventRoundMatchGameMovedTo")
+  providerMappings SportEventRoundMatchGameProviderMapping[]
+
+  @@unique([sportEventRoundMatchId, gameNumber])
+  @@index([sportEventId, sportEventSlotId])
+  @@index([movedToGameId])
+  @@map("sport_event_round_match_games")
+}
+
+/// A provider's own id for one Game (#2007). Webhooks and score syncs find a game by it.
+model SportEventRoundMatchGameProviderMapping {
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventRoundMatchGameId String   @map("sport_event_round_match_game_id") @db.Uuid
+  /// The Provider row whose id this is (a uuid, never the adapter's source id).
+  providerId                 String   @map("provider_id") @db.Uuid
+  /// The provider's own id for the game, as it sends it.
+  externalId                 String   @map("external_id") @db.VarChar(255)
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  game     SportEventRoundMatchGame @relation(fields: [sportEventRoundMatchGameId], references: [id], onDelete: Cascade)
+  provider Provider                 @relation(fields: [providerId], references: [id], onDelete: Restrict)
+
+  @@unique([providerId, externalId])
+  /// A game has one id per provider.
+  @@unique([sportEventRoundMatchGameId, providerId])
+  @@map("sport_event_round_match_game_provider_mappings")
 }
 
 /// The score at the end of one period of a game (#772): the end of a quarter in American
@@ -2551,6 +2613,7 @@ model Provider {
   backgroundJobs      BackgroundJob[]
   syncFindings        ProviderSyncFinding[]
   eventMappings       SportEventProviderMapping[]
+  gameMappings        SportEventRoundMatchGameProviderMapping[]
 
   @@map("providers")
 }

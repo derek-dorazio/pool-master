@@ -220,7 +220,7 @@ describe('BalldontlieAdapter (MLB)', () => {
     const result = await harness.adapter.getLiveScores('mlb-2026-postseason');
 
     expect(detail).toMatchObject({ externalId: 'mlb-2026-postseason', status: 'IN_PROGRESS', participantCount: 8 });
-    expect(result.category === 'GAME' ? result.games.map((game) => game.externalGameId) : []).toEqual(['5066001', '5066002', '5066003']);
+    expect(result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []).toEqual(['5066001', '5066002', '5066003']);
   });
 
   it('gives every game of a postseason in the GAME category, runs as scores, leaving out a game in an unknown state', async () => {
@@ -230,7 +230,7 @@ describe('BalldontlieAdapter (MLB)', () => {
     const result = await harness.adapter.getLiveScores('mlb-2026-postseason');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'mlb-2026-postseason' });
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
       ['5066001', '10', ProviderGameState.FINAL, 4, 1],
       ['5066002', '18', ProviderGameState.IN_PROGRESS, 2, 2],
       ['5066003', '22', ProviderGameState.SCHEDULED, null, null],

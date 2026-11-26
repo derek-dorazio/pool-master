@@ -1,6 +1,9 @@
 import type { FastifyBaseLogger } from 'fastify';
+import { randomUUID } from 'node:crypto';
 import type {
   ParticipantProviderMappingRepository,
+  SportEventRoundMatchGameCreate,
+  SportEventRoundMatchGameRepository,
   SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventRepository,
@@ -35,6 +38,7 @@ export type ProviderGameSlateOutcome =
 export interface ProviderGameSlateDeps {
   sportEvents: Pick<SportEventRepository, 'findByProviderRef'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
+  games: Pick<SportEventRoundMatchGameRepository, 'findBySportEvent' | 'findByProviderExternalIds' | 'applySync'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   bracket: Pick<SportEventBracketService, 'loadBracket' | 'updateMatch' | 'proposeRoundMatchups' | 'setRoundMatchups'>;
@@ -71,6 +75,12 @@ export interface ProviderGameSlateInput {
  *
  * After a sync that loaded or changed matches, each round whose matches have a kickoff starts at
  * the earliest of them; a round with none yet keeps its date.
+ *
+ * Then each provider game is mapped to its Game (#2007): the Game of its number in the match of
+ * its two teams, created for a series game the match has no Game for yet. A provider webhook about
+ * the game routes to that Game from then on. Only an id no Game holds is mapped here: a Game that
+ * holds another id, or an id another event's Game holds, is a re-issued or a moved game, which the
+ * score sync settles with a finding.
  *
  * A finished or cancelled event, an event whose league is not synced to this provider, and one
  * whose teams are not all in its field yet (the field load comes first) are left alone.
@@ -114,7 +124,43 @@ export class ProviderGameSlateService {
     }
     const outcome = await this.syncMatches(event, sync, fieldRowOf);
     if (outcome.outcome !== 'UNCHANGED') await this.dateRoundsByKickoff(event.id);
+    await this.mapProviderGames(event, input, fieldRowOf);
     return outcome;
+  }
+
+  /** Maps each provider game no Game holds to the Game of its number in its teams' match. */
+  private async mapProviderGames(event: SportEvent, input: ProviderGameSlateInput, fieldRowOf: (teamExternalId: string) => string): Promise<void> {
+    const providerGameIds = input.games.flatMap((game) => game.games.map((each) => each.providerGameId));
+    if (providerGameIds.length === 0) return;
+    const providerCode = requireProviderCodeOfSourceId(input.providerId);
+    const [matches, stored, held] = await Promise.all([
+      this.deps.matches.findBySportEvent(event.id),
+      this.deps.games.findBySportEvent(event.id, providerCode),
+      this.deps.games.findByProviderExternalIds(providerCode, providerGameIds),
+    ]);
+    const heldIds = new Set(held.flatMap((each) => (each.externalId === null ? [] : [each.externalId])));
+    const matchByPair = new Map(matches.map((match) => [pairKey(match), match]));
+    const gameAt = new Map(stored.map((each) => [JSON.stringify([each.game.sportEventRoundMatchId, each.game.gameNumber]), each]));
+    const created: SportEventRoundMatchGameCreate[] = [];
+    const mapped: { sportEventRoundMatchGameId: string; externalId: string }[] = [];
+    for (const game of input.games) {
+      const match = matchByPair.get(pairKey({ homeSportEventParticipantId: fieldRowOf(game.homeTeamExternalId), awaySportEventParticipantId: fieldRowOf(game.awayTeamExternalId) }));
+      const gameOne = match === undefined ? undefined : gameAt.get(JSON.stringify([match.id, 1]));
+      if (match === undefined || gameOne === undefined) continue;
+      for (const { providerGameId, gameNumber } of game.games) {
+        if (heldIds.has(providerGameId) || gameNumber > match.slot.seriesGames) continue;
+        const target = gameAt.get(JSON.stringify([match.id, gameNumber]));
+        if (target !== undefined && target.externalId !== null) continue;
+        const id = target?.game.id ?? randomUUID();
+        if (target === undefined) {
+          created.push({ id, sportEventId: event.id, sportEventRoundMatchId: match.id, sportEventSlotId: gameOne.game.sportEventSlotId, gameNumber });
+        }
+        mapped.push({ sportEventRoundMatchGameId: id, externalId: providerGameId });
+      }
+    }
+    if (mapped.length === 0) return;
+    await this.deps.games.applySync({ providerCode, created, mapped, moved: [], scores: [] });
+    this.deps.logger?.info({ sportEventId: event.id, providerId: input.providerId, mapped: mapped.length, created: created.length }, 'Mapped a synced event\'s provider games to its Games');
   }
 
   private async syncMatches(event: SportEvent, input: ProviderGameSlateInput, fieldRowOf: (teamExternalId: string) => string): Promise<ProviderGameSlateOutcome> {
@@ -344,7 +390,12 @@ function bracketOf(bracket: readonly ProviderBracketMatch[], fieldRowOf: (teamEx
 function byRoundThenKickoff(left: ProviderScheduledGame, right: ProviderScheduledGame): number {
   return left.roundNumber - right.roundNumber
     || (left.scheduledAt?.getTime() ?? Number.MAX_SAFE_INTEGER) - (right.scheduledAt?.getTime() ?? Number.MAX_SAFE_INTEGER)
-    || left.externalGameId.localeCompare(right.externalGameId);
+    || gameOneId(left).localeCompare(gameOneId(right));
+}
+
+/** The provider's id for the match's Game 1, which orders matches that kick off together. */
+function gameOneId(game: ProviderScheduledGame): string {
+  return game.games.find((each) => each.gameNumber === 1)?.providerGameId ?? '';
 }
 
 /** A match's two teams, whichever side each is on. */

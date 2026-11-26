@@ -205,7 +205,7 @@ export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: read
     // Only its round of 64 game: in a later round the place is long filled and the winner is a team like any other.
     const playInWinner = game.round === league.firstFourRound + 1 ? [home, away].find((team) => playInWinners.has(team.id)) : undefined;
     return [{
-      externalGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
+      providerGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),
       state,
@@ -373,7 +373,7 @@ export function toNcaaScheduledGames(league: NcaaTournamentLeague, games: readon
     if (!home || !away || round === undefined || round <= league.firstFourRound || game.game_id === undefined || game.game_id === null) return [];
     if (round === league.firstFourRound + 1 && (firstFour.has(home.id) || firstFour.has(away.id))) return [];
     return [{
-      externalGameId: String(game.game_id),
+      games: [{ providerGameId: String(game.game_id), gameNumber: 1 }],
       roundNumber: round - league.firstFourRound,
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),

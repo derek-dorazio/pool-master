@@ -114,7 +114,7 @@ describe('toPlayoffsFieldParticipants', () => {
 });
 
 describe('toPlayoffsGameScoreUpdates', () => {
-  it('passes each game\'s teams, state and score, holds back the score of a game not under way, and leaves out a game in an unknown state', () => {
+  it('passes each game\'s teams, state, score and number in its series, holds back the score of a game not under way, and leaves out a game in an unknown state', () => {
     const [final] = semifinals();
     const updates = toPlayoffsGameScoreUpdates([
       final,
@@ -124,7 +124,7 @@ describe('toPlayoffsGameScoreUpdates', () => {
     ]);
 
     expect(updates).toEqual([
-      { externalGameId: String(final.id), homeTeamExternalId: '1', awayTeamExternalId: '4', state: ProviderGameState.FINAL, homeScore: 100, awayScore: 90 },
+      { providerGameId: String(final.id), gameNumber: 1, homeTeamExternalId: '1', awayTeamExternalId: '4', state: ProviderGameState.FINAL, homeScore: 100, awayScore: 90 },
       expect.objectContaining({ state: ProviderGameState.IN_PROGRESS, homeScore: 40, awayScore: 38 }),
       expect.objectContaining({ state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null }),
     ]);

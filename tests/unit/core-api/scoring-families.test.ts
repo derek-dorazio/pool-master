@@ -64,19 +64,22 @@ describe('head to head', () => {
     expect(getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD).liveScores?.category).toBe('GAME');
   });
 
-  it('writes a GAME batch against the event\'s own matches, reading them once, and reports a batch with no games as nothing written', async () => {
+  it('writes a GAME batch against the event\'s own matches and Games, reading each once, and reports a batch with no games as nothing written', async () => {
     const writer = getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD).liveScores;
     if (writer?.category !== 'GAME') throw new Error('head to head takes GAME live scores');
     const findMany = jest.fn().mockResolvedValue([]);
+    const findGames = jest.fn().mockResolvedValue([]);
 
     const result = await writer.persist(
-      { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportEventRoundMatch: { findMany } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
+      { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportEventRoundMatch: { findMany }, sportEventRoundMatchGame: { findMany: findGames } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
       { id: 'event-1', rounds: null },
       { category: 'GAME', externalEventId: 'scope-1', games: [] },
     );
 
     expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { sportEventId: { in: ['event-1'] } } }));
+    expect(findGames).toHaveBeenCalledTimes(1);
+    expect(findGames).toHaveBeenCalledWith(expect.objectContaining({ where: { sportEventId: 'event-1' } }));
     expect(result).toMatchObject({ updatesReturned: 0, updatesPersisted: 0, updatesSkipped: 0 });
   });
 });

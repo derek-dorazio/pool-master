@@ -112,10 +112,23 @@ export function pairOf(game: PlayoffGame): string {
   return [game.home.id, game.away.id].sort((left, right) => left - right).join('|');
 }
 
-/** One series: its round and its games in the order they start. */
+/** One game of a series, with its number in it: 1 for the first played. */
+export interface PlayoffSeriesGame {
+  game: PlayoffGame;
+  gameNumber: number;
+}
+
+/** One series: its round and its games, numbered in the order they start (#2007). */
 export interface PlayoffSeries {
   round: number;
-  games: PlayoffGame[];
+  games: PlayoffSeriesGame[];
+}
+
+/** A series' Game 1: the game numbered 1, which every series has. */
+export function seriesGameOne(series: Pick<PlayoffSeries, 'games'>): PlayoffGame {
+  const first = series.games.find((each) => each.gameNumber === 1);
+  if (first === undefined) throw new Error('A series has no Game 1.');
+  return first.game;
 }
 
 /**
@@ -133,11 +146,13 @@ export function playoffSeries(games: readonly PlayoffGame[]): PlayoffSeries[] {
     .sort((left, right) => left[0].start - right[0].start || pairOf(left[0]).localeCompare(pairOf(right[0])));
   const lastRoundOf = new Map<number, number>();
   return series.map((seriesGames) => {
-    const { home, away } = seriesGames[0];
+    // Sorted by start above: the series' games numbered in the order they are played.
+    const games = seriesGames.map((game, index) => ({ game, gameNumber: index + 1 }));
+    const { home, away } = seriesGameOne({ games });
     const round = 1 + Math.max(lastRoundOf.get(home.id) ?? 0, lastRoundOf.get(away.id) ?? 0);
     lastRoundOf.set(home.id, round);
     lastRoundOf.set(away.id, round);
-    return { round, games: seriesGames };
+    return { round, games };
   });
 }
 
@@ -183,7 +198,7 @@ export function toPlayoffsEvent(league: PlayoffsLeague, season: number, games: r
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     // The vendor names no round, so a game's code takes its series' round in the bracket (`playoffSeries`).
-    providerSlots: slotPlaysOf(playoffSeries(games).flatMap((series) => series.games.map((game) => ({
+    providerSlots: slotPlaysOf(playoffSeries(games).flatMap((series) => series.games.map(({ game }) => ({
       code: providerSlotCode(ProviderSeasonType.POSTSEASON, series.round),
       start: game.start,
     })))),
@@ -220,15 +235,18 @@ export function toPlayoffsFieldParticipants(league: PlayoffsLeague, games: reado
   return [...teams.values()].map((team) => toPlayoffsTeamParticipant(league, team));
 }
 
-/** Each game's teams, state and score, for the GAME live-score category. */
+/** Each game's teams, state, score and number in its series, for the GAME live-score category. */
 export function toPlayoffsGameScoreUpdates(games: readonly PlayoffGame[]): GameScoreUpdate[] {
+  const numberOf = new Map(playoffSeries(games).flatMap((series) => series.games.map(({ game, gameNumber }) => [game, gameNumber] as const)));
   return games.flatMap((game) => {
     if (game.state === CompetitionStatusState.UNKNOWN) return [];
+    const gameNumber = numberOf.get(game);
     const state = GAME_STATE_BY_STATUS[game.state];
     // A game not under way can show 0-0 at the vendor; it has no score yet.
     const started = hasStarted(state);
     return [{
-      externalGameId: String(game.id),
+      providerGameId: String(game.id),
+      ...(gameNumber !== undefined && { gameNumber }),
       homeTeamExternalId: participantFeedId(game.home.id),
       awayTeamExternalId: participantFeedId(game.away.id),
       state,

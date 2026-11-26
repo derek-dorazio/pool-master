@@ -1045,6 +1045,26 @@ export const ProviderSyncFindingKind = {
    * Subject: league, event and Provider; the next field follow-up that orders the field resolves it.
    */
   FIELD_HAS_NO_ORDER: 'FIELD_HAS_NO_ORDER',
+  /**
+   * A provider's webhook named a game id no Game is mapped to (#2007): nothing is synced for it,
+   * since a notification routes only to the Game its id is mapped to. WARNING; a schedule sync
+   * that maps the id, or a game the provider dropped, leaves it to resolve by hand. Subject:
+   * league, Provider and the provider's game id.
+   */
+  GAME_UNKNOWN: 'GAME_UNKNOWN',
+  /**
+   * The provider re-issued a game's id (#2007): a game with a new id was placed by its match's
+   * teams and its game number at a Game mapped to an old id the feed no longer sends. The mapping
+   * moved to the new id. WARNING. Subject: league, event, Provider and the new id.
+   */
+  GAME_ID_REISSUED: 'GAME_ID_REISSUED',
+  /**
+   * The provider moved a game to another event (#2007), such as a game moved to another week: the
+   * old Game is kept with its picks, marked moved to the Game the game is played at now, and the
+   * mapping moved with it. WARNING until picks on the old Game are voided (#2016). Subject:
+   * league, the event it moved to, Provider and the provider's game id.
+   */
+  GAME_MOVED: 'GAME_MOVED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

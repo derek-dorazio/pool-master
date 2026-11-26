@@ -123,7 +123,7 @@ describe('series playoffs bracket', () => {
     expect(toPlayoffsBracket(league, firstRound(), RANKS)).toBeNull();
   });
 
-  it('gives each series as one game at its Game 1 tip-off, Game 1\'s home team at home when there is no bracket', () => {
+  it('gives each series as one match at its Game 1 tip-off with each of its games numbered in the order they start, Game 1\'s home team at home when there is no bracket', () => {
     const west1 = teamOf('West', 1);
     const west8 = teamOf('West', 8);
     const opener = game(west1, west8, 0);
@@ -131,7 +131,7 @@ describe('series playoffs bracket', () => {
     const third = game(west8, west1, 4);
 
     expect(toPlayoffSeriesGames([third, second, opener], null)).toEqual([
-      { externalGameId: String(opener.id), roundNumber: 1, homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 8), scheduledAt: new Date(opener.start), isNeutralSite: false },
+      { games: [{ providerGameId: String(opener.id), gameNumber: 1 }, { providerGameId: String(second.id), gameNumber: 2 }, { providerGameId: String(third.id), gameNumber: 3 }], roundNumber: 1, homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 8), scheduledAt: new Date(opener.start), isNeutralSite: false },
     ]);
   });
 

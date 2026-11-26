@@ -65,7 +65,7 @@ const collegeRequests = (api: FakeBalldontlie) => api.requests
   .map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
 
 const gameIdsOf = (result: Awaited<ReturnType<BalldontlieAdapter['getLiveScores']>>) =>
-  (result.category === 'GAME' ? result.games.map((game) => game.externalGameId) : []);
+  (result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []);
 
 describe('BalldontlieAdapter (College Football Playoff)', () => {
   let restore: (() => void) | undefined;
@@ -140,7 +140,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
 
       expect(result).toMatchObject({ category: 'GAME', externalEventId: 'ncaaf-2026-cfp' });
       expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/games?dates[]=2026-12-18&dates[]=2026-12-19&dates[]=2026-12-20&per_page=100']);
-      expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.state]) : []).toEqual([
+      expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.state]) : []).toEqual([
         ['6011', ProviderGameState.IN_PROGRESS],
         ['6012', ProviderGameState.SCHEDULED],
       ]);

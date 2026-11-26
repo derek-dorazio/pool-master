@@ -20,7 +20,7 @@ import type { DomainEventType, SportEventFieldSynced } from '../domain-events/do
 import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 
 const ProviderScheduledGameSchema = z.object({
-  externalGameId: z.string().min(1),
+  games: z.array(z.object({ providerGameId: z.string().min(1), gameNumber: z.number().int().min(1) })).min(1),
   roundNumber: z.number().int(),
   homeTeamExternalId: z.string().min(1),
   awayTeamExternalId: z.string().min(1),

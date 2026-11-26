@@ -15,6 +15,7 @@ import {
   PrismaPlatformPricingProfileRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
+  PrismaSportEventRoundMatchGameRepository,
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRaceResultRepository,
   PrismaSportEventParticipantRepository,
@@ -168,6 +169,7 @@ export function createGameScoreWriterDeps(
   return {
     providerId,
     matches: new PrismaSportEventRoundMatchRepository(prisma),
+    games: new PrismaSportEventRoundMatchGameRepository(prisma),
     eventParticipants: new PrismaSportEventParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     results: createMatchResultService(prisma, domainEvents, contestActivation, logger),
@@ -259,6 +261,7 @@ export function createSportEventServices(
     providerGames: new ProviderGameSlateService({
       sportEvents: events,
       matches: new PrismaSportEventRoundMatchRepository(prisma),
+      games: new PrismaSportEventRoundMatchGameRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),
       mappings: new PrismaParticipantProviderMappingRepository(prisma),
       bracket,

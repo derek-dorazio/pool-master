@@ -210,7 +210,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     const scores = result.category === 'GAME' ? result.games : [];
     expect(scores).toHaveLength(7);
     expect(scores[0]).toEqual({
-      externalGameId: '18444001',
+      providerGameId: '18444001',
+      gameNumber: 1,
       homeTeamExternalId: '21',
       awayTeamExternalId: '12',
       state: ProviderGameState.FINAL,
@@ -225,7 +226,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
     const result = await harness.adapter.getLiveScores('nba-2025-postseason');
 
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
       ['18450001', ProviderGameState.FINAL, 112, 98],
       ['18450002', ProviderGameState.FINAL, 101, 108],
       ['18450003', ProviderGameState.IN_PROGRESS, 54, 49],

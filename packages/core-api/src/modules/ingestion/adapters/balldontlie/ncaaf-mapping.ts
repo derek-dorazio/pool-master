@@ -132,7 +132,7 @@ export function toCfpGameScoreUpdates(games: readonly NcaafGame[]): GameScoreUpd
     // A final with no score is passed on as one, and skipped there.
     const started = hasStarted(state);
     return [{
-      externalGameId: String(required(game.id, NCAAF_GAMES_PATH, name, 'id')),
+      providerGameId: String(required(game.id, NCAAF_GAMES_PATH, name, 'id')),
       homeTeamExternalId: participantFeedId(home),
       awayTeamExternalId: participantFeedId(visitor),
       state,

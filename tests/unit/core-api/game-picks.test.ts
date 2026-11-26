@@ -38,7 +38,7 @@ function game(matchNumber: number, overrides: Partial<SportEventRoundMatch> = {}
     advancesToSide: null,
     regionLabel: null,
     homeSpread: null,
-    externalGameId: null,
+
     resultSource: null,
     completedAt: null,
     periodScores: [],

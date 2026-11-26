@@ -14,7 +14,6 @@ import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { Notice, Button, Chip, ErrorState, FactList, formatCount, formatDateDisplay, formatNumber, HelpTip, LoadingState, PageHeader, SectionBody, SectionCard, SectionNote, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
 import { FeatureList } from './feature-list';
-import { FeatureMark } from './feature-mark';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -326,7 +325,7 @@ function PlanChangeWarnings({
               They come back as they were when you move up again.
             </HelpTip>
           )}
-          mark={FeatureMark.REMOVED}
+          removed
           testId="league-plan-confirm-hidden"
         />
       ) : null}

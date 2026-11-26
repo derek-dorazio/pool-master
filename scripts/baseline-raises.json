@@ -216,6 +216,24 @@
       "key": "phaseMissing",
       "now": 0,
       "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "externalGameId",
+      "now": 0,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "linkGames",
+      "now": 0,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "holdsGame",
+      "now": 0,
+      "reason": "retired by #2007"
     }
   ]
 }

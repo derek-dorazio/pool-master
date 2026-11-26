@@ -39,9 +39,9 @@ function bracket(): SportEventRoundMatch[] {
 }
 
 /** A round of 64 game the provider names a First Four winner in. */
-function game(home: string, away: string, playInWinner?: string, externalGameId = 'g1'): GameScoreUpdate {
+function game(home: string, away: string, playInWinner?: string, providerGameId = 'g1'): GameScoreUpdate {
   return {
-    externalGameId,
+    providerGameId,
     homeTeamExternalId: `bdl-${home}`,
     awayTeamExternalId: `bdl-${away}`,
     state: ProviderGameState.SCHEDULED,
@@ -76,7 +76,7 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
   it('fills the place on the other side of the one match the winner\'s round of 64 opponent plays, with the winner', async () => {
     const { deps, fillPlayInSlot, findByProviderExternalIds } = filler();
 
-    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')], new Set());
 
     expect(fillPlayInSlot).toHaveBeenCalledTimes(1);
     expect(fillPlayInSlot).toHaveBeenCalledWith(EVENT_ID, 'sep-PLAYIN16', 'p-UMBC');
@@ -86,7 +86,7 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
   it('finds the place whichever side the provider lists the winner on, and whichever side of the match the place is', async () => {
     const { deps, fillPlayInSlot } = filler();
 
-    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('UMBC', 'HOU', 'UMBC'), game('NCAT', 'AUB', 'NCAT', 'g3')]);
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('UMBC', 'HOU', 'UMBC'), game('NCAT', 'AUB', 'NCAT', 'g3')], new Set());
 
     expect(fillPlayInSlot.mock.calls).toEqual([[EVENT_ID, 'sep-PLAYIN16', 'p-UMBC'], [EVENT_ID, 'sep-PLAYIN16S', 'p-NCAT']]);
   });
@@ -95,7 +95,7 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
     const filledField = FIELD.map((each) => (each.isPlayInPlace ? { ...each, isPlayInPlace: false } : each));
     const { deps, fillPlayInSlot, findByProviderExternalIds } = filler(filledField);
 
-    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')], new Set());
 
     expect(findByProviderExternalIds).not.toHaveBeenCalled();
     expect(fillPlayInSlot).not.toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
   it('leaves alone a pairing the game does not fit: an opponent whose match is against a team, not a play-in place', async () => {
     const { deps, fillPlayInSlot, logger } = filler();
 
-    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('DUKE', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('DUKE', 'UMBC', 'UMBC')], new Set());
 
     expect(fillPlayInSlot).not.toHaveBeenCalled();
     expect(warnedActions(logger)).toEqual(['liveScore.playIn.noSinglePlace']);
@@ -114,7 +114,7 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
     const twice = [...bracket(), ...bracketMatches(EVENT_ID, [{ matchNumber: 5, round: 1, home: 'sep-HOU', away: 'sep-PLAYIN16S' }])];
     const { deps, fillPlayInSlot, logger } = filler();
 
-    await fillPlayInPlaces(deps, EVENT_ID, twice, [game('HOU', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(deps, EVENT_ID, twice, [game('HOU', 'UMBC', 'UMBC')], new Set());
 
     expect(fillPlayInSlot).not.toHaveBeenCalled();
     expect(warnedActions(logger)).toEqual(['liveScore.playIn.noSinglePlace']);
@@ -122,17 +122,17 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
 
   it('leaves it for the admin when the site has no team for the winner, or the opponent is not on the field', async () => {
     const unmapped = filler(FIELD, ['bdl-UMBC']);
-    await fillPlayInPlaces(unmapped.deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(unmapped.deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')], new Set());
     expect(unmapped.fillPlayInSlot).not.toHaveBeenCalled();
     expect(warnedActions(unmapped.logger)).toEqual(['liveScore.playIn.teamNotOnSite']);
 
     const offField = filler();
-    await fillPlayInPlaces(offField.deps, EVENT_ID, bracket(), [game('ALA', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(offField.deps, EVENT_ID, bracket(), [game('ALA', 'UMBC', 'UMBC')], new Set());
     expect(offField.fillPlayInSlot).not.toHaveBeenCalled();
     expect(warnedActions(offField.logger)).toEqual(['liveScore.playIn.teamNotOnSite']);
 
     const opponentUnmapped = filler(FIELD, ['bdl-HOU']);
-    await fillPlayInPlaces(opponentUnmapped.deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(opponentUnmapped.deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')], new Set());
     expect(opponentUnmapped.fillPlayInSlot).not.toHaveBeenCalled();
     expect(warnedActions(opponentUnmapped.logger)).toEqual(['liveScore.playIn.teamNotOnSite']);
   });
@@ -141,11 +141,11 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
     const { deps, fillPlayInSlot, logger } = filler();
     fillPlayInSlot.mockRejectedValueOnce(new SportEventError('UMBC is already on the field.', 'EVENT_PARTICIPANT_ALREADY_ON_FIELD', 409));
 
-    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC'), game('AUB', 'NCAT', 'NCAT', 'g3')]);
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC'), game('AUB', 'NCAT', 'NCAT', 'g3')], new Set());
 
     expect(fillPlayInSlot).toHaveBeenCalledTimes(2);
     expect(logger.warn.mock.calls.map(([fields]) => fields)).toEqual([
-      { action: 'liveScore.playIn.refused', data: { sportEventId: EVENT_ID, externalGameId: 'g1', winnerExternalId: 'bdl-UMBC', opponentExternalId: 'bdl-HOU', code: 'EVENT_PARTICIPANT_ALREADY_ON_FIELD' } },
+      { action: 'liveScore.playIn.refused', data: { sportEventId: EVENT_ID, providerGameId: 'g1', winnerExternalId: 'bdl-UMBC', opponentExternalId: 'bdl-HOU', code: 'EVENT_PARTICIPANT_ALREADY_ON_FIELD' } },
     ]);
   });
 
@@ -153,24 +153,23 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
     const { deps, fillPlayInSlot } = filler();
     fillPlayInSlot.mockRejectedValueOnce(new Error('connection lost'));
 
-    await expect(fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')])).rejects.toThrow('connection lost');
+    await expect(fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')], new Set())).rejects.toThrow('connection lost');
   });
 
   it('fills a place once when two games in a batch both fit it', async () => {
     const { deps, fillPlayInSlot, logger } = filler();
 
-    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC'), game('HOU', 'HOW', 'HOW', 'g9')]);
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC'), game('HOU', 'HOW', 'HOW', 'g9')], new Set());
 
     expect(fillPlayInSlot.mock.calls).toEqual([[EVENT_ID, 'sep-PLAYIN16', 'p-UMBC']]);
     expect(warnedActions(logger)).toEqual(['liveScore.playIn.noSinglePlace']);
   });
 
-  it('reads nothing for a batch with no First Four winner, or whose winner\'s game is already linked to a match', async () => {
-    const linkedBracket = bracket().map((match) => (match.matchNumber === 1 ? { ...match, externalGameId: 'g1' } : match));
+  it('reads nothing for a batch with no First Four winner, or whose winner\'s game a Game is already mapped to', async () => {
     const { deps, findBySportEvent, fillPlayInSlot } = filler();
 
-    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('DUKE', 'MSM')]);
-    await fillPlayInPlaces(deps, EVENT_ID, linkedBracket, [game('HOU', 'UMBC', 'UMBC')]);
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('DUKE', 'MSM')], new Set());
+    await fillPlayInPlaces(deps, EVENT_ID, bracket(), [game('HOU', 'UMBC', 'UMBC')], new Set(['g1']));
 
     expect(findBySportEvent).not.toHaveBeenCalled();
     expect(fillPlayInSlot).not.toHaveBeenCalled();

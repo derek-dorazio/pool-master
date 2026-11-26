@@ -61,7 +61,7 @@ async function syncedWeek() {
     field[name] = row.id;
   }
   const game = (id: string, home: string, away: string, hoursAfterKickoff: number): ProviderScheduledGame => ({
-    externalGameId: id,
+    games: [{ providerGameId: id, gameNumber: 1 }],
     roundNumber: 1,
     homeTeamExternalId: `${externalId}-${home}`,
     awayTeamExternalId: `${externalId}-${away}`,
@@ -165,7 +165,7 @@ describe('Provider game slate (#1728)', () => {
       slot(1, 3, null, null),
     ];
     const game = (id: string, roundNumber: number, home: number, away: number, at: Date): ProviderScheduledGame => ({
-      externalGameId: id, roundNumber, homeTeamExternalId: team(home), awayTeamExternalId: team(away), scheduledAt: at, isNeutralSite: false,
+      games: [{ providerGameId: id, gameNumber: 1 }], roundNumber, homeTeamExternalId: team(home), awayTeamExternalId: team(away), scheduledAt: at, isNeutralSite: false,
     });
     const wildCard = [game('w1', 1, 2, 7, KICKOFF), game('w2', 1, 3, 6, KICKOFF), game('w3', 1, 4, 5, KICKOFF)];
     const { providerGames } = integrationSportEventServices();

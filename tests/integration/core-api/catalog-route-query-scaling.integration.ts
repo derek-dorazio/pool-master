@@ -297,7 +297,7 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
     });
   });
 
-  it("GET an event's bracket: the same statements for 2 games as for 20", async () => {
+  it("GET an event's bracket: the same statements for 2 games as for 20, each match holding its Game and the Game's provider id", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/events/{eventId}/bracket',
       seed: async (games) => ({
