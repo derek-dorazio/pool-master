@@ -58,7 +58,9 @@ export interface ByeEntry {
 /**
  * Every team on a bye, by field row id: a team whose first match in `bracket` comes after the
  * bracket's first round. The one reading of a bye, for team scoring here and for bracket pick'em,
- * where a bye team holds its side of its first game.
+ * where a bye team holds its side of its first game. It relies on `bracket` holding every game a
+ * team was drawn into, cancelled ones included where the caller keeps them: a team whose first game
+ * were missing from it would read as a bye.
  */
 export function byeEntries(
   bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'roundNumber' | 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>>,
