@@ -4,27 +4,7 @@
  * sweep and the event read alike; each check carries the value it was judged on, so a held
  * release can say what held it and the log can show it later.
  */
-
-/** Which ready check: each is passed or failed on the value it carries. */
-export const ReleaseCheckKey = {
-  /** Its start is still ahead: a started event can no longer be released. Value: the start. */
-  NOT_STARTED: 'NOT_STARTED',
-  /** Its rounds are scheduled. Value: how many rounds it has. */
-  ROUNDS_SCHEDULED: 'ROUNDS_SCHEDULED',
-  /** Its field is loaded. Value: how many participants are in it. */
-  FIELD_LOADED: 'FIELD_LOADED',
-  /** Every active field participant is in a tier. Value: how many are not. */
-  TIERS_ASSIGNED: 'TIERS_ASSIGNED',
-  /** No tier is empty: no entry could pick from one. Value: the empty tiers' labels. */
-  TIERS_FILLED: 'TIERS_FILLED',
-  /** Prices are assigned and every active field participant has one. Value: how many have none, or null before prices are assigned. */
-  PRICES_ASSIGNED: 'PRICES_ASSIGNED',
-  /** Its bracket is complete. Only an event played as matches has it. Value: what is missing, in words. */
-  BRACKET_COMPLETE: 'BRACKET_COMPLETE',
-  /** Its sport league offers at least one active contest setup, so a contest can be made on it. Value: how many. */
-  CONTEST_SETUPS_ON: 'CONTEST_SETUPS_ON',
-} as const;
-export type ReleaseCheckKey = (typeof ReleaseCheckKey)[keyof typeof ReleaseCheckKey];
+import { ReleaseCheckKey } from './enums';
 
 /**
  * The checks only the automatic release waits for (#1823). A root admin's "Release for contests"
