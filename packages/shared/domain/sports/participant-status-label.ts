@@ -1,5 +1,5 @@
 import { sportWord } from '../../display-strings/display-strings';
-import { ParticipantInactiveReason, type Sport } from '../enums';
+import { SportEventParticipantStatus, type Sport } from '../enums';
 
 /**
  * A participant status as the audience reads it: `ELIMINATED` and `WITHDRAWN` take the sport's
@@ -9,8 +9,8 @@ import { ParticipantInactiveReason, type Sport } from '../enums';
  */
 export function formatParticipantStatusLabel(status: string, sport?: Sport | null, locale?: string | null): string {
   if (sport) {
-    if (status === ParticipantInactiveReason.ELIMINATED) return sportWord(sport, 'eliminated', { locale });
-    if (status === ParticipantInactiveReason.WITHDRAWN) return sportWord(sport, 'withdrawn', { locale });
+    if (status === SportEventParticipantStatus.ELIMINATED) return sportWord(sport, 'eliminated', { locale });
+    if (status === SportEventParticipantStatus.WITHDRAWN) return sportWord(sport, 'withdrawn', { locale });
   }
   return status
     .split('_')

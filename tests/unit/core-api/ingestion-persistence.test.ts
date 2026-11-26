@@ -2,7 +2,7 @@ import { testDomainEvents } from '../../support/domain-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { expect } from '@jest/globals';
-import { BackgroundJobType, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ProviderCode, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
   ProviderParticipant,
@@ -218,7 +218,7 @@ describe('IngestionPersistence', () => {
           providerId: 'balldontlie',
           sport: Sport.GOLF,
           name: 'Scottie Scheffler',
-          active: true,
+          status: SportEventParticipantStatus.ACTIVE,
           ranking: 7,
           metadata: {
             seed: 1,
@@ -250,8 +250,7 @@ describe('IngestionPersistence', () => {
       linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1',
-        isActive: true,
-        inactiveReason: null,
+        status: 'ACTIVE',
         ranking: 12,
         oddsToWin: 11.25,
         seedNumber: 3,
@@ -307,7 +306,7 @@ describe('IngestionPersistence', () => {
         providerId: 'balldontlie',
         sport: Sport.BASKETBALL,
         name: 'Duke',
-        active: true,
+        status: SportEventParticipantStatus.ACTIVE,
         metadata: { seed: 1 },
       }],
     };
@@ -321,8 +320,7 @@ describe('IngestionPersistence', () => {
       },
       fieldRow: {
         id: 'sport-event-participant-1',
-        isActive: true,
-        inactiveReason: null,
+        status: 'ACTIVE',
         ranking: null,
         oddsToWin: null,
         seedNumber: 3,
@@ -344,7 +342,7 @@ describe('IngestionPersistence', () => {
     const NOW = new Date('2026-10-28T20:00:00.000Z');
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
-      participants: [{ externalId: 'golfer-01', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 1, metadata: {} }],
+      participants: [{ externalId: 'golfer-01', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Scottie Scheffler', status: SportEventParticipantStatus.ACTIVE, ranking: 1, metadata: {} }],
     };
 
     function syncedEvent(createField: jest.Mock) {
@@ -425,7 +423,7 @@ describe('IngestionPersistence', () => {
           providerId: 'balldontlie',
           sport: Sport.GOLF,
           name: 'Scottie Scheffler',
-          active: true,
+          status: SportEventParticipantStatus.ACTIVE,
           ranking: 7,
           metadata: {
             seed: 1,
@@ -457,8 +455,7 @@ describe('IngestionPersistence', () => {
       linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1',
-        isActive: true,
-        inactiveReason: null,
+        status: 'ACTIVE',
         ranking: 12,
         oddsToWin: 11.25,
         seedNumber: 3,
@@ -490,7 +487,7 @@ describe('IngestionPersistence', () => {
       externalId: 'golf-open-2026',
       status: 'SCHEDULED',
       participants: [{
-        externalId: 'golfer-01', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 7,
+        externalId: 'golfer-01', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Scottie Scheffler', status: SportEventParticipantStatus.ACTIVE, ranking: 7,
         metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
       }],
     };
@@ -499,7 +496,7 @@ describe('IngestionPersistence', () => {
       eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null },
       linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
-        id: 'sport-event-participant-1', isActive: true, inactiveReason: null, ranking: 7, oddsToWin: 8.5, seedNumber: 1,
+        id: 'sport-event-participant-1', status: 'ACTIVE', ranking: 7, oddsToWin: 8.5, seedNumber: 1,
         metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
       },
     });
@@ -609,12 +606,12 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
   const EVENT_LEAGUE = { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } };
 
   function golfer(externalId: string, name: string, providerId = 'balldontlie'): ProviderParticipant {
-    return { externalId, providerId, sport: Sport.GOLF, name, active: true, metadata: {} };
+    return { externalId, providerId, sport: Sport.GOLF, name, status: SportEventParticipantStatus.ACTIVE, metadata: {} };
   }
 
   /** A college basketball team as a provider sends it, naming its league by match keyword. */
   function collegeTeam(externalId: string, name: string, tour: string): ProviderParticipant {
-    return { externalId, providerId: 'balldontlie', sport: Sport.BASKETBALL, name, active: true, metadata: { tour } };
+    return { externalId, providerId: 'balldontlie', sport: Sport.BASKETBALL, name, status: SportEventParticipantStatus.ACTIVE, metadata: { tour } };
   }
 
   function unmappedPrisma(siteParticipants: SiteParticipant[] = [], linked = true) {

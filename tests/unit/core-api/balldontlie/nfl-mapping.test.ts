@@ -137,7 +137,7 @@ describe('NFL teams', () => {
       providerId: 'balldontlie',
       sport: Sport.FOOTBALL,
       name: 'Detroit Lions',
-      active: true,
+      status: 'ACTIVE',
       metadata: { abbreviation: 'DET', conference: 'NFC', division: 'NORTH' },
     });
   });

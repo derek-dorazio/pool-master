@@ -102,7 +102,7 @@ describe('Premier League teams', () => {
       providerId: 'balldontlie',
       sport: Sport.SOCCER,
       name: 'Arsenal',
-      active: true,
+      status: 'ACTIVE',
       metadata: { abbreviation: 'ARS' },
     });
     expect(toEplTeamParticipant({ id: 99, name: 'Newcomers FC', abbreviation: null }).metadata).toEqual({});

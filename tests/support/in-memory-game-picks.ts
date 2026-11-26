@@ -28,9 +28,8 @@ import {
   type ContestEntryMatchPrediction,
   type Participant,
   type SportEventRoundMatch,
-  type SportEventParticipant,
-} from '@poolmaster/shared/domain';
-import { weekRoundSlot } from './round-slots';
+  type SportEventParticipant, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { weekRoundSlot, withSlotTiebreakers } from './round-slots';
 import { legacyMatch } from './match-sides';
 import { expectDefined } from './expect-defined';
 import type { EventFieldReads } from '../../packages/core-api/src/modules/events/sport-event-participant-service';
@@ -74,7 +73,7 @@ export class InMemoryGamePicks {
       id: options.id ?? `field-${this.sequence}`,
       sportEventId,
       participantId: participant.id,
-      isActive: true,
+      status: SportEventParticipantStatus.ACTIVE,
       isPlayInPlace: false,
       ...(options.seedNumber !== undefined && { seedNumber: options.seedNumber }),
       metadata: {},
@@ -133,9 +132,10 @@ export class InMemoryGamePicks {
   }
 
   matchRepo(): Pick<SportEventRoundMatchRepository, 'findById' | 'findBySportEvent' | 'findBySportEvents'> {
-    const findBySportEvents = async (sportEventIds: readonly string[]) => [...this.matches.values()]
+    // Read as the stored rows are once each slot's rule has run (#2048).
+    const findBySportEvents = async (sportEventIds: readonly string[]) => withSlotTiebreakers([...this.matches.values()]
       .filter((match) => sportEventIds.includes(match.sportEventId))
-      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || compareMatchPlaces(left, right));
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || compareMatchPlaces(left, right)));
     return {
       findById: async (id) => this.matches.get(id) ?? null,
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),

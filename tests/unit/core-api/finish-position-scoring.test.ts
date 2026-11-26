@@ -4,6 +4,7 @@ import {
   ScoringFamily,
   Sport,
   SportEventStatus,
+  SportEventParticipantStatus,
   type ContestScoringSettings,
   type SportEventParticipantRaceResult,
 } from '@poolmaster/shared/domain';
@@ -39,7 +40,7 @@ function field(runners: RunnerInput[]): SportEventParticipantView[] {
   const event = store.addEvent({ sport: Sport.HORSE_RACING });
   return runners.map(({ name, isActive = true, result }) => {
     const participant = store.addParticipant(sport.id, name);
-    const entry = store.addToField(event.id, participant.id, { isActive });
+    const entry = store.addToField(event.id, participant.id, { status: isActive ? SportEventParticipantStatus.ACTIVE : SportEventParticipantStatus.WITHDRAWN });
     const raceResult: SportEventParticipantRaceResult | null = result === null || result === undefined ? null : {
       id: store.id('race-result'),
       sportEventParticipantId: entry.id,

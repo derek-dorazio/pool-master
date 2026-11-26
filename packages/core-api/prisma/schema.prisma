@@ -234,6 +234,7 @@ enum PrismaBackgroundJobType {
   ACTIVATE_EVENT_CONTESTS
   FOLLOW_POSTPONED_EVENT_CONTESTS
   RESOLVE_MAPPED_PARTICIPANT_FINDINGS
+  REFRESH_SLOT_TIEBREAKERS
 }
 
 enum PrismaBackgroundJobStatus {
@@ -306,9 +307,13 @@ enum PrismaSportEventStatus {
 /// the cut, a knocked-out seed and an eliminated driver are all ELIMINATED; a
 /// golf surface renders ELIMINATED as "Cut" for its audience. null means
 /// "inactive, no more specific reason recorded" — there is no OTHER.
-enum ParticipantInactiveReason {
+/// A field row's place in its event (#2184): still in it, or out of it and why. A golfer who
+/// missed the cut and a knocked-out team are both ELIMINATED.
+enum SportEventParticipantStatus {
+  ACTIVE
   WITHDRAWN
   ELIMINATED
+  DISQUALIFIED
 }
 
 /// How a SportEventParticipantValuation's tier or price was set.
@@ -599,6 +604,7 @@ enum PrismaProviderSyncFindingKind {
   GAME_UNKNOWN
   GAME_ID_REISSUED
   GAME_MOVED
+  TIEBREAKER_GAME_REPLACED
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -699,6 +705,7 @@ model User {
   leaguePayments           LeaguePayment[]           @relation("LeaguePaymentPayer")
   startedBackgroundJobs    BackgroundJob[]           @relation("BackgroundJobStartedBy")
   syncFindingStatusChanges ProviderSyncFinding[]     @relation("SyncFindingStatusChangedBy")
+  chosenTiebreakerGames    SportEventSlot[]          @relation("SportEventSlotTiebreakerGameChosenBy")
 
   @@index([isRootAdmin, isActive])
   /// Trigram indexes serve the root admin user search, a substring match on each column (#1180).
@@ -2199,10 +2206,23 @@ model SportEventSlot {
   sportEventId                 String   @map("sport_event_id") @db.Uuid
   sportLeagueSeasonId          String   @map("sport_league_season_id") @db.Uuid
   sportLeagueSeasonCompetitionSlotId String   @map("sport_league_season_competition_slot_id") @db.Uuid
+  /// The slot's tiebreaker game (#2048): the one Game whose combined score every contest covering
+  /// the slot guesses. Set by one rule (the latest scheduled start, ties to the lower Game id, an
+  /// unscheduled Game after every scheduled one, the later round first) once the slot has a Game,
+  /// and chosen again on each schedule change until it starts;
+  /// written only by `SlotTiebreakerService`, which keeps it one of the slot's own Games.
+  tiebreakerGameId             String?   @unique @map("tiebreaker_game_id") @db.Uuid
+  /// When a root admin chose the tiebreaker game by hand; null while the rule chose it. A chosen
+  /// game stays until it starts, unless it is cancelled or moved, when the rule chooses again.
+  tiebreakerGameChosenAt       DateTime? @map("tiebreaker_game_chosen_at") @db.Timestamptz
+  /// The root admin who chose it; null while the rule chose it.
+  tiebreakerGameChosenByUserId String?   @map("tiebreaker_game_chosen_by_user_id") @db.Uuid
   createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   sportEvent SportEvent                 @relation(fields: [sportEventId, sportLeagueSeasonId], references: [id, sportLeagueSeasonId], onDelete: Cascade, map: "sport_event_slots_event_fkey")
   seasonSlot SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueSeasonId, id], onDelete: Restrict, map: "sport_event_slots_season_slot_fkey")
+  tiebreakerGame         SportEventRoundMatchGame? @relation("SportEventSlotTiebreakerGame", fields: [tiebreakerGameId], references: [id], onDelete: SetNull)
+  tiebreakerGameChosenBy User?                     @relation("SportEventSlotTiebreakerGameChosenBy", fields: [tiebreakerGameChosenByUserId], references: [id], onDelete: SetNull)
 
   /// A slot belongs to at most one event (slot ids are unique, so the Season adds nothing).
   rounds     SportEventRound[]
@@ -2212,6 +2232,7 @@ model SportEventSlot {
   /// The target of a round's composite key, which keeps the round in one of its own event's slots.
   @@unique([sportEventId, id], map: "sport_event_slots_event_id_key")
   @@index([sportEventId, sportLeagueSeasonId], map: "sport_event_slots_event_idx")
+  @@index([tiebreakerGameChosenByUserId])
   @@map("sport_event_slots")
 }
 
@@ -2219,8 +2240,7 @@ model SportEventParticipant {
   id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId   String                     @map("sport_event_id") @db.Uuid
   participantId  String                     @map("participant_id") @db.Uuid
-  isActive       Boolean                    @default(true) @map("is_active")
-  inactiveReason ParticipantInactiveReason? @map("inactive_reason")
+  status         SportEventParticipantStatus @default(ACTIVE)
   /// The rank that applied to this participant at this event (1 is best) —
   /// seeded from the provider or the sport-league affiliation, then editable.
   ranking        Int?
@@ -2385,6 +2405,8 @@ model SportEventRoundMatchGame {
   movedTo          SportEventRoundMatchGame?                @relation("SportEventRoundMatchGameMovedTo", fields: [movedToGameId], references: [id], onDelete: SetNull)
   movedFrom        SportEventRoundMatchGame[]               @relation("SportEventRoundMatchGameMovedTo")
   providerMappings SportEventRoundMatchGameProviderMapping[]
+  /// The slot this Game is the tiebreaker game of, if it is (#2048).
+  tiebreakerOfSlot SportEventSlot?                           @relation("SportEventSlotTiebreakerGame")
   sideResults      SportEventRoundMatchGameSideResult[]
 
   @@unique([sportEventRoundMatchId, gameNumber])

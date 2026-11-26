@@ -83,6 +83,8 @@ interface OldMatchRow {
 /** Puts the tables back as they were, inserts `rows` as the old table held them, runs the migration and answers the events' Games, all rolled back. */
 async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[], kickoff: Date): Promise<MigratedGame[]> {
   return getPrisma().$transaction(async (tx) => {
+    // The tables as they were before the migration, which came before a slot named its tiebreaker Game (#2048).
+    await tx.$executeRawUnsafe('ALTER TABLE "sport_event_slots" DROP CONSTRAINT "sport_event_slots_tiebreaker_game_id_fkey"');
     // The tables as they were before the migration: first the match sides migration (#2046) taken
     // back as far as this one needs: its side results gone with the Games, its sides no longer tied
     // to the match key this migration replaces, and the match's result columns back.

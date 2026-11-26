@@ -108,7 +108,7 @@ describe('toPlayoffsFieldParticipants', () => {
     const participants = toPlayoffsFieldParticipants(LEAGUE, semifinals());
 
     expect(participants.map((participant) => participant.externalId)).toEqual(['1', '4', '2', '3']);
-    expect(participants[0]).toMatchObject({ name: 'Team 1', sport: Sport.BASKETBALL, active: true, metadata: { abbreviation: 'T1' } });
+    expect(participants[0]).toMatchObject({ name: 'Team 1', sport: Sport.BASKETBALL, status: 'ACTIVE', metadata: { abbreviation: 'T1' } });
   });
 });
 

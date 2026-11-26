@@ -93,7 +93,7 @@ async function seedRandomDrawFixture() {
     });
     createdParticipantIds.push(participant.id);
     const row = await prisma.sportEventParticipant.create({
-      data: { sportEventId: event.id, participantId: participant.id, isActive: true },
+      data: { sportEventId: event.id, participantId: participant.id },
     });
     fieldIds.push(row.id);
   }

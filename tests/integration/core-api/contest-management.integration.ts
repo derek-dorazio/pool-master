@@ -78,7 +78,6 @@ describe('Contest management integration', () => {
         data: {
           sportEventId,
           participantId: participant.id,
-          isActive: true,
         },
       });
     }
@@ -148,7 +147,6 @@ describe('Contest management integration', () => {
       data: {
         sportEventId,
         participantId: topParticipantId,
-        isActive: true,
         ranking: 1,
         oddsToWin: 8.5,
       },
@@ -157,7 +155,6 @@ describe('Contest management integration', () => {
       data: {
         sportEventId,
         participantId: secondParticipantId,
-        isActive: true,
         ranking: 8,
         oddsToWin: 18.5,
       },

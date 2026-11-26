@@ -76,12 +76,12 @@ describe('contest leaderboard reads', () => {
     const asOf = new Date('2026-05-31T18:00:00.000Z');
     const scores = toParticipantScores([
       {
-        entry: { id: 'sep-1', isActive: true },
+        entry: { id: 'sep-1', status: 'ACTIVE' },
         participant: { name: 'Ana Park' },
         standing: { standing: { asOf, status: 'ACTIVE' }, golf: { eventScoreToPar: 0 } },
         rounds: [],
       },
-      { entry: { id: 'sep-2', isActive: true }, participant: { name: 'Ben Cole' }, standing: null, rounds: [] },
+      { entry: { id: 'sep-2', status: 'ACTIVE' }, participant: { name: 'Ben Cole' }, standing: null, rounds: [] },
     ] as unknown as Parameters<typeof toParticipantScores>[0], scoringEvent({ rounds: 4, roundsPar: 72 }), GOLF_SCORING);
 
     expect(scores).toEqual([
@@ -125,7 +125,7 @@ describe('contest scoring of unplayed rounds', () => {
   });
 
   it('scores a golfer who withdrew before the event +8 for every scheduled round', () => {
-    const removed = golfer('sep-removed', null, [], { isActive: false, inactiveReason: 'WITHDRAWN' });
+    const removed = golfer('sep-removed', null, [], { status: 'WITHDRAWN' });
 
     const [score] = toParticipantScores(field(removed), scoringEvent({ rounds: 4, roundsPar: 72 }), GOLF_SCORING);
 
@@ -133,7 +133,7 @@ describe('contest scoring of unplayed rounds', () => {
   });
 
   it('leaves a golfer who withdrew before the event unscored while no round\'s par is known yet', () => {
-    const removed = golfer('sep-removed', null, [], { isActive: false, inactiveReason: 'WITHDRAWN' });
+    const removed = golfer('sep-removed', null, [], { status: 'WITHDRAWN' });
 
     const [score] = toParticipantScores(field(removed), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING);
 
@@ -141,7 +141,7 @@ describe('contest scoring of unplayed rounds', () => {
   });
 
   it('scores a golfer removed from the field after round 1 for that round plus 80 for each round after it', () => {
-    const removed = golfer('sep-removed', 'COMPLETE', [[1, 'COMPLETED', 75, 3]], { isActive: false });
+    const removed = golfer('sep-removed', 'COMPLETE', [[1, 'COMPLETED', 75, 3]], { status: 'WITHDRAWN' });
 
     const [, score] = toParticipantScores(field(leader, removed), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING);
 
@@ -283,11 +283,11 @@ function golfer(
   id: string,
   standingStatus: string | null,
   rounds: RoundTuple[],
-  entry: { isActive?: boolean; inactiveReason?: string } = {},
+  entry: { status?: string } = {},
 ) {
   const eventScoreToPar = rounds.reduce((sum, [, , , scoreToPar]) => sum + scoreToPar, 0);
   return {
-    entry: { id, isActive: entry.isActive ?? true, inactiveReason: entry.inactiveReason ?? null },
+    entry: { id, status: entry.status ?? 'ACTIVE' },
     participant: { name: id },
     standing: standingStatus === null
       ? null

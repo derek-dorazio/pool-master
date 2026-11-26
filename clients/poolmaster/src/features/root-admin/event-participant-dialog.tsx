@@ -1,3 +1,4 @@
+import { SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { enumLabel, tierLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -88,9 +89,9 @@ export function EventParticipantDialog({
   });
 
   const withdrawMutation = useInvalidatingMutation({
-    mutationFn: () => patchField(entry.isActive
-      ? { sportEventParticipantId: entry.id, isActive: false, inactiveReason: 'WITHDRAWN' }
-      : { sportEventParticipantId: entry.id, isActive: true }),
+    mutationFn: () => patchField((entry.status === SportEventParticipantStatus.ACTIVE)
+      ? { sportEventParticipantId: entry.id, status: SportEventParticipantStatus.WITHDRAWN }
+      : { sportEventParticipantId: entry.id, status: SportEventParticipantStatus.ACTIVE }),
     invalidates,
     onSuccess: () => setWithdrawOpen(false),
     onError: (error) => logger.warn({ action: 'event.participant.withdraw.failed', data: { sportEventParticipantId: entry.id }, err: error }, 'Withdrawal change was rejected'),
@@ -99,7 +100,7 @@ export function EventParticipantDialog({
   const testId = 'root-admin-event-participant-dialog';
   const facts: Fact[] = [
     { id: 'participant', label: 'Participant', value: entry.affiliatedWithSportLeague ? row.name : `${row.name} (guest)`, testId: `${testId}-participant` },
-    { id: 'inField', label: 'In field', value: entry.isActive ? 'Yes' : fieldOutLabel(entry), testId: `${testId}-in-field` },
+    { id: 'inField', label: 'In field', value: (entry.status === SportEventParticipantStatus.ACTIVE) ? 'Yes' : fieldOutLabel(entry), testId: `${testId}-in-field` },
     ...(row.teamAffiliation === null ? [] : [{ id: 'team', label: 'Team', value: row.teamAffiliation }]),
     ...(row.nationality === null ? [] : [{ id: 'country', label: 'Country', value: row.nationality }]),
     { id: 'seed', label: 'Seed', value: shown(row.seedNumber), testId: `${testId}-seed` },
@@ -135,7 +136,7 @@ export function EventParticipantDialog({
         title={dialog.mode === 'view' ? row.name : `${row.name} · Edit`}
         viewActions={(
           <Button data-testid={`${testId}-withdraw`} onClick={() => setWithdrawOpen(true)} type="button" variant="secondary">
-            {entry.isActive ? 'Withdraw' : 'Return to field'}
+            {(entry.status === SportEventParticipantStatus.ACTIVE) ? 'Withdraw' : 'Return to field'}
           </Button>
         )}
         viewContent={(
@@ -171,9 +172,9 @@ export function EventParticipantDialog({
         </div>
       </DetailEditModal>
       <ConfirmDialog
-        confirmLabel={entry.isActive ? 'Withdraw' : 'Return to field'}
+        confirmLabel={(entry.status === SportEventParticipantStatus.ACTIVE) ? 'Withdraw' : 'Return to field'}
         confirmTestId={`${testId}-withdraw-confirm`}
-        description={entry.isActive
+        description={(entry.status === SportEventParticipantStatus.ACTIVE)
           ? 'It is marked withdrawn and leaves the field.'
           : 'It rejoins the field.'}
         error={withdrawMutation.isError ? extractErrorMessage(withdrawMutation.error, { fallback: 'The change was rejected.' }) : undefined}
@@ -183,7 +184,7 @@ export function EventParticipantDialog({
         onOpenChange={(open) => !open && setWithdrawOpen(false)}
         open={withdrawOpen}
         testId={`${testId}-withdraw-modal`}
-        title={entry.isActive ? `Withdraw ${row.name}?` : `Return ${row.name} to the field?`}
+        title={(entry.status === SportEventParticipantStatus.ACTIVE) ? `Withdraw ${row.name}?` : `Return ${row.name} to the field?`}
       />
     </>
   );

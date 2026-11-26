@@ -25,12 +25,13 @@ import {
   opposingSideOf,
   winningSide,
   MatchStatus,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   UpsetBonusRule,
   assertNever,
   type KnockoutRoundPointsSettings,
   type SportEventRoundMatch,
   type UpsetBonus,
+  type SportEventParticipant,
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
 import { isMatchRoundDecided } from './finished-rounds';
@@ -40,12 +41,12 @@ import { isMatchRoundDecided } from './finished-rounds';
  * by no match of `bracket`. A row inactivated while still in its place is not one of them.
  */
 export function withdrawnRowIds(
-  field: ReadonlyArray<{ id: string; isActive: boolean; inactiveReason?: ParticipantInactiveReason | null }>,
+  field: ReadonlyArray<Pick<SportEventParticipant, 'id' | 'status'>>,
   bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'id' | 'sides'>>,
 ): Set<string> {
   const named = new Set(bracket.flatMap(matchParticipantIds));
   return new Set(field
-    .filter((row) => !row.isActive && row.inactiveReason === ParticipantInactiveReason.WITHDRAWN && !named.has(row.id))
+    .filter((row) => row.status === SportEventParticipantStatus.WITHDRAWN && !named.has(row.id))
     .map((row) => row.id));
 }
 

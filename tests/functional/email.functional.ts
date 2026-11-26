@@ -93,7 +93,7 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
   });
   createdParticipantIds.push(participant.id);
   const sportEventParticipant = await prisma.sportEventParticipant.create({
-    data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true },
+    data: { sportEventId: sportEvent.id, participantId: participant.id },
   });
   createdSportEventParticipantIds.push(sportEventParticipant.id);
   await prisma.sportEventParticipantValuation.create({

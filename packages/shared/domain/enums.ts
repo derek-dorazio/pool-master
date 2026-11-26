@@ -1104,6 +1104,12 @@ export const ProviderSyncFindingKind = {
    * league, the event it moved to, Provider and the provider's game id.
    */
   GAME_MOVED: 'GAME_MOVED',
+  /**
+   * A slot's tiebreaker game was cancelled or moved to another slot (#2048), so the rule chose
+   * another; entries' guesses carry over to it. WARNING. Subject: league and event; no Provider or
+   * value, since the choice is the app's own. A root admin resolves it once they have checked the new game.
+   */
+  TIEBREAKER_GAME_REPLACED: 'TIEBREAKER_GAME_REPLACED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
@@ -1362,29 +1368,30 @@ export const ProviderGameStateOrder = explicitOrder<ProviderGameState>({
 });
 
 /**
- * Why a SportEventParticipant is inactive for a golf tournament. Meaningful only
- * when `SportEventParticipant.isActive` is false; null covers "inactive, no more
- * specific reason recorded." See plans/124 §4.1.
+ * A field row's place in its event (SportEventParticipant.status, #2184): still in the field,
+ * or out of it and why. Cross-sport: a golfer who missed the cut is ELIMINATED, as is a
+ * knocked-out team; golf screens call ELIMINATED "Cut" through the sport's words.
  */
-/**
- * Why a SportEventParticipant is inactive. Cross-sport: a golfer who missed the
- * cut is ELIMINATED, as is a knocked-out seed. Golf surfaces render ELIMINATED
- * as "Cut" for their audience; the value stays sport-agnostic. `null` means
- * "inactive, no more specific reason recorded" — there is no OTHER.
- */
-export const ParticipantInactiveReason = {
+export const SportEventParticipantStatus = {
+  ACTIVE: 'ACTIVE',
   WITHDRAWN: 'WITHDRAWN',
   ELIMINATED: 'ELIMINATED',
+  DISQUALIFIED: 'DISQUALIFIED',
 } as const;
-export type ParticipantInactiveReason =
-  (typeof ParticipantInactiveReason)[keyof typeof ParticipantInactiveReason];
-/** No natural order: A to Z by its display strings. */
-export const ParticipantInactiveReasonOrder = alphabeticalOrder('ParticipantInactiveReason');
+export type SportEventParticipantStatus =
+  (typeof SportEventParticipantStatus)[keyof typeof SportEventParticipantStatus];
+/** The order the values are declared in: in the field first, then each way out of it. */
+export const SportEventParticipantStatusOrder = explicitOrder<SportEventParticipantStatus>({
+  [SportEventParticipantStatus.ACTIVE]: 0,
+  [SportEventParticipantStatus.WITHDRAWN]: 1,
+  [SportEventParticipantStatus.ELIMINATED]: 2,
+  [SportEventParticipantStatus.DISQUALIFIED]: 3,
+});
 
 /**
  * A participant's live state within one event (SportEventParticipantStanding.status).
  * Cross-sport: ELIMINATED covers a golfer who missed the cut as well as a
- * knocked-out team, matching ParticipantInactiveReason.
+ * knocked-out team, matching SportEventParticipantStatus.
  */
 export const ParticipantStandingStatus = {
   ACTIVE: 'ACTIVE',
@@ -1403,27 +1410,6 @@ export const ParticipantStandingStatusOrder = explicitOrder<ParticipantStandingS
   [ParticipantStandingStatus.WITHDRAWN]: 3,
   [ParticipantStandingStatus.ELIMINATED]: 4,
 });
-
-export type LegacyParticipantStatus = 'ACTIVE' | 'INACTIVE' | ParticipantInactiveReason;
-
-/**
- * Derives the pre-`isActive`/`inactiveReason` legacy participant-status string
- * (`'ACTIVE'` / `'INACTIVE'` / a `ParticipantInactiveReason`) some response
- * shapes still expose on the wire (`ContestEntryParticipantDetailDto`,
- * the selection-room selection-participant status).
- * New endpoints should read `isActive`/`inactiveReason` directly instead of this
- * string — see plans/124 §4.1. Single source of truth so every call site derives
- * the same value the same way rather than re-implementing the ternary.
- */
-export function deriveLegacyParticipantStatus(
-  isActive: boolean,
-  inactiveReason: ParticipantInactiveReason | null | undefined,
-): LegacyParticipantStatus {
-  if (isActive) {
-    return 'ACTIVE';
-  }
-  return inactiveReason ?? 'INACTIVE';
-}
 
 // --- Contest Lifecycle ---
 
@@ -2198,6 +2184,8 @@ export const BackgroundJobType = {
   FOLLOW_POSTPONED_EVENT_CONTESTS: 'FOLLOW_POSTPONED_EVENT_CONTESTS',
   /** Resolves the OPEN unmapped participant findings of feed ids a mapping now names, however it was made (#2069). */
   RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
+  /** Runs the tiebreaker game rule for each slot of one event after a write to its games (#2048). */
+  REFRESH_SLOT_TIEBREAKERS: 'REFRESH_SLOT_TIEBREAKERS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */

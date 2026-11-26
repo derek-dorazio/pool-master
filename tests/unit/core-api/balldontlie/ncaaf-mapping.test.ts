@@ -73,7 +73,7 @@ describe('a College Football Playoff as an event', () => {
       providerId: 'balldontlie',
       sport: Sport.FOOTBALL,
       name: 'Navy Midshipmen',
-      active: true,
+      status: 'ACTIVE',
       metadata: { abbreviation: 'NAVY', conference: 'American' },
     });
   });

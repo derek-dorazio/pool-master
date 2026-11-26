@@ -76,7 +76,6 @@ describe('events routes', () => {
       data: {
         sportEventId: eligibleEventId,
         participantId,
-        isActive: true,
       },
     });
 
@@ -176,7 +175,6 @@ describe('events routes', () => {
       data: {
         sportEventId: lockedEventId,
         participantId,
-        isActive: true,
       },
     });
 
@@ -256,7 +254,7 @@ describe('events routes', () => {
       });
       const entry = await prisma.sportEventParticipant.create({
         // A rank gives the field an order to tier and price by (#2040: never by name).
-        data: { sportEventId: eventId, participantId, isActive: true, ranking: 1 },
+        data: { sportEventId: eventId, participantId, ranking: 1 },
       });
       if (options.tiered) {
         const tier = await prisma.sportEventTier.create({

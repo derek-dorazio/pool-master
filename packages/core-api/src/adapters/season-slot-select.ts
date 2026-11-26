@@ -33,14 +33,17 @@ export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition: { canEn
  */
 export const COVERS_TEST_SLOT = { seasonSlot: { isTestData: true } } as const satisfies Prisma.SportEventSlotWhereInput;
 
-/** A round's slot through its event slot (#2006): the select a round or a match reads it with. */
+/**
+ * A round's slot through its event slot (#2006): the select a round or a match reads it with, and
+ * the match of its tiebreaker game (#2048).
+ */
 export const ROUND_EVENT_SLOT_SELECT = {
-  select: { seasonSlot: { select: SEASON_SLOT_SELECT } },
+  select: { seasonSlot: { select: SEASON_SLOT_SELECT }, tiebreakerGame: { select: { sportEventRoundMatchId: true } } },
 } as const satisfies Prisma.SportEventSlotDefaultArgs;
 
 /** The slot a round is played in, as `SportEventRound.slot` and `SportEventRoundMatch.slot` carry it. */
-export function toRoundSlot(eventSlot: { seasonSlot: SeasonSlotRow }): SportEventRoundSlot {
+export function toRoundSlot(eventSlot: Prisma.SportEventSlotGetPayload<typeof ROUND_EVENT_SLOT_SELECT>): SportEventRoundSlot {
   const { id, name, slotKind, weekNumber, seriesGames, pairing } = toSeasonSlot(eventSlot.seasonSlot);
   const { definition } = eventSlot.seasonSlot;
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition) };
+  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition), tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
 }

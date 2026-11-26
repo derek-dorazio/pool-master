@@ -1,4 +1,4 @@
-import { ParticipantInactiveReason, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { SportEventParticipantStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type {
   DateRange,
@@ -327,25 +327,26 @@ function toDomainSport(sport: SupportedMockSport): Sport | null {
 }
 
 /**
- * Maps the mock feed's 7 raw participantStatus values down to
- * {isActive, inactiveReason} — see plans/124 §4.1. active/provisional/alternate
- * and unset all mean "no reason recorded" (undefined, not just falling through
- * to 'inactive'); only withdrawn/cut/eliminated carry an explicit reason.
+ * Maps the mock feed's 7 raw participantStatus values down to a field row status:
+ * withdrawn and inactive are WITHDRAWN, cut and eliminated are ELIMINATED, and
+ * active, provisional, alternate and unset are ACTIVE.
  */
-function toParticipantInactiveReason(
+/** The mock feed's contestant status as a field row's status: anything not out is ACTIVE. */
+function toFieldStatus(
   participantStatus: string | undefined,
-): ParticipantInactiveReason | undefined {
+): SportEventParticipantStatus {
   switch (participantStatus) {
     case 'withdrawn':
-      return ParticipantInactiveReason.WITHDRAWN;
+    case 'inactive':
+      return SportEventParticipantStatus.WITHDRAWN;
     // A golfer who missed the cut is ELIMINATED in the cross-sport model; golf
     // surfaces render it as "Cut".
     case 'cut':
     case 'eliminated':
-      return ParticipantInactiveReason.ELIMINATED;
+      return SportEventParticipantStatus.ELIMINATED;
     case undefined:
     default:
-      return undefined;
+      return SportEventParticipantStatus.ACTIVE;
   }
 }
 
@@ -374,10 +375,7 @@ function toProviderParticipant(
     lastName: lastParts.join(' ') || undefined,
     nationality: contestant.countryCode,
     teamAffiliation: contestant.teamName,
-    active: !['withdrawn', 'inactive', 'eliminated', 'cut'].includes(
-      contestant.participantStatus ?? '',
-    ),
-    inactiveReason: toParticipantInactiveReason(contestant.participantStatus),
+    status: toFieldStatus(contestant.participantStatus),
     ranking: contestant.ranking,
     metadata: {
       seed: contestant.seed,

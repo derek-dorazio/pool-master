@@ -316,7 +316,7 @@ async function tieredGolfEvent(name: string) {
     const golfer = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Read Once Golfer ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
-    const fieldRow = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, isActive: true, ranking: index + 1 } });
+    const fieldRow = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, ranking: index + 1 } });
     await prisma.sportEventParticipantValuation.create({
       data: { sportEventParticipantId: fieldRow.id, sportEventTierId: tier.id, tierOrderIndex: 1, tierAssignedSource: 'MANUAL' },
     });
@@ -412,7 +412,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
     const team = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Read Once ${side} ${suffix}`, participantType: 'TEAM', status: 'ACTIVE' },
     });
-    return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
+    return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id } });
   }));
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
   // The away team on side 1 and the home team on side 2, each period its own points.
@@ -502,6 +502,8 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
       // Ordered as the job types are declared.
       { type: 'SETTLE_GAME_CONTESTS', payload: { sportEventId: eventId, sportEventRoundMatchId: gameId, completedAt: expect.any(String) } },
       { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: eventId } },
+      // A decided game runs its event's slots' tiebreaker rule again (#2048).
+      { type: 'REFRESH_SLOT_TIEBREAKERS', payload: { sportEventId: eventId } },
     ]);
 
     const { statements: jobStatements } = await recordStatements(() => drainBackgroundJobs());

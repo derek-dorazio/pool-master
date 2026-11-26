@@ -1,4 +1,4 @@
-import { FieldOrderBasis, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
@@ -189,7 +189,7 @@ describe('SportEventTierService — assignment', () => {
     store.addToField(event.id, 'p-long', { oddsToWin: 50 });
     store.addToField(event.id, 'p-fav', { oddsToWin: 5 });
     store.addToField(event.id, 'p-mid', { oddsToWin: 20 });
-    store.addToField(event.id, 'p-out', { oddsToWin: 1, isActive: false });
+    store.addToField(event.id, 'p-out', { oddsToWin: 1, status: SportEventParticipantStatus.WITHDRAWN });
 
     const groups = await service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 });
 
@@ -482,7 +482,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     store.addToField(event.id, 'p-unseeded');
     store.addToField(event.id, 'p-2', { seedNumber: 2 });
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
-    store.addToField(event.id, 'p-withdrawn', { seedNumber: 3, isActive: false });
+    store.addToField(event.id, 'p-withdrawn', { seedNumber: 3, status: SportEventParticipantStatus.WITHDRAWN });
 
     const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
 
@@ -670,7 +670,7 @@ describe('SportEventTierService — the field changing between assignments', () 
     store.addToField(event.id, 'p-long', { oddsToWin: 50 });
     await service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 });
 
-    withdrawn.isActive = false;
+    withdrawn.status = SportEventParticipantStatus.WITHDRAWN;
     const groups = await service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 });
 
     expect(groups[0].participants.map((placement) => placement.participantId)).toEqual(['p-withdrawn', 'p-fav']);
@@ -709,7 +709,7 @@ describe('SportEventTierService — the field changing between assignments', () 
 
   it('prices nothing and writes nothing when the event has no active golfer', async () => {
     const { store, event, service } = setup();
-    store.addToField(event.id, 'p-withdrawn', { seedNumber: 1, isActive: false });
+    store.addToField(event.id, 'p-withdrawn', { seedNumber: 1, status: SportEventParticipantStatus.WITHDRAWN });
 
     await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() })).resolves.toEqual([]);
     expect(store.valuationRows).toEqual([]);

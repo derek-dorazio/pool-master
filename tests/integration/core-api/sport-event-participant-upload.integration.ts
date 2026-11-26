@@ -1,7 +1,7 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
-import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import { SportEventParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
   getAppPrisma,
@@ -66,7 +66,7 @@ async function fieldRows(sportEventId: string) {
   const rows = await getPrisma().sportEventParticipant.findMany({
     where: { sportEventId },
     orderBy: { seedNumber: 'asc' },
-    select: { participantId: true, ranking: true, oddsToWin: true, seedNumber: true, isActive: true, inactiveReason: true },
+    select: { participantId: true, ranking: true, oddsToWin: true, seedNumber: true, status: true },
   });
   // oddsToWin is a decimal column; compare it as the number the domain reads.
   return rows.map((row) => ({ ...row, oddsToWin: row.oddsToWin === null ? null : Number(row.oddsToWin) }));
@@ -78,7 +78,7 @@ describe('Field upload — adjusting golfers already on the field', () => {
     const service = createSportEventParticipantService(getAppPrisma(), testDomainEvents());
     const rows = [
       { participantId: rory.participant.id, ranking: 1 },
-      { externalId: jordan.participant.externalId, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, ranking: null },
+      { externalId: jordan.participant.externalId, status: SportEventParticipantStatus.WITHDRAWN, ranking: null },
       { playerName: 'tommy fleetwood', ranking: 12 },
     ];
 
@@ -96,9 +96,9 @@ describe('Field upload — adjusting golfers already on the field', () => {
     expect(field).toHaveLength(3);
     expect(await fieldRows(event.id)).toEqual([
       // The upload takes no odds (#2081): odds come from the feed or the grid save.
-      { participantId: rory.participant.id, ranking: 1, oddsToWin: 20, seedNumber: 1, isActive: true, inactiveReason: null },
-      { participantId: jordan.participant.id, ranking: null, oddsToWin: 21, seedNumber: 2, isActive: false, inactiveReason: 'WITHDRAWN' },
-      { participantId: tommy.participant.id, ranking: 12, oddsToWin: 22, seedNumber: 3, isActive: true, inactiveReason: null },
+      { participantId: rory.participant.id, ranking: 1, oddsToWin: 20, seedNumber: 1, status: 'ACTIVE' },
+      { participantId: jordan.participant.id, ranking: null, oddsToWin: 21, seedNumber: 2, status: 'WITHDRAWN' },
+      { participantId: tommy.participant.id, ranking: 12, oddsToWin: 22, seedNumber: 3, status: 'ACTIVE' },
     ]);
   });
 

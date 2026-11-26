@@ -10,7 +10,7 @@ import type {
   SportEventRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { MatchStatus, SportEventParticipantStatus, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -70,7 +70,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         field.findBySportEvent(sportEventId),
         valuations.findBySportEvent(sportEventId),
       ]);
-      const activeEntryIds = new Set(entries.filter((entry) => entry.isActive).map((entry) => entry.id));
+      const activeEntryIds = new Set(entries.filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE).map((entry) => entry.id));
       return eventValuations.flatMap((valuation) =>
         activeEntryIds.has(valuation.sportEventParticipantId) && valuation.price !== null ? [valuation.price] : []);
     },

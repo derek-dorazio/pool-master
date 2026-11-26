@@ -22,7 +22,7 @@
  * Team ids are the provider's own (`participantFeedId`, #2040), mapped per sport league.
  */
 
-import { MatchSide, Sport } from '@poolmaster/shared/domain';
+import { MatchSide, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderBracketMatch, ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -142,7 +142,7 @@ export function toWorldCupTeamParticipant(team: FifaTeam, path: string): Provide
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.SOCCER,
     name: required(team.name, path, `team ${String(id)}`, 'name'),
-    active: true,
+    status: SportEventParticipantStatus.ACTIVE,
     metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }

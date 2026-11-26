@@ -9,8 +9,7 @@ import {
   RaceResultStatus,
   Sport,
   SportEventStatus,
-  ValuationSource,
-} from '@poolmaster/shared/domain';
+  ValuationSource, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   PrismaParticipantRepository,
   PrismaSportEventRoundMatchRepository,
@@ -145,11 +144,11 @@ describe('Saving the field grid (#1252)', () => {
       const { field } = await eventWithField(size);
       await measure(() => new PrismaSportEventParticipantRepository(getAppPrisma()).updateMany(field.map((row) => ({
         id: row.id,
-        updates: { isActive: false, inactiveReason: 'WITHDRAWN' },
+        updates: { status: SportEventParticipantStatus.WITHDRAWN },
         price: 1_000,
       }))));
       const rows = await getPrisma().sportEventParticipant.findMany({ where: { id: { in: field.map((row) => row.id) } }, include: { valuation: true } });
-      expect(rows.every((row) => !row.isActive && row.inactiveReason === 'WITHDRAWN')).toBe(true);
+      expect(rows.every((row) => row.status === SportEventParticipantStatus.WITHDRAWN)).toBe(true);
       expect(rows.map((row) => [Number(row.valuation?.price), row.valuation?.priceAssignedSource])).toEqual(
         field.map(() => [1_000, ValuationSource.MANUAL]),
       );

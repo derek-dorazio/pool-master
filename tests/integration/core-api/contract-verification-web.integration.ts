@@ -55,6 +55,7 @@ import { randomUUID } from 'node:crypto';
 import { freshEventEdition, fixtureSeasonId } from '../../support/event-edition';
 import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { makeSlotTiebreaker } from '../../support/slot-tiebreaker-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
 
@@ -330,7 +331,6 @@ describe('Contract verification (web)', () => {
       data: {
         sportEventId: eventId,
         participantId,
-        isActive: true,
       },
     });
 
@@ -598,7 +598,6 @@ describe('Contract verification (web)', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     // pool-master-9y6: default tiered templates require a contest-ready field.
@@ -615,7 +614,6 @@ describe('Contract verification (web)', () => {
         data: {
           sportEventId: sportEvent.id,
           participantId: fieldParticipant.id,
-          isActive: true,
         },
       });
     }
@@ -932,7 +930,7 @@ describe('Contract verification (web)', () => {
     const golfer = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: 'Contract Draw Golfer', participantType: 'INDIVIDUAL'  },
     });
-    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, isActive: true } });
+    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });
     // The event added after the entry, as "Events in this contest" adds one: the entry gets a
     // DRAFT status in it (#713).
     await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
@@ -1006,12 +1004,14 @@ describe('Contract verification (web)', () => {
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
     const [home, away] = await Promise.all(['Contract Home', 'Contract Away'].map(async (name) => {
       const team = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'TEAM'  } });
-      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id } });
     }));
     const game = await createMatchRow(prisma, {
       sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1,
       teams: [away.id, home.id], isNeutralSite: false, scheduledDate: new Date('2099-03-19T16:00:00.000Z'),
     });
+    // The week's one game is its tiebreaker game, as the rule names it (#2048).
+    await makeSlotTiebreaker(prisma, game.id);
     await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
     const entry = await prisma.contestEntry.findFirstOrThrow({ where: { contestId: contest.id }, select: { id: true } });
     await prisma.contestEntryEvent.create({ data: { contestEntryId: entry.id, sportEventId: event.id } });

@@ -193,7 +193,6 @@ async function seedImportedGolfEvent(options: {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
@@ -949,7 +948,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
@@ -1109,7 +1107,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
@@ -1254,7 +1251,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
@@ -1397,7 +1393,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);

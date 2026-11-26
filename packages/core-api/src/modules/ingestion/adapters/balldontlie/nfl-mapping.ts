@@ -10,7 +10,7 @@
  * league and kind of participant, so a bare number never collides with a golfer's.
  */
 
-import { MatchSide, Sport } from '@poolmaster/shared/domain';
+import { MatchSide, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderBracketMatch, ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -144,7 +144,7 @@ export function toNflTeamParticipant(team: NflTeam, path: string): ProviderParti
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.FOOTBALL,
     name: team.full_name,
-    active: true,
+    status: SportEventParticipantStatus.ACTIVE,
     metadata: { abbreviation: team.abbreviation, conference: team.conference, division: team.division },
   };
 }

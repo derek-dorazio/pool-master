@@ -11,6 +11,7 @@ import {
   RaceResultStatus,
   type SportDefinition,
   sportVocabulary,
+  SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantDto } from '@/lib/api';
 import type { ScoringFamilyUi } from './types';
@@ -30,7 +31,7 @@ const NON_FINISH_LABEL: Readonly<Record<Exclude<RaceResultStatus, typeof RaceRes
 export function formatFinish(participant: SportEventParticipantDto, sport: SportDefinition): string | null {
   const { race } = participant;
   if (!race) {
-    return participant.isActive ? null : sportVocabulary(sport).withdrawn;
+    return participant.status === SportEventParticipantStatus.ACTIVE ? null : sportVocabulary(sport).withdrawn;
   }
   if (race.resultStatus === RaceResultStatus.FINISHED) {
     if (race.finishPosition === null) {

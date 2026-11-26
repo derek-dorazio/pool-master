@@ -13975,13 +13975,9 @@ export type SportEventParticipantDto = {
     sportEventId: string;
     participantId: string;
     /**
-     * Whether the participant is competing; false is withdrawn or eliminated.
+     * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
      */
-    isActive: boolean;
-    /**
-     * Meaningful only when isActive is false; null means no more specific reason is recorded.
-     */
-    inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+    status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
     /**
      * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
      */
@@ -14228,13 +14224,9 @@ export type SportEventParticipantListResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
@@ -14498,8 +14490,10 @@ export type UpdateSportEventParticipantsRequest = {
      */
     participants: Array<{
         sportEventParticipantId: string;
-        isActive?: boolean;
-        inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+        /**
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+         */
+        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         ranking?: number | null;
         seedNumber?: number | null;
         /**
@@ -14536,13 +14530,9 @@ export type SportEventParticipantResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
@@ -14786,8 +14776,10 @@ export type SportEventParticipantUploadRequest = {
          */
         externalId?: string;
         playerName?: string;
-        isActive?: boolean;
-        inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+        /**
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+         */
+        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         ranking?: number | null;
         seedNumber?: number | null;
     }>;
@@ -14811,8 +14803,10 @@ export type SportEventParticipantUploadPreviewResponse = {
              */
             externalId?: string;
             playerName?: string;
-            isActive?: boolean;
-            inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking?: number | null;
             seedNumber?: number | null;
         };
@@ -14844,8 +14838,10 @@ export type SportEventParticipantUploadPreviewResponse = {
          * What is stored now; set whenever the row resolved.
          */
         before: {
-            isActive: boolean;
-            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking: number | null;
             seedNumber: number | null;
         } | null;
@@ -14853,8 +14849,10 @@ export type SportEventParticipantUploadPreviewResponse = {
          * What applying would store; null when the row cannot be applied.
          */
         after: {
-            isActive: boolean;
-            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking: number | null;
             seedNumber: number | null;
         } | null;
@@ -15978,13 +15976,9 @@ export type ContestLeaderboardResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
@@ -23160,6 +23154,228 @@ export type RaceResultPreviewResponse = {
          * Resolved rows with a row error.
          */
         invalid: number;
+    };
+};
+
+/**
+ * One of a slot's Games.
+ */
+export type SlotTiebreakerGameDto = {
+    /**
+     * The Game: what a root admin chooses.
+     */
+    id: string;
+    /**
+     * The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+     */
+    sportEventRoundMatchId: string;
+    /**
+     * 1 for a single game; a series' games in the order they are played.
+     */
+    gameNumber: number;
+    /**
+     * When the Game starts; null until the schedule gives it a time.
+     */
+    scheduledDate: string | null;
+    /**
+     * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+     */
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    /**
+     * Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen.
+     */
+    moved: boolean;
+    /**
+     * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
+     */
+    choosable: boolean;
+};
+
+/**
+ * One slot's tiebreaker game and the Games it could be.
+ */
+export type SportEventSlotTiebreakerDto = {
+    /**
+     * The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id).
+     */
+    seasonSlotId: string;
+    /**
+     * The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
+     */
+    tiebreakerGameId: string | null;
+    /**
+     * When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.
+     */
+    chosenAt: string | null;
+    /**
+     * The root admin who chose it; null while the rule chose it, or once that account is gone.
+     */
+    chosenByUserId: string | null;
+    /**
+     * Whether it can be changed: no game is chosen yet, or the chosen one has not started.
+     */
+    editable: boolean;
+    /**
+     * Every Game played in the slot, by match and game number.
+     */
+    games: Array<{
+        /**
+         * The Game: what a root admin chooses.
+         */
+        id: string;
+        /**
+         * The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+         */
+        sportEventRoundMatchId: string;
+        /**
+         * 1 for a single game; a series' games in the order they are played.
+         */
+        gameNumber: number;
+        /**
+         * When the Game starts; null until the schedule gives it a time.
+         */
+        scheduledDate: string | null;
+        /**
+         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen.
+         */
+        moved: boolean;
+        /**
+         * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
+         */
+        choosable: boolean;
+    }>;
+};
+
+export type SportEventSlotTiebreakersResponse = {
+    /**
+     * Each slot the event covers; empty for an event with none.
+     */
+    slots: Array<{
+        /**
+         * The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id).
+         */
+        seasonSlotId: string;
+        /**
+         * The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
+         */
+        tiebreakerGameId: string | null;
+        /**
+         * When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.
+         */
+        chosenAt: string | null;
+        /**
+         * The root admin who chose it; null while the rule chose it, or once that account is gone.
+         */
+        chosenByUserId: string | null;
+        /**
+         * Whether it can be changed: no game is chosen yet, or the chosen one has not started.
+         */
+        editable: boolean;
+        /**
+         * Every Game played in the slot, by match and game number.
+         */
+        games: Array<{
+            /**
+             * The Game: what a root admin chooses.
+             */
+            id: string;
+            /**
+             * The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+             */
+            sportEventRoundMatchId: string;
+            /**
+             * 1 for a single game; a series' games in the order they are played.
+             */
+            gameNumber: number;
+            /**
+             * When the Game starts; null until the schedule gives it a time.
+             */
+            scheduledDate: string | null;
+            /**
+             * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen.
+             */
+            moved: boolean;
+            /**
+             * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
+             */
+            choosable: boolean;
+        }>;
+    }>;
+};
+
+export type ChooseSlotTiebreakerGameRequest = {
+    /**
+     * One of the slot's Games (SlotTiebreakerGameDto.id) that is `choosable`.
+     */
+    gameId: string;
+};
+
+export type SportEventSlotTiebreakerResponse = {
+    /**
+     * One slot's tiebreaker game and the Games it could be.
+     */
+    slot: {
+        /**
+         * The Season slot, as the event's slots name it (SportLeagueSeasonSlotDto.id).
+         */
+        seasonSlotId: string;
+        /**
+         * The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
+         */
+        tiebreakerGameId: string | null;
+        /**
+         * When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.
+         */
+        chosenAt: string | null;
+        /**
+         * The root admin who chose it; null while the rule chose it, or once that account is gone.
+         */
+        chosenByUserId: string | null;
+        /**
+         * Whether it can be changed: no game is chosen yet, or the chosen one has not started.
+         */
+        editable: boolean;
+        /**
+         * Every Game played in the slot, by match and game number.
+         */
+        games: Array<{
+            /**
+             * The Game: what a root admin chooses.
+             */
+            id: string;
+            /**
+             * The match the Game is played in, as the event's bracket names it (SportEventRoundMatchDto.id).
+             */
+            sportEventRoundMatchId: string;
+            /**
+             * 1 for a single game; a series' games in the order they are played.
+             */
+            gameNumber: number;
+            /**
+             * When the Game starts; null until the schedule gives it a time.
+             */
+            scheduledDate: string | null;
+            /**
+             * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen.
+             */
+            moved: boolean;
+            /**
+             * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
+             */
+            choosable: boolean;
+        }>;
     };
 };
 
@@ -30343,7 +30559,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
+    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -30472,7 +30688,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -30578,7 +30794,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -30680,7 +30896,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -30833,7 +31049,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -30921,7 +31137,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -37183,6 +37399,89 @@ export type LoadEventBracketResponses = {
 };
 
 export type LoadEventBracketResponse = LoadEventBracketResponses[keyof LoadEventBracketResponses];
+
+export type ListEventSlotTiebreakersData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/tiebreakers';
+};
+
+export type ListEventSlotTiebreakersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListEventSlotTiebreakersError = ListEventSlotTiebreakersErrors[keyof ListEventSlotTiebreakersErrors];
+
+export type ListEventSlotTiebreakersResponses = {
+    /**
+     * Default Response
+     */
+    200: SportEventSlotTiebreakersResponse;
+};
+
+export type ListEventSlotTiebreakersResponse = ListEventSlotTiebreakersResponses[keyof ListEventSlotTiebreakersResponses];
+
+export type ChooseEventSlotTiebreakerGameData = {
+    body: ChooseSlotTiebreakerGameRequest;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/tiebreaker-game';
+};
+
+export type ChooseEventSlotTiebreakerGameErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ChooseEventSlotTiebreakerGameError = ChooseEventSlotTiebreakerGameErrors[keyof ChooseEventSlotTiebreakerGameErrors];
+
+export type ChooseEventSlotTiebreakerGameResponses = {
+    /**
+     * Default Response
+     */
+    200: SportEventSlotTiebreakerResponse;
+};
+
+export type ChooseEventSlotTiebreakerGameResponse = ChooseEventSlotTiebreakerGameResponses[keyof ChooseEventSlotTiebreakerGameResponses];
 
 export type UpdateEventBracketMatchData = {
     body: UpdateSportEventRoundMatchRequest;

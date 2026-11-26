@@ -1,3 +1,5 @@
+import { PrismaSlotTiebreakerRepository } from '../../../packages/core-api/src/adapters/prisma-slot-tiebreaker-repository';
+import { SlotTiebreakerService } from '../../../packages/core-api/src/modules/events/slot-tiebreaker-service';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId, testSlotId } from '../../support/test-slots';
 import { syncSlotsFor } from '../../support/sync-slots';
@@ -118,7 +120,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
-import { ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
 import { insertTestSportLeague } from '../../support/test-sport-league';
 
@@ -198,7 +200,7 @@ class OperationalContractProvider implements SportDataProvider {
           firstName: 'Avery',
           lastName: 'Hart',
           nationality: 'US',
-          active: true,
+          status: SportEventParticipantStatus.ACTIVE,
           metadata: {},
         },
         {
@@ -209,7 +211,7 @@ class OperationalContractProvider implements SportDataProvider {
           firstName: 'Brooke',
           lastName: 'Vale',
           nationality: 'US',
-          active: true,
+          status: SportEventParticipantStatus.ACTIVE,
           metadata: {},
         },
       ],
@@ -223,7 +225,7 @@ class OperationalContractProvider implements SportDataProvider {
         providerId: this.providerId,
         sport: 'GOLF',
         name: 'Avery Hart',
-        active: true,
+        status: SportEventParticipantStatus.ACTIVE,
         metadata: {},
       },
     ];
@@ -377,6 +379,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     domainEvents: testDomainEvents(),
     leaderboards: new RecordingLeaderboardRebuilds(),
     webhookProviderIds: providerRows.webhookProviderIds,
+    slotTiebreakers: new SlotTiebreakerService({ slots: new PrismaSlotTiebreakerRepository(prisma), findings: integrationSyncFindings(prisma), domainEvents: testDomainEvents() }),
   });
   await app.ready();
 
@@ -1430,7 +1433,7 @@ describe('Contract verification (root admin)', () => {
         payload: {
           rows: [
             { participantId: created.participantIds[0], ranking: 3, oddsToWin: 7.5 },
-            { externalId: `z3l-contract-${stamp}-p1`, isActive: false, inactiveReason: 'WITHDRAWN' },
+            { externalId: `z3l-contract-${stamp}-p1`, status: 'WITHDRAWN' },
             { externalId: `z3l-contract-${stamp}-p2`, ranking: 1 },
           ],
         },
@@ -1475,25 +1478,25 @@ describe('Contract verification (root admin)', () => {
       expect(oversizedSaveRes.statusCode).toBe(400);
       expect(ErrorEnvelopeSchema.safeParse(oversizedSaveRes.json()).success).toBe(true);
 
-      // updateEventParticipants (200): a withdrawn golfer reinstated with `inactiveReason: null`
-      // clears the reason, as the contract says null does, rather than being refused with a 400.
+      // updateEventParticipants (200): a withdrawn golfer reinstated with status ACTIVE is back
+      // in the field.
       const withdrawRes = await getApp().inject({
         method: 'PATCH',
         url: `/api/v1/events/${eventId}/participants`,
         headers: rootAdmin.headers,
-        payload: { participants: [{ sportEventParticipantId: fieldRowId, isActive: false, inactiveReason: 'WITHDRAWN' }] },
+        payload: { participants: [{ sportEventParticipantId: fieldRowId, status: 'WITHDRAWN' }] },
       });
       expect(withdrawRes.statusCode).toBe(200);
       const reinstateRes = await getApp().inject({
         method: 'PATCH',
         url: `/api/v1/events/${eventId}/participants`,
         headers: rootAdmin.headers,
-        payload: { participants: [{ sportEventParticipantId: fieldRowId, isActive: true, inactiveReason: null }] },
+        payload: { participants: [{ sportEventParticipantId: fieldRowId, status: 'ACTIVE' }] },
       });
       expect(reinstateRes.statusCode).toBe(200);
       const reinstated = SportEventParticipantListResponseSchema.safeParse(reinstateRes.json());
       expect(reinstated.success).toBe(true);
-      expect(reinstated.data?.participants.find((row) => row.id === fieldRowId)).toMatchObject({ isActive: true, inactiveReason: null });
+      expect(reinstated.data?.participants.find((row) => row.id === fieldRowId)).toMatchObject({ status: 'ACTIVE' });
 
       const uploadApplyRes = await getApp().inject({
         method: 'POST',

@@ -325,7 +325,7 @@ export class PrismaSportEventRoundMatchGameRepository implements SportEventRound
     return rows.map(toProviderMappedGame);
   }
 
-  async applySync({ providerCode, created, mapped, moved, scores }: SportEventRoundMatchGameSync): Promise<void> {
+  async applySync({ providerCode, created, mapped, moved, scores }: SportEventRoundMatchGameSync, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     if (created.length === 0 && mapped.length === 0 && moved.length === 0 && scores.length === 0) return;
     const provider = mapped.length === 0 ? null : await this.prisma.provider.findUniqueOrThrow({ where: { code: providerCode }, select: { id: true } });
     await this.prisma.$transaction(async (tx) => {
@@ -348,6 +348,7 @@ export class PrismaSportEventRoundMatchGameRepository implements SportEventRound
       // poolmaster-allow-query-in-loop: the Games one sync scored (per-row values, one transaction)
       for (const { id, status, completedAt } of scores) await tx.sportEventRoundMatchGame.update({ where: { id }, data: { status, completedAt } });
       await writeSideScores(tx, scores.map(({ id, sportEventRoundMatchId, sides }) => ({ sportEventRoundMatchId, gameId: id, scores: sides })));
+      if (jobs.length > 0) await backgroundJobsInsert(tx, jobs);
     });
   }
 

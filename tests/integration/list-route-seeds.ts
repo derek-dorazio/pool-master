@@ -14,6 +14,7 @@ import { freshEventEdition, fixtureSeasonId } from '../support/event-edition';
 import { sportLeagueRowDefaults } from '../support/league-profiles';
 import { sportRowKeys } from '../support/sport-rows';
 import { sportPlay } from '../support/sport-play';
+import { applySlotTiebreakerRule } from './slot-tiebreakers';
 import { oneEventSlotId } from '../support/test-slots';
 import { createMatchRow } from '../support/match-rows';
 
@@ -90,7 +91,7 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
     const participant = await prisma.participant.create({
       data: { sportLeagueId, name: `Golfer ${suffix} ${index}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
-    field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
+    field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } }));
   }
   return { event, field };
 }
@@ -110,7 +111,7 @@ export async function seedTiers(sportEventId: string, field: readonly { id: stri
 /**
  * An NFL week of `games` games an hour apart from `startDate`, each between two teams of its own,
  * so no two weeks share a team, each match holding its Game 1 mapped to a provider game id as
- * the sync leaves it (#2007). With `played`, the first that many games are final, the home team
+ * the sync leaves it (#2007), and its last kickoff the slot's tiebreaker game (#2048). With `played`, the first that many games are final, the home team
  * winning 20-17.
  */
 export async function seedFootballWeek({ games, startDate, status, played = 0 }: { games: number; startDate: Date; status: SportEventStatus; played?: number }) {
@@ -143,7 +144,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   for (let matchNumber = 1; matchNumber <= games; matchNumber += 1) {
     const team = async (side: string) => {
       const participant = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${side} ${suffix} ${matchNumber}`, participantType: 'TEAM' } });
-      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
     };
     const [home, away] = await Promise.all([team('Home'), team('Away')]);
     const final = matchNumber <= played;
@@ -161,5 +162,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
     });
     matches.push(match);
   }
+  // The week's last kickoff is its tiebreaker game, as the rule the sync's bracket load queues names it (#2048).
+  await applySlotTiebreakerRule(event.id);
   return { event, games: matches };
 }

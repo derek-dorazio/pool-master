@@ -1,22 +1,34 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { SportEventDto } from '@/lib/api';
+import { bindApiMocks } from '@/test/msw-api';
 import type { EventPageContext } from './event-page-context';
 import { EventSlotsTab } from './event-slots-tab';
 import { seasonSlotFixture, sportEventFixture } from './sport-test-fixtures';
 
+// The slot dialog reads the event's tiebreaker games beside its bracket and field; none here.
+bindApiMocks({
+  listEventSlotTiebreakers: vi.fn(() => ({ data: { slots: [] } })),
+  getEventBracket: vi.fn(() => ({ data: { matches: [] } })),
+  listEventParticipants: vi.fn(() => ({ data: { participants: [] } })),
+});
+
 function renderTab(event: SportEventDto) {
   const context = { event, overview: undefined, sportLeague: undefined, isSynced: false, activity: {} } as unknown as EventPageContext;
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
+    <QueryClientProvider client={queryClient}>
     <MemoryRouter initialEntries={['/slots']}>
       <Routes>
         <Route element={<Outlet context={context} />}>
           <Route element={<EventSlotsTab />} path="/slots" />
         </Route>
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -44,7 +56,7 @@ describe('EventSlotsTab', () => {
     expect(screen.getByText('This event covers no Season slot yet.')).toBeInTheDocument();
   });
 
-  it('opens a slot to read in a dialog with no Edit, its unknown end said as such', async () => {
+  it('opens a slot to read in a dialog, its unknown end said as such and no Edit while no game of it is scheduled', async () => {
     renderTab(sportEventFixture({ slots: [seasonSlotFixture({ id: 'open', name: 'The Open', endsAt: null, seriesFormat: 'BEST_OF', seriesGames: 7, pairing: 'RESEEDED' })] }));
 
     await userEvent.click(within(screen.getByTestId('root-admin-event-slot-open')).getByRole('button', { name: /open/i }));

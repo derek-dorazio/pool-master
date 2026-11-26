@@ -1,4 +1,4 @@
-import { HomeAway, MatchResultSource, MatchSide, MatchStatus, PeriodKind, ProviderCode, ProviderGameState, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { BackgroundJobType, HomeAway, MatchResultSource, MatchSide, MatchStatus, PeriodKind, ProviderCode, ProviderGameState, type BackgroundJobRequest, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { MatchStatusWrite, ProviderMappedGame, SportEventRoundMatchGameScoreWrite, SportEventRoundMatchGameSync } from '@poolmaster/shared/db';
 import { writeGameScores, type GameScoreWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-score-writer';
@@ -7,6 +7,7 @@ import { bracketMatches } from '../../support/bracket-fixtures';
 import { bracketRoundSlots } from '../../support/round-slots';
 import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
+import { testDomainEvents } from '../../support/domain-events';
 import { homeAwayResult, withHomeAway, type HomeAwayFields } from '../../support/match-sides';
 
 // A provider's final for a match's Game is written through the admin's result path (#1496); a
@@ -46,7 +47,7 @@ function withWrittenGame(match: SportEventRoundMatch, write: SportEventRoundMatc
 }
 
 /** Each Game score the syncs wrote, as `[Game id, status, [side 1's score and where it played, side 2's]]`. */
-function scoresOf(applySync: jest.Mock<Promise<void>, [SportEventRoundMatchGameSync]>) {
+function scoresOf(applySync: jest.Mock<Promise<void>, [SportEventRoundMatchGameSync, (readonly BackgroundJobRequest[])?]>) {
   return applySync.mock.calls.flatMap(([sync]) => sync.scores.map((each) => [each.id, each.status, each.sides.map((side) => [side.score, side.homeAway])]));
 }
 
@@ -69,7 +70,7 @@ function nth(gameNumber: number, each: GameScoreUpdate): GameScoreUpdate {
 }
 
 /** The provider ids one sync mapped, as `[Game id, provider id]`. */
-function mappedOf(applySync: jest.Mock<Promise<void>, [SportEventRoundMatchGameSync]>): [string, string][] {
+function mappedOf(applySync: jest.Mock<Promise<void>, [SportEventRoundMatchGameSync, (readonly BackgroundJobRequest[])?]>): [string, string][] {
   return applySync.mock.calls.flatMap(([sync]) => sync.mapped.map((each): [string, string] => [each.sportEventRoundMatchGameId, each.externalId]));
 }
 
@@ -81,7 +82,7 @@ function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[
     .filter((id) => !unmappedTeams.includes(id))
     .map((externalId) => ({ id: `map-${externalId}`, providerId, externalId, participantId: externalId.replace('bdl-', 'p-') })));
   const logger = fakeLogger();
-  const applySync = jest.fn<Promise<void>, [SportEventRoundMatchGameSync]>().mockResolvedValue();
+  const applySync = jest.fn<Promise<void>, [SportEventRoundMatchGameSync, (readonly BackgroundJobRequest[])?]>().mockResolvedValue();
   const applyStatuses = jest.fn<Promise<void>, [readonly MatchStatusWrite[]]>().mockResolvedValue();
   const games = {
     findBySportEvent: jest.fn(async (): Promise<ProviderMappedGame[]> => matches.flatMap((match) => match.games.map((each) => ({ game: each, externalId: each.gameNumber === 1 ? LINKS.get(match.id) ?? null : null })))),
@@ -95,6 +96,7 @@ function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[
     eventParticipants: { findByIds },
     mappings: { findByProviderExternalIds },
     results: { recordResult },
+    domainEvents: testDomainEvents(),
     now: () => NOW,
     logger,
   } as unknown as GameScoreWriterDeps;
@@ -299,6 +301,19 @@ describe('writeGameScores', () => {
     expect(result.gameFindings).toEqual([{ kind: 'GAME_MOVED', providerValue: 'p-1' }]);
   });
 
+  it('writes the job running the tiebreaker rule of the event a game moved out of, with the move, and none for a sync that moves nothing', async () => {
+    const matches = bracket().map((match) => linked(match, null));
+    const oldGame = { ...expectDefined(matches[0]?.games[0], 'Game 1'), id: 'week-11-g1', sportEventId: 'week-11' };
+    const moving = writer(matches, [], [{ game: oldGame, externalId: 'p-1' }]);
+    const still = writer(bracket());
+
+    await writeGameScores(moving.deps, EVENT, [game('p-1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED)]);
+    await writeGameScores(still.deps, EVENT, [game('g1', 'KC', 'BUF', 7, 3, ProviderGameState.IN_PROGRESS)]);
+
+    expect(moving.applySync.mock.calls[0]?.[1]?.map((job) => [job.type, job.payload])).toEqual([[BackgroundJobType.REFRESH_SLOT_TIEBREAKERS, { sportEventId: 'week-11' }]]);
+    expect(still.applySync.mock.calls.flatMap(([, jobs]) => jobs ?? [])).toEqual([]);
+  });
+
   it('maps nothing, and logs it, when a game\'s place is a Game whose own id is still in the batch: two provider games for one Game', async () => {
     const { deps, applySync, logger } = writer(bracket());
 
@@ -498,7 +513,7 @@ describe('writeGameScores', () => {
       ], (roundNumber) => expectDefined(slots[roundNumber - 1], `round ${roundNumber}'s slot`)).map((match) => linked(match, null));
     }
 
-    it('holds each game of a series at its own Game, counts each final game as a win from the match\'s sides, and records the series 4-1 once a side has four', async () => {
+    it('holds each game of a series at its own Game, written with the job running the tiebreaker rule again, counts each final game as a win from the match\'s sides, and records the series 4-1 once a side has four', async () => {
       const { deps, recordResult, applySync, applyStatuses } = writer(series());
 
       const result = await writeGameScores(deps, SEVENS, [
@@ -509,8 +524,10 @@ describe('writeGameScores', () => {
         nth(5, game('s5', 'KC', 'BUF', 110, 102)),
       ]);
 
-      const [[sync]] = applySync.mock.calls;
+      const [[sync, jobs]] = applySync.mock.calls;
       expect(sync.created.map((each) => [each.sportEventRoundMatchId, each.gameNumber, each.sportEventSlotId])).toEqual([2, 3, 4, 5].map((number) => ['m1', number, 'event-slot-1']));
+      // The new Games join the slot's, so the event's slots choose their tiebreaker games again, with the write.
+      expect(jobs?.map((job) => [job.type, job.payload])).toEqual([[BackgroundJobType.REFRESH_SLOT_TIEBREAKERS, { sportEventId: EVENT_ID }]]);
       expect(mappedOf(applySync)).toEqual([['m1-g1', 's1'], ...sync.created.map((each, index) => [each.id, `s${index + 2}`])]);
       // Buffalo is side 1 and Kansas City side 2 throughout; home court moves with the games the provider lists Buffalo at home.
       expect(scoresOf(applySync).map(([, status, sides]) => [status, sides])).toEqual([

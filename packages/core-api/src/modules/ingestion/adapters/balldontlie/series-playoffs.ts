@@ -12,7 +12,7 @@
  * league and kind of participant.
  */
 
-import { seriesWinsNeeded, type Sport } from '@poolmaster/shared/domain';
+import { seriesWinsNeeded, type Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, isDone, PROGRESS_BY_STATE } from './competition-status';
@@ -219,7 +219,7 @@ export function toPlayoffsTeamParticipant(league: PlayoffsLeague, team: PlayoffT
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: league.sport,
     name: team.name,
-    active: true,
+    status: SportEventParticipantStatus.ACTIVE,
     metadata: team.metadata,
   };
 }

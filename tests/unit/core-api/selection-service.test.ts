@@ -1,4 +1,4 @@
-import { ContestEntryStatus, ContestFormat, ContestStatus, CupWeight, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, CupWeight, SelectionType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -139,7 +139,7 @@ function fieldRow(id: string, participantId: string, isActive = true): SportEven
     id,
     sportEventId: EVENT_ID,
     participantId,
-    isActive,
+    status: isActive ? SportEventParticipantStatus.ACTIVE : SportEventParticipantStatus.WITHDRAWN,
     metadata: {},
     ...TIMESTAMPS,
   } as SportEventParticipant;
@@ -185,8 +185,7 @@ function pick(
     participant: {
       participantId,
       participantName: `Golfer ${participantId}`,
-      isActive: true,
-      inactiveReason: null,
+      status: SportEventParticipantStatus.ACTIVE,
       role: 'GOLFER',
       teamAffiliation: null,
     },
@@ -602,7 +601,7 @@ describe('#324 SelectionService.selectPick and unselectPick — the guards, in o
     await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'PARTICIPANT_UNAVAILABLE',
       statusCode: 400,
-      message: 'SportEventParticipant sep-a is unavailable with status INACTIVE',
+      message: 'SportEventParticipant sep-a is unavailable with status WITHDRAWN',
     });
     expect(addPick).not.toHaveBeenCalled();
   });

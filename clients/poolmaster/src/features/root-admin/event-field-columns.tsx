@@ -1,13 +1,13 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { StatusBadge, Text } from '@/features/shared/ui';
-import { FieldValueSetByOrder, type FieldValueSetBy } from '@poolmaster/shared/domain';
+import { FieldValueSetByOrder, type FieldValueSetBy, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { EventFieldColumnsShown, EventFieldRow } from './event-field-rows';
 
 const columnHelper = createColumnHelper<EventFieldRow>();
 
 export function fieldOutLabel(entry: EventFieldRow['entry']): string {
-  return entry.inactiveReason === null ? 'Out' : enumLabel('ParticipantInactiveReason', entry.inactiveReason);
+  return enumLabel('SportEventParticipantStatus', entry.status);
 }
 
 /**
@@ -24,7 +24,7 @@ export function eventFieldColumns(shown: EventFieldColumnsShown) {
         <span className="flex flex-wrap items-center gap-2">
           <Text variant="strong">{row.original.name}</Text>
           {row.original.entry.affiliatedWithSportLeague ? null : <StatusBadge tone="warning">Guest</StatusBadge>}
-          {row.original.entry.isActive ? null : <StatusBadge tone="neutral">{fieldOutLabel(row.original.entry)}</StatusBadge>}
+          {(row.original.entry.status === SportEventParticipantStatus.ACTIVE) ? null : <StatusBadge tone="neutral">{fieldOutLabel(row.original.entry)}</StatusBadge>}
         </span>
       ),
     }),

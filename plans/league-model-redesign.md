@@ -699,7 +699,11 @@ Contest:
   championship; a regular week's last kickoff). A root admin can change it in the event's
   slot dialog until that Game starts (audited). If it is cancelled or moved out of the slot,
   the rule picks again and raises a finding; guesses carry over. Replaces
-  `weekTiebreakerGame` and `rounds.at(-1)`.
+  `weekTiebreakerGame` and `rounds.at(-1)`. Built in 10g: until 17 opens pick windows, the
+  window opens when the slot's first Game is scheduled; the rule runs as a job on a new
+  `SPORT_EVENT_GAMES_CHANGED` event (bracket loads, match edits, round matchups, games moved
+  out) and on `GAME_DECIDED`, not on every score write; until 14 rolls schedule and status up
+  from Games, Game 1 takes its match's kickoff and a cancelled match cancels its Games.
 - Contest model audit (2026-11-23), consequences of the slot model:
   - `ContestSeasonSlot` is unique on (contest, Season slot) with no sequence column; every
     row's Season is the contest's `sportLeagueSeasonId` (`Contest.seasonYear` and

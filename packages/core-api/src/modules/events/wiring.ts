@@ -174,6 +174,7 @@ export function createGameScoreWriterDeps(
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     results: createMatchResultService(prisma, domainEvents, contestActivation, logger),
     playIns: createSportEventBracketService(prisma, domainEvents, logger),
+    domainEvents,
     logger,
   };
 }

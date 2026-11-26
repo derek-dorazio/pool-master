@@ -6,8 +6,7 @@ import {
   formatDollars,
   priceOnBudgetCurve,
   type BudgetPricingProfile,
-  type EventPricingConfig,
-} from '@poolmaster/shared/domain';
+  type EventPricingConfig, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { autoAssignEventPrices, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
@@ -89,7 +88,7 @@ export function PriceAssignAction({
   /** The event's sport league, whose pricing profile the dialog starts on when the event was never priced. */
   sportLeagueId: string;
 }) {
-  const activeParticipantCount = field.filter((entry) => entry.isActive).length;
+  const activeParticipantCount = field.filter((entry) => (entry.status === SportEventParticipantStatus.ACTIVE)).length;
   const logger = getLogger().child({ feature: 'root-admin-event-field' });
   const pricingQuery = usePlatformPricingProfilesQuery();
   const profiles = pricingQuery.data ?? [];

@@ -2,7 +2,7 @@ import { legacyMatch, homeAwayOf, withHomeAway } from '../../support/match-sides
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { isAtPlace, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -11,6 +11,7 @@ import {
 import { expectDefined } from '../../support/expect-defined';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { slotTiebreakersRefreshJob } from '../../support/slot-tiebreaker-jobs';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 
 // A bracket's rules against an in-memory store: what loading refuses, what a match edit may
@@ -376,7 +377,7 @@ describe('SportEventBracketService.releaseBlockers', () => {
   it('counts a withdrawn team still in the bracket, and does not ask for a withdrawn team left out of it', async () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
-    expectDefined(context.store.field.find((entry) => entry.id === context.texas.id)).isActive = false;
+    expectDefined(context.store.field.find((entry) => entry.id === context.texas.id)).status = SportEventParticipantStatus.WITHDRAWN;
 
     await expect(context.service.releaseBlockers(context.event)).resolves.toEqual(['1 withdrawn teams are still in the bracket']);
   });
@@ -646,15 +647,17 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
   }
   const mark = (context: ReturnType<typeof setup>) => ({ jobs: context.store.backgroundJobs.length, woken: context.domainEvents.changedSportEventIds.length });
   const once = (sportEventId: string) => ({ jobs: [eventRebuildJob(sportEventId)], woken: [sportEventId] });
+  /** A write of the event's games also runs its slots' tiebreaker rule again (#2048). */
+  const gamesWritten = (sportEventId: string) => ({ jobs: [eventRebuildJob(sportEventId), slotTiebreakersRefreshJob(sportEventId)], woken: [sportEventId] });
 
-  it('writes the event\'s rebuild job with a loaded bracket and with a match edit, waking the runner after each', async () => {
+  it('writes the event\'s rebuild and tiebreaker jobs with a loaded bracket and with a match edit, waking the runner after each', async () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
-    expect(since(context, { jobs: 0, woken: 0 })).toEqual(once(context.event.id));
+    expect(since(context, { jobs: 0, woken: 0 })).toEqual(gamesWritten(context.event.id));
 
     const before = mark(context);
     await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { isNeutralSite: false });
-    expect(since(context, before)).toEqual(once(context.event.id));
+    expect(since(context, before)).toEqual(gamesWritten(context.event.id));
   });
 
   it('writes the rebuild job with a filled play-in place', async () => {
@@ -665,7 +668,7 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
     expect(since(context, { jobs: 0, woken: 0 })).toEqual(once(context.event.id));
   });
 
-  it('writes the rebuild job with a reseeded round\'s matchups', async () => {
+  it('writes the rebuild and tiebreaker jobs with a reseeded round\'s matchups', async () => {
     const context = setup({ pairing: SlotPairing.RESEEDED });
     await context.service.loadBracket(context.event.id, bracketOf(context).map((match) => ({ ...match, advancesTo: null })));
     context.event.status = SportEventStatus.SCHEDULED;
@@ -677,7 +680,7 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
 
     await context.service.setRoundMatchups(context.event.id, 2, proposal);
 
-    expect(since(context, before)).toEqual(once(context.event.id));
+    expect(since(context, before)).toEqual(gamesWritten(context.event.id));
   });
 
   it('hands out no rebuild for a bracket refused before anything is written', async () => {

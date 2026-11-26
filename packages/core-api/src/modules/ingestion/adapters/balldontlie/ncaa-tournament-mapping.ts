@@ -21,7 +21,7 @@
  * teams, which share a name, each map to their own league's participant.
  */
 
-import { MatchSide, Sport } from '@poolmaster/shared/domain';
+import { MatchSide, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderBracketMatch, ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -138,7 +138,7 @@ export function toNcaaTeamParticipant(league: NcaaTournamentLeague, team: NcaaTe
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.BASKETBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
-    active: true,
+    status: SportEventParticipantStatus.ACTIVE,
     metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }
@@ -171,7 +171,7 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
         providerId: BALLDONTLIE_PROVIDER_ID,
         sport: Sport.BASKETBALL,
         name: team.full_name ?? required(team.name, bracketPathOf(league), `a team of ${gameName(game)}`, 'name'),
-        active: true,
+        status: SportEventParticipantStatus.ACTIVE,
         metadata: Number.isInteger(seed) ? { seed } : {},
       });
     }
@@ -256,7 +256,7 @@ export function toNcaaPlayInPlaces(scope: NcaaTournamentScope, games: readonly N
       providerId: BALLDONTLIE_PROVIDER_ID,
       sport: Sport.BASKETBALL,
       name: `${name(home)} / ${name(away)}`,
-      active: true,
+      status: SportEventParticipantStatus.ACTIVE,
       metadata: { seed, playInPlace: true },
     }];
   });

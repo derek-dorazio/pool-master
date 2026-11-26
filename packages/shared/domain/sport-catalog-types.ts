@@ -110,6 +110,11 @@ export interface SportEventRoundSlot {
   canEndTied: boolean;
   /** What a game of the slot is played in (#2047), from its definition; null for a game kept by no period. */
   periods: SlotPeriods | null;
+  /**
+   * The match whose Game is the slot's tiebreaker game (#2048): the one Game whose combined score
+   * every contest covering the slot guesses. Null until the slot has a scheduled Game.
+   */
+  tiebreakerMatchId: string | null;
 }
 
 /** What a match reads of its round's slot (#2006): its label's facts and its kind. */

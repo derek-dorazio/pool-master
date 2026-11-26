@@ -1,5 +1,5 @@
 {
-  "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md §5 Shared-Component and Helper Adoption Gate.",
+  "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md \u00a75 Shared-Component and Helper Adoption Gate.",
   "raises": [
     {
       "file": "scripts/retired-names.json",
@@ -236,6 +236,12 @@
       "reason": "retired by #2007"
     },
     {
+      "file": "scripts/dead-exports.json",
+      "key": "own:packages/shared/dto/slot-tiebreaker.dto.ts",
+      "now": 2,
+      "reason": "#2048: the two slot tiebreaker response schemas are exported for their functional and query-scaling tests, as other DTO files' response schemas are"
+    },
+    {
       "file": "scripts/retired-names.json",
       "key": "startsAtRound",
       "now": 0,
@@ -306,6 +312,78 @@
       "key": "PrismaMatchSide",
       "now": 0,
       "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "inactiveReason",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ParticipantInactiveReason",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "deriveLegacyParticipantStatus",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "LegacyParticipantStatus",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "useEventRoundLabels",
+      "now": 0,
+      "reason": "retired by #2200"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "matchPeriodLayout",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "MatchPeriodLayout",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "MATCH_PERIOD_LAYOUTS",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "matchPeriodsOf",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "loadedParticipantCount",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "GOLF_HOLES_PER_ROUND",
+      "now": 0,
+      "reason": "retired by #2047"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "HOLES_IN_ROUND",
+      "now": 0,
+      "reason": "retired by #2047"
     }
   ]
 }

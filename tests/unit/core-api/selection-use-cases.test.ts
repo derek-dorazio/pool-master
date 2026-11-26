@@ -1,4 +1,4 @@
-import { ContestEntryStatus, ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, SelectionType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -147,8 +147,7 @@ function buildWorld(options: WorldOptions = {}) {
     id: `sep-${golfer}`,
     sportEventId: EVENT_ID,
     participantId: `p-${golfer}`,
-    isActive: !withdrawn.has(golfer),
-    ...(withdrawn.has(golfer) ? { inactiveReason: 'WITHDRAWN' } : {}),
+    status: withdrawn.has(golfer) ? SportEventParticipantStatus.WITHDRAWN : SportEventParticipantStatus.ACTIVE,
     metadata: {},
     ...TIMESTAMPS,
   }) as SportEventParticipant);
@@ -272,8 +271,7 @@ function buildWorld(options: WorldOptions = {}) {
             participant: {
               participantId: participant.id,
               participantName: participant.name,
-              isActive: row.isActive,
-              inactiveReason: row.inactiveReason ?? null,
+              status: row.status,
               role: 'GOLFER',
               teamAffiliation: null,
             },

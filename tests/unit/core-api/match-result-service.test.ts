@@ -8,6 +8,7 @@ import { homeAwayOf, homeAwayPeriod, homeAwayResult, legacyMatch, placeTeam, typ
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { slotTiebreakersRefreshJob } from '../../support/slot-tiebreaker-jobs';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { DomainEventType } from '../../../packages/core-api/src/modules/domain-events';
@@ -266,7 +267,7 @@ describe('MatchResultService.recordResult', () => {
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
 
     expect(settlement.decided(event.id, 'match-1')).toHaveLength(1);
-    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ jobs: [settleGameJob(event.id, 'match-1'), eventRebuildJob(event.id)] }));
+    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ jobs: [settleGameJob(event.id, 'match-1'), eventRebuildJob(event.id), slotTiebreakersRefreshJob(event.id)] }));
     expect(settlement.queued).toHaveBeenCalledTimes(1);
     expect(applyResult.mock.invocationCallOrder[0]).toBeLessThan(expectDefined(settlement.queued.mock.invocationCallOrder[0]));
   });
@@ -637,7 +638,7 @@ describe('MatchResultService.cancelMatch', () => {
     await service.cancelMatch(event.id, { roundNumber: 1, matchNumber: 1 });
 
     expect(settlement.decided(event.id, 'game-1')).toHaveLength(1);
-    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ result: expect.objectContaining({ status: MatchStatus.CANCELLED }), jobs: [settleGameJob(event.id, 'game-1'), eventRebuildJob(event.id)] }));
+    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ result: expect.objectContaining({ status: MatchStatus.CANCELLED }), jobs: [settleGameJob(event.id, 'game-1'), eventRebuildJob(event.id), slotTiebreakersRefreshJob(event.id)] }));
     expect(settlement.queued).toHaveBeenCalledTimes(1);
   });
 
@@ -721,7 +722,7 @@ describe('MatchResultService period scores', () => {
     // Decided twice: by its result, then by the quarter entered after it.
     expect(settlement.decided(event.id, 'game-1')).toHaveLength(2);
     // Each side's own points per quarter: the third's are its running score less the first's.
-    expect(saveGamePeriodScores).toHaveBeenLastCalledWith(gamePeriods([[1, 7, 0], [3, 10, 3]]), [settleGameJob(event.id, 'game-1'), eventRebuildJob(event.id)]);
+    expect(saveGamePeriodScores).toHaveBeenLastCalledWith(gamePeriods([[1, 7, 0], [3, 10, 3]]), [settleGameJob(event.id, 'game-1'), eventRebuildJob(event.id), slotTiebreakersRefreshJob(event.id)]);
     expect(settlement.queued).toHaveBeenCalledTimes(1);
   });
 
@@ -1014,7 +1015,7 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
 
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
 
-    expect(store.backgroundJobs).toEqual([settleGameJob(event.id, 'match-1'), eventRebuildJob(event.id)]);
+    expect(store.backgroundJobs).toEqual([settleGameJob(event.id, 'match-1'), eventRebuildJob(event.id), slotTiebreakersRefreshJob(event.id)]);
     expect(domainEvents.changedSportEventIds).toEqual([event.id]);
   });
 
@@ -1027,9 +1028,9 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
     await weekly.service.cancelMatch(games.event.id, { roundNumber: 1, matchNumber: 1 });
 
     // The result and the cancellation decide their games, so each also settles the game's squares contests.
-    expect(context.store.backgroundJobs).toEqual([settleGameJob(context.event.id, 'match-1'), eventRebuildJob(context.event.id)]);
+    expect(context.store.backgroundJobs).toEqual([settleGameJob(context.event.id, 'match-1'), eventRebuildJob(context.event.id), slotTiebreakersRefreshJob(context.event.id)]);
     expect(domainEvents.changedSportEventIds).toEqual([context.event.id]);
-    expect(games.store.backgroundJobs).toEqual([settleGameJob(games.event.id, 'game-1'), eventRebuildJob(games.event.id)]);
+    expect(games.store.backgroundJobs).toEqual([settleGameJob(games.event.id, 'game-1'), eventRebuildJob(games.event.id), slotTiebreakersRefreshJob(games.event.id)]);
     expect(weekly.domainEvents.changedSportEventIds).toEqual([games.event.id]);
   });
 

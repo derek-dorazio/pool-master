@@ -28,6 +28,7 @@ import {
 import { activateEventContestsHandler, followPostponedEventContestsHandler } from '../events/event-contests-job-requests';
 import { syncGamesThenTierFieldHandler } from '../events/synced-field-follow-up-job';
 import { resolveMappedParticipantFindingsHandler } from '../ingestion/findings/mapped-participant-findings-job';
+import { refreshDecidedGameSlotTiebreakersHandler, refreshSlotTiebreakersHandler } from '../events/slot-tiebreaker-job';
 import { DomainEventType } from './domain-event';
 import type { DomainEventHandlerMap } from './domain-event-handler';
 
@@ -42,7 +43,8 @@ export const DOMAIN_EVENT_HANDLERS = {
   ],
   [DomainEventType.SPORT_EVENT_RESCHEDULED]: [tellLeaguesEventRescheduledHandler],
   [DomainEventType.SPORT_EVENT_RESULTS_CHANGED]: [rebuildChangedResultsLeaderboardsHandler],
-  [DomainEventType.GAME_DECIDED]: [settleDecidedGameContestsHandler, rebuildDecidedGameLeaderboardsHandler],
+  [DomainEventType.SPORT_EVENT_GAMES_CHANGED]: [refreshSlotTiebreakersHandler],
+  [DomainEventType.GAME_DECIDED]: [settleDecidedGameContestsHandler, rebuildDecidedGameLeaderboardsHandler, refreshDecidedGameSlotTiebreakersHandler],
   [DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED]: [rebuildContestLeaderboardsHandler],
   // A contest opened by its commissioner (DRAFT to OPEN) has no email handler: its entry reminders
   // start from the `nextReminderAt` the move sets, and its "New contest open" email is told by

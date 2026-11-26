@@ -12,7 +12,7 @@
  * - Anything else is unscored: no result yet, or a result not yet official. The family never
  *   invents a place for a runner the admin did not enter.
  */
-import { RaceResultStatus, assertNever, type FinishPositionPointsSettings } from '@poolmaster/shared/domain';
+import { RaceResultStatus, SportEventParticipantStatus, assertNever, type FinishPositionPointsSettings } from '@poolmaster/shared/domain';
 import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
 
 /** Whether an admin has made the race's result official: any official result in the field. */
@@ -46,7 +46,7 @@ export function scoreRunner(
         return assertNever(result.resultStatus);
     }
   }
-  if (!result && !row.entry.isActive && raceOfficial) {
+  if (!result && row.entry.status !== SportEventParticipantStatus.ACTIVE && raceOfficial) {
     return settings.didNotFinishPoints;
   }
   return null;
