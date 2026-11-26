@@ -39,8 +39,9 @@ import { isTestSlate, parseSportDataFile } from '../../../packages/core-api/scri
 
 // Only a sport with a scoring definition can host a contest, so only it is owed presets.
 /**
- * The tiered templates with no budget twin yet (#2160), by league URL segment and key. Shrink-only: the data change that
- * adds a league's budget twins removes its keys here, and nothing is ever added.
+ * The tiered templates with no budget twin yet (#2160), by league URL segment and key. #2164, the
+ * contest template data pass, twins them. Shrink-only: the data change that adds a league's budget
+ * twins removes its keys here, and nothing is ever added.
  */
 const TIERED_TEMPLATES_WITHOUT_BUDGET_TWIN: string[] = [
   'atp/atp-tiered-best-four-doubling',
