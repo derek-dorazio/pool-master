@@ -1356,6 +1356,8 @@ export const enUS = {
     week: 'Week',
     weekNumber: 'Week {{n}}',
     weekRange: 'Weeks {{first}}–{{last}}',
+    // A tier of an event's field, by its number (1 is the top tier).
+    tierNumber: 'Tier {{n}}',
     earlierRounds: 'Earlier rounds',
     // The data grid's date filter.
     today: 'Today',
