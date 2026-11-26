@@ -69,6 +69,7 @@ function game(options: {
         confidence: options.confidence ?? null,
       } as ContestEntryMatchPrediction,
     pickScore: null,
+    survivorOutcome: null,
   };
 }
 

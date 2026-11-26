@@ -44,6 +44,7 @@ function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
         pickedAt: pick.pickedAt.toISOString(),
         outcome: pickScore?.outcome ?? null,
         points: pickScore?.points ?? null,
+        survivorOutcome: game.survivorOutcome,
       },
   };
 }

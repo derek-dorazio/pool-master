@@ -1,6 +1,6 @@
 import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import { Lock } from 'lucide-react';
-import { PickEmMode, PickOutcome, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
+import { PickEmMode } from '@poolmaster/shared/domain';
 import {
   Chip,
   cn,
@@ -18,26 +18,13 @@ import { PickedLine, PickOption } from './pick-option';
 import { confidenceOptions, gameTeams, isSurvivorWeek, isTiePicked, teamUsedInWeek, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
 
 /**
- * A survivor pick's mark (#719): its team won, or the entry is out, in the survivor week's words.
- * A survivor pick is never scored against the spread, so a push and a pending pick keep the pick's own.
+ * How a pick stands against its game. A survivor pick reads its week as the API decides it
+ * (#1992): Survived, Life lost, Out (the short form of Eliminated) or Pending.
  */
-function survivorOutcomeLabel(outcome: PickOutcome): string {
-  switch (outcome) {
-    case PickOutcome.CORRECT:
-      return enumLabel('SurvivorWeekOutcome', SurvivorWeekOutcome.SURVIVED);
-    case PickOutcome.BUSTED:
-      return enumLabel('SurvivorWeekOutcome', SurvivorWeekOutcome.ELIMINATED, { form: 'short' });
-    case PickOutcome.PUSH:
-    case PickOutcome.PENDING:
-      return enumLabel('PickOutcome', outcome);
-  }
-}
-
-/** How a pick stands against its game: a survivor pick reads as surviving or going out. */
 function pickOutcome(gamePicks: PickEmWeek, pick: NonNullable<PickEmGame['pick']>) {
   const outcome = describePickOutcome(pick);
-  return outcome && isSurvivorWeek(gamePicks) && pick.outcome !== null
-    ? { ...outcome, label: survivorOutcomeLabel(pick.outcome) }
+  return outcome && isSurvivorWeek(gamePicks) && pick.survivorOutcome !== null
+    ? { ...outcome, label: enumLabel('SurvivorWeekOutcome', pick.survivorOutcome, { form: 'short' }) }
     : outcome;
 }
 

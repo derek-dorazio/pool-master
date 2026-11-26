@@ -69,6 +69,7 @@ export function gamePick(picked: Team, overrides: Partial<NonNullable<Game['pick
     pickedAt: '2099-03-01T12:00:00.000Z',
     outcome: 'PENDING',
     points: null,
+    survivorOutcome: null,
     ...overrides,
   };
 }

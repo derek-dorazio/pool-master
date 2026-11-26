@@ -65,6 +65,7 @@ export function weekPick(picked: Team, overrides: Partial<NonNullable<Game['pick
     pickedAt: '2099-09-01T12:00:00.000Z',
     outcome: 'PENDING',
     points: null,
+    survivorOutcome: null,
     ...overrides,
   };
 }
@@ -78,6 +79,7 @@ export function weekTiePick(overrides: Partial<NonNullable<Game['pick']>> = {}):
     pickedAt: '2099-09-01T12:00:00.000Z',
     outcome: 'PENDING',
     points: null,
+    survivorOutcome: null,
     ...overrides,
   };
 }

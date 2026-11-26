@@ -509,6 +509,19 @@ describe('Survivor contest entry page', () => {
     expect(screen.queryByTestId('pick-em-submit')).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['SURVIVED', 'Survived', 'CORRECT'],
+    ['LIFE_LOST', 'Life lost', 'BUSTED'],
+    ['ELIMINATED', 'Out', 'BUSTED'],
+    ['PENDING', 'Pending', 'PENDING'],
+  ] as const)('marks a locked survivor pick by its week outcome from the API: a %s week reads "%s"', async (survivorOutcome, mark, outcome) => {
+    const pick = weekPick(NFL_TEAMS.eagles, { outcome, survivorOutcome });
+    primeSurvivor(survivorWeekFixture({ games: week1Games({ 3: { pick, locked: true } }), canSubmit: false }));
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('pick-em-game-3-outcome')).toHaveTextContent(new RegExp(`^${mark}$`));
+  });
+
   it('shows a refused pick of a used team in product copy', async () => {
     primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: null, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }] } }));
     saveGamePicksMock.mockResolvedValue({ error: { error: { code: 'PREDICTION_TEAM_ALREADY_USED', message: 'Team already used.' } } });

@@ -13,6 +13,7 @@ import {
   PredictedResult,
   ProviderCode,
   Sport,
+  SurvivorWeekOutcome,
   getSportDefinition,
   type EmailMessage,
   type SportConfig,
@@ -408,6 +409,7 @@ describe('toGamePicksResponse', () => {
     revealed: false,
     pick: null,
     pickScore: null,
+    survivorOutcome: null,
     ...overrides,
   });
   const view = (games: GamePickGame[], submittedAt: Date | null): GamePicksView => ({
@@ -448,8 +450,14 @@ describe('toGamePicksResponse', () => {
 
     expect(dto.submittedAt).toBe(ISO);
     expect(dto.games[0].pick).toEqual({
-      predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', confidence: 2, pickedAt: ISO, outcome: null, points: null,
+      predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', confidence: 2, pickedAt: ISO, outcome: null, points: null, survivorOutcome: null,
     });
+  });
+
+  it('sends a survivor pick\'s week outcome as the season decided it', () => {
+    const dto = toGamePicksResponse(view([game({ pick, survivorOutcome: SurvivorWeekOutcome.LIFE_LOST })], AT));
+
+    expect(dto.games[0].pick?.survivorOutcome).toBe(SurvivorWeekOutcome.LIFE_LOST);
   });
 
   it('sends a scored pick\'s outcome and points', () => {

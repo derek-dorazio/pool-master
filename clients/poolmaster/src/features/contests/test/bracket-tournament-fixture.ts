@@ -102,6 +102,7 @@ export function tournamentGames({
           pickedAt: '2026-03-19T12:00:00.000Z',
           outcome,
           points: outcome === 'CORRECT' ? 2 ** (roundNumber - 1) : outcome === 'BUSTED' ? 0 : null,
+          survivorOutcome: null,
         } : null,
       });
       nextReal.push(winner);

@@ -39970,6 +39970,20 @@
                       ],
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "survivorOutcome": {
+                      "description": "In a survivor pool, the pick's week as the entry's season decides it (#1992): SURVIVED when its team won or its game was cancelled; after a loss or a tie, LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry's last; PENDING while the game is unplayed. Null in the other pools, before the week starts, and for a week after the entry went out.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "SURVIVED",
+                        "LIFE_LOST",
+                        "ELIMINATED",
+                        "PENDING",
+                        null
+                      ]
                     }
                   },
                   "required": [
@@ -39978,7 +39992,8 @@
                     "confidence",
                     "pickedAt",
                     "outcome",
-                    "points"
+                    "points",
+                    "survivorOutcome"
                   ],
                   "additionalProperties": false
                 }
