@@ -35,12 +35,12 @@ function migrationStatements(): string[] {
 }
 
 /** A provider-linked event in one test slot with one round, answering its id, its round's id and the round's slot. */
-async function eventWithRound(name: string, notifiedAt: Date | null) {
+async function eventWithRound(name: string, notifiedAt: Date | null, startDate = new Date('2027-03-20T12:00:00.000Z')) {
   const prisma = getPrisma();
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     ...(await freshEventEdition(prisma)),
     name: `${name} ${randomUUID().slice(0, 8)}`,
-    startDate: new Date('2027-03-20T12:00:00.000Z'),
+    startDate,
     status: 'IN_PROGRESS',
     rounds: 1,
     autoLifecycleEnabled: false,
@@ -68,6 +68,60 @@ interface MigratedGame {
   providerGameIds: string[];
 }
 
+interface OldMatchRow {
+  id: string;
+  event: { eventId: string; roundId: string };
+  number: number;
+  gameId: string | null;
+  status: string;
+  winner: string | null;
+  home: number | null;
+  away: number | null;
+}
+
+/** Puts the tables back as they were, inserts `rows` as the old table held them, runs the migration and answers the events' Games, all rolled back. */
+async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[], kickoff: Date): Promise<MigratedGame[]> {
+  return getPrisma().$transaction(async (tx) => {
+    // The tables as they were before the migration.
+    await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_provider_mappings"');
+    await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_games"');
+    await tx.$executeRawUnsafe('DROP INDEX "sport_event_round_matches_event_id_key"');
+    await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "external_game_id" VARCHAR(255)');
+    await tx.$executeRawUnsafe('CREATE UNIQUE INDEX "sport_event_round_matches_sport_event_id_external_game_id_key" ON "sport_event_round_matches"("sport_event_id", "external_game_id")');
+    for (const row of rows) {
+      // poolmaster-allow-query-in-loop: a few fixture matches, inserted as the old table held them
+      await tx.$executeRaw`INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "external_game_id", "scheduled_date", "status", "winner_side", "home_score", "away_score", "is_neutral_site", "updated_at")
+        VALUES (${row.id}::uuid, ${row.event.eventId}::uuid, ${row.event.roundId}::uuid, ${row.number}, ${row.gameId}, ${kickoff}, ${row.status}::"PrismaMatchStatus", ${row.winner}::"PrismaMatchSide", ${row.home}, ${row.away}, false, now())`;
+    }
+    for (const statement of migrationStatements()) {
+      // poolmaster-allow-query-in-loop: the migration's own statements, in order
+      await tx.$executeRawUnsafe(statement);
+    }
+    const games = await tx.sportEventRoundMatchGame.findMany({
+      where: { sportEventId: { in: [...eventIds] } },
+      select: {
+        sportEventRoundMatchId: true, sportEventSlotId: true, gameNumber: true, scheduledDate: true, status: true, winnerSide: true, homeScore: true, awayScore: true, lastProviderNotificationAt: true,
+        providerMappings: { select: { externalId: true, provider: { select: { code: true } } } },
+      },
+    });
+    throw new Rollback(JSON.stringify(games.map((game): MigratedGame => ({
+      matchId: game.sportEventRoundMatchId,
+      sportEventSlotId: game.sportEventSlotId,
+      gameNumber: game.gameNumber,
+      scheduledDate: game.scheduledDate?.toISOString() ?? null,
+      status: game.status,
+      winnerSide: game.winnerSide,
+      homeScore: game.homeScore,
+      awayScore: game.awayScore,
+      lastProviderNotificationAt: game.lastProviderNotificationAt?.toISOString() ?? null,
+      providerGameIds: game.providerMappings.map((mapping) => `${mapping.provider.code}:${mapping.externalId}`),
+    }))));
+  }, { timeout: 30_000 }).catch((error: unknown) => {
+    if (error instanceof Rollback) return JSON.parse(error.message) as MigratedGame[];
+    throw error;
+  });
+}
+
 describe('the match games migration', () => {
   it('gives every match its Game 1 in its round\'s slot, with the match\'s date, status, result and its event\'s last notification, and moves a linked game id to that Game\'s mapping on the event\'s provider', async () => {
     const prisma = getPrisma();
@@ -77,51 +131,13 @@ describe('the match games migration', () => {
     const kickoff = new Date('2027-03-20T13:00:00.000Z');
     const gameIds = [`qa-${randomUUID()}`, `qa-${randomUUID()}`];
     // QA's rows: a final game and a scheduled one linked to provider games, and a bracket match nobody linked.
-    const rows = [
+    const rows: OldMatchRow[] = [
       { id: randomUUID(), event: week, number: 1, gameId: gameIds[0] ?? null, status: 'COMPLETED', winner: 'HOME', home: 24, away: 17 },
       { id: randomUUID(), event: week, number: 2, gameId: gameIds[1] ?? null, status: 'SCHEDULED', winner: null, home: null, away: null },
       { id: randomUUID(), event: bracket, number: 1, gameId: null, status: 'SCHEDULED', winner: null, home: null, away: null },
     ];
 
-    const migrated = await prisma.$transaction(async (tx) => {
-      // The tables as they were before the migration.
-      await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_provider_mappings"');
-      await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_games"');
-      await tx.$executeRawUnsafe('DROP INDEX "sport_event_round_matches_event_id_key"');
-      await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "external_game_id" VARCHAR(255)');
-      await tx.$executeRawUnsafe('CREATE UNIQUE INDEX "sport_event_round_matches_sport_event_id_external_game_id_key" ON "sport_event_round_matches"("sport_event_id", "external_game_id")');
-      for (const row of rows) {
-        // poolmaster-allow-query-in-loop: three fixture matches, inserted as the old table held them
-        await tx.$executeRaw`INSERT INTO "sport_event_round_matches" ("id", "sport_event_id", "sport_event_round_id", "match_number", "external_game_id", "scheduled_date", "status", "winner_side", "home_score", "away_score", "is_neutral_site", "updated_at")
-          VALUES (${row.id}::uuid, ${row.event.eventId}::uuid, ${row.event.roundId}::uuid, ${row.number}, ${row.gameId}, ${kickoff}, ${row.status}::"PrismaMatchStatus", ${row.winner}::"PrismaMatchSide", ${row.home}, ${row.away}, false, now())`;
-      }
-      for (const statement of migrationStatements()) {
-        // poolmaster-allow-query-in-loop: the migration's own statements, in order
-        await tx.$executeRawUnsafe(statement);
-      }
-      const games = await tx.sportEventRoundMatchGame.findMany({
-        where: { sportEventId: { in: [week.eventId, bracket.eventId] } },
-        select: {
-          sportEventRoundMatchId: true, sportEventSlotId: true, gameNumber: true, scheduledDate: true, status: true, winnerSide: true, homeScore: true, awayScore: true, lastProviderNotificationAt: true,
-          providerMappings: { select: { externalId: true, provider: { select: { code: true } } } },
-        },
-      });
-      throw new Rollback(JSON.stringify(games.map((game): MigratedGame => ({
-        matchId: game.sportEventRoundMatchId,
-        sportEventSlotId: game.sportEventSlotId,
-        gameNumber: game.gameNumber,
-        scheduledDate: game.scheduledDate?.toISOString() ?? null,
-        status: game.status,
-        winnerSide: game.winnerSide,
-        homeScore: game.homeScore,
-        awayScore: game.awayScore,
-        lastProviderNotificationAt: game.lastProviderNotificationAt?.toISOString() ?? null,
-        providerGameIds: game.providerMappings.map((mapping) => `${mapping.provider.code}:${mapping.externalId}`),
-      }))));
-    }, { timeout: 30_000 }).catch((error: unknown) => {
-      if (error instanceof Rollback) return JSON.parse(error.message) as MigratedGame[];
-      throw error;
-    });
+    const migrated = await migrate(rows, [week.eventId, bracket.eventId], kickoff);
 
     const byMatch = new Map(migrated.map((game) => [game.matchId, game]));
     expect(migrated).toHaveLength(3);
@@ -132,5 +148,17 @@ describe('the match games migration', () => {
     ]);
     // Rolled back: the Games tables are back, and the old rows are gone with the transaction.
     expect(await prisma.sportEventRoundMatch.count({ where: { sportEventId: { in: [week.eventId, bracket.eventId] } } })).toBe(0);
+  });
+
+  it('maps a game id linked on two events, a game the provider moved to a later week, to the later event\'s Game alone, leaving the earlier Game unmapped', async () => {
+    const week11 = await eventWithRound('Week Moved From', null, new Date('2027-03-13T12:00:00.000Z'));
+    const week12 = await eventWithRound('Week Moved To', null, new Date('2027-03-20T12:00:00.000Z'));
+    const gameId = `qa-${randomUUID()}`;
+    const rows: OldMatchRow[] = [week12, week11].map((event) => ({ id: randomUUID(), event, number: 1, gameId, status: 'SCHEDULED', winner: null, home: null, away: null }));
+
+    const migrated = await migrate(rows, [week11.eventId, week12.eventId], new Date('2027-03-20T13:00:00.000Z'));
+
+    const byMatch = new Map(migrated.map((game) => [game.matchId, game.providerGameIds]));
+    expect(rows.map((row) => byMatch.get(row.id))).toEqual([[`BALLDONTLIE:${gameId}`], []]);
   });
 });

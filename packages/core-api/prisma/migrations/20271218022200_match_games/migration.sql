@@ -90,17 +90,21 @@ FROM "sport_event_round_matches" m
 JOIN "sport_event_rounds" r ON r."id" = m."sport_event_round_id"
 JOIN "sport_events" e ON e."id" = m."sport_event_id";
 
--- A match's linked provider game id becomes its Game 1's mapping, on the event's own provider.
+-- A match's linked provider game id becomes its Game 1's mapping, on the event's own provider. A
+-- provider id is one Game's: where a game the provider moved left the same id linked on two
+-- events, the latest-starting event's match keeps it (the match the provider lists it at now).
 INSERT INTO "sport_event_round_match_game_provider_mappings" ("sport_event_round_match_game_id", "provider_id", "external_id", "updated_at")
-SELECT g."id", p."provider_id", m."external_game_id", now()
+SELECT DISTINCT ON (p."provider_id", m."external_game_id") g."id", p."provider_id", m."external_game_id", now()
 FROM "sport_event_round_matches" m
+JOIN "sport_events" e ON e."id" = m."sport_event_id"
 JOIN "sport_event_round_match_games" g ON g."sport_event_round_match_id" = m."id" AND g."game_number" = 1
 JOIN (
   SELECT DISTINCT ON ("sport_event_id") "sport_event_id", "provider_id"
   FROM "sport_event_provider_mappings"
   ORDER BY "sport_event_id", "created_at"
 ) p ON p."sport_event_id" = m."sport_event_id"
-WHERE m."external_game_id" IS NOT NULL;
+WHERE m."external_game_id" IS NOT NULL
+ORDER BY p."provider_id", m."external_game_id", e."start_date" DESC, e."id";
 
 -- DropIndex
 DROP INDEX "sport_event_round_matches_sport_event_id_external_game_id_key";

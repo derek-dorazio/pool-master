@@ -239,6 +239,46 @@ describe('writeGameScores', () => {
     expect(result).toMatchObject({ updatesPersisted: 2, updatesSkipped: 1 });
   });
 
+  it('moves a re-issued id onto the Game its teams and game number place it at, the Game\'s old id gone from the batch, with a GAME_ID_REISSUED finding', async () => {
+    const { deps, applySync } = writer(bracket());
+
+    const result = await writeGameScores(deps, EVENT, [game('g1-new', 'KC', 'BUF', 27, 24)]);
+
+    expect(mappedOf(applySync)).toEqual([['m1-g1', 'g1-new']]);
+    expect(applySync.mock.calls[0]?.[0].moved).toEqual([]);
+    expect(result.gameFindings).toEqual([{ kind: 'GAME_ID_REISSUED', providerValue: 'g1-new' }]);
+  });
+
+  it('marks a game mapped to another event\'s Game moved to the Game it is placed at here, with a GAME_MOVED finding, and keeps the old Game', async () => {
+    const matches = bracket().map((match) => linked(match, null));
+    const oldGame = { ...gameOne(matches[0] ?? expectDefined(undefined, 'match')), id: 'week-11-g1', sportEventId: 'week-11' };
+    const { deps, applySync } = writer(matches, [], [{ game: oldGame, externalId: 'p-1' }]);
+
+    const result = await writeGameScores(deps, EVENT, [game('p-1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED)]);
+
+    expect(mappedOf(applySync)).toEqual([['m1-g1', 'p-1']]);
+    expect(applySync.mock.calls[0]?.[0].moved).toEqual([{ id: 'week-11-g1', movedToGameId: 'm1-g1' }]);
+    expect(result.gameFindings).toEqual([{ kind: 'GAME_MOVED', providerValue: 'p-1' }]);
+  });
+
+  it('maps nothing, and logs it, when a game\'s place is a Game whose own id is still in the batch: two provider games for one Game', async () => {
+    const { deps, applySync, logger } = writer(bracket());
+
+    const result = await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED), game('g1-twin', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED)]);
+
+    expect(mappedOf(applySync)).toEqual([]);
+    expect(result.gameFindings).toEqual([]);
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'liveScore.game.ambiguous', data: { sportEventId: EVENT_ID, providerGameId: 'g1-twin' } }), expect.any(String));
+  });
+
+  it('fails the sync rather than create a Game with no slot when a match was loaded without its Game 1', async () => {
+    const matches = bracket().map((match) => linked(match, null));
+    const { deps } = writer(matches);
+    (deps.games.findBySportEvent as jest.Mock).mockResolvedValue([]);
+
+    await expect(writeGameScores(deps, EVENT, [game('p-1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED)])).rejects.toThrow('Match m1 has no Game');
+  });
+
   it('links nothing it would have to guess: two games for one match, a match with a side to come, a team not mapped, or a side with no field row', async () => {
     const twoGames = writer(bracket().map((match) => linked(match, null)));
     await writeGameScores(twoGames.deps, EVENT, [game('p-1', 'KC', 'BUF', 1, 0), game('p-1b', 'BUF', 'KC', 0, 1)]);
