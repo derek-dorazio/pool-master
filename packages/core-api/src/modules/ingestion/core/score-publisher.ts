@@ -22,7 +22,7 @@ import {
   LiveScoreResultSchema,
   type LiveScoreResult,
 } from '@poolmaster/shared/dto';
-import { JobErrorType, providerCodeOfSourceId, SportEventStatus } from '@poolmaster/shared/domain';
+import { JobErrorType, type ProviderSyncFindingKind, ProviderSyncFindingSeverity, providerCodeOfSourceId, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import type { DomainEvents } from '../../domain-events';
@@ -55,7 +55,7 @@ export interface LiveScorePublisherDeps {
   /** The app's event lifecycle, which a result passing a contest's cutoff puts it live through (#1954). */
   contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;
   /** Where a feed participant no participant is mapped to is raised as a finding (#1999). */
-  findings: Pick<ProviderSyncFindingService, 'raiseUnmappedParticipants'>;
+  findings: Pick<ProviderSyncFindingService, 'raiseUnmappedParticipants' | 'raiseOfSource'>;
 }
 
 export interface LiveScorePersistenceResult {
@@ -68,6 +68,18 @@ export interface LiveScorePersistenceResult {
    * (#1999). The publisher raises an UNMAPPED_PARTICIPANT finding for each.
    */
   unmappedExternalIds?: readonly string[];
+  /**
+   * What the write found about the provider's own game ids (#2007): a re-issued id or a game moved
+   * to this event. The publisher raises a finding of the kind on the event for each.
+   */
+  gameFindings?: readonly LiveScoreGameFinding[];
+}
+
+/** A provider game id the write raises a finding about, with its kind. */
+export interface LiveScoreGameFinding {
+  kind: typeof ProviderSyncFindingKind.GAME_ID_REISSUED | typeof ProviderSyncFindingKind.GAME_MOVED;
+  /** The provider's game id. */
+  providerValue: string;
 }
 
 /**
@@ -188,6 +200,13 @@ export async function publishLiveScoreUpdate(
         providerSourceId: deps.providerId,
         participants: (written.unmappedExternalIds ?? []).map((externalId) => ({ externalId, name: null })),
       });
+      await deps.findings.raiseOfSource(deps.providerId, (written.gameFindings ?? []).map((finding) => ({
+        ...finding,
+        severity: ProviderSyncFindingSeverity.WARNING,
+        sportLeagueId: sportEvent.sportLeagueSeason.sportLeague.id,
+        sportEventId: sportEvent.id,
+        providerValueName: null,
+      })));
     } catch (err) {
       deps.logger?.error(
         { action: 'ingestion.syncFinding.raiseFailed', err, sportEventId: sportEvent.id, providerId: deps.providerId },

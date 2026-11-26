@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
+import { isAtPlace } from '@poolmaster/shared/domain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setDeviceWidth } from '@/test/device-color-scheme';
 import { bindApiMocks } from '@/test/msw-api';
@@ -110,8 +111,8 @@ function primeMocks({ contest = bracketContestFixture(), gamePicks = gamePicksFi
   getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sport-league-1', name: 'NCAA Men' } } });
 }
 
-const team = (matchNumber: number, sportEventParticipantId: string) =>
-  screen.getByTestId(`bracket-game-${matchNumber}-team-${sportEventParticipantId}`);
+const team = (roundNumber: number, matchNumber: number, sportEventParticipantId: string) =>
+  screen.getByTestId(`bracket-game-${roundNumber}-${matchNumber}-team-${sportEventParticipantId}`);
 
 describe('Bracket contest entry page', () => {
   afterEach(() => {
@@ -160,11 +161,11 @@ describe('Bracket contest entry page', () => {
     const board = await screen.findByTestId('bracket-board');
     expect(board).toHaveAttribute('data-layout', 'desktop');
     const east = screen.getByTestId('bracket-region-East');
-    expect(within(east).getByTestId('bracket-game-1')).toBeInTheDocument();
+    expect(within(east).getByTestId('bracket-game-1-1')).toBeInTheDocument();
     expect(within(east).getByTestId('bracket-round-2')).toHaveTextContent('Final Four');
     expect(within(east).getByTestId('bracket-round-1')).toHaveTextContent('Elite Eight');
-    expect(within(screen.getByTestId('bracket-region-West')).getByTestId('bracket-game-3')).toBeInTheDocument();
-    expect(within(screen.getByTestId('bracket-middle')).getByTestId('bracket-game-7')).toBeInTheDocument();
+    expect(within(screen.getByTestId('bracket-region-West')).getByTestId('bracket-game-1-3')).toBeInTheDocument();
+    expect(within(screen.getByTestId('bracket-middle')).getByTestId('bracket-game-3-1')).toBeInTheDocument();
     expect(east.compareDocumentPosition(screen.getByTestId('bracket-middle')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(getSelectionStateMock).not.toHaveBeenCalled();
   });
@@ -175,26 +176,26 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-board');
-    expect(team(1, TEAMS.duke.sportEventParticipantId)).toHaveTextContent('Duke');
-    expect(team(1, TEAMS.vermont.sportEventParticipantId)).toHaveTextContent('Vermont');
-    expect(screen.getByTestId('bracket-game-5-open-home')).toHaveTextContent('Elite Eight winner');
-    expect(screen.getByTestId('bracket-game-7-open-away')).toHaveTextContent('Final Four winner');
+    expect(team(1, 1, TEAMS.duke.sportEventParticipantId)).toHaveTextContent('Duke');
+    expect(team(1, 1, TEAMS.vermont.sportEventParticipantId)).toHaveTextContent('Vermont');
+    expect(screen.getByTestId('bracket-game-2-1-open-home')).toHaveTextContent('Elite Eight winner');
+    expect(screen.getByTestId('bracket-game-3-1-open-away')).toHaveTextContent('Final Four winner');
     expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('0 of 7');
   });
 
   it('saves a pick through saveGamePicks and shows the bracket the server answers with, so a later pick the change cleared is shown cleared', async () => {
-    // The entry had Duke through game 1 and game 5; switching game 1 to Vermont clears game 5.
+    // The entry had Duke through round 1's game 1 and round 2's game 1; switching the first to Vermont clears the second.
     const [g1, g2, ...rest] = filledBracketGames();
     primeMocks({ gamePicks: gamePicksFixture({ games: [g1, g2, ...rest] }) });
     const afterSwitch = emptyBracketGames().map((game) => {
-      if (game.matchNumber === 1) {
+      if (isAtPlace(game, { roundNumber: 1, matchNumber: 1 })) {
         return { ...game, pick: gamePick(TEAMS.vermont) };
       }
-      if (game.matchNumber === 2) {
+      if (isAtPlace(game, { roundNumber: 1, matchNumber: 2 })) {
         return { ...game, pick: gamePick(TEAMS.houston) };
       }
-      if (game.matchNumber === 5) {
-        return bracketGame({ matchNumber: 5, roundNumber: 2, regionLabel: 'East', predictedHome: TEAMS.vermont, predictedAway: TEAMS.houston });
+      if (isAtPlace(game, { roundNumber: 2, matchNumber: 1 })) {
+        return bracketGame({ matchNumber: 1, roundNumber: 2, regionLabel: 'East', predictedHome: TEAMS.vermont, predictedAway: TEAMS.houston });
       }
       return game;
     });
@@ -202,17 +203,17 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-board');
-    expect(team(5, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(team(1, TEAMS.vermont.sportEventParticipantId));
+    expect(team(2, 1, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(team(1, 1, TEAMS.vermont.sportEventParticipantId));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(saveGamePicksMock.mock.calls[0]?.[0]).toMatchObject({
       path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' },
-      body: { picks: [{ sportEventRoundMatchId: 'match-1', sportEventParticipantId: TEAMS.vermont.sportEventParticipantId }] },
+      body: { picks: [{ sportEventRoundMatchId: 'match-1-1', sportEventParticipantId: TEAMS.vermont.sportEventParticipantId }] },
     });
-    await waitFor(() => expect(team(1, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
-    expect(team(5, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.queryByTestId(`bracket-game-5-team-${TEAMS.duke.sportEventParticipantId}`)).not.toBeInTheDocument();
+    await waitFor(() => expect(team(1, 1, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
+    expect(team(2, 1, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByTestId(`bracket-game-2-1-team-${TEAMS.duke.sportEventParticipantId}`)).not.toBeInTheDocument();
     expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('2 of 7');
   });
 
@@ -225,7 +226,7 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-board');
-    fireEvent.click(team(1, TEAMS.duke.sportEventParticipantId));
+    fireEvent.click(team(1, 1, TEAMS.duke.sportEventParticipantId));
 
     expect(await screen.findByTestId('bracket-pick-error')).toHaveTextContent('That game has started, so its pick is locked.');
     await waitFor(() => expect(getGamePicksMock).toHaveBeenCalledTimes(2));
@@ -307,16 +308,16 @@ describe('Bracket contest entry page', () => {
     setDeviceWidth(1280);
     const started = filledBracketGames().map((game) => ({ ...game, locked: true, revealed: true }));
     const marked = started.map((game) => {
-      switch (game.matchNumber) {
-        case 1:
-          return { ...game, status: 'COMPLETED' as const, pick: gamePick(TEAMS.duke, { outcome: 'CORRECT', points: 1 }) };
-        case 2:
-          return { ...game, status: 'COMPLETED' as const, pick: gamePick(TEAMS.houston, { outcome: 'BUSTED', points: 0 }) };
-        case 5:
-          return { ...game, home: TEAMS.duke, away: TEAMS.texas };
-        default:
-          return game;
+      if (isAtPlace(game, { roundNumber: 1, matchNumber: 1 })) {
+        return { ...game, status: 'COMPLETED' as const, pick: gamePick(TEAMS.duke, { outcome: 'CORRECT', points: 1 }) };
       }
+      if (isAtPlace(game, { roundNumber: 1, matchNumber: 2 })) {
+        return { ...game, status: 'COMPLETED' as const, pick: gamePick(TEAMS.houston, { outcome: 'BUSTED', points: 0 }) };
+      }
+      if (isAtPlace(game, { roundNumber: 2, matchNumber: 1 })) {
+        return { ...game, home: TEAMS.duke, away: TEAMS.texas };
+      }
+      return game;
     });
     primeMocks({
       contest: bracketContestFixture({ status: 'ACTIVE' }),
@@ -325,11 +326,11 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-board');
-    expect(team(5, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-mark', 'right');
-    const houston = team(5, TEAMS.houston.sportEventParticipantId);
+    expect(team(2, 1, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-mark', 'right');
+    const houston = team(2, 1, TEAMS.houston.sportEventParticipantId);
     expect(houston).toHaveAttribute('data-mark', 'wrong');
     expect(houston).toHaveTextContent('Texas');
-    expect(team(7, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-mark', 'none');
+    expect(team(3, 1, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-mark', 'none');
     expect(screen.queryByRole('button', { name: /Duke/ })).not.toBeInTheDocument();
     expect(screen.getByTestId('bracket-champion-name')).toHaveTextContent('Duke');
     expect(screen.getByTestId('bracket-points')).toHaveTextContent('1 pt');
@@ -359,7 +360,7 @@ describe('Bracket contest entry page', () => {
 
     expect(await screen.findByTestId('contest-entry-header-name')).toHaveTextContent('Chalk All The Way');
     expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Submitted$/);
-    expect(team(7, TEAMS.duke.sportEventParticipantId)).not.toHaveRole('button');
+    expect(team(3, 1, TEAMS.duke.sportEventParticipantId)).not.toHaveRole('button');
     expect(screen.getByTestId('bracket-champion')).toHaveTextContent('Champion');
     expect(screen.getByTestId('bracket-champion')).not.toHaveTextContent('Your champion');
     expect(screen.queryByTestId('bracket-finish')).not.toBeInTheDocument();
@@ -398,10 +399,10 @@ describe('Bracket contest entry page › a second-chance bracket', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-board');
-    expect(team(57, TEAMS.duke.sportEventParticipantId)).toHaveRole('button');
-    expect(team(57, TEAMS.vermont.sportEventParticipantId)).toHaveRole('button');
-    expect(screen.getByTestId('bracket-game-61-open-home')).toHaveTextContent('Elite Eight winner');
-    expect(screen.getByTestId('bracket-game-63-open-home')).toHaveTextContent('Final Four winner');
+    expect(team(4, 1, TEAMS.duke.sportEventParticipantId)).toHaveRole('button');
+    expect(team(4, 1, TEAMS.vermont.sportEventParticipantId)).toHaveRole('button');
+    expect(screen.getByTestId('bracket-game-5-1-open-home')).toHaveTextContent('Elite Eight winner');
+    expect(screen.getByTestId('bracket-game-6-1-open-home')).toHaveTextContent('Final Four winner');
   });
 
   it('says the bracket is open, and its picks lock, until the starting round\'s first game rather than the opening tip-off', async () => {

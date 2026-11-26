@@ -86,6 +86,9 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.GAMES_UNPLACED]: [],
   [ProviderSyncFindingKind.SLOT_DATES_NEEDED]: [],
   [ProviderSyncFindingKind.FIELD_HAS_NO_ORDER]: [],
+  [ProviderSyncFindingKind.GAME_UNKNOWN]: [],
+  [ProviderSyncFindingKind.GAME_ID_REISSUED]: [],
+  [ProviderSyncFindingKind.GAME_MOVED]: [],
 };
 
 /**

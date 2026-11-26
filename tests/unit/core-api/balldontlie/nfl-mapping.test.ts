@@ -159,9 +159,9 @@ describe('NFL teams', () => {
 describe('NFL game scores', () => {
   it('passes on each game\'s teams, state and score, and leaves out a game whose state the vendor cannot classify', () => {
     expect(toGameScoreUpdates(week12)).toEqual([
-      { externalGameId: '401201', homeTeamExternalId: '25', awayTeamExternalId: '27', state: ProviderGameState.FINAL, homeScore: 27, awayScore: 24 },
-      { externalGameId: '401202', homeTeamExternalId: '9', awayTeamExternalId: '4', state: ProviderGameState.IN_PROGRESS, homeScore: 14, awayScore: 10 },
-      { externalGameId: '401203', homeTeamExternalId: '17', awayTeamExternalId: '3', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { providerGameId: '401201', homeTeamExternalId: '25', awayTeamExternalId: '27', state: ProviderGameState.FINAL, homeScore: 27, awayScore: 24 },
+      { providerGameId: '401202', homeTeamExternalId: '9', awayTeamExternalId: '4', state: ProviderGameState.IN_PROGRESS, homeScore: 14, awayScore: 10 },
+      { providerGameId: '401203', homeTeamExternalId: '17', awayTeamExternalId: '3', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
     ]);
   });
 
@@ -212,9 +212,9 @@ describe('NFL postseason bracket', () => {
     const allStar: NflGame = { ...postseason2025[0], id: 999, week: 4, home_team: { id: 90, full_name: 'AFC' }, visitor_team: { id: 91, full_name: 'NFC' } };
     const undecided: NflGame = { ...postseason2025[12], id: 998, home_team: undefined };
     const scheduled = toNflPostseasonGames([...postseason2025, allStar, undecided], new Set(field.map((participant) => participant.externalId)));
-    expect(scheduled.map((game) => game.externalGameId)).not.toContain('999');
-    expect(scheduled.map((game) => game.externalGameId)).not.toContain('998');
-    expect(scheduled.at(-1)).toMatchObject({ externalGameId: '402513', roundNumber: 4 });
+    expect(scheduled.map((game) => game.games[0]?.providerGameId)).not.toContain('999');
+    expect(scheduled.map((game) => game.games[0]?.providerGameId)).not.toContain('998');
+    expect(scheduled.at(-1)).toMatchObject({ games: [{ providerGameId: '402513', gameNumber: 1 }], roundNumber: 4 });
   });
 
   it('lays out the whole bracket: the Wild Card by seed, the 1 seeds waiting in the Divisional round, the championships linked to the Super Bowl', () => {
@@ -226,13 +226,13 @@ describe('NFL postseason bracket', () => {
       [4, 1, 'NFC', team('PHI'), team('GB'), null, false],
       [5, 1, 'NFC', team('TB'), team('WAS'), null, false],
       [6, 1, 'NFC', team('LAR'), team('MIN'), null, false],
-      [7, 2, 'AFC', team('KC'), null, null, false],
-      [8, 2, 'AFC', null, null, null, false],
-      [9, 2, 'NFC', team('DET'), null, null, false],
-      [10, 2, 'NFC', null, null, null, false],
-      [11, 3, 'AFC', null, null, { matchNumber: 13, side: MatchSide.HOME }, false],
-      [12, 3, 'NFC', null, null, { matchNumber: 13, side: MatchSide.AWAY }, false],
-      [13, 4, null, null, null, null, true],
+      [1, 2, 'AFC', team('KC'), null, null, false],
+      [2, 2, 'AFC', null, null, null, false],
+      [3, 2, 'NFC', team('DET'), null, null, false],
+      [4, 2, 'NFC', null, null, null, false],
+      [1, 3, 'AFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.HOME }, false],
+      [2, 3, 'NFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.AWAY }, false],
+      [1, 4, null, null, null, null, true],
     ]);
   });
 

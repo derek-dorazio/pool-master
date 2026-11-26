@@ -4,7 +4,7 @@
  * the head-to-head family.
  */
 
-import type { BackgroundJobRequest, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, SportEventRoundMatch, SportEventMatchPeriodScore } from '../domain';
+import type { BackgroundJobRequest, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, ProviderCode, SportEventRoundMatch, SportEventRoundMatchGame, SportEventMatchPeriodScore } from '../domain';
 
 /** One match of a bracket being loaded. `id` is chosen by the caller so links can name it. */
 export interface SportEventRoundMatchWrite {
@@ -94,14 +94,12 @@ export interface SportEventRoundMatchRepository {
   /** Several events' matches in one read (#762), each event's in match-number order. */
   findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventRoundMatch[]>;
   /**
-   * Replaces every match of the event with `matches`, all or none. Every round named must exist.
-   * Each bracket write takes the background jobs it causes (the event's leaderboard rebuild,
+   * Replaces every match of the event with `matches`, each with its Game 1 (#2007), all or none.
+   * Every round named must exist. Each bracket write takes the background jobs it causes (the event's leaderboard rebuild,
    * #1466) and writes them with it.
    */
   replaceBracket(sportEventId: string, matches: readonly SportEventRoundMatchWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   update(id: string, patch: SportEventRoundMatchPatch, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
-  /** Each match linked to the provider game whose teams are its own (#1496), all or none. */
-  linkGames(links: readonly { id: string; externalGameId: string }[]): Promise<void>;
   /**
    * Writes each match's live score, all or none. A match that has since been given a result or
    * cancelled keeps it: only a scheduled or in-progress match takes a live score.
@@ -116,4 +114,56 @@ export interface SportEventRoundMatchRepository {
    * jobs it causes in the same transaction.
    */
   savePeriodScore(sportEventRoundMatchId: string, score: SportEventMatchPeriodScore, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+}
+
+/** A Game with the one provider's id for it, when it has one (#2007). */
+export interface ProviderMappedGame {
+  game: SportEventRoundMatchGame;
+  /** The provider's game id the Game is mapped to; null while it has none at this provider. */
+  externalId: string | null;
+}
+
+/** A Game the score sync creates, for a series game it has not seen before, with its provider id. */
+export interface SportEventRoundMatchGameCreate {
+  id: string;
+  sportEventId: string;
+  sportEventRoundMatchId: string;
+  sportEventSlotId: string;
+  gameNumber: number;
+}
+
+/** A Game's provider score, written as the provider reports the game (#2007). */
+export interface SportEventRoundMatchGameScoreWrite {
+  id: string;
+  status: MatchStatus;
+  winnerSide: MatchSide | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  /** When a COMPLETED game was written; null in any other status. */
+  completedAt: Date | null;
+}
+
+/**
+ * What one score sync writes to an event's Games, all or none: the Games it creates, the provider
+ * ids it maps (a mapping moves to its new Game, taking the place of the Game's old id at the
+ * provider), the Games it marks moved and each Game's score.
+ */
+export interface SportEventRoundMatchGameSync {
+  providerCode: ProviderCode;
+  created: readonly SportEventRoundMatchGameCreate[];
+  mapped: readonly { sportEventRoundMatchGameId: string; externalId: string }[];
+  moved: readonly { id: string; movedToGameId: string }[];
+  scores: readonly SportEventRoundMatchGameScoreWrite[];
+}
+
+/** Repository port for the Games of an event's matches (#2007) and their provider ids. */
+export interface SportEventRoundMatchGameRepository {
+  /** Every Game of the event's matches, with the provider's id for each, by match and game number. */
+  findBySportEvent(sportEventId: string, providerCode: ProviderCode): Promise<ProviderMappedGame[]>;
+  /** The Games the provider's game ids are mapped to, in any event: one per id at most. */
+  findByProviderExternalIds(providerCode: ProviderCode, externalIds: readonly string[]): Promise<ProviderMappedGame[]>;
+  /** One score sync's writes, all or none. */
+  applySync(sync: SportEventRoundMatchGameSync): Promise<void>;
+  /** Records when a provider's notification about each of these Games arrived (#1499). */
+  recordProviderNotification(gameIds: readonly string[], receivedAt: Date): Promise<void>;
 }

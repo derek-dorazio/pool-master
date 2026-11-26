@@ -254,7 +254,7 @@ describe('sport data bracket', () => {
   interface BracketMatch {
     home: string | null;
     away: string | null;
-    advancesTo: { matchNumber: number; side: string } | null;
+    advancesTo: { roundNumber: number; matchNumber: number; side: string } | null;
     regionLabel?: string;
     result?: { winner: string | null; homeScore: number | null; awayScore: number | null; homeShootoutScore?: number; awayShootoutScore?: number; ending?: string };
     periodScores?: Array<{ periodNumber: number; homeScore: number; awayScore: number }>;
@@ -291,9 +291,9 @@ describe('sport data bracket', () => {
             { player: 'ncaa-texas-xavier', seed: 16, isPlayInPlace: true, oddsToWin: 6 },
           ],
           matches: [
-            { matchNumber: 1, roundNumber: 1, home: 'ncaa-duke', away: 'ncaa-vermont', isNeutralSite: true, scheduledAt: '2027-03-20T12:15:00-04:00', advancesTo: { matchNumber: 3, side: 'HOME' } },
-            { matchNumber: 2, roundNumber: 1, home: 'ncaa-houston', away: 'ncaa-texas-xavier', isNeutralSite: true, advancesTo: { matchNumber: 3, side: 'AWAY' } },
-            { matchNumber: 3, roundNumber: 2, home: null, away: null, isNeutralSite: true, advancesTo: null },
+            { matchNumber: 1, roundNumber: 1, home: 'ncaa-duke', away: 'ncaa-vermont', isNeutralSite: true, scheduledAt: '2027-03-20T12:15:00-04:00', advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' } },
+            { matchNumber: 2, roundNumber: 1, home: 'ncaa-houston', away: 'ncaa-texas-xavier', isNeutralSite: true, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'AWAY' } },
+            { matchNumber: 1, roundNumber: 2, home: null, away: null, isNeutralSite: true, advancesTo: null },
           ],
         }],
       }],
@@ -305,10 +305,10 @@ describe('sport data bracket', () => {
     const file = parseSportDataFile(bracketFile());
     const event = file.sportLeagues[0].events[0];
 
-    expect(event.matches?.map((match) => [match.matchNumber, match.home, match.away, match.advancesTo?.matchNumber ?? null])).toEqual([
-      [1, 'ncaa-duke', 'ncaa-vermont', 3],
-      [2, 'ncaa-houston', 'ncaa-texas-xavier', 3],
-      [3, null, null, null],
+    expect(event.matches?.map((match) => [match.matchNumber, match.home, match.away, match.advancesTo ?? null])).toEqual([
+      [1, 'ncaa-duke', 'ncaa-vermont', { roundNumber: 2, matchNumber: 1, side: 'HOME' }],
+      [2, 'ncaa-houston', 'ncaa-texas-xavier', { roundNumber: 2, matchNumber: 1, side: 'AWAY' }],
+      [1, null, null, null],
     ]);
     expect(event.field.map((entry) => [entry.seed, entry.isPlayInPlace ?? false])).toEqual([[1, false], [16, false], [1, false], [16, true]]);
   });
@@ -317,12 +317,12 @@ describe('sport data bracket', () => {
     const file = bracketFile();
     const matches = file.sportLeagues[0].events[0].matches;
     matches[1].away = 'ncaa-duke';
-    matches[2].advancesTo = { matchNumber: 1, side: 'HOME' };
+    matches[2].advancesTo = { roundNumber: 1, matchNumber: 1, side: 'HOME' };
 
     expect(problemsOf(file)).toEqual([
-      'NCAA Men, Tournament: bracket: match 2 away names the same field row as match 1 home.',
-      'NCAA Men, Tournament: bracket: match 3 advances to match 1, which is not in a later round.',
-      'NCAA Men, Tournament: bracket: match 1 home names a team, but match 3\'s winner fills it.',
+      'NCAA Men, Tournament: bracket: round 1 match 2 away names the same field row as round 1 match 1 home.',
+      'NCAA Men, Tournament: bracket: round 2 match 1 advances to round 1 match 1, which is not in a later round.',
+      'NCAA Men, Tournament: bracket: round 1 match 1 home names a team, but round 2 match 1\'s winner fills it.',
       'NCAA Men, Tournament: ncaa-texas-xavier is in the field but in no match, and the release refuses a field member left out of the games.',
     ]);
   });
@@ -332,7 +332,7 @@ describe('sport data bracket', () => {
     file.sportLeagues[0].events[0].matches[0].away = 'ncaa-gonzaga';
 
     expect(problemsOf(file)).toEqual([
-      'NCAA Men, Tournament: bracket: match 1 away names ncaa-gonzaga, which is not on the event\'s field.',
+      'NCAA Men, Tournament: bracket: round 1 match 1 away names ncaa-gonzaga, which is not on the event\'s field.',
       'NCAA Men, Tournament: ncaa-vermont is in the field but in no match, and the release refuses a field member left out of the games.',
     ]);
   });
@@ -395,15 +395,15 @@ describe('sport data bracket', () => {
   it('refuses no winner on a bracket match, on unequal scores, with a shoot-out or with an ending', () => {
     const bracket = bracketTestSeed();
     bracket.sportLeagues[0].events[0].matches[0].result = { winner: null, homeScore: 1, awayScore: 1 };
-    expect(problemsOf(bracket)).toContain('NCAA Men, Tournament: match 1 has no winner, but a bracket match always has one.');
+    expect(problemsOf(bracket)).toContain('NCAA Men, Tournament: round 1 match 1 has no winner, but a bracket match always has one.');
 
     const week = weekTestSeed();
     const [first, second] = week.sportLeagues[0].events[0].matches;
     first.result = { winner: null, homeScore: 2, awayScore: 1 };
     second.result = { winner: null, homeScore: 1, awayScore: 1, homeShootoutScore: 4, awayShootoutScore: 3 };
     expect(problemsOf(week)).toEqual([
-      'NCAA Men, Tournament: match 1 has no winner, so it needs level scores, played to its end with no shoot-out.',
-      'NCAA Men, Tournament: match 2 has no winner, so it needs level scores, played to its end with no shoot-out.',
+      'NCAA Men, Tournament: round 1 match 1 has no winner, so it needs level scores, played to its end with no shoot-out.',
+      'NCAA Men, Tournament: round 1 match 2 has no winner, so it needs level scores, played to its end with no shoot-out.',
     ]);
   });
 
@@ -431,18 +431,18 @@ describe('sport data bracket', () => {
   it('refuses a cancelled game with a result or period scores, and in a bracket, which cannot lose a game', () => {
     const played = weekTestSeed();
     Object.assign(played.sportLeagues[0].events[0].matches[1], { cancelled: true });
-    expect(problemsOf(played)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.']);
+    expect(problemsOf(played)).toEqual(['NCAA Men, Tournament: round 1 match 2 is cancelled, so it has no result and no period scores.']);
 
     const scored = weekTestSeed();
     const scoredGame = scored.sportLeagues[0].events[0].matches[1];
     delete scoredGame.result;
     Object.assign(scoredGame, { cancelled: true, periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 0 }] });
-    expect(problemsOf(scored)).toContain('NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.');
+    expect(problemsOf(scored)).toContain('NCAA Men, Tournament: round 1 match 2 is cancelled, so it has no result and no period scores.');
 
     const bracket = bracketTestSeed();
     delete bracket.sportLeagues[0].events[0].matches[1].result;
     Object.assign(bracket.sportLeagues[0].events[0].matches[1], { cancelled: true });
-    expect(problemsOf(bracket)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, but only a week\'s game can be: a bracket cannot lose a game.']);
+    expect(problemsOf(bracket)).toEqual(['NCAA Men, Tournament: round 1 match 2 is cancelled, but only a week\'s game can be: a bracket cannot lose a game.']);
   });
 
   it('refuses a result with an ending that is not one', () => {
@@ -501,9 +501,9 @@ describe('sport data bracket', () => {
     delete matches[2].result;
     matches[2].periodScores = [{ periodNumber: 1, homeScore: 0, awayScore: 0 }];
     expect(problemsOf(file)).toEqual([
-      'NCAA Men, Tournament: match 1 has a score for quarter 4 or later, which is the result\'s final score.',
-      'NCAA Men, Tournament: match 2\'s period scores are not in period order, once each.',
-      'NCAA Men, Tournament: match 3 carries period scores but no result, and they are entered with its result.',
+      'NCAA Men, Tournament: round 1 match 1 has a score for quarter 4 or later, which is the result\'s final score.',
+      'NCAA Men, Tournament: round 1 match 2\'s period scores are not in period order, once each.',
+      'NCAA Men, Tournament: round 2 match 1 carries period scores but no result, and they are entered with its result.',
     ]);
   });
 
@@ -515,7 +515,7 @@ describe('sport data bracket', () => {
 
     const league = parseSportDataFile(file).sportLeagues[0];
 
-    expect(league.events[0].matches?.map((match) => [match.matchNumber, match.regionLabel, match.advancesTo])).toEqual([[1, 'East', null], [2, 'East', null], [3, 'East', null]]);
+    expect(league.events[0].matches?.map((match) => [match.matchNumber, match.regionLabel, match.advancesTo])).toEqual([[1, 'East', null], [2, 'East', null], [1, 'East', null]]);
   });
 
   it('refuses a bracket, a seed or a play-in place for a sport not played as a bracket', () => {

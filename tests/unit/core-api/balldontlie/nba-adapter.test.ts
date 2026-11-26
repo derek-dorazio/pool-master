@@ -173,8 +173,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
         [7, 'East', team(17), team(12)],
         [8, 'East', team(20), team(23)],
       ]);
-      expect(detail?.bracket?.filter((match) => match.roundNumber > 1).map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.advancesTo?.matchNumber ?? null])).toEqual([
-        [9, 2, 'West', 13], [10, 2, 'West', 13], [11, 2, 'East', 14], [12, 2, 'East', 14], [13, 3, 'West', 15], [14, 3, 'East', 15], [15, 4, null, null],
+      expect(detail?.bracket?.filter((match) => match.roundNumber > 1).map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.advancesTo?.roundNumber ?? null, match.advancesTo?.matchNumber ?? null])).toEqual([
+        [1, 2, 'West', 3, 1], [2, 2, 'West', 3, 1], [3, 2, 'East', 3, 2], [4, 2, 'East', 3, 2], [1, 3, 'West', 4, 1], [2, 3, 'East', 4, 1], [1, 4, null, null, null],
       ]);
       expect(detail?.rounds).toBe(4);
       expect(detail?.games).toHaveLength(15);
@@ -210,7 +210,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     const scores = result.category === 'GAME' ? result.games : [];
     expect(scores).toHaveLength(7);
     expect(scores[0]).toEqual({
-      externalGameId: '18444001',
+      providerGameId: '18444001',
+      gameNumber: 1,
       homeTeamExternalId: '21',
       awayTeamExternalId: '12',
       state: ProviderGameState.FINAL,
@@ -225,7 +226,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
     const result = await harness.adapter.getLiveScores('nba-2025-postseason');
 
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
       ['18450001', ProviderGameState.FINAL, 112, 98],
       ['18450002', ProviderGameState.FINAL, 101, 108],
       ['18450003', ProviderGameState.IN_PROGRESS, 54, 49],

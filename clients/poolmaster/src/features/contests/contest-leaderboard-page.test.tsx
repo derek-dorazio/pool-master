@@ -415,7 +415,7 @@ describe('ContestLeaderboardPage', () => {
 
   function primeTeamPicksGames() {
     const match = (matchNumber: number, roundNumber: number, homeId: string, awayId: string, result: Record<string, unknown>) => ({
-      id: `match-${String(matchNumber)}`, sportEventId: 'event-1', roundNumber, matchNumber,
+      id: `match-${String(roundNumber)}-${String(matchNumber)}`, sportEventId: 'event-1', roundNumber, matchNumber,
       homeSportEventParticipantId: homeId, awaySportEventParticipantId: awayId, isNeutralSite: true,
       scheduledDate: '2026-03-21T18:00:00.000Z', status: 'SCHEDULED', winnerSide: null, homeScore: null, awayScore: null,
       homeShootoutScore: null, awayShootoutScore: null, ending: 'PLAYED', resultSource: null, advancesToMatchId: null,
@@ -424,7 +424,7 @@ describe('ContestLeaderboardPage', () => {
     getEventMock.mockResolvedValue({ data: { event: { id: 'event-1', sport: 'BASKETBALL', sportLeagueId: null, rounds: 6 } } });
     getEventBracketMock.mockResolvedValue({ data: { matches: [
       match(1, 1, 'sep-1', 'sep-2', { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 81, awayScore: 76 }),
-      match(9, 2, 'sep-1', 'sep-3', { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 74 }),
+      match(1, 2, 'sep-1', 'sep-3', { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 74 }),
       match(2, 1, 'sep-4', 'sep-2', { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 90, awayScore: 60 }),
     ] } });
     // The tournament's rounds are named by their slots.

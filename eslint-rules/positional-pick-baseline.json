@@ -3,6 +3,6 @@
   "clients/poolmaster/src/features/contests/create-contest/use-create-contest-form.ts": 1,
   "packages/core-api/src/adapters/prisma-contest-entry-match-prediction-repository.ts": 1,
   "packages/core-api/src/modules/contest-entry-picks/service.ts": 1,
-  "packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket.ts": 15,
+  "packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket.ts": 8,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs.ts": 1
 }

@@ -1806,7 +1806,7 @@ export const getEventBracket = <ThrowOnError extends boolean = false>(options: O
 /**
  * Load a sport event's bracket
  *
- * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. 409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats, a round is not the event's, a side names a field row the event lacks or one already named, a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+ * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. 409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats within a round, a round is not the event's, a side names a field row the event lacks or one already named, a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
  */
 export const loadEventBracket = <ThrowOnError extends boolean = false>(options: Options<LoadEventBracketData, ThrowOnError>): RequestResult<LoadEventBracketResponses, LoadEventBracketErrors, ThrowOnError> => (options.client ?? client).put<LoadEventBracketResponses, LoadEventBracketErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1821,11 +1821,11 @@ export const loadEventBracket = <ThrowOnError extends boolean = false>(options: 
 /**
  * Edit one match of a sport event's bracket
  *
- * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
+ * Test events only (#2074): an event that covers no test slot takes its results from the feed alone, 409 SPORT_EVENT_NOT_TEST_DATA. Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a round and match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
  */
 export const updateEventBracketMatch = <ThrowOnError extends boolean = false>(options: Options<UpdateEventBracketMatchData, ThrowOnError>): RequestResult<UpdateEventBracketMatchResponses, UpdateEventBracketMatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateEventBracketMatchResponses, UpdateEventBracketMatchErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}',
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1840,7 +1840,7 @@ export const updateEventBracketMatch = <ThrowOnError extends boolean = false>(op
  */
 export const recordEventMatchResult = <ThrowOnError extends boolean = false>(options: Options<RecordEventMatchResultData, ThrowOnError>): RequestResult<RecordEventMatchResultResponses, RecordEventMatchResultErrors, ThrowOnError> => (options.client ?? client).put<RecordEventMatchResultResponses, RecordEventMatchResultErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result',
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/result',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1855,7 +1855,7 @@ export const recordEventMatchResult = <ThrowOnError extends boolean = false>(opt
  */
 export const recordEventMatchPeriodScore = <ThrowOnError extends boolean = false>(options: Options<RecordEventMatchPeriodScoreData, ThrowOnError>): RequestResult<RecordEventMatchPeriodScoreResponses, RecordEventMatchPeriodScoreErrors, ThrowOnError> => (options.client ?? client).put<RecordEventMatchPeriodScoreResponses, RecordEventMatchPeriodScoreErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}',
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/periods/{periodNumber}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1870,7 +1870,7 @@ export const recordEventMatchPeriodScore = <ThrowOnError extends boolean = false
  */
 export const cancelEventMatch = <ThrowOnError extends boolean = false>(options: Options<CancelEventMatchData, ThrowOnError>): RequestResult<CancelEventMatchResponses, CancelEventMatchErrors, ThrowOnError> => (options.client ?? client).post<CancelEventMatchResponses, CancelEventMatchErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel',
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/cancel',
     ...options
 });
 

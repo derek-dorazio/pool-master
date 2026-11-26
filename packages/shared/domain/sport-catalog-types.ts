@@ -229,7 +229,7 @@ export interface SportEventRoundMatch extends DomainEntity {
   roundNumber: number;
   /** The slot its round is played in (#2006): what the round is called, and whether it is the FINAL. */
   slot: SportEventRoundSlot;
-  /** Unique within the event: the bracket slot and the display order. */
+  /** Unique within its round (#2161): the match's place in the round and its display order. */
   matchNumber: number;
   homeSportEventParticipantId: string | null;
   awaySportEventParticipantId: string | null;
@@ -261,11 +261,6 @@ export interface SportEventRoundMatch extends DomainEntity {
    */
   homeSpread: number | null;
   /**
-   * The provider game the match takes its score from (#1496), at the provider its event is
-   * mapped to (`SportEvent.providerMappings`); null until the sync or an admin links it.
-   */
-  externalGameId: string | null;
-  /**
    * Who set the result (#1531): an admin, or the provider of the linked game; null while the
    * match has none. A cancelled match was cancelled by an admin.
    */
@@ -281,6 +276,42 @@ export interface SportEventRoundMatch extends DomainEntity {
    * Empty for a sport without periods (`SportDefinition.matchPeriods`).
    */
   periodScores: readonly SportEventMatchPeriodScore[];
+}
+
+/**
+ * One game of a match (#2007): a single-game match has its Game 1, a best-of series one Game per
+ * game played. Every match has its Game 1 from the moment it is loaded. A Game holds the provider's
+ * score of that game alone; the match's own result (a series' games won) is the match's. Its
+ * provider game ids are its provider mappings, one per provider.
+ */
+export interface SportEventRoundMatchGame extends DomainEntity {
+  sportEventId: string;
+  sportEventRoundMatchId: string;
+  /** The slot the match's round is played in, the same as the round's. */
+  sportEventSlotId: string;
+  /** 1 for the first game of its match; a series' games in the order they are played. */
+  gameNumber: number;
+  scheduledDate: Date | null;
+  status: MatchStatus;
+  winnerSide: MatchSide | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  completedAt: Date | null;
+  /**
+   * The Game this one was moved to (#2007): a provider that moves a game to another week keeps
+   * this Game, and whatever is tied to it, and plays the game at the other event's Game. Null for
+   * a game that was not moved.
+   */
+  movedToGameId: string | null;
+  /** When a provider last sent a notification about the game (#1499); null until one does. */
+  lastProviderNotificationAt: Date | null;
+}
+
+/** A Game's id at one provider (#2007): the provider's game id the Game takes its score from. */
+export interface SportEventRoundMatchGameProviderMapping {
+  sportEventRoundMatchGameId: string;
+  providerCode: ProviderCode;
+  externalId: string;
 }
 
 /** Both sides' score at the end of one period of a game, as the scoreboard shows it (#772). */

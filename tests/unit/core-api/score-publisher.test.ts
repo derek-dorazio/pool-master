@@ -36,7 +36,13 @@ type UnmappedRaise = Parameters<LiveScorePublisherDeps['findings']['raiseUnmappe
 /** The findings the publisher raises, recorded; it raises nothing elsewhere. */
 function recordingFindings() {
   const raised: UnmappedRaise[] = [];
-  return { raised, raiseUnmappedParticipants: async (input: UnmappedRaise) => { raised.push(input); } };
+  const raisedOfSource: Parameters<LiveScorePublisherDeps['findings']['raiseOfSource']>[] = [];
+  return {
+    raised,
+    raisedOfSource,
+    raiseUnmappedParticipants: async (input: UnmappedRaise) => { raised.push(input); },
+    raiseOfSource: async (...args: Parameters<LiveScorePublisherDeps['findings']['raiseOfSource']>) => { raisedOfSource.push(args); },
+  };
 }
 
 const NO_FINDINGS = recordingFindings();
@@ -242,7 +248,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     const games: LiveScoreResult = {
       category: 'GAME',
       externalEventId: 'nfl-2025-postseason',
-      games: [{ externalGameId: 'g1', homeTeamExternalId: '1', awayTeamExternalId: '2', state: 'FINAL', homeScore: 27, awayScore: 24 }],
+      games: [{ providerGameId: 'g1', homeTeamExternalId: '1', awayTeamExternalId: '2', state: 'FINAL', homeScore: 27, awayScore: 24 }],
     };
     const persisted = { updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0, writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] } };
     const inProgressEvent = () => ({ findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', rounds: null, status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: 'NFL' } } } })) });
@@ -334,7 +340,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
     it('still returns the written scores, and logs ingestion.syncFinding.raiseFailed, when raising the unmapped findings fails', async () => {
       const logger = fakeLogger();
-      const findings = { raiseUnmappedParticipants: async () => { throw new Error('connection reset'); } };
+      const findings = { raiseUnmappedParticipants: async () => { throw new Error('connection reset'); }, raiseOfSource: async () => undefined };
 
       const written = await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, findings, logger,
         prisma: asPrismaClient({ sportEventProviderMapping: buildSportEventStub() }),

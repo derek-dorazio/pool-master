@@ -1,5 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import type { ProviderSyncKind, ReleaseCheckKey } from '@poolmaster/shared/domain';
+import type { ProviderSyncKind } from '@poolmaster/shared/domain';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { plural } from '@/lib/plural';
 
@@ -17,18 +17,6 @@ export function overdueLateness(expectedEndAt: string, now: Date): string {
 export function syncFailedText(kind: ProviderSyncKind): string {
   return `${enumLabel('ProviderSyncKind', kind)} sync failed`;
 }
-
-/** Each ready check that can hold an automatic release, as a short phrase. */
-export const RELEASE_CHECK_LABELS: Record<ReleaseCheckKey, string> = {
-  NOT_STARTED: 'Not started',
-  ROUNDS_SCHEDULED: 'Rounds scheduled',
-  FIELD_LOADED: 'Field loaded',
-  TIERS_ASSIGNED: 'Every participant in a tier',
-  TIERS_FILLED: 'No empty tier',
-  PRICES_ASSIGNED: 'Prices made',
-  BRACKET_COMPLETE: 'Bracket complete',
-  CONTEST_SETUPS_ON: 'Contest template on',
-};
 
 /** The header's count line: how many sports, and how many of the sport leagues are on. */
 export function sportsCountLine(overviews: readonly SportLeagueOverviewDto[]): string {

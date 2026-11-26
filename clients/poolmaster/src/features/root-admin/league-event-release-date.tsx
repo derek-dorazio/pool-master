@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { AutoReleaseCheckOutcome, SportEventReleaseAtKind } from '@poolmaster/shared/domain';
 import {
   DetailsPeek,
@@ -8,7 +9,6 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import type { SportLeagueEventOverviewDto } from '@/lib/api';
-import { RELEASE_CHECK_LABELS } from './sport-league-overview-text';
 
 /** A Release date cell: an actual date plainly, a planned one grey with its latest check on hover. */
 export function LeagueEventReleaseDate({ event }: { event: SportLeagueEventOverviewDto }) {
@@ -28,7 +28,7 @@ export function LeagueEventReleaseDate({ event }: { event: SportLeagueEventOverv
     >
       <SectionRows>
         <SectionRow
-          facts={held ? `${check.failedChecks.map((key) => RELEASE_CHECK_LABELS[key]).join(', ')} failed` : 'Every check passed'}
+          facts={held ? `${check.failedChecks.map((key) => enumLabel('ReleaseCheckKey', key)).join(', ')} failed` : 'Every check passed'}
           name={`Last checked ${formatDateTimeDisplay(check.checkedAt, preferences)}`}
         />
       </SectionRows>

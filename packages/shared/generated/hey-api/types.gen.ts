@@ -1280,6 +1280,17 @@ export type PlanEntitlementsDto = {
 };
 
 /**
+ * One group of plan features (#2110): the plan pages list a group's features under its name, or count them on one line.
+ */
+export type PlanFeatureGroupDto = {
+    group: 'EMAILS' | 'CHAMPIONSHIPS' | 'HISTORY';
+    /**
+     * The features in the group, in `PlanFeatureOrder` (A to Z by their names).
+     */
+    features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+};
+
+/**
  * What each league plan allows, which plan new leagues are gifted and for how long, and what expanding a contest costs on each plan.
  */
 export type LeaguePlanListResponse = {
@@ -1312,6 +1323,16 @@ export type LeaguePlanListResponse = {
          * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
          */
         commissionerSelectable: boolean;
+    }>;
+    /**
+     * Every feature group that has features, in `PlanFeatureGroupOrder` (emails, championships, history): which group each feature is in, so the app never keeps that list itself.
+     */
+    featureGroups: Array<{
+        group: 'EMAILS' | 'CHAMPIONSHIPS' | 'HISTORY';
+        /**
+         * The features in the group, in `PlanFeatureOrder` (A to Z by their names).
+         */
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
     }>;
     /**
      * How many months of Premium every new league is gifted from signup (#986), before it moves to Free.
@@ -7434,7 +7455,7 @@ export type SportEventRoundMatchDto = {
         weekNumber: number | null;
     };
     /**
-     * Unique within the event: the bracket slot and the display order.
+     * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
      */
     matchNumber: number;
     /**
@@ -7533,7 +7554,7 @@ export type SportEventRoundMatchDto = {
  */
 export type SportEventBracketResponse = {
     /**
-     * Every match of the event in match-number order; empty until the bracket is loaded.
+     * Every match of the event in round order, then match-number order within each round; empty until the bracket is loaded.
      */
     matches: Array<{
         id: string;
@@ -7564,7 +7585,7 @@ export type SportEventBracketResponse = {
             weekNumber: number | null;
         };
         /**
-         * Unique within the event: the bracket slot and the display order.
+         * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
          */
         matchNumber: number;
         /**
@@ -7695,7 +7716,7 @@ export type SportEventRoundMatchResponse = {
             weekNumber: number | null;
         };
         /**
-         * Unique within the event: the bracket slot and the display order.
+         * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
          */
         matchNumber: number;
         /**
@@ -7796,13 +7817,13 @@ export type SportEventRoundMatchResponse = {
 export type LoadSportEventBracketRequest = {
     matches: Array<{
         /**
-         * Unique within the bracket: the slot and the display order.
-         */
-        matchNumber: number;
-        /**
          * A round the event has.
          */
         roundNumber: number;
+        /**
+         * Unique within its round (#2161): the match's place in the round and its display order.
+         */
+        matchNumber: number;
         /**
          * A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet).
          */
@@ -7818,7 +7839,11 @@ export type LoadSportEventBracketRequest = {
          */
         advancesTo: {
             /**
-             * A match of this bracket in a later round.
+             * A later round of this bracket.
+             */
+            roundNumber: number;
+            /**
+             * A match of that round.
              */
             matchNumber: number;
             /**
@@ -7915,7 +7940,7 @@ export type RecordSportEventMatchPeriodScoreRequest = {
  */
 export type RoundMatchupDto = {
     /**
-     * A match of the round.
+     * A match of the round, numbered within it.
      */
     matchNumber: number;
     /**
@@ -7937,7 +7962,7 @@ export type SportEventRoundMatchupsResponse = {
      */
     matches: Array<{
         /**
-         * A match of the round.
+         * A match of the round, numbered within it.
          */
         matchNumber: number;
         /**
@@ -7960,7 +7985,7 @@ export type SetSportEventRoundMatchupsRequest = {
      */
     matches: Array<{
         /**
-         * A match of the round.
+         * A match of the round, numbered within it.
          */
         matchNumber: number;
         /**
@@ -17641,6 +17666,9 @@ export type GamePicksResponse = {
      */
     games: Array<{
         sportEventRoundMatchId: string;
+        /**
+         * The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together.
+         */
         matchNumber: number;
         roundNumber: number;
         /**
@@ -17775,6 +17803,10 @@ export type GamePicksResponse = {
              * What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored.
              */
             points: number | null;
+            /**
+             * In a survivor pool, the pick's week as the entry's season decides it (#1992): SURVIVED when its team won or its game was cancelled; after a loss or a tie, LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry's last; PENDING while the game is unplayed. Null in the other pools, before the week starts, and for a week after the entry went out.
+             */
+            survivorOutcome: 'SURVIVED' | 'LIFE_LOST' | 'ELIMINATED' | 'PENDING' | null;
         } | null;
     }>;
 };
@@ -18008,6 +18040,9 @@ export type GamePickPreviewResponse = {
      */
     games: Array<{
         sportEventRoundMatchId: string;
+        /**
+         * The game's number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together.
+         */
         matchNumber: number;
         roundNumber: number;
         /**
@@ -23289,7 +23324,7 @@ export type SquaresBoardResponse = {
             weekNumber: number | null;
         };
         /**
-         * Unique within the event: the bracket slot and the display order.
+         * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
          */
         matchNumber: number;
         /**
@@ -30668,7 +30703,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -30821,7 +30856,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -30909,7 +30944,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -37176,10 +37211,11 @@ export type UpdateEventBracketMatchData = {
     body: UpdateSportEventRoundMatchRequest;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}';
 };
 
 export type UpdateEventBracketMatchErrors = {
@@ -37224,10 +37260,11 @@ export type RecordEventMatchResultData = {
     body: RecordSportEventRoundMatchResultRequest;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/result';
 };
 
 export type RecordEventMatchResultErrors = {
@@ -37272,11 +37309,12 @@ export type RecordEventMatchPeriodScoreData = {
     body: RecordSportEventMatchPeriodScoreRequest;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
         periodNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/periods/{periodNumber}';
 };
 
 export type RecordEventMatchPeriodScoreErrors = {
@@ -37321,10 +37359,11 @@ export type CancelEventMatchData = {
     body?: never;
     path: {
         eventId: string;
+        roundNumber: number;
         matchNumber: number;
     };
     query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel';
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matches/{matchNumber}/cancel';
 };
 
 export type CancelEventMatchErrors = {

@@ -20,7 +20,7 @@ import type { DomainEventType, SportEventFieldSynced } from '../domain-events/do
 import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 
 const ProviderScheduledGameSchema = z.object({
-  externalGameId: z.string().min(1),
+  games: z.array(z.object({ providerGameId: z.string().min(1), gameNumber: z.number().int().min(1) })).min(1),
   roundNumber: z.number().int(),
   homeTeamExternalId: z.string().min(1),
   awayTeamExternalId: z.string().min(1),
@@ -29,13 +29,13 @@ const ProviderScheduledGameSchema = z.object({
 });
 
 const ProviderBracketMatchSchema = z.object({
-  matchNumber: z.number().int(),
   roundNumber: z.number().int(),
+  matchNumber: z.number().int(),
   homeTeamExternalId: z.string().min(1).nullable(),
   awayTeamExternalId: z.string().min(1).nullable(),
   isNeutralSite: z.boolean(),
   scheduledAt: z.iso.datetime().nullable(),
-  advancesTo: z.object({ matchNumber: z.number().int(), side: z.enum(MatchSide) }).nullable(),
+  advancesTo: z.object({ roundNumber: z.number().int(), matchNumber: z.number().int(), side: z.enum(MatchSide) }).nullable(),
   regionLabel: z.string().nullable(),
 });
 

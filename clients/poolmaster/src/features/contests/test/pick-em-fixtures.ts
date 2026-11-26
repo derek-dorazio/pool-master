@@ -68,6 +68,7 @@ export function weekPick(picked: Team, overrides: Partial<NonNullable<Game['pick
     pickedAt: '2099-09-01T12:00:00.000Z',
     outcome: 'PENDING',
     points: null,
+    survivorOutcome: null,
     ...overrides,
   };
 }
@@ -81,6 +82,7 @@ export function weekTiePick(overrides: Partial<NonNullable<Game['pick']>> = {}):
     pickedAt: '2099-09-01T12:00:00.000Z',
     outcome: 'PENDING',
     points: null,
+    survivorOutcome: null,
     ...overrides,
   };
 }
@@ -283,8 +285,9 @@ export function playoffSurvivorFixture(overrides: Partial<GamePicksResponse> = {
   const [, billsAtChiefs] = week1Games();
   const games: Game[] = [
     { ...billsAtChiefs, matchNumber: 1, sportEventRoundMatchId: 'match-1', status: 'COMPLETED', locked: true, revealed: true, pick: weekPick(NFL_TEAMS.bills, { outcome: 'CORRECT' }) },
-    game(2, WEEK_2_START, NFL_TEAMS.bills, NFL_TEAMS.eagles, { roundNumber: 2 }),
-    game(3, WEEK_2_START, NFL_TEAMS.bears, NFL_TEAMS.packers, { roundNumber: 2 }),
+    // Round 2 numbers its games from 1 again (#2161).
+    game(1, WEEK_2_START, NFL_TEAMS.bills, NFL_TEAMS.eagles, { roundNumber: 2, sportEventRoundMatchId: 'match-2' }),
+    game(2, WEEK_2_START, NFL_TEAMS.bears, NFL_TEAMS.packers, { roundNumber: 2, sportEventRoundMatchId: 'match-3' }),
   ];
   return survivorWeekFixture({
     sportEventId: 'playoffs',

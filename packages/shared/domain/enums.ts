@@ -510,6 +510,23 @@ export const RaceResultChangeOrder = explicitOrder<RaceResultChange>({
   [RaceResultChange.UNCHANGED]: 2,
 });
 
+/** What applying one row of a golf round-score upload would do to the golfer's stored round. */
+export const GolfRoundScoreChange = {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  UNCHANGED: 'UNCHANGED',
+  /** The row has no strokes, so applying stores nothing for it. */
+  SKIPPED: 'SKIPPED',
+} as const;
+export type GolfRoundScoreChange = (typeof GolfRoundScoreChange)[keyof typeof GolfRoundScoreChange];
+/** The order the values are declared in. */
+export const GolfRoundScoreChangeOrder = explicitOrder<GolfRoundScoreChange>({
+  [GolfRoundScoreChange.CREATE]: 0,
+  [GolfRoundScoreChange.UPDATE]: 1,
+  [GolfRoundScoreChange.UNCHANGED]: 2,
+  [GolfRoundScoreChange.SKIPPED]: 3,
+});
+
 /**
  * How an entry picks its lineup. Each value has a selection engine.
  *
@@ -801,6 +818,41 @@ export const AutoReleaseCheckOutcomeOrder = explicitOrder<AutoReleaseCheckOutcom
 });
 
 /**
+ * Which ready check a DRAFT sport event must pass before it is released for contests (#1823):
+ * each is passed or failed on the value it carries (`release-checks.ts`).
+ */
+export const ReleaseCheckKey = {
+  /** Its start is still ahead: a started event can no longer be released. Value: the start. */
+  NOT_STARTED: 'NOT_STARTED',
+  /** Its rounds are scheduled. Value: how many rounds it has. */
+  ROUNDS_SCHEDULED: 'ROUNDS_SCHEDULED',
+  /** Its field is loaded. Value: how many participants are in it. */
+  FIELD_LOADED: 'FIELD_LOADED',
+  /** Every active field participant is in a tier. Value: how many are not. */
+  TIERS_ASSIGNED: 'TIERS_ASSIGNED',
+  /** No tier is empty: no entry could pick from one. Value: the empty tiers' labels. */
+  TIERS_FILLED: 'TIERS_FILLED',
+  /** Prices are assigned and every active field participant has one. Value: how many have none, or null before prices are assigned. */
+  PRICES_ASSIGNED: 'PRICES_ASSIGNED',
+  /** Its bracket is complete. Only an event played as matches has it. Value: what is missing, in words. */
+  BRACKET_COMPLETE: 'BRACKET_COMPLETE',
+  /** Its sport league offers at least one active contest setup, so a contest can be made on it. Value: how many. */
+  CONTEST_SETUPS_ON: 'CONTEST_SETUPS_ON',
+} as const;
+export type ReleaseCheckKey = (typeof ReleaseCheckKey)[keyof typeof ReleaseCheckKey];
+/** Check order: the order the checks are judged and listed in. */
+export const ReleaseCheckKeyOrder = explicitOrder<ReleaseCheckKey>({
+  [ReleaseCheckKey.NOT_STARTED]: 0,
+  [ReleaseCheckKey.ROUNDS_SCHEDULED]: 1,
+  [ReleaseCheckKey.FIELD_LOADED]: 2,
+  [ReleaseCheckKey.TIERS_ASSIGNED]: 3,
+  [ReleaseCheckKey.TIERS_FILLED]: 4,
+  [ReleaseCheckKey.PRICES_ASSIGNED]: 5,
+  [ReleaseCheckKey.BRACKET_COMPLETE]: 6,
+  [ReleaseCheckKey.CONTEST_SETUPS_ON]: 7,
+});
+
+/**
  * A sport league's sync health on the root admin's Sports page (#1847), from the latest finished
  * run of each of its syncs: its event list, and its events' fields and scores.
  */
@@ -993,6 +1045,26 @@ export const ProviderSyncFindingKind = {
    * Subject: league, event and Provider; the next field follow-up that orders the field resolves it.
    */
   FIELD_HAS_NO_ORDER: 'FIELD_HAS_NO_ORDER',
+  /**
+   * A provider's webhook named a game id no Game is mapped to (#2007): nothing is synced for it,
+   * since a notification routes only to the Game its id is mapped to. WARNING; a schedule sync
+   * that maps the id, or a game the provider dropped, leaves it to resolve by hand. Subject:
+   * league, Provider and the provider's game id.
+   */
+  GAME_UNKNOWN: 'GAME_UNKNOWN',
+  /**
+   * The provider re-issued a game's id (#2007): a game with a new id was placed by its match's
+   * teams and its game number at a Game mapped to an old id the feed no longer sends. The mapping
+   * moved to the new id. WARNING. Subject: league, event, Provider and the new id.
+   */
+  GAME_ID_REISSUED: 'GAME_ID_REISSUED',
+  /**
+   * The provider moved a game to another event (#2007), such as a game moved to another week: the
+   * old Game is kept with its picks, marked moved to the Game the game is played at now, and the
+   * mapping moved with it. WARNING until picks on the old Game are voided (#2016). Subject:
+   * league, the event it moved to, Provider and the provider's game id.
+   */
+  GAME_MOVED: 'GAME_MOVED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
@@ -1478,6 +1550,21 @@ export const ValuationSourceOrder = explicitOrder<ValuationSource>({
   [ValuationSource.MANUAL]: 3,
 });
 
+/**
+ * Who last set a field row's tier or price, as the root admin's Field grid shows it: automatic
+ * tiering and pricing, or a root admin's correction (read from the row's ValuationSource).
+ */
+export const FieldValueSetBy = {
+  AUTO: 'AUTO',
+  MANUAL: 'MANUAL',
+} as const;
+export type FieldValueSetBy = (typeof FieldValueSetBy)[keyof typeof FieldValueSetBy];
+/** Auto first, then the corrections. */
+export const FieldValueSetByOrder = explicitOrder<FieldValueSetBy>({
+  [FieldValueSetBy.AUTO]: 0,
+  [FieldValueSetBy.MANUAL]: 1,
+});
+
 export const GolfCategoryKey = {
   SENIOR: 'SENIOR',
   ROOKIE: 'ROOKIE',
@@ -1849,8 +1936,12 @@ export const PlanFeatureGroup = {
   HISTORY: 'HISTORY',
 } as const;
 export type PlanFeatureGroup = (typeof PlanFeatureGroup)[keyof typeof PlanFeatureGroup];
-/** No natural order: A to Z by its display strings. */
-export const PlanFeatureGroupOrder = alphabeticalOrder('PlanFeatureGroup');
+/** The order the Plans pages list the groups in (#2110): emails first, then championships, then history. */
+export const PlanFeatureGroupOrder = explicitOrder<PlanFeatureGroup>({
+  [PlanFeatureGroup.EMAILS]: 0,
+  [PlanFeatureGroup.CHAMPIONSHIPS]: 1,
+  [PlanFeatureGroup.HISTORY]: 2,
+});
 
 export const PLAN_FEATURE_GROUP: Readonly<Record<PlanFeature, PlanFeatureGroup>> = {
   EMAIL_CONTEST_OPENED: PlanFeatureGroup.EMAILS,
@@ -1948,6 +2039,24 @@ export const EmailTemplateKey = {
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 /** No natural order: A to Z by its display strings. */
 export const EmailTemplateKeyOrder = alphabeticalOrder('EmailTemplateKey');
+
+/** Who a system email goes to, as the root admin's Notifications page lists it. */
+export const EmailAudience = {
+  MEMBERS: 'MEMBERS',
+  COMMISSIONERS: 'COMMISSIONERS',
+  ROOT_ADMINS: 'ROOT_ADMINS',
+  PEOPLE_INVITED: 'PEOPLE_INVITED',
+  ACCOUNT_HOLDERS: 'ACCOUNT_HOLDERS',
+} as const;
+export type EmailAudience = (typeof EmailAudience)[keyof typeof EmailAudience];
+/** The widest group first, then the people who run leagues and the site. */
+export const EmailAudienceOrder = explicitOrder<EmailAudience>({
+  [EmailAudience.ACCOUNT_HOLDERS]: 0,
+  [EmailAudience.MEMBERS]: 1,
+  [EmailAudience.PEOPLE_INVITED]: 2,
+  [EmailAudience.COMMISSIONERS]: 3,
+  [EmailAudience.ROOT_ADMINS]: 4,
+});
 
 /**
  * The emails EMAIL_CONFIG has a switch for. Account emails (the password reset and the

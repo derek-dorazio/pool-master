@@ -38,6 +38,10 @@ import {
   PredictedResult,
   SelectionType,
   Sport,
+  isAtPlace,
+  matchPlaceOf,
+  describeMatchPlace,
+  type MatchPlace,
 } from '@poolmaster/shared/domain';
 import {
   BracketLeaderboardResponseSchema,
@@ -74,6 +78,8 @@ import type { TestRoundSlot } from '../support/event-edition';
 //
 // Every date is fixed in 2099, so the server's real clock never reaches the event: the admin
 // starts and completes it by status, which is what locks, reveals and settles the picks.
+
+const at = (roundNumber: number, matchNumber: number): MatchPlace => ({ roundNumber, matchNumber });
 
 const RUN = `bracket-pool-${Date.now()}`;
 
@@ -118,7 +124,7 @@ interface BracketMatchInput {
   roundNumber: number;
   home: number | null;
   away: number | null;
-  advancesTo: { matchNumber: number; side: MatchSide } | null;
+  advancesTo: (MatchPlace & { side: MatchSide }) | null;
   regionLabel?: string;
   /** When the game tips off; with none it is timed at the event's start. */
   scheduledDate?: string;
@@ -126,7 +132,7 @@ interface BracketMatchInput {
 
 /**
  * A released knockout of teams named `Seed <n>`, seeded n, on a new sport league of its own: the
- * admin's client, the event and its field rows by seed, and its games by match number.
+ * admin's client, the event and its field rows by seed, and its games by round and number.
  */
 async function releasedKnockout(options: {
   label: string;
@@ -197,7 +203,7 @@ async function releasedKnockout(options: {
   expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
 
   const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
-  const gameId = (matchNumber: number) => expectDefined(bracket.find((match) => match.matchNumber === matchNumber), `game ${matchNumber}`).id;
+  const gameId = (place: MatchPlace) => expectDefined(bracket.find((match) => isAtPlace(match, place)), describeMatchPlace(place)).id;
   return { admin: a, eventId, row, seedOf, gameId };
 }
 
@@ -217,11 +223,11 @@ describe('SDK Functional: a bracket pool (#721)', () => {
   it('fills in a 16-team bracket before tip-off, scores it round by round as max possible points shrink, and settles it with the tiebreaker deciding a tie on points', async () => {
     // --- A released 16-team, four-round knockout -----------------------------------------------
     // Round 1 pairs 1-16, 8-9, 5-12, 4-13, 6-11, 3-14, 7-10 and 2-15; each pair of games feeds one
-    // game of the next round, down to the final, game 15.
+    // game of the next round, down to the final, round 4's game 1. Each round numbers its games from 1 (#2161).
     const firstRound: Array<[number, number]> = [[1, 16], [8, 9], [5, 12], [4, 13], [6, 11], [3, 14], [7, 10], [2, 15]];
-    const later = (matchNumber: number, roundNumber: number, next: number | null): BracketMatchInput => ({
+    const later = (roundNumber: number, matchNumber: number, last = false): BracketMatchInput => ({
       matchNumber, roundNumber, home: null, away: null,
-      advancesTo: next === null ? null : { matchNumber: next, side: matchNumber % 2 === 1 ? MatchSide.HOME : MatchSide.AWAY },
+      advancesTo: last ? null : { roundNumber: roundNumber + 1, matchNumber: Math.ceil(matchNumber / 2), side: matchNumber % 2 === 1 ? MatchSide.HOME : MatchSide.AWAY },
     });
     const { admin: a, eventId, row, gameId } = await releasedKnockout({
       label: 'Sixteen',
@@ -231,11 +237,11 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       matches: [
         ...firstRound.map(([home, away], index): BracketMatchInput => ({
           matchNumber: index + 1, roundNumber: 1, home, away,
-          advancesTo: { matchNumber: 9 + Math.floor(index / 2), side: index % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY },
+          advancesTo: { roundNumber: 2, matchNumber: 1 + Math.floor(index / 2), side: index % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY },
         })),
-        later(9, 2, 13), later(10, 2, 13), later(11, 2, 14), later(12, 2, 14),
-        later(13, 3, 15), later(14, 3, 15),
-        later(15, 4, null),
+        later(2, 1), later(2, 2), later(2, 3), later(2, 4),
+        later(3, 1), later(3, 2),
+        later(4, 1, true),
       ],
     });
 
@@ -268,31 +274,34 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const entryOf = async (client: Client) => expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
     const entries = { alice: await entryOf(alice.client), bob: await entryOf(bob.client), cara: await entryOf(cara.client) };
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
-    const pick = (matchNumber: number, seed: number) => ({ sportEventRoundMatchId: gameId(matchNumber), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
-    const picksOf = (winners: readonly number[]) => winners.map((seed, index) => pick(index + 1, seed));
-    const predictedSeeds = (view: { games: Array<{ matchNumber: number; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, matchNumber: number) => {
-      const game = expectDefined(view.games.find((each) => each.matchNumber === matchNumber));
+    const pick = (place: MatchPlace, seed: number) => ({ sportEventRoundMatchId: gameId(place), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
+    // The bracket's 15 games in bracket order: round 1's eight, round 2's four, the semi-finals and the final.
+    const BRACKET_ORDER = [1, 2, 3, 4, 5, 6, 7, 8].map((matchNumber) => at(1, matchNumber))
+      .concat([1, 2, 3, 4].map((matchNumber) => at(2, matchNumber)), [at(3, 1), at(3, 2), at(4, 1)]);
+    const picksOf = (winners: readonly number[]) => winners.map((seed, index) => pick(expectDefined(BRACKET_ORDER[index]), seed));
+    const predictedSeeds = (view: { games: Array<MatchPlace & { predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, place: MatchPlace) => {
+      const game = expectDefined(view.games.find((each) => isAtPlace(each, place)));
       return [game.predictedHome?.sportEventParticipantId ?? null, game.predictedAway?.sportEventParticipantId ?? null];
     };
 
-    // The winners of games 1 to 15, in game order. Chalk: the better seed wins every game.
+    // The winners of the 15 games, in bracket order. Chalk: the better seed wins every game.
     const CHALK = [1, 8, 5, 4, 6, 3, 7, 2, 1, 4, 3, 2, 1, 2, 1];
     // Cara: 9, 12, 11 and 10 win in round 1, 12 reaches the semi-final, and 2 wins it all.
     const CARA = [1, 9, 12, 4, 11, 3, 10, 2, 1, 12, 3, 2, 12, 2, 2];
 
     const fresh = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(entries.alice) })).data);
     expect(fresh).toMatchObject({ selectionType: SelectionType.BRACKET, mode: null, gameCount: 15, pickedCount: 0, tiebreakerValue: null, canSubmit: false });
-    expect(predictedSeeds(fresh, 1)).toEqual([row(1), row(16)]);
+    expect(predictedSeeds(fresh, at(1, 1))).toEqual([row(1), row(16)]);
     // Each team carries its seed, which the bracket shows beside its name.
-    expect(fresh.games.find((game) => game.matchNumber === 1)?.predictedHome?.seedNumber).toBe(1);
-    expect(predictedSeeds(fresh, 9)).toEqual([null, null]);
+    expect(fresh.games.find((game) => isAtPlace(game, at(1, 1)))?.predictedHome?.seedNumber).toBe(1);
+    expect(predictedSeeds(fresh, at(2, 1))).toEqual([null, null]);
 
     // --- Alice fills in the whole bracket in one request, with her tiebreaker ------------------
     const aliceSaved = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({
       client: alice.client, path: path(entries.alice), body: { picks: picksOf(CHALK), tiebreakerValue: 140 },
     })).data);
     expect(aliceSaved).toMatchObject({ pickedCount: 15, tiebreakerValue: 140, canSubmit: true });
-    expect(predictedSeeds(aliceSaved, 15)).toEqual([row(1), row(2)]);
+    expect(predictedSeeds(aliceSaved, at(4, 1))).toEqual([row(1), row(2)]);
     expect(expectMatchesSchema(GamePicksResponseSchema, (await submitGamePicks({ client: alice.client, path: path(entries.alice) })).data).status)
       .toBe(ContestEntryStatus.SUBMITTED);
 
@@ -300,20 +309,20 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     expect((await saveGamePicks({ client: bob.client, path: path(entries.bob), body: { picks: picksOf(CHALK) } })).data?.pickedCount).toBe(15);
     // A later pick must name a team the entry picked to get there.
     expectFunctionalError(
-      await saveGamePicks({ client: bob.client, path: path(entries.bob), body: { picks: [pick(9, 16)] } }),
+      await saveGamePicks({ client: bob.client, path: path(entries.bob), body: { picks: [pick(at(2, 1), 16)] } }),
       { status: 400, code: 'PREDICTION_TEAM_NOT_IN_GAME' },
     );
     // Picking 16 over 1 in game 1 strands his 1 seed in game 9, the semi-final and the final.
-    const upset = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({ client: bob.client, path: path(entries.bob), body: { picks: [pick(1, 16)] } })).data);
+    const upset = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({ client: bob.client, path: path(entries.bob), body: { picks: [pick(at(1, 1), 16)] } })).data);
     expect(upset.pickedCount).toBe(12);
-    expect(upset.games.filter((game) => game.pick === null).map((game) => game.matchNumber)).toEqual([9, 13, 15]);
-    expect(predictedSeeds(upset, 9)).toEqual([row(16), row(8)]);
-    expect(predictedSeeds(upset, 15)).toEqual([null, row(2)]);
+    expect(upset.games.filter((game) => game.pick === null).map(matchPlaceOf)).toEqual([at(2, 1), at(3, 1), at(4, 1)]);
+    expect(predictedSeeds(upset, at(2, 1))).toEqual([row(16), row(8)]);
+    expect(predictedSeeds(upset, at(4, 1))).toEqual([null, row(2)]);
     // Clearing game 4 clears his 4 seed in game 10 too.
-    const clearedView = expectMatchesSchema(GamePicksResponseSchema, (await clearGamePick({ client: bob.client, path: { ...path(entries.bob), sportEventRoundMatchId: gameId(4) } })).data);
-    expect(clearedView.games.filter((game) => game.pick === null).map((game) => game.matchNumber)).toEqual([4, 9, 10, 13, 15]);
+    const clearedView = expectMatchesSchema(GamePicksResponseSchema, (await clearGamePick({ client: bob.client, path: { ...path(entries.bob), sportEventRoundMatchId: gameId(at(1, 4)) } })).data);
+    expect(clearedView.games.filter((game) => game.pick === null).map(matchPlaceOf)).toEqual([at(1, 4), at(2, 1), at(2, 2), at(3, 1), at(4, 1)]);
     // He goes back to chalk, but submits without a tiebreaker first.
-    await saveGamePicks({ client: bob.client, path: path(entries.bob), body: { picks: [pick(1, 1), pick(4, 4), pick(9, 1), pick(10, 4), pick(13, 1), pick(15, 1)] } });
+    await saveGamePicks({ client: bob.client, path: path(entries.bob), body: { picks: [pick(at(1, 1), 1), pick(at(1, 4), 4), pick(at(2, 1), 1), pick(at(2, 2), 4), pick(at(3, 1), 1), pick(at(4, 1), 1)] } });
     expectFunctionalError(await submitGamePicks({ client: bob.client, path: path(entries.bob) }), { status: 409, code: 'PREDICTION_TIEBREAKER_MISSING' });
     // A prediction contest's tiebreaker rides with its picks, not the entry update.
     expectFunctionalError(
@@ -326,13 +335,13 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     // --- Cara picks upsets and submits; an incomplete bracket cannot be submitted ---------------
     await saveGamePicks({ client: cara.client, path: path(entries.cara), body: { picks: picksOf(CARA).slice(0, 14), tiebreakerValue: 150 } });
     expectFunctionalError(await submitGamePicks({ client: cara.client, path: path(entries.cara) }), { status: 409, code: 'PREDICTION_WEEK_INCOMPLETE' });
-    await saveGamePicks({ client: cara.client, path: path(entries.cara), body: { picks: [pick(15, 2)] } });
+    await saveGamePicks({ client: cara.client, path: path(entries.cara), body: { picks: [pick(at(4, 1), 2)] } });
     expect((await submitGamePicks({ client: cara.client, path: path(entries.cara) })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
 
     // Before tip-off nobody sees another team's picks, and there is no leaderboard yet.
     const hidden = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: bob.client, path: path(entries.alice) })).data);
     expect(hidden).toMatchObject({ ownEntry: false, pickedCount: 0, tiebreakerValue: null, points: null });
-    expect(predictedSeeds(hidden, 9)).toEqual([null, null]);
+    expect(predictedSeeds(hidden, at(2, 1))).toEqual([null, null]);
     expectFunctionalError(await getBracketLeaderboard({ client: bob.client, path: { contestId } }), { status: 400, code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN' });
     expectFunctionalError(await getContestLeaderboard({ client: bob.client, path: { contestId } }), { status: 400, code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN' });
 
@@ -340,7 +349,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
     expect(expectDefined((await getContest({ client: bob.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.ACTIVE);
     expectFunctionalError(
-      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(15, 2)] } }),
+      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(at(4, 1), 2)] } }),
       { status: 409, code: 'PREDICTION_GAME_STARTED' },
     );
     expectFunctionalError(
@@ -349,7 +358,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     );
     const revealed = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: bob.client, path: path(entries.alice) })).data);
     expect(revealed).toMatchObject({ pickedCount: 15, tiebreakerValue: 140, points: 0, maxPossiblePoints: 8 * 1 + 4 * 2 + 2 * 4 + 8 });
-    expect(predictedSeeds(revealed, 15)).toEqual([row(1), row(2)]);
+    expect(predictedSeeds(revealed, at(4, 1))).toEqual([row(1), row(2)]);
     // A bracket has its own leaderboard: the roster one refuses it.
     expectFunctionalError(await getContestLeaderboard({ client: bob.client, path: { contestId } }), { status: 400, code: 'CONTEST_FORMAT_MISMATCH' });
 
@@ -365,19 +374,19 @@ describe('SDK Functional: a bracket pool (#721)', () => {
 
     // --- The results go in, round by round ------------------------------------------------------
     /** The admin enters a game's result: the team seeded `seed` wins it, by `winnerScore` to `loserScore`. */
-    const win = async (matchNumber: number, seed: number, winnerScore = 70, loserScore = 60) => {
+    const win = async (place: MatchPlace, seed: number, winnerScore = 70, loserScore = 60) => {
       const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
-      const game = expectDefined(bracket.find((match) => match.matchNumber === matchNumber));
+      const game = expectDefined(bracket.find((match) => isAtPlace(match, place)));
       const winnerSide = game.homeSportEventParticipantId === row(seed) ? MatchSide.HOME : MatchSide.AWAY;
       expect([game.homeSportEventParticipantId, game.awaySportEventParticipantId]).toContain(row(seed));
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
-      const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
+      const result = await recordEventMatchResult({ client: a, path: { eventId, ...place }, body: { winnerSide, homeScore, awayScore } });
       expect([result.error, result.response?.status]).toEqual([undefined, 200]);
       // A test event's result stands in for the feed's (#2074).
-      expect(result.data?.matches.find((match) => match.matchNumber === matchNumber)?.resultSource).toBe(MatchResultSource.PROVIDER);
+      expect(result.data?.matches.find((match) => isAtPlace(match, place))?.resultSource).toBe(MatchResultSource.PROVIDER);
     };
     // Round 1: chalk, except 9 beats 8 in game 2.
-    for (const [matchNumber, seed] of [[1, 1], [2, 9], [3, 5], [4, 4], [5, 6], [6, 3], [7, 7], [8, 2]]) await win(matchNumber, seed);
+    for (const [place, seed] of [[at(1, 1), 1], [at(1, 2), 9], [at(1, 3), 5], [at(1, 4), 4], [at(1, 5), 6], [at(1, 6), 3], [at(1, 7), 7], [at(1, 8), 2]] as const) await win(place, seed);
     // Alice and Bob: 7 of 8, only the 8 seed lost. Cara: 5 of 8, and her 12 seed is out of games 10 and 13.
     expect(await board()).toEqual({
       [entries.alice]: ['T1', 7, 31],
@@ -385,20 +394,20 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       [entries.cara]: ['3', 5, 23],
     });
     const caraView = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: cara.client, path: path(entries.cara) })).data);
-    const outcomeOf = (matchNumber: number) => expectDefined(caraView.games.find((game) => game.matchNumber === matchNumber)).pick;
-    expect(outcomeOf(2)).toMatchObject({ outcome: PickOutcome.CORRECT, points: 1 });
-    expect(outcomeOf(3)).toMatchObject({ outcome: PickOutcome.BUSTED, points: 0 });
-    expect(outcomeOf(13)).toMatchObject({ outcome: PickOutcome.BUSTED, points: 0 });
-    expect(outcomeOf(15)).toMatchObject({ outcome: PickOutcome.PENDING, points: null });
+    const outcomeOf = (place: MatchPlace) => expectDefined(caraView.games.find((game) => isAtPlace(game, place))).pick;
+    expect(outcomeOf(at(1, 2))).toMatchObject({ outcome: PickOutcome.CORRECT, points: 1 });
+    expect(outcomeOf(at(1, 3))).toMatchObject({ outcome: PickOutcome.BUSTED, points: 0 });
+    expect(outcomeOf(at(3, 1))).toMatchObject({ outcome: PickOutcome.BUSTED, points: 0 });
+    expect(outcomeOf(at(4, 1))).toMatchObject({ outcome: PickOutcome.PENDING, points: null });
 
     // Round 2 and the semi-finals: chalk.
-    for (const [matchNumber, seed] of [[9, 1], [10, 4], [11, 3], [12, 2]]) await win(matchNumber, seed);
+    for (const [place, seed] of [[at(2, 1), 1], [at(2, 2), 4], [at(2, 3), 3], [at(2, 4), 2]] as const) await win(place, seed);
     expect(await board()).toEqual({
       [entries.alice]: ['T1', 15, 31],
       [entries.bob]: ['T1', 15, 31],
       [entries.cara]: ['3', 11, 23],
     });
-    for (const [matchNumber, seed] of [[13, 1], [14, 2]]) await win(matchNumber, seed);
+    for (const [place, seed] of [[at(3, 1), 1], [at(3, 2), 2]] as const) await win(place, seed);
     expect(await board()).toEqual({
       [entries.alice]: ['T1', 23, 31],
       [entries.bob]: ['T1', 23, 31],
@@ -407,7 +416,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     expect((await standings()).finalTotalPoints).toBeNull();
 
     // The final: 1 beats 2, 70 to 66, a total of 136. Alice guessed 140, Bob 120.
-    await win(15, 1, 70, 66);
+    await win(at(4, 1), 1, 70, 66);
     const decided = await standings();
     expect(decided.finalTotalPoints).toBe(136);
     expect(decided.entries.map((entry) => [entry.entryId, entry.displayPosition, entry.points, entry.maxPossiblePoints, entry.correctPickCount, entry.tiebreakerValue])).toEqual([
@@ -433,7 +442,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     ]);
     // A score correction after settlement moves the final's total to 130, which would level Alice
     // and Bob (both 10 away); the settled places stand.
-    await win(15, 1, 70, 60);
+    await win(at(4, 1), 1, 70, 60);
     const settled = await standings();
     expect(settled.finalTotalPoints).toBe(130);
     expect(settled.entries.map((entry) => [entry.entryId, entry.displayPosition, entry.points])).toEqual([
@@ -456,9 +465,9 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       roundSlots: [{ slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' }, { slotKind: 'FINAL' }],
       matches: [
         wildCard(1, 2, 7), wildCard(2, 3, 6), wildCard(3, 4, 5),
-        { matchNumber: 4, roundNumber: 2, home: 1, away: null, advancesTo: { matchNumber: 6, side: MatchSide.HOME }, regionLabel: 'AFC' },
-        { matchNumber: 5, roundNumber: 2, home: null, away: null, advancesTo: { matchNumber: 6, side: MatchSide.AWAY }, regionLabel: 'AFC' },
-        { matchNumber: 6, roundNumber: 3, home: null, away: null, advancesTo: null, regionLabel: 'AFC' },
+        { matchNumber: 1, roundNumber: 2, home: 1, away: null, advancesTo: { ...at(3, 1), side: MatchSide.HOME }, regionLabel: 'AFC' },
+        { matchNumber: 2, roundNumber: 2, home: null, away: null, advancesTo: { ...at(3, 1), side: MatchSide.AWAY }, regionLabel: 'AFC' },
+        { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, regionLabel: 'AFC' },
       ],
     });
     const { commissioner, league, bob } = await leagueOfThree('Reseed');
@@ -484,42 +493,42 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const aliceEntry = expectDefined((await enterContest({ client: commissioner.client, path: { contestId } })).data).entry.id;
     const bobEntry = expectDefined((await enterContest({ client: bob.client, path: { contestId } })).data).entry.id;
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
-    const pick = (matchNumber: number, seed: number) => ({ sportEventRoundMatchId: gameId(matchNumber), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
-    const divisional = (view: { games: Array<{ matchNumber: number; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }) =>
-      [4, 5].map((matchNumber) => {
-        const game = expectDefined(view.games.find((each) => each.matchNumber === matchNumber));
+    const pick = (place: MatchPlace, seed: number) => ({ sportEventRoundMatchId: gameId(place), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
+    const divisional = (view: { games: Array<MatchPlace & { predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }) =>
+      [at(2, 1), at(2, 2)].map((place) => {
+        const game = expectDefined(view.games.find((each) => isAtPlace(each, place)));
         return [seedOf(game.predictedHome?.sportEventParticipantId), seedOf(game.predictedAway?.sportEventParticipantId)];
       });
 
     // Alice has the 7 upsetting the 2, so her Divisional round is 1-7 and 3-5; she takes the 5 to the final.
     const aliceView = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({
-      client: commissioner.client, path: path(aliceEntry), body: { picks: [pick(1, 7), pick(2, 3), pick(3, 5), pick(4, 1), pick(5, 5), pick(6, 5)], tiebreakerValue: 41 },
+      client: commissioner.client, path: path(aliceEntry), body: { picks: [pick(at(1, 1), 7), pick(at(1, 2), 3), pick(at(1, 3), 5), pick(at(2, 1), 1), pick(at(2, 2), 5), pick(at(3, 1), 5)], tiebreakerValue: 41 },
     })).data);
     expect(divisional(aliceView)).toEqual([[1, 7], [3, 5]]);
-    // With the 2 through instead, the 5 is reseeded to visit the 1, so her picks of the 5 in game 5 and the final go.
-    const repaired = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({ client: commissioner.client, path: path(aliceEntry), body: { picks: [pick(1, 2)] } })).data);
+    // With the 2 through instead, the 5 is reseeded to visit the 1, so her picks of the 5 in the Divisional round's game 2 and the final go.
+    const repaired = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({ client: commissioner.client, path: path(aliceEntry), body: { picks: [pick(at(1, 1), 2)] } })).data);
     expect(divisional(repaired)).toEqual([[1, 5], [2, 3]]);
-    expect(repaired.games.filter((game) => game.pick === null).map((game) => game.matchNumber)).toEqual([5, 6]);
-    await saveGamePicks({ client: commissioner.client, path: path(aliceEntry), body: { picks: [pick(1, 7), pick(5, 5), pick(6, 5)] } });
+    expect(repaired.games.filter((game) => game.pick === null).map(matchPlaceOf)).toEqual([at(2, 2), at(3, 1)]);
+    await saveGamePicks({ client: commissioner.client, path: path(aliceEntry), body: { picks: [pick(at(1, 1), 7), pick(at(2, 2), 5), pick(at(3, 1), 5)] } });
     expect((await submitGamePicks({ client: commissioner.client, path: path(aliceEntry) })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
 
     // Bob picks every home team: 2, 3 and 4 through, the 1 and the 2 in the final, the 1 champion.
     await saveGamePicks({
-      client: bob.client, path: path(bobEntry), body: { picks: [pick(1, 2), pick(2, 3), pick(3, 4), pick(4, 1), pick(5, 2), pick(6, 1)], tiebreakerValue: 40 },
+      client: bob.client, path: path(bobEntry), body: { picks: [pick(at(1, 1), 2), pick(at(1, 2), 3), pick(at(1, 3), 4), pick(at(2, 1), 1), pick(at(2, 2), 2), pick(at(3, 1), 1)], tiebreakerValue: 40 },
     });
     expect((await submitGamePicks({ client: bob.client, path: path(bobEntry) })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
 
     // --- The playoff: Wild Card weekend, the admin's reseed, then the rest -----------------------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 1 }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } });
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 1) }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 2) }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(1, 3) }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
     const proposal = expectMatchesSchema(SportEventRoundMatchupsResponseSchema, (await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } })).data).matches;
     expect((await setEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 }, body: { matches: proposal } })).response?.status).toBe(200);
     // The 1 beats the 7; the 5 beats the 3; the 5 wins the final 23 to 20.
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 4 }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 14 } });
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 5 }, body: { winnerSide: MatchSide.AWAY, homeScore: 16, awayScore: 19 } });
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 6 }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(2, 1) }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 14 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(2, 2) }, body: { winnerSide: MatchSide.AWAY, homeScore: 16, awayScore: 19 } });
+    await recordEventMatchResult({ client: a, path: { eventId, ...at(3, 1) }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
 
     // Alice: all three Wild Card games (3), the 1 and the 5 in the Divisional round (4), the 5 champion (4).
     // Bob: only the 3 (1) and the 1 in the Divisional round (2); his 2 and his champion 1 are busted.
@@ -539,23 +548,23 @@ describe('SDK Functional: a bracket pool (#721)', () => {
   it('runs a second-chance bracket from round 2 while the knockout is under way: entered and picked until round 2 tips off, live at its first game, scored and settled on rounds 2 and 3 only', async () => {
     // --- An eight-team knockout whose first round is under way ----------------------------------
     // Round 1 pairs 1-8, 4-5, 2-7 and 3-6 at the event's start; round 2 tips off two days later
-    // (game 5 first) and the final, game 7, two days after that. Every date is in 2099, so the
+    // (its game 1 first) and the final, round 3's game 1, two days after that. Every date is in 2099, so the
     // server's clock never reaches round 2: a game's result is what starts the round for it.
     const ROUND_TWO_FIRST_GAME = '2099-03-21T16:00:00.000Z';
-    const link = (matchNumber: number, side: MatchSide) => ({ matchNumber, side });
+    const link = (place: MatchPlace, side: MatchSide) => ({ ...place, side });
     const { admin: a, eventId, row, gameId } = await releasedKnockout({
       label: 'SecondChance',
       seeds: [1, 2, 3, 4, 5, 6, 7, 8],
       rounds: 3,
       tierSize: 2,
       matches: [
-        { matchNumber: 1, roundNumber: 1, home: 1, away: 8, advancesTo: link(5, MatchSide.HOME) },
-        { matchNumber: 2, roundNumber: 1, home: 4, away: 5, advancesTo: link(5, MatchSide.AWAY) },
-        { matchNumber: 3, roundNumber: 1, home: 2, away: 7, advancesTo: link(6, MatchSide.HOME) },
-        { matchNumber: 4, roundNumber: 1, home: 3, away: 6, advancesTo: link(6, MatchSide.AWAY) },
-        { matchNumber: 5, roundNumber: 2, home: null, away: null, advancesTo: link(7, MatchSide.HOME), scheduledDate: ROUND_TWO_FIRST_GAME },
-        { matchNumber: 6, roundNumber: 2, home: null, away: null, advancesTo: link(7, MatchSide.AWAY), scheduledDate: '2099-03-21T19:00:00.000Z' },
-        { matchNumber: 7, roundNumber: 3, home: null, away: null, advancesTo: null, scheduledDate: '2099-03-23T20:00:00.000Z' },
+        { matchNumber: 1, roundNumber: 1, home: 1, away: 8, advancesTo: link(at(2, 1), MatchSide.HOME) },
+        { matchNumber: 2, roundNumber: 1, home: 4, away: 5, advancesTo: link(at(2, 1), MatchSide.AWAY) },
+        { matchNumber: 3, roundNumber: 1, home: 2, away: 7, advancesTo: link(at(2, 2), MatchSide.HOME) },
+        { matchNumber: 4, roundNumber: 1, home: 3, away: 6, advancesTo: link(at(2, 2), MatchSide.AWAY) },
+        { matchNumber: 1, roundNumber: 2, home: null, away: null, advancesTo: link(at(3, 1), MatchSide.HOME), scheduledDate: ROUND_TWO_FIRST_GAME },
+        { matchNumber: 2, roundNumber: 2, home: null, away: null, advancesTo: link(at(3, 1), MatchSide.AWAY), scheduledDate: '2099-03-21T19:00:00.000Z' },
+        { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, scheduledDate: '2099-03-23T20:00:00.000Z' },
       ],
     });
     const { commissioner, league, bob, cara } = await leagueOfThree('SecondChance');
@@ -572,12 +581,12 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS' as const, config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' as const } } },
       },
     });
-    const win = async (matchNumber: number, seed: number, winnerScore = 70, loserScore = 60) => {
-      const game = expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches.find((match) => match.matchNumber === matchNumber));
+    const win = async (place: MatchPlace, seed: number, winnerScore = 70, loserScore = 60) => {
+      const game = expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches.find((match) => isAtPlace(match, place)));
       const winnerSide = game.homeSportEventParticipantId === row(seed) ? MatchSide.HOME : MatchSide.AWAY;
       expect([game.homeSportEventParticipantId, game.awaySportEventParticipantId]).toContain(row(seed));
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
-      const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
+      const result = await recordEventMatchResult({ client: a, path: { eventId, ...place }, body: { winnerSide, homeScore, awayScore } });
       expect([result.error, result.response?.status]).toEqual([undefined, 200]);
     };
 
@@ -592,7 +601,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       { status: 422, code: 'CONTEST_EVENT_NOT_A_BRACKET' },
     );
     // Round 1: chalk, except 5 beats 4. Round 2 is now 1-5 and 2-3.
-    for (const [matchNumber, seed] of [[1, 1], [2, 5], [3, 2], [4, 3]]) await win(matchNumber, seed);
+    for (const [place, seed] of [[at(1, 1), 1], [at(1, 2), 5], [at(1, 3), 2], [at(1, 4), 3]] as const) await win(place, seed);
 
     // --- The second-chance bracket, made, opened and entered while the event is under way -------
     const contest = await createContest({ client: alice.client, path: { id: league.id }, body: contestBody(2) });
@@ -607,33 +616,33 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     };
     const entries = { alice: await entryOf(alice.client), bob: await entryOf(bob.client), cara: await entryOf(cara.client) };
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
-    const pick = (matchNumber: number, seed: number) => ({ sportEventRoundMatchId: gameId(matchNumber), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
-    const sides = (view: { games: Array<{ matchNumber: number; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, matchNumber: number) => {
-      const game = expectDefined(view.games.find((each) => each.matchNumber === matchNumber));
+    const pick = (place: MatchPlace, seed: number) => ({ sportEventRoundMatchId: gameId(place), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
+    const sides = (view: { games: Array<MatchPlace & { predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, place: MatchPlace) => {
+      const game = expectDefined(view.games.find((each) => isAtPlace(each, place)));
       return [game.predictedHome?.sportEventParticipantId ?? null, game.predictedAway?.sportEventParticipantId ?? null];
     };
 
     // Only round 2 and the final are picked; round 2 offers the teams the results put there.
     const fresh = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(entries.alice) })).data);
     expect(fresh).toMatchObject({ selectionType: SelectionType.BRACKET, gameCount: 3, pickedCount: 0, canSubmit: false });
-    expect(fresh.games.map((game) => [game.matchNumber, game.locked])).toEqual([[5, false], [6, false], [7, false]]);
-    expect(sides(fresh, 5)).toEqual([row(1), row(5)]);
-    expect(sides(fresh, 6)).toEqual([row(2), row(3)]);
+    expect(fresh.games.map((game) => [game.roundNumber, game.matchNumber, game.locked])).toEqual([[2, 1, false], [2, 2, false], [3, 1, false]]);
+    expect(sides(fresh, at(2, 1))).toEqual([row(1), row(5)]);
+    expect(sides(fresh, at(2, 2))).toEqual([row(2), row(3)]);
     expectFunctionalError(
-      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(1, 1)] } }),
+      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(at(1, 1), 1)] } }),
       { status: 404, code: 'PREDICTION_GAME_NOT_FOUND' },
     );
 
     // Alice: 1 and 2 through, 1 champion. Bob: the 5 upsets the 1, the 2 champion. Cara: 1 and 3, the 3 champion.
     const enter = async (client: Client, entryId: string, winners: readonly [number, number, number], tiebreakerValue: number) => {
       const saved = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({
-        client, path: path(entryId), body: { picks: [pick(5, winners[0]), pick(6, winners[1]), pick(7, winners[2])], tiebreakerValue },
+        client, path: path(entryId), body: { picks: [pick(at(2, 1), winners[0]), pick(at(2, 2), winners[1]), pick(at(3, 1), winners[2])], tiebreakerValue },
       })).data);
       expect(saved).toMatchObject({ pickedCount: 3, tiebreakerValue, canSubmit: true });
       expect((await submitGamePicks({ client, path: path(entryId) })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
       return saved;
     };
-    expect(sides(await enter(alice.client, entries.alice, [1, 2, 1], 140), 7)).toEqual([row(1), row(2)]);
+    expect(sides(await enter(alice.client, entries.alice, [1, 2, 1], 140), at(3, 1))).toEqual([row(1), row(2)]);
     await enter(bob.client, entries.bob, [5, 2, 2], 130);
     await enter(cara.client, entries.cara, [1, 3, 3], 150);
 
@@ -649,12 +658,12 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     await lifecycle.activateContestsPastCutoff(await liveEvent(), new Date(Date.parse(ROUND_TWO_FIRST_GAME) - 60 * 60 * 1000));
     expect(expectDefined((await getContest({ client: bob.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.OPEN);
 
-    // --- Round 2 tips off: 1 beats 5 in game 5 ---------------------------------------------------
-    await win(5, 1);
+    // --- Round 2 tips off: 1 beats 5 in its game 1 -----------------------------------------------
+    await win(at(2, 1), 1);
     // Entries, picks and the tiebreaker are closed from the starting round's first game.
     expectFunctionalError(await enterContest({ client: alice.client, path: { contestId } }), { status: 400, code: 'CONTEST_ENTRY_LOCKED' });
     expectFunctionalError(
-      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(7, 2)] } }),
+      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(at(3, 1), 2)] } }),
       { status: 409, code: 'PREDICTION_GAME_STARTED' },
     );
     expectFunctionalError(
@@ -680,8 +689,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     });
 
     // --- The rest: 2 beats 3, then 1 beats 2 in the final, 70 to 66 --------------------------------
-    await win(6, 2);
-    await win(7, 1, 70, 66);
+    await win(at(2, 2), 2);
+    await win(at(3, 1), 1, 70, 66);
     // Alice 2 + 2 + 4. Bob only his 2 in game 6; Cara only her 1 in game 5. The final totals 136:
     // Bob's 130 is 6 away, Cara's 150 is 14 away.
     const decided = await standings();

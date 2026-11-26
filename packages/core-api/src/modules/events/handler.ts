@@ -43,7 +43,7 @@ import type {
   SportEventRoundMatchupsResponse,
   UpdateSportEventRoundMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
-import { eventFeedRef, OFFERABLE_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
+import { eventFeedRef, matchPlaceOf, OFFERABLE_SPORT_EVENT_STATUSES, type MatchPlace } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
@@ -387,11 +387,11 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     },
 
     updateEventBracketMatch: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: UpdateSportEventRoundMatchRequest }>,
+      request: FastifyRequest<{ Params: { eventId: string } & MatchPlace; Body: UpdateSportEventRoundMatchRequest }>,
     ): Promise<SportEventRoundMatchResponse> => {
       await sportEvents.requireTestEvent(request.params.eventId);
       const { scheduledDate, ...edit } = request.body;
-      const match = await bracket.updateMatch(request.params.eventId, request.params.matchNumber, {
+      const match = await bracket.updateMatch(request.params.eventId, matchPlaceOf(request.params), {
         ...edit,
         ...(scheduledDate !== undefined && { scheduledDate: scheduledDate === null ? null : new Date(scheduledDate) }),
       });
@@ -399,27 +399,27 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     },
 
     recordEventMatchResult: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: RecordSportEventRoundMatchResultRequest }>,
+      request: FastifyRequest<{ Params: { eventId: string } & MatchPlace; Body: RecordSportEventRoundMatchResultRequest }>,
     ): Promise<SportEventBracketResponse> => {
       await sportEvents.requireTestEvent(request.params.eventId);
-      const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body);
+      const matches = await matchResults.recordResult(request.params.eventId, matchPlaceOf(request.params), request.body);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     recordEventMatchPeriodScore: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number; periodNumber: number }; Body: RecordSportEventMatchPeriodScoreRequest }>,
+      request: FastifyRequest<{ Params: { eventId: string; periodNumber: number } & MatchPlace; Body: RecordSportEventMatchPeriodScoreRequest }>,
     ): Promise<SportEventBracketResponse> => {
-      const { eventId, matchNumber, periodNumber } = request.params;
+      const { eventId, periodNumber } = request.params;
       await sportEvents.requireTestEvent(eventId);
-      const matches = await matchResults.recordPeriodScore(eventId, matchNumber, periodNumber, request.body);
+      const matches = await matchResults.recordPeriodScore(eventId, matchPlaceOf(request.params), periodNumber, request.body);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     cancelEventMatch: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
+      request: FastifyRequest<{ Params: { eventId: string } & MatchPlace }>,
     ): Promise<SportEventBracketResponse> => {
       await sportEvents.requireTestEvent(request.params.eventId);
-      const matches = await matchResults.cancelMatch(request.params.eventId, request.params.matchNumber);
+      const matches = await matchResults.cancelMatch(request.params.eventId, matchPlaceOf(request.params));
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 

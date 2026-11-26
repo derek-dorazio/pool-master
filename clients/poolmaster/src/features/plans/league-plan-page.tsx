@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router';
 import { PlanCap, PlanFeatureGroup, type LeaguePlan } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { updateLeaguePlan, type LeagueDto, type LeaguePlanUsageResponse, type PlanEntitlementsDto } from '@/lib/api';
+import { updateLeaguePlan, type LeagueDto, type LeaguePlanUsageResponse, type PlanEntitlementsDto, type PlanFeatureGroupDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -14,7 +14,6 @@ import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { Notice, Button, Chip, ErrorState, FactList, formatCount, formatDateDisplay, formatNumber, HelpTip, LoadingState, PageHeader, SectionBody, SectionCard, SectionNote, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
 import { FeatureList } from './feature-list';
-import { FeatureMark } from './feature-mark';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -76,6 +75,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
   });
 
   const plans = plansQuery.data?.plans;
+  const featureGroups = plansQuery.data?.featureGroups ?? [];
   const currentIndex = plans?.findIndex((plan) => plan.plan === current.plan) ?? -1;
   const chosen = plans?.find((plan) => plan.plan === choice) ?? null;
   const sportLeagueNames = new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.name]));
@@ -119,6 +119,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
                 {usageQuery.data ? (
                   <PlanChangeWarnings
                     current={current}
+                    featureGroups={featureGroups}
                     sportLeagueNames={sportLeagueNames}
                     target={chosen}
                     usage={usageQuery.data}
@@ -155,6 +156,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
           ) : null}
 
           <PlanCards
+            featureGroups={featureGroups}
             plans={plans}
             renderAction={(plan) => {
               if (plan === current.plan) {
@@ -181,6 +183,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
           <SectionCard bare help="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
             <PlanComparisonTable
               capUsage={usageQuery.data ? buildCapUsage(usageQuery.data) : undefined}
+              featureGroups={featureGroups}
               highlightedPlan={current.plan}
               initiallyFolded={[PlanFeatureGroup.EMAILS]}
               plans={plans}
@@ -263,11 +266,13 @@ function YourLeagueNow({
 /** What moving to `target` would stop and hide (#972), following *Moving to a lower plan*. */
 function PlanChangeWarnings({
   current,
+  featureGroups,
   sportLeagueNames,
   target,
   usage,
 }: {
   current: PlanEntitlementsDto;
+  featureGroups: readonly PlanFeatureGroupDto[];
   sportLeagueNames: ReadonlyMap<string, string>;
   target: PlanEntitlementsDto;
   usage: LeaguePlanUsageResponse;
@@ -313,14 +318,14 @@ function PlanChangeWarnings({
       ) : null}
       {effects.hiddenFeatures.length ? (
         <FeatureList
-          features={buildFeatureLines(effects.hiddenFeatures, false)}
+          features={buildFeatureLines(effects.hiddenFeatures, featureGroups, false)}
           label={`Hidden on ${label}`}
           labelAside={(
             <HelpTip className="-my-2" label={`About features hidden on ${label}`} testId="league-plan-confirm-hidden-help">
               They come back as they were when you move up again.
             </HelpTip>
           )}
-          mark={FeatureMark.REMOVED}
+          removed
           testId="league-plan-confirm-hidden"
         />
       ) : null}

@@ -126,7 +126,7 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       expect(requestLine(harness.api)).toEqual(['/wnba/v1/games?seasons[]=2025&per_page=100', '/wnba/v1/standings?season=2025']);
     });
 
-    it('gives the playoffs\' seeded bracket, 1 v 8, 4 v 5, 3 v 6 and 2 v 7 linked to the semifinals and the Finals, and each series as one game on the bracket\'s sides', async () => {
+    it('gives the playoffs\' seeded bracket, 1 v 8, 4 v 5, 3 v 6 and 2 v 7 linked to the semifinals and the Finals, and each series as one match on the bracket\'s sides holding each of its games by number', async () => {
       const harness = setup();
       restore = harness.restore;
 
@@ -135,20 +135,20 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       const team = (id: number) => String(id);
       // Minnesota 1 v Golden State 8, Phoenix 4 v New York 5, Atlanta 3 v Indiana 6, Las Vegas 2 v Seattle 7.
       expect(detail?.bracket?.map((match) => [match.matchNumber, match.roundNumber, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
-        [1, 1, team(8), team(18), { matchNumber: 5, side: MatchSide.HOME }],
-        [2, 1, team(10), team(9), { matchNumber: 5, side: MatchSide.AWAY }],
-        [3, 1, team(1), team(5), { matchNumber: 6, side: MatchSide.AWAY }],
-        [4, 1, team(7), team(11), { matchNumber: 6, side: MatchSide.HOME }],
-        [5, 2, null, null, { matchNumber: 7, side: MatchSide.HOME }],
-        [6, 2, null, null, { matchNumber: 7, side: MatchSide.AWAY }],
-        [7, 3, null, null, null],
+        [1, 1, team(8), team(18), { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME }],
+        [2, 1, team(10), team(9), { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY }],
+        [3, 1, team(1), team(5), { roundNumber: 2, matchNumber: 2, side: MatchSide.AWAY }],
+        [4, 1, team(7), team(11), { roundNumber: 2, matchNumber: 2, side: MatchSide.HOME }],
+        [1, 2, null, null, { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME }],
+        [2, 2, null, null, { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY }],
+        [1, 3, null, null, null],
       ]);
       expect(detail?.rounds).toBe(3);
       expect(detail?.games).toHaveLength(7);
       // Las Vegas hosted Game 1 of the Finals, but Phoenix came up the 1 seed's half, the bracket's
       // home side, so the series' game takes the bracket's sides and the slate reads no swap.
       expect(detail?.games?.filter((game) => game.roundNumber === 3)).toEqual([
-        { externalGameId: '4252021', roundNumber: 3, homeTeamExternalId: team(10), awayTeamExternalId: team(7), scheduledAt: new Date('2025-10-03T23:30:00.000Z'), isNeutralSite: false },
+        { games: ['4252021', '4252022', '4252023', '4252024'].map((providerGameId, index) => ({ providerGameId, gameNumber: index + 1 })), roundNumber: 3, homeTeamExternalId: team(10), awayTeamExternalId: team(7), scheduledAt: new Date('2025-10-03T23:30:00.000Z'), isNeutralSite: false },
       ]);
     });
 
@@ -202,7 +202,7 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
     const result = await harness.adapter.getLiveScores('wnba-2026-postseason');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'wnba-2026-postseason' });
-    expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
+    expect(result.category === 'GAME' ? result.games.map((game) => [game.providerGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
       ['4262001', '8', ProviderGameState.FINAL, 91, 80],
       ['4262002', '7', ProviderGameState.IN_PROGRESS, 44, 40],
       ['4262003', '1', ProviderGameState.SCHEDULED, null, null],

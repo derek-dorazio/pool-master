@@ -106,7 +106,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2026-05-02T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 3,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -123,7 +124,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2026-04-30T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 3,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -133,7 +135,7 @@
               }
             },
             {
-              "matchNumber": 3,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": null,
               "away": null,

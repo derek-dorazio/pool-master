@@ -15,6 +15,5 @@
   "json:SportEvent.pricingConfig": "#2044 (slice 7b)",
   "json:SportEvent.tierConfig": "#2044 (slice 7b)",
   "json:SportEventParticipant.metadata": "#2047 (slice 10f): field row metadata becomes columns",
-  "key:EmailMessage.providerMessageId": "allowed: the email vendor's message id, owned by the email adapter, not a sports feed key",
-  "key:SportEventRoundMatch.externalGameId": "#2007 (slice 10): moves to GameProviderMapping"
+  "key:EmailMessage.providerMessageId": "allowed: the email vendor's message id, owned by the email adapter, not a sports feed key"
 }

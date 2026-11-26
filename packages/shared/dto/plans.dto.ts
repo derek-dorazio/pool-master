@@ -5,7 +5,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { LeaguePlan, PlanFeature, type PlanCap } from '../domain/enums';
+import { LeaguePlan, PlanFeature, PlanFeatureGroup, type PlanCap } from '../domain/enums';
 import { BillingConfigSchema } from './config.dto';
 
 const PlanLimitSchema = z.number().int().nullable().describe('The most the plan allows, or null for unlimited.');
@@ -30,8 +30,15 @@ export const PlanEntitlementsDtoSchema = z.object({
 }).describe('What a league on one plan may do, from the current plan settings.');
 export type PlanEntitlementsDto = z.infer<typeof PlanEntitlementsDtoSchema>;
 
+const PlanFeatureGroupDtoSchema = z.object({
+  group: z.enum(PlanFeatureGroup),
+  features: z.array(z.enum(PlanFeature)).min(1).describe('The features in the group, in `PlanFeatureOrder` (A to Z by their names).'),
+}).describe('One group of plan features (#2110): the plan pages list a group\'s features under its name, or count them on one line.');
+export type PlanFeatureGroupDto = z.infer<typeof PlanFeatureGroupDtoSchema>;
+
 export const LeaguePlanListResponseSchema = z.object({
   plans: z.array(PlanEntitlementsDtoSchema).describe('Every plan, lowest first, for comparing them.'),
+  featureGroups: z.array(PlanFeatureGroupDtoSchema).describe('Every feature group that has features, in `PlanFeatureGroupOrder` (emails, championships, history): which group each feature is in, so the app never keeps that list itself.'),
   previewPeriodMonths: z.number().int().min(1).describe(
     'How many months of Premium every new league is gifted from signup (#986), before it moves to Free.',
   ),
@@ -86,6 +93,7 @@ export type LeaguePlanUsageResponse = z.infer<typeof LeaguePlanUsageResponseSche
 
 registerSchema('PlanCapsDto', PlanCapsDtoSchema);
 registerSchema('PlanEntitlementsDto', PlanEntitlementsDtoSchema);
+registerSchema('PlanFeatureGroupDto', PlanFeatureGroupDtoSchema);
 registerSchema('LeaguePlanListResponse', LeaguePlanListResponseSchema);
 registerSchema('UpdateLeaguePlanRequest', UpdateLeaguePlanRequestSchema);
 registerSchema('ExtendPlanRenewalRequest', ExtendPlanRenewalRequestSchema);

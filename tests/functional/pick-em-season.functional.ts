@@ -27,6 +27,7 @@ import {
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
+  isAtPlace,
   MatchSide,
   MatchStatus,
   PickEmMode,
@@ -137,7 +138,8 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${RUN}`), team).id;
 
-  // Games 1-4: Duke-Vermont, Houston-Texas, Purdue-Akron, Baylor-Colgate; 5 and 6 the second round, 7 the final.
+  // Round 1's games 1-4: Duke-Vermont, Houston-Texas, Purdue-Akron, Baylor-Colgate; round 2's games 1 and 2, then round 3's final.
+  // The week's picks are on round 1's games, so the helpers below name a game by its number in round 1.
   const firstRound = [0, 1, 2, 3].map((index) => ({
     matchNumber: index + 1,
     roundNumber: 1,
@@ -145,7 +147,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     awaySportEventParticipantId: rowOf(expectDefined(TEAMS[index * 2 + 1])),
     isNeutralSite: true,
     scheduledDate: kickoffs[index] ?? null,
-    advancesTo: { matchNumber: 5 + Math.floor(index / 2), side: index % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY },
+    advancesTo: { roundNumber: 2, matchNumber: 1 + Math.floor(index / 2), side: index % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY },
   }));
   const loaded = await loadEventBracket({
     client: a,
@@ -153,9 +155,9 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     body: {
       matches: [
         ...firstRound,
-        { matchNumber: 5, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 7, side: MatchSide.HOME } },
-        { matchNumber: 6, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 7, side: MatchSide.AWAY } },
-        { matchNumber: 7, roundNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+        { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME } },
+        { matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY } },
+        { matchNumber: 1, roundNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
       ],
     },
   });
@@ -163,10 +165,10 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const released = await releaseEvent({ client: a, path: { eventId } });
   expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
   // The later rounds are called off, so they are not among the week's games.
-  await getFunctionalPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: eventId, matchNumber: { gt: 4 } }, data: { status: MatchStatus.CANCELLED } });
+  await getFunctionalPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: eventId, sportEventRound: { roundNumber: { gt: 1 } } }, data: { status: MatchStatus.CANCELLED } });
 
   const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
-  const game = (matchNumber: number) => expectDefined(bracket.find((match) => match.matchNumber === matchNumber), `game ${matchNumber}`);
+  const game = (matchNumber: number) => expectDefined(bracket.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber })), `game ${matchNumber}`);
   /** A confidence pick of game `matchNumber`'s home or away team. */
   const pick = (matchNumber: number, side: Side, confidence: number) => ({
     sportEventRoundMatchId: game(matchNumber).id,
@@ -178,7 +180,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const result = async (matchNumber: number, side: Side, winnerScore = 70, loserScore = 60) => {
     const winnerSide = side === 'home' ? MatchSide.HOME : MatchSide.AWAY;
     const [homeScore, awayScore] = side === 'home' ? [winnerScore, loserScore] : [loserScore, winnerScore];
-    const recorded = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
+    const recorded = await recordEventMatchResult({ client: a, path: { eventId, roundNumber: 1, matchNumber }, body: { winnerSide, homeScore, awayScore } });
     expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
   };
   return { eventId, gameId: (matchNumber: number) => game(matchNumber).id, pick, result };
@@ -324,7 +326,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     });
     // Alice's lost pick on Purdue scores nothing.
     const aliceLive = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(week1, entries.alice) })).data);
-    const aliceOutcome = (matchNumber: number) => expectDefined(aliceLive.games.find((game) => game.matchNumber === matchNumber)).pick;
+    const aliceOutcome = (matchNumber: number) => expectDefined(aliceLive.games.find((game) => isAtPlace(game, { roundNumber: 1, matchNumber }))).pick;
     expect(aliceOutcome(1)).toMatchObject({ outcome: PickOutcome.CORRECT, points: 4 });
     expect(aliceOutcome(3)).toMatchObject({ outcome: PickOutcome.BUSTED, points: 0 });
     expect(aliceOutcome(4)).toMatchObject({ outcome: PickOutcome.PENDING, points: null });

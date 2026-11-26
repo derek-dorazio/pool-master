@@ -5,14 +5,19 @@
 import { expect } from '@jest/globals';
 import type { LeaguePaymentRecord, PayerPaymentRecord } from '@poolmaster/shared/db';
 import {
+  compareByEnumOrder,
   ContestStatus,
+  explicitOrderValues,
   LeaguePaymentKind,
   LeaguePlan,
   PlanCap,
   PlanFeature,
+  PlanFeatureGroupOrder,
+  PlanFeatureOrder,
   PredictedResult,
   ProviderCode,
   Sport,
+  SurvivorWeekOutcome,
   getSportDefinition,
   type EmailMessage,
   type SportConfig,
@@ -29,6 +34,7 @@ import { toEmailTestResponseDto } from '../../../packages/core-api/src/mappers/e
 import { toGamePickPreviewResponse, toGamePicksResponse } from '../../../packages/core-api/src/mappers/game-picks.mapper';
 import { mapGolfRoundScorePreviewToDto } from '../../../packages/core-api/src/mappers/golf-scores.mapper';
 import { toLeagueDto } from '../../../packages/core-api/src/mappers/leagues.mapper';
+import { toPlanFeatureGroupDtos } from '../../../packages/core-api/src/mappers/plans.mapper';
 import { toPickEmLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/pick-em-leaderboard.mapper';
 import { mapRaceResultPreviewToDto } from '../../../packages/core-api/src/mappers/race-results.mapper';
 import { toSelectionGroupDto } from '../../../packages/core-api/src/mappers/selections.mapper';
@@ -247,6 +253,17 @@ describe('auth mappers', () => {
   });
 });
 
+describe('toPlanFeatureGroupDtos', () => {
+  it('lists the groups in their declared order and each group\'s features in PlanFeatureOrder, every feature in exactly one group', () => {
+    const groups = toPlanFeatureGroupDtos();
+
+    expect(groups.map((entry) => entry.group)).toEqual(explicitOrderValues(PlanFeatureGroupOrder));
+    expect(groups.map((entry) => entry.group)).toEqual(['EMAILS', 'CHAMPIONSHIPS', 'HISTORY']);
+    for (const { features } of groups) expect(features).toEqual([...features].sort(compareByEnumOrder(PlanFeatureOrder)));
+    expect(groups.flatMap((entry) => entry.features).sort()).toEqual(Object.values(PlanFeature).sort());
+  });
+});
+
 describe('toLeagueDto', () => {
   const entitlements: PlanEntitlements = {
     plan: LeaguePlan.PRO,
@@ -407,6 +424,7 @@ describe('toGamePicksResponse', () => {
     revealed: false,
     pick: null,
     pickScore: null,
+    survivorOutcome: null,
     ...overrides,
   });
   const view = (games: GamePickGame[], submittedAt: Date | null): GamePicksView => ({
@@ -447,8 +465,14 @@ describe('toGamePicksResponse', () => {
 
     expect(dto.submittedAt).toBe(ISO);
     expect(dto.games[0].pick).toEqual({
-      predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', confidence: 2, pickedAt: ISO, outcome: null, points: null,
+      predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', confidence: 2, pickedAt: ISO, outcome: null, points: null, survivorOutcome: null,
     });
+  });
+
+  it('sends a survivor pick\'s week outcome as the season decided it', () => {
+    const dto = toGamePicksResponse(view([game({ pick, survivorOutcome: SurvivorWeekOutcome.LIFE_LOST })], AT));
+
+    expect(dto.games[0].pick?.survivorOutcome).toBe(SurvivorWeekOutcome.LIFE_LOST);
   });
 
   it('sends a scored pick\'s outcome and points', () => {

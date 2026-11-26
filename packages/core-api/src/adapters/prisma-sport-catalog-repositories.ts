@@ -66,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -725,17 +725,15 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]> {
-    const { gameId, startedBy } = query;
+    const { startedBy } = query;
+    if ('sportEventIds' in query && query.sportEventIds.length === 0) return [];
+    const providerCode = requireProviderCodeOfSourceId(query.providerId);
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         ...sportEventSportWhere(query.sport),
+        ...('sportEventIds' in query && { id: { in: [...query.sportEventIds] } }),
         providerMappings: {
-          some: {
-            provider: { code: requireProviderCodeOfSourceId(query.providerId) },
-            ...('externalId' in query
-              ? { externalId: query.externalId }
-              : { sportLeagueProviderMapping: { providerLeague: { code: query.providerLeagueCode } } }),
-          },
+          some: { provider: { code: providerCode }, ...('externalId' in query && { externalId: query.externalId }) },
         },
         ...(startedBy === undefined
           ? { status: SportEventStatus.IN_PROGRESS }
@@ -749,10 +747,8 @@ export class PrismaSportEventRepository implements SportEventRepository {
       select: {
         id: true,
         ...SPORT_EVENT_SPORT_SELECT,
-        providerMappings: { where: { provider: { code: requireProviderCodeOfSourceId(query.providerId) } }, select: { externalId: true } },
+        providerMappings: { where: { provider: { code: providerCode } }, select: { externalId: true } },
         status: true,
-        // An event holds a game at most once (sportEventId, externalGameId is unique).
-        ...(gameId !== undefined && { matches: { where: { externalGameId: gameId }, select: { id: true } } }),
       },
     });
     // The where clause keeps only events with a mapping of this provider, and an event has one.
@@ -761,7 +757,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
       sport: sportOfEvent(row),
       providerId: query.providerId,
       externalId: mapping.externalId,
-      holdsGame: 'matches' in row && row.matches.length > 0,
       inProgress: row.status === SportEventStatus.IN_PROGRESS,
     })));
   }
@@ -960,8 +955,8 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
     })),
     raceResult: raceResult ? toRaceResult(raceResult) : null,
     matches: [...homeMatches, ...awayMatches]
-      .sort((left, right) => left.matchNumber - right.matchNumber)
-      .map(toSportEventRoundMatch),
+      .map(toSportEventRoundMatch)
+      .sort(compareMatchPlaces),
     affiliatedWithSportLeague: participant.sportLeagueId === sportLeagueId,
   };
 }

@@ -19,7 +19,7 @@ import {
   recordEventMatchResult,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, MATCH_PERIOD_LAYOUTS, MatchPeriodLayout, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, isAtPlace, MATCH_PERIOD_LAYOUTS, matchPlaceOf, MatchPeriodLayout, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { SquaresBoardResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
@@ -39,7 +39,8 @@ import { sportRowKeys } from '../support/sport-rows';
 
 const RUN = `squares-${Date.now()}`;
 const SEED_FILE = join(__dirname, '../../packages/core-api/scripts/seed-golf/american-football-2026-nfl-playoffs-test.json');
-const SUPER_BOWL = 13;
+/** The Super Bowl's place: round 4's match 1, as each round numbers its games from 1 (#2161). */
+const SUPER_BOWL = { roundNumber: 4, matchNumber: 1 };
 
 const created = { sportEventIds: new Set<string>() };
 
@@ -89,7 +90,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     for (const player of file.sportLeagues[0].players) player.key = expectDefined(tagged(player.key));
     for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
     for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
-    const superBowlRow = expectDefined((playoffs.matches ?? []).find((match) => match.matchNumber === SUPER_BOWL));
+    const superBowlRow = expectDefined((playoffs.matches ?? []).find((match) => isAtPlace(match, SUPER_BOWL)));
     delete superBowlRow.result;
     delete superBowlRow.periodScores;
     // The loader makes the event in the NFL's current Season; another suite may have moved it.
@@ -102,7 +103,7 @@ describe('SDK Functional: Super Bowl squares', () => {
       .find((row) => row.name === playoffs.name));
     created.sportEventIds.add(event.id);
     const superBowl = expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches
-      .find((match) => match.matchNumber === SUPER_BOWL));
+      .find((match) => isAtPlace(match, SUPER_BOWL)));
     expect([superBowl.status, superBowl.homeScore]).toEqual(['SCHEDULED', null]);
 
     // --- The league, and a squares contest from the NFL's squares preset ----------------------------
@@ -196,7 +197,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     const final = { homeScore: 30 + homeFor(7), awayScore: 40 + awayFor(0) };
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).response?.status).toBe(200);
     for (const { periodNumber, ...score } of quarters) {
-      expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: event.id, matchNumber: SUPER_BOWL, periodNumber }, body: score })).response?.status).toBe(200);
+      expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: event.id, ...SUPER_BOWL, periodNumber }, body: score })).response?.status).toBe(200);
     }
     const live = expectMatchesSchema(SquaresBoardResponseSchema, (await getSquaresBoard({ client: bob.client, path: { contestId } })).data);
     expect(live.contestStatus).toBe(ContestStatus.ACTIVE);
@@ -205,7 +206,7 @@ describe('SDK Functional: Super Bowl squares', () => {
 
     expect((await recordEventMatchResult({
       client: a,
-      path: { eventId: event.id, matchNumber: SUPER_BOWL },
+      path: { eventId: event.id, ...SUPER_BOWL },
       body: { winnerSide: 'AWAY', ...final },
     })).response?.status).toBe(200);
 
@@ -239,8 +240,9 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
       const file = oneEventOf(row.file, row.league, row.event)(tag, 2099);
       const [event] = file.sportLeagues[0].events;
       const matches = event.matches ?? [];
-      const finalNumber = Math.max(...matches.map((match) => match.matchNumber));
-      const finalRow = expectDefined(matches.find((match) => match.matchNumber === finalNumber));
+      // The final is the one game of the last round.
+      const finalRow = expectDefined(matches.find((match) => match.roundNumber === Math.max(...matches.map((each) => each.roundNumber))));
+      const finalPlace = matchPlaceOf(finalRow);
       delete finalRow.result;
       delete finalRow.periodScores;
       await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
@@ -252,7 +254,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
         .find((each) => each.name === event.name));
       created.sportEventIds.add(loaded.id);
       const final = expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: loaded.id } })).data).matches
-        .find((match) => match.matchNumber === finalNumber));
+        .find((match) => isAtPlace(match, finalPlace)));
       expect(final.status).toBe('SCHEDULED');
 
       const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'College Squares Commissioner', leagueName: `College Squares ${tag}` });
@@ -298,16 +300,16 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
       expect((await transitionEvent({ client: a, path: { eventId: final.sportEventId }, body: { toStatus: 'IN_PROGRESS' } })).response?.status).toBe(200);
       for (let periodNumber = 1; periodNumber < count; periodNumber += 1) {
         const score = { homeScore: 10 * periodNumber + homeFor(periodNumber), awayScore: 10 * periodNumber + awayFor(0) };
-        expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: final.sportEventId, matchNumber: finalNumber, periodNumber }, body: score })).response?.status).toBe(200);
+        expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: final.sportEventId, ...finalPlace, periodNumber }, body: score })).response?.status).toBe(200);
       }
       // The last period's score is the final result, never a period score of its own.
       expectFunctionalError(
-        await recordEventMatchPeriodScore({ client: a, path: { eventId: final.sportEventId, matchNumber: finalNumber, periodNumber: count }, body: { homeScore: 90, awayScore: 90 } }),
+        await recordEventMatchPeriodScore({ client: a, path: { eventId: final.sportEventId, ...finalPlace, periodNumber: count }, body: { homeScore: 90, awayScore: 90 } }),
         { status: 422, code: 'MATCH_PERIOD_INVALID' },
       );
       expect((await recordEventMatchResult({
         client: a,
-        path: { eventId: final.sportEventId, matchNumber: finalNumber },
+        path: { eventId: final.sportEventId, ...finalPlace },
         body: { winnerSide: 'HOME', homeScore: 100 + homeFor(0), awayScore: 90 + awayFor(0) },
       })).response?.status).toBe(200);
 

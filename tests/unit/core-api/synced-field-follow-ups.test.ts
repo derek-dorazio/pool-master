@@ -14,7 +14,7 @@ const PAYLOAD: SyncEventGamesAndTiersJobPayload = {
   sportEventId: 'sport-event-1',
   providerId: 'balldontlie',
   externalId: 'week-2',
-  games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF, isNeutralSite: false }],
+  games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF, isNeutralSite: false }],
 };
 
 const UNCHANGED_VALUATION = {
@@ -46,14 +46,14 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
     expect(providerGames.afterFieldLoad).toHaveBeenCalledWith({
       providerId: 'balldontlie',
       externalId: 'week-2',
-      games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: new Date(KICKOFF), isNeutralSite: false }],
+      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: new Date(KICKOFF), isNeutralSite: false }],
     });
     expect(valuation.afterFieldLoad).toHaveBeenCalledWith({ providerId: 'balldontlie', externalId: 'week-2' });
   });
 
   it('passes a bracket with no kickoff yet as null, and lists no games when the provider listed none', async () => {
     const { providerGames, service } = followUps();
-    const bracket = [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: null, awayTeamExternalId: 'lions', isNeutralSite: false, scheduledAt: null, advancesTo: { matchNumber: 5, side: 'HOME' as const }, regionLabel: 'NFC' }];
+    const bracket = [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: null, awayTeamExternalId: 'lions', isNeutralSite: false, scheduledAt: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' as const }, regionLabel: 'NFC' }];
 
     await service.run({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'postseason', bracket });
 
@@ -62,14 +62,14 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
 
   it('reports the games it loaded and the tiers and prices it made, with the run\'s stats, as the job\'s result', async () => {
     const { service } = followUps({
-      slate: { outcome: 'MATCHES_UPDATED', sportEventId: 'sport-event-1', matchNumbers: [1, 2] },
+      slate: { outcome: 'MATCHES_UPDATED', sportEventId: 'sport-event-1', matches: [{ roundNumber: 1, matchNumber: 1 }, { roundNumber: 1, matchNumber: 2 }] },
       valuation: { ...UNCHANGED_VALUATION, tiers: { result: 'MADE', basis: FieldOrderBasis.ODDS, tierCount: 4 }, prices: { result: 'MADE', basis: FieldOrderBasis.ODDS, pricedCount: 32, profileName: 'Standard' } },
     });
 
     expect(await service.run(PAYLOAD)).toEqual({
       changedCount: 2 + 4 + 32,
       result: {
-        games: { outcome: 'MATCHES_UPDATED', sportEventId: 'sport-event-1', matchNumbers: [1, 2] },
+        games: { outcome: 'MATCHES_UPDATED', sportEventId: 'sport-event-1', matches: [{ roundNumber: 1, matchNumber: 1 }, { roundNumber: 1, matchNumber: 2 }] },
         stats: { tiersMadeFromOdds: 4, pricesMadeFromOdds: 32 },
         warnings: [],
       },

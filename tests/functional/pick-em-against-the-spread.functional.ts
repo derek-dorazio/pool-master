@@ -172,13 +172,13 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
 
     const setSpread = (matchNumber: number, homeSpread: number | null) =>
-      updateEventBracketMatch({ client: a, path: { eventId, matchNumber }, body: { homeSpread } });
+      updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber }, body: { homeSpread } });
     for (const [matchNumber, homeSpread] of [[1, -3.5], [2, 6.5], [3, -3]] as const) {
       const set = await setSpread(matchNumber, homeSpread);
       expect([set.error, set.data?.match.homeSpread]).toEqual([undefined, homeSpread]);
     }
     expectFunctionalError(
-      await updateEventBracketMatch({ client: a, path: { eventId, matchNumber: 4 }, body: { homeSpread: 2.25 } }),
+      await updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 4 }, body: { homeSpread: 2.25 } }),
       { status: 400, code: 'FST_ERR_VALIDATION' },
     );
     const games = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
@@ -236,7 +236,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     for (const [matchNumber, homeScore, awayScore] of [[1, 70, 67], [2, 60, 64], [3, 73, 70], [4, 80, 70]] as const) {
       const recorded = await recordEventMatchResult({
         client: a,
-        path: { eventId, matchNumber },
+        path: { eventId, roundNumber: 1, matchNumber },
         body: { winnerSide: homeScore > awayScore ? MatchSide.HOME : MatchSide.AWAY, homeScore, awayScore },
       });
       expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);

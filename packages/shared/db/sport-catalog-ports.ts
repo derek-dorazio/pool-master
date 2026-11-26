@@ -181,27 +181,24 @@ export interface SportEventProviderSummary {
 
 /**
  * Which of a provider's events a notification from it is about (#1498): the one it knows by
- * `externalId`, or every event it has an id for in the provider league `providerLeagueCode` names
- * (`nfl`), found through the events' provider mappings (#2004). `gameId` names the provider game the notification is about, when it is a game's.
- * `startedBy` is set for a notification that play has started (#1499): it also finds the events
- * still `SCHEDULED` that started by then, which the lifecycle sweep has yet to move.
+ * `externalId` (an event's own notification), or the events holding the Games a game's provider
+ * id is mapped to (#2007), by PoolMaster's ids for them. `startedBy` is set for a notification that
+ * play has started (#1499): it also finds the events still `SCHEDULED` that started by then, which
+ * the lifecycle sweep has yet to move.
  */
 export type ProviderNotifiedEventQuery = {
   providerId: string;
   sport: Sport;
-  gameId?: string;
   startedBy?: Date;
-} & ({ externalId: string } | { providerLeagueCode: string });
+} & ({ externalId: string } | { sportEventIds: readonly string[] });
 
-/** A provider-linked event a notification may sync, and whether it holds the notified game. */
+/** A provider-linked event a notification may sync. */
 export interface ProviderNotifiedEvent {
   /** PoolMaster's own id for the event (#1819). */
   sportEventId: string;
   sport: Sport;
   providerId: string;
   externalId: string;
-  /** Whether one of its matches is linked to the query's `gameId`; false with no `gameId`. */
-  holdsGame: boolean;
   /** Whether the event is `IN_PROGRESS`; false for one still `SCHEDULED` past its start. */
   inProgress: boolean;
 }
@@ -339,7 +336,7 @@ export interface SportEventRepository {
    * `startedBy`, also `SCHEDULED` with auto lifecycle on and a start by then. Unordered.
    */
   findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]>;
-  /** Sets when the provider last sent a notification about each of these events (#1499). */
+  /** Sets when the provider last sent a notification about each of these events themselves (#1499): a golf round's. */
   recordProviderNotification(receipt: ProviderNotificationReceipt): Promise<void>;
   /**
    * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED`,

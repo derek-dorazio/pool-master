@@ -1,7 +1,7 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { MatchEnding, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchEnding, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -79,9 +79,10 @@ function withRosters(context: ReturnType<typeof setup>, ...onRoster: string[]) {
 /** Two semifinals feeding a final: the smallest whole bracket. */
 function fourTeamBracket(ids: { duke: string; vermont: string; houston: string; texas: string }): BracketMatchInput[] {
   return [
-    { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: ids.duke, awaySportEventParticipantId: ids.vermont, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
-    { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: ids.houston, awaySportEventParticipantId: ids.texas, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
-    { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+    { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: ids.duke, awaySportEventParticipantId: ids.vermont, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
+    { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: ids.houston, awaySportEventParticipantId: ids.texas, isNeutralSite: true, scheduledDate: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
+    // Each round numbers its matches from 1 (#2161): the final is round 2's match 1.
+    { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
   ];
 }
 
@@ -103,7 +104,7 @@ describe('SportEventBracketService.loadBracket', () => {
     expect(matches.map((match) => [match.matchNumber, match.roundNumber, match.advancesToMatchId, match.advancesToSide])).toEqual([
       [1, 1, 'match-3', MatchSide.HOME],
       [2, 1, 'match-3', MatchSide.AWAY],
-      [3, 2, null, null],
+      [1, 2, null, null],
     ]);
     expect(matches.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
   });
@@ -202,31 +203,31 @@ describe('findBracketProblems', () => {
   it('still checks the sides of games that link nowhere', () => {
     const week = [{ ...first, advancesTo: null }, { ...second, advancesTo: null, homeSportEventParticipantId: ids.duke }];
 
-    expect(findBracketProblems(week, context)).toEqual(['match 2 home names the same field row as match 1 home']);
+    expect(findBracketProblems(week, context)).toEqual(['round 1 match 2 home names the same field row as round 1 match 1 home']);
   });
 
   it.each([
-    ['a match number used twice', [first, { ...second, matchNumber: 1 }, final], 'match number 1 is used more than once'],
-    ['a round the event does not have', [first, second, { ...final, roundNumber: 3 }], 'match 3 is in round 3, which the event does not have'],
-    ['a side naming a field row the event lacks', [{ ...first, homeSportEventParticipantId: 'stranger' }, second, final], 'match 1 home names stranger, which is not on the event\'s field'],
-    ['a team named twice', [first, { ...second, homeSportEventParticipantId: ids.duke }, final], 'match 2 home names the same field row as match 1 home'],
-    ['the two sides naming one team', [{ ...first, awaySportEventParticipantId: ids.duke }, second, final], 'match 1 away names the same field row as match 1 home'],
-    ['a winner advancing to a match the bracket lacks', [first, { ...second, advancesTo: { matchNumber: 9, side: MatchSide.AWAY } }, final], 'match 2 advances to match 9, which the bracket does not have'],
-    ['a winner advancing to a match in the same round', [{ ...first, advancesTo: { matchNumber: 2, side: MatchSide.HOME } }, { ...second, homeSportEventParticipantId: null }, final], 'match 1 advances to match 2, which is not in a later round'],
-    ['two winners advancing to one side', [first, { ...second, advancesTo: { matchNumber: 3, side: MatchSide.HOME } }, final], 'two matches advance to match 3 home'],
-    ['a fed side that also names a team', [first, second, { ...final, homeSportEventParticipantId: ids.duke }], 'match 3 home names a team, but match 1\'s winner fills it'],
-    ['no final', [first, second, { ...final, advancesTo: { matchNumber: 1, side: MatchSide.HOME } }], 'a bracket has one final, the one match of its FINAL slot\'s round, but this one has 0'],
-    ['a winner placed nowhere outside the final\'s round', [first, { ...second, advancesTo: null }, final], 'match 2\'s winner advances nowhere, but it is not the final'],
+    ['a match number used twice within one round', [first, { ...second, matchNumber: 1 }, final], 'round 1 match 1 is used more than once'],
+    ['a round the event does not have', [first, second, { ...final, roundNumber: 3 }], 'round 3 match 1 is in a round the event does not have'],
+    ['a side naming a field row the event lacks', [{ ...first, homeSportEventParticipantId: 'stranger' }, second, final], 'round 1 match 1 home names stranger, which is not on the event\'s field'],
+    ['a team named twice', [first, { ...second, homeSportEventParticipantId: ids.duke }, final], 'round 1 match 2 home names the same field row as round 1 match 1 home'],
+    ['the two sides naming one team', [{ ...first, awaySportEventParticipantId: ids.duke }, second, final], 'round 1 match 1 away names the same field row as round 1 match 1 home'],
+    ['a winner advancing to a match the bracket lacks', [first, { ...second, advancesTo: { roundNumber: 2, matchNumber: 9, side: MatchSide.AWAY } }, final], 'round 1 match 2 advances to round 2 match 9, which the bracket does not have'],
+    ['a winner advancing to a match in the same round', [{ ...first, advancesTo: { roundNumber: 1, matchNumber: 2, side: MatchSide.HOME } }, { ...second, homeSportEventParticipantId: null }, final], 'round 1 match 1 advances to round 1 match 2, which is not in a later round'],
+    ['two winners advancing to one side', [first, { ...second, advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } }, final], 'two matches advance to round 2 match 1 home'],
+    ['a fed side that also names a team', [first, second, { ...final, homeSportEventParticipantId: ids.duke }], 'round 2 match 1 home names a team, but round 1 match 1\'s winner fills it'],
+    ['no final', [first, second, { ...final, advancesTo: { roundNumber: 1, matchNumber: 1, side: MatchSide.HOME } }], 'a bracket has one final, the one match of its FINAL slot\'s round, but this one has 0'],
+    ['a winner placed nowhere outside the final\'s round', [first, { ...second, advancesTo: null }, final], 'round 1 match 2\'s winner advances nowhere, but it is not the final'],
   ])('reports %s', (_name, matches, problem) => {
     expect(findBracketProblems(matches, context)).toContain(problem);
   });
 
   it('takes no game outside the FINAL slot\'s round for the final, even the only one whose winner goes nowhere', () => {
-    const matches = [{ ...first, advancesTo: null }, { ...final, advancesTo: { matchNumber: 9, side: MatchSide.HOME } }];
+    const matches = [{ ...first, advancesTo: null }, { ...final, advancesTo: { roundNumber: 2, matchNumber: 9, side: MatchSide.HOME } }];
 
     expect(findBracketProblems(matches, context)).toEqual(expect.arrayContaining([
       'a bracket has one final, the one match of its FINAL slot\'s round, but this one has 0',
-      'match 1\'s winner advances nowhere, but it is not the final',
+      'round 1 match 1\'s winner advances nowhere, but it is not the final',
     ]));
   });
 });
@@ -238,7 +239,7 @@ describe('SportEventBracketService.updateMatch', () => {
     context.store.events[0].status = SportEventStatus.SCHEDULED;
     const tipOff = new Date('2027-03-18T19:10:00.000Z');
 
-    const match = await context.service.updateMatch(context.event.id, 1, { scheduledDate: tipOff, isNeutralSite: false });
+    const match = await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { scheduledDate: tipOff, isNeutralSite: false });
 
     expect(match).toMatchObject({ scheduledDate: tipOff, isNeutralSite: false, homeSportEventParticipantId: context.duke.id });
   });
@@ -249,9 +250,9 @@ describe('SportEventBracketService.updateMatch', () => {
     context.store.events[0].status = SportEventStatus.SCHEDULED;
     const tipOff = new Date('2027-03-18T19:10:00.000Z');
 
-    await context.service.updateMatch(context.event.id, 1, { isNeutralSite: false });
-    await context.service.updateMatch(context.event.id, 1, { scheduledDate: tipOff });
-    await context.service.updateMatch(context.event.id, 1, { scheduledDate: tipOff });
+    await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { isNeutralSite: false });
+    await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { scheduledDate: tipOff });
+    await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { scheduledDate: tipOff });
 
     expect(context.reminderRechecks.mock.calls).toEqual([[{ sportEventId: context.event.id }, NOW]]);
   });
@@ -261,7 +262,7 @@ describe('SportEventBracketService.updateMatch', () => {
     await context.service.loadBracket(context.event.id, bracketOf(context));
     context.store.events[0].status = SportEventStatus.SCHEDULED;
 
-    await expect(context.service.updateMatch(context.event.id, 1, { awaySportEventParticipantId: null }))
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { awaySportEventParticipantId: null }))
       .rejects.toMatchObject({ code: 'SPORT_EVENT_BRACKET_LOCKED', statusCode: 409 });
   });
 
@@ -270,22 +271,22 @@ describe('SportEventBracketService.updateMatch', () => {
     const [first, second, final] = bracketOf(context);
     await context.service.loadBracket(context.event.id, [{ ...first, awaySportEventParticipantId: null }, { ...second, awaySportEventParticipantId: null }, final]);
 
-    const match = await context.service.updateMatch(context.event.id, 1, { awaySportEventParticipantId: context.texas.id });
+    const match = await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { awaySportEventParticipantId: context.texas.id });
 
     expect(match.awaySportEventParticipantId).toBe(context.texas.id);
   });
 
   it.each([
-    ['a team already in another match', (context: ReturnType<typeof setup>) => ({ matchNumber: 1, edit: { awaySportEventParticipantId: context.houston.id } }), 'already in match 2'],
-    ['a side an earlier match\'s winner fills', (context: ReturnType<typeof setup>) => ({ matchNumber: 3, edit: { homeSportEventParticipantId: context.duke.id } }), 'filled by an earlier match\'s winner'],
-    ['both sides one team', (context: ReturnType<typeof setup>) => ({ matchNumber: 1, edit: { awaySportEventParticipantId: context.duke.id } }), 'both sides name the same team'],
-    ['a field row the event lacks', () => ({ matchNumber: 1, edit: { awaySportEventParticipantId: 'stranger' } }), 'not on the event\'s field'],
+    ['a team already in another match', (context: ReturnType<typeof setup>) => ({ place: { roundNumber: 1, matchNumber: 1 }, edit: { awaySportEventParticipantId: context.houston.id } }), 'already in round 1 match 2'],
+    ['a side an earlier match\'s winner fills', (context: ReturnType<typeof setup>) => ({ place: { roundNumber: 2, matchNumber: 1 }, edit: { homeSportEventParticipantId: context.duke.id } }), 'filled by an earlier match\'s winner'],
+    ['both sides one team', (context: ReturnType<typeof setup>) => ({ place: { roundNumber: 1, matchNumber: 1 }, edit: { awaySportEventParticipantId: context.duke.id } }), 'both sides name the same team'],
+    ['a field row the event lacks', () => ({ place: { roundNumber: 1, matchNumber: 1 }, edit: { awaySportEventParticipantId: 'stranger' } }), 'not on the event\'s field'],
   ])('refuses (422 BRACKET_INVALID) a side naming %s', async (_name, change, problem) => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
-    const { matchNumber, edit } = change(context);
+    const { place, edit } = change(context);
 
-    await expect(context.service.updateMatch(context.event.id, matchNumber, edit))
+    await expect(context.service.updateMatch(context.event.id, place, edit))
       .rejects.toMatchObject({ code: 'BRACKET_INVALID', statusCode: 422, message: expect.stringContaining(problem) });
   });
 
@@ -294,8 +295,8 @@ describe('SportEventBracketService.updateMatch', () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
 
-    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: -3.5 })).resolves.toMatchObject({ homeSpread: -3.5 });
-    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: null })).resolves.toMatchObject({ homeSpread: null });
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3.5 })).resolves.toMatchObject({ homeSpread: -3.5 });
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: null })).resolves.toMatchObject({ homeSpread: null });
   });
 
   it('changes a game\'s spread after release while no entry has picked the game', async () => {
@@ -303,30 +304,30 @@ describe('SportEventBracketService.updateMatch', () => {
     await context.service.loadBracket(context.event.id, bracketOf(context));
     context.store.events[0].status = SportEventStatus.SCHEDULED;
 
-    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: 7 })).resolves.toMatchObject({ homeSpread: 7 });
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: 7 })).resolves.toMatchObject({ homeSpread: 7 });
   });
 
   it('refuses (422 MATCH_SPREAD_REQUIRED) clearing a game\'s spread after release, even with no picks, keeping the spread', async () => {
     const context = setup({ picks: picksOn() });
     await context.service.loadBracket(context.event.id, bracketOf(context));
-    await context.service.updateMatch(context.event.id, 1, { homeSpread: -3 });
+    await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3 });
     context.store.events[0].status = SportEventStatus.SCHEDULED;
 
-    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: null }))
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: null }))
       .rejects.toMatchObject({ code: 'MATCH_SPREAD_REQUIRED', statusCode: 422 });
-    expect(context.store.matchRows.find((row) => row.matchNumber === 1)?.homeSpread).toBe(-3);
+    expect(context.store.matchRows.find((row) => isAtPlace(row, { roundNumber: 1, matchNumber: 1 }))?.homeSpread).toBe(-3);
   });
 
   it('refuses (409 MATCH_SPREAD_LOCKED) a spread change after release on a game with picks, keeping the spread, but still moves its time', async () => {
     const context = setup({ picks: picksOn('match-1') });
     await context.service.loadBracket(context.event.id, bracketOf(context));
-    await context.service.updateMatch(context.event.id, 1, { homeSpread: -3 });
+    await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3 });
     context.store.events[0].status = SportEventStatus.SCHEDULED;
 
-    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: -4 }))
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -4 }))
       .rejects.toMatchObject({ code: 'MATCH_SPREAD_LOCKED', statusCode: 409 });
     const tipOff = new Date('2027-03-18T19:10:00.000Z');
-    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: -3, scheduledDate: tipOff }))
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { homeSpread: -3, scheduledDate: tipOff }))
       .resolves.toMatchObject({ homeSpread: -3, scheduledDate: tipOff });
   });
 
@@ -334,7 +335,7 @@ describe('SportEventBracketService.updateMatch', () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
 
-    await expect(context.service.updateMatch(context.event.id, 9, { isNeutralSite: false }))
+    await expect(context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 9 }, { isNeutralSite: false }))
       .rejects.toMatchObject({ code: 'BRACKET_MATCH_NOT_FOUND', statusCode: 404 });
   });
 });
@@ -534,7 +535,7 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
       id: 'match-started', sportEventId: event.id, roundNumber: 1, slot: expectDefined(store.roundRows.find((round) => round.roundNumber === 1)).slot, matchNumber: 1,
       homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true,
       scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
+      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
     });
 
     await expect(service.fillPlayInSlot(event.id, slot.id, xavier.id))
@@ -571,10 +572,10 @@ describe('SportEventBracketService round matchups (reseeded bracket)', () => {
     finishRound(context, 1);
 
     const proposal = await context.service.proposeRoundMatchups(context.event.id, 2);
-    expect(proposal).toEqual([{ matchNumber: 3, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.houston.id }]);
+    expect(proposal).toEqual([{ matchNumber: 1, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.houston.id }]);
 
     const bracket = await context.service.setRoundMatchups(context.event.id, 2, proposal);
-    expect(expectDefined(bracket.find((match) => match.matchNumber === 3))).toMatchObject({
+    expect(expectDefined(bracket.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 })))).toMatchObject({
       homeSportEventParticipantId: context.duke.id,
       awaySportEventParticipantId: context.houston.id,
     });
@@ -616,7 +617,7 @@ describe('SportEventBracketService round matchups (reseeded bracket)', () => {
     const context = await reseededSetup({
       bracket: (ids) => [
         { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: ids.duke.id, awaySportEventParticipantId: ids.vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: null },
-        { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: ids.houston.id, awaySportEventParticipantId: ids.texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+        { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: ids.houston.id, awaySportEventParticipantId: ids.texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: null },
       ],
     });
     finishRound(context, 1);
@@ -629,9 +630,9 @@ describe('SportEventBracketService round matchups (reseeded bracket)', () => {
     finishRound(context, 1);
 
     await expect(context.service.setRoundMatchups(context.event.id, 2, [
-      { matchNumber: 3, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.vermont.id },
+      { matchNumber: 1, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.vermont.id },
     ])).rejects.toMatchObject({ code: 'BRACKET_INVALID', statusCode: 422 });
-    expect(expectDefined(context.store.matchRows.find((match) => match.matchNumber === 3))).toMatchObject({
+    expect(expectDefined(context.store.matchRows.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 })))).toMatchObject({
       homeSportEventParticipantId: null,
       awaySportEventParticipantId: null,
     });
@@ -652,7 +653,7 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
     expect(since(context, { jobs: 0, woken: 0 })).toEqual(once(context.event.id));
 
     const before = mark(context);
-    await context.service.updateMatch(context.event.id, 1, { isNeutralSite: false });
+    await context.service.updateMatch(context.event.id, { roundNumber: 1, matchNumber: 1 }, { isNeutralSite: false });
     expect(since(context, before)).toEqual(once(context.event.id));
   });
 

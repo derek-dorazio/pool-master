@@ -34,7 +34,7 @@ export const SportEventRoundMatchDtoSchema = z.object({
   sportEventId: z.uuid(),
   roundNumber: z.number().int().describe('The round the match is played in.'),
   slot: SportEventRoundSlotDtoSchema.describe('The slot the match\'s round is played in: the round\'s label and whether the match is the final.'),
-  matchNumber: z.number().int().describe('Unique within the event: the bracket slot and the display order.'),
+  matchNumber: z.number().int().describe('Unique within its round (#2161): the match\'s place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.'),
   homeSportEventParticipantId: z.uuid().nullable().describe('The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.'),
   awaySportEventParticipantId: z.uuid().nullable().describe('The field row on the away side; null until it is decided.'),
   isNeutralSite: z.boolean().describe('True when neither side is at home: screens then say "vs" rather than "@".'),
@@ -58,7 +58,7 @@ export const SportEventRoundMatchDtoSchema = z.object({
 export type SportEventRoundMatchDto = z.infer<typeof SportEventRoundMatchDtoSchema>;
 
 export const SportEventBracketResponseSchema = z.object({
-  matches: z.array(SportEventRoundMatchDtoSchema).describe('Every match of the event in match-number order; empty until the bracket is loaded.'),
+  matches: z.array(SportEventRoundMatchDtoSchema).describe('Every match of the event in round order, then match-number order within each round; empty until the bracket is loaded.'),
 }).describe('An event\'s bracket.');
 export type SportEventBracketResponse = z.infer<typeof SportEventBracketResponseSchema>;
 
@@ -68,14 +68,15 @@ export const SportEventRoundMatchResponseSchema = z.object({
 export type SportEventRoundMatchResponse = z.infer<typeof SportEventRoundMatchResponseSchema>;
 
 export const LoadSportEventBracketMatchSchema = z.object({
-  matchNumber: z.number().int().min(1).describe('Unique within the bracket: the slot and the display order.'),
   roundNumber: z.number().int().min(1).describe('A round the event has.'),
+  matchNumber: z.number().int().min(1).describe('Unique within its round (#2161): the match\'s place in the round and its display order.'),
   homeSportEventParticipantId: z.uuid().nullable().describe('A field row of the event, or null when an earlier match\'s winner fills the side (or its team is not known yet).'),
   awaySportEventParticipantId: z.uuid().nullable().describe('A field row of the event, or null as for the home side.'),
   isNeutralSite: z.boolean(),
   scheduledDate: z.iso.datetime().nullable(),
   advancesTo: z.object({
-    matchNumber: z.number().int().min(1).describe('A match of this bracket in a later round.'),
+    roundNumber: z.number().int().min(1).describe('A later round of this bracket.'),
+    matchNumber: z.number().int().min(1).describe('A match of that round.'),
     side: MatchSideDtoSchema.describe('The side of that match the winner fills, which must not name a team.'),
   }).nullable().describe('Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed.'),
   regionLabel: z.string().min(1).max(40).nullable().optional().describe('The region or conference the match is played in; omitted or null for none.'),
@@ -118,7 +119,7 @@ export const RecordSportEventMatchPeriodScoreRequestSchema = z.object({
 export type RecordSportEventMatchPeriodScoreRequest = z.infer<typeof RecordSportEventMatchPeriodScoreRequestSchema>;
 
 export const RoundMatchupDtoSchema = z.object({
-  matchNumber: z.number().int().min(1).describe('A match of the round.'),
+  matchNumber: z.number().int().min(1).describe('A match of the round, numbered within it.'),
   homeSportEventParticipantId: z.uuid().describe('The field row on the home side.'),
   awaySportEventParticipantId: z.uuid().describe('The field row on the away side.'),
 }).describe('Both sides of one match of a reseeded round.');

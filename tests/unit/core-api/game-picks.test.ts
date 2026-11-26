@@ -38,7 +38,7 @@ function game(matchNumber: number, overrides: Partial<SportEventRoundMatch> = {}
     advancesToSide: null,
     regionLabel: null,
     homeSpread: null,
-    externalGameId: null,
+
     resultSource: null,
     completedAt: null,
     periodScores: [],
@@ -219,6 +219,12 @@ describe('weekTiebreakerGame', () => {
   it('takes the highest game number among games that kick off together, and gives a game with no time the event\'s start', () => {
     const week = [game(1, { scheduledDate: null }), game(2), game(3)];
     expect(weekTiebreakerGame(week, new Date('2026-09-11T00:20:00.000Z'))?.id).toBe('game-3');
+  });
+
+  it('takes the later round\'s game among games kicking off together in two rounds, though its number within its round is lower', () => {
+    const kickoff = new Date('2027-01-17T21:30:00.000Z');
+    const week = [game(2, { id: 'round-1-game-2', scheduledDate: kickoff }), game(1, { id: 'round-2-game-1', roundNumber: 2, scheduledDate: kickoff })];
+    expect(weekTiebreakerGame(week, SUNDAY)?.id).toBe('round-2-game-1');
   });
 
   it('finds none in a week with no games', () => {

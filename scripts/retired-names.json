@@ -50,7 +50,10 @@
     "SEASON_PHASE_MISSING": "#2153 (6b): the SEASON_COMPETITION_MISSING unplaced reason",
     "SLOT_PHASE_NOT_IN_SEASON": "#2153 (6b): SLOT_COMPETITION_NOT_IN_SEASON",
     "PHASE_NOT_IN_SEASON": "#2153 (6b): the COMPETITION_NOT_IN_SEASON test slot outcome",
-    "phaseMissing": "#2153 (6b): competitionMissing"
+    "phaseMissing": "#2153 (6b): competitionMissing",
+    "externalGameId": "#2007 (10): the Game's GameProviderMapping holds the provider game id",
+    "linkGames": "#2007 (10): GameRepository.applySync maps Games",
+    "holdsGame": "#2007 (10): a webhook routes by GameProviderMapping, no fan-out"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -66,7 +69,7 @@
   "FEED_LABELS": 3,
   "IngestionFeedType": 20,
   "overdueLateness": 3,
-  "RELEASE_CHECK_LABELS": 7,
+  "RELEASE_CHECK_LABELS": 0,
   "PROGRESS_UNITS": 2,
   "squaresFromRound": 30,
   "CupWeight": 84,
@@ -101,5 +104,8 @@
   "SEASON_PHASE_MISSING": 0,
   "SLOT_PHASE_NOT_IN_SEASON": 0,
   "PHASE_NOT_IN_SEASON": 0,
-  "phaseMissing": 0
+  "phaseMissing": 0,
+  "externalGameId": 0,
+  "linkGames": 0,
+  "holdsGame": 0
 }

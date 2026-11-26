@@ -92,7 +92,7 @@ export function pickEmBoardGames(
 ): PickEmBoardGame[] {
   return [...matches]
     .filter((match) => match.status !== MatchStatus.CANCELLED)
-    .sort((left, right) => (Date.parse(left.scheduledDate ?? '') || 0) - (Date.parse(right.scheduledDate ?? '') || 0) || left.matchNumber - right.matchNumber)
+    .sort((left, right) => (Date.parse(left.scheduledDate ?? '') || 0) - (Date.parse(right.scheduledDate ?? '') || 0) || left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber)
     .map((match) => {
       const home = teamName(match.homeSportEventParticipantId);
       const away = teamName(match.awaySportEventParticipantId);

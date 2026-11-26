@@ -22,7 +22,7 @@ const FIELD_EVENTS_PER_PROVIDER = 2;
 export const ROUND_WITHOUT_END_UNDERWAY_MS = 14 * 60 * 60 * 1000;
 
 export interface ScheduledEventReaderDependencies {
-  prisma: Pick<PrismaClient, 'sportEvent' | 'sport'>;
+  prisma: Pick<PrismaClient, 'sportEvent' | 'sport' | 'sportEventRoundMatchGame'>;
   registry: Pick<ProviderRegistry, 'all'>;
   logger?: FastifyBaseLogger;
 }
@@ -104,7 +104,7 @@ export function createScheduledEventReader({
         sportEventParticipants: { some: {} },
       };
       const identity = {
-        lastProviderNotificationAt: true,
+        id: true,
         providerMappings: {
           where: { provider: { code: { in: codes } } },
           select: { externalId: true, provider: { select: { code: true } }, sportLeagueProviderMapping: { select: { providerLeague: { select: { code: true } } } } },
@@ -119,6 +119,8 @@ export function createScheduledEventReader({
             where,
             select: {
               ...identity,
+              // An event played in rounds hears of its rounds on the event itself (a golf round's notification).
+              lastProviderNotificationAt: true,
               roundSchedule: {
                 where: { scheduledDate: { lte: now } },
                 orderBy: { roundNumber: 'desc' },
@@ -126,8 +128,8 @@ export function createScheduledEventReader({
                 select: { scheduledDate: true, scheduledEndAt: true },
               },
             },
-          })).flatMap(({ roundSchedule, providerMappings, ...event }) => refsOf(providerMappings).map((ref) => ({ ...event, ...ref, playedInRounds, playUnderwaySince: roundUnderwaySince(roundSchedule, now) })))
-        : (await prisma.sportEvent.findMany({
+          })).flatMap(({ id: _id, roundSchedule, providerMappings, ...event }) => refsOf(providerMappings).map((ref) => ({ ...event, ...ref, playedInRounds, playUnderwaySince: roundUnderwaySince(roundSchedule, now) })))
+        : await matchEventRefs(await prisma.sportEvent.findMany({
             where,
             select: {
               ...identity,
@@ -138,7 +140,7 @@ export function createScheduledEventReader({
                 select: { scheduledDate: true },
               },
             },
-          })).flatMap(({ matches, providerMappings, ...event }) => refsOf(providerMappings).map((ref) => ({ ...event, ...ref, playedInRounds, playUnderwaySince: matchUnderwaySince(matches) })));
+          }));
       logger?.debug({ sport, feed, providerIds, eventCount: events.length, events }, 'Listed sport events for scheduled ingestion feed');
       return events;
     },
@@ -156,6 +158,29 @@ export function createScheduledEventReader({
       return rows.map((row) => row.sport);
     },
   };
+
+  /**
+   * Each event played in matches with its ids, when play got under way, and when a provider last
+   * sent a notification about any of its Games (#2007): one read of the Games for every event.
+   */
+  async function matchEventRefs(rows: ReadonlyArray<{
+    id: string;
+    providerMappings: Parameters<typeof refsOf>[0];
+    matches: Array<{ scheduledDate: Date | null }>;
+  }>): Promise<LiveScoreEventRef[]> {
+    const heard = rows.length === 0 ? [] : await prisma.sportEventRoundMatchGame.groupBy({
+      by: ['sportEventId'],
+      where: { sportEventId: { in: rows.map((row) => row.id) } },
+      _max: { lastProviderNotificationAt: true },
+    });
+    const lastHeardOf = new Map(heard.map((row) => [row.sportEventId, row._max.lastProviderNotificationAt]));
+    return rows.flatMap(({ id, matches, providerMappings }) => refsOf(providerMappings).map((ref) => ({
+      ...ref,
+      lastProviderNotificationAt: lastHeardOf.get(id) ?? null,
+      playedInRounds: false,
+      playUnderwaySince: matchUnderwaySince(matches),
+    })));
+  }
 
   /** The running providers' ids, as their feeds name them: each syncs only the leagues that select it. */
   function servingProviderIds(sport: Sport, feed: EventSyncFeed): string[] {

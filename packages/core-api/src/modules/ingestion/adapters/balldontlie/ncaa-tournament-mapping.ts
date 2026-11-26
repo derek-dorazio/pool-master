@@ -205,7 +205,7 @@ export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: read
     // Only its round of 64 game: in a later round the place is long filled and the winner is a team like any other.
     const playInWinner = game.round === league.firstFourRound + 1 ? [home, away].find((team) => playInWinners.has(team.id)) : undefined;
     return [{
-      externalGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
+      providerGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),
       state,
@@ -333,15 +333,15 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
   // Each later round: half the games of the round before, the region kept through the Elite Eight.
   const rounds: ProviderBracketMatch[][] = [firstRound];
   let previous = firstRound;
-  let nextNumber = firstRound.length + 1;
   while (previous.length > 1) {
     const round: ProviderBracketMatch[] = [];
     for (let index = 0; index + 1 < previous.length; index += 2) {
       const left = previous[index];
       const right = previous[index + 1];
+      // Numbered within its round (#2161), in the draw's order.
+      const next = { roundNumber: left.roundNumber + 1, matchNumber: index / 2 + 1 };
       round.push({
-        matchNumber: nextNumber,
-        roundNumber: left.roundNumber + 1,
+        ...next,
         homeTeamExternalId: null,
         awayTeamExternalId: null,
         isNeutralSite: true,
@@ -349,9 +349,8 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
         advancesTo: null,
         regionLabel: left.regionLabel === right.regionLabel ? left.regionLabel : null,
       });
-      left.advancesTo = { matchNumber: nextNumber, side: MatchSide.HOME };
-      right.advancesTo = { matchNumber: nextNumber, side: MatchSide.AWAY };
-      nextNumber += 1;
+      left.advancesTo = { ...next, side: MatchSide.HOME };
+      right.advancesTo = { ...next, side: MatchSide.AWAY };
     }
     rounds.push(round);
     previous = round;
@@ -374,7 +373,7 @@ export function toNcaaScheduledGames(league: NcaaTournamentLeague, games: readon
     if (!home || !away || round === undefined || round <= league.firstFourRound || game.game_id === undefined || game.game_id === null) return [];
     if (round === league.firstFourRound + 1 && (firstFour.has(home.id) || firstFour.has(away.id))) return [];
     return [{
-      externalGameId: String(game.game_id),
+      games: [{ providerGameId: String(game.game_id), gameNumber: 1 }],
       roundNumber: round - league.firstFourRound,
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),

@@ -14,7 +14,7 @@ import {
   updateEventBracketMatch,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
-import { MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
 import {
   AddSportEventParticipantsResponseSchema,
   SportEventBracketResponseSchema,
@@ -145,8 +145,8 @@ describe('SDK Functional: Basketball bracket', () => {
     expect(expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches).toEqual([]);
 
     const firstRound = [
-      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf(PAIRING), isNeutralSite: true, scheduledDate: '2099-03-19T16:00:00.000Z', advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
-      { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: '2099-03-19T19:00:00.000Z', advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
+      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf(PAIRING), isNeutralSite: true, scheduledDate: '2099-03-19T16:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME } },
+      { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: rowOf('Houston'), awaySportEventParticipantId: rowOf('Vermont'), isNeutralSite: true, scheduledDate: '2099-03-19T19:00:00.000Z', advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY } },
     ];
     expectFunctionalError(
       await loadEventBracket({
@@ -158,7 +158,7 @@ describe('SDK Functional: Basketball bracket', () => {
           matches: [
             { ...expectDefined(firstRound[0]), advancesTo: null },
             expectDefined(firstRound[1]),
-            { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+            { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
           ],
         },
       }),
@@ -172,16 +172,16 @@ describe('SDK Functional: Basketball bracket', () => {
       body: {
         matches: [
           ...firstRound,
-          { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+          { matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
         ],
       },
     });
     expect(loaded.response?.status).toBe(200);
     const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
     expect(bracket.map((match) => [match.matchNumber, match.roundNumber, match.status])).toEqual([
-      [1, 1, MatchStatus.SCHEDULED], [2, 1, MatchStatus.SCHEDULED], [3, 2, MatchStatus.SCHEDULED],
+      [1, 1, MatchStatus.SCHEDULED], [2, 1, MatchStatus.SCHEDULED], [1, 2, MatchStatus.SCHEDULED],
     ]);
-    const final = expectDefined(bracket.find((match) => match.matchNumber === 3));
+    const final = expectDefined(bracket.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 })));
     expect(bracket.filter((match) => match.advancesToMatchId === final.id).map((match) => match.advancesToSide).sort((left, right) => String(left).localeCompare(String(right))))
       .toEqual([MatchSide.AWAY, MatchSide.HOME]);
 
@@ -195,7 +195,7 @@ describe('SDK Functional: Basketball bracket', () => {
       { status: 409, code: 'SPORT_EVENT_BRACKET_LOCKED' },
     );
     expectFunctionalError(
-      await updateEventBracketMatch({ client: a, path: { eventId, matchNumber: 1 }, body: { awaySportEventParticipantId: rowOf('Vermont') } }),
+      await updateEventBracketMatch({ client: a, path: { eventId, roundNumber: 1, matchNumber: 1 }, body: { awaySportEventParticipantId: rowOf('Vermont') } }),
       { status: 409, code: 'SPORT_EVENT_BRACKET_LOCKED' },
     );
     expectFunctionalError(
@@ -209,7 +209,7 @@ describe('SDK Functional: Basketball bracket', () => {
 
     const moved = await updateEventBracketMatch({
       client: a,
-      path: { eventId, matchNumber: 3 },
+      path: { eventId, roundNumber: 2, matchNumber: 1 },
       body: { scheduledDate: '2099-03-21T18:30:00.000Z' },
     });
     expect(expectMatchesSchema(SportEventRoundMatchResponseSchema, moved.data).match.scheduledDate).toBe('2099-03-21T18:30:00.000Z');
@@ -233,7 +233,7 @@ describe('SDK Functional: Basketball bracket', () => {
     expect(filled.response?.status).toBe(200);
     expect(expectMatchesSchema(SportEventParticipantResponseSchema, filled.data).participant).toMatchObject({ id: rowOf(PAIRING), seedNumber: 16, participant: { name: `Texas ${RUN}` } });
     const afterFill = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
-    expect(expectDefined(afterFill.find((match) => match.matchNumber === 1)).awaySportEventParticipantId).toBe(rowOf(PAIRING));
+    expect(expectDefined(afterFill.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))).awaySportEventParticipantId).toBe(rowOf(PAIRING));
     const pairing = await getFunctionalPrisma().participant.findUniqueOrThrow({ where: { id: expectDefined(teamIdOf.get(PAIRING)) } });
     expect(pairing.status).toBe('INACTIVE');
 

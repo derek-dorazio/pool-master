@@ -41,7 +41,7 @@ export function EventMatchesCard({ event }: { event: SportEventDto }) {
                 filterTestIdPrefix="root-admin-event-matches-filter"
                 getRowId={(match) => match.id}
                 openRowDialog={(match) => setOpenMatchId(match.id)}
-                rowTestId={(match) => `root-admin-event-match-${String(match.matchNumber)}`}
+                rowTestId={(match) => `root-admin-event-match-${String(match.roundNumber)}-${String(match.matchNumber)}`}
                 tableTestId="root-admin-event-matches-table"
                 urlKey="matches"
               />

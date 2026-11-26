@@ -148,9 +148,9 @@ describe('NCAA men\'s basketball teams', () => {
 describe('NCAA men\'s tournament game scores', () => {
   it('gives each game from the round of 64 on whose teams are decided, leaving out the First Four and an unknown state', () => {
     expect(toNcaaGameScoreUpdates(NCAA_MEN, bracket2026)).toEqual([
-      { externalGameId: '401900101', homeTeamExternalId: '57', awayTeamExternalId: '2390', state: ProviderGameState.FINAL, homeScore: 81, awayScore: 58 },
-      { externalGameId: '401900102', homeTeamExternalId: '194', awayTeamExternalId: '2628', state: ProviderGameState.IN_PROGRESS, homeScore: 44, awayScore: 47 },
-      { externalGameId: '401900103', homeTeamExternalId: '150', awayTeamExternalId: '2561', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { providerGameId: '401900101', homeTeamExternalId: '57', awayTeamExternalId: '2390', state: ProviderGameState.FINAL, homeScore: 81, awayScore: 58 },
+      { providerGameId: '401900102', homeTeamExternalId: '194', awayTeamExternalId: '2628', state: ProviderGameState.IN_PROGRESS, homeScore: 44, awayScore: 47 },
+      { providerGameId: '401900103', homeTeamExternalId: '150', awayTeamExternalId: '2561', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
     ]);
     expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, unknown2026])).toEqual([]);
   });
@@ -158,7 +158,7 @@ describe('NCAA men\'s tournament game scores', () => {
   it('names the First Four winner in its round of 64 game, the team that fills that side\'s play-in place', () => {
     const texasInRoundOf64: NcaaBracketGame = { ...duke2025, status_state: CompetitionStatusState.SCHEDULED, away_team: { ...firstFour2025.home_team, score: null } };
     expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, texasInRoundOf64])).toEqual([{
-      externalGameId: '401856490',
+      providerGameId: '401856490',
       homeTeamExternalId: '150',
       awayTeamExternalId: '251',
       state: ProviderGameState.SCHEDULED,
@@ -246,7 +246,7 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
   });
 
   it('gives game scores from round 1 on, leaving out the round 0 First Four', () => {
-    expect(toNcaaGameScoreUpdates(NCAA_WOMEN, womens2025).map((game) => [game.externalGameId, game.homeTeamExternalId, game.awayTeamExternalId, game.homeScore, game.awayScore])).toEqual([
+    expect(toNcaaGameScoreUpdates(NCAA_WOMEN, womens2025).map((game) => [game.providerGameId, game.homeTeamExternalId, game.awayTeamExternalId, game.homeScore, game.awayScore])).toEqual([
       ['401856710', '41', '2636', 88, 50],
       ['401856711', '150', '2655', 74, 61],
       ['401856772', '41', '2579', 72, 66],
@@ -292,30 +292,35 @@ describe('an NCAA men\'s bracket from the vendor\'s (#1728)', () => {
     expect(firstRound?.[16]).toEqual([17, 'South', team(3, 1), southSixteen]);
   });
 
-  it('links each pair of games into the next round through the Elite Eight, the first two regions\' champions meeting in semifinal 61 and the last two in 62, all at neutral sites', () => {
+  it('links each pair of games into the next round through the Elite Eight, the first two regions\' champions meeting in the first semifinal and the last two in the second, all at neutral sites', () => {
     const bracket = toNcaaBracket(SEASON_2025, whole) ?? [];
-    const byNumber = new Map(bracket.map((match) => [match.matchNumber, match]));
+    const game = (roundNumber: number, matchNumber: number) =>
+      bracket.find((match) => match.roundNumber === roundNumber && match.matchNumber === matchNumber);
+    const to = (roundNumber: number, matchNumber: number, side: MatchSide) => ({ roundNumber, matchNumber, side });
     expect(bracket).toHaveLength(63);
     expect(bracket.map((match) => match.roundNumber).filter((round, index, rounds) => rounds.indexOf(round) === index)).toEqual([1, 2, 3, 4, 5, 6]);
-    expect([1, 2, 32, 33, 56, 57, 58, 59, 60, 61, 62].map((number) => [number, byNumber.get(number)?.advancesTo])).toEqual([
-      [1, { matchNumber: 33, side: MatchSide.HOME }],
-      [2, { matchNumber: 33, side: MatchSide.AWAY }],
-      [32, { matchNumber: 48, side: MatchSide.AWAY }],
-      [33, { matchNumber: 49, side: MatchSide.HOME }],
-      [56, { matchNumber: 60, side: MatchSide.AWAY }],
-      [57, { matchNumber: 61, side: MatchSide.HOME }],
-      [58, { matchNumber: 61, side: MatchSide.AWAY }],
-      [59, { matchNumber: 62, side: MatchSide.HOME }],
-      [60, { matchNumber: 62, side: MatchSide.AWAY }],
-      [61, { matchNumber: 63, side: MatchSide.HOME }],
-      [62, { matchNumber: 63, side: MatchSide.AWAY }],
+    expect([1, 2, 3, 4, 5, 6].map((round) => bracket.filter((match) => match.roundNumber === round).map((match) => match.matchNumber)))
+      .toEqual([32, 16, 8, 4, 2, 1].map((count) => Array.from({ length: count }, (_, index) => index + 1)));
+    expect(([[1, 1], [1, 2], [1, 32], [2, 1], [3, 8], [4, 1], [4, 2], [4, 3], [4, 4], [5, 1], [5, 2]] as const)
+      .map(([round, number]) => [round, number, game(round, number)?.advancesTo])).toEqual([
+      [1, 1, to(2, 1, MatchSide.HOME)],
+      [1, 2, to(2, 1, MatchSide.AWAY)],
+      [1, 32, to(2, 16, MatchSide.AWAY)],
+      [2, 1, to(3, 1, MatchSide.HOME)],
+      [3, 8, to(4, 4, MatchSide.AWAY)],
+      [4, 1, to(5, 1, MatchSide.HOME)],
+      [4, 2, to(5, 1, MatchSide.AWAY)],
+      [4, 3, to(5, 2, MatchSide.HOME)],
+      [4, 4, to(5, 2, MatchSide.AWAY)],
+      [5, 1, to(6, 1, MatchSide.HOME)],
+      [5, 2, to(6, 1, MatchSide.AWAY)],
     ]);
-    expect(byNumber.get(63)?.advancesTo).toBeNull();
-    expect([57, 58, 59, 60].map((number) => byNumber.get(number)?.regionLabel)).toEqual(['East', 'West', 'South', 'Midwest']);
-    expect([61, 62, 63].map((number) => byNumber.get(number)?.regionLabel)).toEqual([null, null, null]);
+    expect(game(6, 1)?.advancesTo).toBeNull();
+    expect([1, 2, 3, 4].map((number) => game(4, number)?.regionLabel)).toEqual(['East', 'West', 'South', 'Midwest']);
+    expect([game(5, 1), game(5, 2), game(6, 1)].map((match) => match?.regionLabel)).toEqual([null, null, null]);
     expect(bracket.every((match) => match.isNeutralSite)).toBe(true);
-    expect(byNumber.get(1)?.scheduledAt).toBeInstanceOf(Date);
-    expect(byNumber.get(33)?.scheduledAt).toBeNull();
+    expect(game(1, 1)?.scheduledAt).toBeInstanceOf(Date);
+    expect(game(2, 1)?.scheduledAt).toBeNull();
   });
 
   it('lays out no bracket for the women\'s tournament, whose bracket names no region, nor for a region short of its eight games, nor once a play-in place has gone', () => {

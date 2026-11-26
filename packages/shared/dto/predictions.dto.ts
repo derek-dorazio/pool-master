@@ -51,12 +51,13 @@ export const GamePickDtoSchema = z.object({
   pickedAt: z.iso.datetime(),
   outcome: z.enum(PickOutcome).nullable().describe('How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), or for a TIE pick once the game ended level, BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.'),
   points: z.number().int().nullable().describe('What the pick earned when CORRECT: in a bracket its round\'s value plus any upset bonus, in a pick\'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored.'),
+  survivorOutcome: z.enum(SurvivorWeekOutcome).nullable().describe('In a survivor pool, the pick\'s week as the entry\'s season decides it (#1992): SURVIVED when its team won or its game was cancelled; after a loss or a tie, LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry\'s last; PENDING while the game is unplayed. Null in the other pools, before the week starts, and for a week after the entry went out.'),
 }).describe('An entry\'s pick on one game.');
 export type GamePickDto = z.infer<typeof GamePickDtoSchema>;
 
 export const GamePickGameDtoSchema = z.object({
   sportEventRoundMatchId: z.uuid(),
-  matchNumber: z.number().int(),
+  matchNumber: z.number().int().describe('The game\'s number within its round (#2161): each round has a game 1, so a game is named by roundNumber and matchNumber together.'),
   roundNumber: z.number().int(),
   slot: SportEventRoundSlotDtoSchema.describe('The slot the game\'s round is played in: the round\'s label.'),
   isFinal: z.boolean().describe('Whether the game is the event\'s final (#2006): the game of its FINAL slot, or in an event of one slot (a tennis Slam) the game its bracket\'s links end at. Never the last round by number.'),

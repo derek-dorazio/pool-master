@@ -149,7 +149,7 @@ describe('toPreviewWeek', () => {
     expect(week.survivor).toBeNull();
     expect(week.tiebreakerValue).toBe(41);
     expect(week.games[0]?.revealed).toBe(false);
-    expect(week.games[0]?.pick).toEqual({ ...teamPickOf(bills), outcome: null, points: null });
+    expect(week.games[0]?.pick).toEqual({ ...teamPickOf(bills), outcome: null, points: null, survivorOutcome: null });
     expect(week.games[1]?.pick).toBeNull();
   });
 });

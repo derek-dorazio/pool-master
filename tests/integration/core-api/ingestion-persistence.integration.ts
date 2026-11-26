@@ -130,7 +130,7 @@ describe('IngestionPersistence', () => {
     const withFollowUps = () => new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
     const followUpJobs = (sportEventId: string) => getPrisma().backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId } });
     const KICKOFF = new Date('2026-04-15T17:00:00.000Z');
-    const games = [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'home', awayTeamExternalId: 'away', scheduledAt: KICKOFF, isNeutralSite: false }];
+    const games = [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'home', awayTeamExternalId: 'away', scheduledAt: KICKOFF, isNeutralSite: false }];
 
     it('writes one job with the field a sync writes, carrying the provider\'s games, and one on its own when the field is unchanged', async () => {
       const detail = { ...await linkedField('integration-follow-up-sync', 'ingestion-follow-up-1'), games };

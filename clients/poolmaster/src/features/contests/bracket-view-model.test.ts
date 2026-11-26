@@ -10,11 +10,11 @@ import { midTournamentGames, tournamentGames } from './test/bracket-tournament-f
 
 
 
-function lineOf(drawing: ReturnType<typeof drawBracket>, matchNumber: number, name: string) {
+function lineOf(drawing: ReturnType<typeof drawBracket>, roundNumber: number, matchNumber: number, name: string) {
   const game = bracketGroups(drawing).flatMap((group) => group.rounds.flatMap((round) => round.games))
-    .find((drawn) => drawn.game.matchNumber === matchNumber);
+    .find((drawn) => drawn.game.roundNumber === roundNumber && drawn.game.matchNumber === matchNumber);
   const line = game?.lines.find((candidate) => candidate.team?.name === name);
-  if (!line) throw new Error(`No ${name} in game ${matchNumber}`);
+  if (!line) throw new Error(`No ${name} in round ${roundNumber} game ${matchNumber}`);
   return line;
 }
 
@@ -40,16 +40,16 @@ describe('drawBracket', () => {
   it('leaves the bracket\'s own first round plain, and marks a later line green when the pick that sent its team there was right', () => {
     const drawing = drawBracket(midTournamentGames());
 
-    expect(lineOf(drawing, 1, 'Auburn').mark).toBe('none');
+    expect(lineOf(drawing, 1, 1, 'Auburn').mark).toBe('none');
     // Auburn won its first-round game (1), as picked, so its line in the Round of 32 game is right.
-    expect(lineOf(drawing, 33, 'Auburn').mark).toBe('right');
+    expect(lineOf(drawing, 2, 1, 'Auburn').mark).toBe('right');
   });
 
   it('marks a line wrong when the pick that sent its team there lost, with the team that really won the place', () => {
     const drawing = drawBracket(midTournamentGames());
 
     // The entry picked Michigan over UC San Diego in game 3; UC San Diego won.
-    const michigan = lineOf(drawing, 34, 'Michigan');
+    const michigan = lineOf(drawing, 2, 2, 'Michigan');
     expect(michigan.mark).toBe('wrong');
     expect(michigan.actual?.name).toBe('UC San Diego');
   });
@@ -58,7 +58,7 @@ describe('drawBracket', () => {
     const drawing = drawBracket(tournamentGames({ playedRounds: 1, realUpsets: [[1, 'UC San Diego']], upsets: [[2, 'Michigan']] }));
 
     // Michigan is out after the first round; the entry still has it in the Sweet 16.
-    const michigan = lineOf(drawing, 49, 'Michigan');
+    const michigan = lineOf(drawing, 3, 1, 'Michigan');
     expect(michigan.mark).toBe('wrong');
     expect(michigan.actual).toBeNull();
   });
@@ -89,7 +89,7 @@ describe('drawBracket', () => {
     expect(drawBracket(emptyBracketGames()).champion).toBeNull();
     expect(drawBracket(filledBracketGames()).champion).toEqual({ team: TEAMS.duke, isOut: false });
 
-    const busted = filledBracketGames().map((game) => (game.matchNumber === 7 ? { ...game, pick: gamePick(TEAMS.duke, { outcome: 'BUSTED', points: 0 }) } : game));
+    const busted = filledBracketGames().map((game) => (game.roundNumber === 3 ? { ...game, pick: gamePick(TEAMS.duke, { outcome: 'BUSTED', points: 0 }) } : game));
     expect(drawBracket(busted).champion).toEqual({ team: TEAMS.duke, isOut: true });
   });
 
@@ -120,8 +120,8 @@ describe('splitMiddle', () => {
     if (!middle) throw new Error('no middle');
     const { left, right } = splitMiddle(middle);
 
-    expect(left.map((round) => round.games.map(({ game }) => game.matchNumber))).toEqual([[1, 2], [5]]);
-    expect(right.map((round) => round.games.map(({ game }) => game.matchNumber))).toEqual([[3, 4], [6]]);
+    expect(left.map((round) => round.games.map(({ game }) => game.matchNumber))).toEqual([[1, 2], [1]]);
+    expect(right.map((round) => round.games.map(({ game }) => game.matchNumber))).toEqual([[3, 4], [2]]);
     expect(splitMiddle({ rounds: middle.rounds.slice(-1) })).toMatchObject({ left: [], right: [] });
   });
 });

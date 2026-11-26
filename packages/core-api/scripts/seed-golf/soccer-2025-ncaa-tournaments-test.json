@@ -707,7 +707,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 17,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -724,7 +725,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 18,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -741,7 +743,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T00:15:00Z",
               "advancesTo": {
-                "matchNumber": 19,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "result": {
@@ -758,7 +761,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 20,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "result": {
@@ -777,7 +781,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 21,
+                "roundNumber": 2,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "result": {
@@ -794,7 +799,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 22,
+                "roundNumber": 2,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "result": {
@@ -811,7 +817,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 23,
+                "roundNumber": 2,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "result": {
@@ -830,7 +837,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 24,
+                "roundNumber": 2,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "result": {
@@ -847,7 +855,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 25,
+                "roundNumber": 2,
+                "matchNumber": 9,
                 "side": "AWAY"
               },
               "result": {
@@ -864,7 +873,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 26,
+                "roundNumber": 2,
+                "matchNumber": 10,
                 "side": "AWAY"
               },
               "result": {
@@ -883,7 +893,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 27,
+                "roundNumber": 2,
+                "matchNumber": 11,
                 "side": "AWAY"
               },
               "result": {
@@ -900,7 +911,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 28,
+                "roundNumber": 2,
+                "matchNumber": 12,
                 "side": "AWAY"
               },
               "result": {
@@ -917,7 +929,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 29,
+                "roundNumber": 2,
+                "matchNumber": 13,
                 "side": "AWAY"
               },
               "result": {
@@ -936,7 +949,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 30,
+                "roundNumber": 2,
+                "matchNumber": 14,
                 "side": "AWAY"
               },
               "result": {
@@ -953,7 +967,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 31,
+                "roundNumber": 2,
+                "matchNumber": 15,
                 "side": "AWAY"
               },
               "result": {
@@ -970,7 +985,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T02:00:00Z",
               "advancesTo": {
-                "matchNumber": 32,
+                "roundNumber": 2,
+                "matchNumber": 16,
                 "side": "AWAY"
               },
               "result": {
@@ -980,14 +996,15 @@
               }
             },
             {
-              "matchNumber": 17,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": "ncaam-georgetown",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 33,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -997,14 +1014,15 @@
               }
             },
             {
-              "matchNumber": 18,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": "ncaam-high-point",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T00:30:00Z",
               "advancesTo": {
-                "matchNumber": 33,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -1014,14 +1032,15 @@
               }
             },
             {
-              "matchNumber": 19,
+              "matchNumber": 3,
               "roundNumber": 2,
               "home": "ncaam-nc-state",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 34,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "result": {
@@ -1031,14 +1050,15 @@
               }
             },
             {
-              "matchNumber": 20,
+              "matchNumber": 4,
               "roundNumber": 2,
               "home": "ncaam-virginia",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T22:55:00Z",
               "advancesTo": {
-                "matchNumber": 34,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -1050,14 +1070,15 @@
               }
             },
             {
-              "matchNumber": 21,
+              "matchNumber": 5,
               "roundNumber": 2,
               "home": "ncaam-akron",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 35,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "result": {
@@ -1067,14 +1088,15 @@
               }
             },
             {
-              "matchNumber": 22,
+              "matchNumber": 6,
               "roundNumber": 2,
               "home": "ncaam-princeton",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 35,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "result": {
@@ -1084,14 +1106,15 @@
               }
             },
             {
-              "matchNumber": 23,
+              "matchNumber": 7,
               "roundNumber": 2,
               "home": "ncaam-bryant",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 36,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "result": {
@@ -1101,14 +1124,15 @@
               }
             },
             {
-              "matchNumber": 24,
+              "matchNumber": 8,
               "roundNumber": 2,
               "home": "ncaam-indiana",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 36,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "result": {
@@ -1118,14 +1142,15 @@
               }
             },
             {
-              "matchNumber": 25,
+              "matchNumber": 9,
               "roundNumber": 2,
               "home": "ncaam-portland",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T02:00:00Z",
               "advancesTo": {
-                "matchNumber": 37,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "result": {
@@ -1137,14 +1162,15 @@
               }
             },
             {
-              "matchNumber": 26,
+              "matchNumber": 10,
               "roundNumber": 2,
               "home": "ncaam-san-diego",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 37,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "result": {
@@ -1154,14 +1180,15 @@
               }
             },
             {
-              "matchNumber": 27,
+              "matchNumber": 11,
               "roundNumber": 2,
               "home": "ncaam-furman",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 38,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "result": {
@@ -1171,14 +1198,15 @@
               }
             },
             {
-              "matchNumber": 28,
+              "matchNumber": 12,
               "roundNumber": 2,
               "home": "ncaam-vermont",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 38,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "result": {
@@ -1188,14 +1216,15 @@
               }
             },
             {
-              "matchNumber": 29,
+              "matchNumber": 13,
               "roundNumber": 2,
               "home": "ncaam-maryland",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 39,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "result": {
@@ -1207,14 +1236,15 @@
               }
             },
             {
-              "matchNumber": 30,
+              "matchNumber": 14,
               "roundNumber": 2,
               "home": "ncaam-uconn",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 39,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "result": {
@@ -1224,14 +1254,15 @@
               }
             },
             {
-              "matchNumber": 31,
+              "matchNumber": 15,
               "roundNumber": 2,
               "home": "ncaam-stanford",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 40,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "result": {
@@ -1241,14 +1272,15 @@
               }
             },
             {
-              "matchNumber": 32,
+              "matchNumber": 16,
               "roundNumber": 2,
               "home": "ncaam-smu",
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 40,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "result": {
@@ -1258,14 +1290,15 @@
               }
             },
             {
-              "matchNumber": 33,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-29T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 41,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -1275,14 +1308,15 @@
               }
             },
             {
-              "matchNumber": 34,
+              "matchNumber": 2,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-30T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 41,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -1292,14 +1326,15 @@
               }
             },
             {
-              "matchNumber": 35,
+              "matchNumber": 3,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-30T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 42,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "result": {
@@ -1309,14 +1344,15 @@
               }
             },
             {
-              "matchNumber": 36,
+              "matchNumber": 4,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-30T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 42,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -1328,14 +1364,15 @@
               }
             },
             {
-              "matchNumber": 37,
+              "matchNumber": 5,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-30T03:00:00Z",
               "advancesTo": {
-                "matchNumber": 43,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "result": {
@@ -1345,14 +1382,15 @@
               }
             },
             {
-              "matchNumber": 38,
+              "matchNumber": 6,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-30T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 43,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "result": {
@@ -1364,14 +1402,15 @@
               }
             },
             {
-              "matchNumber": 39,
+              "matchNumber": 7,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-29T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 44,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "result": {
@@ -1381,14 +1420,15 @@
               }
             },
             {
-              "matchNumber": 40,
+              "matchNumber": 8,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-12-01T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 44,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "result": {
@@ -1398,14 +1438,15 @@
               }
             },
             {
-              "matchNumber": 41,
+              "matchNumber": 1,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-12-06T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 45,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -1415,14 +1456,15 @@
               }
             },
             {
-              "matchNumber": 42,
+              "matchNumber": 2,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-12-06T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 45,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -1432,14 +1474,15 @@
               }
             },
             {
-              "matchNumber": 43,
+              "matchNumber": 3,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-12-06T03:00:00Z",
               "advancesTo": {
-                "matchNumber": 46,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "result": {
@@ -1449,14 +1492,15 @@
               }
             },
             {
-              "matchNumber": 44,
+              "matchNumber": 4,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-12-06T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 46,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "result": {
@@ -1466,14 +1510,15 @@
               }
             },
             {
-              "matchNumber": 45,
+              "matchNumber": 1,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2025-12-13T01:30:00Z",
               "advancesTo": {
-                "matchNumber": 47,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -1483,14 +1528,15 @@
               }
             },
             {
-              "matchNumber": 46,
+              "matchNumber": 2,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2025-12-12T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 47,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -1500,7 +1546,7 @@
               }
             },
             {
-              "matchNumber": 47,
+              "matchNumber": 1,
               "roundNumber": 6,
               "home": null,
               "away": null,
@@ -2311,7 +2357,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T02:00:00Z",
               "advancesTo": {
-                "matchNumber": 33,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -2329,7 +2376,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 33,
+                "roundNumber": 2,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Stanford bracket",
@@ -2349,7 +2397,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-16T02:00:00Z",
               "advancesTo": {
-                "matchNumber": 34,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -2367,7 +2416,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 34,
+                "roundNumber": 2,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Stanford bracket",
@@ -2387,7 +2437,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 35,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -2405,7 +2456,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 35,
+                "roundNumber": 2,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Stanford bracket",
@@ -2423,7 +2475,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T02:00:00Z",
               "advancesTo": {
-                "matchNumber": 36,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -2441,7 +2494,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T23:30:00Z",
               "advancesTo": {
-                "matchNumber": 36,
+                "roundNumber": 2,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Stanford bracket",
@@ -2459,7 +2513,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 37,
+                "roundNumber": 2,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Virginia bracket",
@@ -2477,7 +2532,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 37,
+                "roundNumber": 2,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -2495,7 +2551,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 38,
+                "roundNumber": 2,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Virginia bracket",
@@ -2513,7 +2570,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 38,
+                "roundNumber": 2,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -2533,7 +2591,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 39,
+                "roundNumber": 2,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Virginia bracket",
@@ -2551,7 +2610,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 39,
+                "roundNumber": 2,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -2569,7 +2629,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T03:00:00Z",
               "advancesTo": {
-                "matchNumber": 40,
+                "roundNumber": 2,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Virginia bracket",
@@ -2587,7 +2648,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 40,
+                "roundNumber": 2,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -2605,7 +2667,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 41,
+                "roundNumber": 2,
+                "matchNumber": 9,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2623,7 +2686,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 41,
+                "roundNumber": 2,
+                "matchNumber": 9,
                 "side": "AWAY"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2641,7 +2705,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 42,
+                "roundNumber": 2,
+                "matchNumber": 10,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2659,7 +2724,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 42,
+                "roundNumber": 2,
+                "matchNumber": 10,
                 "side": "AWAY"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2677,7 +2743,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 43,
+                "roundNumber": 2,
+                "matchNumber": 11,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2695,7 +2762,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-16T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 43,
+                "roundNumber": 2,
+                "matchNumber": 11,
                 "side": "AWAY"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2713,7 +2781,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 44,
+                "roundNumber": 2,
+                "matchNumber": 12,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2731,7 +2800,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 44,
+                "roundNumber": 2,
+                "matchNumber": 12,
                 "side": "AWAY"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -2749,7 +2819,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T23:30:00Z",
               "advancesTo": {
-                "matchNumber": 45,
+                "roundNumber": 2,
+                "matchNumber": 13,
                 "side": "HOME"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2767,7 +2838,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 45,
+                "roundNumber": 2,
+                "matchNumber": 13,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2785,7 +2857,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 46,
+                "roundNumber": 2,
+                "matchNumber": 14,
                 "side": "HOME"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2803,7 +2876,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 46,
+                "roundNumber": 2,
+                "matchNumber": 14,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2821,7 +2895,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 47,
+                "roundNumber": 2,
+                "matchNumber": 15,
                 "side": "HOME"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2839,7 +2914,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T01:00:00Z",
               "advancesTo": {
-                "matchNumber": 47,
+                "roundNumber": 2,
+                "matchNumber": 15,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2857,7 +2933,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-15T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 48,
+                "roundNumber": 2,
+                "matchNumber": 16,
                 "side": "HOME"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2875,7 +2952,8 @@
               "isNeutralSite": false,
               "scheduledAt": "2025-11-14T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 48,
+                "roundNumber": 2,
+                "matchNumber": 16,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -2886,14 +2964,15 @@
               }
             },
             {
-              "matchNumber": 33,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-22T03:30:00Z",
               "advancesTo": {
-                "matchNumber": 49,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -2904,14 +2983,15 @@
               }
             },
             {
-              "matchNumber": 34,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-22T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 49,
+                "roundNumber": 3,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Stanford bracket",
@@ -2924,14 +3004,15 @@
               }
             },
             {
-              "matchNumber": 35,
+              "matchNumber": 3,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 50,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -2942,14 +3023,15 @@
               }
             },
             {
-              "matchNumber": 36,
+              "matchNumber": 4,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 50,
+                "roundNumber": 3,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Stanford bracket",
@@ -2960,14 +3042,15 @@
               }
             },
             {
-              "matchNumber": 37,
+              "matchNumber": 5,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:30:00Z",
               "advancesTo": {
-                "matchNumber": 51,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Virginia bracket",
@@ -2978,14 +3061,15 @@
               }
             },
             {
-              "matchNumber": 38,
+              "matchNumber": 6,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 51,
+                "roundNumber": 3,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -2996,14 +3080,15 @@
               }
             },
             {
-              "matchNumber": 39,
+              "matchNumber": 7,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 52,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Virginia bracket",
@@ -3014,14 +3099,15 @@
               }
             },
             {
-              "matchNumber": 40,
+              "matchNumber": 8,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 52,
+                "roundNumber": 3,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -3032,14 +3118,15 @@
               }
             },
             {
-              "matchNumber": 41,
+              "matchNumber": 9,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-22T00:00:00Z",
               "advancesTo": {
-                "matchNumber": 53,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -3050,14 +3137,15 @@
               }
             },
             {
-              "matchNumber": 42,
+              "matchNumber": 10,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 53,
+                "roundNumber": 3,
+                "matchNumber": 5,
                 "side": "AWAY"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -3068,14 +3156,15 @@
               }
             },
             {
-              "matchNumber": 43,
+              "matchNumber": 11,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-22T01:54:00Z",
               "advancesTo": {
-                "matchNumber": 54,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -3086,14 +3175,15 @@
               }
             },
             {
-              "matchNumber": 44,
+              "matchNumber": 12,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-21T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 54,
+                "roundNumber": 3,
+                "matchNumber": 6,
                 "side": "AWAY"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -3106,14 +3196,15 @@
               }
             },
             {
-              "matchNumber": 45,
+              "matchNumber": 13,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 55,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "HOME"
               },
               "regionLabel": "Notre Dame bracket",
@@ -3126,14 +3217,15 @@
               }
             },
             {
-              "matchNumber": 46,
+              "matchNumber": 14,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 55,
+                "roundNumber": 3,
+                "matchNumber": 7,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -3144,14 +3236,15 @@
               }
             },
             {
-              "matchNumber": 47,
+              "matchNumber": 15,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 56,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "HOME"
               },
               "regionLabel": "Notre Dame bracket",
@@ -3162,14 +3255,15 @@
               }
             },
             {
-              "matchNumber": 48,
+              "matchNumber": 16,
               "roundNumber": 2,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-20T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 56,
+                "roundNumber": 3,
+                "matchNumber": 8,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -3180,14 +3274,15 @@
               }
             },
             {
-              "matchNumber": 49,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 57,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -3198,14 +3293,15 @@
               }
             },
             {
-              "matchNumber": 50,
+              "matchNumber": 2,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T18:00:00Z",
               "advancesTo": {
-                "matchNumber": 57,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Stanford bracket",
@@ -3216,14 +3312,15 @@
               }
             },
             {
-              "matchNumber": 51,
+              "matchNumber": 3,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 58,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Virginia bracket",
@@ -3234,14 +3331,15 @@
               }
             },
             {
-              "matchNumber": 52,
+              "matchNumber": 4,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 58,
+                "roundNumber": 4,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -3254,14 +3352,15 @@
               }
             },
             {
-              "matchNumber": 53,
+              "matchNumber": 5,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 59,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -3272,14 +3371,15 @@
               }
             },
             {
-              "matchNumber": 54,
+              "matchNumber": 6,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-24T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 59,
+                "roundNumber": 4,
+                "matchNumber": 3,
                 "side": "AWAY"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -3292,14 +3392,15 @@
               }
             },
             {
-              "matchNumber": 55,
+              "matchNumber": 7,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T17:00:00Z",
               "advancesTo": {
-                "matchNumber": 60,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "HOME"
               },
               "regionLabel": "Notre Dame bracket",
@@ -3310,14 +3411,15 @@
               }
             },
             {
-              "matchNumber": 56,
+              "matchNumber": 8,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-23T19:00:00Z",
               "advancesTo": {
-                "matchNumber": 60,
+                "roundNumber": 4,
+                "matchNumber": 4,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -3328,14 +3430,15 @@
               }
             },
             {
-              "matchNumber": 57,
+              "matchNumber": 1,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-28T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 61,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "Stanford bracket",
@@ -3346,14 +3449,15 @@
               }
             },
             {
-              "matchNumber": 58,
+              "matchNumber": 2,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-28T21:00:00Z",
               "advancesTo": {
-                "matchNumber": 61,
+                "roundNumber": 5,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "Virginia bracket",
@@ -3364,14 +3468,15 @@
               }
             },
             {
-              "matchNumber": 59,
+              "matchNumber": 3,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-30T00:30:00Z",
               "advancesTo": {
-                "matchNumber": 62,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "HOME"
               },
               "regionLabel": "Vanderbilt bracket",
@@ -3382,14 +3487,15 @@
               }
             },
             {
-              "matchNumber": 60,
+              "matchNumber": 4,
               "roundNumber": 4,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2025-11-28T22:00:00Z",
               "advancesTo": {
-                "matchNumber": 62,
+                "roundNumber": 5,
+                "matchNumber": 2,
                 "side": "AWAY"
               },
               "regionLabel": "Notre Dame bracket",
@@ -3400,14 +3506,15 @@
               }
             },
             {
-              "matchNumber": 61,
+              "matchNumber": 1,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2025-12-06T01:45:00Z",
               "advancesTo": {
-                "matchNumber": 63,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "result": {
@@ -3417,14 +3524,15 @@
               }
             },
             {
-              "matchNumber": 62,
+              "matchNumber": 2,
               "roundNumber": 5,
               "home": null,
               "away": null,
               "isNeutralSite": true,
               "scheduledAt": "2025-12-05T23:00:00Z",
               "advancesTo": {
-                "matchNumber": 63,
+                "roundNumber": 6,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "result": {
@@ -3434,7 +3542,7 @@
               }
             },
             {
-              "matchNumber": 63,
+              "matchNumber": 1,
               "roundNumber": 6,
               "home": null,
               "away": null,

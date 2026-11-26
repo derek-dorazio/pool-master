@@ -37,6 +37,10 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   MatchEnding,
+  describeMatchPlace,
+  isAtPlace,
+  type MatchPlace,
+  matchPlaceOf,
   MatchResultSource,
   MatchSide,
   MatchStatus,
@@ -186,14 +190,14 @@ export class MatchResultService {
    * shoot-out that does not fit, or an early ending that does not (`describeScoreProblem`); 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED for
    * a new winner once the next match has a result. The feed is its only writer on a synced event (#2074).
    */
-  async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput): Promise<SportEventRoundMatch[]> {
+  async recordResult(sportEventId: string, place: MatchPlace, input: MatchResultInput): Promise<SportEventRoundMatch[]> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
-    const match = this.requireMatch(sportEventId, bracket, matchNumber);
+    const match = this.requireMatch(sportEventId, bracket, place);
     if (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null) {
-      this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused a result for a match whose teams are not both known');
+      this.deps.logger?.warn({ sportEventId, ...place }, 'Refused a result for a match whose teams are not both known');
       throw new SportEventError(
-        `Match ${matchNumber} does not have both teams yet: enter the results of the matches that feed it first.`,
+        `${describeMatchPlace(place, { sentenceStart: true })} does not have both teams yet: enter the results of the matches that feed it first.`,
         'MATCH_SIDES_NOT_SET',
         422,
       );
@@ -208,8 +212,8 @@ export class MatchResultService {
       shootout: getSportDefinition(sportEvent.sport).shootout,
     }) ?? describeWalkoverPeriods(match, ending) ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
     if (scoreProblem) {
-      this.deps.logger?.warn({ sportEventId, matchNumber, scoreProblem }, 'Refused a match result with invalid scores');
-      throw new SportEventError(`Match ${matchNumber}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
+      this.deps.logger?.warn({ sportEventId, ...place, scoreProblem }, 'Refused a match result with invalid scores');
+      throw new SportEventError(`${describeMatchPlace(place, { sentenceStart: true })}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
     }
     const winnerChanges = match.status !== MatchStatus.COMPLETED || match.winnerSide !== input.winnerSide;
     if (winnerChanges) {
@@ -225,7 +229,7 @@ export class MatchResultService {
     const jobs = await this.decided(sportEventId, match.id, now);
     const after = await this.write(sportEventId, bracket, result, sideFill, jobs.jobs);
     jobs.queued();
-    this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, ending, winnerChanges }, 'Saved a match result');
+    this.deps.logger?.info({ sportEventId, ...place, winnerSide: input.winnerSide, ending, winnerChanges }, 'Saved a match result');
     // The bracket as written stands in for a read of it (#1355).
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
       await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now, after);
@@ -241,26 +245,26 @@ export class MatchResultService {
    * result; 422 MATCH_IN_BRACKET for a game of a bracket (it sends its winner on, takes a team from
    * an earlier game, or sits among games of several rounds), since a bracket cannot lose a game.
    */
-  async cancelMatch(sportEventId: string, matchNumber: number): Promise<SportEventRoundMatch[]> {
+  async cancelMatch(sportEventId: string, place: MatchPlace): Promise<SportEventRoundMatch[]> {
     await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
-    const match = this.requireMatch(sportEventId, bracket, matchNumber);
+    const match = this.requireMatch(sportEventId, bracket, place);
     if (match.status === MatchStatus.CANCELLED) {
       return bracket;
     }
     if (match.status === MatchStatus.COMPLETED) {
-      this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused to cancel a game that has a result');
+      this.deps.logger?.warn({ sportEventId, ...place }, 'Refused to cancel a game that has a result');
       throw new SportEventError(
-        `Match ${matchNumber} has a result: clear it before cancelling the game.`,
+        `${describeMatchPlace(place, { sentenceStart: true })} has a result: clear it before cancelling the game.`,
         'MATCH_ALREADY_PLAYED',
         409,
       );
     }
     // A reseeded bracket links no games, but its games still span several rounds.
     if (!formsNoBracket(bracket, linksOn)) {
-      this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused to cancel a bracket game');
+      this.deps.logger?.warn({ sportEventId, ...place }, 'Refused to cancel a bracket game');
       throw new SportEventError(
-        `Match ${matchNumber} is part of a bracket, which cannot lose a game: change its time instead.`,
+        `${describeMatchPlace(place, { sentenceStart: true })} is part of a bracket, which cannot lose a game: change its time instead.`,
         'MATCH_IN_BRACKET',
         422,
       );
@@ -271,7 +275,7 @@ export class MatchResultService {
     const jobs = await this.decided(sportEventId, match.id, this.deps.now?.() ?? new Date());
     const after = await this.write(sportEventId, bracket, result, null, jobs.jobs);
     jobs.queued();
-    this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
+    this.deps.logger?.info({ sportEventId, ...place }, 'Cancelled a game');
     return after;
   }
 
@@ -284,21 +288,21 @@ export class MatchResultService {
    * side waits for its team; 409 MATCH_CANCELLED for a cancelled game; 422 MATCH_PERIOD_SCORE_INVALID
    * for a score below an earlier period's or above a later one's or the final score.
    */
-  async recordPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number, input: PeriodScoreInput): Promise<SportEventRoundMatch[]> {
-    const { sportEvent, match, periods } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
+  async recordPeriodScore(sportEventId: string, place: MatchPlace, periodNumber: number, input: PeriodScoreInput): Promise<SportEventRoundMatch[]> {
+    const { sportEvent, match, periods } = await this.requirePeriod(sportEventId, place, periodNumber);
     if (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null) {
-      this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber }, 'Refused a period score for a game whose teams are not both known');
+      this.deps.logger?.warn({ sportEventId, ...place, periodNumber }, 'Refused a period score for a game whose teams are not both known');
       throw new SportEventError(
-        `Match ${matchNumber} does not have both teams yet, so it has no score.`,
+        `${describeMatchPlace(place, { sentenceStart: true })} does not have both teams yet, so it has no score.`,
         'MATCH_SIDES_NOT_SET',
         422,
       );
     }
     const problem = describePeriodScoreProblem(match, periodNumber, input, periods);
     if (problem) {
-      this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber, problem }, 'Refused a period score out of step with the game\'s other scores');
+      this.deps.logger?.warn({ sportEventId, ...place, periodNumber, problem }, 'Refused a period score out of step with the game\'s other scores');
       throw new SportEventError(
-        `The score at the end of ${periods.label.one} ${periodNumber} of match ${matchNumber} cannot be saved: ${problem}.`,
+        `The score at the end of ${periods.label.one} ${periodNumber} of the ${describeMatchPlace(place)} cannot be saved: ${problem}.`,
         'MATCH_PERIOD_SCORE_INVALID',
         422,
       );
@@ -309,7 +313,7 @@ export class MatchResultService {
     const jobs = match.status === MatchStatus.COMPLETED ? await this.decided(sportEventId, match.id, now) : await this.rebuild(sportEventId);
     await this.deps.matches.savePeriodScore(match.id, { periodNumber, ...input }, jobs.jobs);
     jobs.queued();
-    this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Saved a period score');
+    this.deps.logger?.info({ sportEventId, ...place, periodNumber }, 'Saved a period score');
     // A scored period means the game is under way: a squares contest on it goes live (#711).
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
       await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now);
@@ -320,7 +324,7 @@ export class MatchResultService {
   /** A released event's game, of a sport with periods, and a period of it before the last. */
   private async requirePeriod(
     sportEventId: string,
-    matchNumber: number,
+    place: MatchPlace,
     periodNumber: number,
   ): Promise<{ sportEvent: SportEvent; match: SportEventRoundMatch; periods: SportMatchPeriods }> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
@@ -334,17 +338,17 @@ export class MatchResultService {
       );
     }
     if (periodNumber >= periods.count) {
-      this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber }, 'Refused a score for the last period or past it');
+      this.deps.logger?.warn({ sportEventId, ...place, periodNumber }, 'Refused a score for the last period or past it');
       throw new SportEventError(
         `A game has ${periods.count} ${periods.label.many}, and the score at the end of the last is the final score: enter it as the game's result.`,
         'MATCH_PERIOD_INVALID',
         422,
       );
     }
-    const match = this.requireMatch(sportEventId, await this.deps.matches.findBySportEvent(sportEventId), matchNumber);
+    const match = this.requireMatch(sportEventId, await this.deps.matches.findBySportEvent(sportEventId), place);
     if (match.status === MatchStatus.CANCELLED) {
-      this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused a period score for a cancelled game');
-      throw new SportEventError(`Match ${matchNumber} was cancelled, so it has no score.`, 'MATCH_CANCELLED', 409);
+      this.deps.logger?.warn({ sportEventId, ...place }, 'Refused a period score for a cancelled game');
+      throw new SportEventError(`${describeMatchPlace(place, { sentenceStart: true })} was cancelled, so it has no score.`, 'MATCH_CANCELLED', 409);
     }
     return { sportEvent, match, periods };
   }
@@ -400,21 +404,21 @@ export class MatchResultService {
     // A quarter score belongs to the two teams playing (#772), so a next match with one is locked
     // as one with a result is: changing who plays it would leave the score on another pairing.
     if (next && (next.status === MatchStatus.COMPLETED || next.periodScores.length > 0)) {
-      this.deps.logger?.warn({ sportEventId, matchNumber: match.matchNumber, nextMatchNumber: next.matchNumber }, 'Refused a match result change after the next match was decided or scored');
+      this.deps.logger?.warn({ sportEventId, match: matchPlaceOf(match), next: matchPlaceOf(next) }, 'Refused a match result change after the next match was decided or scored');
       throw new SportEventError(
         next.status === MatchStatus.COMPLETED
-          ? `Match ${match.matchNumber}'s winner already played match ${next.matchNumber}, which has a result: clear match ${next.matchNumber}'s result first.`
-          : `Match ${match.matchNumber}'s winner is playing match ${next.matchNumber}, which has scores entered: clear them first.`,
+          ? `${describeMatchPlace(match, { sentenceStart: true })}'s winner already played the ${describeMatchPlace(next)}, which has a result: clear its result first.`
+          : `${describeMatchPlace(match, { sentenceStart: true })}'s winner is playing the ${describeMatchPlace(next)}, which has scores entered: clear them first.`,
         'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED',
         409,
       );
     }
   }
 
-  private requireMatch(sportEventId: string, bracket: readonly SportEventRoundMatch[], matchNumber: number): SportEventRoundMatch {
-    const match = bracket.find((candidate) => candidate.matchNumber === matchNumber);
+  private requireMatch(sportEventId: string, bracket: readonly SportEventRoundMatch[], place: MatchPlace): SportEventRoundMatch {
+    const match = bracket.find((candidate) => isAtPlace(candidate, place));
     if (!match) {
-      throw new SportEventError(`Sport event ${sportEventId} has no match ${matchNumber}.`, 'BRACKET_MATCH_NOT_FOUND', 404);
+      throw new SportEventError(`Sport event ${sportEventId} has no ${describeMatchPlace(place)}.`, 'BRACKET_MATCH_NOT_FOUND', 404);
     }
     return match;
   }

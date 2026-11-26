@@ -172,7 +172,7 @@ export function toWorldCupGameScoreUpdates(matches: readonly FifaMatch[]): GameS
     // A final with no score is passed on as one, and skipped there.
     const started = hasStarted(state);
     return [{
-      externalGameId: String(required(match.id, FIFA_WC_MATCHES_PATH, 'a match with both teams', 'id')),
+      providerGameId: String(required(match.id, FIFA_WC_MATCHES_PATH, 'a match with both teams', 'id')),
       homeTeamExternalId: participantFeedId(required(match.home_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'home team id')),
       awayTeamExternalId: participantFeedId(required(match.away_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'away team id')),
       state,
@@ -202,7 +202,7 @@ export function toWorldCupScheduledGames(knockout: readonly FifaMatch[]): Provid
     const away = decided(match.away_team);
     if (!home || !away || match.id === undefined) return [];
     return [{
-      externalGameId: String(match.id),
+      games: [{ providerGameId: String(match.id), gameNumber: 1 }],
       roundNumber: rounds.of(match),
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),
@@ -258,20 +258,19 @@ export function toWorldCupBracket(knockout: readonly FifaMatch[]): ProviderBrack
     levels.unshift(level);
   }
 
-  const numbers = new Map<FifaMatch, number>();
-  for (const match of levels.flat()) numbers.set(match, numbers.size + 1);
+  // Each match is numbered within its round (#2161), in the draw's order.
   return levels.flatMap((level, index) => level.map((match, position): ProviderBracketMatch => {
     const next = index + 1 < levels.length ? levels[index + 1][Math.floor(position / 2)] : null;
     const home = index === 0 ? decided(match.home_team) : null;
     const away = index === 0 ? decided(match.away_team) : null;
     return {
-      matchNumber: numbers.get(match) ?? 0,
       roundNumber: index + 1,
+      matchNumber: position + 1,
       homeTeamExternalId: home ? participantFeedId(home.id) : null,
       awayTeamExternalId: away ? participantFeedId(away.id) : null,
       isNeutralSite: true,
       scheduledAt: match.datetime ? new Date(match.datetime) : null,
-      advancesTo: next ? { matchNumber: numbers.get(next) ?? 0, side: position % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY } : null,
+      advancesTo: next ? { roundNumber: index + 2, matchNumber: Math.floor(position / 2) + 1, side: position % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY } : null,
       regionLabel: null,
     };
   }));

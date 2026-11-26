@@ -78,6 +78,7 @@ import {
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
   PrismaBackgroundJobRepository,
+  PrismaSportEventRoundMatchGameRepository,
   PrismaSportLeagueRepository,
   PrismaSquaresRepository,
 } from './adapters';
@@ -528,6 +529,9 @@ export function buildApp(options: BuildAppOptions = {}) {
     prefix: '/api/v1/provider-webhooks',
     notifications: new ProviderNotificationService({
       sportEvents: new PrismaSportEventRepository(prisma),
+      games: new PrismaSportEventRoundMatchGameRepository(prisma),
+      sportLeagues: new PrismaSportLeagueRepository(prisma),
+      findings: syncFindings,
       jobs: backgroundJobs,
       logger: app.log,
     }),

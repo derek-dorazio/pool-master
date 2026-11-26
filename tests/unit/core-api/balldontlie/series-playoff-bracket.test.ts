@@ -71,25 +71,25 @@ describe('series playoffs bracket', () => {
   it('links each two matches into the next, the half with the better seed at home, the West\'s champion home in the Finals', () => {
     const bracket = toPlayoffsBracket(NBA_PLAYOFFS, firstRound(), RANKS) ?? [];
 
-    expect(bracket.map((match) => [match.matchNumber, match.advancesTo])).toEqual([
-      [1, { matchNumber: 9, side: MatchSide.HOME }],
-      [2, { matchNumber: 9, side: MatchSide.AWAY }],
-      [3, { matchNumber: 10, side: MatchSide.AWAY }],
-      [4, { matchNumber: 10, side: MatchSide.HOME }],
-      [5, { matchNumber: 11, side: MatchSide.HOME }],
-      [6, { matchNumber: 11, side: MatchSide.AWAY }],
-      [7, { matchNumber: 12, side: MatchSide.AWAY }],
-      [8, { matchNumber: 12, side: MatchSide.HOME }],
-      [9, { matchNumber: 13, side: MatchSide.HOME }],
-      [10, { matchNumber: 13, side: MatchSide.AWAY }],
-      [11, { matchNumber: 14, side: MatchSide.HOME }],
-      [12, { matchNumber: 14, side: MatchSide.AWAY }],
-      [13, { matchNumber: 15, side: MatchSide.HOME }],
-      [14, { matchNumber: 15, side: MatchSide.AWAY }],
-      [15, null],
+    expect(bracket.map((match) => [match.roundNumber, match.matchNumber, match.advancesTo])).toEqual([
+      [1, 1, { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME }],
+      [1, 2, { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY }],
+      [1, 3, { roundNumber: 2, matchNumber: 2, side: MatchSide.AWAY }],
+      [1, 4, { roundNumber: 2, matchNumber: 2, side: MatchSide.HOME }],
+      [1, 5, { roundNumber: 2, matchNumber: 3, side: MatchSide.HOME }],
+      [1, 6, { roundNumber: 2, matchNumber: 3, side: MatchSide.AWAY }],
+      [1, 7, { roundNumber: 2, matchNumber: 4, side: MatchSide.AWAY }],
+      [1, 8, { roundNumber: 2, matchNumber: 4, side: MatchSide.HOME }],
+      [2, 1, { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME }],
+      [2, 2, { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY }],
+      [2, 3, { roundNumber: 3, matchNumber: 2, side: MatchSide.HOME }],
+      [2, 4, { roundNumber: 3, matchNumber: 2, side: MatchSide.AWAY }],
+      [3, 1, { roundNumber: 4, matchNumber: 1, side: MatchSide.HOME }],
+      [3, 2, { roundNumber: 4, matchNumber: 1, side: MatchSide.AWAY }],
+      [4, 1, null],
     ]);
     expect(bracket.filter((match) => match.roundNumber > 1).every((match) => match.homeTeamExternalId === null && match.awayTeamExternalId === null && match.scheduledAt === null)).toBe(true);
-    expect(bracket.find((match) => match.matchNumber === 15)).toMatchObject({ roundNumber: 4, regionLabel: null, isNeutralSite: false });
+    expect(bracket.find((match) => match.roundNumber === 4 && match.matchNumber === 1)).toMatchObject({ regionLabel: null, isNeutralSite: false });
   });
 
   it('builds no bracket until the whole first round is out', () => {
@@ -123,7 +123,7 @@ describe('series playoffs bracket', () => {
     expect(toPlayoffsBracket(league, firstRound(), RANKS)).toBeNull();
   });
 
-  it('gives each series as one game at its Game 1 tip-off, Game 1\'s home team at home when there is no bracket', () => {
+  it('gives each series as one match at its Game 1 tip-off with each of its games numbered in the order they start, Game 1\'s home team at home when there is no bracket', () => {
     const west1 = teamOf('West', 1);
     const west8 = teamOf('West', 8);
     const opener = game(west1, west8, 0);
@@ -131,7 +131,7 @@ describe('series playoffs bracket', () => {
     const third = game(west8, west1, 4);
 
     expect(toPlayoffSeriesGames([third, second, opener], null)).toEqual([
-      { externalGameId: String(opener.id), roundNumber: 1, homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 8), scheduledAt: new Date(opener.start), isNeutralSite: false },
+      { games: [{ providerGameId: String(opener.id), gameNumber: 1 }, { providerGameId: String(second.id), gameNumber: 2 }, { providerGameId: String(third.id), gameNumber: 3 }], roundNumber: 1, homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 8), scheduledAt: new Date(opener.start), isNeutralSite: false },
     ]);
   });
 

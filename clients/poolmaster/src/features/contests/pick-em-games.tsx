@@ -1,6 +1,6 @@
 import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import { Lock } from 'lucide-react';
-import { PickEmMode, PickOutcome, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
+import { PickEmMode } from '@poolmaster/shared/domain';
 import {
   Chip,
   cn,
@@ -18,26 +18,13 @@ import { PickedLine, PickOption } from './pick-option';
 import { confidenceOptions, gameTeams, isSurvivorWeek, isTiePicked, teamUsedInWeek, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
 
 /**
- * A survivor pick's mark (#719): its team won, or the entry is out, in the survivor week's words.
- * A survivor pick is never scored against the spread, so a push and a pending pick keep the pick's own.
+ * How a pick stands against its game. A survivor pick reads its week as the API decides it
+ * (#1992): Survived, Life lost, Out (the short form of Eliminated) or Pending.
  */
-function survivorOutcomeLabel(outcome: PickOutcome): string {
-  switch (outcome) {
-    case PickOutcome.CORRECT:
-      return enumLabel('SurvivorWeekOutcome', SurvivorWeekOutcome.SURVIVED);
-    case PickOutcome.BUSTED:
-      return enumLabel('SurvivorWeekOutcome', SurvivorWeekOutcome.ELIMINATED, { form: 'short' });
-    case PickOutcome.PUSH:
-    case PickOutcome.PENDING:
-      return enumLabel('PickOutcome', outcome);
-  }
-}
-
-/** How a pick stands against its game: a survivor pick reads as surviving or going out. */
 function pickOutcome(gamePicks: PickEmWeek, pick: NonNullable<PickEmGame['pick']>) {
   const outcome = describePickOutcome(pick);
-  return outcome && isSurvivorWeek(gamePicks) && pick.outcome !== null
-    ? { ...outcome, label: survivorOutcomeLabel(pick.outcome) }
+  return outcome && isSurvivorWeek(gamePicks) && pick.survivorOutcome !== null
+    ? { ...outcome, label: enumLabel('SurvivorWeekOutcome', pick.survivorOutcome, { form: 'short' }) }
     : outcome;
 }
 
@@ -54,7 +41,7 @@ function TeamName({ game, spread, team }: { game: PickEmGame; spread: string | n
     <span className="flex min-w-0 items-baseline gap-2">
       <span className="truncate">{team.name}</span>
       {spread === null ? null : (
-        <Text className="shrink-0 tabular-nums" data-testid={`pick-em-game-${game.matchNumber}-spread-${team.sportEventParticipantId}`} variant="caption">
+        <Text className="shrink-0 tabular-nums" data-testid={`pick-em-game-${game.roundNumber}-${game.matchNumber}-spread-${team.sportEventParticipantId}`} variant="caption">
           {spread}
         </Text>
       )}
@@ -81,7 +68,7 @@ function TieChoice({
   label: string;
   onPick: (game: PickEmGame) => void;
 }) {
-  const testId = `pick-em-game-${game.matchNumber}-tie`;
+  const testId = `pick-em-game-${game.roundNumber}-${game.matchNumber}-tie`;
   return choosable ? (
     <PickOption isBusy={isBusy} isPicked={isPicked} onPick={() => onPick(game)} testId={testId}>
       <span>{label}</span>
@@ -111,7 +98,7 @@ function ConfidenceValue({
   const value = game.pick?.confidence ?? null;
   if (!canChange || !game.pick) {
     return game.pick ? (
-      <Text as="p" data-testid={`pick-em-game-${game.matchNumber}-confidence-value`}>
+      <Text as="p" data-testid={`pick-em-game-${game.roundNumber}-${game.matchNumber}-confidence-value`}>
         {value === null ? 'Not ranked' : `Confidence ${value}`}
       </Text>
     ) : null;
@@ -119,7 +106,7 @@ function ConfidenceValue({
   return (
     <FormField label="Confidence">
       <Select
-        data-testid={`pick-em-game-${game.matchNumber}-confidence`}
+        data-testid={`pick-em-game-${game.roundNumber}-${game.matchNumber}-confidence`}
         disabled={isBusy}
         onChange={(event) => onChange(game, event.target.value === '' ? null : Number(event.target.value))}
         value={value === null ? '' : String(value)}
@@ -176,19 +163,19 @@ function PickEmGameCard({
     <GameCard
       aside={(
         <>
-          <EventScheduleChip status={game.status} testId={`pick-em-game-${game.matchNumber}-schedule`} />
+          <EventScheduleChip status={game.status} testId={`pick-em-game-${game.roundNumber}-${game.matchNumber}-schedule`} />
           {isTiebreakerGame ? <Chip tone="info">Tiebreaker game</Chip> : null}
           {game.locked ? (
-            <span className="inline-flex items-center gap-1" data-testid={`pick-em-game-${game.matchNumber}-locked`}>
+            <span className="inline-flex items-center gap-1" data-testid={`pick-em-game-${game.roundNumber}-${game.matchNumber}-locked`}>
               <Lock aria-hidden size={13} />
               Locked
             </span>
           ) : null}
-          {outcome ? <Chip data-testid={`pick-em-game-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip> : null}
+          {outcome ? <Chip data-testid={`pick-em-game-${game.roundNumber}-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip> : null}
         </>
       )}
-      label={<span data-testid={`pick-em-game-${game.matchNumber}-kickoff`}>{formatDateTimeDisplay(game.kickoff, displayPreferences)}</span>}
-      testId={`pick-em-game-${game.matchNumber}`}
+      label={<span data-testid={`pick-em-game-${game.roundNumber}-${game.matchNumber}-kickoff`}>{formatDateTimeDisplay(game.kickoff, displayPreferences)}</span>}
+      testId={`pick-em-game-${game.roundNumber}-${game.matchNumber}`}
     >
       <div className={cn('grid gap-2', gamePicks.tiePicksOffered ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
         {gameTeams(game).flatMap((team, index) => {
@@ -211,7 +198,7 @@ function PickEmGameCard({
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
           const spread = teamSpread(gamePicks, game, team);
-          const testId = `pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`;
+          const testId = `pick-em-game-${game.roundNumber}-${game.matchNumber}-team-${team.sportEventParticipantId}`;
           return [...tieChoice, choosable ? (
             <PickOption
               isBusy={isBusy}
@@ -231,7 +218,7 @@ function PickEmGameCard({
         })}
       </div>
       {isHidden ? (
-        <Text as="p" data-testid={`pick-em-game-${game.matchNumber}-hidden`} variant="meta">
+        <Text as="p" data-testid={`pick-em-game-${game.roundNumber}-${game.matchNumber}-hidden`} variant="meta">
           This pick is shown at kickoff.
         </Text>
       ) : null}
@@ -277,7 +264,7 @@ export function PickEmGames({
   weekName?: (weekNumber: number) => string;
 }) {
   const games = [...gamePicks.games].sort(
-    (left, right) => Date.parse(left.kickoff) - Date.parse(right.kickoff) || left.matchNumber - right.matchNumber,
+    (left, right) => Date.parse(left.kickoff) - Date.parse(right.kickoff) || left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber,
   );
   if (games.length === 0) {
     return <Text as="p" data-testid="pick-em-no-games" variant="meta">This week has no games to pick.</Text>;

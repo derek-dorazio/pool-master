@@ -59,13 +59,12 @@ export function tournamentGames({
   const realOut = new Set<string>();
   let realSides: Array<Team | null> = REGIONS.flatMap((region) => NAMES[region].map(teamNamed));
   let pickedSides: Array<Team | null> = [...realSides];
-  let matchNumber = 0;
   for (let roundNumber = 1; realSides.length > 1; roundNumber += 1) {
     const nextReal: Array<Team | null> = [];
     const nextPicked: Array<Team | null> = [];
     const regionSize = realSides.length / 4;
     for (let index = 0; index < realSides.length; index += 2) {
-      matchNumber += 1;
+      const matchNumber = index / 2 + 1;
       const [home, away] = [realSides[index], realSides[index + 1]];
       const [predictedHome, predictedAway] = [pickedSides[index], pickedSides[index + 1]];
       const played = roundNumber <= playedRounds;
@@ -82,7 +81,7 @@ export function tournamentGames({
         : winner ? (winner.sportEventParticipantId === picked.sportEventParticipantId ? 'CORRECT' : 'BUSTED')
           : realOut.has(picked.sportEventParticipantId) ? 'BUSTED' : 'PENDING';
       games.push({
-        sportEventRoundMatchId: `match-${matchNumber}`,
+        sportEventRoundMatchId: `match-${roundNumber}-${matchNumber}`,
         matchNumber,
         roundNumber,
         slot: TOURNAMENT_ROUND_SLOTS[roundNumber - 1] ?? TOURNAMENT_ROUND_SLOTS[0],
@@ -105,6 +104,7 @@ export function tournamentGames({
           pickedAt: '2026-03-19T12:00:00.000Z',
           outcome,
           points: outcome === 'CORRECT' ? 2 ** (roundNumber - 1) : outcome === 'BUSTED' ? 0 : null,
+          survivorOutcome: null,
         } : null,
       });
       nextReal.push(winner);

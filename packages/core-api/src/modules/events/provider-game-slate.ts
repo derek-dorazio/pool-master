@@ -1,14 +1,22 @@
 import type { FastifyBaseLogger } from 'fastify';
+import { randomUUID } from 'node:crypto';
 import type {
   ParticipantProviderMappingRepository,
+  SportEventRoundMatchGameCreate,
+  SportEventRoundMatchGameRepository,
   SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
+  compareMatchPlaces,
   eventPlaysMatches,
+  isAtPlace,
   isProviderSyncedEvent,
   isMatchUnplayed,
+  type MatchPlace,
+  MatchPlaceMap,
+  matchPlaceOf,
   SportEventStatus,
   type SportEvent,
   type SportEventRoundMatch,
@@ -23,13 +31,14 @@ import type { SportEventRoundService } from './sport-event-round-service';
 /** What one slate sync did to the event's games, and why when it did nothing. */
 export type ProviderGameSlateOutcome =
   | { outcome: 'LOADED'; sportEventId: string; matchCount: number }
-  | { outcome: 'MATCHES_UPDATED'; sportEventId: string; matchNumbers: number[] }
+  | { outcome: 'MATCHES_UPDATED'; sportEventId: string; matches: MatchPlace[] }
   | { outcome: 'UNCHANGED'; sportEventId: string }
   | { outcome: 'SKIPPED'; reason: 'NO_EVENT' | 'NOT_SYNCED' | 'PLAYS_NO_GAMES' | 'FINISHED' | 'TEAMS_NOT_IN_FIELD' };
 
 export interface ProviderGameSlateDeps {
   sportEvents: Pick<SportEventRepository, 'findByProviderRef'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
+  games: Pick<SportEventRoundMatchGameRepository, 'findBySportEvent' | 'findByProviderExternalIds' | 'applySync'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   bracket: Pick<SportEventBracketService, 'loadBracket' | 'updateMatch' | 'proposeRoundMatchups' | 'setRoundMatchups'>;
@@ -66,6 +75,12 @@ export interface ProviderGameSlateInput {
  *
  * After a sync that loaded or changed matches, each round whose matches have a kickoff starts at
  * the earliest of them; a round with none yet keeps its date.
+ *
+ * Then each provider game is mapped to its Game (#2007): the Game of its number in the match of
+ * its two teams, created for a series game the match has no Game for yet. A provider webhook about
+ * the game routes to that Game from then on. Only an id no Game holds is mapped here: a Game that
+ * holds another id, or an id another event's Game holds, is a re-issued or a moved game, which the
+ * score sync settles with a finding.
  *
  * A finished or cancelled event, an event whose league is not synced to this provider, and one
  * whose teams are not all in its field yet (the field load comes first) are left alone.
@@ -109,7 +124,43 @@ export class ProviderGameSlateService {
     }
     const outcome = await this.syncMatches(event, sync, fieldRowOf);
     if (outcome.outcome !== 'UNCHANGED') await this.dateRoundsByKickoff(event.id);
+    await this.mapProviderGames(event, input, fieldRowOf);
     return outcome;
+  }
+
+  /** Maps each provider game no Game holds to the Game of its number in its teams' match. */
+  private async mapProviderGames(event: SportEvent, input: ProviderGameSlateInput, fieldRowOf: (teamExternalId: string) => string): Promise<void> {
+    const providerGameIds = input.games.flatMap((game) => game.games.map((each) => each.providerGameId));
+    if (providerGameIds.length === 0) return;
+    const providerCode = requireProviderCodeOfSourceId(input.providerId);
+    const [matches, stored, held] = await Promise.all([
+      this.deps.matches.findBySportEvent(event.id),
+      this.deps.games.findBySportEvent(event.id, providerCode),
+      this.deps.games.findByProviderExternalIds(providerCode, providerGameIds),
+    ]);
+    const heldIds = new Set(held.flatMap((each) => (each.externalId === null ? [] : [each.externalId])));
+    const matchByPair = new Map(matches.map((match) => [pairKey(match), match]));
+    const gameAt = new Map(stored.map((each) => [JSON.stringify([each.game.sportEventRoundMatchId, each.game.gameNumber]), each]));
+    const created: SportEventRoundMatchGameCreate[] = [];
+    const mapped: { sportEventRoundMatchGameId: string; externalId: string }[] = [];
+    for (const game of input.games) {
+      const match = matchByPair.get(pairKey({ homeSportEventParticipantId: fieldRowOf(game.homeTeamExternalId), awaySportEventParticipantId: fieldRowOf(game.awayTeamExternalId) }));
+      const gameOne = match === undefined ? undefined : gameAt.get(JSON.stringify([match.id, 1]));
+      if (match === undefined || gameOne === undefined) continue;
+      for (const { providerGameId, gameNumber } of game.games) {
+        if (heldIds.has(providerGameId) || gameNumber > match.slot.seriesGames) continue;
+        const target = gameAt.get(JSON.stringify([match.id, gameNumber]));
+        if (target !== undefined && target.externalId !== null) continue;
+        const id = target?.game.id ?? randomUUID();
+        if (target === undefined) {
+          created.push({ id, sportEventId: event.id, sportEventRoundMatchId: match.id, sportEventSlotId: gameOne.game.sportEventSlotId, gameNumber });
+        }
+        mapped.push({ sportEventRoundMatchGameId: id, externalId: providerGameId });
+      }
+    }
+    if (mapped.length === 0) return;
+    await this.deps.games.applySync({ providerCode, created, mapped, moved: [], scores: [] });
+    this.deps.logger?.info({ sportEventId: event.id, providerId: input.providerId, mapped: mapped.length, created: created.length }, 'Mapped a synced event\'s provider games to its Games');
   }
 
   private async syncMatches(event: SportEvent, input: ProviderGameSlateInput, fieldRowOf: (teamExternalId: string) => string): Promise<ProviderGameSlateOutcome> {
@@ -201,8 +252,8 @@ export class ProviderGameSlateService {
    * provider lists with both teams, once the round before is played: the server's reseed proposes
    * the pairing, and it is set when the provider pairs the same teams. Returns the matches placed.
    */
-  private async placeReseededRounds(event: SportEvent, stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): Promise<number[]> {
-    const placed: number[] = [];
+  private async placeReseededRounds(event: SportEvent, stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): Promise<MatchPlace[]> {
+    const placed: MatchPlace[] = [];
     for (const roundNumber of [...reseededRounds(stored)].sort((left, right) => left - right)) {
       const round = stored.filter((match) => match.roundNumber === roundNumber);
       const games = slate.filter((game) => game.roundNumber === roundNumber);
@@ -218,7 +269,7 @@ export class ProviderGameSlateService {
         continue;
       }
       await this.deps.bracket.setRoundMatchups(event.id, roundNumber, proposal);
-      placed.push(...proposal.map((matchup) => matchup.matchNumber));
+      placed.push(...proposal.map((matchup) => ({ roundNumber, matchNumber: matchup.matchNumber })));
       this.deps.logger?.info({ sportEventId: event.id, roundNumber }, 'Placed a synced event\'s reseeded round from its provider\'s games');
     }
     return placed;
@@ -233,11 +284,11 @@ export class ProviderGameSlateService {
     draft: boolean,
     stored: readonly SportEventRoundMatch[],
     slate: readonly BracketMatchInput[],
-    placed: readonly number[],
+    placed: readonly MatchPlace[],
   ): Promise<ProviderGameSlateOutcome> {
     const storedByPair = new Map(stored.map((match) => [pairKey(match), match]));
-    const updated: number[] = [...placed];
-    const swapped: number[] = [];
+    const updated: MatchPlace[] = [...placed];
+    const swapped: MatchPlace[] = [];
     const unmatched: string[] = [];
     for (const game of slate) {
       const match = storedByPair.get(pairKey(game));
@@ -247,7 +298,7 @@ export class ProviderGameSlateService {
       }
       const isSwapped = match.homeSportEventParticipantId !== game.homeSportEventParticipantId;
       const movesKickoff = isMatchUnplayed(match.status) && game.scheduledDate !== null && !sameTime(match.scheduledDate, game.scheduledDate);
-      if (isSwapped && !draft) swapped.push(match.matchNumber);
+      if (isSwapped && !draft) swapped.push(matchPlaceOf(match));
       const patch = {
         ...(movesKickoff && { scheduledDate: game.scheduledDate }),
         ...(isSwapped && draft && {
@@ -257,18 +308,18 @@ export class ProviderGameSlateService {
         }),
       };
       if (Object.keys(patch).length === 0) continue;
-      await this.deps.bracket.updateMatch(event.id, match.matchNumber, patch);
-      if (!updated.includes(match.matchNumber)) updated.push(match.matchNumber);
+      await this.deps.bracket.updateMatch(event.id, matchPlaceOf(match), patch);
+      if (!updated.some((place) => isAtPlace(match, place))) updated.push(matchPlaceOf(match));
     }
     if (unmatched.length > 0 || swapped.length > 0) {
       this.deps.logger?.warn(
-        { sportEventId: event.id, ...(unmatched.length > 0 && { unmatchedPairings: unmatched }), ...(swapped.length > 0 && { swappedMatchNumbers: swapped }) },
+        { sportEventId: event.id, ...(unmatched.length > 0 && { unmatchedPairings: unmatched }), ...(swapped.length > 0 && { swappedMatches: swapped }) },
         'A released synced event\'s provider changed games its matches hold fixed; an admin decides',
       );
     }
     if (updated.length === 0) return { outcome: 'UNCHANGED', sportEventId: event.id };
-    this.deps.logger?.info({ sportEventId: event.id, matchNumbers: updated }, 'Kept a synced event\'s matches current with its provider\'s games');
-    return { outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: updated.sort((left, right) => left - right) };
+    this.deps.logger?.info({ sportEventId: event.id, matches: updated }, 'Kept a synced event\'s matches current with its provider\'s games');
+    return { outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: updated.sort(compareMatchPlaces) };
   }
 }
 
@@ -280,12 +331,18 @@ function skipReason(event: SportEvent | null): Extract<ProviderGameSlateOutcome,
   return null;
 }
 
-/** The provider's games as the event's matches, in round and kickoff order. */
+/** The provider's games as the event's matches, in round and kickoff order, numbered within each round (#2161). */
 function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExternalId: string) => string): BracketMatchInput[] {
+  const numbered = new Map<number, number>();
   return [...games]
     .sort(byRoundThenKickoff)
-    .map((game, index) => ({
-      matchNumber: index + 1,
+    .map((game) => {
+      const matchNumber = (numbered.get(game.roundNumber) ?? 0) + 1;
+      numbered.set(game.roundNumber, matchNumber);
+      return { game, matchNumber };
+    })
+    .map(({ game, matchNumber }) => ({
+      matchNumber,
       roundNumber: game.roundNumber,
       homeSportEventParticipantId: fieldRowOf(game.homeTeamExternalId),
       awaySportEventParticipantId: fieldRowOf(game.awayTeamExternalId),
@@ -299,20 +356,21 @@ function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExter
  * Each match whose two feeders come from different regions, with the regions in it: an NCAA
  * national semifinal, which the provider's bracket pairs by a guess an admin checks (#1728).
  */
-function crossRegionPairings(bracket: readonly BracketMatchInput[]): Array<{ matchNumber: number; regions: string[] }> {
-  const regionsByMatch = new Map<number, string[]>();
+function crossRegionPairings(bracket: readonly BracketMatchInput[]): Array<MatchPlace & { regions: string[] }> {
+  const regionsByMatch = new Map<BracketMatchInput, string[]>();
   for (const match of bracket) {
-    if (match.advancesTo === null || match.regionLabel === undefined || match.regionLabel === null) continue;
-    const target = bracket.find((candidate) => candidate.matchNumber === match.advancesTo?.matchNumber);
-    if (target === undefined || target.regionLabel === match.regionLabel) continue;
-    const regions = regionsByMatch.get(target.matchNumber) ?? [];
-    if (!regions.includes(match.regionLabel)) regions.push(match.regionLabel);
-    regionsByMatch.set(target.matchNumber, regions);
+    const { advancesTo, regionLabel } = match;
+    if (advancesTo === null || regionLabel === undefined || regionLabel === null) continue;
+    const target = bracket.find((candidate) => isAtPlace(candidate, advancesTo));
+    if (target === undefined || target.regionLabel === regionLabel) continue;
+    const regions = regionsByMatch.get(target) ?? [];
+    if (!regions.includes(regionLabel)) regions.push(regionLabel);
+    regionsByMatch.set(target, regions);
   }
   return [...regionsByMatch]
     .filter(([, regions]) => regions.length > 1)
-    .map(([matchNumber, regions]) => ({ matchNumber, regions }))
-    .sort((left, right) => left.matchNumber - right.matchNumber);
+    .map(([target, regions]) => ({ ...matchPlaceOf(target), regions }))
+    .sort(compareMatchPlaces);
 }
 
 /** The provider's bracket as the event's, each named side its team's field row. */
@@ -332,7 +390,12 @@ function bracketOf(bracket: readonly ProviderBracketMatch[], fieldRowOf: (teamEx
 function byRoundThenKickoff(left: ProviderScheduledGame, right: ProviderScheduledGame): number {
   return left.roundNumber - right.roundNumber
     || (left.scheduledAt?.getTime() ?? Number.MAX_SAFE_INTEGER) - (right.scheduledAt?.getTime() ?? Number.MAX_SAFE_INTEGER)
-    || left.externalGameId.localeCompare(right.externalGameId);
+    || gameOneId(left).localeCompare(gameOneId(right));
+}
+
+/** The provider's id for the match's Game 1, which orders matches that kick off together. */
+function gameOneId(game: ProviderScheduledGame): string {
+  return game.games.find((each) => each.gameNumber === 1)?.providerGameId ?? '';
 }
 
 /** A match's two teams, whichever side each is on. */
@@ -347,18 +410,20 @@ function sameTime(left: Date | null, right: Date | null): boolean {
 /** Whether the stored bracket has the provider's shape and teams, match by match, kickoffs aside. */
 function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly BracketMatchInput[]): boolean {
   if (stored.length !== bracket.length) return false;
-  const numberById = new Map(stored.map((match) => [match.id, match.matchNumber]));
-  const storedByNumber = new Map(stored.map((match) => [match.matchNumber, match]));
+  const storedById = new Map(stored.map((match) => [match.id, match]));
+  const storedByPlace = new MatchPlaceMap(stored.map((match) => [match, match] as const));
   return bracket.every((slot) => {
-    const match = storedByNumber.get(slot.matchNumber);
+    const match = storedByPlace.get(slot);
     if (match === undefined) return false;
-    const advancesTo = match.advancesToMatchId === null ? null : `${String(numberById.get(match.advancesToMatchId))}/${String(match.advancesToSide)}`;
-    return match.roundNumber === slot.roundNumber
+    const next = match.advancesToMatchId === null ? undefined : storedById.get(match.advancesToMatchId);
+    const advancesAlike = slot.advancesTo === null
+      ? match.advancesToMatchId === null
+      : next !== undefined && isAtPlace(next, slot.advancesTo) && match.advancesToSide === slot.advancesTo.side;
+    return advancesAlike
       && match.homeSportEventParticipantId === slot.homeSportEventParticipantId
       && match.awaySportEventParticipantId === slot.awaySportEventParticipantId
       && match.isNeutralSite === slot.isNeutralSite
-      && match.regionLabel === (slot.regionLabel ?? null)
-      && advancesTo === (slot.advancesTo === null ? null : `${String(slot.advancesTo.matchNumber)}/${slot.advancesTo.side}`);
+      && match.regionLabel === (slot.regionLabel ?? null);
   });
 }
 

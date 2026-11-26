@@ -329,7 +329,7 @@
               }
             },
             {
-              "matchNumber": 7,
+              "matchNumber": 1,
               "roundNumber": 2,
               "home": "nfl-denver-broncos",
               "away": null,
@@ -344,7 +344,7 @@
               }
             },
             {
-              "matchNumber": 8,
+              "matchNumber": 2,
               "roundNumber": 2,
               "home": null,
               "away": null,
@@ -359,7 +359,7 @@
               }
             },
             {
-              "matchNumber": 9,
+              "matchNumber": 3,
               "roundNumber": 2,
               "home": "nfl-seattle-seahawks",
               "away": null,
@@ -374,7 +374,7 @@
               }
             },
             {
-              "matchNumber": 10,
+              "matchNumber": 4,
               "roundNumber": 2,
               "home": null,
               "away": null,
@@ -389,14 +389,15 @@
               }
             },
             {
-              "matchNumber": 11,
+              "matchNumber": 1,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2026-01-25T20:00:00Z",
               "advancesTo": {
-                "matchNumber": 13,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "HOME"
               },
               "regionLabel": "AFC",
@@ -407,14 +408,15 @@
               }
             },
             {
-              "matchNumber": 12,
+              "matchNumber": 2,
               "roundNumber": 3,
               "home": null,
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2026-01-25T23:30:00Z",
               "advancesTo": {
-                "matchNumber": 13,
+                "roundNumber": 4,
+                "matchNumber": 1,
                 "side": "AWAY"
               },
               "regionLabel": "NFC",
@@ -425,7 +427,7 @@
               }
             },
             {
-              "matchNumber": 13,
+              "matchNumber": 1,
               "roundNumber": 4,
               "home": null,
               "away": null,

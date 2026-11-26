@@ -93,7 +93,7 @@ describe('College Football Playoff game scores', () => {
   it('passes on each game\'s teams, state and score, the national championship among them', () => {
     const updates = toCfpGameScoreUpdates(season2025);
     expect(updates.at(-1)).toEqual({
-      externalGameId: '5041',
+      providerGameId: '5041',
       homeTeamExternalId: '64',
       awayTeamExternalId: '76',
       state: ProviderGameState.FINAL,
@@ -104,9 +104,9 @@ describe('College Football Playoff game scores', () => {
 
   it('passes on a live score, a scheduled game with no score, and leaves out a game whose state is unknown', () => {
     expect(toCfpGameScoreUpdates(season2026)).toEqual([
-      expect.objectContaining({ externalGameId: '6002', state: ProviderGameState.FINAL }),
-      expect.objectContaining({ externalGameId: '6011', state: ProviderGameState.IN_PROGRESS, homeScore: 14, awayScore: 10 }),
-      expect.objectContaining({ externalGameId: '6012', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null }),
+      expect.objectContaining({ providerGameId: '6002', state: ProviderGameState.FINAL }),
+      expect.objectContaining({ providerGameId: '6011', state: ProviderGameState.IN_PROGRESS, homeScore: 14, awayScore: 10 }),
+      expect.objectContaining({ providerGameId: '6012', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null }),
     ]);
   });
 

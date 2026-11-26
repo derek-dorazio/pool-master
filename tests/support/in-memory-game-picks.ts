@@ -17,6 +17,7 @@ import type {
   SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import {
+  compareMatchPlaces,
   MatchEnding,
   ContestEntryStatus,
   MatchStatus,
@@ -110,7 +111,7 @@ export class InMemoryGamePicks {
       advancesToSide: null,
       regionLabel: null,
       homeSpread: null,
-      externalGameId: null,
+
       resultSource: null,
       completedAt: null,
       periodScores: [],
@@ -143,7 +144,7 @@ export class InMemoryGamePicks {
   matchRepo(): Pick<SportEventRoundMatchRepository, 'findById' | 'findBySportEvent' | 'findBySportEvents'> {
     const findBySportEvents = async (sportEventIds: readonly string[]) => [...this.matches.values()]
       .filter((match) => sportEventIds.includes(match.sportEventId))
-      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber);
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || compareMatchPlaces(left, right));
     return {
       findById: async (id) => this.matches.get(id) ?? null,
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
@@ -190,8 +191,9 @@ export class InMemoryGamePicks {
     return this.matches.get(row.sportEventRoundMatchId)?.sportEventId === sportEventId;
   }
 
-  private matchNumberOf(row: ContestEntryMatchPrediction): number {
-    return expectDefined(this.matches.get(row.sportEventRoundMatchId)).matchNumber;
+  /** The pick's game's round and number: picks read in game order, round first, as the Prisma adapter orders them. */
+  private matchOf(row: ContestEntryMatchPrediction): SportEventRoundMatch {
+    return expectDefined(this.matches.get(row.sportEventRoundMatchId));
   }
 
   /** Mirrors the adapter: all or none, unique per entry and game, confidence at least 1, the week's status and tiebreaker written with the picks. */
@@ -200,10 +202,10 @@ export class InMemoryGamePicks {
     return {
       findByEntryAndEvent: async (contestEntryId, sportEventId) => [...this.predictions.values()]
         .filter((row) => row.contestEntryId === contestEntryId && this.inEvent(row, sportEventId))
-        .sort((left, right) => this.matchNumberOf(left) - this.matchNumberOf(right)),
+        .sort((left, right) => compareMatchPlaces(this.matchOf(left), this.matchOf(right))),
       findByEntriesAndEvent: async (contestEntryIds, sportEventId) => [...this.predictions.values()]
         .filter((row) => contestEntryIds.includes(row.contestEntryId) && this.inEvent(row, sportEventId))
-        .sort((left, right) => this.matchNumberOf(left) - this.matchNumberOf(right)
+        .sort((left, right) => compareMatchPlaces(this.matchOf(left), this.matchOf(right))
           || left.contestEntryId.localeCompare(right.contestEntryId)),
       findByEntriesAndEvents: async (contestEntryIds, sportEventIds) => [...this.predictions.values()]
         .filter((row) => contestEntryIds.includes(row.contestEntryId)
@@ -219,7 +221,7 @@ export class InMemoryGamePicks {
         const week = (): LockedPredictionWeek => ({
           predictions: [...this.predictions.values()]
             .filter((row) => row.contestEntryId === contestEntryId && this.inEvent(row, sportEventId))
-            .sort((left, right) => this.matchNumberOf(left) - this.matchNumberOf(right)),
+            .sort((left, right) => compareMatchPlaces(this.matchOf(left), this.matchOf(right))),
           event: expectDefined(this.world.entries.get(contestEntryId)).events.find((event) => event.sportEventId === sportEventId) ?? null,
         });
         const change = decide(week());

@@ -1,9 +1,9 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { type EmailTemplateStatus, EmailTemplateStatusOrder, explicitOrderValues, LeaguePlanOrder } from '@poolmaster/shared/domain';
+import { type EmailAudience, EmailAudienceOrder, type EmailTemplateStatus, EmailTemplateStatusOrder, explicitOrderValues, LeaguePlanOrder } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SystemEmailDto } from '@/lib/api';
 import { EmailStatusChip } from './email-status-chip';
-import { EMAIL_AUDIENCE_LABELS, EmailAudienceOrder, type EmailAudience, EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
+import { EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
 
 const PLAN_OPTIONS = [
   { value: EVERY_PLAN, label: planText(null) },
@@ -22,8 +22,8 @@ export const systemEmailColumns = [
   columnHelper.accessor((email) => SYSTEM_EMAIL_LABELS[email.templateKey].audience, {
     id: 'audience',
     header: 'Audience',
-    meta: { info: 'Who gets it.', type: { kind: 'enum', order: EmailAudienceOrder, label: (audience) => EMAIL_AUDIENCE_LABELS[audience as EmailAudience] } },
-    cell: ({ getValue }) => EMAIL_AUDIENCE_LABELS[getValue()],
+    meta: { info: 'Who gets it.', type: { kind: 'enum', order: EmailAudienceOrder, label: (audience) => enumLabel('EmailAudience', audience as EmailAudience) } },
+    cell: ({ getValue }) => enumLabel('EmailAudience', getValue()),
   }),
   columnHelper.accessor((email) => SYSTEM_EMAIL_LABELS[email.templateKey].when, {
     id: 'when',

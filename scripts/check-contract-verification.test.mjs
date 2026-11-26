@@ -43,7 +43,7 @@ describe('check-contract-verification', () => {
     const findings = evaluateContractVerification({
       schemas,
       checked: new Set(['SportEventBracketResponseSchema']),
-      gaps: [{ schema: 'SportEventRoundMatchResponseSchema', endpoints: 'PATCH /bracket/matches/:matchNumber' }],
+      gaps: [{ schema: 'SportEventRoundMatchResponseSchema', endpoints: 'PATCH /bracket/rounds/:roundNumber/matches/:matchNumber' }],
     });
     assert.deepEqual(findings, []);
   });
@@ -53,7 +53,7 @@ describe('check-contract-verification', () => {
       schemas,
       checked: new Set(['SportEventBracketResponseSchema', 'SportEventRoundMatchResponseSchema']),
       gaps: [
-        { schema: 'SportEventRoundMatchResponseSchema', endpoints: 'PATCH /bracket/matches/:matchNumber' },
+        { schema: 'SportEventRoundMatchResponseSchema', endpoints: 'PATCH /bracket/rounds/:roundNumber/matches/:matchNumber' },
         { schema: 'RetiredResponseSchema', endpoints: 'GET /gone' },
       ],
     });
@@ -69,7 +69,7 @@ describe('check-contract-verification', () => {
       checked: new Set(),
       gaps: [
         { schema: 'SportEventBracketResponseSchema', endpoints: 'GET /bracket' },
-        { schema: 'SportEventRoundMatchResponseSchema', endpoints: 'PATCH /bracket/matches/:matchNumber' },
+        { schema: 'SportEventRoundMatchResponseSchema', endpoints: 'PATCH /bracket/rounds/:roundNumber/matches/:matchNumber' },
       ],
       ceiling: 1,
     });

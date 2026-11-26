@@ -1,5 +1,5 @@
 import { insertBackgroundJobs } from './prisma-background-job-repository';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   ContestEntryMatchPredictionRepository,
   ContestEntryMatchPredictionSave,
@@ -9,9 +9,11 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   ContestEntryStatus,
+  compareMatchPlaces,
   PredictedResult,
   type ContestEntryMatchPrediction,
   type PredictedChoice,
+  type MatchPlace,
 } from '@poolmaster/shared/domain';
 import { toEntryEventStatus } from './prisma-contest-entry-repository';
 
@@ -33,12 +35,23 @@ function toChoice(row: PredictionRow): PredictedChoice {
 
 /** The entry's row for one event, as a change reads and writes it. */
 const WEEK_EVENT = { sportEventId: true, status: true, submittedAt: true, tiebreakerValue: true } as const;
-/** A pick with its game's number, so a week's picks can be put in game order without another read. */
-const WITH_MATCH_NUMBER = { sportEventRoundMatch: { select: { matchNumber: true } } } as const;
+/** A pick with its game's round and number, so a week's picks can be put in game order without another read. */
+const WITH_MATCH_PLACE = { sportEventRoundMatch: { select: { matchNumber: true, sportEventRound: { select: { roundNumber: true } } } } } as const;
+/** Game order: round first, then the match's number within its round (#2161). */
+const IN_GAME_ORDER = [
+  { sportEventRoundMatch: { sportEventRound: { roundNumber: 'asc' } } },
+  { sportEventRoundMatch: { matchNumber: 'asc' } },
+] satisfies Prisma.ContestEntryMatchPredictionOrderByWithRelationInput[];
 
-function inGameOrder(rows: readonly (PredictionRow & { sportEventRoundMatch: { matchNumber: number } })[]): ContestEntryMatchPrediction[] {
+type WithMatchPlace = PredictionRow & { sportEventRoundMatch: { matchNumber: number; sportEventRound: { roundNumber: number } } };
+
+function placeOf(row: WithMatchPlace): MatchPlace {
+  return { roundNumber: row.sportEventRoundMatch.sportEventRound.roundNumber, matchNumber: row.sportEventRoundMatch.matchNumber };
+}
+
+function inGameOrder(rows: readonly WithMatchPlace[]): ContestEntryMatchPrediction[] {
   return [...rows]
-    .sort((left, right) => left.sportEventRoundMatch.matchNumber - right.sportEventRoundMatch.matchNumber)
+    .sort((left, right) => compareMatchPlaces(placeOf(left), placeOf(right)))
     .map(toPrediction);
 }
 
@@ -62,7 +75,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
   async findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]> {
     const rows = await this.prisma.contestEntryMatchPrediction.findMany({
       where: { contestEntryId, sportEventRoundMatch: { sportEventId } },
-      orderBy: { sportEventRoundMatch: { matchNumber: 'asc' } },
+      orderBy: IN_GAME_ORDER,
     });
     return rows.map(toPrediction);
   }
@@ -73,7 +86,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
     }
     const rows = await this.prisma.contestEntryMatchPrediction.findMany({
       where: { contestEntryId: { in: [...contestEntryIds] }, sportEventRoundMatch: { sportEventId } },
-      orderBy: [{ contestEntryId: 'asc' }, { sportEventRoundMatch: { matchNumber: 'asc' } }],
+      orderBy: [{ contestEntryId: 'asc' }, ...IN_GAME_ORDER],
     });
     return rows.map(toPrediction);
   }
@@ -85,7 +98,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
     const rows = await this.prisma.contestEntryMatchPrediction.findMany({
       where: { contestEntryId: { in: [...contestEntryIds] }, sportEventRoundMatch: { sportEventId: { in: [...sportEventIds] } } },
       include: { sportEventRoundMatch: { select: { sportEventId: true } }, sportEventParticipant: { select: { participantId: true } } },
-      orderBy: [{ contestEntryId: 'asc' }, { sportEventRoundMatch: { matchNumber: 'asc' } }],
+      orderBy: [{ contestEntryId: 'asc' }, ...IN_GAME_ORDER],
     });
     return rows.map((row): ContestEntrySeasonPrediction => {
       const prediction = toPrediction(row);
@@ -116,7 +129,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
         data: { updatedAt: at },
         select: {
           events: { where: { sportEventId }, select: WEEK_EVENT },
-          predictions: { where: { sportEventRoundMatch: { sportEventId } }, include: WITH_MATCH_NUMBER },
+          predictions: { where: { sportEventRoundMatch: { sportEventId } }, include: WITH_MATCH_PLACE },
         },
       });
       const lockedEvent = locked.events.at(0);
@@ -141,7 +154,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           data: saves.map(({ sportEventRoundMatchId, predictedResult, sportEventParticipantId, confidence }) => ({
             contestEntryId, sportEventRoundMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at,
           })),
-          include: WITH_MATCH_NUMBER,
+          include: WITH_MATCH_PLACE,
         })
         : [];
       const statusChange = eventStatus === null

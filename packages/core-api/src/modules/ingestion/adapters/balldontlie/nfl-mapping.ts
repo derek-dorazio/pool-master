@@ -172,7 +172,7 @@ export function toNflScheduledGames(games: readonly NflGame[]): ProviderSchedule
 
 function toNflScheduledGame(game: NflGame): ProviderScheduledGame {
   return {
-    externalGameId: String(required(game.id, game.id, 'id')),
+    games: [{ providerGameId: String(required(game.id, game.id, 'id')), gameNumber: 1 }],
     roundNumber: 1,
     homeTeamExternalId: participantFeedId(required(required(game.home_team, game.id, 'home_team').id, game.id, 'home_team.id')),
     awayTeamExternalId: participantFeedId(required(required(game.visitor_team, game.id, 'visitor_team').id, game.id, 'visitor_team.id')),
@@ -239,18 +239,18 @@ export function toNflPlayoffBracket(field: readonly ProviderParticipant[], games
     return bracketSlot(1 + index * 3 + game, 1, label, { homeTeamExternalId: home, awayTeamExternalId: away, scheduledAt: kickoffOf(home, away) });
   }));
   const divisional = conferences.flatMap(({ label, teamOfSeed }, index) => [
-    bracketSlot(7 + index * 2, 2, label, { homeTeamExternalId: teamOfSeed(1) }),
-    bracketSlot(8 + index * 2, 2, label),
+    bracketSlot(1 + index * 2, 2, label, { homeTeamExternalId: teamOfSeed(1) }),
+    bracketSlot(2 + index * 2, 2, label),
   ]);
+  // The Super Bowl is the one match of its round (#2161: matches are numbered within their round).
+  const superBowl = bracketSlot(1, NFL_POSTSEASON_ROUNDS, null, { isNeutralSite: true });
   const championships = conferences.map(({ label }, index) =>
-    bracketSlot(11 + index, 3, label, { advancesTo: { matchNumber: SUPER_BOWL_MATCH, side: index === 0 ? MatchSide.HOME : MatchSide.AWAY } }));
-  return [...wildCard, ...divisional, ...championships, bracketSlot(SUPER_BOWL_MATCH, NFL_POSTSEASON_ROUNDS, null, { isNeutralSite: true })];
+    bracketSlot(1 + index, 3, label, { advancesTo: { roundNumber: superBowl.roundNumber, matchNumber: superBowl.matchNumber, side: index === 0 ? MatchSide.HOME : MatchSide.AWAY } }));
+  return [...wildCard, ...divisional, ...championships, superBowl];
 }
 
 /** Each conference's Wild Card games by seed, home first. */
 const WILD_CARD_SEEDS = [[2, 7], [3, 6], [4, 5]] as const;
-
-const SUPER_BOWL_MATCH = 13;
 
 function pairOf(left: string, right: string): string {
   return [left, right].sort().join('|');
@@ -294,7 +294,7 @@ export function toGameScoreUpdates(games: readonly NflGame[]): GameScoreUpdate[]
     // A final with no score is passed on as one, and skipped there.
     const started = hasStarted(state);
     return [{
-      externalGameId: String(required(game.id, game.id, 'id')),
+      providerGameId: String(required(game.id, game.id, 'id')),
       homeTeamExternalId: participantFeedId(home),
       awayTeamExternalId: participantFeedId(visitor),
       state,

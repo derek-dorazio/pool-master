@@ -202,30 +202,41 @@ export interface SportEventDetail extends SportEvent {
   bracket?: ProviderBracketMatch[];
 }
 
-/** One match of a provider's fixed-shape bracket, numbered and linked as the event's bracket is. */
+/** One match of a provider's fixed-shape bracket, numbered within its round and linked as the event's bracket is (#2161). */
 export interface ProviderBracketMatch {
-  matchNumber: number;
   roundNumber: number;
+  matchNumber: number;
   homeTeamExternalId: string | null;
   awayTeamExternalId: string | null;
   isNeutralSite: boolean;
   scheduledAt: Date | null;
   /** The match and side its winner goes to; null for the final, and for a match before a reseed. */
-  advancesTo: { matchNumber: number; side: MatchSide } | null;
+  advancesTo: { roundNumber: number; matchNumber: number; side: MatchSide } | null;
   regionLabel: string | null;
 }
 
 /**
- * One game of an event as its provider schedules it (ADR 0011, #1728): the provider's game id,
- * the round it is in, both teams by the provider's external id, and its kickoff.
+ * One match of an event as its provider schedules it (ADR 0011, #1728): the provider's games of
+ * it, the round it is in, both teams by the provider's external id, and its kickoff.
  */
 export interface ProviderScheduledGame {
-  externalGameId: string;
+  /**
+   * The provider's games of the match, each with its number (#2007): one for a single game, and
+   * a best-of series' games scheduled so far, Game 1 first. The schedule sync maps each to its Game.
+   */
+  games: ProviderScheduledGameId[];
   roundNumber: number;
   homeTeamExternalId: string;
   awayTeamExternalId: string;
   scheduledAt: Date | null;
   isNeutralSite: boolean;
+}
+
+/** A provider's id for one game of a match, with the game's number in it. */
+export interface ProviderScheduledGameId {
+  providerGameId: string;
+  /** 1 for a single game and a series' first; a series' games in the order they are played. */
+  gameNumber: number;
 }
 
 export interface ProviderParticipant {

@@ -1,9 +1,9 @@
 import { sportPlay } from '../../support/sport-play';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Sport } from '@poolmaster/shared/domain';
 import {
-  dueResultMatchNumbers,
+  dueResultMatches,
   golferRoundScore,
   seedDateOffsetDays,
   shiftedEventDates,
@@ -139,6 +139,26 @@ function readDataFile(name: string) {
   return parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, name), 'utf8')) as unknown);
 }
 
+describe('every test data file', () => {
+  const testFiles = readdirSync(SEED_DIR).filter((name) => name.endsWith('-test.json'));
+
+  it.each(testFiles)('%s numbers each round\'s matches 1, 2, 3… in its own run, and names each next match by round and number', (name) => {
+    for (const league of readDataFile(name).sportLeagues) {
+      for (const event of league.events) {
+        const matches = event.matches ?? [];
+        for (const roundNumber of new Set(matches.map((match) => match.roundNumber))) {
+          const numbers = matches.filter((match) => match.roundNumber === roundNumber).map((match) => match.matchNumber).sort((left, right) => left - right);
+          expect(numbers).toEqual(numbers.map((_, index) => index + 1));
+        }
+        for (const { advancesTo } of matches) {
+          if (advancesTo === null) continue;
+          expect(matches.some((next) => next.roundNumber === advancesTo.roundNumber && next.matchNumber === advancesTo.matchNumber)).toBe(true);
+        }
+      }
+    }
+  });
+});
+
 function eventRows(file: SportDataFile, league = 0) {
   return file.sportLeagues[league].events.map((event) => [event.name, event.startDate, event.endDate, event.rounds, event.roundsPar]);
 }
@@ -167,8 +187,10 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
     expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
     // The Divisional and conference rounds are both placed by the reseed, so the games before them link nowhere.
     expect(matches.filter((match) => match.roundNumber <= 2).every((match) => match.advancesTo === null)).toBe(true);
-    expect(matches.filter((match) => match.roundNumber === 3).map((match) => [match.home, match.away, match.advancesTo?.matchNumber])).toEqual([
-      [null, null, 13], [null, null, 13],
+    // Each round numbers its games from 1 (#2161): the Super Bowl is round 4's match 1.
+    expect(matches.map((match) => match.matchNumber)).toEqual([1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 1, 2, 1]);
+    expect(matches.filter((match) => match.roundNumber === 3).map((match) => [match.home, match.away, match.advancesTo])).toEqual([
+      [null, null, { roundNumber: 4, matchNumber: 1, side: 'HOME' }], [null, null, { roundNumber: 4, matchNumber: 1, side: 'AWAY' }],
     ]);
     expect(matches.filter((match) => match.roundNumber === 2).map((match) => [match.home, match.away])).toEqual([
       ['nfl-denver-broncos', null], [null, null], ['nfl-seattle-seahawks', null], [null, null],
@@ -719,30 +741,32 @@ describe('test slates', () => {
 
 describe('test seed results as games are played', () => {
   const THROUGH = new Date('2026-11-20T12:00:00Z');
-  const stored = (matchNumber: number, scheduledDate: string | null, status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' = 'SCHEDULED') => ({ matchNumber, scheduledDate, status });
-  const withResult = (matchNumber: number) => ({ matchNumber, result: {} });
+  const at = (roundNumber: number, matchNumber: number) => ({ roundNumber, matchNumber });
+  const stored = (roundNumber: number, matchNumber: number, scheduledDate: string | null, status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' = 'SCHEDULED') => ({ roundNumber, matchNumber, scheduledDate, status });
+  const withResult = (roundNumber: number, matchNumber: number) => ({ roundNumber, matchNumber, result: {} });
 
-  it('enters a result only for a game that kicked off by then and is still to be decided on the site', () => {
-    const due = dueResultMatchNumbers(
-      [withResult(1), withResult(2), withResult(3), withResult(4), { matchNumber: 5 }],
+  it('enters a result only for a game that kicked off by then and is still to be decided on the site, each found by its round and number, in round order', () => {
+    const due = dueResultMatches(
+      [withResult(2, 1), withResult(1, 1), withResult(1, 2), withResult(1, 3), withResult(1, 4), at(1, 5)],
       [
-        stored(1, '2026-11-19T18:00:00Z'),
-        stored(2, '2026-11-21T18:00:00Z'),
-        stored(3, '2026-11-19T18:00:00Z', 'COMPLETED'),
-        stored(4, '2026-11-20T12:00:00Z'),
-        stored(5, '2026-11-19T18:00:00Z'),
+        stored(2, 1, '2026-11-20T09:00:00Z'),
+        stored(1, 1, '2026-11-19T18:00:00Z'),
+        stored(1, 2, '2026-11-21T18:00:00Z'),
+        stored(1, 3, '2026-11-19T18:00:00Z', 'COMPLETED'),
+        stored(1, 4, '2026-11-20T12:00:00Z'),
+        stored(1, 5, '2026-11-19T18:00:00Z'),
       ],
       THROUGH,
       new Date('2026-11-25T00:00:00Z'),
     );
 
-    // Game 2 is still to come, game 3 already has its result, game 5 carries none in the file.
-    expect(due).toEqual([1, 4]);
+    // Round 1's game 2 is still to come, its game 3 already has its result, its game 5 carries none in the file.
+    expect(due).toEqual([at(1, 1), at(1, 4), at(2, 1)]);
   });
 
   it('takes the event\'s start for a game with no kickoff', () => {
-    expect(dueResultMatchNumbers([withResult(1)], [stored(1, null)], THROUGH, new Date('2026-11-19T00:00:00Z'))).toEqual([1]);
-    expect(dueResultMatchNumbers([withResult(1)], [stored(1, null)], THROUGH, new Date('2026-11-21T00:00:00Z'))).toEqual([]);
+    expect(dueResultMatches([withResult(1, 1)], [stored(1, 1, null)], THROUGH, new Date('2026-11-19T00:00:00Z'))).toEqual([at(1, 1)]);
+    expect(dueResultMatches([withResult(1, 1)], [stored(1, 1, null)], THROUGH, new Date('2026-11-21T00:00:00Z'))).toEqual([]);
   });
 
   it('names the file event a stored test event came from, a numbered copy too', () => {
