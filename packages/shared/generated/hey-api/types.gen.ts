@@ -13998,13 +13998,9 @@ export type SportEventParticipantDto = {
     sportEventId: string;
     participantId: string;
     /**
-     * Whether the participant is competing; false is withdrawn or eliminated.
+     * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
      */
-    isActive: boolean;
-    /**
-     * Meaningful only when isActive is false; null means no more specific reason is recorded.
-     */
-    inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+    status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
     /**
      * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
      */
@@ -14251,13 +14247,9 @@ export type SportEventParticipantListResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
@@ -14521,8 +14513,10 @@ export type UpdateSportEventParticipantsRequest = {
      */
     participants: Array<{
         sportEventParticipantId: string;
-        isActive?: boolean;
-        inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+        /**
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+         */
+        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         ranking?: number | null;
         seedNumber?: number | null;
         /**
@@ -14559,13 +14553,9 @@ export type SportEventParticipantResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */
@@ -14809,8 +14799,10 @@ export type SportEventParticipantUploadRequest = {
          */
         externalId?: string;
         playerName?: string;
-        isActive?: boolean;
-        inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+        /**
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+         */
+        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         ranking?: number | null;
         seedNumber?: number | null;
     }>;
@@ -14834,8 +14826,10 @@ export type SportEventParticipantUploadPreviewResponse = {
              */
             externalId?: string;
             playerName?: string;
-            isActive?: boolean;
-            inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking?: number | null;
             seedNumber?: number | null;
         };
@@ -14867,8 +14861,10 @@ export type SportEventParticipantUploadPreviewResponse = {
          * What is stored now; set whenever the row resolved.
          */
         before: {
-            isActive: boolean;
-            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking: number | null;
             seedNumber: number | null;
         } | null;
@@ -14876,8 +14872,10 @@ export type SportEventParticipantUploadPreviewResponse = {
          * What applying would store; null when the row cannot be applied.
          */
         after: {
-            isActive: boolean;
-            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            /**
+             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             */
+            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
             ranking: number | null;
             seedNumber: number | null;
         } | null;
@@ -16009,13 +16007,9 @@ export type ContestLeaderboardResponse = {
         sportEventId: string;
         participantId: string;
         /**
-         * Whether the participant is competing; false is withdrawn or eliminated.
+         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
          */
-        isActive: boolean;
-        /**
-         * Meaningful only when isActive is false; null means no more specific reason is recorded.
-         */
-        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+        status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
         /**
          * The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.
          */

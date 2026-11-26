@@ -692,18 +692,17 @@ class Loader {
       }
       if (entry.oddsToWin !== undefined && row?.oddsToWin !== entry.oddsToWin) patch.oddsToWin = entry.oddsToWin;
       // Back in the field after a withdrawal (a re-commitment).
-      if (!this.testSeed && row && !row.isActive && row.inactiveReason === 'WITHDRAWN') {
-        patch.isActive = true;
-        patch.inactiveReason = null;
+      if (!this.testSeed && row && row.status === 'WITHDRAWN') {
+        patch.status = 'ACTIVE';
         reinstated.push(name);
       }
       if (participantId !== null && Object.keys(patch).length > 0) patches.push({ participantId, patch });
     });
     const unlisted = storedField.filter((row) => !listed.has(row.participantId));
     const removed = this.replaceField ? unlisted : [];
-    const withdrawn = this.replaceField ? [] : unlisted.filter((row) => row.isActive);
+    const withdrawn = this.replaceField ? [] : unlisted.filter((row) => row.status === 'ACTIVE');
     const addedIds = new Set(add.map((entry) => entry.participantId));
-    const updated = patches.filter(({ participantId, patch }) => !addedIds.has(participantId) && patch.isActive === undefined
+    const updated = patches.filter(({ participantId, patch }) => !addedIds.has(participantId) && patch.status === undefined
       && (patch.ranking !== undefined || patch.seedNumber !== undefined || patch.oddsToWin !== undefined)).length;
     const changes = [
       ...(add.length > 0 ? [`${add.length} added (${names(add.map((entry) => entry.name))})`] : []),
@@ -917,8 +916,8 @@ class Loader {
         sportEventParticipantId: found(rowByParticipant.get(participantId), `${event.name}: the field row for ${participantId}`),
         ...patch,
       })),
-      ...[...plan.withdrawn, ...picked.filter((row) => row.isActive)]
-        .map((row) => ({ sportEventParticipantId: row.id, isActive: false, inactiveReason: 'WITHDRAWN' as const })),
+      ...[...plan.withdrawn, ...picked.filter((row) => row.status === 'ACTIVE')]
+        .map((row) => ({ sportEventParticipantId: row.id, status: 'WITHDRAWN' as const })),
     ];
     if (participants.length > 0) {
       await must(updateEventParticipants({ client, path, body: { participants } }), `Set the field of ${event.name}`);

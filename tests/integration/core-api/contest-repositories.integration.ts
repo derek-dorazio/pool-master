@@ -1,6 +1,6 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, ContestFormat, ContestStatus, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus, TemplateCoverageMode } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestFormat, ContestStatus, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus, TemplateCoverageMode, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
@@ -102,7 +102,7 @@ async function createLeagueAndEvent() {
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE', role },
     });
     field.push(await prisma.sportEventParticipant.create({
-      data: { sportEventId: event.id, participantId: participant.id, isActive: true },
+      data: { sportEventId: event.id, participantId: participant.id },
     }));
   }
   return { owner, league, squads: [alpha, bravo] as const, event, field, suffix };
@@ -126,7 +126,7 @@ async function createLaterEvent(suffix: string, startDate = new Date('2026-07-16
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     field.push(await prisma.sportEventParticipant.create({
-      data: { sportEventId: event.id, participantId: participant.id, isActive: true },
+      data: { sportEventId: event.id, participantId: participant.id },
     }));
   }
   return { event, field };
@@ -1455,7 +1455,7 @@ describe('ContestEntryPickRepository — read-only', () => {
     ]);
     await prisma.sportEventParticipant.update({
       where: { id: field[1].id },
-      data: { isActive: false, inactiveReason: 'WITHDRAWN' },
+      data: { status: SportEventParticipantStatus.WITHDRAWN },
     });
     const later = await prisma.contestEntryPick.create({
       data: {
@@ -1484,16 +1484,14 @@ describe('ContestEntryPickRepository — read-only', () => {
       {
         participantId: field[0].participantId,
         participantName: `Golfer One ${suffix}`,
-        isActive: true,
-        inactiveReason: null,
+        status: 'ACTIVE',
         role: 'GOLFER',
         teamAffiliation: null,
       },
       {
         participantId: field[1].participantId,
         participantName: `Golfer Two ${suffix}`,
-        isActive: false,
-        inactiveReason: 'WITHDRAWN',
+        status: 'WITHDRAWN',
         role: null,
         teamAffiliation: null,
       },

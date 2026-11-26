@@ -480,10 +480,10 @@ describe('Filling an event from a test slate through the admin API', () => {
 
     expect(changes(await loadSportData(file, { getClient, now: NOW, mode: LoadMode.APPLY, event: eventName }))).toContainEqual(expected);
     const field = await fieldOf(eventId);
-    expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ seedNumber: 1, ranking: 4, isActive: true });
-    expect(field.get(`${prefix} Golfer 2`)).toMatchObject({ seedNumber: 2, isActive: true });
-    expect(field.get(`${prefix} Golfer 5`)).toMatchObject({ seedNumber: 3, isActive: true });
-    expect(field.get(`${prefix} Golfer 1`)).toMatchObject({ isActive: false, inactiveReason: 'WITHDRAWN' });
+    expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ seedNumber: 1, ranking: 4, status: 'ACTIVE' });
+    expect(field.get(`${prefix} Golfer 2`)).toMatchObject({ seedNumber: 2, status: 'ACTIVE' });
+    expect(field.get(`${prefix} Golfer 5`)).toMatchObject({ seedNumber: 3, status: 'ACTIVE' });
+    expect(field.get(`${prefix} Golfer 1`)).toMatchObject({ status: 'WITHDRAWN' });
 
     expect(changes(await loadSportData(file, { getClient, now: NOW, mode: LoadMode.APPLY, event: eventName }))).toEqual([]);
   });
@@ -508,9 +508,9 @@ describe('Filling an event from a test slate through the admin API', () => {
       expect(changes(applied)).toContainEqual(fieldRow(`1 withdrawn, not removed, because a contest entry picked them (${prefix} Golfer 2)`));
       const field = await fieldOf(eventId);
       expect([...field.keys()].sort()).toEqual([`${prefix} Golfer 2`, `${prefix} Golfer 4`, `${prefix} Golfer 6`]);
-      expect(field.get(`${prefix} Golfer 6`)).toMatchObject({ seedNumber: 1, isActive: true });
-      expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ seedNumber: 2, isActive: true });
-      expect(field.get(`${prefix} Golfer 2`)).toMatchObject({ isActive: false, inactiveReason: 'WITHDRAWN' });
+      expect(field.get(`${prefix} Golfer 6`)).toMatchObject({ seedNumber: 1, status: 'ACTIVE' });
+      expect(field.get(`${prefix} Golfer 4`)).toMatchObject({ seedNumber: 2, status: 'ACTIVE' });
+      expect(field.get(`${prefix} Golfer 2`)).toMatchObject({ status: 'WITHDRAWN' });
     } finally {
       await db.contestEntryPick.deleteMany({ where: { entryId: entry.id } });
       await db.contestEntry.delete({ where: { id: entry.id } });

@@ -258,6 +258,30 @@
       "key": "PrismaMatchSide",
       "now": 0,
       "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "inactiveReason",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ParticipantInactiveReason",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "deriveLegacyParticipantStatus",
+      "now": 0,
+      "reason": "retired by #2184"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "LegacyParticipantStatus",
+      "now": 0,
+      "reason": "retired by #2184"
     }
   ]
 }

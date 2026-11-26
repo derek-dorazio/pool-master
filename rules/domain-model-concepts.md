@@ -250,11 +250,11 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
   running result names only the runner, so its `riderName` stays empty, and a runner who drops
   out is a `DID_NOT_FINISH` result, not a withdrawal. A marathon is one `SportEvent` with one
   round.
-- **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
-  inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
+- **Scratched, withdrawn**: a runner taken out of a race before the start is a field row whose
+  `status` is `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.
 - **Withdrawn after the draw, replacement** (#704): in any bracket sport, a field member who
-  withdraws before their first-round match is made inactive (`WITHDRAWN`) and a replacement (a
+  withdraws before their first-round match gets the status `WITHDRAWN` and a replacement (a
   tennis lucky loser) gets a field row of its own in that bracket place; a bye's place is not
   replaced. "Withdrawn" in scoring means `WITHDRAWN` and named by no match. Picks stay on the withdrawn row
   and score as a first-round loss; they never move to the replacement, unlike a play-in place,
@@ -273,8 +273,9 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
   slot whose `pairing` is `RESEEDED` **reseeds**: the round before's winners go to no fixed match, and
   the feed or a test's admin places them by seed within their region (the NFL's Divisional round).
   The pairing is the Season slot's, from its definition (#2006), never the league's.
-- **Active**: `isActive` on a league, squad, user or field member (present in normal views),
-  and the contest status `ACTIVE` (its first event has started and it has not settled). Different things.
+- **Active**: `isActive` on a league, squad or user (present in normal views), a field row's
+  status `ACTIVE` (still in the event: not withdrawn, eliminated or disqualified), and the contest
+  status `ACTIVE` (its first event has started and it has not settled). Different things.
 
 ---
 

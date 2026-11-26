@@ -85,7 +85,7 @@ export type SharedEnums = {
   RoundStatus: Enums.RoundStatus;
   MatchResultSource: Enums.MatchResultSource;
   ProviderGameState: Enums.ProviderGameState;
-  ParticipantInactiveReason: Enums.ParticipantInactiveReason;
+  SportEventParticipantStatus: Enums.SportEventParticipantStatus;
   ParticipantStandingStatus: Enums.ParticipantStandingStatus;
   ContestStatus: Enums.ContestStatus;
   ContestEntryStatus: Enums.ContestEntryStatus;

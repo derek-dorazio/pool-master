@@ -11,7 +11,7 @@ import {
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import { SportEventParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import { keyedSlotDefinitionId, linkedProviderEvent, providerEventWhere, putEventInSlot } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 
@@ -95,7 +95,7 @@ describe('IngestionPersistence', () => {
       status: 'SCHEDULED',
       fieldLocked: false,
       providerSlots: [],
-      participants: [{ externalId: golferId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${golferId}`, active: true, ranking: 3, metadata: {} }],
+      participants: [{ externalId: golferId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${golferId}`, status: SportEventParticipantStatus.ACTIVE, ranking: 3, metadata: {} }],
     };
     await linkedProviderEvent(getPrisma(), { providerId: detail.providerId, externalId, name: detail.name, startDate: detail.startDate });
     return detail;
@@ -195,7 +195,7 @@ describe('IngestionPersistence', () => {
           name: 'Ingestion Player One',
           firstName: 'Ingestion',
           lastName: 'One',
-          active: true,
+          status: SportEventParticipantStatus.ACTIVE,
           metadata: { scoreToPar: -4, madeCut: true },
         },
       ],
@@ -233,8 +233,7 @@ describe('IngestionPersistence', () => {
         },
       });
 
-    expect(sportEventParticipant.isActive).toBe(true);
-    expect(sportEventParticipant.inactiveReason).toBeNull();
+    expect(sportEventParticipant.status).toBe(SportEventParticipantStatus.ACTIVE);
 
     // Per-participant source data (sportEventParticipantSourceData) was dropped
     // per plans/117 §13.2. rop.78.7 will rebuild the live-scoring path on
@@ -250,7 +249,7 @@ describe('IngestionPersistence', () => {
       providerId: 'balldontlie',
       sport: Sport.GOLF,
       name,
-      active: true,
+      status: SportEventParticipantStatus.ACTIVE,
       ...(ranking === undefined ? {} : { ranking }),
       metadata: {},
     });
@@ -284,13 +283,13 @@ describe('IngestionPersistence', () => {
     });
   });
 
-  function rankedGolfer(externalId: string, ranking?: number) {
+  function rankedGolfer(externalId: string, ranking?: number): SportEventDetail['participants'][number] {
     return {
       externalId,
       providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Golfer ${externalId}`,
-      active: true,
+      status: SportEventParticipantStatus.ACTIVE,
       ...(ranking === undefined ? {} : { ranking }),
       metadata: {},
     };
@@ -474,7 +473,7 @@ describe('IngestionPersistence', () => {
       providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Golfer ${externalId}`,
-      active: true,
+      status: SportEventParticipantStatus.ACTIVE,
       metadata: { seed: 3, odds: 8.5, oddsSourceEventId },
     });
     const detail = rankedFieldDetail('integration-odds-field', [
@@ -512,7 +511,7 @@ describe('IngestionPersistence', () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const entrant = (externalId: string, metadata: Record<string, unknown>) => ({
-      externalId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${externalId}`, active: true, metadata,
+      externalId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${externalId}`, status: SportEventParticipantStatus.ACTIVE, metadata,
     });
     const detail = rankedFieldDetail('integration-play-in-place', [
       entrant('ingestion-play-in-team', { seed: 1 }),
@@ -627,7 +626,7 @@ describe('IngestionPersistence', () => {
 
     // A withdrawal: the field row records it, and the rest of the field is not touched.
     const withdrawn = await persistence.persistEventDetailWithDiagnostics(field(9, {
-      'ingestion-batch-3': { active: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
+      'ingestion-batch-3': { status: SportEventParticipantStatus.WITHDRAWN },
     }));
 
     expect(withdrawn.writeDiagnostics.rows.filter((diagnostic) => diagnostic.disposition === 'UPDATED').map((diagnostic) => diagnostic.participantExternalId)).toEqual(['ingestion-batch-3']);
@@ -635,12 +634,12 @@ describe('IngestionPersistence', () => {
     expect(afterWithdrawal.get('ingestion-batch-1')).toEqual(afterChange.get('ingestion-batch-1'));
     expect(afterWithdrawal.get('ingestion-batch-2')).toEqual(afterChange.get('ingestion-batch-2'));
     await expect(prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { providerMappings: { some: { externalId: 'ingestion-batch-3' } } } } }))
-      .resolves.toMatchObject({ isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
+      .resolves.toMatchObject({ status: SportEventParticipantStatus.WITHDRAWN });
 
     // A participant-only change: the participant row is rewritten, the field row is not.
     const reaffiliated = await persistence.persistEventDetailWithDiagnostics(field(9, {
       'ingestion-batch-1': { teamAffiliation: 'Team Europe' },
-      'ingestion-batch-3': { active: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
+      'ingestion-batch-3': { status: SportEventParticipantStatus.WITHDRAWN },
     }));
 
     expect(reaffiliated.writeDiagnostics.summary).toMatchObject({ unchanged: 3, updated: 0, created: 0 });

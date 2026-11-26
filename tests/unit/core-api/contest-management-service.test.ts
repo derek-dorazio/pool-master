@@ -3163,7 +3163,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
 
   it('lists the prices of the active field only, leaving out a withdrawn golfer and an unpriced one', async () => {
     const reader = readerOver({
-      entries: [{ id: 'in', isActive: true }, { id: 'out', isActive: false }, { id: 'unpriced', isActive: true }],
+      entries: [{ id: 'in', status: 'ACTIVE' }, { id: 'out', status: 'WITHDRAWN' }, { id: 'unpriced', status: 'ACTIVE' }],
       valuations: [
         { sportEventParticipantId: 'in', price: 9000 },
         { sportEventParticipantId: 'out', price: 8000 },

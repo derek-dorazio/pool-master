@@ -5,7 +5,7 @@ import type {
   MatchFormat,
   SlotKind,
   MatchPeriodLayout,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   ParticipantType,
   SelectionType,
   Sport,
@@ -119,10 +119,8 @@ export interface SportEvent extends DomainEntity {
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;
   participantId: string;
-  /** Whether this golfer is currently eligible/available for this tournament. */
-  isActive: boolean;
-  /** Meaningful only when `isActive` is false; undefined covers "inactive, no more specific reason recorded." */
-  inactiveReason?: ParticipantInactiveReason;
+  /** The row's place in the event: ACTIVE while it competes, or how it went out (#2184). */
+  status: SportEventParticipantStatus;
   /** Rank that applied at this event: copied from the provider's ranking snapshot, then editable. */
   ranking?: number;
   /** Event-scoped implied odds-to-win snapshot (decimal). */

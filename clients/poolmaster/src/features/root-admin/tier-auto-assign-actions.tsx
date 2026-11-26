@@ -1,3 +1,4 @@
+import { SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { autoAssignEventTiers, type SportEventOverviewDto } from '@/lib/api';
 import {
@@ -74,7 +75,7 @@ export function TierAutoAssignActions({
       <ConfirmDialog
         confirmLabel="Replace tier assignments"
         confirmTestId="root-admin-tier-auto-tiers-confirm"
-        description={`${describeFieldOrder(overview, field.some((entry) => entry.isActive))} Every participant is re-tiered in that order, the order prices use too. Manual tier assignments will be replaced. Prices are untouched.`}
+        description={`${describeFieldOrder(overview, field.some((entry) => (entry.status === SportEventParticipantStatus.ACTIVE)))} Every participant is re-tiered in that order, the order prices use too. Manual tier assignments will be replaced. Prices are untouched.`}
         error={
           autoTiersMutation.isError
             ? extractErrorMessage(autoTiersMutation.error, {

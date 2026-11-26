@@ -395,9 +395,11 @@ export const enUS = {
       POSTPONED: 'Postponed',
       CANCELLED: 'Cancelled',
     },
-    ParticipantInactiveReason: {
+    SportEventParticipantStatus: {
+      ACTIVE: 'Active',
       WITHDRAWN: 'Withdrawn',
       ELIMINATED: 'Eliminated',
+      DISQUALIFIED: 'Disqualified',
     },
     ParticipantStandingStatus: {
       ACTIVE: 'Active',

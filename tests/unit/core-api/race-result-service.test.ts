@@ -1,5 +1,5 @@
 import { testDomainEvents } from '../../support/domain-events';
-import { RaceResultStatus, Sport } from '@poolmaster/shared/domain';
+import { RaceResultStatus, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   RaceResultService,
   type RaceResultRowInput,
@@ -24,7 +24,7 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
     return store.addToField(event.id, participant.id);
   });
   const scratchedHorse = store.addParticipant(sportRow.id, 'Drift');
-  const scratched = store.addToField(event.id, scratchedHorse.id, { isActive: false });
+  const scratched = store.addToField(event.id, scratchedHorse.id, { status: SportEventParticipantStatus.WITHDRAWN });
   const domainEvents = new RecordingDomainEvents();
   const service = new RaceResultService({
     events: store.sportEventRepo(),

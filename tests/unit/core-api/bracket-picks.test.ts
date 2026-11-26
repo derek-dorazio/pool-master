@@ -8,7 +8,7 @@ import { expect } from '@jest/globals';
 import {
   MatchSide,
   MatchStatus,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   PickOutcome,
   UpsetBonusRule,
   type KnockoutRoundPointsSettings,
@@ -543,14 +543,14 @@ describe('withdrawnRowIds — which field rows count as withdrawn after the draw
   const bracket = eightTeamBracket().map((match) => (match.matchNumber === 1 ? withHomeAway(match, { awaySportEventParticipantId: 'LL' }) : match));
 
   it('counts a row inactive as WITHDRAWN that no game names any more, the one a replacement took the place of', () => {
-    expect(withdrawnRowIds([{ id: 'T8', isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN }], bracket)).toEqual(new Set(['T8']));
+    expect(withdrawnRowIds([{ id: 'T8', status: SportEventParticipantStatus.WITHDRAWN }], bracket)).toEqual(new Set(['T8']));
   });
 
   it('does not count a row made inactive in the field grid while a game still names it, so it stays in its game', () => {
-    expect(withdrawnRowIds([{ id: 'T1', isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN }], bracket)).toEqual(new Set());
+    expect(withdrawnRowIds([{ id: 'T1', status: SportEventParticipantStatus.WITHDRAWN }], bracket)).toEqual(new Set());
   });
 
   it('does not count a row inactive for another reason, such as eliminated', () => {
-    expect(withdrawnRowIds([{ id: 'T8', isActive: false, inactiveReason: ParticipantInactiveReason.ELIMINATED }], bracket)).toEqual(new Set());
+    expect(withdrawnRowIds([{ id: 'T8', status: SportEventParticipantStatus.ELIMINATED }], bracket)).toEqual(new Set());
   });
 });

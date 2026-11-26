@@ -119,8 +119,10 @@ This allows PoolMaster to keep the primary active/inactive filter simple while
 still supporting richer lifecycle semantics later.
 
 Do not over-model reason enums preemptively when current product behavior only
-needs active vs inactive. `SportEventParticipant.inactiveReason` (`WITHDRAWN`,
-`ELIMINATED`) is the reference case of one that earned its place.
+needs active vs inactive. When the reasons are themselves the states a record moves
+through, skip the pair and go straight to a `status`: `SportEventParticipant.status`
+(`ACTIVE`, `WITHDRAWN`, `ELIMINATED`, `DISQUALIFIED`) replaced an `isActive` +
+`inactiveReason` pair that never needed to disagree (#2184).
 
 ### Start with the simplest lifecycle
 

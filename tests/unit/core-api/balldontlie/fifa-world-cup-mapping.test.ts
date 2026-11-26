@@ -95,7 +95,7 @@ describe('World Cup teams', () => {
       providerId: 'balldontlie',
       sport: Sport.SOCCER,
       name: 'Argentina',
-      active: true,
+      status: 'ACTIVE',
       metadata: { abbreviation: 'ARG' },
     });
     expect(toWorldCupTeamParticipant({ id: 99, name: 'Wales', abbreviation: null }, '/fifa/worldcup/v1/teams').metadata).toEqual({});

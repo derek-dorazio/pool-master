@@ -14,7 +14,7 @@ import type {
   PlatformPricingProfile,
   ProviderEventRef,
   OverdueEventFacts,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   Participant,
   ParticipantType,
   ProviderSyncKind,
@@ -383,8 +383,7 @@ export interface SportEventRoundRepository {
 
 /** undefined leaves a field alone; null clears it. */
 export interface SportEventParticipantPatch {
-  isActive?: boolean;
-  inactiveReason?: ParticipantInactiveReason | null;
+  status?: SportEventParticipantStatus;
   ranking?: number | null;
   oddsToWin?: number | null;
   seedNumber?: number | null;

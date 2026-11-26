@@ -101,7 +101,7 @@ describe('NCAA men\'s basketball teams', () => {
       providerId: 'balldontlie',
       sport: Sport.BASKETBALL,
       name: 'Duke Blue Devils',
-      active: true,
+      status: 'ACTIVE',
       metadata: { abbreviation: 'DUKE' },
     });
   });

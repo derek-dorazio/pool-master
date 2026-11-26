@@ -32453,21 +32453,15 @@
             "type": "string",
             "format": "uuid"
           },
-          "isActive": {
-            "type": "boolean",
-            "description": "Whether the participant is competing; false is withdrawn or eliminated."
-          },
-          "inactiveReason": {
-            "description": "Meaningful only when isActive is false; null means no more specific reason is recorded.",
-            "type": [
-              "string",
-              "null"
-            ],
+          "status": {
+            "type": "string",
             "enum": [
+              "ACTIVE",
               "WITHDRAWN",
               "ELIMINATED",
-              null
-            ]
+              "DISQUALIFIED"
+            ],
+            "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
           },
           "ranking": {
             "description": "The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.",
@@ -32990,8 +32984,7 @@
           "id",
           "sportEventId",
           "participantId",
-          "isActive",
-          "inactiveReason",
+          "status",
           "ranking",
           "oddsToWin",
           "seedNumber",
@@ -33029,21 +33022,15 @@
                   "type": "string",
                   "format": "uuid"
                 },
-                "isActive": {
-                  "type": "boolean",
-                  "description": "Whether the participant is competing; false is withdrawn or eliminated."
-                },
-                "inactiveReason": {
-                  "description": "Meaningful only when isActive is false; null means no more specific reason is recorded.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                "status": {
+                  "type": "string",
                   "enum": [
+                    "ACTIVE",
                     "WITHDRAWN",
                     "ELIMINATED",
-                    null
-                  ]
+                    "DISQUALIFIED"
+                  ],
+                  "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
                 },
                 "ranking": {
                   "description": "The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.",
@@ -33566,8 +33553,7 @@
                 "id",
                 "sportEventId",
                 "participantId",
-                "isActive",
-                "inactiveReason",
+                "status",
                 "ranking",
                 "oddsToWin",
                 "seedNumber",
@@ -33653,19 +33639,15 @@
                   "type": "string",
                   "format": "uuid"
                 },
-                "isActive": {
-                  "type": "boolean"
-                },
-                "inactiveReason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                "status": {
+                  "type": "string",
                   "enum": [
+                    "ACTIVE",
                     "WITHDRAWN",
                     "ELIMINATED",
-                    null
-                  ]
+                    "DISQUALIFIED"
+                  ],
+                  "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
                 },
                 "ranking": {
                   "type": [
@@ -33740,21 +33722,15 @@
                 "type": "string",
                 "format": "uuid"
               },
-              "isActive": {
-                "type": "boolean",
-                "description": "Whether the participant is competing; false is withdrawn or eliminated."
-              },
-              "inactiveReason": {
-                "description": "Meaningful only when isActive is false; null means no more specific reason is recorded.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+              "status": {
+                "type": "string",
                 "enum": [
+                  "ACTIVE",
                   "WITHDRAWN",
                   "ELIMINATED",
-                  null
-                ]
+                  "DISQUALIFIED"
+                ],
+                "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
               },
               "ranking": {
                 "description": "The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.",
@@ -34277,8 +34253,7 @@
               "id",
               "sportEventId",
               "participantId",
-              "isActive",
-              "inactiveReason",
+              "status",
               "ranking",
               "oddsToWin",
               "seedNumber",
@@ -34322,19 +34297,15 @@
                 "playerName": {
                   "type": "string"
                 },
-                "isActive": {
-                  "type": "boolean"
-                },
-                "inactiveReason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                "status": {
+                  "type": "string",
                   "enum": [
+                    "ACTIVE",
                     "WITHDRAWN",
                     "ELIMINATED",
-                    null
-                  ]
+                    "DISQUALIFIED"
+                  ],
+                  "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
                 },
                 "ranking": {
                   "type": [
@@ -34385,19 +34356,15 @@
                     "playerName": {
                       "type": "string"
                     },
-                    "isActive": {
-                      "type": "boolean"
-                    },
-                    "inactiveReason": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                    "status": {
+                      "type": "string",
                       "enum": [
+                        "ACTIVE",
                         "WITHDRAWN",
                         "ELIMINATED",
-                        null
-                      ]
+                        "DISQUALIFIED"
+                      ],
+                      "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
                     },
                     "ranking": {
                       "type": [
@@ -34481,19 +34448,15 @@
                     "null"
                   ],
                   "properties": {
-                    "isActive": {
-                      "type": "boolean"
-                    },
-                    "inactiveReason": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                    "status": {
+                      "type": "string",
                       "enum": [
+                        "ACTIVE",
                         "WITHDRAWN",
                         "ELIMINATED",
-                        null
-                      ]
+                        "DISQUALIFIED"
+                      ],
+                      "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
                     },
                     "ranking": {
                       "type": [
@@ -34513,8 +34476,7 @@
                     }
                   },
                   "required": [
-                    "isActive",
-                    "inactiveReason",
+                    "status",
                     "ranking",
                     "seedNumber"
                   ],
@@ -34527,19 +34489,15 @@
                     "null"
                   ],
                   "properties": {
-                    "isActive": {
-                      "type": "boolean"
-                    },
-                    "inactiveReason": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                    "status": {
+                      "type": "string",
                       "enum": [
+                        "ACTIVE",
                         "WITHDRAWN",
                         "ELIMINATED",
-                        null
-                      ]
+                        "DISQUALIFIED"
+                      ],
+                      "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
                     },
                     "ranking": {
                       "type": [
@@ -34559,8 +34517,7 @@
                     }
                   },
                   "required": [
-                    "isActive",
-                    "inactiveReason",
+                    "status",
                     "ranking",
                     "seedNumber"
                   ],
@@ -37372,21 +37329,15 @@
                   "type": "string",
                   "format": "uuid"
                 },
-                "isActive": {
-                  "type": "boolean",
-                  "description": "Whether the participant is competing; false is withdrawn or eliminated."
-                },
-                "inactiveReason": {
-                  "description": "Meaningful only when isActive is false; null means no more specific reason is recorded.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                "status": {
+                  "type": "string",
                   "enum": [
+                    "ACTIVE",
                     "WITHDRAWN",
                     "ELIMINATED",
-                    null
-                  ]
+                    "DISQUALIFIED"
+                  ],
+                  "description": "The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out."
                 },
                 "ranking": {
                   "description": "The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.",
@@ -37909,8 +37860,7 @@
                 "id",
                 "sportEventId",
                 "participantId",
-                "isActive",
-                "inactiveReason",
+                "status",
                 "ranking",
                 "oddsToWin",
                 "seedNumber",
@@ -86433,7 +86383,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber, isActive and inactiveReason (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.",
+        "description": "Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {

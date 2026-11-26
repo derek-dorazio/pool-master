@@ -2,7 +2,7 @@ import { legacyMatch, homeAwayOf, withHomeAway } from '../../support/match-sides
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { isAtPlace, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { isAtPlace, MatchSide, MatchStatus, ParticipantStatus, SlotKind, SlotPairing, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -376,7 +376,7 @@ describe('SportEventBracketService.releaseBlockers', () => {
   it('counts a withdrawn team still in the bracket, and does not ask for a withdrawn team left out of it', async () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
-    expectDefined(context.store.field.find((entry) => entry.id === context.texas.id)).isActive = false;
+    expectDefined(context.store.field.find((entry) => entry.id === context.texas.id)).status = SportEventParticipantStatus.WITHDRAWN;
 
     await expect(context.service.releaseBlockers(context.event)).resolves.toEqual(['1 withdrawn teams are still in the bracket']);
   });

@@ -15,6 +15,7 @@ import {
   ParticipantStandingStatus,
   type SportDefinition,
   sportVocabulary,
+  SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import type { ScoredContestEntryPickDto, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { LeaderboardContext, LeaderboardDetailCell, LeaderboardDetailColumn, ScoringFamilyUi } from './types';
@@ -65,7 +66,7 @@ export function formatKnockoutStatus(
   sport: SportDefinition,
   context?: LeaderboardContext,
 ): Pick<LeaderboardDetailCell, 'text' | 'chip'> {
-  if (!participant.isActive) {
+  if (participant.status !== SportEventParticipantStatus.ACTIVE) {
     return { text: sportVocabulary(sport).withdrawn, chip: 'neutral' };
   }
   if (participant.standing?.status === ParticipantStandingStatus.COMPLETE) {

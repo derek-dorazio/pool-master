@@ -245,7 +245,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
 
     await waitFor(() => expect(updateEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { eventId: 'evt-1' },
-      body: { participants: [{ sportEventParticipantId: 'sep-rory', isActive: false, inactiveReason: 'WITHDRAWN' }] },
+      body: { participants: [{ sportEventParticipantId: 'sep-rory', status: 'WITHDRAWN' }] },
     })));
   });
 
@@ -358,8 +358,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
       id: 'sep-out',
       participantId: 'p-out',
       participant: participantFixture({ id: 'p-out', name: 'Withdrawn Golfer' }),
-      isActive: false,
-      inactiveReason: 'WITHDRAWN',
+      status: 'WITHDRAWN',
     });
     seed({ entries: [withdrawn] });
     updateEventParticipantsMock.mockResolvedValue({ data: { participants: [withdrawn] } });
@@ -375,7 +374,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     await userEvent.click(screen.getByTestId('root-admin-event-participant-dialog-withdraw-confirm'));
 
     await waitFor(() => expect(updateEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { participants: [{ sportEventParticipantId: 'sep-out', isActive: true }] },
+      body: { participants: [{ sportEventParticipantId: 'sep-out', status: 'ACTIVE' }] },
     })));
   });
 

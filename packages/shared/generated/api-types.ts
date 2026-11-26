@@ -2246,7 +2246,7 @@ export interface paths {
         put?: never;
         /**
          * Preview a field upload
-         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber, isActive and inactiveReason (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
+         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
          */
         post: operations["previewEventParticipantUpload"];
         delete?: never;
@@ -14696,13 +14696,11 @@ export interface components {
             sportEventId: string;
             /** Format: uuid */
             participantId: string;
-            /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-            isActive: boolean;
             /**
-             * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-             * @enum {string|null}
+             * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+             * @enum {string}
              */
-            inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+            status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
             /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
             ranking: number | null;
             oddsToWin: number | null;
@@ -14901,13 +14899,11 @@ export interface components {
                 sportEventId: string;
                 /** Format: uuid */
                 participantId: string;
-                /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-                isActive: boolean;
                 /**
-                 * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-                 * @enum {string|null}
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
                  */
-                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
                 ranking: number | null;
                 oddsToWin: number | null;
@@ -15112,9 +15108,11 @@ export interface components {
             participants: {
                 /** Format: uuid */
                 sportEventParticipantId: string;
-                isActive?: boolean;
-                /** @enum {string|null} */
-                inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                /**
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
+                 */
+                status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 ranking?: number | null;
                 seedNumber?: number | null;
                 /** @description The odds to win, as the feed sends them. Kept on the grid save only for the test-data loader, which writes test odds in the feed's place (#2077). */
@@ -15140,13 +15138,11 @@ export interface components {
                 sportEventId: string;
                 /** Format: uuid */
                 participantId: string;
-                /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-                isActive: boolean;
                 /**
-                 * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-                 * @enum {string|null}
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
                  */
-                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
                 ranking: number | null;
                 oddsToWin: number | null;
@@ -15340,9 +15336,11 @@ export interface components {
                 /** @description The participant's canonical external id. */
                 externalId?: string;
                 playerName?: string;
-                isActive?: boolean;
-                /** @enum {string|null} */
-                inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                /**
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
+                 */
+                status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 ranking?: number | null;
                 seedNumber?: number | null;
             }[];
@@ -15357,9 +15355,11 @@ export interface components {
                     /** @description The participant's canonical external id. */
                     externalId?: string;
                     playerName?: string;
-                    isActive?: boolean;
-                    /** @enum {string|null} */
-                    inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                    /**
+                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                     * @enum {string}
+                     */
+                    status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                     ranking?: number | null;
                     seedNumber?: number | null;
                 };
@@ -15392,17 +15392,21 @@ export interface components {
                 change: "UPDATE" | "UNCHANGED" | null;
                 /** @description What is stored now; set whenever the row resolved. */
                 before: {
-                    isActive: boolean;
-                    /** @enum {string|null} */
-                    inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                    /**
+                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                     ranking: number | null;
                     seedNumber: number | null;
                 } | null;
                 /** @description What applying would store; null when the row cannot be applied. */
                 after: {
-                    isActive: boolean;
-                    /** @enum {string|null} */
-                    inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                    /**
+                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                     ranking: number | null;
                     seedNumber: number | null;
                 } | null;
@@ -16208,13 +16212,11 @@ export interface components {
                 sportEventId: string;
                 /** Format: uuid */
                 participantId: string;
-                /** @description Whether the participant is competing; false is withdrawn or eliminated. */
-                isActive: boolean;
                 /**
-                 * @description Meaningful only when isActive is false; null means no more specific reason is recorded.
-                 * @enum {string|null}
+                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
+                 * @enum {string}
                  */
-                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
                 /** @description The participant's rank coming into this event — seeded from the provider's ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`. */
                 ranking: number | null;
                 oddsToWin: number | null;

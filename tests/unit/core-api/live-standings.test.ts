@@ -60,9 +60,9 @@ interface RoundSpec {
 }
 
 /** One field row, with only what round detection and cut news read. */
-function golfer(id: string, rounds: RoundSpec[], options: { standing?: ParticipantStandingStatus; isActive?: boolean } = {}): SportEventParticipantView {
+function golfer(id: string, rounds: RoundSpec[], options: { standing?: ParticipantStandingStatus; withdrawn?: boolean } = {}): SportEventParticipantView {
   return {
-    entry: { id, isActive: options.isActive ?? true },
+    entry: { id, status: options.withdrawn === true ? 'WITHDRAWN' : 'ACTIVE' },
     participant: { name: `Golfer ${id}` },
     standing: options.standing === undefined ? null : { standing: { status: options.standing }, golf: null },
     rounds: rounds.map((round) => ({
@@ -122,7 +122,7 @@ describe('lastFinishedRound', () => {
       golfer('a', [done(1, ROUND_1_DONE), done(2, ROUND_2_DONE), done(3, after(ROUND_2_DONE, 1440))]),
       golfer('cut', [done(1, ROUND_1_DONE), { roundNumber: 2, status: ParticipantRoundStatus.MISSED_CUT, completedAt: ROUND_2_DONE }], { standing: ParticipantStandingStatus.ELIMINATED }),
       golfer('withdrew', [{ roundNumber: 1, status: ParticipantRoundStatus.DNF, thru: 7 }], { standing: ParticipantStandingStatus.WITHDRAWN }),
-      golfer('removed', [], { isActive: false }),
+      golfer('removed', [], { withdrawn: true }),
     ])?.roundNumber).toBe(3);
   });
 });

@@ -27,8 +27,7 @@ import {
   type ContestEntryMatchPrediction,
   type Participant,
   type SportEventRoundMatch,
-  type SportEventParticipant,
-} from '@poolmaster/shared/domain';
+  type SportEventParticipant, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { weekRoundSlot } from './round-slots';
 import { legacyMatch } from './match-sides';
 import { expectDefined } from './expect-defined';
@@ -73,7 +72,7 @@ export class InMemoryGamePicks {
       id: options.id ?? `field-${this.sequence}`,
       sportEventId,
       participantId: participant.id,
-      isActive: true,
+      status: SportEventParticipantStatus.ACTIVE,
       isPlayInPlace: false,
       ...(options.seedNumber !== undefined && { seedNumber: options.seedNumber }),
       metadata: {},

@@ -80,7 +80,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       data: {
         sportEventId: event.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
 

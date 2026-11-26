@@ -382,7 +382,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       summary: 'Preview a field upload',
       description:
         'Resolves each row against the event\'s field — participantId, then externalId, then an exact case-insensitive playerName, '
-        + 'with no fallback — and reports what applying it would change to ranking, seedNumber, isActive and inactiveReason (odds come only from the feed). '
+        + 'with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). '
         + 'A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. '
         + 'A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.',
       operationId: 'previewEventParticipantUpload',

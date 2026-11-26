@@ -1,5 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { assertNever, RaceResultOrderError, RaceResultStatus, type SportVocabulary, sportVocabulary } from '@poolmaster/shared/domain';
+import { assertNever, RaceResultOrderError, RaceResultStatus, type SportVocabulary, sportVocabulary, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
@@ -138,7 +138,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                 {[...field].sort(byFinish).map((entry) => {
                   const { race } = entry;
                   const finish = !race
-                    ? (entry.isActive ? '—' : vocabulary.withdrawn)
+                    ? ((entry.status === SportEventParticipantStatus.ACTIVE) ? '—' : vocabulary.withdrawn)
                     : race.resultStatus === RaceResultStatus.FINISHED
                       ? (race.finishPosition === null ? '—' : formatOrdinal(race.finishPosition))
                       : enumLabel('RaceResultStatus', race.resultStatus);

@@ -1,5 +1,5 @@
 import { sportPlay } from '../../support/sport-play';
-import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType, isRosterSelectionType } from '@poolmaster/shared/domain';
+import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType, isRosterSelectionType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -90,7 +90,7 @@ function fieldRow(overrides: Partial<SportEventParticipant> & { id: string }): S
   return {
     sportEventId: 'event-1',
     participantId: 'participant-1',
-    isActive: true,
+    status: 'ACTIVE',
     metadata: {},
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -300,7 +300,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
   it('pool-master-uvc keeps an inactive field row selectable-with-a-reason rather than dropping it', () => {
     const participants = buildSelectionParticipants({
       field: [
-        fieldRow({ id: 'sep-1', participantId: 'participant-1', isActive: false, inactiveReason: 'ELIMINATED' }),
+        fieldRow({ id: 'sep-1', participantId: 'participant-1', status: SportEventParticipantStatus.ELIMINATED }),
       ],
       participantsById: new Map([['participant-1', participant('participant-1', { name: 'Eliminated Golfer' })]]),
       valuationBySportEventParticipantId: new Map(),
