@@ -13,6 +13,7 @@ import type { ApiErrorCode } from '../dto/api-error-codes';
 import type {
   DisplayEntry,
   DisplayStringsModule,
+  ProfileDisplaySection,
   SharedEnumName,
   SharedEnums,
 } from './display-strings-module';
@@ -125,6 +126,12 @@ export function flattenDisplayStrings(module: DisplayStringsModule): Record<stri
   for (const [sport, roles] of Object.entries(module.sport)) {
     for (const [role, entry] of Object.entries(roles)) add(`sport.${sport}.${role}`, entry);
   }
+  for (const section of PROFILE_SECTIONS) {
+    for (const [code, entry] of Object.entries(module[section])) {
+      flat[`${section}.${code}.name`] = entry.name;
+      flat[`${section}.${code}.description`] = entry.description;
+    }
+  }
   return flat;
 }
 
@@ -136,7 +143,19 @@ export type DisplayStrings = {
   /** Whether a key has words in the reader's language or the source language's. */
   readonly hasDisplayString: (key: string, locale?: string | null) => boolean;
   readonly sportWord: SportWordLookup;
+  readonly profileWords: (section: ProfileDisplaySection, profile: ProfileIdentity, locale?: string | null) => ProfileWords;
 };
+
+const PROFILE_SECTIONS: readonly ProfileDisplaySection[] = ['tierProfile', 'pricingProfile'];
+
+/** What a profile lookup needs from the row: its code, and the root admin's name to fall back to. */
+export type ProfileIdentity = { readonly code: string; readonly name: string };
+
+/**
+ * A profile's words on screen: the seeded name and line for its code, or, for a profile with
+ * none seeded yet (one a root admin added on screen), the row's name and no line.
+ */
+export type ProfileWords = { readonly name: string; readonly description: string | null };
 
 /**
  * Lookups over a set of modules, keyed by locale tag. The app's lookups are this over
@@ -203,6 +222,12 @@ export function createDisplayStrings(modules: Readonly<Record<string, DisplayStr
     enumLabel: (enumName, code, options) => lookup(`enum.${enumName}.${code}`, undefined, options?.locale, options?.form),
     hasDisplayString: (key, locale) => instance.exists(key, { lng: moduleLocaleFor(locale) }),
     sportWord,
+    profileWords: (section, profile, locale) => {
+      const lng = moduleLocaleFor(locale);
+      const key = `${section}.${profile.code}`;
+      if (!instance.exists(`${key}.name`, { lng })) return { name: profile.name, description: null };
+      return { name: instance.t(`${key}.name`, { lng }), description: instance.t(`${key}.description`, { lng }) };
+    },
   };
 }
 
@@ -240,4 +265,13 @@ export function enumLabel<E extends SharedEnumName>(enumName: E, code: SharedEnu
  */
 export function hasDisplayString(key: string, locale?: string | null): boolean {
   return appDisplayStrings.hasDisplayString(key, locale);
+}
+
+/**
+ * What commissioners and members read about a tier or pricing profile (#2194):
+ * `profileWords('tierProfile', profile, locale)` gives the name and line seeded for its code,
+ * or the row's own name and no line while none are seeded.
+ */
+export function profileWords(section: ProfileDisplaySection, profile: ProfileIdentity, locale?: string | null): ProfileWords {
+  return appDisplayStrings.profileWords(section, profile, locale);
 }

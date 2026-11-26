@@ -21,8 +21,8 @@ type EqualGroupsWrite = Extract<TierWrite, { type: typeof TierProfileType.EQUAL_
 const ODDS_FIRST = [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING];
 const SEED_FIRST = [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.RANKING];
 
-const SIX_OF_TEN: EqualGroupsWrite = { code: 'TIERS_6_OF_10', name: '6 tiers of 10', sources: ODDS_FIRST, type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
-const STANDARD: PricingWrite = { code: 'STANDARD', name: 'Standard', sources: ODDS_FIRST, salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+const SIX_OF_TEN: EqualGroupsWrite = { code: 'TIERS_6_OF_10', name: '6 tiers of 10', description: 'A profile for this test.', sources: ODDS_FIRST, type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
+const STANDARD: PricingWrite = { code: 'STANDARD', name: 'Standard', description: 'A profile for this test.', sources: ODDS_FIRST, salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 /**
  * Profiles in a list, each league naming one by id in `uses`; `paired` holds, by profile id, the
@@ -83,7 +83,7 @@ describe('ProfileService — tier profiles', () => {
   it('creates a profile with no sport league naming it yet, and lists every profile by name with how many leagues name each', async () => {
     const { service, uses } = tierService();
     const created = await service.create(SIX_OF_TEN);
-    await service.create({ ...SIX_OF_TEN, code: 'TIERS_4_OF_16', name: '4 tiers of 16', tierCount: 4, tierSize: 16 });
+    await service.create({ ...SIX_OF_TEN, code: 'TIERS_4_OF_16', name: '4 tiers of 16', description: 'A profile for this test.', tierCount: 4, tierSize: 16 });
     uses.set(created.profile.id, 3);
 
     expect(created.sportLeagueCount).toBe(0);
@@ -123,7 +123,7 @@ describe('ProfileService — tier profiles', () => {
   it('refuses a second profile with a code already taken with 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, and an update onto another profile\'s code the same way', async () => {
     const { service, rows } = tierService();
     const { profile } = await service.create(SIX_OF_TEN);
-    const other = await service.create({ ...SIX_OF_TEN, code: 'TIERS_6_OF_8', name: '6 tiers of 8', tierSize: 8 });
+    const other = await service.create({ ...SIX_OF_TEN, code: 'TIERS_6_OF_8', name: '6 tiers of 8', description: 'A profile for this test.', tierSize: 8 });
 
     await expect(service.create({ ...SIX_OF_TEN, name: 'Another name' })).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_CODE_TAKEN', statusCode: 409 });
     await expect(service.update(other.profile.id, { ...other.profile, code: profile.code })).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_CODE_TAKEN', statusCode: 409 });
@@ -155,7 +155,7 @@ describe('ProfileService — tier profiles', () => {
     const { service } = tierService();
     const ranges = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }];
 
-    const created = await service.create({ code: 'PLAYOFF_SEEDS_1_4_REST', name: 'Playoff seeds', sources: SEED_FIRST, type: TierProfileType.RANGES, ranges });
+    const created = await service.create({ code: 'PLAYOFF_SEEDS_1_4_REST', name: 'Playoff seeds', description: 'A profile for this test.', sources: SEED_FIRST, type: TierProfileType.RANGES, ranges });
 
     expect(created.profile).toMatchObject({ type: 'RANGES', sources: SEED_FIRST, ranges });
   });
@@ -164,7 +164,7 @@ describe('ProfileService — tier profiles', () => {
     const { service, rows } = tierService();
     const ranges = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 3, toValue: null }];
 
-    await expect(service.create({ code: 'GAPPED', name: 'Gapped', sources: SEED_FIRST, type: TierProfileType.RANGES, ranges }))
+    await expect(service.create({ code: 'GAPPED', name: 'Gapped', description: 'A profile for this test.', sources: SEED_FIRST, type: TierProfileType.RANGES, ranges }))
       .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_INVALID', statusCode: 422 });
     expect(rows).toEqual([]);
   });
@@ -186,7 +186,7 @@ describe('ProfileService — tier profiles', () => {
     paired.set(profile.id, [FieldOrderBasis.ODDS]);
 
     await expect(service.update(profile.id, { ...SIX_OF_TEN, sources: [FieldOrderBasis.ODDS, FieldOrderBasis.RANKING] })).resolves.toMatchObject({ profile: { sources: ['ODDS', 'RANKING'] } });
-    await expect(service.update(free.profile.id, { ...SIX_OF_TEN, code: 'FREE', name: 'Free', sources: SEED_FIRST })).resolves.toMatchObject({ profile: { sources: SEED_FIRST } });
+    await expect(service.update(free.profile.id, { ...SIX_OF_TEN, code: 'FREE', name: 'Free', description: 'A profile for this test.', sources: SEED_FIRST })).resolves.toMatchObject({ profile: { sources: SEED_FIRST } });
   });
 
   it('deletes a profile no sport league names', async () => {

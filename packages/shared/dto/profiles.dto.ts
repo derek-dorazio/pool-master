@@ -7,20 +7,22 @@ import { BudgetPricingProfileSchema, EqualGroupsLayoutSchema, ProfileSourcesSche
 import { DateTimeSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
-const ProfileNameSchema = z.string().trim().min(1).max(50).describe('The profile\'s name, unique among its kind: "6 tiers of 10", "Standard".');
+const ProfileNameSchema = z.string().trim().min(1).max(50).describe('The root admin\'s name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.');
 const ProfileCodeSchema = z.string().trim().min(1).max(50).regex(/^[A-Z][A-Z0-9_]*$/, 'Use capital letters, digits and underscores, starting with a letter.')
   .describe('The profile\'s key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.');
+const ProfileDescriptionSchema = z.string().trim().min(1, 'Say what the profile is for.').max(500)
+  .describe('Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).');
 const SportLeagueCountSchema = z.number().int().describe('How many sport leagues name the profile. One any league names can\'t be deleted.');
 
 // --- Tier profiles ----------------------------------------------------------
 
-const TierProfileIdentity = { code: ProfileCodeSchema, name: ProfileNameSchema, sources: ProfileSourcesSchema };
+const TierProfileIdentity = { code: ProfileCodeSchema, name: ProfileNameSchema, description: ProfileDescriptionSchema, sources: ProfileSourcesSchema };
 const SavedProfile = { id: z.uuid(), sportLeagueCount: SportLeagueCountSchema, createdAt: DateTimeSchema, updatedAt: DateTimeSchema };
 
 export const PlatformTierProfileWriteRequestSchema = z.discriminatedUnion('type', [
   EqualGroupsLayoutSchema.extend(TierProfileIdentity),
   RangesLayoutSchema.extend(TierProfileIdentity),
-]).describe('A tier profile\'s code, name, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can\'t be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.');
+]).describe('A tier profile\'s code, name, description, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can\'t be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.');
 export type PlatformTierProfileWriteRequest = z.infer<typeof PlatformTierProfileWriteRequestSchema>;
 
 export const PlatformTierProfileDtoSchema = z.discriminatedUnion('type', [
@@ -44,8 +46,9 @@ export type PlatformTierProfileResponse = z.infer<typeof PlatformTierProfileResp
 export const PlatformPricingProfileWriteRequestSchema = BudgetPricingProfileSchema.extend({
   code: ProfileCodeSchema,
   name: ProfileNameSchema,
+  description: ProfileDescriptionSchema,
   sources: ProfileSourcesSchema,
-}).describe('A pricing profile\'s code, name, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one.');
+}).describe('A pricing profile\'s code, name, description, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one.');
 export type PlatformPricingProfileWriteRequest = z.infer<typeof PlatformPricingProfileWriteRequestSchema>;
 
 export const PlatformPricingProfileDtoSchema = PlatformPricingProfileWriteRequestSchema.extend({

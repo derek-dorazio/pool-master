@@ -31394,7 +31394,7 @@ export type CustomerUserListResponse = {
 };
 
 /**
- * A tier profile's code, name, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.
+ * A tier profile's code, name, description, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.
  */
 export type PlatformTierProfileWriteRequest = {
     type: 'EQUAL_GROUPS';
@@ -31419,9 +31419,13 @@ export type PlatformTierProfileWriteRequest = {
      */
     code: string;
     /**
-     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
      */
     name: string;
+    /**
+     * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+     */
+    description: string;
     /**
      * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
      */
@@ -31450,9 +31454,13 @@ export type PlatformTierProfileWriteRequest = {
      */
     code: string;
     /**
-     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
      */
     name: string;
+    /**
+     * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+     */
+    description: string;
     /**
      * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
      */
@@ -31485,9 +31493,13 @@ export type PlatformTierProfileDto = {
      */
     code: string;
     /**
-     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
      */
     name: string;
+    /**
+     * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+     */
+    description: string;
     /**
      * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
      */
@@ -31529,9 +31541,13 @@ export type PlatformTierProfileDto = {
      */
     code: string;
     /**
-     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
      */
     name: string;
+    /**
+     * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+     */
+    description: string;
     /**
      * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
      */
@@ -31581,9 +31597,13 @@ export type PlatformTierProfileListResponse = {
          */
         code: string;
         /**
-         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
          */
         name: string;
+        /**
+         * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+         */
+        description: string;
         /**
          * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
          */
@@ -31625,9 +31645,13 @@ export type PlatformTierProfileListResponse = {
          */
         code: string;
         /**
-         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
          */
         name: string;
+        /**
+         * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+         */
+        description: string;
         /**
          * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
          */
@@ -31678,9 +31702,13 @@ export type PlatformTierProfileResponse = {
          */
         code: string;
         /**
-         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
          */
         name: string;
+        /**
+         * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+         */
+        description: string;
         /**
          * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
          */
@@ -31722,9 +31750,13 @@ export type PlatformTierProfileResponse = {
          */
         code: string;
         /**
-         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
          */
         name: string;
+        /**
+         * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+         */
+        description: string;
         /**
          * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
          */
@@ -31746,7 +31778,7 @@ export type PlatformTierProfileResponse = {
 };
 
 /**
- * A pricing profile's code, name, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one.
+ * A pricing profile's code, name, description, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one.
  */
 export type PlatformPricingProfileWriteRequest = {
     /**
@@ -31770,13 +31802,17 @@ export type PlatformPricingProfileWriteRequest = {
      */
     steepness: number;
     /**
-     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
      */
     name: string;
     /**
      * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
      */
     code: string;
+    /**
+     * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+     */
+    description: string;
     /**
      * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
      */
@@ -31808,13 +31844,17 @@ export type PlatformPricingProfileDto = {
      */
     steepness: number;
     /**
-     * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+     * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
      */
     name: string;
     /**
      * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
      */
     code: string;
+    /**
+     * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+     */
+    description: string;
     /**
      * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
      */
@@ -31863,13 +31903,17 @@ export type PlatformPricingProfileListResponse = {
          */
         steepness: number;
         /**
-         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
          */
         name: string;
         /**
          * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
          */
         code: string;
+        /**
+         * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+         */
+        description: string;
         /**
          * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
          */
@@ -31919,13 +31963,17 @@ export type PlatformPricingProfileResponse = {
          */
         steepness: number;
         /**
-         * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
+         * The root admin's name for the profile, unique among its kind: "6 tiers of 10", "Standard". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.
          */
         name: string;
         /**
          * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
          */
         code: string;
+        /**
+         * Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).
+         */
+        description: string;
         /**
          * The values the field is put in order by, first deciding: the first every participant has orders the field, and the later ones break ties. Each of ODDS, SEED and RANKING at most once.
          */

@@ -725,7 +725,7 @@ export interface SportLeaguePageReader {
 }
 
 /** A profile write: its code, name and values. */
-export type PlatformTierProfileWrite = Pick<PlatformTierProfile, 'code' | 'name'> & TierProfileValues;
+export type PlatformTierProfileWrite = Pick<PlatformTierProfile, 'code' | 'name' | 'description'> & TierProfileValues;
 export type PlatformPricingProfileWrite = Omit<PlatformPricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
 
 /** Which of a profile's unique keys another profile of the kind already holds. */

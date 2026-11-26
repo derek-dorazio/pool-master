@@ -122,6 +122,12 @@ export function flatKeys(module) {
   for (const [sport, roles] of Object.entries(module.sport ?? {})) {
     for (const [role, entry] of Object.entries(roles ?? {})) add(`sport.${sport}.${role}`, entry);
   }
+  for (const section of ['tierProfile', 'pricingProfile']) {
+    for (const [code, entry] of Object.entries(module[section] ?? {})) {
+      add(`${section}.${code}.name`, entry?.name);
+      add(`${section}.${code}.description`, entry?.description);
+    }
+  }
   return keys;
 }
 
@@ -181,6 +187,12 @@ export function flatEntries(module) {
   for (const [key, entry] of Object.entries(module.word ?? {})) add(`word.${key}`, entry);
   for (const [sport, roles] of Object.entries(module.sport ?? {})) {
     for (const [role, entry] of Object.entries(roles ?? {})) add(`sport.${sport}.${role}`, entry);
+  }
+  for (const section of ['tierProfile', 'pricingProfile']) {
+    for (const [code, entry] of Object.entries(module[section] ?? {})) {
+      add(`${section}.${code}.name`, entry?.name);
+      add(`${section}.${code}.description`, entry?.description);
+    }
   }
   return entries;
 }
