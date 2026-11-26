@@ -171,7 +171,8 @@ describe('Creating one event (#1253)', () => {
     );
 
     // One insert per table: the default rounds and tiers go in together, not one at a time; and
-    // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
+    // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844),
+    // with its sources and its ranges one read each (#2160).
     // The tour is synced: its selected mapping, provider league and provider are read with the
     // league and again with the event read back, beside the event's own provider ids (#2004). The
     // test slot is read once with its definition and any event on it, and linked in one insert. The
@@ -180,6 +181,7 @@ describe('Creating one event (#1253)', () => {
     // series is found or created (#2010).
     expect(statementCounts(statements)).toEqual([
       ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
+      ['SELECT platform_tier_profile_ranges', 1], ['SELECT platform_tier_profile_sources', 1],
       ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
       ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 2], ['SELECT sport_events', 1], ['SELECT sport_league_competition_slots', 2],
       ['SELECT sport_league_competitions', 1], ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_competition_slots', 2],
