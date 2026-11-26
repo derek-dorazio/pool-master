@@ -7,12 +7,13 @@
  */
 import {
   ContestOpening,
-  definitionPlaysMatches,
+  eventPlaysMatches,
   eventSportDefinition,
   hasSportEventStarted,
   SelectionType,
   SportEventStatus,
   type SportLeagueEvent,
+  type SportEvent,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, type ContestCutoff } from '../contests/entry-window';
 import { evaluateEventOperationalState } from '../events/operational-timing';
@@ -85,7 +86,7 @@ export async function contestOpening(
 }
 
 /** What an event's openings are read from: the event row as the event list has it, no other read. */
-export interface EventOpeningFacts extends SportLeagueEvent {
+export interface EventOpeningFacts extends SportLeagueEvent, Pick<SportEvent, 'slotDefinitions'> {
   status: SportEventStatus;
   startDate: Date;
   participantCount: number;
@@ -113,7 +114,7 @@ export function eventContestOpenings(event: EventOpeningFacts, now: Date): Event
     now,
   });
   const hasStarted = readinessReasons.includes('EVENT_STARTED');
-  const knockoutUnderWay = definitionPlaysMatches(definition)
+  const knockoutUnderWay = eventPlaysMatches(event)
     && event.status === SportEventStatus.IN_PROGRESS
     && readinessReasons.every((reason) => reason === 'EVENT_STARTED');
   return definition.selectionTypes.map((selectionType): EventContestOpening => {

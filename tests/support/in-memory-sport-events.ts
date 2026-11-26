@@ -44,7 +44,7 @@ import type {
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
-import { sportPlay } from './sport-play';
+import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
@@ -331,7 +331,7 @@ export class InMemorySportEvents {
   // --- Fixtures ---------------------------------------------------------------------
 
   addSport(sport: SportConfig['sport']): SportConfig {
-    const row: SportConfig = stamp({ id: this.id('sport'), sport, ...sportRowKeys(sport), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' });
+    const row: SportConfig = stamp({ id: this.id('sport'), sport, ...sportRowKeys(sport) });
     this.sports.push(row);
     return row;
   }
@@ -386,7 +386,7 @@ export class InMemorySportEvents {
   addEvent({ providerRef, ...overrides }: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
     const event: SportEvent = stamp({
       id: this.id('event'), providerMappings: providerRef === undefined ? [] : [providerMappingOf(providerRef)], sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
-      slotDefinitions: [], sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
+      slotDefinitions: sportEventSlots(overrides.sport ?? Sport.GOLF), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
       autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
       championshipYear: 0,

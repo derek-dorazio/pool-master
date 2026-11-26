@@ -79,7 +79,7 @@ describe('SDK Functional: American football', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.FOOTBALL },
-      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });

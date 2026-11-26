@@ -1,4 +1,4 @@
-import { ParticipantType, ScoringFamily, Sport, type SportLeaguePlay } from '@poolmaster/shared/domain';
+import { LEAGUE_PLAY_BY_SCORING_FAMILY, MatchFormat, ParticipantType, ScoringFamily, SlotKind, Sport, type SportEventSlotDefinition, type SportLeaguePlay } from '@poolmaster/shared/domain';
 
 /**
  * Who competes in a sport's leagues and how they are scored, as the migrations seed them (#2001).
@@ -22,4 +22,16 @@ const SPORT_PLAY: Readonly<Record<Sport, SportLeaguePlay>> = {
 /** A sport's leagues' participant type and scoring family, for a test row or event. */
 export function sportPlay(sport: Sport): SportLeaguePlay {
   return SPORT_PLAY[sport];
+}
+
+/**
+ * The one slot a test event of this sport covers unless the test gives its own (#2008): a FIELD
+ * slot for a stroke-play or finishing-place league, a HEAD_TO_HEAD one for a head-to-head league,
+ * so whether it plays matches (`eventPlaysMatches`) follows its play as the migrations seed it.
+ */
+export function sportEventSlots(sport: Sport): SportEventSlotDefinition[] {
+  const [matchFormat] = LEAGUE_PLAY_BY_SCORING_FAMILY[SPORT_PLAY[sport].scoringFamily].matchFormats;
+  return [matchFormat === MatchFormat.FIELD
+    ? { id: 'test-field-slot-definition', slotKind: SlotKind.TOURNAMENT, canEndTied: true, periods: null, matchFormat }
+    : { id: 'test-match-slot-definition', slotKind: SlotKind.FINAL, canEndTied: true, periods: null, matchFormat }];
 }

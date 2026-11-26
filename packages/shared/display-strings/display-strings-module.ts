@@ -40,7 +40,6 @@ export type SharedEnums = {
   FormTrend: Enums.FormTrend;
   PoolType: Enums.PoolType;
   ContestFormat: Enums.ContestFormat;
-  TournamentFormat: Enums.TournamentFormat;
   MatchStatus: Enums.MatchStatus;
   MatchSide: Enums.MatchSide;
   MatchEnding: Enums.MatchEnding;

@@ -50,7 +50,7 @@ async function footballLeague(slots: ReadonlyArray<{ code: string; covered?: boo
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.FOOTBALL },
-    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
     update: {},
   });
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Slot League ${randomUUID().slice(0, 8)}` } });
@@ -179,7 +179,7 @@ async function windowedLeague(slots: ReadonlyArray<{ key: string; window: TestSl
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.FOOTBALL },
-    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
     update: {},
   });
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Window League ${randomUUID().slice(0, 8)}` } });
@@ -384,7 +384,7 @@ async function golfTour(patterns: readonly string[]) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
   const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Name Tour ${randomUUID().slice(0, 8)}` } });

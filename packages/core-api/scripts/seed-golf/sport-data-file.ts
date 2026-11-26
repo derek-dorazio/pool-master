@@ -34,7 +34,7 @@
  */
 
 import { z } from 'zod';
-import { describeMatchPlace, getSportDefinition, ProviderCode, MatchEnding, MatchSide, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
+import { describeMatchPlace, getSportDefinition, LEAGUE_PLAY_BY_SCORING_FAMILY, MatchFormat, ProviderCode, MatchEnding, MatchSide, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -504,7 +504,9 @@ export function parseSportDataFile(json: unknown): SportDataFile {
   }
   const contents = new Set(file.scope.contents);
   const strokePlay = file.scope.scoringFamily === ScoringFamily.STROKE_PLAY;
-  const playsBracket = isSport(sport) && sportPlaysMatches(sport);
+  // A file's league plays matches when its scoring family plays HEAD_TO_HEAD slots (#2008), read
+  // from the one table of each family's match formats.
+  const playsBracket = isSport(sport) && (LEAGUE_PLAY_BY_SCORING_FAMILY[file.scope.scoringFamily].matchFormats as readonly MatchFormat[]).includes(MatchFormat.HEAD_TO_HEAD);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {
     problems.push('scope.contents has FIELDS without PLAYERS: a field names its players, so the file carries them.');
   }

@@ -51,7 +51,6 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       create: {
         sport: Sport.GOLF,
         ...sportRowKeys(Sport.GOLF),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
     });
@@ -275,7 +274,7 @@ describe('golf contest settlement — which contests settle', () => {
     const suffix = randomUUID().slice(0, 8);
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
       update: {},
     });
     const league = await prisma.league.create({
@@ -406,7 +405,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const owner = await createTestUser({ displayName: `Golf Unplayed ${suffix}` });
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
       update: {},
     });
     const league = await prisma.league.create({

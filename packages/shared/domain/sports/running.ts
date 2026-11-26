@@ -1,4 +1,4 @@
-import { SelectionType, Sport, TournamentFormat } from '../enums';
+import { SelectionType, Sport } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -14,7 +14,6 @@ import type { SportDefinition } from './sport-definition';
 export const runningSportDefinition: SportDefinition = {
   sport: Sport.RUNNING,
   name: 'Running',
-  tournamentFormat: TournamentFormat.RACE,
   defaultRounds: 1,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],

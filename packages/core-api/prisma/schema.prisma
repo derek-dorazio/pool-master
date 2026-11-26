@@ -354,18 +354,6 @@ enum PrismaSport {
   TENNIS
 }
 
-/// Tournament structural format — drives which contest types are valid
-/// pool formats for a given Sport. Composes with category to form the
-/// (sport × pool format) compatibility matrix in shared/domain.
-enum PrismaTournamentFormat {
-  STROKE_PLAY_TOURNAMENT
-  /// One race: one field, one finishing order (#623).
-  RACE
-  /// Games between two sides (#698; KNOCKOUT_BRACKET until #715). Whether they form a bracket
-  /// is read from the match links.
-  MATCHES
-}
-
 /// Where one match stands (#698). Mirrors the domain `MatchStatus`.
 enum PrismaMatchStatus {
   SCHEDULED
@@ -438,9 +426,8 @@ enum RaceResultStatus {
   DID_NOT_START
 }
 
-/// Contest format — the pool format applied to a SportEvent. Validity vs.
-/// tournamentFormat is enforced by the const map in packages/shared/domain
-/// (see plans/117 §9). Replaces the legacy `ContestType.SINGLE_EVENT` enum
+/// Contest format — the pool format applied to a SportEvent. Validity against the event's
+/// slots' match format is enforced in packages/shared/domain (#2008). Replaces the legacy `ContestType.SINGLE_EVENT` enum
 /// which was a duration/scope concept that turned out not to be load-bearing.
 /// Multi-event contest coverage will be re-modeled when a real multi-event
 /// contest type is built (the speculative ContestSportEvent M:N join that
@@ -1118,10 +1105,6 @@ model Sport {
   /// Where the sport sits wherever sports are listed together, grids included (#2042): the most
   /// popular first. Lower comes first. Display only, never used to identify a sport.
   displayOrder     Int                    @unique @map("display_order")
-  /// No default (#236): the table that discriminates between sports must not
-  /// make a row a stroke-play golf sport by omission. Creators take it from
-  /// DEFAULT_TOURNAMENT_FORMAT_BY_SPORT.
-  tournamentFormat PrismaTournamentFormat @map("tournament_format")
   createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -35,7 +35,7 @@ async function syncedWeek() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.FOOTBALL },
-    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}` } });
@@ -136,7 +136,7 @@ describe('Provider game slate (#1728)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.FOOTBALL },
-      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
       update: {},
     });
     const sportLeague = await prisma.sportLeague.create({

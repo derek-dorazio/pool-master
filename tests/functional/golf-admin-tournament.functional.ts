@@ -56,7 +56,6 @@ async function ensureGolfSportRow(): Promise<void> {
     create: {
       sport: 'GOLF',
       ...sportRowKeys('GOLF'),
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
   });

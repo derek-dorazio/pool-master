@@ -10362,11 +10362,6 @@ export interface components {
             /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
             displayOrder: number;
             /**
-             * @description Structural format of the sport's events; decides which contest formats are valid.
-             * @enum {string}
-             */
-            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
-            /**
              * Format: date-time
              * @description ISO 8601 datetime string.
              */
@@ -10395,11 +10390,6 @@ export interface components {
                 urlSegment: string;
                 /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
                 displayOrder: number;
-                /**
-                 * @description Structural format of the sport's events; decides which contest formats are valid.
-                 * @enum {string}
-                 */
-                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -13431,6 +13421,8 @@ export interface components {
              * @enum {string}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+            /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+            playsMatches: boolean;
             /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
             shootout: boolean;
             /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
@@ -13776,6 +13768,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+                playsMatches: boolean;
                 /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
                 shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
@@ -14100,6 +14094,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+                playsMatches: boolean;
                 /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
                 shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */

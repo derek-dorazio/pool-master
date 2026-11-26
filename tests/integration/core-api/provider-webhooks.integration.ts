@@ -49,7 +49,7 @@ async function linkedEvent(input: {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: input.sport },
-    create: { sport: input.sport, ...sportRowKeys(input.sport), tournamentFormat: input.sport === Sport.GOLF ? 'STROKE_PLAY_TOURNAMENT' : 'MATCHES' },
+    create: { sport: input.sport, ...sportRowKeys(input.sport) },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League ${randomUUID()}` } });

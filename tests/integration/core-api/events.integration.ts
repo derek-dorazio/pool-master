@@ -39,7 +39,6 @@ describe('events routes', () => {
         id: randomUUID(),
         sport: Sport.GOLF,
         ...sportRowKeys(Sport.GOLF),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 
@@ -137,7 +136,6 @@ describe('events routes', () => {
         id: randomUUID(),
         sport: Sport.GOLF,
         ...sportRowKeys(Sport.GOLF),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 

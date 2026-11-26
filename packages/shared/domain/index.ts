@@ -25,7 +25,7 @@ export * from './match-sides';
 export * from './bracket-final';
 export * from './slot-tiebreaker';
 export * from './sport-rows';
-export * from './tournament-format';
+export * from './event-match-format';
 export * from './template-coverage';
 export * from './sports';
 export * from './squares';

@@ -62,6 +62,7 @@ vi.mock('@/lib/logger', () => ({
 const tournament = sportEventFixture({
   id: 'evt-1',
   sport: 'BASKETBALL',
+  playsMatches: true,
   name: 'Harbour Classic',
   status: 'IN_PROGRESS',
   rounds: 2,

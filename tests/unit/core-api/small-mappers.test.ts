@@ -372,9 +372,9 @@ describe('toSelectionGroupDto', () => {
 
 describe('sport catalog mappers', () => {
   it('sends a sport with its dates as ISO', () => {
-    const sport = { id: 's1', sport: 'GOLF', tournamentFormat: 'STROKE', createdAt: AT, updatedAt: AT } as unknown as SportConfig;
+    const sport = { id: 's1', sport: 'GOLF', createdAt: AT, updatedAt: AT } as unknown as SportConfig;
 
-    expect(mapSportToDto(sport)).toEqual({ id: 's1', sport: 'GOLF', tournamentFormat: 'STROKE', createdAt: ISO, updatedAt: ISO });
+    expect(mapSportToDto(sport)).toEqual({ id: 's1', sport: 'GOLF', createdAt: ISO, updatedAt: ISO });
   });
 
   it('sends a sport league with its counts, and its sport\'s name and ways of picking', () => {

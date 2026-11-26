@@ -33,7 +33,7 @@ async function unmatchedTournament() {
   const database = getFunctionalPrisma();
   const sport = await database.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF') },
     update: {},
   });
   const tour = await database.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(database)), ...sportPlay(sport.sport), sportId: sport.id, name: `FAPI Name Tour ${randomUUID()}` } });

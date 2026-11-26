@@ -8615,10 +8615,6 @@ export type SportDto = {
      */
     displayOrder: number;
     /**
-     * Structural format of the sport's events; decides which contest formats are valid.
-     */
-    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
-    /**
      * ISO 8601 datetime string.
      */
     createdAt: string;
@@ -8652,10 +8648,6 @@ export type SportListResponse = {
          * Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.
          */
         displayOrder: number;
-        /**
-         * Structural format of the sport's events; decides which contest formats are valid.
-         */
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
         /**
          * ISO 8601 datetime string.
          */
@@ -12285,6 +12277,10 @@ export type SportEventDto = {
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
+     * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+     */
+    playsMatches: boolean;
+    /**
      * Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one.
      */
     shootout: boolean;
@@ -12739,6 +12735,10 @@ export type SportEventListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
+         * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+         */
+        playsMatches: boolean;
+        /**
          * Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one.
          */
         shootout: boolean;
@@ -13167,6 +13167,10 @@ export type SportEventResponse = {
          * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+        /**
+         * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+         */
+        playsMatches: boolean;
         /**
          * Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one.
          */
