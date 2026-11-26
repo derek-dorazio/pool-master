@@ -135,7 +135,7 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, rounds: 7, status: 'COMPLETED' });
       expect(detail?.participants).toHaveLength(7);
       expect(detail?.participants.map((team) => team.name)).toContain('Texas Longhorns');
-      expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ seed: 1 });
+      expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.seed).toBe(1);
       expect(requestLine(harness.api)).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100']);
     });
 

@@ -258,18 +258,24 @@ export interface ProviderParticipant {
    * the ranking it already has.
    */
   ranking?: number;
+  /** The participant's seed in the event, where the provider seeds the field. */
+  seed?: number;
+  /** Odds to win, valid only for the event the provider quoted them for. */
+  odds?: ProviderParticipantOdds;
   metadata: ProviderParticipantMetadata;
 }
 
+/** A participant's odds to win, and the provider's id of the event they were quoted for. */
+export interface ProviderParticipantOdds {
+  toWin: number;
+  eventExternalId: string;
+}
+
 /**
- * Provider-specific extras on a participant. Stored as given; the named keys are the
- * ones something reads back.
+ * Provider-specific extras on a participant that an adapter reads while it maps a feed, such
+ * as a team's conference. Nothing stores them.
  */
 export interface ProviderParticipantMetadata {
-  seed?: number;
-  /** Odds to win, valid only for the event named by `oddsSourceEventId`. */
-  odds?: number;
-  oddsSourceEventId?: string;
   [key: string]: unknown;
 }
 

@@ -428,7 +428,9 @@ describe('IngestionPersistence', () => {
       sport: Sport.GOLF,
       name: `Golfer ${externalId}`,
       status: SportEventParticipantStatus.ACTIVE,
-      metadata: { seed: 3, odds: 8.5, oddsSourceEventId },
+      seed: 3,
+      odds: { toWin: 8.5, eventExternalId: oddsSourceEventId },
+      metadata: {},
     });
     const detail = rankedFieldDetail('integration-odds-field', [
       golfer('ingestion-odds-1', 'integration-odds-field'),
