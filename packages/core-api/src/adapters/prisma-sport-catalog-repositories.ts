@@ -308,7 +308,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const fields = new Map<string, Set<string>>();
     if (sportEventIds.length === 0 || code === undefined) return fields;
     const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId: { in: [...sportEventIds] }, isActive: true },
+      where: { sportEventId: { in: [...sportEventIds] }, status: SportEventParticipantStatus.ACTIVE },
       select: { sportEventId: true, participantId: true },
     });
     if (rows.length === 0) return fields;
@@ -524,7 +524,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       by: ['sportEventId'],
       where: {
         sportEventId: { in: [...sportEventIds] },
-        isActive: true,
+        status: SportEventParticipantStatus.ACTIVE,
         // A tierless row auto-tiering left beyond a capped last tier has a source (#1844): it is
         // out of the tiers by the league's layout, not waiting for one.
         OR: [{ valuation: null }, { valuation: { sportEventTierId: null, tierAssignedSource: null } }],
@@ -539,7 +539,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       by: ['sportEventId'],
       where: {
         sportEventId: { in: [...sportEventIds] },
-        isActive: true,
+        status: SportEventParticipantStatus.ACTIVE,
         OR: [{ valuation: null }, { valuation: { price: null } }],
       },
       _count: { _all: true },

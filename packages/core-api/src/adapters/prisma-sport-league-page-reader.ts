@@ -299,7 +299,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       readOverdueCandidates(this.prisma, now, undefined, [sportEventId]),
       this.prisma.sportEventParticipant.findMany({
         where: { sportEventId },
-        select: { id: true, participantId: true, isActive: true, oddsToWin: true, seedNumber: true, ranking: true, participant: { select: { name: true } } },
+        select: { id: true, participantId: true, status: true, oddsToWin: true, seedNumber: true, ranking: true, participant: { select: { name: true } } },
         orderBy: { id: 'asc' },
       }),
       // An offer names a slot definition (#2010): the event's page offers one of its slots.
@@ -335,7 +335,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       overdueCandidates,
       field: field.map((row) => ({
         id: row.id,
-        isActive: row.isActive,
+        status: row.status,
         oddsToWin: row.oddsToWin === null ? null : row.oddsToWin.toNumber(),
         seedNumber: row.seedNumber,
         ranking: row.ranking,
