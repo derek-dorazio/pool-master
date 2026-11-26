@@ -6,7 +6,8 @@
 -- bracket comes back on slot coverage (#2171), not on these settings.
 --
 -- - The `startsAtRound` and `tiersUsed` keys go from every stored rule: templates and contest
---   configurations. Their schemas now refuse them.
+--   configurations. Their schemas no longer name them, so a sent key is dropped like any
+--   unknown key and never stored.
 -- - The one event page offer of a bracket from a later round (the NFL bracket from the
 --   conference round on Championship Weekend) goes with its column; the page's squares offer
 --   heads it instead.
