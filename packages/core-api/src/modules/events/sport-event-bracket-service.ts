@@ -13,8 +13,8 @@
  * admin places the next round's teams region by region (`setRoundMatchups`), from the pairing the
  * server proposes from seeds (`proposeRoundMatchups`, bracket-reseed.ts).
  *
- * The March Madness First Four is not played here: each play-in place is one field row standing
- * for the pairing, which `fillPlayInSlot` points at the winning team once the game is played.
+ * A play-in (the March Madness First Four) is a round of its own: each play-in match advances its
+ * winner into an empty side of the next round, like any linked match (#2184).
  */
 
 import { randomUUID } from 'node:crypto';
@@ -22,8 +22,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryMatchPredictionRepository,
   ContestRepository,
-  ParticipantRepository,
-  SportLeagueRepository,
   MatchSideWrite,
   SportEventRoundMatchPatch,
   SportEventRoundMatchRepository,
@@ -40,7 +38,6 @@ import {
   getSportDefinition,
   describeMatchPlace,
   isAtPlace,
-  isMatchUnplayed,
   type MatchPlace,
   MatchPlaceMap,
   matchPlaceOf,
@@ -49,8 +46,6 @@ import {
   sideNumberOfMatchSide,
   sideOfParticipant,
   sideParticipantId,
-  type Participant,
-  ParticipantStatus,
   finalRoundNumbers,
   SlotPairing,
   type SportEvent,
@@ -247,10 +242,8 @@ export function findBracketProblems(
 
 export interface SportEventBracketServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
-  sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
   field: SportEventParticipantRepository;
-  participants: Pick<ParticipantRepository, 'findById'>;
   matches: SportEventRoundMatchRepository;
   /** The event's tiers and valuations, which a replacement joins at the bottom of. */
   tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
@@ -492,76 +485,6 @@ export class SportEventBracketService {
     return reseedsOf(await this.deps.rounds.findBySportEvent(event.id));
   }
 
-  /**
-   * The First Four (design Q3.7): points a play-in place's field row, which stands for the
-   * pairing ("Texas / Xavier"), at the team that won the play-in, and inactivates the pairing's
-   * participant. The row keeps its seed, tier, price and every pick of it, and is no longer a
-   * play-in place. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event, 409
-   * EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE for a row not marked as one (#709: filling Duke's row would
-   * make every pick of Duke a pick of the winner), 404 PARTICIPANT_NOT_FOUND for a
-   * winner that is not an active participant, 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for one of
-   * another sport league (#1853: of another sport too), 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD
-   * when the winner already has a field row, 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has
-   * played or started a bracket match.
-   */
-  async fillPlayInSlot(sportEventId: string, sportEventParticipantId: string, winnerParticipantId: string): Promise<void> {
-    const event = await this.requireBracketEvent(sportEventId);
-    const entry = await this.deps.field.findById(sportEventParticipantId);
-    if (!entry || entry.sportEventId !== sportEventId) {
-      throw new SportEventError(
-        `Field row ${sportEventParticipantId} is not on sport event ${sportEventId}.`,
-        'EVENT_PARTICIPANT_NOT_FOUND',
-        404,
-      );
-    }
-    if (!entry.isPlayInPlace) {
-      this.deps.logger?.warn({ sportEventId, sportEventParticipantId }, 'Refused to fill a field row that is not a play-in place');
-      throw new SportEventError(
-        `Field row ${sportEventParticipantId} is not a play-in place, so it cannot take a play-in winner.`,
-        'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE',
-        409,
-      );
-    }
-    const [pairing, winner] = await Promise.all([
-      this.deps.participants.findById(entry.participantId),
-      this.deps.participants.findById(winnerParticipantId),
-    ]);
-    if (!pairing || !winner || winner.status !== ParticipantStatus.ACTIVE) {
-      throw new SportEventError(
-        `Participant ${winnerParticipantId} is not an active participant.`,
-        'PARTICIPANT_NOT_FOUND',
-        404,
-      );
-    }
-    this.requireOnLeagueRoster(event, winner);
-    const field = await this.deps.field.findBySportEvent(sportEventId);
-    if (field.some((row) => row.participantId === winnerParticipantId)) {
-      throw new SportEventError(
-        `${winner.name} is already on sport event ${sportEventId}'s field.`,
-        'EVENT_PARTICIPANT_ALREADY_ON_FIELD',
-        409,
-      );
-    }
-    const played = (await this.deps.matches.findBySportEvent(sportEventId)).some((match) => (
-      !isMatchUnplayed(match.status)
-      && sideOfParticipant(match, entry.id) !== null
-    ));
-    if (played) {
-      throw new SportEventError(
-        `Field row ${sportEventParticipantId} has already played in the bracket, so its team can no longer change.`,
-        'PLAY_IN_SLOT_ALREADY_PLAYED',
-        409,
-      );
-    }
-    const rebuild = await this.rebuild(sportEventId);
-    await this.deps.field.fillPlayInSlot({ id: entry.id, winnerParticipantId, pairingParticipantId: pairing.id }, rebuild.jobs);
-    rebuild.queued();
-    this.deps.logger?.info(
-      { sportEventId, sportEventParticipantId, winnerParticipantId, pairingParticipantId: pairing.id },
-      'Filled a play-in place with its winner',
-    );
-  }
-
   private async findSideEditProblems(
     match: SportEventRoundMatch,
     bracket: readonly SportEventRoundMatch[],
@@ -635,23 +558,6 @@ export class SportEventBracketService {
         409,
       );
     }
-  }
-
-  /**
-   * 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for a participant of another sport league (#830, #1853):
-   * a participant belongs to one league, and men's and women's are separate leagues, so a WTA
-   * player never joins an ATP draw.
-   */
-  private requireOnLeagueRoster(event: SportEvent, participant: Participant): void {
-    if (participant.sportLeagueId === event.sportLeagueId) {
-      return;
-    }
-    this.deps.logger?.warn({ sportEventId: event.id, sportLeagueId: event.sportLeagueId, participantId: participant.id }, 'Refused a participant off the event\'s league roster');
-    throw new SportEventError(
-      `${participant.name} is not on the roster of sport event ${event.id}'s league.`,
-      'PARTICIPANT_NOT_IN_SPORT_LEAGUE',
-      409,
-    );
   }
 
   /** The job rebuilding the event's boards, written with a bracket write that may change them (#1466, #1946). */

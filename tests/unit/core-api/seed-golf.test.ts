@@ -228,13 +228,14 @@ describe('basketball-2025-nba-playoffs-test.json', () => {
     expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]);
   });
 
-  it('fills the 7 and 8 seeds through play-in places, each naming the team that won it and is not otherwise in the field', () => {
-    expect(playoffs.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.player, entry.seed, entry.playInWinner])).toEqual([
-      ['nba-west-7-seed-play-in', 7, 'nba-golden-state-warriors'],
-      ['nba-east-7-seed-play-in', 7, 'nba-orlando-magic'],
-      ['nba-west-8-seed-play-in', 8, 'nba-memphis-grizzlies'],
-      ['nba-east-8-seed-play-in', 8, 'nba-miami-heat'],
+  it('seeds the play-in tournament\'s winners 7 and 8 straight into the field, each once', () => {
+    expect(playoffs.field.filter((entry) => entry.seed === 7 || entry.seed === 8).map((entry) => [entry.player, entry.seed])).toEqual([
+      ['nba-golden-state-warriors', 7],
+      ['nba-orlando-magic', 7],
+      ['nba-memphis-grizzlies', 8],
+      ['nba-miami-heat', 8],
     ]);
+    expect(new Set(playoffs.field.map((entry) => entry.player)).size).toBe(playoffs.field.length);
   });
 
   it('plays each series as one game scored in games won, Oklahoma City beating Indiana 4-3 in the Finals', () => {
@@ -302,17 +303,11 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
     expect(new Set(men.matches?.map((match) => match.regionLabel))).toEqual(new Set(['East', 'South', 'West', 'Midwest', undefined]));
   });
 
-  it('fills each First Four place with the team that won it, never a team already in the field', () => {
-    expect(men.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.seed, entry.playInWinner])).toEqual([
-      [11, 'ncaam-texas-longhorns'], [11, 'ncaam-miami-oh-redhawks'], [16, 'ncaam-prairie-view-am-panthers'], [16, 'ncaam-howard-bison'],
-    ]);
-    expect(women.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.seed, entry.playInWinner])).toEqual([
-      [10, 'ncaaw-virginia-cavaliers'], [11, 'ncaaw-nebraska-cornhuskers'], [16, 'ncaaw-southern-jaguars'], [16, 'ncaaw-missouri-state-lady-bears'],
-    ]);
-    for (const tournament of [men, women]) {
-      const fieldKeys = new Set(tournament.field.map((entry) => entry.player));
-      expect(tournament.field.filter((entry) => entry.playInWinner !== undefined && fieldKeys.has(entry.playInWinner))).toEqual([]);
-    }
+  it('seeds each First Four winner straight into the place it won, each team in the field once', () => {
+    const seedOf = (tournament: typeof men, player: string) => tournament.field.find((entry) => entry.player === player)?.seed;
+    expect(['ncaam-texas-longhorns', 'ncaam-miami-oh-redhawks', 'ncaam-prairie-view-am-panthers', 'ncaam-howard-bison'].map((player) => seedOf(men, player))).toEqual([11, 11, 16, 16]);
+    expect(['ncaaw-virginia-cavaliers', 'ncaaw-nebraska-cornhuskers', 'ncaaw-southern-jaguars', 'ncaaw-missouri-state-lady-bears'].map((player) => seedOf(women, player))).toEqual([10, 11, 16, 16]);
+    for (const tournament of [men, women]) expect(new Set(tournament.field.map((entry) => entry.player)).size).toBe(tournament.field.length);
   });
 
   it('ends with Michigan beating UConn 69-63 for the men\'s title and UCLA beating South Carolina 79-51 for the women\'s', () => {
@@ -369,14 +364,12 @@ describe('hockey-2026-ncaa-tournaments-test.json', () => {
     expect(new Set(matches.map((match) => match.regionLabel))).toEqual(new Set(['Albany', 'Loveland', 'Sioux Falls', 'Worcester', undefined]));
   });
 
-  it('fills the women\'s three quarterfinal places from the first round, seeded 6 to 8 by the seed each meets, never with a team already in the field', () => {
+  it('seeds the women\'s three first-round winners 6 to 8 straight into the quarterfinals, each team in the field once', () => {
     expect(women.rounds).toBe(3);
-    expect(women.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-    expect(women.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.seed, entry.playInWinner])).toEqual([
-      [6, 'ncaawh-uconn-huskies'], [7, 'ncaawh-quinnipiac-bobcats'], [8, 'ncaawh-yale-bulldogs'],
+    expect(women.field.map((entry) => [entry.player, entry.seed]).slice(5)).toEqual([
+      ['ncaawh-uconn-huskies', 6], ['ncaawh-quinnipiac-bobcats', 7], ['ncaawh-yale-bulldogs', 8],
     ]);
-    const fieldKeys = new Set(women.field.map((entry) => entry.player));
-    expect(women.field.filter((entry) => entry.playInWinner !== undefined && fieldKeys.has(entry.playInWinner))).toEqual([]);
+    expect(new Set(women.field.map((entry) => entry.player)).size).toBe(women.field.length);
   });
 
   it('ends with Denver beating Wisconsin 2-1 for the men\'s title and Wisconsin beating Ohio State 3-2 for the women\'s, each with its first two periods\' scores', () => {

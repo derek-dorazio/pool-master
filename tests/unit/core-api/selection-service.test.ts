@@ -144,7 +144,7 @@ function fieldRow(id: string, participantId: string, isActive = true): SportEven
     status: isActive ? SportEventParticipantStatus.ACTIVE : SportEventParticipantStatus.WITHDRAWN,
     metadata: {},
     ...TIMESTAMPS,
-  } as SportEventParticipant;
+  };
 }
 
 const FIELD = [

@@ -366,7 +366,6 @@ export const SportEventParticipantDtoSchema = z.object({
   ranking: z.number().int().nullable().describe('The participant\'s rank coming into this event — seeded from the provider\'s ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.'),
   oddsToWin: z.number().nullable(),
   seedNumber: z.number().int().nullable(),
-  isPlayInPlace: z.boolean().describe('Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.'),
   participant: ParticipantDtoSchema.describe('The canonical participant.'),
   valuation: SportEventParticipantValuationDtoSchema.nullable().describe('Null until a tier or price is set.'),
   standing: SportEventParticipantStandingDtoSchema.nullable().describe('Null until the participant has a scored round, or a race result.'),
@@ -417,7 +416,6 @@ export const UpdateSportEventParticipantsRequestSchema = z.object({
     ...SportEventParticipantPatchShape,
     price: z.number().nullable().optional().describe('A manual price; null clears it.'),
     tierKey: z.string().min(1).optional().describe('Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for.'),
-    isPlayInPlace: z.boolean().optional().describe('Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release.'),
   })).min(1).describe('Field rows to patch, all or none. Omitted fields are left alone; null clears.'),
 }).describe('One save of the field grid.');
 export type UpdateSportEventParticipantsRequest = z.infer<typeof UpdateSportEventParticipantsRequestSchema>;

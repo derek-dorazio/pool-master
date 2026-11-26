@@ -343,7 +343,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       summary: 'Update a sport event\'s field',
       description: 'Patches field rows, their manual prices and their moves into another tier, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event\'s price or tier would change: its tiers and prices are locked. '
         + '409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event\'s seed would change: the upset bonus reads the seeds as they stood at release. '
-        + '422 UNKNOWN_TIER_KEY for a tierKey the event has no tier for; 422 SPORT_EVENT_NOT_BRACKET for a play-in place on an event that plays no bracket.',
+        + '422 UNKNOWN_TIER_KEY for a tierKey the event has no tier for.',
       operationId: 'updateEventParticipants',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventParticipantsRequest'),
@@ -775,28 +775,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SportEventBracketResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     handler: handler.setEventRoundMatchups,
-  });
-
-  fastify.put('/:eventId/participants/:sportEventParticipantId/play-in-winner', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Set the winner of a play-in place',
-      description: `${TEST_EVENT_ONLY} ` + 'For a field row that stands for a play-in pairing ("Texas / Xavier"): the row then names the team that won, keeping its seed, tier, price and every pick of it, and the pairing\'s participant is inactivated. '
-        + '404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the winner is not an active participant of the event\'s sport; '
-        + '409 PARTICIPANT_NOT_IN_SPORT_LEAGUE when the event\'s sport league has a roster and the winner is not on it; '
-        + '409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the winner already has a field row; 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has started or played a bracket match. '
-        + `422 ${BRACKET_NOT_A_BRACKET} Returns the field row. Root admin only.`,
-      operationId: 'setEventPlayInWinner',
-      params: {
-        type: 'object',
-        required: ['eventId', 'sportEventParticipantId'],
-        properties: { eventId: uuid, sportEventParticipantId: uuid },
-      },
-      body: schemaRef('FillPlayInSlotRequest'),
-      response: { 200: schemaRef('SportEventParticipantResponse'), ...errors(400, 401, 403, 404, 409, 422) },
-    },
-    handler: handler.setEventPlayInWinner,
   });
 
 }

@@ -30,8 +30,6 @@ export interface SportVocabulary {
   overtime: string;
   /** A game that ends level: "Draw" for soccer, else "Tie". */
   tie: string;
-  /** A field place filled after the draw, read before "place": "qualifier" for tennis, else "play-in". */
-  playInPlace: string;
   /** What one match's score counts, as a tiebreaker reads it: "sets" for tennis, else "points". */
   scoreUnit: string;
   /** Who rides each participant, as a result column: "Rider" for horse racing; absent elsewhere. */
@@ -64,7 +62,6 @@ export function sportVocabulary(source: SportWordSource, locale?: string | null)
     eventStart: sportWord(source, 'eventStart', word),
     overtime: sportWord(source, 'overtime', word),
     tie: sportWord(source, 'tie', word),
-    playInPlace: sportWord(source, 'playInPlace', word),
     scoreUnit: sportWord(source, 'scoreUnit', word),
     rider: sportWord(source, 'rider', word),
     topPlaces: sportWord(source, 'topPlaces', word),

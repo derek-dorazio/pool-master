@@ -387,7 +387,6 @@ export interface SportEventParticipantPatch {
   ranking?: number | null;
   oddsToWin?: number | null;
   seedNumber?: number | null;
-  isPlayInPlace?: boolean;
 }
 
 export type SportEventParticipantCreate = SportEventParticipantPatch & { participantId: string };
@@ -464,12 +463,6 @@ export interface SportEventParticipantRepository {
   delete(id: string, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Contest-entry picks made of this field row. */
   countPicks(id: string): Promise<number>;
-  /**
-   * Points a play-in slot's field row at the team that won the play-in and inactivates the
-   * participant that stood for the pairing, in one transaction (#698). The row keeps its seed,
-   * tier, price and picks, and is no longer a play-in place (#709). `jobs` are written with it.
-   */
-  fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
 }
 
 export interface SportEventTierRepository {

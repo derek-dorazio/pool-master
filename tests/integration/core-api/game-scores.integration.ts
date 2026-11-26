@@ -356,33 +356,6 @@ describe('game scores from a provider', () => {
     expect(final).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Florida').id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
   });
 
-  it('fills a First Four play-in place with the winner the provider names in its round of 64 game, links that game in the same sync, and scores it on the next (#1571)', async () => {
-    const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
-    const prisma = getPrisma();
-    await unmapGames(event.id);
-    // Houston's place is the play-in place "UMBC / Howard" instead; UMBC, linked to the provider, won it.
-    const { sportLeagueId } = await prisma.participant.findUniqueOrThrow({ where: { id: entryOf('Houston').participantId } });
-    const [pairing, umbc] = await Promise.all(['UMBC / Howard', 'UMBC Retrievers'].map((name) => prisma.participant.create({ data: { sportLeagueId, name, participantType: 'TEAM' } })));
-    await prisma.participantProviderMapping.create({ data: { participantId: umbc.id, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId: `${externalId}-team-umbc` } });
-    const place = entryOf('Houston');
-    await prisma.sportEventParticipant.update({ where: { id: place.id }, data: { participantId: pairing.id, isPlayInPlace: true } });
-    const roundOf64 = { providerGameId: 'p-1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: `${externalId}-team-umbc`, playInWinnerTeamExternalId: `${externalId}-team-umbc` };
-
-    await publish(externalId, [{ ...roundOf64, state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null }]);
-
-    const filled = await prisma.sportEventParticipant.findUniqueOrThrow({ where: { id: place.id } });
-    expect(filled).toMatchObject({ participantId: umbc.id, isPlayInPlace: false });
-    expect((await viewsOf(matches, event.id))[0]).toMatchObject({ awaySportEventParticipantId: place.id, status: MatchStatus.SCHEDULED });
-    expect((await gamesOf(event.id))[0]).toMatchObject({ place: [1, 1, 1], providerGameId: 'p-1' });
-
-    const result = await publish(externalId, [{ ...roundOf64, state: ProviderGameState.FINAL, homeScore: 62, awayScore: 70 }]);
-
-    expect(result).toMatchObject({ updatesPersisted: 1 });
-    const [first, , final] = await viewsOf(matches, event.id);
-    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 62, awayScore: 70, resultSource: MatchResultSource.PROVIDER });
-    expect(final.homeSportEventParticipantId).toBe(place.id);
-  });
-
   it('holds each NBA series game at its own Game with its own score, completes a series at four from its Games and sends its winner on, and shows a series still on as its wins so far (#1545)', async () => {
     // The NBA's conference finals and Finals slots are best of seven, as its reference data says.
     const { event, externalId, entryOf, teamId, matches } = await linkedBracket(Sport.BASKETBALL, 'NBA', [{ slotKind: 'SEMIFINAL' }, { slotKind: 'FINAL' }]);

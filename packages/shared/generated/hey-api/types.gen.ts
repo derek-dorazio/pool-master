@@ -7838,16 +7838,6 @@ export type UpdateSportEventRoundMatchRequest = {
 };
 
 /**
- * The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated.
- */
-export type FillPlayInSlotRequest = {
-    /**
-     * The team that won the play-in game: an active participant of the event's sport not yet on the field.
-     */
-    participantId: string;
-};
-
-/**
  * A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
  */
 export type RecordSportEventRoundMatchResultRequest = {
@@ -13936,10 +13926,6 @@ export type SportEventParticipantDto = {
     oddsToWin: number | null;
     seedNumber: number | null;
     /**
-     * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-     */
-    isPlayInPlace: boolean;
-    /**
      * The canonical participant.
      */
     participant: {
@@ -14184,10 +14170,6 @@ export type SportEventParticipantListResponse = {
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
-        /**
-         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-         */
-        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -14459,10 +14441,6 @@ export type UpdateSportEventParticipantsRequest = {
          * Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for.
          */
         tierKey?: string;
-        /**
-         * Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release.
-         */
-        isPlayInPlace?: boolean;
     }>;
 };
 
@@ -14490,10 +14468,6 @@ export type SportEventParticipantResponse = {
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
-        /**
-         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-         */
-        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -15936,10 +15910,6 @@ export type ContestLeaderboardResponse = {
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
-        /**
-         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
-         */
-        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -37670,54 +37640,6 @@ export type SetEventRoundMatchupsResponses = {
 };
 
 export type SetEventRoundMatchupsResponse = SetEventRoundMatchupsResponses[keyof SetEventRoundMatchupsResponses];
-
-export type SetEventPlayInWinnerData = {
-    body: FillPlayInSlotRequest;
-    path: {
-        eventId: string;
-        sportEventParticipantId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/play-in-winner';
-};
-
-export type SetEventPlayInWinnerErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type SetEventPlayInWinnerError = SetEventPlayInWinnerErrors[keyof SetEventPlayInWinnerErrors];
-
-export type SetEventPlayInWinnerResponses = {
-    /**
-     * One field row.
-     */
-    200: SportEventParticipantResponse;
-};
-
-export type SetEventPlayInWinnerResponse = SetEventPlayInWinnerResponses[keyof SetEventPlayInWinnerResponses];
 
 export type ListSportsData = {
     body?: never;

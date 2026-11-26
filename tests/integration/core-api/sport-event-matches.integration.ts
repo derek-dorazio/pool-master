@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, HomeAway, JobTrigger, MatchEnding, MatchSideOutcome, MatchStatus, ParticipantStatus, PeriodKind, Sport, gameNumbered, matchSpread, shootoutScoreOf, sideParticipantId, gameScoreOf } from '@poolmaster/shared/domain';
+import { BackgroundJobType, HomeAway, JobTrigger, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, Sport, gameNumbered, matchSpread, shootoutScoreOf, sideParticipantId, gameScoreOf } from '@poolmaster/shared/domain';
 import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { MatchResultWrite, MatchSideWrite, SportEventRoundMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
@@ -26,7 +26,7 @@ import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // An event's bracket against real Postgres (#698): the match port's one read and its writes, what
-// removing a field row or the event does to it, the play-in fill, and every database check the
+// removing a field row or the event does to it, and every database check the
 // migration adds to sport_event_round_matches. No mocks.
 
 beforeAll(() => setupIntegrationTests());
@@ -522,25 +522,6 @@ describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
   });
 });
 
-describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
-  it('points the field row at the winning team, ends its play-in place and inactivates the pairing, together', async () => {
-    const { event, sportLeague, entryOf } = await createBracketEvent();
-    const prisma = getPrisma();
-    const pairing = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: 'Texas / Xavier', participantType: 'TEAM' } });
-    const xavier = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: 'Xavier', participantType: 'TEAM' } });
-    await repos().field.createMany(event.id, [{ participantId: pairing.id, seedNumber: 11 }]);
-    const slot = expectDefined((await repos().field.findBySportEvent(event.id)).find((entry) => entry.participantId === pairing.id));
-    expect(entryOf('Duke')).toBeDefined();
-    await repos().field.updateMany([{ id: slot.id, updates: { isPlayInPlace: true } }]);
-    await expect(repos().field.findById(slot.id)).resolves.toMatchObject({ isPlayInPlace: true });
-
-    await repos().field.fillPlayInSlot({ id: slot.id, winnerParticipantId: xavier.id, pairingParticipantId: pairing.id });
-
-    await expect(repos().field.findById(slot.id)).resolves.toMatchObject({ participantId: xavier.id, seedNumber: 11, isPlayInPlace: false });
-    await expect(prisma.participant.findUnique({ where: { id: pairing.id } })).resolves.toMatchObject({ status: ParticipantStatus.INACTIVE });
-  });
-});
-
 /**
  * One bracket or field write, on a fresh event: `write` makes it carrying the given jobs, and
  * `state` reads what it changes, so a rolled-back write leaves `state` as it was.
@@ -585,17 +566,6 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
     write: (jobs) => repos().field.delete(context.entryOf('Texas').id, jobs),
     state: () => fieldRows(context.event.id),
   })],
-  ['a play-in place filled', async (context) => {
-    const prisma = getPrisma();
-    const pairing = await prisma.participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Pairing ${randomUUID()}`, participantType: 'TEAM' } });
-    const winner = await prisma.participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Winner ${randomUUID()}`, participantType: 'TEAM' } });
-    await repos().field.createMany(context.event.id, [{ participantId: pairing.id, seedNumber: 11 }]);
-    const slot = expectDefined((await repos().field.findBySportEvent(context.event.id)).find((entry) => entry.participantId === pairing.id));
-    return {
-      write: (jobs) => repos().field.fillPlayInSlot({ id: slot.id, winnerParticipantId: winner.id, pairingParticipantId: pairing.id }, jobs),
-      state: () => fieldRows(context.event.id),
-    };
-  }],
 ];
 
 describe('Bracket and field writes carry the event\'s leaderboard rebuild (#1466)', () => {
