@@ -101,7 +101,7 @@ describe('SDK Functional: College Football Playoff', () => {
     });
   });
 
-  it('loads the played 2025-26 playoff on six tiers of two with the top four seeds on byes, then scores and settles an entry from the default tiered template by games won', async () => {
+  it('loads the played 2025-26 playoff on three tiers by seed, 1-4, 5-8 and 9-12, whatever the odds say, with the top four seeds on byes, then scores and settles an entry from the default pick-3 tiered template by games won', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -111,13 +111,13 @@ describe('SDK Functional: College Football Playoff', () => {
     expect([cfp.bracketAdvancement, cfp.roundNames]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship']]);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
 
-    // The league's six tiers, not football's seven, each holding two teams by odds.
+    // The league's seed-range tiers (#2164): four seeds in each, by seed and not by odds.
     const tiers = await getFunctionalPrisma().sportEventTier.findMany({
       where: { sportEventId: event.id },
       orderBy: { tierNumber: 'asc' },
       select: { tierNumber: true, _count: { select: { valuations: true } } },
     });
-    expect(tiers.map((tier) => [tier.tierNumber, tier._count.valuations])).toEqual([[1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2]]);
+    expect(tiers.map((tier) => [tier.tierNumber, tier._count.valuations])).toEqual([[1, 4], [2, 4], [3, 4]]);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === team), team).id;
@@ -146,7 +146,7 @@ describe('SDK Functional: College Football Playoff', () => {
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const tiered = expectDefined(templates.find((template) => template.isDefault), 'the College Football Playoff default');
-    expect(tiered.templateKey).toBe('cfp-tiered-doubling');
+    expect(tiered.templateKey).toBe('cfp-tiered-pick-3');
 
     const contest = await createContest({
       client: commissioner.client,
@@ -157,8 +157,9 @@ describe('SDK Functional: College Football Playoff', () => {
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
-    // One team from each tier of two, by odds.
-    const lineup = ['Indiana Hoosiers', 'Oregon Ducks', 'Ole Miss Rebels', 'Alabama Crimson Tide', 'Miami Hurricanes', 'James Madison Dukes'];
+    // One team from each tier. Texas Tech, the 4 seed, is in the first tier though Oregon, the 5
+    // seed in the second, has the better odds.
+    const lineup = ['Texas Tech Red Raiders', 'Oregon Ducks', 'Miami Hurricanes'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const team of lineup) {
       expect((await selectContestPick({ client: member.client, path: { contestId, entryId, sportEventParticipantId: rowOf(team) } })).response?.status).toBe(200);
@@ -170,21 +171,17 @@ describe('SDK Functional: College Football Playoff', () => {
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     const points = Object.fromEntries(board.entries.flatMap((entry) => entry.picks)
       .map((pick) => [expectDefined(field.find((row) => row.id === pick.sportEventParticipantId)).participant.name, pick.knockout?.points]));
-    // Indiana's bye scores nothing, then it wins out, 2 + 4 + 8; Miami loses the final, 1 + 2 + 4;
-    // Oregon and Ole Miss lose the semifinals, 1 + 2; Alabama loses a quarterfinal, 1; James Madison
-    // loses in the first round.
+    // Texas Tech's bye scores nothing and it loses its quarterfinal; Oregon wins two before losing
+    // its semifinal, 1 + 2; Miami loses the final, 1 + 2 + 4.
     expect(points).toEqual({
-      'Indiana Hoosiers': 14,
+      'Texas Tech Red Raiders': 0,
       'Oregon Ducks': 3,
-      'Ole Miss Rebels': 3,
-      'Alabama Crimson Tide': 1,
       'Miami Hurricanes': 7,
-      'James Madison Dukes': 0,
     });
 
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
-    expect([settled.totalScore, settled.displayPosition]).toEqual([28, '1']);
+    expect([settled.totalScore, settled.displayPosition]).toEqual([10, '1']);
   });
 });

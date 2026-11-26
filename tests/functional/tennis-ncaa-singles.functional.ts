@@ -132,7 +132,8 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
         client: admin.client,
         query: { sportLeagueId: sportLeague.id, active: true },
       })).data).templates;
-      expect(templates.filter((template) => template.isDefault)).toHaveLength(5);
+      // One default each for tiered, budget, sweepstakes and bracket; tennis has no survivor (#2164).
+      expect(templates.filter((template) => template.isDefault)).toHaveLength(4);
     }
 
     // The women's Round of 16 walkover: Welker through without a ball struck, so no score.

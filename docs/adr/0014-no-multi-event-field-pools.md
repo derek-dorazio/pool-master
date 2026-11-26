@@ -21,10 +21,10 @@ ADRs are immutable, so this record amends ADR 0013 rather than editing it.
 
 ## Decision
 
-- **Tiered, budget and quick pick contests never span events.** A field pool covers one
+- **Tiered, budget and sweepstakes contests never span events.** A field pool covers one
   event. A contest on one major is `ONE_SLOT` and counts toward cups.
 - **`ALL_LISTED` covers listed slots of one event only**: a bracket, a tiered, budget or
-  quick pick pool over several postseason slots of one event, or a whole-playoffs Clutch
+  sweepstakes pool over several postseason slots of one event, or a whole-playoffs Clutch
   Card. The "majors pool" example in ADR 0013 is withdrawn.
 - **Only pick'em and survivor span events**, through `FROM_SLOT` over a Season's weekly
   events.

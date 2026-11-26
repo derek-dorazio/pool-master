@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { SUPPORTED_SPORTS, SelectionType } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -1262,7 +1263,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
   });
 });
 
-describe('Commissioner tools › Contests › Create contest › Quick pick format', () => {
+describe('Commissioner tools › Contests › Create contest › Sweepstakes format', () => {
   const DRAW_TEMPLATES = [
     {
       id: '66666666-6666-4666-8666-666666666666',
@@ -1311,7 +1312,7 @@ describe('Commissioner tools › Contests › Create contest › Quick pick form
     listEventsMock.mockReset();
   });
 
-  it('switches to Quick pick with its sweepstake presets, and creates quick pick rules with golfers dealt per entry', async () => {
+  it('switches to Sweepstakes with its presets, and creates sweepstakes rules with golfers dealt per entry', async () => {
     await primeDrawMocks();
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-draw' } } });
 
@@ -1320,7 +1321,7 @@ describe('Commissioner tools › Contests › Create contest › Quick pick form
     await waitForStartingChoices();
     fireEvent.click(screen.getByTestId('contest-format-RANDOM_DRAW'));
 
-    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Quick pick');
+    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent(enumLabel('SelectionType', SelectionType.RANDOM_DRAW));
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toBeChecked();
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveTextContent('Draw 1 golfer each');
     expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveTextContent('Draw 3 golfers each, 2 count');

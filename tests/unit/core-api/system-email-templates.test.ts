@@ -195,19 +195,19 @@ describe('pool-master-98i system email templates', () => {
     expect(message.text).toContain('You can change your pick until Sun, Sep 20, 2026.');
   });
 
-  it('renders a quick pick receipt with the dealt picks, saying the draw made them and leaving out a submit time', () => {
+  it('renders a sweepstakes receipt with the dealt picks, saying the draw made them and leaving out a submit time', () => {
     const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
       ...ENTRY,
       submittedAt: undefined,
-      contestName: 'Masters Quick Pick',
+      contestName: 'Masters Sweepstakes',
       receipt: { kind: EntryReceiptKind.QUICK_PICK, picks: ['Scottie Scheffler', 'Min Woo Lee'] },
     }, UTC);
 
-    expect(message.subject).toBe('Your quick picks: Masters Quick Pick');
-    expect(message.text).toContain('Derek Dorazio, your Entry 1 entry got its picks in the quick pick draw for Masters Quick Pick.');
+    expect(message.subject).toBe('Your sweepstakes picks: Masters Sweepstakes');
+    expect(message.text).toContain('Derek Dorazio, your Entry 1 entry got its picks in the sweepstakes draw for Masters Sweepstakes.');
     expect(message.text).toContain('- Pick 1: Scottie Scheffler');
     expect(message.text).toContain('- Pick 2: Min Woo Lee');
-    expect(message.text).toContain('The quick pick made these picks for you, so there\'s nothing to change.');
+    expect(message.text).toContain('The sweepstakes draw made these picks for you, so there\'s nothing to change.');
     expect(message.text).not.toContain('Submitted:');
   });
 
@@ -643,7 +643,7 @@ describe('pool-master-98i system email templates', () => {
       }, UTC);
 
       expect(message.subject).toBe('Entries close soon: Office Pool');
-      expect(message.text).toContain('Just join Office Pool before entries close. It\'s a quick pick contest, so your picks are made for you.');
+      expect(message.text).toContain('Just join Office Pool before entries close. It\'s a sweepstakes, so your picks are made for you.');
       expect(message.text).toContain('Entries close in 3 hours: Apr 9, 2026');
       expect(message.text).toContain(`Join the contest: ${base.contestUrl}`);
       expect(message.text).not.toContain('Make your picks');

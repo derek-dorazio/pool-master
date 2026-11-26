@@ -280,7 +280,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       memberJoined,
       releaseReadiness: sportEventServices.sportEvents,
     }),
-    // A quick pick draw's receipts, queued by the draw for the sweep (#1171).
+    // A sweepstakes draw's receipts, queued by the draw for the sweep (#1171).
     { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, app.log, { email, appBaseUrl, planEntitlements }) },
   ], { jobLock, logger: app.log });
   const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);

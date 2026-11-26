@@ -271,7 +271,7 @@ describe('a draw racing an entry write', () => {
   });
 });
 
-describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171)', () => {
+describe('sweepstakes receipts, queued by the draw for the lifecycle sweep (#1171)', () => {
   /** The fixture's contest dealing one golfer each, with an owner on each squad, so each entry has someone to send to. */
   async function seedOwnedDraw() {
     const prisma = getPrisma();

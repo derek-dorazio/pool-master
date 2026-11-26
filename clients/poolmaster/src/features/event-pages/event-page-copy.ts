@@ -46,7 +46,7 @@ export const EVENT_PAGE_COPY: Readonly<Record<string, Readonly<Record<string, Ev
       picksClose: 'Picks close at the first kickoff',
       leagueName: 'the NFL',
       offers: {
-        'nfl-bracket-second-chance-doubling': {
+        'nfl-bracket-doubling': {
           contestType: 'Bracket',
           line: 'Call the last three games: both conference winners and the champion. Later rounds are worth more.',
           facts: ['Three picks, done in a minute', 'Runs through the Super Bowl'],

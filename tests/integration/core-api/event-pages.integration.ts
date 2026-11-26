@@ -42,7 +42,7 @@ describe('Seeded event pages', () => {
 
     expect(page).toMatchObject({ isActive: true, redirectTo: null });
     expect(offers.map((offer) => [offer.sportLeagueName, keyOf(offer.sportLeagueCompetitionSlotId), offer.template.templateKey, offer.bracketStartRound, offer.isPrimary])).toEqual([
-      ['NFL', 'SEMIFINAL', 'nfl-bracket-second-chance-doubling', 3, true],
+      ['NFL', 'SEMIFINAL', 'nfl-bracket-doubling', 3, true],
       ['NFL', 'SEMIFINAL', 'nfl-squares', null, false],
     ]);
   });

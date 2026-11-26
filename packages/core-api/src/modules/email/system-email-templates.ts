@@ -72,7 +72,7 @@ export const EntryReceiptKind = {
   BRACKET: 'BRACKET',
   /** A survivor week: the one team picked. */
   SURVIVOR: 'SURVIVOR',
-  /** A quick pick contest's entry once the draw deals it its picks: nothing to submit or change. */
+  /** A sweepstakes contest's entry once the draw deals it its picks: nothing to submit or change. */
   QUICK_PICK: 'QUICK_PICK',
   /** A squares entry's boxes once the numbers are drawn, each with its two numbers. */
   SQUARES: 'SQUARES',
@@ -1403,7 +1403,7 @@ function renderSquadOwnerAddedEmail(
 
 /**
  * A receipt's content: its sections, and when its picks can still change or why they can't. A
- * receipt for an entry nobody submitted (a quick pick's draw, a squares draw) says what happened
+ * receipt for an entry nobody submitted (a sweepstakes's draw, a squares draw) says what happened
  * instead of "was submitted".
  */
 function entryReceiptContent(receipt: EntryReceipt, dates: EmailDateStyle): {
@@ -1460,8 +1460,8 @@ function entryReceiptContent(receipt: EntryReceipt, dates: EmailDateStyle): {
     case EntryReceiptKind.QUICK_PICK:
       return {
         sections: [{ title: 'Your picks', rows: receipt.picks.map((pick, index): [string, string] => [`Pick ${String(index + 1)}`, pick]) }],
-        changeLine: 'The quick pick made these picks for you, so there\'s nothing to change.',
-        event: { subject: 'Your quick picks', lead: 'got its picks in the quick pick draw for' },
+        changeLine: 'The sweepstakes draw made these picks for you, so there\'s nothing to change.',
+        event: { subject: 'Your sweepstakes picks', lead: 'got its picks in the sweepstakes draw for' },
       };
     case EntryReceiptKind.SQUARES:
       return {
@@ -1629,7 +1629,7 @@ function entryReminderWording(data: ContestEntryReminderEmailData): {
       return {
         subject: `Entries close soon: ${data.contestName}`,
         title: 'Entries close soon',
-        message: `Just join ${data.contestName} before entries close. It's a quick pick contest, so your picks are made for you.`,
+        message: `Just join ${data.contestName} before entries close. It's a sweepstakes, so your picks are made for you.`,
         closesLabel: 'Entries close',
         action: 'Join the contest',
       };

@@ -121,8 +121,8 @@ describe('pickPreviewUnavailableReason', () => {
     expect(reason({})).toBeNull();
   });
 
-  it('turns the preview off for a random draw and squares, saying why', () => {
-    expect(reason({ selectionType: 'RANDOM_DRAW' })).toContain('random draw');
+  it('turns the preview off for a sweepstakes and squares, saying why', () => {
+    expect(reason({ selectionType: 'RANDOM_DRAW' })).toContain('sweepstakes');
     expect(reason({ selectionType: 'SQUARES' })).toContain('no picks page');
   });
 

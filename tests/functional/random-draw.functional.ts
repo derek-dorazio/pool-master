@@ -118,7 +118,7 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-describe('SDK Functional: Quick pick', () => {
+describe('SDK Functional: Sweepstakes', () => {
   it('refuses a member\'s pick and a member\'s draw, then the commissioner\'s draw deals and submits every entry, revealing each entry\'s golfer to the league', async () => {
     const fixture = await seedRandomDrawFixture();
     const { contestId } = fixture;

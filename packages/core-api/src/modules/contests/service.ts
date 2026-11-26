@@ -1701,7 +1701,7 @@ export class ContestService {
    * The "Entry submitted" confirmation, sent by the selection room when an entry is submitted
    * (#481), to every owner of the entry's squad (#845, catalog row D3), with when picks close so
    * they know how long it can still change. The selection room only calls it once the lineup has
-   * passed the submit check, so it does not judge the lineup again. A quick pick contest's draw
+   * passed the submit check, so it does not judge the lineup again. A sweepstakes contest's draw
    * has it sent for every entry it dealt (#867), listing the dealt picks, by the receipts sweep
    * after the draw (#1171).
    *
@@ -1764,7 +1764,7 @@ export class ContestService {
       }
     }
     const rules = input.configuration?.configJson;
-    // A quick pick entry is dealt its picks by the draw (#867): nobody submitted it, and there is
+    // A sweepstakes entry is dealt its picks by the draw (#867): nobody submitted it, and there is
     // nothing left to change.
     const quickPick = rules?.selectionType === SelectionType.RANDOM_DRAW;
     const golf = eventSportDefinition(sportEvent).scoringFamily === ScoringFamily.STROKE_PLAY;
@@ -1795,7 +1795,7 @@ export class ContestService {
         entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
         ...(!quickPick && { submittedAt: entry.updatedAt }),
         // Only golf's roster has a tiebreaker: a predicted winning score relative to par. Submit
-        // does not require one, so a lineup submitted without it says so; a quick pick shows one
+        // does not require one, so a lineup submitted without it says so; a sweepstakes shows one
         // only when its entry gave it.
         ...(golf && (!quickPick || tiebreakerValue !== null) && {
           tiebreaker: tiebreakerValue === null

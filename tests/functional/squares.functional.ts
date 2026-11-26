@@ -220,16 +220,12 @@ describe('SDK Functional: Super Bowl squares', () => {
 });
 
 // Each league's squares preset on its own final: men's college basketball played in two halves,
-// women's in quarters (#786), college hockey in three periods (#788), and the World Cup in two
-// halves (#787). Men's college basketball sets its halves on the league; the others take the
-// sport's. Each test seed loads with every game played but the final; one entry holds the top
+// women's in quarters (#786). Squares are only on football and March Madness (#2164). Men's
+// college basketball sets its halves on the league; the women's takes the sport's. Each test seed loads with every game played but the final; one entry holds the top
 // row, the other the left column, and every scoring moment lands in the top row.
 const LEAGUE_FINALS = [
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Basketball', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: MatchPeriodLayout.HALVES },
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Basketball', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS, leagueLayout: null },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Hockey', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Hockey', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
-  { sport: Sport.SOCCER, file: 'soccer-2022-fifa-world-cup-test.json', league: 'FIFA World Cup', event: 'FIFA World Cup', templateKey: 'world-cup-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: null },
 ] as const;
 
 describe('SDK Functional: squares on each league\'s final, scored at the end of each of its periods', () => {

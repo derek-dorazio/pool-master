@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { PlanFeature, SelectionType } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -567,7 +568,7 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
 
     expect(await screen.findByText('2 entries waiting for the draw')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Run draw' })).toBeInTheDocument();
-    expect(screen.getByTestId('manage-contest-format')).toHaveTextContent('Quick pick');
+    expect(screen.getByTestId('manage-contest-format')).toHaveTextContent(enumLabel('SelectionType', SelectionType.RANDOM_DRAW));
     expect(screen.getByTestId('manage-contest-rules')).toHaveTextContent('The draw deals each entry 3 golfers at random. The best 2 scores count.');
     expect(screen.getByTestId('manage-contest-event-row')).toHaveTextContent('Entries close when you run the draw');
   });

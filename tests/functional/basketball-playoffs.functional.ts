@@ -150,7 +150,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const tiered = expectDefined(templates.find((template) => template.isDefault), 'the NBA default');
-    expect(tiered.templateKey).toBe('nba-tiered-doubling');
+    expect(tiered.templateKey).toBe('nba-tiered-pick-3');
 
     const contest = await createContest({
       client: commissioner.client,
@@ -161,8 +161,8 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
-    // One team from each tier of four, by odds; the last tier is the four play-in places.
-    const lineup = ['Oklahoma City Thunder', 'Indiana Pacers', 'Minnesota Timberwolves', 'Golden State Warriors'];
+    // One team from each tier by seed (#2164): the 1 and 2 seeds, the 3 to 5 seeds, and the rest.
+    const lineup = ['Oklahoma City Thunder', 'Indiana Pacers', 'Minnesota Timberwolves'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const team of lineup) {
       expect((await selectContestPick({ client: member.client, path: { contestId, entryId, sportEventParticipantId: rowOf(team) } })).response?.status).toBe(200);
@@ -175,18 +175,17 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const points = Object.fromEntries(board.entries.flatMap((entry) => entry.picks)
       .map((pick) => [expectDefined(field.find((row) => row.id === pick.sportEventParticipantId)).participant.name, pick.knockout?.points]));
     // The Thunder win every series, 1 + 2 + 4 + 8; the Pacers lose the Finals, 1 + 2 + 4; the
-    // Timberwolves lose the Conference Finals, 1 + 2; the Warriors, a play-in 7 seed, win one series.
+    // Timberwolves lose the Conference Finals, 1 + 2.
     expect(points).toEqual({
       'Oklahoma City Thunder': 15,
       'Indiana Pacers': 7,
       'Minnesota Timberwolves': 3,
-      'Golden State Warriors': 1,
     });
 
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
-    expect([settled.totalScore, settled.displayPosition]).toEqual([26, '1']);
+    expect([settled.totalScore, settled.displayPosition]).toEqual([25, '1']);
   });
 
   it('loads the played WNBA playoffs as three rounds named by the WNBA, Las Vegas sweeping Phoenix in the Finals', async () => {
