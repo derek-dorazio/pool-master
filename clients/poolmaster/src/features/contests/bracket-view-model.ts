@@ -149,6 +149,7 @@ export function drawBracket(games: readonly BracketGame[]): BracketDrawing {
       const region = drawn.find((candidate) => candidate.regionLabel === regionLabel);
       return region ? [{ roundNumber: round.roundNumber, label: round.label, games: region.games }] : [];
     });
+    // A region's own last round names its winner; the bracket's final is found by its flag (splitMiddle).
     const lastGame = regionRounds.at(-1)?.games;
     return {
       label: regionLabel,

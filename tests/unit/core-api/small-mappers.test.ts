@@ -341,7 +341,7 @@ describe('sport catalog mappers', () => {
   });
 
   it('sends a sport league\'s selected provider mapping as a copy with the provider\'s name, and null for a league not synced', () => {
-    const base = { id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', roundNames: [], participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
+    const base = { id: 'sl1', sportId: 's1', sport: 'FOOTBALL', name: 'NFL', participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
     const mapping = buildProviderMapping({ providerLeagueCode: 'nfl', providerLeagueName: 'NFL' });
 
     const synced = mapSportLeagueToDto({ ...base, selectedProviderMapping: mapping } as unknown as SportLeagueSummary);
