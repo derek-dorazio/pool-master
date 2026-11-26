@@ -9,21 +9,22 @@ import {
   teardownIntegrationTests,
   integrationSyncFindings,
 } from '../helpers';
-import { Sport } from '@poolmaster/shared/domain';
+import { PeriodUnit, Sport } from '@poolmaster/shared/domain';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { sportRowKeys } from '../../support/sport-rows';
-import { oneEventSlotId } from '../../support/test-slots';
+import { oneEventSlotId, setEventSlotPeriods } from '../../support/test-slots';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
 // schedule an admin-created event starts with.
 const fourRoundSchedule = () => ({ rounds: 4 });
 
-/** The event's four rounds, a day apart, in its one slot (#2006). */
+/** The event's four rounds, a day apart, in its one slot (#2006), of 18 holes each (#2047). */
 async function addFourRounds(prisma: ReturnType<typeof getPrisma>, sportEventId: string): Promise<void> {
   const sportEventSlotId = await oneEventSlotId(prisma, sportEventId);
+  await setEventSlotPeriods(prisma, sportEventId, { unit: PeriodUnit.HOLE, count: 18 });
   await prisma.sportEventRound.createMany({
     data: [1, 2, 3, 4].map((roundNumber) => ({ sportEventId, sportEventSlotId, roundNumber, scheduledDate: new Date(Date.UTC(2026, 4, 6 + roundNumber, 12)) })),
   });
