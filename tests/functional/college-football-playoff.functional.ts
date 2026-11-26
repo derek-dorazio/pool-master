@@ -10,6 +10,7 @@ import {
   getEventBracket,
   listContestConfigTemplates,
   listEventParticipants,
+  listEventRounds,
   listEvents,
   listSportLeagues,
   openContest,
@@ -108,7 +109,8 @@ describe('SDK Functional: College Football Playoff', () => {
 
     const file = taggedSeed('american-football-2025-cfp-test.json', `College Football Playoff ${RUN}`);
     const { sportLeague: cfp, event } = await loadPlayoffs(admin, file);
-    expect([cfp.bracketAdvancement, cfp.roundNames]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship']]);
+    // Each round is played in its CFP slot, the National Championship the FINAL.
+    expect(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
 
     // The league's six tiers, not football's seven, each holding two teams by odds.
