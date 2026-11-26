@@ -8,7 +8,11 @@ the PR. When one of these turns out wrong, change it here.
 
 The templates themselves are rows seeded by migration, and the code is the source of truth for
 what each league offers today. This page holds no per-league counts, so it does not go stale
-when templates change. How a template is named, described and checked is a rule:
+when templates change.
+
+**Some of these are checked by the seeded-template integration test**
+(`tests/integration/core-api/contest-template-reference-data.integration.ts`); they are marked *(checked)*. Departing from
+one means changing that test in the same PR, with the reason. How a template is named, described and checked is a rule:
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools* (item 12).
 
 They come from the owner's league-by-league template review of November 2026.
@@ -22,20 +26,27 @@ They come from the owner's league-by-league template review of November 2026.
   playoff rounds, a smaller field).
 - **No template for a field that does not exist yet.** For example, no upset-bonus template where
   the field has no seeds. Add it when the feed starts giving seeds.
-- **A contest stays inside one competition.** A tournament's group matchdays can be its own
-  slots, so that a matchday pick'em covers them while brackets stay on the knockout.
+- **A contest stays inside one competition.** This one is a rule, not a recommendation: the
+  template coverage check refuses a template that spans competitions. A tournament's group
+  matchdays can be its own slots, so that a matchday pick'em covers them while brackets stay on
+  the knockout.
 - **Introduce a new contest type in one sport first** and see how it is taken up before adding
   it everywhere.
 
 ## Tiered and budget
 
-- **Every tiered template has a budget twin** on the same slots, picks and counting rule. The
-  exceptions are the player and margin cards below.
-- **Playoffs of 12 or more teams only.** With fewer teams the tiers are too thin to give a real
-  choice. Leagues with an 8-team playoff (WNBA, NWSL) or a 4-team one (PWHL) get none.
-- **Team playoffs: three tiers, one pick each, all count.** For example, tier 1 is the #1 seeds,
-  tier 2 seeds 2 to 4, tier 3 the rest. Fit the tier ranges to the league's real seed numbering
-  (the NHL seeds 1 to 4 within each division).
+- **Every tiered template has a budget twin** on the same slots, picks and counting rule
+  *(checked)*. Clutch Card and Margin Card, below, will be the first exceptions; the slice that
+  builds each adds it to the test as a named exception, with its reason.
+- **Playoffs of 12 or more teams only** *(checked)*. With fewer teams the tiers are too thin to
+  give a real choice. Leagues with an 8-team playoff (WNBA, NWSL) or a 4-team one (PWHL) get
+  none. The test reads this as a knockout with a round of 16 or earlier, which agrees with 12 or
+  more teams for every league today; a 9 to 11 team field is where the two could differ.
+- **Team playoffs: three or four tiers, one pick each, all count**, the tiers following the
+  field's seed structure. For example, the NFL's tier 1 is the #1 seeds, tier 2 seeds 2 to 4,
+  tier 3 the rest, and March Madness uses seed lines 1-4, 5-8, 9-12 and 13 on. Fit the ranges to
+  the league's real seed numbering, so no tier is left empty: the NHL seeds within each
+  division, so its tiers are the 1 seeds, the 2 seeds, then the rest.
 - **Individual fields (golf, tennis): two templates.** One with one pick per tier where every
   pick counts, and one where only the best 4 count.
 - **Racing:** one tiered and one budget, every pick counts.
@@ -44,7 +55,7 @@ They come from the owner's league-by-league template review of November 2026.
 
 ## Random draw (shown as "Sweepstakes")
 
-- **Team knockouts and tennis: three templates.** *Straight up* (one point per win),
+- **Team knockouts and tennis: three templates** *(checked)*. *Straight up* (one point per win),
   *Escalating* (points double each round) and *Full* (escalating plus an upset bonus by seed
   difference).
   - Where the field has seeds, Full is the default.
@@ -56,17 +67,17 @@ They come from the owner's league-by-league template review of November 2026.
 
 ## Brackets
 
-- **Brackets follow the random draw:** Straight up, Escalating and Full where the field has
+- **Brackets follow the random draw** *(checked)*: Straight up, Escalating and Full where the field has
   seeds (Full the default), and Straight up and Escalating where it has none (Escalating the
   default).
 - **Any single-elimination event can have a bracket**, including conference tournaments.
-- **No second-chance brackets.** A bracket starting at a later round (the Sweet 16) is a
+- **No second-chance brackets** *(checked: every bracket starts at round 1)*. A bracket starting at a later round (the Sweet 16) is a
   possible future idea.
 
 ## Pick'em and survivor
 
 - **Regular seasons get pick'em and survivor across the weeks**: straight up, against the
-  spread, and confidence. A league with draws allows draw picks.
+  spread, and confidence.
 - **College football:** limit the weekly pick'em to ranked games, any game with a team ranked
   25 or better, which the commissioner can change.
 - **Survivor on a playoff:** one pick per round. Tennis gets no survivor. A bracket is the
@@ -75,10 +86,12 @@ They come from the owner's league-by-league template review of November 2026.
 ## Squares
 
 - **Squares only on single games with period scores** that people gather to watch: football
-  games and the March Madness final.
+  games and the March Madness final *(checked)*.
 - **None on series** (NBA, NHL, MLB), **on soccer or hockey**, or **on regular-season games**.
 
 ## Clutch Card (players scored by their stats)
+
+Planned, not built yet.
 
 - **Playoffs only.** No regular-season cards for now.
 - **Single-game knockouts** (NFL, CFP, March Madness): a card on the whole playoff, one on the
@@ -95,6 +108,8 @@ They come from the owner's league-by-league template review of November 2026.
   cards.**
 
 ## Margin Card (teams scored by their point margin)
+
+An idea, not built yet.
 
 - **Football first, to see if it is taken up:** a card per regular-season week and per playoff
   round, for the NFL and college football.
