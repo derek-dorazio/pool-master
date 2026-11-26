@@ -17,7 +17,7 @@ const LATE = new Date('2027-01-12T01:15:00.000Z');
 const PAST = new Date('2027-01-09T18:00:00.000Z');
 
 function game(id: string, scheduledDate: Date | null, overrides: Partial<SlotTiebreakerGame> = {}): SlotTiebreakerGame {
-  return { id, sportEventRoundMatchId: `match-${id}`, gameNumber: 1, scheduledDate, status: MatchStatus.SCHEDULED, moved: false, ...overrides };
+  return { id, sportEventRoundMatchId: `match-${id}`, gameNumber: 1, scheduledDate, roundNumber: 1, status: MatchStatus.SCHEDULED, moved: false, ...overrides };
 }
 
 function slot(overrides: Partial<SlotTiebreakerState> = {}): SlotTiebreakerState {
@@ -98,7 +98,7 @@ describe('SlotTiebreakerService.chooseTiebreakerGame', () => {
     expect(view).toMatchObject({ tiebreakerGameId: 'g-1', chosen: { at: NOW, byUserId: 'admin-1' }, editable: true });
   });
 
-  it('refuses a slot the event does not cover, a game of another slot, a cancelled, moved or unscheduled game, and a change once either game has started', async () => {
+  it('refuses a slot the event does not cover, a game of another slot, a cancelled or moved game, and a change once either game has started, but takes a game with no start yet', async () => {
     const { service } = setup([
       slot({ games: [game('g-1', EARLY), game('g-off', EARLY, { status: MatchStatus.CANCELLED }), game('g-moved', EARLY, { moved: true }), game('g-none', null), game('g-past', PAST)] }),
       slot({ sportEventSlotId: 'locked', seasonSlotId: 'season-slot-2', tiebreakerGameId: 'g-past', games: [game('g-past', PAST), game('g-1', EARLY)] }),
@@ -107,11 +107,12 @@ describe('SlotTiebreakerService.chooseTiebreakerGame', () => {
 
     await expect(choose('season-slot-9', 'g-1')).rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
     await expect(choose('season-slot-1', 'g-elsewhere')).rejects.toMatchObject({ code: 'TIEBREAKER_GAME_NOT_IN_SLOT', statusCode: 422 });
-    for (const gameId of ['g-off', 'g-moved', 'g-none']) {
+    for (const gameId of ['g-off', 'g-moved']) {
       await expect(choose('season-slot-1', gameId)).rejects.toMatchObject({ code: 'TIEBREAKER_GAME_NOT_ELIGIBLE', statusCode: 422 });
     }
     await expect(choose('season-slot-1', 'g-past')).rejects.toMatchObject({ code: 'TIEBREAKER_GAME_STARTED', statusCode: 409 });
     await expect(choose('season-slot-2', 'g-1')).rejects.toMatchObject({ code: 'TIEBREAKER_GAME_STARTED', statusCode: 409 });
+    await expect(choose('season-slot-1', 'g-none')).resolves.toMatchObject({ tiebreakerGameId: 'g-none' });
   });
 });
 

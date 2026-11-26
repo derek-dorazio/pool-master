@@ -36,7 +36,7 @@ export class PrismaSlotTiebreakerRepository implements SlotTiebreakerRepository 
           scheduledDate: true,
           status: true,
           movedToGameId: true,
-          match: { select: { scheduledDate: true, status: true } },
+          match: { select: { scheduledDate: true, status: true, sportEventRound: { select: { roundNumber: true } } } },
         },
         orderBy: [{ sportEventRoundMatchId: 'asc' }, { gameNumber: 'asc' }],
       }),
@@ -51,6 +51,7 @@ export class PrismaSlotTiebreakerRepository implements SlotTiebreakerRepository 
         scheduledDate: game.gameNumber === 1 ? match.scheduledDate : game.scheduledDate,
         status: match.status === MatchStatus.CANCELLED ? MatchStatus.CANCELLED : game.status,
         moved: movedToGameId !== null,
+        roundNumber: match.sportEventRound.roundNumber,
       };
       const slotGames = gamesBySlot.get(sportEventSlotId);
       if (slotGames) slotGames.push(candidate);

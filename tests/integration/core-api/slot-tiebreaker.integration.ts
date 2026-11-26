@@ -113,10 +113,12 @@ describe('SlotTiebreakerService.refresh', () => {
     const { result, statements } = await recordStatements(() => service(SUNDAY_EARLY).refresh(event.id));
 
     expect(result).toEqual({ changedCount: 0, replacedCount: 0 });
-    // Pinned: one read of the slots and one of their Games, each with its relation; no write.
+    // Pinned: one read of the slots and one of their Games, each with its relations (a Game's match
+    // and its round); no write.
     expect(statementCounts(statements)).toEqual([
       ['SELECT sport_event_round_match_games', 1],
       ['SELECT sport_event_round_matches', 1],
+      ['SELECT sport_event_rounds', 1],
       ['SELECT sport_event_slots', 1],
       ['SELECT sport_league_season_competition_slots', 1],
     ]);

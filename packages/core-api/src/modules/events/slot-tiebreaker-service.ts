@@ -2,9 +2,9 @@
  * An event slot's tiebreaker game (#2048, plan §9c): the one Game whose combined score every
  * contest covering the slot guesses. This service is its one writer.
  *
- * - **The rule** (`chooseSlotTiebreakerGame`) chooses it once a Game of the slot is scheduled: the
- *   latest scheduled start, ties to the lower Game id. Until slice 17 opens pick windows, the
- *   window opens when the slot's first Game is scheduled.
+ * - **The rule** (`chooseSlotTiebreakerGame`) chooses it as soon as the slot has a Game: the
+ *   latest scheduled start, ties to the lower Game id; a Game with no start yet ranks after every
+ *   scheduled one, the later round first, so a bracket's final is its tiebreaker game from entry time.
  * - **It runs again** after each write to the event's games (the `REFRESH_SLOT_TIEBREAKERS` job),
  *   so a schedule change moves it, until the chosen Game starts; from then on it is fixed.
  * - **A root admin can choose another** of the slot's Games until the chosen one starts. Who chose
@@ -123,7 +123,7 @@ export class SlotTiebreakerService {
       throw new SportEventError(`Game ${gameId} is not played in the slot.`, 'TIEBREAKER_GAME_NOT_IN_SLOT', 422);
     }
     if (!canBeSlotTiebreaker(game)) {
-      throw new SportEventError(`Game ${gameId} is cancelled, moved or has no start.`, 'TIEBREAKER_GAME_NOT_ELIGIBLE', 422);
+      throw new SportEventError(`Game ${gameId} is cancelled or moved.`, 'TIEBREAKER_GAME_NOT_ELIGIBLE', 422);
     }
     const current = slot.games.find((each) => each.id === slot.tiebreakerGameId) ?? null;
     if ((current !== null && hasTiebreakerGameStarted(current, now)) || hasTiebreakerGameStarted(game, now)) {

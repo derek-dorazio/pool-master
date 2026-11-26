@@ -220,7 +220,7 @@ async function leagueOfThree(label: string) {
 }
 
 describe('SDK Functional: a bracket pool (#721)', () => {
-  it('fills in a 16-team bracket before tip-off, scores it round by round as max possible points shrink, and settles it with the tiebreaker deciding a tie on points', async () => {
+  it('fills in a 16-team bracket with its tiebreaker before tip-off and before any game has a start time, scores it round by round as max possible points shrink, and settles it with the tiebreaker deciding a tie on points', async () => {
     // --- A released 16-team, four-round knockout -----------------------------------------------
     // Round 1 pairs 1-16, 8-9, 5-12, 4-13, 6-11, 3-14, 7-10 and 2-15; each pair of games feeds one
     // game of the next round, down to the final, round 4's game 1. Each round numbers its games from 1 (#2161).
@@ -241,8 +241,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         })),
         later(2, 1), later(2, 2), later(2, 3), later(2, 4),
         later(3, 1), later(3, 2),
-        // The final is scheduled, so the rule names it the slot's tiebreaker game (#2048).
-        { ...later(4, 1, true), scheduledDate: '2099-04-06T01:00:00.000Z' },
+        // No game has a start yet: the rule still names the final the slot's tiebreaker game (#2048).
+        later(4, 1, true),
       ],
     });
 
@@ -468,8 +468,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         wildCard(1, 2, 7), wildCard(2, 3, 6), wildCard(3, 4, 5),
         { matchNumber: 1, roundNumber: 2, home: 1, away: null, advancesTo: { ...at(3, 1), side: MatchSide.HOME }, regionLabel: 'AFC' },
         { matchNumber: 2, roundNumber: 2, home: null, away: null, advancesTo: { ...at(3, 1), side: MatchSide.AWAY }, regionLabel: 'AFC' },
-        // The conference final is scheduled, so the rule names it the FINAL slot's tiebreaker game (#2048).
-        { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, regionLabel: 'AFC', scheduledDate: '2099-03-29T23:00:00.000Z' },
+        { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null, regionLabel: 'AFC' },
       ],
     });
     const { commissioner, league, bob } = await leagueOfThree('Reseed');

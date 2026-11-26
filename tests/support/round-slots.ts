@@ -4,7 +4,7 @@
  * as played in different slots. Test code only.
  */
 import { createHash } from 'node:crypto';
-import { MatchStatus, SlotKind, SlotPairing, chooseSlotTiebreakerGame, compareMatchPlaces, type SportEventRoundMatch, type SportEventRoundSlot } from '@poolmaster/shared/domain';
+import { SlotKind, SlotPairing, chooseSlotTiebreakerGame, type SportEventRoundMatch, type SportEventRoundSlot } from '@poolmaster/shared/domain';
 
 /** A Season slot id for a name, the same each run: a UUID, as the wire's slot id is. */
 function slotIdOf(name: string): string {
@@ -79,9 +79,8 @@ export function withSlotTiebreakers<Match extends Pick<SportEventRoundMatch, 'id
   const chosenBySlot = new Map<string, string | null>();
   for (const slotId of new Set(matches.map(slotKey))) {
     const inSlot = matches.filter((match) => slotKey(match) === slotId);
-    const chosen = chooseSlotTiebreakerGame(inSlot.map((match) => ({ id: match.id, scheduledDate: match.scheduledDate, status: match.status, moved: false })));
-    const playable = inSlot.filter((match) => match.status !== MatchStatus.CANCELLED).sort(compareMatchPlaces);
-    chosenBySlot.set(slotId, chosen?.id ?? playable.at(-1)?.id ?? null);
+    const chosen = chooseSlotTiebreakerGame(inSlot.map((match) => ({ id: match.id, scheduledDate: match.scheduledDate, roundNumber: match.roundNumber, status: match.status, moved: false })));
+    chosenBySlot.set(slotId, chosen?.id ?? null);
   }
   return matches.map((match) => ({ ...match, slot: { ...match.slot, tiebreakerMatchId: chosenBySlot.get(slotKey(match)) ?? null } }));
 }

@@ -14,12 +14,12 @@ const SlotTiebreakerGameDtoSchema = z.object({
   scheduledDate: DateTimeSchema.nullable().describe('When the Game starts; null until the schedule gives it a time.'),
   status: MatchStatusDtoSchema,
   moved: z.boolean().describe('Whether the provider moved the Game to another slot\'s event; it is played there, so it is never chosen.'),
-  choosable: z.boolean().describe('Whether a root admin can choose it now: the slot\'s game has not started, and this one is in the slot, not cancelled, scheduled and not started.'),
+  choosable: z.boolean().describe('Whether a root admin can choose it now: the slot\'s game has not started, and this one is in the slot, not cancelled and not started.'),
 }).describe('One of a slot\'s Games.');
 
 const SportEventSlotTiebreakerDtoSchema = z.object({
   seasonSlotId: z.uuid().describe('The Season slot, as the event\'s slots name it (SportLeagueSeasonSlotDto.id).'),
-  tiebreakerGameId: z.uuid().nullable().describe('The slot\'s tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.'),
+  tiebreakerGameId: z.uuid().nullable().describe('The slot\'s tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.'),
   chosenAt: DateTimeSchema.nullable().describe('When a root admin chose it by hand; null while the rule chose it. A chosen game stays until it starts, unless it is cancelled or moved.'),
   chosenByUserId: z.uuid().nullable().describe('The root admin who chose it; null while the rule chose it, or once that account is gone.'),
   editable: z.boolean().describe('Whether it can be changed: no game is chosen yet, or the chosen one has not started.'),
