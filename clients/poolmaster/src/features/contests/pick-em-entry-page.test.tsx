@@ -523,7 +523,7 @@ describe('Survivor contest entry page', () => {
     primeSurvivor(survivorWeekFixture({ games: week1Games({ 3: { pick, locked: true } }), canSubmit: false }));
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('pick-em-game-3-outcome')).toHaveTextContent(new RegExp(`^${mark}$`));
+    expect(await screen.findByTestId('pick-em-game-1-3-outcome')).toHaveTextContent(new RegExp(`^${mark}$`));
   });
 
   it('shows a refused pick of a used team in product copy', async () => {
