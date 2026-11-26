@@ -1,7 +1,7 @@
 import type { SportEventDto } from '@/lib/api';
 import { ErrorState, FormField, LoadingState, Notice, Select, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { formatSquaresGameTeams } from './squares-board';
-import { useEventRoundLabels } from './use-bracket-round-label';
+import { useEventRoundNames } from './use-bracket-round-label';
 import type { useSquaresGameChoices } from './use-squares-game-choices';
 
 /** The game picker of Create contest for a squares contest: one of the event's games still to kick off. */
@@ -17,8 +17,10 @@ export function SquaresGamePicker({
   value: string;
 }) {
   const displayPreferences = useDisplayPreferences();
-  const nameOfRound = useEventRoundLabels(event.id);
-  if (choices.isLoading) {
+  const rounds = useEventRoundNames(event.id);
+  const nameOfRound = rounds.nameOfRound;
+  // The games wait for their round names, so a game never shows as "Round N" first (#2200).
+  if (choices.isLoading || rounds.isLoading) {
     return <LoadingState body="Loading games..." testId="contest-squares-games-loading" />;
   }
   if (choices.isError) {

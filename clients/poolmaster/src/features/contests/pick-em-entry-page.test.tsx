@@ -554,6 +554,34 @@ describe('Playoff survivor entry page', () => {
     getContestMock.mockResolvedValue({ data: { contest: playoffSurvivorContestFixture() } });
   }
 
+  it('shows the loading state, never "Round 1" and "Round 2", until a playoff survivor pool\'s round names have loaded', async () => {
+    primePlayoff();
+    let releaseRounds: () => void = () => undefined;
+    listEventRoundsMock.mockImplementation(() => new Promise((resolve) => {
+      releaseRounds = () => resolve(eventRoundsResponse(playoffSurvivorFixture().sportEventId, PLAYOFF_ROUND_SLOTS));
+    }));
+    renderPickEmEntry();
+
+    await waitFor(() => expect(listEventRoundsMock).toHaveBeenCalled());
+    await waitFor(() => expect(getGamePicksMock).toHaveBeenCalled());
+    expect(screen.getByText('Loading picks...')).toBeInTheDocument();
+    expect(screen.queryByTestId('survivor-round-switcher')).not.toBeInTheDocument();
+
+    releaseRounds();
+
+    const switcher = await screen.findByTestId('survivor-round-switcher');
+    expect(within(switcher).getAllByRole('option').map((option) => option.textContent)).toEqual(['Conference Championship', 'Super Bowl']);
+  });
+
+  it('names a playoff survivor pool\'s rounds "Round N" when the event\'s rounds cannot be read, rather than loading for ever', async () => {
+    primePlayoff();
+    listEventRoundsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'rounds unavailable' } } });
+    renderPickEmEntry();
+
+    const switcher = await screen.findByTestId('survivor-round-switcher');
+    expect(within(switcher).getAllByRole('option').map((option) => option.textContent)).toEqual(['Round 1', 'Round 2']);
+  });
+
   it('opens on the round still to be picked, named as the bracket names it, marks the earlier round\'s team used in that round and warns that the round needs a pick', async () => {
     primePlayoff();
     renderPickEmEntry();

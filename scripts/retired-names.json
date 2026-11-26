@@ -69,7 +69,8 @@
     "inactiveReason": "#2184 (10e-web): the field row status",
     "ParticipantInactiveReason": "#2184 (10e-web): SportEventParticipantStatus",
     "deriveLegacyParticipantStatus": "#2184 (10e-web): the field row status, read as is",
-    "LegacyParticipantStatus": "#2184 (10e-web): SportEventParticipantStatus"
+    "LegacyParticipantStatus": "#2184 (10e-web): SportEventParticipantStatus",
+    "useEventRoundLabels": "#2200: useEventRoundNames, which every screen waits on so no round shows as Round N first"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -139,5 +140,6 @@
   "inactiveReason": 0,
   "ParticipantInactiveReason": 0,
   "deriveLegacyParticipantStatus": 0,
-  "LegacyParticipantStatus": 0
+  "LegacyParticipantStatus": 0,
+  "useEventRoundLabels": 0
 }
