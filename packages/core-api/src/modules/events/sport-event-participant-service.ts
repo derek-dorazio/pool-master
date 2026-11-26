@@ -39,6 +39,7 @@ import {
   type ParticipantInactiveReason,
   type SportEvent,
   type SportEventParticipant,
+  sideOfParticipant,
 } from '@poolmaster/shared/domain';
 import type { JobsForWrite } from '../background-jobs/background-job-queue';
 import { DomainEventType, type DomainEvents } from '../domain-events';
@@ -467,7 +468,7 @@ export class SportEventParticipantService implements EventFieldReads {
       );
     }
     const inBracket = (await this.deps.matches.findBySportEvent(sportEventId)).some((match) => (
-      match.homeSportEventParticipantId === sportEventParticipantId || match.awaySportEventParticipantId === sportEventParticipantId
+      sideOfParticipant(match, sportEventParticipantId) !== null
     ));
     if (inBracket) {
       throw new SportEventError(

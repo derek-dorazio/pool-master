@@ -60,11 +60,4 @@ export interface SportDefinition {
    * where it says yes.
    */
   pickEm?: SportPickEm;
-  /**
-   * Whether a bracket match level after extra time is settled by a shoot-out (#791): penalties in
-   * soccer; false for a sport whose knockout matches always end with one side ahead. A shoot-out
-   * is entered only on a bracket match of such a sport (`MatchResultService`), and screens call it
-   * by the sport's `shootout` word.
-   */
-  shootout: boolean;
 }

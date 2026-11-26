@@ -13,7 +13,7 @@
  * not name. Once the place is filled, both sides of its match are teams the provider names, so
  * the game is placed and scores like any other, in the same sync.
  */
-import { requireProviderCodeOfSourceId, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { opposingSideOf, requireProviderCodeOfSourceId, sideOfParticipant, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ParticipantProviderMappingRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -75,8 +75,8 @@ export async function fillPlayInPlaces(
       continue;
     }
     const places = matches.flatMap((match) => {
-      const { homeSportEventParticipantId: home, awaySportEventParticipantId: away } = match;
-      const other = home === opponentRowId ? away : away === opponentRowId ? home : null;
+      const opponentSide = sideOfParticipant(match, opponentRowId);
+      const other = opponentSide === null ? null : opposingSideOf(match, opponentSide.sideNumber).sportEventParticipantId;
       return other !== null && placeIds.has(other) ? [other] : [];
     });
     if (places.length !== 1) {

@@ -234,6 +234,30 @@
       "key": "holdsGame",
       "now": 0,
       "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportEventMatchPeriodScore",
+      "now": 0,
+      "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "savePeriodScore",
+      "now": 0,
+      "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "applyLiveScores",
+      "now": 0,
+      "reason": "retired by #2046"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PrismaMatchSide",
+      "now": 0,
+      "reason": "retired by #2046"
     }
   ]
 }

@@ -370,11 +370,29 @@ enum PrismaMatchStatus {
   POSTPONED
 }
 
-/// One side of a match (#698). Mirrors the domain `MatchSide`; on a neutral site HOME is the
-/// upper line of the bracket.
-enum PrismaMatchSide {
+/// How one side of a match came out (#2046), rolled up from its Games by the result writer alone.
+/// PENDING until the match is decided. Mirrors the domain `MatchSideOutcome`.
+enum PrismaMatchSideOutcome {
+  PENDING
+  WON
+  LOST
+  TIED
+}
+
+/// Where one side played one Game (#2046): HOME, AWAY, or NONE at a neutral site. Per Game, since
+/// home court alternates in a series. Mirrors the domain `HomeAway`.
+enum PrismaHomeAway {
   HOME
   AWAY
+  NONE
+}
+
+/// What a period score counts (#2046): a period of play, an overtime period, or the shoot-out's
+/// kicks scored. Mirrors the domain `PeriodKind`.
+enum PrismaPeriodKind {
+  REGULAR
+  OVERTIME
+  SHOOTOUT
 }
 
 /// How a match with a result ended (#704). Mirrors the domain `MatchEnding`.
@@ -383,11 +401,6 @@ enum PrismaMatchEnding {
   RETIREMENT
   WALKOVER
   DEFAULT
-}
-
-/// Who set a match's result (#1496): the feed only (#2074). Mirrors the domain `MatchResultSource`.
-enum PrismaMatchResultSource {
-  PROVIDER
 }
 
 /// What one game pick says happens (#792). Mirrors the domain `PredictedResult`.
@@ -1827,8 +1840,13 @@ model ContestEntryMatchPrediction {
   contestEntryId          String                @map("contest_entry_id") @db.Uuid
   sportEventRoundMatchId  String                @map("sport_event_round_match_id") @db.Uuid
   predictedResult         PrismaPredictedResult @default(TEAM) @map("predicted_result")
-  /// The team picked to win; null for a tie pick.
+  /// The team picked to win; null for a tie pick. In a bracket a later game's side means "the
+  /// winner of the game before", which can win while the team picked is out, so the team is kept
+  /// with its side.
   sportEventParticipantId String?               @map("sport_event_participant_id") @db.Uuid
+  /// The match side picked to win (#2046); null for a tie pick, and only then (database check).
+  /// Tie picks go in #2016, which makes it required.
+  sportEventRoundMatchSideId String?            @map("sport_event_round_match_side_id") @db.Uuid
   confidence              Int?
   pickedAt                DateTime              @map("picked_at") @db.Timestamptz
   createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz
@@ -1837,9 +1855,11 @@ model ContestEntryMatchPrediction {
   contestEntry          ContestEntry           @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
   sportEventRoundMatch  SportEventRoundMatch   @relation(fields: [sportEventRoundMatchId], references: [id], onDelete: Restrict)
   sportEventParticipant SportEventParticipant? @relation(fields: [sportEventParticipantId], references: [id], onDelete: Restrict)
+  /// The composite key keeps the side one of the predicted match's own (#2046).
+  side                  SportEventRoundMatchSide? @relation(fields: [sportEventRoundMatchId, sportEventRoundMatchSideId], references: [sportEventRoundMatchId, id], onDelete: Restrict, map: "contest_entry_match_predictions_side_fkey")
 
   @@unique([contestEntryId, sportEventRoundMatchId])
-  @@index([sportEventRoundMatchId])
+  @@index([sportEventRoundMatchId, sportEventRoundMatchSideId])
   @@index([sportEventParticipantId])
   @@map("contest_entry_match_predictions")
 }
@@ -2236,11 +2256,12 @@ model SportEventParticipant {
   rounds      SportEventParticipantRound[]
   standing    SportEventParticipantStanding?
   raceResult  SportEventParticipantRaceResult?
-  homeMatches SportEventRoundMatch[]           @relation("SportEventRoundMatchHome")
-  awayMatches SportEventRoundMatch[]           @relation("SportEventRoundMatchAway")
+  matchSides  SportEventRoundMatchSide[]
   predictions ContestEntryMatchPrediction[]
 
   @@unique([sportEventId, participantId])
+  /// The target of a match side's composite key, which keeps the side's team in its match's event (#2046).
+  @@unique([sportEventId, id], map: "sport_event_participants_event_id_key")
   @@index([participantId])
   @@map("sport_event_participants")
 }
@@ -2274,72 +2295,86 @@ model SportEventRound {
 }
 
 /// One game or match of an event, played in one of its rounds (#698). Core event data, beside the
-/// round schedule; a result is written by the head-to-head family. In a bracket it is also a slot:
-/// `advancesToMatchId`/`advancesToSide` name where its winner goes (null for the final). A side is
-/// a field row, null until decided. Database checks: the two sides differ, `advancesToSide` is set
-/// exactly when `advancesToMatchId` is, a winner only on a COMPLETED match, scores never negative.
-/// That both sides and the next match belong to the match's own event is the bracket service's check.
+/// round schedule. Its two sides are SportEventRoundMatchSide rows (#2046), its games
+/// SportEventRoundMatchGame rows with each side's result. In a bracket it is also a slot:
+/// `advancesToMatchId`/`advancesToSideNumber` name the next match and the side its winner fills
+/// (null for the final). Database check: both or neither. That the next match belongs to the
+/// match's own event is the bracket service's check.
 model SportEventRoundMatch {
-  id                          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportEventId                String                   @map("sport_event_id") @db.Uuid
-  sportEventRoundId           String                   @map("sport_event_round_id") @db.Uuid
-  matchNumber                 Int                      @map("match_number")
-  homeSportEventParticipantId String?                  @map("home_sport_event_participant_id") @db.Uuid
-  awaySportEventParticipantId String?                  @map("away_sport_event_participant_id") @db.Uuid
-  isNeutralSite               Boolean                  @map("is_neutral_site")
-  scheduledDate               DateTime?                @map("scheduled_date") @db.Timestamptz
-  status                      PrismaMatchStatus        @default(SCHEDULED)
-  winnerSide                  PrismaMatchSide?         @map("winner_side")
-  homeScore                   Int?                     @map("home_score")
-  awayScore                   Int?                     @map("away_score")
-  /// A knockout match level after extra time is settled by a shoot-out (#791): both sides' kicks
-  /// scored, or neither. Not part of the match score (IFAB Law 10); the winner's is the higher.
-  homeShootoutScore           Int?                     @map("home_shootout_score")
-  awayShootoutScore           Int?                     @map("away_shootout_score")
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventId         String            @map("sport_event_id") @db.Uuid
+  sportEventRoundId    String            @map("sport_event_round_id") @db.Uuid
+  matchNumber          Int               @map("match_number")
+  isNeutralSite        Boolean           @map("is_neutral_site")
+  scheduledDate        DateTime?         @map("scheduled_date") @db.Timestamptz
+  /// Rolled up from the match's Games by the result writer (#2046).
+  status               PrismaMatchStatus @default(SCHEDULED)
   /// How the match ended (#704): PLAYED unless it stopped early. A walkover has no scores.
-  ending                      PrismaMatchEnding        @default(PLAYED)
-  advancesToMatchId           String?                  @map("advances_to_match_id") @db.Uuid
-  advancesToSide              PrismaMatchSide?         @map("advances_to_side")
+  ending               PrismaMatchEnding @default(PLAYED)
+  advancesToMatchId    String?           @map("advances_to_match_id") @db.Uuid
+  /// The side of the next match the winner fills (#2046): that match's `sideNumber`.
+  advancesToSideNumber Int?              @map("advances_to_side_number")
   /// The bracket region or conference the match is in ("East", "AFC"); null where the bracket
   /// has none. A reseeded round pairs the teams of one region (#722).
-  regionLabel                 String?                  @map("region_label") @db.VarChar(40)
-  /// The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5.
-  /// Null until set; half points at most. A pick'em contest scored against the spread reads it.
-  homeSpread                  Decimal?                 @map("home_spread") @db.Decimal(4, 1)
-  /// Who set the result (#1531): an admin, or the linked game's provider; null with no result. A
-  /// provider's final never overwrites an admin's result.
-  resultSource                PrismaMatchResultSource? @map("result_source")
+  regionLabel          String?           @map("region_label") @db.VarChar(40)
   /// When the result was last recorded (#1889): set each time the match is written COMPLETED, a
   /// correction included; cleared by any other status the result service writes.
-  completedAt                 DateTime?                @map("completed_at") @db.Timestamptz
-  createdAt                   DateTime                 @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  completedAt          DateTime?         @map("completed_at") @db.Timestamptz
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
   sportEvent      SportEvent                    @relation(fields: [sportEventId], references: [id])
   sportEventRound SportEventRound               @relation(fields: [sportEventRoundId], references: [id])
-  home            SportEventParticipant?        @relation("SportEventRoundMatchHome", fields: [homeSportEventParticipantId], references: [id], onDelete: Restrict)
-  away            SportEventParticipant?        @relation("SportEventRoundMatchAway", fields: [awaySportEventParticipantId], references: [id], onDelete: Restrict)
   advancesTo      SportEventRoundMatch?         @relation("SportEventRoundMatchAdvancesTo", fields: [advancesToMatchId], references: [id], onDelete: NoAction)
   fedBy           SportEventRoundMatch[]        @relation("SportEventRoundMatchAdvancesTo")
   predictions     ContestEntryMatchPrediction[]
-  periodScores    SportEventMatchPeriodScore[]
   squaresGames    ContestSquaresGame[]
   games           SportEventRoundMatchGame[]
+  sides           SportEventRoundMatchSide[]
 
   // A match is numbered within its round (#2161): each round has its own match 1.
   @@unique([sportEventRoundId, matchNumber])
   /// The target of a Game's composite key, which keeps the Game in its match's event (#2007).
   @@unique([sportEventId, id], map: "sport_event_round_matches_event_id_key")
   // Two matches cannot feed the same side of the next one.
-  @@unique([advancesToMatchId, advancesToSide])
-  @@index([homeSportEventParticipantId])
-  @@index([awaySportEventParticipantId])
+  @@unique([advancesToMatchId, advancesToSideNumber])
   @@map("sport_event_round_matches")
 }
 
+/// One side of a match (#2046): its fixed place (`sideNumber` 1 or 2, set by whoever creates the
+/// match) and the field row playing it, empty until the side is known (a later-round slot waiting
+/// on its feeder match). The spread is side 1's only (database check): -3.5 has side 1 favoured by
+/// 3.5. `outcome` is rolled up from the match's Games, written only by the result writer.
+model SportEventRoundMatchSide {
+  id                      String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventId            String                 @map("sport_event_id") @db.Uuid
+  sportEventRoundMatchId  String                 @map("sport_event_round_match_id") @db.Uuid
+  sideNumber              Int                    @map("side_number")
+  sportEventParticipantId String?                @map("sport_event_participant_id") @db.Uuid
+  /// Points spread on side 1; half points at most. A pick'em contest scored against the spread reads it.
+  spread                  Decimal?               @db.Decimal(4, 1)
+  outcome                 PrismaMatchSideOutcome @default(PENDING)
+  createdAt               DateTime               @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime               @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// The composite keys keep the side, and its team, in its match's own event.
+  match                 SportEventRoundMatch                 @relation(fields: [sportEventId, sportEventRoundMatchId], references: [sportEventId, id], onDelete: Cascade, map: "sport_event_round_match_sides_match_fkey")
+  sportEventParticipant SportEventParticipant?               @relation(fields: [sportEventId, sportEventParticipantId], references: [sportEventId, id], onDelete: Restrict, map: "sport_event_round_match_sides_participant_fkey")
+  gameResults           SportEventRoundMatchGameSideResult[]
+  predictions           ContestEntryMatchPrediction[]
+
+  @@unique([sportEventRoundMatchId, sideNumber])
+  /// A team plays one side of a match.
+  @@unique([sportEventRoundMatchId, sportEventParticipantId])
+  /// The target of a side result's and a prediction's composite keys.
+  @@unique([sportEventRoundMatchId, id], map: "sport_event_round_match_sides_match_id_key")
+  @@index([sportEventId, sportEventParticipantId])
+  @@map("sport_event_round_match_sides")
+}
+
 /// One played game of a Match (#2007): a single game, or one game of a best-of series. Every Match
-/// has a Game 1. Scores are from the Match's home and away sides until side results (#2046) replace
-/// them. Provider game ids live in SportEventRoundMatchGameProviderMapping.
+/// has a Game 1. Each side's score, and where it played, is a SportEventRoundMatchGameSideResult
+/// (#2046). Provider game ids live in SportEventRoundMatchGameProviderMapping.
 model SportEventRoundMatchGame {
   id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId               String                   @map("sport_event_id") @db.Uuid
@@ -2350,9 +2385,6 @@ model SportEventRoundMatchGame {
   gameNumber                 Int                      @map("game_number")
   scheduledDate              DateTime?                @map("scheduled_date") @db.Timestamptz
   status                     PrismaMatchStatus        @default(SCHEDULED)
-  winnerSide                 PrismaMatchSide?         @map("winner_side")
-  homeScore                  Int?                     @map("home_score")
-  awayScore                  Int?                     @map("away_score")
   /// When the game was last written COMPLETED; null for any other status.
   completedAt                DateTime?                @map("completed_at") @db.Timestamptz
   /// The Game a provider moved this one to (another week's): set once, never re-parented. This
@@ -2369,8 +2401,11 @@ model SportEventRoundMatchGame {
   movedTo          SportEventRoundMatchGame?                @relation("SportEventRoundMatchGameMovedTo", fields: [movedToGameId], references: [id], onDelete: SetNull)
   movedFrom        SportEventRoundMatchGame[]               @relation("SportEventRoundMatchGameMovedTo")
   providerMappings SportEventRoundMatchGameProviderMapping[]
+  sideResults      SportEventRoundMatchGameSideResult[]
 
   @@unique([sportEventRoundMatchId, gameNumber])
+  /// The target of a side result's composite key, which keeps the result in its Game's match.
+  @@unique([sportEventRoundMatchId, id], map: "sport_event_round_match_games_match_id_key")
   @@index([sportEventId, sportEventSlotId])
   @@index([movedToGameId])
   @@map("sport_event_round_match_games")
@@ -2396,23 +2431,44 @@ model SportEventRoundMatchGameProviderMapping {
   @@map("sport_event_round_match_game_provider_mappings")
 }
 
-/// The score at the end of one period of a game (#772): the end of a quarter in American
-/// football, as the scoreboard shows it, so a later period's score includes the earlier ones.
-/// Rows exist for every period but the last: the final score, overtime included, is the match's
-/// own result. Squares pools read it (#711); nothing derives one period from another.
-model SportEventMatchPeriodScore {
-  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportEventRoundMatchId String   @map("sport_event_round_match_id") @db.Uuid
-  periodNumber           Int      @map("period_number")
-  homeScore              Int      @map("home_score")
-  awayScore              Int      @map("away_score")
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+/// One side's result in one Game (#2046): its score (null until the game starts; the final score,
+/// overtime included, once it ends) and whether it played at home, away or at a neutral site. The
+/// composite keys keep the Game and the side in one match.
+model SportEventRoundMatchGameSideResult {
+  id                         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventRoundMatchId     String         @map("sport_event_round_match_id") @db.Uuid
+  sportEventRoundMatchGameId String         @map("sport_event_round_match_game_id") @db.Uuid
+  sportEventRoundMatchSideId String         @map("sport_event_round_match_side_id") @db.Uuid
+  score                      Int?
+  homeAway                   PrismaHomeAway @default(NONE) @map("home_away")
+  createdAt                  DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEventRoundMatch SportEventRoundMatch @relation(fields: [sportEventRoundMatchId], references: [id], onDelete: Cascade)
+  game         SportEventRoundMatchGame                      @relation(fields: [sportEventRoundMatchId, sportEventRoundMatchGameId], references: [sportEventRoundMatchId, id], onDelete: Cascade, map: "sport_event_round_match_game_side_results_game_fkey")
+  side         SportEventRoundMatchSide                      @relation(fields: [sportEventRoundMatchId, sportEventRoundMatchSideId], references: [sportEventRoundMatchId, id], onDelete: Cascade, map: "sport_event_round_match_game_side_results_side_fkey")
+  periodScores SportEventRoundMatchGameSideResultPeriodScore[]
 
-  @@unique([sportEventRoundMatchId, periodNumber])
-  @@map("sport_event_match_period_scores")
+  @@unique([sportEventRoundMatchGameId, sportEventRoundMatchSideId])
+  @@index([sportEventRoundMatchId, sportEventRoundMatchSideId])
+  @@map("sport_event_round_match_game_side_results")
+}
+
+/// The points one side scored in one period of a Game (#2046): that period's own points, not the
+/// running total (a squares pool sums them, #2019). A shoot-out is one SHOOTOUT row, period 1, with
+/// the kicks scored; it is never part of the Game's score (IFAB Law 10).
+model SportEventRoundMatchGameSideResultPeriodScore {
+  id                                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventRoundMatchGameSideResultId String           @map("sport_event_round_match_game_side_result_id") @db.Uuid
+  kind                                 PrismaPeriodKind
+  periodNumber                         Int              @map("period_number")
+  score                                Int
+  createdAt                            DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                            DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  sideResult SportEventRoundMatchGameSideResult @relation(fields: [sportEventRoundMatchGameSideResultId], references: [id], onDelete: Cascade)
+
+  @@unique([sportEventRoundMatchGameSideResultId, kind, periodNumber], map: "sport_event_round_match_game_side_result_period_scores_key")
+  @@map("sport_event_round_match_game_side_result_period_scores")
 }
 
 /// One participant's part in one round of an event — the (participant, round)

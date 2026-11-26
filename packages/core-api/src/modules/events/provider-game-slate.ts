@@ -14,6 +14,12 @@ import {
   isAtPlace,
   isProviderSyncedEvent,
   isMatchUnplayed,
+  gameNumbered,
+  HomeAway,
+  homeAwayOf,
+  MatchSide,
+  sideNumberOfMatchSide,
+  sideParticipantId,
   type MatchPlace,
   MatchPlaceMap,
   matchPlaceOf,
@@ -48,6 +54,11 @@ export interface ProviderGameSlateDeps {
 
 type Sides = Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>;
 
+/** A stored match's teams as the provider's home and away name them: home on side 2, away on side 1, where the sync created it. */
+function storedSides(match: SportEventRoundMatch): Sides {
+  return { homeSportEventParticipantId: sideParticipantId(match, sideNumberOfMatchSide(MatchSide.HOME)), awaySportEventParticipantId: sideParticipantId(match, sideNumberOfMatchSide(MatchSide.AWAY)) };
+}
+
 /** What a provider gives for an event's games: its games so far, and for a fixed-shape playoff its whole bracket. */
 export interface ProviderGameSlateInput {
   providerId: string;
@@ -62,10 +73,11 @@ export interface ProviderGameSlateInput {
  * would load them through `loadBracket`. Each provider game is matched to a stored match by its
  * two teams, whichever side each is on. While the event is a draft and the provider's pairings
  * differ from the stored ones, the slate replaces them: the provider wins, and nobody can have
- * picked yet. Otherwise each match is kept, with its spread, and takes the provider's kickoff if
- * it has not started; on a draft it also takes the provider's home and away, its spread turned
- * around. Once the event is released its pairings and sides are fixed: a pairing or a swap the
- * provider makes after release is logged for an admin.
+ * picked yet. Otherwise each match is kept, with its sides and spread, and takes the provider's
+ * kickoff if it has not started. A match the sync creates puts the provider's away team on side 1
+ * and its home team on side 2 (#2046); a game the provider later lists the other way round changes
+ * only where each side plays Game 1 (`homeAway`), never the sides. Once the event is released its
+ * pairings are fixed: a pairing the provider changes after release is logged for an admin.
  *
  * A playoff whose shape is fixed (the NFL postseason) comes with its whole bracket: a draft loads
  * it, every match from the first round to the final, whenever its shape or teams differ from the
@@ -139,7 +151,7 @@ export class ProviderGameSlateService {
       this.deps.games.findByProviderExternalIds(providerCode, providerGameIds),
     ]);
     const heldIds = new Set(held.flatMap((each) => (each.externalId === null ? [] : [each.externalId])));
-    const matchByPair = new Map(matches.map((match) => [pairKey(match), match]));
+    const matchByPair = new Map(matches.map((match) => [pairKey(storedSides(match)), match]));
     const gameAt = new Map(stored.map((each) => [JSON.stringify([each.game.sportEventRoundMatchId, each.game.gameNumber]), each]));
     const created: SportEventRoundMatchGameCreate[] = [];
     const mapped: { sportEventRoundMatchGameId: string; externalId: string }[] = [];
@@ -187,11 +199,11 @@ export class ProviderGameSlateService {
         }
         return { outcome: 'LOADED', sportEventId: event.id, matchCount: load.length };
       }
-      return this.updateMatches(event, draft, stored, slate, []);
+      return this.updateMatches(event, stored, slate, []);
     }
     const placed = await this.placeReseededRounds(event, stored, slate);
     const current = placed.length === 0 ? stored : await this.deps.matches.findBySportEvent(event.id);
-    return this.updateMatches(event, draft, current, slate, placed);
+    return this.updateMatches(event, current, slate, placed);
   }
 
   /** Moves each round whose matches have a kickoff to the earliest of them; a round with none keeps its date. */
@@ -257,7 +269,7 @@ export class ProviderGameSlateService {
     for (const roundNumber of [...reseededRounds(stored)].sort((left, right) => left - right)) {
       const round = stored.filter((match) => match.roundNumber === roundNumber);
       const games = slate.filter((game) => game.roundNumber === roundNumber);
-      const open = round.some((match) => match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null);
+      const open = round.some((match) => match.sides.some((side) => side.sportEventParticipantId === null));
       if (!open || games.length !== round.length || roundPlacementBlocker(stored, roundNumber) !== null) continue;
       const proposal = await this.deps.bracket.proposeRoundMatchups(event.id, roundNumber);
       const providerPairs = new Set(games.map(pairKey));
@@ -277,18 +289,17 @@ export class ProviderGameSlateService {
 
   /**
    * Each stored match of a provider game's two teams takes the game's kickoff while it has not
-   * started (a postponed game's new time too, #1791), and on a draft the game's home and away, its spread turned around with them.
+   * started (a postponed game's new time too, #1791), and where each side plays Game 1 (#2046): a
+   * game the provider lists the other way round changes only `homeAway`, never the match's sides.
    */
   private async updateMatches(
     event: SportEvent,
-    draft: boolean,
     stored: readonly SportEventRoundMatch[],
     slate: readonly BracketMatchInput[],
     placed: readonly MatchPlace[],
   ): Promise<ProviderGameSlateOutcome> {
-    const storedByPair = new Map(stored.map((match) => [pairKey(match), match]));
+    const storedByPair = new Map(stored.map((match) => [pairKey(storedSides(match)), match]));
     const updated: MatchPlace[] = [...placed];
-    const swapped: MatchPlace[] = [];
     const unmatched: string[] = [];
     for (const game of slate) {
       const match = storedByPair.get(pairKey(game));
@@ -296,24 +307,24 @@ export class ProviderGameSlateService {
         unmatched.push(pairKey(game));
         continue;
       }
-      const isSwapped = match.homeSportEventParticipantId !== game.homeSportEventParticipantId;
       const movesKickoff = isMatchUnplayed(match.status) && game.scheduledDate !== null && !sameTime(match.scheduledDate, game.scheduledDate);
-      if (isSwapped && !draft) swapped.push(matchPlaceOf(match));
+      const gameOne = gameNumbered(match, 1);
+      const homeAway = match.sides.map(({ sideNumber, sportEventParticipantId }) => ({
+        sideNumber,
+        homeAway: game.isNeutralSite ? HomeAway.NONE : sportEventParticipantId === game.homeSportEventParticipantId ? HomeAway.HOME : HomeAway.AWAY,
+      }));
+      const movesHomeAway = gameOne !== null && homeAway.some((side) => homeAwayOf(gameOne, side.sideNumber) !== side.homeAway);
       const patch = {
         ...(movesKickoff && { scheduledDate: game.scheduledDate }),
-        ...(isSwapped && draft && {
-          homeSportEventParticipantId: game.homeSportEventParticipantId,
-          awaySportEventParticipantId: game.awaySportEventParticipantId,
-          ...(match.homeSpread !== null && { homeSpread: -match.homeSpread }),
-        }),
+        ...(movesHomeAway && { gameOneHomeAway: homeAway }),
       };
       if (Object.keys(patch).length === 0) continue;
       await this.deps.bracket.updateMatch(event.id, matchPlaceOf(match), patch);
       if (!updated.some((place) => isAtPlace(match, place))) updated.push(matchPlaceOf(match));
     }
-    if (unmatched.length > 0 || swapped.length > 0) {
+    if (unmatched.length > 0) {
       this.deps.logger?.warn(
-        { sportEventId: event.id, ...(unmatched.length > 0 && { unmatchedPairings: unmatched }), ...(swapped.length > 0 && { swappedMatches: swapped }) },
+        { sportEventId: event.id, unmatchedPairings: unmatched },
         'A released synced event\'s provider changed games its matches hold fixed; an admin decides',
       );
     }
@@ -418,10 +429,11 @@ function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly 
     const next = match.advancesToMatchId === null ? undefined : storedById.get(match.advancesToMatchId);
     const advancesAlike = slot.advancesTo === null
       ? match.advancesToMatchId === null
-      : next !== undefined && isAtPlace(next, slot.advancesTo) && match.advancesToSide === slot.advancesTo.side;
+      : next !== undefined && isAtPlace(next, slot.advancesTo) && match.advancesToSideNumber === sideNumberOfMatchSide(slot.advancesTo.side);
+    const sides = storedSides(match);
     return advancesAlike
-      && match.homeSportEventParticipantId === slot.homeSportEventParticipantId
-      && match.awaySportEventParticipantId === slot.awaySportEventParticipantId
+      && sides.homeSportEventParticipantId === slot.homeSportEventParticipantId
+      && sides.awaySportEventParticipantId === slot.awaySportEventParticipantId
       && match.isNeutralSite === slot.isNeutralSite
       && match.regionLabel === (slot.regionLabel ?? null);
   });
@@ -430,6 +442,6 @@ function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly 
 /** Whether the stored matches pair the same teams as the provider's games, kickoffs and sides aside. */
 function samePairings(stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): boolean {
   if (stored.length !== slate.length) return false;
-  const storedPairs = new Set(stored.map(pairKey));
+  const storedPairs = new Set(stored.map((match) => pairKey(storedSides(match))));
   return slate.every((match) => storedPairs.has(pairKey(match)));
 }

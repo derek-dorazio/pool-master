@@ -13,6 +13,7 @@
  * the final: out in round 3. Dan picks T7 and leaves round 2 without a pick: out in round 2. Cara
  * picks T2: out in round 1.
  */
+import { homeAwayOf, withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   ContestEntryStatus,
@@ -58,19 +59,17 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
   const round1 = [1, 2, 3, 4].map((matchNumber) => games.addGame(playoffs.id, matchNumber, later(ROUND_1, matchNumber - 1)));
   const teamRow = {} as Record<Team, string>;
   round1.forEach((game, index) => {
-    teamRow[`T${index * 2 + 1}` as Team] = expectDefined(game.homeSportEventParticipantId ?? undefined);
-    teamRow[`T${index * 2 + 2}` as Team] = expectDefined(game.awaySportEventParticipantId ?? undefined);
+    teamRow[`T${index * 2 + 1}` as Team] = expectDefined(homeAwayOf(game).homeSportEventParticipantId ?? undefined);
+    teamRow[`T${index * 2 + 2}` as Team] = expectDefined(homeAwayOf(game).awaySportEventParticipantId ?? undefined);
   });
   /** A later-round game, its teams not yet known. */
-  const laterGame = (matchNumber: number, roundNumber: number, kickoff: Date): SportEventRoundMatch => ({
+  const laterGame = (matchNumber: number, roundNumber: number, kickoff: Date): SportEventRoundMatch => withHomeAway({
     ...round1[0],
     id: `game-${matchNumber}`,
     matchNumber,
     roundNumber,
     scheduledDate: options.untimedLaterRounds === true ? null : kickoff,
-    homeSportEventParticipantId: null,
-    awaySportEventParticipantId: null,
-  });
+  }, { homeSportEventParticipantId: null, awaySportEventParticipantId: null, homeScore: null, awayScore: null });
   const g5 = laterGame(5, 2, ROUND_2);
   const g6 = laterGame(6, 2, later(ROUND_2, 1));
   const g7 = laterGame(7, 3, FINAL);
@@ -139,11 +138,11 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
   const save = (name: Name, matchNumber: number, team: Team) => predictions.saveGamePicks({ ...input(name), picks: [pick(matchNumber, team)] });
   /** The game is played: `winner` wins it. */
   const play = (matchNumber: number, winner: MatchSide) => {
-    games.putMatches([{ ...game(matchNumber), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore: winner === MatchSide.HOME ? 24 : 10, awayScore: winner === MatchSide.HOME ? 10 : 24 }]);
+    games.putMatches([withHomeAway(game(matchNumber), { status: MatchStatus.COMPLETED, winnerSide: winner, homeScore: winner === MatchSide.HOME ? 24 : 10, awayScore: winner === MatchSide.HOME ? 10 : 24 })]);
   };
   /** The admin places the round's teams once the round before is played. */
   const place = (matchNumber: number, home: Team, away: Team) => {
-    games.putMatches([{ ...game(matchNumber), homeSportEventParticipantId: teamRow[home], awaySportEventParticipantId: teamRow[away] }]);
+    games.putMatches([withHomeAway(game(matchNumber), { homeSportEventParticipantId: teamRow[home], awaySportEventParticipantId: teamRow[away] })]);
   };
   const storedPicks = (name: Name) => [...games.predictions.values()]
     .filter((row) => row.contestEntryId === `entry-${name.toLowerCase()}`)

@@ -5,6 +5,7 @@
  * once the event is under way its picks are scored and revealed. Against an in-memory world, so
  * each test asserts the stored picks, the entry's status and the view rather than the calls.
  */
+import { withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   ContestEntryStatus,
@@ -112,6 +113,10 @@ function setup(options: { bracket?: SportEventRoundMatch[]; seeds?: ReadonlyMap<
     storedPicks: () => [...games.predictions.values()]
       .map((row) => [row.sportEventRoundMatchId, row.sportEventParticipantId] as const)
       .sort((left, right) => left[0].localeCompare(right[0], undefined, { numeric: true })),
+    /** Each stored pick's game and the number of the side it was written with. */
+    storedSides: () => [...games.predictions.values()]
+      .map((row) => [row.sportEventRoundMatchId, games.pickedSideNumbers.get(row.id)] as const)
+      .sort((left, right) => left[0].localeCompare(right[0], undefined, { numeric: true })),
     setNow: (when: Date) => { now = when; },
     goLive: () => {
       now = at(3);
@@ -164,6 +169,32 @@ describe('PredictionService on a bracket — filling it in', () => {
     expect(predicted(view, 5)).toEqual(['T1', 'T4']);
     expect(predicted(view, 7)).toEqual(['T1', 'T2']);
     expect(view.pickedCount).toBe(7);
+  });
+
+  it('writes each pick with the side its team is on, a later game\'s the side the entry\'s earlier pick sends its team to (#2046)', async () => {
+    const context = setup();
+    // Every first-round pick is its game's home team (side 2). T4 comes through game 2, which sends
+    // its winner to game 5's away side (1); T3 through game 4 to game 6's away side, and on through
+    // game 6 to the final's away side.
+    const picks = [
+      bracketPick(1, 'T1'), bracketPick(2, 'T4'), bracketPick(3, 'T2'), bracketPick(4, 'T3'),
+      bracketPick(5, 'T4'), bracketPick(6, 'T3'), bracketPick(7, 'T3'),
+    ].map((each) => ({ ...each, confidence: null }));
+
+    await context.service.saveGamePicks({ ...context.input, picks });
+
+    expect(context.storedSides().map(([, sideNumber]) => sideNumber)).toEqual([2, 2, 2, 2, 1, 1, 1]);
+  });
+
+  it('writes a reseeded round\'s pick with the side the entry\'s own Wild Card picks seat its team on (#2046)', async () => {
+    const context = setup({ bracket: nflPlayoff(), seeds: NFL_SEEDS });
+    const wildCard = [bracketPick(1, 'AFC-7'), bracketPick(2, 'AFC-3'), bracketPick(3, 'AFC-5'), bracketPick(4, 'NFC-2'), bracketPick(5, 'NFC-3'), bracketPick(6, 'NFC-4')];
+    await context.service.saveGamePicks({ ...context.input, picks: wildCard.map((each) => ({ ...each, confidence: null })) });
+
+    // Game 7 pairs AFC-1 at home (side 2) with AFC-7 away (side 1).
+    await context.service.saveGamePicks({ ...context.input, picks: [{ ...bracketPick(7, 'AFC-7'), confidence: null }] });
+
+    expect(context.storedSides().find(([matchId]) => matchId === bracketPick(7, 'AFC-7').sportEventRoundMatchId)?.[1]).toBe(1);
   });
 
   it('refuses a later pick naming a team the entry did not pick to get there with 400 PREDICTION_TEAM_NOT_IN_GAME, saving none of the request', async () => {
@@ -373,7 +404,7 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
     const sportEventId = expectDefined(context.games.matches.get('m1')).sportEventId;
     Object.assign(expectDefined(context.games.field.get('T1')), { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
     context.games.addTeam(sportEventId, 'Lucky Loser', { id: 'LL' });
-    context.games.putMatches([...context.games.matches.values()].map((match) => (match.matchNumber === 1 ? { ...match, homeSportEventParticipantId: 'LL' } : match)));
+    context.games.putMatches([...context.games.matches.values()].map((match) => (match.matchNumber === 1 ? withHomeAway(match, { homeSportEventParticipantId: 'LL' }) : match)));
   }
 
   it('keeps the entry\'s picks of the withdrawn team, each busted as a first-round loss, rather than dropping them', async () => {

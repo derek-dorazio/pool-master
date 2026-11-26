@@ -9353,7 +9353,7 @@ export interface components {
          */
         MatchStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /**
-         * @description One side of a match. On a neutral site HOME is the upper line of the bracket.
+         * @description One side of a match: HOME is side 2 and AWAY side 1, the sides the sync placed the home and away teams on. On a neutral site HOME is the upper line of the bracket.
          * @enum {string}
          */
         MatchSideDto: "HOME" | "AWAY";
@@ -9362,11 +9362,11 @@ export interface components {
          * @enum {string}
          */
         MatchEndingDto: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
-        /** @description Both sides' score at the end of one period of a game (#772). */
+        /** @description Both sides' running score at the end of one period of play of a game (#772, #2046), summed by the server. */
         SportEventMatchPeriodScoreDto: {
-            /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+            /** @description 1 for the first period (quarter, in American football). */
             periodNumber: number;
-            /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+            /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
             homeScore: number;
             /** @description The away side's score at the end of the period, earlier periods included. */
             awayScore: number;
@@ -9437,6 +9437,8 @@ export interface components {
              * @enum {string}
              */
             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /** @description True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status. */
+            isFinal: boolean;
             /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
             isUnplayed: boolean;
             /**
@@ -9458,7 +9460,7 @@ export interface components {
              */
             ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
             /**
-             * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+             * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
              * @enum {string|null}
              */
             resultSource: "PROVIDER" | null;
@@ -9481,11 +9483,11 @@ export interface components {
             regionLabel: string | null;
             /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
             homeSpread: number | null;
-            /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+            /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
             periodScores: {
-                /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                /** @description 1 for the first period (quarter, in American football). */
                 periodNumber: number;
-                /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
                 homeScore: number;
                 /** @description The away side's score at the end of the period, earlier periods included. */
                 awayScore: number;
@@ -9542,6 +9544,8 @@ export interface components {
                  * @enum {string}
                  */
                 status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status. */
+                isFinal: boolean;
                 /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
                 isUnplayed: boolean;
                 /**
@@ -9563,7 +9567,7 @@ export interface components {
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+                 * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
                  * @enum {string|null}
                  */
                 resultSource: "PROVIDER" | null;
@@ -9586,11 +9590,11 @@ export interface components {
                 regionLabel: string | null;
                 /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
                 homeSpread: number | null;
-                /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+                /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
                 periodScores: {
-                    /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                    /** @description 1 for the first period (quarter, in American football). */
                     periodNumber: number;
-                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
                     homeScore: number;
                     /** @description The away side's score at the end of the period, earlier periods included. */
                     awayScore: number;
@@ -9648,6 +9652,8 @@ export interface components {
                  * @enum {string}
                  */
                 status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status. */
+                isFinal: boolean;
                 /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
                 isUnplayed: boolean;
                 /**
@@ -9669,7 +9675,7 @@ export interface components {
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+                 * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
                  * @enum {string|null}
                  */
                 resultSource: "PROVIDER" | null;
@@ -9692,11 +9698,11 @@ export interface components {
                 regionLabel: string | null;
                 /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
                 homeSpread: number | null;
-                /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+                /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
                 periodScores: {
-                    /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                    /** @description 1 for the first period (quarter, in American football). */
                     periodNumber: number;
-                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
                     homeScore: number;
                     /** @description The away side's score at the end of the period, earlier periods included. */
                     awayScore: number;
@@ -13420,7 +13426,7 @@ export interface components {
              * @enum {string}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-            /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+            /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
             shootout: boolean;
             /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
             isTestData: boolean;
@@ -13769,7 +13775,7 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-                /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+                /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
                 shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
@@ -14097,7 +14103,7 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-                /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+                /** @description Whether a game of the event can be decided by a shoot-out: one of its slots' games cannot finish level (`canEndTied` false), so a level score is settled by one. */
                 shootout: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
@@ -21458,6 +21464,8 @@ export interface components {
                  * @enum {string}
                  */
                 status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status. */
+                isFinal: boolean;
                 /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
                 isUnplayed: boolean;
                 /**
@@ -21479,7 +21487,7 @@ export interface components {
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
+                 * @description Who set the result: PROVIDER, the data feed (on a test event, the test-data loader standing in for it), the only writer; null while the match has no result.
                  * @enum {string|null}
                  */
                 resultSource: "PROVIDER" | null;
@@ -21502,11 +21510,11 @@ export interface components {
                 regionLabel: string | null;
                 /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
                 homeSpread: number | null;
-                /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+                /** @description Game 1's running score at the end of each period of play entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
                 periodScores: {
-                    /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                    /** @description 1 for the first period (quarter, in American football). */
                     periodNumber: number;
-                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
                     homeScore: number;
                     /** @description The away side's score at the end of the period, earlier periods included. */
                     awayScore: number;

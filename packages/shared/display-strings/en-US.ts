@@ -153,6 +153,22 @@ export const enUS = {
       WALKOVER: { name: 'Walkover', short: 'w/o' },
       DEFAULT: { name: 'Default', short: 'def.' },
     },
+    MatchSideOutcome: {
+      PENDING: 'Undecided',
+      WON: 'Won',
+      LOST: 'Lost',
+      TIED: 'Tied',
+    },
+    HomeAway: {
+      HOME: 'Home',
+      AWAY: 'Away',
+      NONE: 'Neutral site',
+    },
+    PeriodKind: {
+      REGULAR: 'Period',
+      OVERTIME: 'Overtime',
+      SHOOTOUT: 'Shoot-out',
+    },
     MatchPeriodLayout: {
       QUARTERS: 'Quarters',
       HALVES: 'Halves',

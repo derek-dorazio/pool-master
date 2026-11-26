@@ -1,4 +1,4 @@
-import { deleteTestSportLeagues } from '../support/test-slots';
+import { deleteTestSportLeagues, LEVEL_TEST_DEFINITION_KEY, withTestDefinition } from '../support/test-slots';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -114,6 +114,8 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // --- A league and a week of three games -----------------------------------------------------
     const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.FOOTBALL, name: `Week League ${RUN}` });
     created.sportLeagueIds.add(sportLeagueId);
+    // The week is played on a test definition whose games can end level, as a regular season's can (#2046).
+    await withTestDefinition(getFunctionalPrisma(), sportLeagueId, LEVEL_TEST_DEFINITION_KEY);
     const teamIds: string[] = [];
     for (const team of TEAMS) {
       const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${team} ${RUN}` } });

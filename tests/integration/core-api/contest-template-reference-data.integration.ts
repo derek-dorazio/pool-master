@@ -38,6 +38,7 @@ import { scoreKnockoutField } from '../../../packages/core-api/src/modules/scori
 import { expectDefined } from '../../support/expect-defined';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { roundSlot } from '../../support/round-slots';
+import { legacyMatch } from '../../support/match-sides';
 
 /** A seeded league's knockout slot definitions, in play order: each one's name (null for its kind's word), kind and pairing (#2006). */
 async function knockoutDefinitions(sportLeagueName: string): Promise<Array<[string | null, string, string]>> {
@@ -1383,7 +1384,7 @@ function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[
   };
   const champion = team('Champion');
   const opponents = slotKinds.map((_, index) => team(`Opponent ${String(index + 1)}`));
-  const matches: SportEventRoundMatch[] = slotKinds.map((slotKind, index) => ({
+  const matches: SportEventRoundMatch[] = slotKinds.map((slotKind, index) => legacyMatch({
     id: `match-${String(index + 1)}`,
     sportEventId: event.id,
     roundNumber: index + 1,
@@ -1417,7 +1418,7 @@ function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[
     standing: null,
     rounds: [],
     raceResult: null,
-    matches: matches.filter((match) => match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id),
+    matches: matches.filter((match) => match.sides.some((side) => side.sportEventParticipantId === entry.id)),
     affiliatedWithSportLeague: true,
   }));
 }

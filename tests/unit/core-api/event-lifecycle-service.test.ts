@@ -1,3 +1,4 @@
+import { legacyMatch } from '../../support/match-sides';
 import type { ContestRepository, ContestStatusTransition } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
@@ -615,7 +616,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
     contests.matches = {
       findBySportEvent: jest.fn().mockResolvedValue([
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff } as SportEventRoundMatch,
+        legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff }),
       ]),
     };
     contests.contests.transitionStatuses = guardedMove(written, (ids, transition) => {
@@ -1068,7 +1069,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
 
   it('keeps every contest live when a game of the event was already under way before the postponement', async () => {
     const deps = liveContests([LIVE], {
-      games: [{ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START } as SportEventRoundMatch],
+      games: [legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START })],
     });
 
     await follow(deps, postponedEvents(NEW_START));
@@ -1079,8 +1080,8 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
   it('still reopens when the event\'s games are scheduled or postponed themselves, none of them begun', async () => {
     const deps = liveContests([LIVE], {
       games: [
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: NEW_START } as SportEventRoundMatch,
-        { id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.POSTPONED, scheduledDate: NEW_START } as SportEventRoundMatch,
+        legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, scheduledDate: NEW_START }),
+        legacyMatch({ id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.POSTPONED, scheduledDate: NEW_START }),
       ],
     });
 

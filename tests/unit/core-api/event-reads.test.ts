@@ -2,6 +2,7 @@
  * One fan-out's shared reads (#1199): an event's data read once for all of its contests, a read
  * that fails read again by the next contest, and each answer the contest's own to change.
  */
+import { legacyMatch } from '../../support/match-sides';
 import type { SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   readEventMatchesOnce,
@@ -14,7 +15,7 @@ function event(id: string): SportEvent {
 }
 
 function match(sportEventId: string, matchNumber: number): SportEventRoundMatch {
-  return { id: `${sportEventId}-game-${String(matchNumber)}`, sportEventId, matchNumber } as SportEventRoundMatch;
+  return legacyMatch({ id: `${sportEventId}-game-${String(matchNumber)}`, sportEventId, matchNumber });
 }
 
 describe('fan-out event reads', () => {

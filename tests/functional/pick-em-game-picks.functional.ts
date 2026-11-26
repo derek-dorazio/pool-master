@@ -43,6 +43,8 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { AWAY_SIDE, HOME_SIDE } from '../support/match-sides';
+import { rowSideTeam } from '../support/match-rows';
 
 // A confidence pick'em week end to end over HTTP (#716). An admin builds a four-team basketball
 // event and releases it; its final, whose teams are still to be decided, is called off, so the
@@ -155,7 +157,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     // The final is called off, so it is not one of the week's games.
     await db.sportEventRoundMatch.updateMany({ where: { sportEventId: eventId, sportEventRound: { roundNumber: 2 }, matchNumber: 1 }, data: { status: MatchStatus.CANCELLED } });
-    const games = await db.sportEventRoundMatch.findMany({ where: { sportEventId: eventId }, orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }] });
+    const games = await db.sportEventRoundMatch.findMany({ where: { sportEventId: eventId }, include: { sides: true }, orderBy: [{ sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }] });
     const [game1, game2] = [expectDefined(games[0]), expectDefined(games[1])];
 
     // --- A confidence pick'em contest, opened and entered by two teams -------------------------
@@ -193,7 +195,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     const pick = (game: typeof game1, side: 'home' | 'away', confidence: number) => ({
       sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
-      sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
+      sportEventParticipantId: expectDefined(side === 'home' ? rowSideTeam(game, HOME_SIDE) : rowSideTeam(game, AWAY_SIDE)),
       confidence,
     });
 
@@ -254,7 +256,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
 
     const revealed = expectDefined((await getGamePicks({ client: member.client, path: week })).data);
     expect(revealed.games.map((game) => [game.matchNumber, game.revealed, game.pick?.sportEventParticipantId ?? null, game.pick?.confidence ?? null])).toEqual([
-      [1, true, game1.homeSportEventParticipantId, 2],
+      [1, true, rowSideTeam(game1, HOME_SIDE), 2],
       [2, false, null, null],
     ]);
 
@@ -268,7 +270,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     );
     const swapped = expectDefined((await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [pick(game2, 'home', 1)] } })).data);
     expect(swapped.status).toBe(ContestEntryStatus.SUBMITTED);
-    expect(swapped.games.find((game) => isAtPlace(game, { roundNumber: 1, matchNumber: 2 }))?.pick?.sportEventParticipantId).toBe(game2.homeSportEventParticipantId);
+    expect(swapped.games.find((game) => isAtPlace(game, { roundNumber: 1, matchNumber: 2 }))?.pick?.sportEventParticipantId).toBe(rowSideTeam(game2, HOME_SIDE));
 
     // The member's team was still in draft at the first kickoff: its week no longer counts or changes.
     expectFunctionalError(

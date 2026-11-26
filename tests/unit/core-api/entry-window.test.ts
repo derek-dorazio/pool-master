@@ -3,6 +3,7 @@
  * when each event's picks can change, when each event's picks are revealed, and which event a
  * contest's pages open on.
  */
+import { withHomeAway, legacyMatch } from '../../support/match-sides';
 import { ContestStatus, MatchStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   ContestCutoffKind,
@@ -138,12 +139,12 @@ describe('currentContestEvent — the event a contest\'s pages open on', () => {
 
 // A week of pick'em (#716): each game's pick locks, and is revealed, at that game's own kickoff.
 function game(kickoffOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED, roundNumber = 1) {
-  return {
+  return legacyMatch({
     id: `game-${roundNumber}-${kickoffOffsetHours ?? 'untimed'}`,
     roundNumber,
     status,
     scheduledDate: kickoffOffsetHours === null ? null : new Date(NOW.getTime() + kickoffOffsetHours * HOUR),
-  };
+  });
 }
 
 // The week's event started on Thursday's kickoff; its status has not been moved on yet.
@@ -293,7 +294,7 @@ describe('contestCutoff — where a contest\'s window closes (#721)', () => {
 describe('cutoffTiming — the timing a contest\'s window runs on (#721)', () => {
   const ROUND_TWO = { kind: ContestCutoffKind.ROUND_START, roundNumber: 2 } as const;
   const underWay = event('regional', -48, SportEventStatus.IN_PROGRESS);
-  const game = (roundNumber: number, startOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) => ({
+  const game = (roundNumber: number, startOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) => legacyMatch({
     id: `game-${roundNumber}-${startOffsetHours ?? 'untimed'}`,
     roundNumber,
     status,
@@ -351,7 +352,7 @@ describe('cutoffTiming — the timing a contest\'s window runs on (#721)', () =>
 
 describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (#711)', () => {
   const playoffs = event('playoffs', -24 * 14, SportEventStatus.IN_PROGRESS);
-  const game = (id: string, startOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) => ({
+  const game = (id: string, startOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) => legacyMatch({
     id,
     roundNumber: 4,
     status,
@@ -384,7 +385,7 @@ describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (
   });
 
   it('is started once a quarter\'s score is in, though the game is still SCHEDULED and its kickoff time has not passed', () => {
-    const scored = { ...game('super-bowl', 6), periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }] };
+    const scored = withHomeAway(game('super-bowl', 6), { periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }] });
 
     expect(cutoffTiming(SUPER_BOWL, playoffs, [scored]).status).toBe(SportEventStatus.IN_PROGRESS);
     expect(hasMatchStarted(scored, playoffs, NOW)).toBe(true);

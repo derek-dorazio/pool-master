@@ -1,4 +1,4 @@
-import { BackgroundJobType, MatchStatus, ProviderSyncFindingKind, ProviderSyncFindingSeverity, Sport, type SportLeague } from '@poolmaster/shared/domain';
+import { BackgroundJobType, MatchStatus, ProviderSyncFindingKind, ProviderSyncFindingSeverity, Sport, type SportLeague, HomeAway } from '@poolmaster/shared/domain';
 import type { ProviderMappedGame, ProviderNotificationReceipt, ProviderNotifiedEvent, ProviderNotifiedEventQuery } from '@poolmaster/shared/db';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import {
@@ -48,8 +48,12 @@ const MAPPED_GAME: ProviderMappedGame = {
   externalId: '424095',
   game: {
     id: 'game-1', sportEventId: LIVE_EVENT_ID, sportEventRoundMatchId: 'match-1', sportEventSlotId: 'event-slot-1', gameNumber: 1,
-    scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 7, awayScore: 3, completedAt: null,
+    scheduledDate: null, status: MatchStatus.IN_PROGRESS, completedAt: null,
     movedToGameId: null, lastProviderNotificationAt: null, createdAt: NOW, updatedAt: NOW,
+    sideResults: [
+      { sportEventRoundMatchSideId: 'match-1-s1', sideNumber: 1, score: 3, homeAway: HomeAway.AWAY, periodScores: [] },
+      { sportEventRoundMatchSideId: 'match-1-s2', sideNumber: 2, score: 7, homeAway: HomeAway.HOME, periodScores: [] },
+    ],
   },
 };
 

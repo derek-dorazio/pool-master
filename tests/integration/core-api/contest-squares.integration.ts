@@ -23,6 +23,7 @@ import { recordStatements } from '../statement-log';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -76,11 +77,9 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   const round = await prisma.sportEventRound.create({
     data: { sportEventId: sportEvent.id, sportEventSlotId: await oneEventSlotId(prisma, sportEvent.id), roundNumber: 1, scheduledDate: sportEvent.startDate },
   });
-  const game = await prisma.sportEventRoundMatch.create({
-    data: {
-      sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true,
-      homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
-    },
+  const game = await createMatchRow(prisma, {
+    sportEventId: sportEvent.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1, isNeutralSite: true,
+    teams: [away.id, home.id],
   });
   const contest = await prisma.contest.create({
     data: {
@@ -271,7 +270,7 @@ describe('PrismaSquaresRepository finding the boards the automatic draw is due o
     const [underWay, over, cancelled] = await Promise.all([seedSquaresContest(), seedSquaresContest(), seedSquaresContest()]);
     const prisma = getPrisma();
     await prisma.sportEventRoundMatch.update({ where: { id: underWay.gameId }, data: { status: 'IN_PROGRESS' } });
-    await prisma.sportEventRoundMatch.update({ where: { id: over.gameId }, data: { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 21, awayScore: 17 } });
+    await prisma.sportEventRoundMatch.update({ where: { id: over.gameId }, data: { status: 'COMPLETED', completedAt: new Date() } });
     await prisma.sportEventRoundMatch.update({ where: { id: cancelled.gameId }, data: { status: 'CANCELLED' } });
 
     const due = await new PrismaSquaresRepository(getAppPrisma()).findDueForAutoDraw(KICKOFF);
