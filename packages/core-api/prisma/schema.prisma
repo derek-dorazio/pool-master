@@ -2315,7 +2315,6 @@ model SportEventRoundMatch {
   sportEventId         String            @map("sport_event_id") @db.Uuid
   sportEventRoundId    String            @map("sport_event_round_id") @db.Uuid
   matchNumber          Int               @map("match_number")
-  isNeutralSite        Boolean           @map("is_neutral_site")
   scheduledDate        DateTime?         @map("scheduled_date") @db.Timestamptz
   /// Rolled up from the match's Games by the result writer (#2046).
   status               PrismaMatchStatus @default(SCHEDULED)
@@ -2327,9 +2326,6 @@ model SportEventRoundMatch {
   /// The bracket region or conference the match is in ("East", "AFC"); null where the bracket
   /// has none. A reseeded round pairs the teams of one region (#722).
   regionLabel          String?           @map("region_label") @db.VarChar(40)
-  /// When the result was last recorded (#1889): set each time the match is written COMPLETED, a
-  /// correction included; cleared by any other status the result service writes.
-  completedAt          DateTime?         @map("completed_at") @db.Timestamptz
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -2394,8 +2390,12 @@ model SportEventRoundMatchGame {
   /// 1 for a single game; a series' games in the order they are played.
   gameNumber                 Int                      @map("game_number")
   scheduledDate              DateTime?                @map("scheduled_date") @db.Timestamptz
+  /// Neither side plays at home (#2047): a Super Bowl, a tournament game. Its side results then
+  /// say NONE for home or away.
+  isNeutralSite              Boolean                  @default(false) @map("is_neutral_site")
   status                     PrismaMatchStatus        @default(SCHEDULED)
-  /// When the game was last written COMPLETED; null for any other status.
+  /// When the game was last written COMPLETED; null for any other status. A match's and a
+  /// round's completion time are read from their Games.
   completedAt                DateTime?                @map("completed_at") @db.Timestamptz
   /// The Game a provider moved this one to (another week's): set once, never re-parented. This
   /// Game keeps its picks; the provider's id moves to the new Game.

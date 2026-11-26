@@ -1,6 +1,6 @@
 import { withHomeAway, homeAwayOf, legacyMatch } from '../../support/match-sides';
 import { expect } from '@jest/globals';
-import { matchPlaceOf, MatchEnding, MatchSide, MatchStatus, SlotPairing, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { matchIsNeutralSite, matchPlaceOf, MatchEnding, MatchSide, MatchStatus, SlotPairing, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   findReseededPlaceGaps,
   findRoundMatchupProblems,
@@ -227,7 +227,7 @@ describe('findBracketProblems on a league that reseeds', () => {
     roundNumber: match.roundNumber,
     homeSportEventParticipantId: homeAwayOf(match).homeSportEventParticipantId,
     awaySportEventParticipantId: homeAwayOf(match).awaySportEventParticipantId,
-    isNeutralSite: match.isNeutralSite,
+    isNeutralSite: matchIsNeutralSite(match),
     scheduledDate: null,
     advancesTo: match.advancesToMatchId === null ? null : { ...matchPlaceOf(expectDefined(all.find((next) => next.id === match.advancesToMatchId), 'the next match')), side: homeAwayOf(match).advancesToSide ?? MatchSide.HOME },
     regionLabel: match.regionLabel,

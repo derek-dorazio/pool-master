@@ -39,6 +39,7 @@ function game(gameNumber: number, status: MatchStatus, sideResults: readonly Spo
     sportEventSlotId: 'slot',
     gameNumber,
     scheduledDate: null,
+    isNeutralSite: false,
     status,
     completedAt: null,
     movedToGameId: null,

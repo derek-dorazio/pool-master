@@ -20,6 +20,7 @@ export interface SportEventRoundMatchWrite {
   matchNumber: number;
   /** Both sides, side 1 and side 2. */
   sides: readonly MatchSideWrite[];
+  /** Written onto its Game 1 (#2047): a neutral site is the Game's. */
   isNeutralSite: boolean;
   scheduledDate: Date | null;
   advancesToMatchId: string | null;
@@ -37,6 +38,7 @@ export interface MatchSideTeam {
 export interface SportEventRoundMatchPatch {
   /** The sides whose team changes. */
   sides?: readonly MatchSideTeam[];
+  /** Every one of the match's Games' neutral-site flag (#2047), so the match reads what was set. */
   isNeutralSite?: boolean;
   scheduledDate?: Date | null;
   /** Side 1's spread (#720). */
@@ -61,7 +63,10 @@ export interface MatchResultWrite {
   id: string;
   status: MatchStatus;
   ending: MatchEnding;
-  /** When a COMPLETED result was written (#1889); null for any other status. */
+  /**
+   * When a COMPLETED result was written (#1889); null for any other status. It is stored on the
+   * single-game match's Game 1 (#2047); a match keeps no completion time of its own.
+   */
   completedAt: Date | null;
   outcomes: readonly { sideNumber: number; outcome: MatchSideOutcome }[];
   /**
@@ -156,6 +161,8 @@ export interface SportEventRoundMatchGameCreate {
   sportEventRoundMatchId: string;
   sportEventSlotId: string;
   gameNumber: number;
+  /** As its match's other Games (#2047): a series is played where its Game 1 is, until the provider says. */
+  isNeutralSite: boolean;
 }
 
 /** A Game's provider score, written as the provider reports the game (#2007, #2046). */

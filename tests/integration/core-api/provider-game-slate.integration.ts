@@ -209,7 +209,9 @@ describe('Provider game slate (#1728)', () => {
     for (const [matchNumber, winnerSide] of [[1, 'HOME'], [2, 'AWAY'], [3, 'HOME']] as const) {
       // poolmaster-allow-query-in-loop: three test fixture results
       const { id } = await prisma.sportEventRoundMatch.findFirstOrThrow({ where: { sportEventId: event.id, sportEventRound: { roundNumber: 1 }, matchNumber }, select: { id: true } });
-      await prisma.sportEventRoundMatch.update({ where: { id }, data: { status: 'COMPLETED', completedAt: new Date() } });
+      await prisma.sportEventRoundMatch.update({ where: { id }, data: { status: 'COMPLETED' } });
+      // poolmaster-allow-query-in-loop: three test fixture results
+      await prisma.sportEventRoundMatchGame.updateMany({ where: { sportEventRoundMatchId: id }, data: { status: 'COMPLETED', completedAt: new Date() } });
       const winner = sideNumberOfMatchSide(winnerSide);
       await prisma.sportEventRoundMatchSide.updateMany({ where: { sportEventRoundMatchId: id, sideNumber: winner }, data: { outcome: 'WON' } });
       await prisma.sportEventRoundMatchSide.updateMany({ where: { sportEventRoundMatchId: id, sideNumber: { not: winner } }, data: { outcome: 'LOST' } });

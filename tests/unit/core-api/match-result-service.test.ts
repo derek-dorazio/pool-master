@@ -1,6 +1,6 @@
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { BackgroundJobType, isAtPlace, matchPlaceOf, type MatchPlace, MatchEnding, MatchResultSource, PeriodUnit, type SlotPeriods, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, isAtPlace, matchCompletedAt, matchPlaceOf, type MatchPlace, MatchEnding, MatchResultSource, PeriodUnit, type SlotPeriods, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService, describeScoreProblem, gameStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
@@ -193,7 +193,7 @@ describe('MatchResultService.recordResult', () => {
 
   it('records when the result came in, and moves it with a correction (#1889)', async () => {
     const { store, event } = await setup();
-    const completedAtOf = async () => (await store.matchRepo().findBySportEvent(event.id)).find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))?.completedAt;
+    const completedAtOf = async () => matchCompletedAt(expectDefined((await store.matchRepo().findBySportEvent(event.id)).find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })), 'match 1'));
     const corrected = new Date(AS_OF.getTime() + 60_000);
     let now = AS_OF;
     const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => now });

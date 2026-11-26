@@ -237,7 +237,6 @@ export interface SportEventRoundMatch extends DomainEntity {
   slot: SportEventRoundSlot;
   /** Unique within its round (#2161): the match's place in the round and its display order. */
   matchNumber: number;
-  isNeutralSite: boolean;
   scheduledDate: Date | null;
   /** Rolled up from the Games by the result writer. */
   status: MatchStatus;
@@ -251,11 +250,6 @@ export interface SportEventRoundMatch extends DomainEntity {
   advancesToSideNumber: number | null;
   /** The bracket region or conference ("East", "AFC"); null where the bracket has none. */
   regionLabel: string | null;
-  /**
-   * When the result was last recorded (#1889): each write of a COMPLETED result sets it, a
-   * correction included; null in every other status.
-   */
-  completedAt: Date | null;
   /** Side 1 then side 2 (#2046). */
   sides: readonly SportEventRoundMatchSide[];
   /** The match's Games in game-number order, each with its side results (#2046). */
@@ -293,7 +287,10 @@ export interface SportEventRoundMatchGame extends DomainEntity {
   /** 1 for the first game of its match; a series' games in the order they are played. */
   gameNumber: number;
   scheduledDate: Date | null;
+  /** Neither side plays at home (#2047); its side results then say NONE for home or away. */
+  isNeutralSite: boolean;
   status: MatchStatus;
+  /** When the game was last written COMPLETED; null for any other status. */
   completedAt: Date | null;
   /**
    * The Game this one was moved to (#2007): a provider that moves a game to another week keeps

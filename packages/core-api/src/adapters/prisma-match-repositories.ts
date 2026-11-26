@@ -78,7 +78,7 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
     });
     const roundByNumber = new Map(rounds.map((round) => [round.roundNumber, round]));
     // Ids chosen here, so the sides, Games and side results go in one insert each.
-    const data = matches.map(({ roundNumber, sides, ...match }) => {
+    const data = matches.map(({ roundNumber, sides, isNeutralSite, ...match }) => {
       const round = roundByNumber.get(roundNumber);
       if (round === undefined) {
         throw new Error(`Sport event ${sportEventId} has no round ${roundNumber}`);
@@ -87,6 +87,7 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
         match: { ...match, sportEventId, sportEventRoundId: round.id },
         sportEventSlotId: round.sportEventSlotId,
         gameId: randomUUID(),
+        isNeutralSite,
         sides: sides.map((side) => ({ ...side, id: randomUUID() })),
       };
     });
@@ -98,7 +99,7 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
       }),
       // Every match has its Game 1 from the start, played in its round's slot, with both sides' results.
       this.prisma.sportEventRoundMatchGame.createMany({
-        data: data.map(({ match, gameId, sportEventSlotId }) => ({ id: gameId, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId, gameNumber: 1, scheduledDate: match.scheduledDate })),
+        data: data.map(({ match, gameId, sportEventSlotId, isNeutralSite }) => ({ id: gameId, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId, gameNumber: 1, scheduledDate: match.scheduledDate, isNeutralSite })),
       }),
       this.prisma.sportEventRoundMatchGameSideResult.createMany({
         data: data.flatMap(({ match, gameId, sides }) => sides.map((side) => ({
@@ -109,10 +110,11 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
     ]);
   }
 
-  async update(id: string, { sides = [], spread, gameOneHomeAway = [], ...patch }: SportEventRoundMatchPatch, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
+  async update(id: string, { sides = [], spread, gameOneHomeAway = [], isNeutralSite, ...patch }: SportEventRoundMatchPatch, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.sportEventRoundMatch.update({ where: { id }, data: patch }),
       ...sideTeamUpdates(this.prisma, id, sides),
+      ...(isNeutralSite === undefined ? [] : [this.prisma.sportEventRoundMatchGame.updateMany({ where: { sportEventRoundMatchId: id }, data: { isNeutralSite } })]),
       // poolmaster-allow-query-in-loop: a match's two sides at most
       ...gameOneHomeAway.map(({ sideNumber, homeAway }) => this.prisma.sportEventRoundMatchGameSideResult.updateMany({
         where: { sportEventRoundMatchId: id, game: { gameNumber: 1 }, side: { sideNumber } },
@@ -159,14 +161,14 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
   }
 
   async applyResult({ result, sideFill, standings, jobs = [] }: MatchResultApply): Promise<void> {
-    const { id, outcomes, gameOne, ...values } = result;
+    const { id, outcomes, gameOne, completedAt, ...values } = result;
     await this.prisma.$transaction(async (tx) => {
       await tx.sportEventRoundMatch.update({ where: { id }, data: values });
       // poolmaster-allow-query-in-loop: a match's two sides
       for (const { sideNumber, outcome } of outcomes) await tx.sportEventRoundMatchSide.updateMany({ where: { sportEventRoundMatchId: id, sideNumber }, data: { outcome } });
       if (gameOne !== null) {
         // A single game's Game 1 is the match: it takes the result's status and completion time.
-        await tx.sportEventRoundMatchGame.update({ where: { id: gameOne.gameId }, data: { status: values.status, completedAt: values.completedAt } });
+        await tx.sportEventRoundMatchGame.update({ where: { id: gameOne.gameId }, data: { status: values.status, completedAt } });
         await writeSideScores(tx, [{ sportEventRoundMatchId: id, gameId: gameOne.gameId, scores: gameOne.scores }]);
       }
       if (sideFill) {

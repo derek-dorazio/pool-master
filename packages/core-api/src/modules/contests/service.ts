@@ -71,6 +71,7 @@ import {
   opposingSideOf,
   matchSideOfSideNumber,
   matchScoreOf,
+  matchIsNeutralSite,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_EVENT_NOT_IN_CONTEST,
@@ -1439,7 +1440,7 @@ export class ContestService {
         opponent: opponent.name,
         opponentShortName: opponent.shortName ?? null,
         side,
-        isNeutralSite: game.isNeutralSite,
+        isNeutralSite: matchIsNeutralSite(game),
         scheduledDate: game.scheduledDate,
         status: game.status,
         teamScore: pickedSide === null ? null : matchScoreOf(game, pickedSide.sideNumber),
