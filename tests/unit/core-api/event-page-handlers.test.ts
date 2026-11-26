@@ -39,7 +39,6 @@ const OFFER: EventPageOffer = {
     createdAt: STAMP,
     updatedAt: STAMP,
   },
-  bracketStartRound: null,
   sortOrder: 1,
   isPrimary: true,
 };

@@ -1048,21 +1048,17 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1', 'contest-2'], expect.objectContaining({ startsAt: NEW_START }));
   });
 
-  it('keeps live a squares contest, a contest whose draw dealt its picks and a bracket starting at a later round, and reopens a full bracket', async () => {
+  it('keeps live a squares contest and a contest whose draw dealt its picks, and reopens a bracket, reading no rules to decide', async () => {
     const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' });
     const drawn = buildContest({ ...LIVE, id: 'contest-drawn', drawnAt: new Date('2026-05-01T00:00:00.000Z') });
-    const secondChance = buildContest({ ...LIVE, id: 'contest-second-chance', selectionType: SelectionType.BRACKET });
     const fullBracket = buildContest({ ...LIVE, id: 'contest-full-bracket', selectionType: SelectionType.BRACKET });
-    const deps = liveContests([squares, drawn, secondChance, fullBracket], {
-      configurations: [
-        { contestId: secondChance.id, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 2 } },
-        { contestId: fullBracket.id, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 } },
-      ],
+    const deps = liveContests([squares, drawn, fullBracket], {
+      configurations: [{ contestId: fullBracket.id, configJson: { selectionType: SelectionType.BRACKET } }],
     });
 
     await follow(deps, postponedEvents(NEW_START));
 
-    expect(deps.configurations.findByContests).toHaveBeenCalledWith([secondChance.id, fullBracket.id]);
+    expect(deps.configurations.findByContests).not.toHaveBeenCalled();
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith([fullBracket.id], expect.objectContaining({ to: ContestStatus.OPEN }));
   });
 

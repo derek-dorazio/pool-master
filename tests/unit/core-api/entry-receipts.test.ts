@@ -290,27 +290,6 @@ describe('EntryReceipts', () => {
     expect(text).toContain('You can change your bracket until Thu, Mar 19, 2026');
   });
 
-  it('says a second-chance bracket locks at its starting round, not at the event start its untimed later games fall back to', async () => {
-    const eventStart = new Date('2026-03-19T16:15:00.000Z');
-    const sweetSixteen = new Date('2026-03-26T23:10:00.000Z');
-    const { contest, event, entry, owners } = await entryIn(SelectionType.BRACKET, {
-      name: 'NCAA Tournament', sport: Sport.BASKETBALL, rounds: 4, startDate: eventStart,
-    });
-    slotNames = ['Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
-
-    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
-      selectionType: SelectionType.BRACKET,
-      picksCloseAt: sweetSixteen,
-      games: [
-        game({ id: 's16', away: 'Duke', home: 'Arizona', picked: 'Duke', roundNumber: 1, kickoff: sweetSixteen }),
-        // A later game with no time yet reports the event's start as its kickoff.
-        game({ id: 'e8', away: 'TBD1', home: 'TBD2', predictedAway: 'Duke', predictedHome: 'Houston', picked: 'Duke', roundNumber: 2, kickoff: eventStart }),
-      ],
-    }));
-
-    expect(textTo(owners[0].id)).toContain('You can change your bracket until Thu, Mar 26, 2026.');
-  });
-
   it('sends a survivor receipt with the team, its game and when the pick locks', async () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.SURVIVOR, { name: 'Week 3', sport: Sport.FOOTBALL, startDate: KICKOFF });
 

@@ -234,6 +234,54 @@
       "key": "holdsGame",
       "now": 0,
       "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "startsAtRound",
+      "now": 0,
+      "reason": "retired by #2172"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "startsAtRounds",
+      "now": 0,
+      "reason": "retired by #2172"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "bracketStartRound",
+      "now": 0,
+      "reason": "retired by #2172"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ROUND_START",
+      "now": 0,
+      "reason": "retired by #2172"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "isSecondChanceBracket",
+      "now": 0,
+      "reason": "retired by #2172"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "formatBracketStartLabel",
+      "now": 0,
+      "reason": "retired by #2172"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "tiersUsed",
+      "now": 0,
+      "reason": "retired by #2172"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "getTiersInPlay",
+      "now": 0,
+      "reason": "retired by #2172"
     }
   ]
 }

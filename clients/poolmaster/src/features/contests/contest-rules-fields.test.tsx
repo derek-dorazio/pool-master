@@ -86,7 +86,7 @@ describe('contest rules fields for a survivor contest', () => {
 });
 
 describe('contest rules fields for a tiered contest', () => {
-  it('puts how "Tiers to pick from" works behind its (?), not under the field', () => {
+  it('picks from every tier of the event, so the roster reads the event\'s tier count times the picks per tier and there is no tier count to choose', () => {
     render(
       <ContestRulesFields
         onChange={vi.fn()}
@@ -98,8 +98,7 @@ describe('contest rules fields for a tiered contest', () => {
       />,
     );
 
-    expect(screen.queryByText(/The first tiers only/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('contest-tiered-tiers-used-help'));
-    expect(screen.getByTestId('contest-tiered-tiers-used-help-callout')).toHaveTextContent('The first tiers only, in tier order. Leave empty for all 6.');
+    expect(screen.getByText('6 tiers × 1 = 6 golfers per entry')).toBeInTheDocument();
+    expect(screen.queryByText('Tiers to pick from')).not.toBeInTheDocument();
   });
 });

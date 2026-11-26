@@ -12,11 +12,9 @@ import {
   describeSurvivorRules,
   formatPickEmModeName,
   getTieredRosterSize,
-  isSecondChanceBracket,
 } from '@poolmaster/shared/domain';
-import { Checkbox, FormField, HelpTip, Input, SegmentedControl, Select, Text } from '@/features/shared/ui';
-import type { BracketStartRoundOption } from './bracket-start-round';
-import { defaultCountedScoresFor, perEntryLabel, tiersInPlayFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
+import { Checkbox, FormField, Input, SegmentedControl, Text } from '@/features/shared/ui';
+import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
   onChange,
@@ -30,16 +28,15 @@ function TieredRulesInputs({
   values: ContestRulesValues;
 }) {
   const picksPerTier = Number(values.picksPerTier);
-  const tiersInPlay = tiersInPlayFor(values.tiersUsed, tierCount);
   const rosterSize = tierCount > 0 && Number.isInteger(picksPerTier) && picksPerTier >= 1
-    ? getTieredRosterSize(tiersInPlay, picksPerTier)
+    ? getTieredRosterSize(tierCount, picksPerTier)
     : null;
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <FormField
         helperText={tierCount > 0
-          ? `${tiersInPlay} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} ${participant.many} per entry`
+          ? `${tierCount} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} ${participant.many} per entry`
           : 'The event has no tiers yet.'}
         label="Picks per tier"
       >
@@ -48,30 +45,11 @@ function TieredRulesInputs({
           min={1}
           onChange={(event) => {
             const next = event.target.value;
-            const countedScores = defaultCountedScoresFor(next, tiersInPlay);
+            const countedScores = defaultCountedScoresFor(next, tierCount);
             onChange(countedScores === null ? { picksPerTier: next } : { countedScores, picksPerTier: next });
           }}
           type="number"
           value={values.picksPerTier}
-        />
-      </FormField>
-      <FormField
-        label="Tiers to pick from"
-        labelAddon={(
-          <HelpTip label="About tiers to pick from" testId="contest-tiered-tiers-used-help">
-            {tierCount > 0
-              ? `The first tiers only, in tier order. Leave empty for all ${tierCount}.`
-              : 'The first tiers only, in tier order. Leave empty for every tier.'}
-          </HelpTip>
-        )}
-      >
-        <Input
-          data-testid="contest-tiered-tiers-used"
-          min={1}
-          onChange={(event) => onChange({ tiersUsed: event.target.value })}
-          placeholder={tierCount > 0 ? `All ${tierCount}` : 'All'}
-          type="number"
-          value={values.tiersUsed}
         />
       </FormField>
       <FormField
@@ -235,50 +213,17 @@ function PickEmRulesInputs({
 }
 
 /**
- * The bracket input (#721): where the bracket starts, the full bracket or a later round for a
- * second-chance bracket, among the rounds the event offers. Every game from there on is picked,
- * and the round points below say what each is worth.
+ * The bracket rules (#721): every game of the event is picked, from the first round to the
+ * final, and the round points below say what each is worth.
  */
-function BracketRulesInputs({
-  onChange,
-  startRounds,
-  values,
-}: {
-  onChange: (next: Partial<ContestRulesValues>) => void;
-  startRounds: readonly BracketStartRoundOption[];
-  values: ContestRulesValues;
-}) {
-  const chosen = startRounds.find((option) => String(option.roundNumber) === values.startsAtRound) ?? null;
-  const startRoundName = chosen && isSecondChanceBracket(chosen.roundNumber) ? chosen.name : null;
-  return (
-    <div className="space-y-3">
-      {startRounds.length ? (
-        <FormField
-          helperText="A second-chance bracket is picked from a later round on, and closes at that round's first game."
-          label="Starts at"
-        >
-          <Select
-            data-testid="contest-bracket-starts-at-round"
-            onChange={(event) => onChange({ startsAtRound: event.target.value })}
-            value={chosen ? values.startsAtRound : ''}
-          >
-            {chosen ? null : <option disabled value="">Choose a round</option>}
-            {startRounds.map((option) => (
-              <option key={option.roundNumber} value={String(option.roundNumber)}>{option.label}</option>
-            ))}
-          </Select>
-        </FormField>
-      ) : null}
-      <Text as="p" data-testid="contest-bracket-rules" variant="meta">{describeBracketRules(startRoundName)}</Text>
-    </div>
-  );
+function BracketRulesInputs() {
+  return <Text as="p" data-testid="contest-bracket-rules" variant="meta">{describeBracketRules()}</Text>;
 }
 
 /** The survivor Lives choice (#1754): 1 up to the most a contest allows. */
 const SURVIVOR_LIVES_CHOICES = Array.from({ length: SURVIVOR_LIVES_MAX }, (_, index) => index + 1);
 
 type RulesInputsProps = {
-  bracketStartRounds: readonly BracketStartRoundOption[];
   onChange: (next: Partial<ContestRulesValues>) => void;
   participant: SportNoun;
   salaryCap: number | null;
@@ -300,9 +245,7 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   [SelectionType.PICK_EM]: ({ onChange, values }: RulesInputsProps) => (
     <PickEmRulesInputs onChange={onChange} values={values} />
   ),
-  [SelectionType.BRACKET]: ({ bracketStartRounds, onChange, values }: RulesInputsProps) => (
-    <BracketRulesInputs onChange={onChange} startRounds={bracketStartRounds} values={values} />
-  ),
+  [SelectionType.BRACKET]: () => <BracketRulesInputs />,
   [SelectionType.SURVIVOR]: ({ onChange, values }: RulesInputsProps) => (
     <div className="space-y-4">
       <Text as="p" data-testid="contest-survivor-rules" variant="meta">{describeSurvivorRules(values.survivorReuseTeams, values.survivorLives)}</Text>
@@ -355,11 +298,10 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
  * one, golfers dealt per entry and scores that count for a random draw, the mode for a pick'em
- * contest, where a bracket starts, a survivor contest's rules, a squares contest's boxes per entry, then entries per member with No limit (a squares contest takes one). Create and Edit contest both use it, so a new format
+ * contest, a bracket's rules, a survivor contest's rules, a squares contest's boxes per entry, then entries per member with No limit (a squares contest takes one). Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({
-  bracketStartRounds = [],
   onChange,
   participant,
   salaryCap,
@@ -367,8 +309,6 @@ export function ContestRulesFields({
   tierCount,
   values,
 }: {
-  /** The rounds a bracket on the event can start at; only a bracket reads them. */
-  bracketStartRounds?: readonly BracketStartRoundOption[];
   onChange: (next: Partial<ContestRulesValues>) => void;
   /** What the event's sport calls a competitor: "golfer", "horse". */
   participant: SportNoun;
@@ -380,7 +320,7 @@ export function ContestRulesFields({
 }) {
   return (
     <div className="space-y-4">
-      {RULES_INPUTS[selectionType]({ bracketStartRounds, onChange, participant, salaryCap, tierCount, values })}
+      {RULES_INPUTS[selectionType]({ onChange, participant, salaryCap, tierCount, values })}
       {selectionType === SelectionType.SQUARES ? (
         // The box limit is per entry, so a squares contest takes one entry per member (#711).
         <Text as="p" data-testid="contest-squares-one-entry" variant="meta">One entry per member, which holds their boxes.</Text>

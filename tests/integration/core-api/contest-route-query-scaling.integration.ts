@@ -232,12 +232,11 @@ async function seedMyLiveEntries({ contests, boards }: { contests: number; board
 /**
  * A league whose commissioner runs `contests` contests of `status`, each on an event of its own in
  * a sports league of its own, `startsInDays` from now, with one entry from the commissioner's team.
- * With `secondChanceBrackets`, every other contest is a bracket starting at round 2, whose window
- * reads its rules and its event's games.
+ * With `brackets`, every other contest is a bracket.
  */
 async function seedContestsInSportLeagues(
   contests: number,
-  { status, startsInDays, secondChanceBrackets = false }: { status: ContestStatus; startsInDays: number; secondChanceBrackets?: boolean },
+  { status, startsInDays, brackets = false }: { status: ContestStatus; startsInDays: number; brackets?: boolean },
 ) {
   const prisma = getPrisma();
   const seeded = await seedMyEntries({ contests: 0, events: 0 });
@@ -245,7 +244,7 @@ async function seedContestsInSportLeagues(
   const events = [];
   for (let index = 0; index < contests; index += 1) {
     const { event } = await seedEventWithField(2, { startsInDays, ownSportLeague: true });
-    const bracket = secondChanceBrackets && index % 2 === 1;
+    const bracket = brackets && index % 2 === 1;
     const contest = await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
@@ -260,7 +259,7 @@ async function seedContestsInSportLeagues(
     });
     if (bracket) {
       await prisma.contestConfiguration.create({
-        data: { contestId: contest.id, selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 2 } },
+        data: { contestId: contest.id, selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET } },
       });
     }
     events.push(event);
@@ -427,7 +426,7 @@ async function seedBracketContest(entries: number) {
     data: {
       contestId: contest.id,
       selectionType: SelectionType.BRACKET,
-      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+      configJson: { selectionType: SelectionType.BRACKET },
       participantScoringRules: {
         create: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', sortOrder: 1, config: { roundValues: [1, 2], upsetBonus: { rule: 'NONE' } } },
       },
@@ -636,11 +635,11 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
     });
   });
 
-  it("GET a league's plan usage: the same statements for 2 open contests in 2 sports leagues as for 20 in 20, half of them second-chance brackets", async () => {
+  it("GET a league's plan usage: the same statements for 2 open contests in 2 sports leagues as for 20 in 20, half of them brackets", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/contests/plan-usage',
       // Within the hour, so the events start this year however late in it the test runs.
-      seed: (contests) => seedContestsInSportLeagues(contests, { status: ContestStatus.OPEN, startsInDays: 1 / 24, secondChanceBrackets: true }),
+      seed: (contests) => seedContestsInSportLeagues(contests, { status: ContestStatus.OPEN, startsInDays: 1 / 24, brackets: true }),
       call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/plan-usage`, viewer),
       rowsShown: (response) => {
         const usage = okBody(response, LeaguePlanUsageResponseSchema);

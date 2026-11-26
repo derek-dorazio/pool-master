@@ -11,15 +11,14 @@
  * Joining, leaving and renaming are the contest's: only while it is OPEN (#117) and before its
  * first event starts, so nobody joins a contest already being played (design Q5.6).
  *
- * A second-chance bracket (#721) closes later than its event's start: at its starting round's
- * first game; a squares contest (#711) closes at its one game's kickoff. `ContestCutoff` says which, and `cutoffTiming` gives every check below the timing
+ * A squares contest (#711) closes later than its event's start: at its one game's kickoff. `ContestCutoff` says which, and `cutoffTiming` gives every check below the timing
  * it runs on, so the checks themselves stay the same for every contest.
  *
  * A random draw closes entries early (#601): once it has dealt, nobody may enter, leave or
  * change an entry, or the deal would no longer be the one every entry was given.
  */
-import type { Contest, ContestRules, ContestSelectionConfig } from '@poolmaster/shared/domain';
-import { ContestStatus, isMatchUnplayed, MatchStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished } from '@poolmaster/shared/domain';
+import type { Contest, ContestRules, ContestSelectionConfig, MatchStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, isMatchUnplayed, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished } from '@poolmaster/shared/domain';
 
 export type EventTiming = { status: SportEventStatus; startDate: Date };
 /** A game's timing: its status, its kickoff, and any period scores, which only a game under way has (#772). */
@@ -28,20 +27,17 @@ type RoundMatchTiming = MatchTiming & { id: string; roundNumber: number };
 
 /**
  * Where a contest's window on an event closes (#721): at the event's start, as for every contest,
- * at the first game of a later round, for a second-chance bracket that starts there, or at one
- * game's kickoff, for a squares contest on that game (#711). Entries, picks and the tiebreaker
+ * or at one game's kickoff, for a squares contest on that game (#711). Entries, picks and the tiebreaker
  * close, picks are revealed and the contest goes live at this point.
  */
 export const ContestCutoffKind = {
   EVENT_START: 'EVENT_START',
-  ROUND_START: 'ROUND_START',
   MATCH_START: 'MATCH_START',
 } as const;
 export type ContestCutoffKind = (typeof ContestCutoffKind)[keyof typeof ContestCutoffKind];
 
 export type ContestCutoff =
   | { kind: typeof ContestCutoffKind.EVENT_START }
-  | { kind: typeof ContestCutoffKind.ROUND_START; roundNumber: number }
   | { kind: typeof ContestCutoffKind.MATCH_START; sportEventRoundMatchId: string };
 
 const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
@@ -52,16 +48,13 @@ export function hasGameMovedOn(game: MatchTiming): boolean {
 }
 
 /**
- * A contest's cutoff, from its rules and, for squares, its game: a bracket starting after round 1
- * closes at its starting round, and a squares contest at its game's kickoff.
+ * A contest's cutoff, from its rules and, for squares, its game: a squares contest closes at its
+ * game's kickoff, every other contest at its event's start.
  */
 export function contestCutoff(
   rules: ContestRules | ContestSelectionConfig | undefined,
   squaresGameMatchId?: string,
 ): ContestCutoff {
-  if (rules?.selectionType === SelectionType.BRACKET && rules.startsAtRound > 1) {
-    return { kind: ContestCutoffKind.ROUND_START, roundNumber: rules.startsAtRound };
-  }
   if (rules?.selectionType === SelectionType.SQUARES && squaresGameMatchId !== undefined) {
     return { kind: ContestCutoffKind.MATCH_START, sportEventRoundMatchId: squaresGameMatchId };
   }
@@ -70,28 +63,13 @@ export function contestCutoff(
 
 /**
  * The timing a contest's window runs on for one event, in the shape every check below reads: the
- * event's own, or, at a round's start, the round's first game time (a game without a time is
- * timed at the event's start, as a weekly game is) and whether any of its games has moved on from
- * SCHEDULED; at a game's kickoff, that game's time and whether it has moved on (a cancelled game
+ * event's own, or at a game's kickoff, that game's time and whether it has moved on (a cancelled game
  * has, so its contest closes, and so has a game with a period score). A finished event is finished for every cutoff.
  */
 export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, games: readonly RoundMatchTiming[]): EventTiming {
   switch (cutoff.kind) {
     case ContestCutoffKind.EVENT_START:
       return sportEvent;
-    case ContestCutoffKind.ROUND_START: {
-      if (isSportEventStatusFinished(sportEvent.status)) {
-        return sportEvent;
-      }
-      const round = games.filter((game) => game.roundNumber === cutoff.roundNumber && game.status !== MatchStatus.CANCELLED);
-      const times = round.map((game) => (game.scheduledDate ?? sportEvent.startDate).getTime());
-      const startDate = times.length > 0 ? new Date(Math.min(...times)) : sportEvent.startDate;
-      const started = round.some(hasGameMovedOn);
-      const status = started
-        ? SportEventStatus.IN_PROGRESS
-        : sportEvent.status === SportEventStatus.IN_PROGRESS ? SportEventStatus.SCHEDULED : sportEvent.status;
-      return { status, startDate };
-    }
     case ContestCutoffKind.MATCH_START: {
       if (isSportEventStatusFinished(sportEvent.status)) {
         return sportEvent;

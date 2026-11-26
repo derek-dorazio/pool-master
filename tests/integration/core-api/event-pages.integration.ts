@@ -5,7 +5,6 @@
  */
 import { randomUUID } from 'node:crypto';
 import {
-  SelectionType,
   Sport,
   SportEventStatus,
   isUrlSegment,
@@ -33,7 +32,7 @@ afterAll(async () => {
 const NOW = new Date('2030-01-10T12:00:00.000Z');
 
 describe('Seeded event pages', () => {
-  it('seeds Championship Weekend with the NFL bracket from the conference round first and primary, then NFL Squares, both shown with the conference championships slot', async () => {
+  it('seeds Championship Weekend with NFL Squares alone, primary, shown with the conference championships slot, since a bracket is picked from the first round', async () => {
     const pages = new PrismaEventPageRepository(getAppPrisma());
 
     const page = await pages.findByUrlSegments('football', 'championship-weekend');
@@ -42,9 +41,8 @@ describe('Seeded event pages', () => {
     const keyOf = (id: string) => definitions.find((definition) => definition.id === id)?.key;
 
     expect(page).toMatchObject({ isActive: true, redirectTo: null });
-    expect(offers.map((offer) => [offer.sportLeagueName, keyOf(offer.sportLeagueCompetitionSlotId), offer.template.templateKey, offer.bracketStartRound, offer.isPrimary])).toEqual([
-      ['NFL', 'SEMIFINAL', 'nfl-bracket-doubling', 3, true],
-      ['NFL', 'SEMIFINAL', 'nfl-squares', null, false],
+    expect(offers.map((offer) => [offer.sportLeagueName, keyOf(offer.sportLeagueCompetitionSlotId), offer.template.templateKey, offer.isPrimary])).toEqual([
+      ['NFL', 'SEMIFINAL', 'nfl-squares', true],
     ]);
   });
 
@@ -61,7 +59,6 @@ describe('Seeded event pages', () => {
         ...(offer.template.active ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is inactive`]),
         ...(offer.sportLeague.sport.sport === page.sport ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is another sport's`]),
         ...(offer.template.sportLeagueId === offer.sportLeagueId ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is another sport league's`]),
-        ...(offer.bracketStartRound === null || offer.template.selectionType === SelectionType.BRACKET ? [] : [`${page.urlSegment}: a starting round on ${offer.template.templateKey}, not a bracket`]),
       ]),
     ]);
     expect(problems).toEqual([]);

@@ -14,7 +14,6 @@ import {
   assertNever,
   getSportDefinition,
   getTieredRosterSize,
-  getTiersInPlay,
   sportAllowsSelectionType,
   sportLeagueDefinitionOf,
   placeInRanges,
@@ -238,15 +237,15 @@ describe('Golf and horse racing setups, one copy per sport league', () => {
 
     const shapes = templates.map((template) => {
       const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
-      if (rules.selectionType === SelectionType.TIERED) return [template.sportLeague.name, template.templateKey, template.isDefault, rules.picksPerTier, rules.tiersUsed, rules.countedScores];
-      if (rules.selectionType === SelectionType.BUDGET_PICK) return [template.sportLeague.name, template.templateKey, template.isDefault, rules.rosterSize, undefined, rules.countedScores];
+      if (rules.selectionType === SelectionType.TIERED) return [template.sportLeague.name, template.templateKey, template.isDefault, rules.picksPerTier, rules.countedScores];
+      if (rules.selectionType === SelectionType.BUDGET_PICK) return [template.sportLeague.name, template.templateKey, template.isDefault, rules.rosterSize, rules.countedScores];
       throw new Error(`${template.templateKey} is not a roster template`);
     });
     const perTour = (name: string) => [
-      [name, 'golf-tiered-pick-6', true, 1, undefined, 4],
-      [name, 'golf-tiered-pick-6-all-count', false, 1, undefined, 6],
-      [name, 'golf-budget-pick-6-best-4', true, 6, undefined, 4],
-      [name, 'golf-budget-pick-6-all-count', false, 6, undefined, 6],
+      [name, 'golf-tiered-pick-6', true, 1, 4],
+      [name, 'golf-tiered-pick-6-all-count', false, 1, 6],
+      [name, 'golf-budget-pick-6-best-4', true, 6, 4],
+      [name, 'golf-budget-pick-6-all-count', false, 6, 6],
     ];
     expect(shapes).toEqual([...perTour('LPGA Tour'), ...perTour('PGA TOUR')]);
   });
@@ -581,7 +580,6 @@ describe('Seeded soccer competitions and their knockout templates', () => {
       });
       if (rules.selectionType === SelectionType.BUDGET_PICK) expect([rules.rosterSize, rules.countedScores]).toEqual([rosterPicks, rosterPicks]);
       if (rules.selectionType === SelectionType.TIERED) expect([rules.picksPerTier, rules.countedScores]).toEqual([1, rosterPicks]);
-      if (rules.selectionType === SelectionType.BRACKET) expect(rules.startsAtRound).toBe(1);
     }
   });
 });
@@ -678,9 +676,8 @@ describe('Seeded tennis tours and their knockout templates', () => {
         },
       });
       const counted = template.templateKey.includes('best-four') ? 4 : 6;
-      if (rules.selectionType === SelectionType.TIERED) expect([rules.tiersUsed, rules.picksPerTier, rules.countedScores]).toEqual([undefined, 1, counted]);
+      if (rules.selectionType === SelectionType.TIERED) expect([rules.picksPerTier, rules.countedScores]).toEqual([1, counted]);
       if (rules.selectionType === SelectionType.BUDGET_PICK) expect([rules.rosterSize, rules.countedScores]).toEqual([6, counted]);
-      if (rules.selectionType === SelectionType.BRACKET) expect(rules.startsAtRound).toBe(1);
     }
   });
 });
@@ -846,7 +843,7 @@ describe('Every seeded contest template, whatever its sport', () => {
           case SelectionType.TIERED:
             return getTieredRosterSize(
               // A RANGES profile has one tier per range and no tier count (#2160).
-              getTiersInPlay(template.sportLeague.platformTierProfile.tierCount ?? template.sportLeague.platformTierProfile._count.ranges, rules.tiersUsed),
+              template.sportLeague.platformTierProfile.tierCount ?? template.sportLeague.platformTierProfile._count.ranges,
               rules.picksPerTier,
             );
           case SelectionType.BUDGET_PICK:
@@ -885,7 +882,7 @@ describe('Every seeded contest template, whatever its sport', () => {
       const rules = rulesOf(template);
       if (rules.selectionType !== SelectionType.TIERED) return [];
       const profile = template.sportLeague.platformTierProfile;
-      const held = getTieredRosterSize(getTiersInPlay(profile.tierCount ?? profile._count.ranges, rules.tiersUsed), rules.picksPerTier);
+      const held = getTieredRosterSize(profile.tierCount ?? profile._count.ranges, rules.picksPerTier);
       const twinned = templates.some((other) => {
         if (other.sportLeagueId !== template.sportLeagueId || slotsOf(other) !== slotsOf(template)) return false;
         const budget = rulesOf(other);
@@ -1281,12 +1278,11 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
     expect(problems).toEqual([]);
   });
 
-  it('starts every bracket template at the first round: no second-chance or second-week bracket is seeded', async () => {
-    const brackets = (await knockoutTemplates()).filter((entry) => entry.rules.selectionType === SelectionType.BRACKET);
+  it('stores no template whose rules carry the retired bracket start round or tiers used, so every one parses under today\'s rules', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({ select: { templateKey: true, configJson: true } });
 
-    expect(brackets.length).toBeGreaterThan(20);
-    expect(brackets.filter((entry) => entry.rules.selectionType === SelectionType.BRACKET && entry.rules.startsAtRound !== 1)
-      .map((entry) => entry.template.templateKey)).toEqual([]);
+    expect(templates.length).toBeGreaterThan(100);
+    expect(templates.filter((template) => !ContestRulesWithEntryLimitSchema.safeParse(template.configJson).success).map((template) => template.templateKey)).toEqual([]);
   });
 
   it('offers tiered and budget on a knockout of more than eight teams, one that has a round of 16 or an earlier round, and on none smaller', async () => {

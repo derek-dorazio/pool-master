@@ -224,7 +224,6 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
           configuration: selectionType === SelectionType.BRACKET
             ? {
               selectionType,
-              startsAtRound: 1,
               maxEntriesPerSquad: 1,
               scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues, upsetBonus: { rule: 'NONE' } } },
             }

@@ -36,7 +36,6 @@ const OFFER: EventPageOffer = {
     createdAt: STAMP,
     updatedAt: STAMP,
   },
-  bracketStartRound: null,
   sortOrder: 1,
   isPrimary: true,
 };
@@ -46,10 +45,10 @@ describe('toEventPageDto (#2042)', () => {
     const dto = toEventPageDto({
       page: CURRENT,
       offers: [{
-        offer: OFFER, startsAtRound: null, state: EventPageOfferState.OPEN, closesAt: STAMP,
+        offer: OFFER, state: EventPageOfferState.OPEN, closesAt: STAMP,
         nextSlot: { seasonSlotId: 'cw-slot-2027', sportEventId: 'cw-2027', name: 'Conference Championships', championshipYear: 2027, startDate: STAMP, endDate: new Date('2026-10-02T00:00:00.000Z') },
       }, {
-        offer: { ...OFFER, id: 'tiered-open-ended' }, startsAtRound: null, state: EventPageOfferState.NOT_YET, closesAt: STAMP,
+        offer: { ...OFFER, id: 'tiered-open-ended' }, state: EventPageOfferState.NOT_YET, closesAt: STAMP,
         nextSlot: { seasonSlotId: 'cw-slot-2028', sportEventId: 'cw-2028', name: 'Conference Championships', championshipYear: 2028, startDate: STAMP, endDate: null },
       }],
     });

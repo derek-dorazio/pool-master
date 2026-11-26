@@ -177,7 +177,7 @@ export interface GamePicksView {
   survivor: GamePicksSurvivorView | null;
   status: ContestEntryStatus;
   submittedAt: Date | null;
-  /** When the entry's picks for the event close as a whole: the event's start, or a second-chance bracket's starting round. */
+  /** When the entry's picks for the event close as a whole: the event's start. */
   picksCloseAt: Date;
   ownEntry: boolean;
   canSubmit: boolean;
@@ -259,7 +259,7 @@ interface WeekSetup {
   /** Whether a pick may be a tie (#792): the engine takes one and the event's sport offers it. */
   tiePicksOffered: boolean;
   sportEvent: SportEvent;
-  /** The timing the contest's window runs on: the event's, or its starting round's for a second-chance bracket (#721). */
+  /** The timing the contest's window runs on: the event's (#721). */
   window: EventTiming;
   /** The event's opening round: a later round's game with no time yet has not kicked off (#785). */
   openingRound: number;
@@ -268,7 +268,7 @@ interface WeekSetup {
   seedOf: Map<string, number | null>;
   /** The field rows withdrawn after the draw (#704): a pick of one made before stands, and loses. */
   withdrawn: Set<string>;
-  /** The games the entry picks, in game-number order: cancelled games are not picked, and a bracket's start at its starting round. */
+  /** The games the entry picks, in game-number order: cancelled games are not picked. */
   games: SportEventRoundMatch[];
   /** The game whose total points the tiebreaker guesses, among `games`. */
   tiebreakerGame: SportEventRoundMatch | null;
@@ -722,8 +722,8 @@ export class PredictionService {
   }
 
   /**
-   * What a game setup's rules make of an event: the games an entry picks (a bracket's from its
-   * starting round, never a cancelled game), the mode and spread, whether ties may be picked, the
+   * What a game setup's rules make of an event: the games an entry picks (never a cancelled
+   * game), the mode and spread, whether ties may be picked, the
    * window the picks close on, the seeds and withdrawals a bracket resolves with, and the
    * tiebreaker game. A saved week and a setup's preview both start here.
    */
@@ -734,7 +734,7 @@ export class PredictionService {
     field: SportEventParticipant[],
   ): WeekSetup {
     const games = rules.selectionType === SelectionType.BRACKET
-      ? contestBracketGames(matches, rules.startsAtRound)
+      ? contestBracketGames(matches)
       : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
     const engine = getPredictionEngine(rules.selectionType);
     const sportDefinition = (this.deps.sportDefinitionOf ?? getSportDefinition)(sportEvent.sport);

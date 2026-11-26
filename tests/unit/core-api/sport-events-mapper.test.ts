@@ -67,9 +67,9 @@ describe('SportEvent contest openings and tier lock on the wire (#1929)', () => 
   it('opens every format golf offers on a contest-ready event, and locks its tiers and prices since it is released', () => {
     expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({
       contestOpenings: [
-        { selectionType: 'TIERED', opening: 'OPEN', startsAtRounds: [] },
-        { selectionType: 'BUDGET_PICK', opening: 'OPEN', startsAtRounds: [] },
-        { selectionType: 'RANDOM_DRAW', opening: 'OPEN', startsAtRounds: [] },
+        { selectionType: 'TIERED', opening: 'OPEN' },
+        { selectionType: 'BUDGET_PICK', opening: 'OPEN' },
+        { selectionType: 'RANDOM_DRAW', opening: 'OPEN' },
       ],
       tiersLocked: true,
     });

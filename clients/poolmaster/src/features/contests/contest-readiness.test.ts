@@ -51,16 +51,4 @@ describe('contest readiness', () => {
     const ready = getContestReadinessChecks(buildSportEvent({ tierCount: 0 }), NOW);
     expect(ready.find((check) => check.id === 'field')).toMatchObject({ isMet: true, label: '89 golfers' });
   });
-
-  it('counts a second-chance bracket\'s event being under way as met, naming the round the bracket starts at', () => {
-    const started = buildSportEvent({
-      sport: 'BASKETBALL', status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false,
-    });
-    expect(getContestReadinessChecks(started, NOW, 'Sweet 16').find((check) => check.id === 'not-started')).toEqual({
-      id: 'not-started',
-      isMet: true,
-      label: 'Event under way · the bracket starts at the Sweet 16',
-    });
-    expect(getContestReadinessChecks(started, NOW).find((check) => check.id === 'not-started')?.isMet).toBe(false);
-  });
 });

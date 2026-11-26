@@ -27,7 +27,6 @@ import {
   buildSelectionState,
   buildSportEvent,
   buildTier,
-  openingsUnderWay,
 } from './test/contest-admin-fixtures';
 import { eventRoundsResponse, TOURNAMENT_ROUND_SLOTS } from './test/round-slots';
 
@@ -650,7 +649,7 @@ describe('Commissioner tools › Contests › one contest › its events', () =>
       configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
     })],
     ['bracket', buildManagedContest({
-      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET },
     })],
   ] as const)('offers no way to add or change events on a %s contest, since it covers one event', async (_label, managedContest) => {
     primeMocks({ contest: buildContest({ selectionType: managedContest.configuration.selectionType }), managedContest });
@@ -952,19 +951,9 @@ function basketballEvent(overrides: Partial<SportEventDto> = {}) {
   return buildSportEvent({ sport: 'BASKETBALL', name: 'March Madness', venue: null, rounds: 6, tierCount: 4, ...overrides });
 }
 
-/** A basketball tournament under way: released with its field, only started. */
-const UNDER_WAY: Partial<SportEventDto> = {
-  status: 'IN_PROGRESS',
-  startDate: '2026-03-19T16:00:00.000Z',
-  readinessStatus: 'EVENT_STARTED',
-  readinessReasons: ['EVENT_STARTED'],
-  contestEligible: false,
-  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3, 4, 5]),
-};
-
 function bracketContest(overrides: Partial<ContestDto> = {}) {
   return buildContest({
-    name: 'Sweet 16 Second Chance',
+    name: 'March Madness Bracket',
     sport: 'BASKETBALL',
     contestFormat: 'PREDICTION',
     selectionType: SelectionType.BRACKET,
@@ -973,46 +962,21 @@ function bracketContest(overrides: Partial<ContestDto> = {}) {
   });
 }
 
-function bracketManagedContest(startsAtRound: number) {
+function bracketManagedContest() {
   return buildManagedContest({
-    configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET, startsAtRound },
+    configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET },
   });
 }
 
-function primeBracketMocks(startsAtRound: number, { contest = bracketContest(), event = basketballEvent() } = {}) {
-  primeMocks({ contest, event, managedContest: bracketManagedContest(startsAtRound) });
+function primeBracketMocks({ contest = bracketContest(), event = basketballEvent() } = {}) {
+  primeMocks({ contest, event, managedContest: bracketManagedContest() });
   // The tournament's rounds are named by their slots.
   listEventRoundsMock.mockResolvedValue(eventRoundsResponse(event.id, TOURNAMENT_ROUND_SLOTS));
 }
 
-describe('Commissioner tools › Contests › one second-chance bracket contest', () => {
-  it('reads its rules from its starting round, and counts its event being under way as no bar to opening', async () => {
-    primeBracketMocks(3, { event: basketballEvent(UNDER_WAY) });
-    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
-
-    await waitFor(() => expect(screen.getByTestId('manage-contest-rules')).toHaveTextContent(
-      'Second-chance bracket from the Sweet 16: pick the winner of every game from the Sweet 16 on, all the way to the final, before its first game.',
-    ));
-    const notStarted = screen.getByTestId('contest-readiness-not-started');
-    expect(notStarted).toHaveAttribute('data-met', 'true');
-    expect(notStarted).toHaveTextContent('Event under way · the bracket starts at the Sweet 16');
-    fireEvent.click(screen.getByTestId('contest-status-card-help'));
-    expect(screen.getByTestId('contest-status-card-help-callout')).toHaveTextContent('members can enter until the first game of the Sweet 16');
-  });
-
-  it('says an open second-chance bracket\'s entries close at its starting round\'s first game, with no countdown to the event\'s start', async () => {
-    primeBracketMocks(3, { contest: bracketContest({ status: 'OPEN' }), event: basketballEvent(UNDER_WAY) });
-    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
-
-    fireEvent.click(await screen.findByTestId('contest-status-card-help'));
-    await waitFor(() => expect(screen.getByTestId('contest-second-chance-close'))
-      .toHaveTextContent('Entries close at the first game of the Sweet 16.'));
-    await screen.findByTestId('contest-stat-entries');
-    expect(screen.queryByTestId('contest-stat-until-close')).not.toBeInTheDocument();
-  });
-
-  it('reads a full bracket\'s rules as the whole bracket, with the event\'s start as its close', async () => {
-    primeBracketMocks(1);
+describe('Commissioner tools › Contests › one bracket contest', () => {
+  it('reads a bracket\'s rules as the whole bracket, with the event\'s start as its close', async () => {
+    primeBracketMocks();
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     await waitFor(() => expect(screen.getByTestId('manage-contest-rules')).toHaveTextContent('Fill in the whole bracket before the first game'));
@@ -1023,35 +987,18 @@ describe('Commissioner tools › Contests › one second-chance bracket contest'
 });
 
 describe('Commissioner tools › Contests › one bracket contest › Edit', () => {
-  it('offers a bracket whose event has not started only the full bracket, since its later rounds have no teams yet', async () => {
-    primeBracketMocks(1);
-    renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
-
-    const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
-    expect(startsAt).toHaveDisplayValue('Full bracket');
-    expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual(['Full bracket']);
-  });
-
-  it('offers only the later rounds but the final once the bracket\'s event is under way, keeping the saved starting round, and saves the one chosen', async () => {
-    primeBracketMocks(3, { event: basketballEvent(UNDER_WAY) });
-    updateContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: bracketManagedContest(4) }));
+  it('shows the bracket\'s rules with no round to choose, and saves its entry limit alone', async () => {
+    primeBracketMocks();
+    updateContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: bracketManagedContest() }));
     updateContestMock.mockResolvedValue(apiSuccess({ contest: bracketContest() }));
     renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
 
-    const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
-    await waitFor(() => expect(startsAt).toHaveDisplayValue('From the Sweet 16'));
-    expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'From the Round of 32',
-      'From the Sweet 16',
-      'From the Elite Eight',
-      'From the Final Four',
-    ]);
-    fireEvent.change(startsAt, { target: { value: '4' } });
-    expect(screen.getByTestId('contest-bracket-rules')).toHaveTextContent('Second-chance bracket from the Elite Eight');
+    expect(await screen.findByTestId('contest-bracket-rules')).toHaveTextContent('Fill in the whole bracket before the first game');
+    fireEvent.change(screen.getByTestId('contest-max-entries'), { target: { value: '2' } });
     fireEvent.click(screen.getByTestId('edit-contest-save'));
 
     await waitFor(() => expect(updateContestConfigurationMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { selectionType: 'BRACKET', startsAtRound: 4, maxEntriesPerSquad: 1 },
+      body: { selectionType: 'BRACKET', maxEntriesPerSquad: 2 },
     })));
   });
 });

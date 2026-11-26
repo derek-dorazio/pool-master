@@ -9,7 +9,7 @@ import type {
   ContestEntryWithSquad,
   SportEventRoundMatchRepository,
 } from '@poolmaster/shared/db';
-import { PickOutcome, SelectionType, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type SportEvent } from '@poolmaster/shared/domain';
+import { PickOutcome, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type SportEvent } from '@poolmaster/shared/domain';
 import {
   bracketFinal,
   contestBracketGames,
@@ -56,7 +56,7 @@ export interface BracketStandings {
   eventCancelled: boolean;
   /** The final's combined score once it is played: what the tiebreakers are measured against. */
   finalTotalPoints: number | null;
-  /** The bracket's games from its starting round, cancelled ones left out (all of them when the event was cancelled): an entry picks each one. */
+  /** The bracket's games, cancelled ones left out (all of them when the event was cancelled): an entry picks each one. */
   gameCount: number;
   /** Ranked, best first. */
   entries: BracketEntryStanding[];
@@ -99,9 +99,7 @@ export async function loadBracketStandings(
     throw new BracketScoringUnavailableError(contestId, 'NOT_KNOCKOUT_ROUND_POINTS');
   }
   const settings = scoring.scoring.config;
-  const rules = configuration?.configJson;
-  const startsAtRound = rules?.selectionType === SelectionType.BRACKET ? rules.startsAtRound : 1;
-  const games = eventCancelled ? [] : contestBracketGames(matches, startsAtRound);
+  const games = eventCancelled ? [] : contestBracketGames(matches);
   const seedOf = knockoutSeeds(field.map((row) => row.entry));
   const withdrawn = withdrawnRowIds(field.map((row) => row.entry), matches);
   const predictions = await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);

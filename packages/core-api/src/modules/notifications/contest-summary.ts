@@ -22,7 +22,6 @@ import {
   type SportEventRoundMatch,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
-import { roundLabels } from '@poolmaster/shared/display-strings';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
@@ -46,7 +45,7 @@ export interface ContestSummary {
   rules: string;
   /** "1 entry per member", or "No limit on entries per member". */
   entriesPerMember: string;
-  /** When the first event's picks close: its start, a second-chance bracket's round or a squares game's kickoff. */
+  /** When the first event's picks close: its start or a squares game's kickoff. */
   closesAt: Date;
 }
 
@@ -95,7 +94,6 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
       rules.selectionType === SelectionType.TIERED ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id)).length : 0,
       sportVocabulary(eventSportDefinition(first)).participant,
       rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
-      rules.selectionType === SelectionType.BRACKET ? roundLabels(await deps.matches.findBySportEvent(first.id)) : undefined,
     ),
     entriesPerMember: formatEntriesPerTeamSentence(configuration.maxEntriesPerSquad),
     closesAt,
@@ -103,8 +101,8 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
 }
 
 /**
- * When the contest's picks close on its first event: the event's start, a second-chance
- * bracket's starting round or a squares game's kickoff. Never before the event starts.
+ * When the contest's picks close on its first event: the event's start or a squares game's
+ * kickoff. Never before the event starts.
  */
 export async function contestClosesAt(
   deps: { matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'> },

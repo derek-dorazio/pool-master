@@ -1,5 +1,4 @@
-import { roundLabels } from '@poolmaster/shared/display-strings';
-import { SlotKind, type RoundName } from '@poolmaster/shared/domain';
+import { SlotKind } from '@poolmaster/shared/domain';
 import type { SportEventRoundDto, SportEventRoundSlotDto } from '@/lib/api';
 
 /** A round's slot as the API sends it (#2006); one Season slot per kind and week. */
@@ -21,9 +20,6 @@ export const TOURNAMENT_ROUND_SLOTS = [
 export function weekSlot(weekNumber: number): SportEventRoundSlotDto {
   return roundSlot(SlotKind.WEEK, null, weekNumber);
 }
-
-/** The tournament's rounds by number, named by their slots as the screens name them. */
-export const tournamentRoundName: RoundName = roundLabels(TOURNAMENT_ROUND_SLOTS.map((slot, index) => ({ roundNumber: index + 1, slot })));
 
 /** An event's rounds as `listEventRounds` answers them: round n played in `slots[n - 1]`. */
 export function eventRoundsResponse(sportEventId: string, slots: readonly SportEventRoundSlotDto[]): { data: { rounds: SportEventRoundDto[] } } {

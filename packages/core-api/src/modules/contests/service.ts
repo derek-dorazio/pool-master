@@ -380,9 +380,8 @@ export class ContestService {
   }
 
   /**
-   * Each event's timing as the contest's window runs on it (#721): the event's own, or, for a
-   * second-chance bracket, its starting round's first game, and for squares its game's kickoff
-   * (#711). Only those two read their rules for it.
+   * Each event's timing as the contest's window runs on it (#721): the event's own, or for
+   * squares its game's kickoff (#711). Only squares reads its rules for it.
    */
   private async findContestWindows<Event extends SportEvent>(contest: Contest, events: readonly Event[]): Promise<Array<{ event: Event; window: EventTiming }>> {
     const cutoff = (await this.findCutoffs([contest])).get(contest.id);
@@ -407,11 +406,10 @@ export class ContestService {
 
   /**
    * The cutoff of each contest whose window does not close at its events' start, by contest id:
-   * a second-chance bracket's and a squares grid's (#711, #721). Only those two read their rules
-   * for it, a lone contest through its remembered point read (#1176) and several in one read.
+   * a squares grid's (#711). Only squares reads its rules for it, a lone contest through its remembered point read (#1176) and several in one read.
    */
   private async findCutoffs(contests: readonly Contest[]): Promise<Map<string, ContestCutoff>> {
-    const ruled = contests.filter((contest) => contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES);
+    const ruled = contests.filter((contest) => contest.selectionType === SelectionType.SQUARES);
     const configurations = ruled.length === 1
       ? [await this.deps.configurations.findByContest(ruled[0].id)].filter((configuration) => configuration !== null)
       : await this.deps.configurations.findByContests(ruled.map((contest) => contest.id));

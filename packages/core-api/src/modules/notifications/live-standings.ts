@@ -33,7 +33,6 @@
 import { roundLabels } from '@poolmaster/shared/display-strings';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  ContestConfigurationRepository,
   ContestEntryEventStandingRepository,
   ContestRepository,
   LeagueRepository,
@@ -101,8 +100,6 @@ export interface LiveStandingsDeps extends LeagueMemberDeps {
   leaderboards: Pick<ContestService, 'leaderboardOf' | 'pickEmLeaderboardOf' | 'survivorLeaderboardOf' | 'bracketStandingsOf'>;
   /** A bracket's games, for when a round finished and when the next one starts. */
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
-  /** A bracket contest's rules, for the round it starts at. */
-  configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
   /** The event's sport league: named on the email, and a bracket's round names in its words. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   positions: StandingsEmailPositionRepository;
@@ -293,13 +290,8 @@ export class LiveStandings implements DueNotifications {
   ): Promise<DueStandings[]> {
     const sportEvent = contestEvents.at(0);
     if (sportEvent?.status !== SportEventStatus.IN_PROGRESS) return [];
-    const [matches, configuration] = await Promise.all([
-      this.deps.matches.findBySportEvent(sportEvent.id),
-      this.deps.configurations.findByContest(contest.id),
-    ]);
-    const rules = configuration?.configJson;
-    const startsAtRound = rules?.selectionType === SelectionType.BRACKET ? rules.startsAtRound : 1;
-    const finished = lastFinishedMatchRound(matches, startsAtRound);
+    const matches = await this.deps.matches.findBySportEvent(sportEvent.id);
+    const finished = lastFinishedMatchRound(matches);
     // A finished final ends the bracket, so it sends no round email.
     const playedFinal = finished !== null && finalRoundsOfMatches(matches).has(finished.roundNumber);
     if (!finished || playedFinal || !isDue(finished.finishedAt)) return [];

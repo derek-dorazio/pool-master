@@ -85,9 +85,9 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     },
     countGamesWithoutSpread: async (sportEventId) =>
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED && match.homeSpread === null).length,
-    findBracketProblem: async (sportEventId, startsAtRound) => {
+    findBracketProblem: async (sportEventId) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
-      return findBracketProblem(contestBracketGames(games, startsAtRound), knockoutSeeds(entries), startsAtRound);
+      return findBracketProblem(contestBracketGames(games), knockoutSeeds(entries));
     },
     findGame: async (sportEventId, sportEventRoundMatchId) => {
       const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventRoundMatchId);

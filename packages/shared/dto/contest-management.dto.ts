@@ -210,10 +210,10 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
   extendRules(BudgetContestConfigSchema, persistedConfigurationFields),
   extendRules(RandomDrawContestRulesSchema, persistedConfigurationFields),
   extendRules(PickEmContestRulesSchema, persistedConfigurationFields),
-  extendRules(BracketContestRulesSchema, persistedConfigurationFields),
   extendRules(SquaresContestRulesSchema, persistedConfigurationFields),
-  // Last, as in every rules union: see the note above `ContestRulesSchema`.
+  // Last, with bracket, as in every rules union: see the note above `ContestRulesSchema`.
   extendRules(SurvivorContestRulesSchema, persistedConfigurationFields),
+  extendRules(BracketContestRulesSchema, persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
