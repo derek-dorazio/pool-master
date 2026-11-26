@@ -26,8 +26,8 @@ export function EventRoundsTab() {
   const rows = useMemo<EventRoundRow[] | undefined>(
     () => {
       if (roundsQuery.data === undefined) return undefined;
-      const roundLabel = roundLabels(roundsQuery.data);
-      return roundsQuery.data.map((round) => ({ ...round, label: roundLabel(round.roundNumber) }));
+      const nameOfRound = roundLabels(roundsQuery.data);
+      return roundsQuery.data.map((round) => ({ ...round, label: nameOfRound(round.roundNumber) }));
     },
     [roundsQuery.data],
   );

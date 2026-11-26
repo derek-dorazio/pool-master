@@ -28,7 +28,7 @@ export function EventMatchDialog({
   const testId = 'root-admin-event-match-dialog';
   const settleAgain = useSettleAgain(eventId, testId);
   const facts: Fact[] = [
-    { id: 'round', label: displayString('word.roundHeading'), value: row.roundLabel, testId: `${testId}-round` },
+    { id: 'round', label: displayString('word.roundHeading'), value: row.roundName, testId: `${testId}-round` },
     {
       id: 'starts',
       label: 'Starts',

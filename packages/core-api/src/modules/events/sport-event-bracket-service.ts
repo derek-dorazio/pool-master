@@ -345,10 +345,10 @@ export class SportEventBracketService {
       blockers.push(`${emptySides} bracket place(s) have no ${participant.one} and no earlier match to fill them`);
     }
     if (reseeds) {
-      const roundLabel = roundLabels(rounds);
+      const nameOfRound = roundLabels(rounds);
       for (const gap of findReseededPlaceGaps(bracket)) {
-        const where = gap.regionLabel === null ? roundLabel(gap.roundNumber) : `${roundLabel(gap.roundNumber)} in ${gap.regionLabel}`;
-        blockers.push(`${where} has ${gap.openPlaces} open place(s) for ${gap.winnersToCome} ${roundLabel(gap.roundNumber - 1)} winner(s) still to come`);
+        const where = gap.regionLabel === null ? nameOfRound(gap.roundNumber) : `${nameOfRound(gap.roundNumber)} in ${gap.regionLabel}`;
+        blockers.push(`${where} has ${gap.openPlaces} open place(s) for ${gap.winnersToCome} ${nameOfRound(gap.roundNumber - 1)} winner(s) still to come`);
       }
     }
     const missing = field.filter((entry) => entry.isActive && !named.has(entry.id)).length;

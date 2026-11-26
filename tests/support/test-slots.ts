@@ -5,6 +5,7 @@
  * migrations; a league a test made through the API has neither, so this adds one TOURNAMENT
  * definition (key TEST_EVENT) in a REGULAR competition for it. Test code only.
  */
+import { randomInt } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { competitionFor, seasonCompetitionFor, type TestCompetition } from './competitions';
 
@@ -28,7 +29,8 @@ export const TEST_DEFINITION_KEY = 'TEST_EVENT';
 /** The league's first slot definition (by key), or its TEST_EVENT definition made now when it has none. */
 async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<TestDefinition> {
   const existing = await prisma.sportLeagueCompetitionSlot.findFirst({
-    where: { sportLeagueId },
+    // Not a copy made for one synced slot (`syncedSlotPlaceIn`).
+    where: { sportLeagueId, NOT: { key: { startsWith: SYNCED_KEY_PREFIX } } },
     select: DEFINITION_SELECT,
     orderBy: { key: 'asc' },
   });
@@ -120,7 +122,11 @@ export async function testSlotIdIn(
   /** A slot the sync keeps (false): unlabelled, so its event is no test event. A test slot by default. */
   isTestData = true,
 ): Promise<string> {
-  const { definitionId, seasonCompetitionId } = await testSlotPlaceIn(prisma, sportLeagueId, sportLeagueSeasonId);
+  // A Season holds one synced slot per definition, and a competition one definition per kind, so
+  // each synced slot a test makes plays a definition of its own in a competition of its own.
+  const { definitionId, seasonCompetitionId } = isTestData
+    ? await testSlotPlaceIn(prisma, sportLeagueId, sportLeagueSeasonId)
+    : await syncedSlotPlaceIn(prisma, sportLeagueId, sportLeagueSeasonId);
   return (await prisma.sportLeagueSeasonCompetitionSlot.create({
     data: {
       sportLeagueId, sportLeagueSeasonId, sportLeagueSeasonCompetitionId: seasonCompetitionId, sportLeagueCompetitionSlotId: definitionId,
@@ -128,6 +134,31 @@ export async function testSlotIdIn(
     },
     select: { id: true },
   })).id;
+}
+
+const SYNCED_KEY_PREFIX = 'SYNCED_';
+let syncedPlaceCount = 0;
+
+/**
+ * A copy of the league's test definition under a key of its own, in a competition of its own that
+ * the Season has: where one synced slot a test makes goes.
+ */
+async function syncedSlotPlaceIn(prisma: Db, sportLeagueId: string, sportLeagueSeasonId: string): Promise<{ definitionId: string; seasonCompetitionId: string }> {
+  const definition = await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({
+    where: { id: (await slotDefinitionOf(prisma, sportLeagueId)).id },
+    omit: { id: true, createdAt: true, updatedAt: true },
+  });
+  syncedPlaceCount += 1;
+  // A key and an order index no other test file or worker takes: each file counts from 1 again.
+  const run = randomInt(1, 1_000_000);
+  const code = `${SYNCED_KEY_PREFIX}${String(run)}_${String(syncedPlaceCount)}`;
+  const orderIndex = 1000 + run * 1000 + syncedPlaceCount;
+  const competition = await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR', code, orderIndex });
+  const { id: definitionId } = await prisma.sportLeagueCompetitionSlot.create({
+    data: { ...definition, sportLeagueCompetitionId: competition.competitionId, key: code },
+    select: { id: true },
+  });
+  return { definitionId, seasonCompetitionId: await seasonCompetitionFor(prisma, { sportLeagueId, sportLeagueSeasonId, competition }) };
 }
 
 /**

@@ -17,7 +17,7 @@ export function SquaresGamePicker({
   value: string;
 }) {
   const displayPreferences = useDisplayPreferences();
-  const roundLabel = useEventRoundLabels(event.id);
+  const nameOfRound = useEventRoundLabels(event.id);
   if (choices.isLoading) {
     return <LoadingState body="Loading games..." testId="contest-squares-games-loading" />;
   }
@@ -37,7 +37,7 @@ export function SquaresGamePicker({
         {choices.games.map((game) => (
           <option key={game.id} value={game.id}>
             {[
-              roundLabel(game.roundNumber),
+              nameOfRound(game.roundNumber),
               formatSquaresGameTeams(game, choices.namesById),
               formatDateTimeDisplay(game.scheduledDate, displayPreferences, 'Kickoff to be announced'),
             ].join(' · ')}

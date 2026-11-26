@@ -34,12 +34,12 @@ export function isFinalGame(game: Pick<BracketGame, 'isFinal'>): boolean {
 /** The bracket's games by round and region, in the order the bracket lists them, each round named by its slot. */
 export function buildBracketRounds(games: readonly BracketGame[]): BracketRound[] {
   const ordered = [...games].sort((left, right) => left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber);
-  const roundLabel = roundLabels(ordered);
+  const nameOfRound = roundLabels(ordered);
   const rounds = new Map<number, BracketRound>();
   for (const game of ordered) {
     let round = rounds.get(game.roundNumber);
     if (!round) {
-      round = { roundNumber: game.roundNumber, label: roundLabel(game.roundNumber), regions: [] };
+      round = { roundNumber: game.roundNumber, label: nameOfRound(game.roundNumber), regions: [] };
       rounds.set(game.roundNumber, round);
     }
     let region = round.regions.find((candidate) => candidate.regionLabel === game.regionLabel);

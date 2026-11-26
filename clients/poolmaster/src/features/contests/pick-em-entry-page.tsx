@@ -80,7 +80,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const sportEventId = requestedEventId ?? currentContestEvent(contest)?.sportEventId ?? '';
   // A playoff survivor pool's round on screen (#785), until the member switches: the one being picked.
   const [requestedRound, setRequestedRound] = useState<number | null>(null);
-  const roundLabel = useEventRoundLabels(sportEventId);
+  const nameOfRound = useEventRoundLabels(sportEventId);
   const tieLabel = contestTieLabel(contest.sport);
   const match = contestMatchNoun(contest.sport);
   const participant = contestParticipantNoun(contest.sport);
@@ -142,9 +142,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   // A used team names the week it was picked in; a week that is one of this playoff's rounds, by the round's name.
   const usedWeekName = (weekNumber: number) => {
     const round = isPlayoff ? eventPicks.survivor?.roundWeeks.find((week) => week.weekNumber === weekNumber)?.roundNumber : undefined;
-    return round === undefined ? displayString('word.weekNumber', { n: weekNumber }) : roundLabel(round);
+    return round === undefined ? displayString('word.weekNumber', { n: weekNumber }) : nameOfRound(round);
   };
-  const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound)}` : `week ${eliminatedInWeek ?? ''}`;
+  const eliminatedIn = eliminatedRound !== null ? `the ${nameOfRound(eliminatedRound)}` : `week ${eliminatedInWeek ?? ''}`;
   // poolmaster-allow-position: weekRounds sorts round numbers ascending: the lowest is the first round
   const roundNeedsPick = isPlayoff && round !== rounds.at(0) && canChangeWeek(gamePicks) && gamePicks.pickedCount === 0;
   const survivorTeam = isSurvivor ? survivorPickTeam(gamePicks) : null;
@@ -238,7 +238,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         <FormField className="max-w-md" label="Round">
           <Select data-testid="survivor-round-switcher" onChange={(event) => setRequestedRound(Number(event.target.value))} value={String(round)}>
             {rounds.map((roundNumber) => (
-              <option key={roundNumber} value={roundNumber}>{roundLabel(roundNumber)}</option>
+              <option key={roundNumber} value={roundNumber}>{nameOfRound(roundNumber)}</option>
             ))}
           </Select>
         </FormField>

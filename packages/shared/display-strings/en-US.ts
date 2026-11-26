@@ -1286,8 +1286,6 @@ export const enUS = {
     // How many games a slot's meeting is played over, beside its series format.
     seriesGames_one: '{{count}} game',
     seriesGames_other: '{{count}} games',
-    raceNumber: 'Race {{n}}',
-    singleRace: 'Race',
     roundHeading: 'Round',
     // How auto-assigned tiers and prices put a field in order (#2160), by the league's profile's
     // sources, keyed by FieldOrderBasis code: each source's name, how a participant without it is

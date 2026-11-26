@@ -1390,9 +1390,9 @@ function requiredEventSlotId(eventSlotIdOf: ReadonlyMap<string, string>, round: 
 }
 
 /** A round with the slot it is played in (#2006). */
-export const ROUND_SLOT_INCLUDE = { eventSlot: ROUND_EVENT_SLOT_SELECT } as const satisfies Prisma.SportEventRoundInclude;
+const ROUND_SLOT_INCLUDE = { eventSlot: ROUND_EVENT_SLOT_SELECT } as const satisfies Prisma.SportEventRoundInclude;
 
-export function toSportEventRound(row: Prisma.SportEventRoundGetPayload<{ include: typeof ROUND_SLOT_INCLUDE }>): SportEventRound {
+function toSportEventRound(row: Prisma.SportEventRoundGetPayload<{ include: typeof ROUND_SLOT_INCLUDE }>): SportEventRound {
   return {
     id: row.id,
     sportEventId: row.sportEventId,

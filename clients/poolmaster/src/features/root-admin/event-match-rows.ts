@@ -8,7 +8,7 @@ export type EventMatchRow = {
   match: SportEventRoundMatchDto;
   id: string;
   roundNumber: number;
-  roundLabel: string;
+  roundName: string;
   matchNumber: number;
   /** "Duke vs UNC" on a neutral site, else "Away @ Home"; a side not decided yet is "TBD". */
   pairingLabel: string;
@@ -39,7 +39,7 @@ export function eventMatchRows(
   matches: readonly SportEventRoundMatchDto[],
   field: readonly SportEventParticipantDto[],
 ): EventMatchRow[] {
-  const roundLabel = roundLabels(matches);
+  const nameOfRound = roundLabels(matches);
   const fieldById = new Map(field.map((entry) => [entry.id, entry]));
   return matches.map((match) => {
     const home = sideName(match, MatchSide.HOME, fieldById);
@@ -48,7 +48,7 @@ export function eventMatchRows(
       match,
       id: match.id,
       roundNumber: match.roundNumber,
-      roundLabel: roundLabel(match.roundNumber),
+      roundName: nameOfRound(match.roundNumber),
       matchNumber: match.matchNumber,
       pairingLabel: match.isNeutralSite ? `${home} vs ${away}` : `${away} @ ${home}`,
       scheduledDate: match.scheduledDate,

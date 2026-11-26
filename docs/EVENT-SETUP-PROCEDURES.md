@@ -301,12 +301,12 @@ squares round (`squaresFromRound`): the Champions League's final (round 5) and M
 semifinals (round 3). A squares contest is refused on an earlier game, and the create form does
 not offer one. Every other league takes squares on any round.
 
-**Series rounds.** A sport league whose playoff rounds are best-of series names each round's
-length, first to final (`roundSeriesLengths`, set by migration): the NBA and NHL 7, 7, 7, 7, MLB
-3, 5, 7, 7, the WNBA 3, 5, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
+**Series rounds.** A playoff round that is a best-of series takes its length from the Season
+slot it is played in (`seriesGames`, from the slot definition the migration seeds, #2006): the
+NBA and NHL 7, 7, 7, 7, MLB 3, 5, 7, 7, the WNBA 3, 5, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
 synced event counts its games' winners against the length and records the series once a side has
 won more than half. A test data file gives a series' result as the games won (4-2).
-When a league changes its format, change its lengths by migration before the playoffs start.
+When a league changes its format, change its slot definitions' lengths by migration before the playoffs start.
 
 Tennis (#704) has two sport leagues, the ATP (men's singles) and the WTA (women's singles), each
 holding the four Grand Slams; every bracket is fixed. A Slam singles draw is 128 players in seven
@@ -321,8 +321,8 @@ retirement, a walkover (no score) or a default; the winner advances in full. The
 are no periods, so no squares pools. A draw starts on six tiers of eight by ranking, the last
 taking everyone else, so the first four tiers are the seeds.
 
-**Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
-`RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round
+**Reseeded brackets.** An event whose rounds are played in slots paired `RESEEDED` (the NFL's
+postseason slot definitions, #2006) loads each round that is placed by seed with no next game in the round
 before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,
 so the Divisional round and the conference championships are each placed by seed; the
 conference winners link to the Super Bowl. Release lets those rounds wait. Once every game of

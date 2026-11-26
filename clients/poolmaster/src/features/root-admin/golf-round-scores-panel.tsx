@@ -35,11 +35,11 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
     const byNumber = new Map(
       (roundsQuery.data ?? []).map((r) => [r.roundNumber, r]),
     );
-    const roundLabel = roundLabels(roundsQuery.data ?? []);
+    const nameOfRound = roundLabels(roundsQuery.data ?? []);
     return Array.from({ length: total }, (_, index) => {
       const number = index + 1;
       const scheduled = byNumber.get(number)?.scheduledDate;
-      const label = roundLabel(number);
+      const label = nameOfRound(number);
       return {
         value: String(number),
         label: scheduled ? `${label} — ${formatDateDisplay(scheduled, displayPreferences)}` : label,
