@@ -43,7 +43,7 @@ function isBracketSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat
  * beside the bracket, no round of it; a TOURNAMENT slot is an event of its own, whose rounds its
  * slot does not show.
  */
-export function isBracketRoundSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>): boolean {
+function isBracketRoundSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>): boolean {
   return isBracketSlot(slot) && slot.slotKind !== SlotKind.THIRD_PLACE && slot.slotKind !== SlotKind.TOURNAMENT;
 }
 
@@ -53,7 +53,7 @@ export function isBracketRoundSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 
  * every listed bracket round (#2177). One that covers a slot at a time, or a tournament, plays
  * whatever rounds its event has.
  */
-export function templateBracketRounds<Slot extends Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>>(
+function templateBracketRounds<Slot extends Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>>(
   template: { coverageMode: TemplateCoverageMode },
   slots: readonly Slot[],
 ): Slot[] | null {

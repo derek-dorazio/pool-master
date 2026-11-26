@@ -18,7 +18,6 @@ import {
   sportAllowsSelectionType,
   sportLeagueDefinitionOf,
   placeInRanges,
-  templateBracketRounds,
   templateCoverageProblem,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
@@ -1425,16 +1424,19 @@ function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[
 
 describe('Seeded knockout round points cover every round a template lists', () => {
   /**
-   * Every template a knockout round-points contest scores a whole bracket by, with the bracket
-   * rounds its slots list (`templateBracketRounds`): the third-place play-off is no round of it.
+   * Every template a knockout round-points contest scores a whole bracket by: it covers all its
+   * listed slots, none of them a tournament (an event of its own, whose rounds its slots do not
+   * show). Each listed slot is a round of the bracket but the third-place play-off, a match beside
+   * the bracket that is no round of it. Spelled out here, apart from the shared rule, so the two
+   * check each other.
    */
   async function bracketTemplates() {
     const all = await new PrismaContestConfigTemplateRepository(getAppPrisma()).list();
     return all.flatMap((template) => {
       const scoring = template.configJson.scoring;
-      const listed = templateBracketRounds(template, template.slots);
-      if (scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS' || listed === null) return [];
-      const rounds = listed.map((slot) => slot.slotKind);
+      if (template.coverageMode !== TemplateCoverageMode.ALL_LISTED || scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS') return [];
+      if (template.slots.some((slot) => slot.slotKind === SlotKind.TOURNAMENT)) return [];
+      const rounds = template.slots.filter((slot) => slot.slotKind !== SlotKind.THIRD_PLACE).map((slot) => slot.slotKind);
       return [{ template, roundValues: scoring.config.roundValues, upsetBonus: scoring.config.upsetBonus, rounds }];
     });
   }

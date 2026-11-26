@@ -12,9 +12,7 @@ import {
   TemplateCoverageProblem,
   UpsetBonusRule,
   compareCoveredSlots,
-  isBracketRoundSlot,
   isWeekEvent,
-  templateBracketRounds,
   templateCoverageProblem,
   type ContestTemplateSlot,
 } from '@poolmaster/shared/domain';
@@ -96,8 +94,9 @@ describe('templateCoverageProblem', () => {
       slot({ key: 'FINAL', slotKind: SlotKind.FINAL }),
     ];
 
-    it('accepts one round value for each listed bracket round, the third-place play-off no round of it', () => {
+    it('accepts one round value for each listed bracket round, the third-place play-off no round of it, and a week no bracket round either', () => {
       expect(templateCoverageProblem(knockout([1, 2, 4, 8, 16]), ROUND_OF_32_TO_FINAL)).toBeNull();
+      expect(templateCoverageProblem(knockout([1, 2]), [slot({ key: 'WEEK_1', slotKind: SlotKind.WEEK }), slot({ key: 'SEMIFINAL' }), slot({ key: 'FINAL', slotKind: SlotKind.FINAL })])).toBeNull();
     });
 
     it('refuses with ROUND_VALUES_MISMATCH a table one round short, which would score the final nothing, or one round long', () => {
@@ -114,20 +113,6 @@ describe('templateCoverageProblem', () => {
       const tiered = { ...allListed, configJson: { scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' as const, config: {} } } };
       expect(templateCoverageProblem(tiered, ROUND_OF_32_TO_FINAL)).toBeNull();
     });
-  });
-});
-
-describe('templateBracketRounds', () => {
-  it('lists the bracket rounds of a template covering all its slots, in their order, without the third-place play-off or a week', () => {
-    const slots = [slot({ key: 'SEMIFINAL' }), slot({ key: 'THIRD_PLACE', slotKind: SlotKind.THIRD_PLACE }), slot({ key: 'FINAL', slotKind: SlotKind.FINAL })];
-
-    expect(templateBracketRounds({ coverageMode: TemplateCoverageMode.ALL_LISTED }, slots)?.map((each) => each.key)).toEqual(['SEMIFINAL', 'FINAL']);
-    expect(isBracketRoundSlot(regular({ slotKind: SlotKind.WEEK }))).toBe(false);
-  });
-
-  it('shows no rounds for a template on one slot at a time or on a tournament', () => {
-    expect(templateBracketRounds({ coverageMode: TemplateCoverageMode.FROM_SLOT }, [slot()])).toBeNull();
-    expect(templateBracketRounds({ coverageMode: TemplateCoverageMode.ALL_LISTED }, [regular({ slotKind: SlotKind.TOURNAMENT })])).toBeNull();
   });
 });
 
