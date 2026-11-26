@@ -2,7 +2,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { expect } from '@jest/globals';
 import { testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, ParticipantInactiveReason, ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SportEventParticipantStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
@@ -194,7 +194,7 @@ describe('SportEventRepository — writes', () => {
     await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3 }]);
     const [active, withdrawn] = await createParticipants(['Active Golfer', 'Withdrawn Golfer']);
     await field.createMany(event.id, [{ participantId: active.id }, { participantId: withdrawn.id }]);
-    await getPrisma().sportEventParticipant.updateMany({ where: { participantId: withdrawn.id }, data: { isActive: false } });
+    await getPrisma().sportEventParticipant.updateMany({ where: { participantId: withdrawn.id }, data: { status: 'WITHDRAWN' } });
     const entries = await field.findBySportEvent(event.id);
     const [tier1, tier2] = await tiers.findBySportEvent(event.id);
     await valuations.assignTiers(entries.map((entry) => ({
@@ -335,12 +335,12 @@ describe('SportEventParticipantRepository — the field', () => {
     const [ana, ben] = await createParticipants(['Ana', 'Ben']);
 
     await field.createMany(event.id, [
-      { participantId: ana.id, seedNumber: 1, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
+      { participantId: ana.id, seedNumber: 1, status: SportEventParticipantStatus.WITHDRAWN },
       { participantId: ben.id },
     ]);
 
     const rows = await field.findBySportEvent(event.id);
-    expect(rows.map((row) => [row.participantId, row.seedNumber, row.isActive])).toEqual([
+    expect(rows.map((row) => [row.participantId, row.seedNumber, row.status === SportEventParticipantStatus.ACTIVE])).toEqual([
       [ana.id, 1, false],
       [ben.id, undefined, true],
     ]);
@@ -619,7 +619,7 @@ describe('SportEventTierRepository and valuations', () => {
       { participantId: ana.id },
       { participantId: ben.id },
       { participantId: cal.id },
-      { participantId: dee.id, isActive: false },
+      { participantId: dee.id, status: SportEventParticipantStatus.WITHDRAWN },
     ]);
     const rows = await field.findBySportEvent(event.id);
     const entryOf = (participantId: string) => expectDefined(rows.find((row) => row.participantId === participantId)).id;
@@ -705,7 +705,7 @@ describe('Budget pricing on the event (#93)', () => {
       { participantId: ana.id },
       { participantId: ben.id },
       { participantId: cal.id },
-      { participantId: dee.id, isActive: false },
+      { participantId: dee.id, status: SportEventParticipantStatus.WITHDRAWN },
     ]);
     const rows = await field.findBySportEvent(event.id);
     const priced = expectDefined(rows.find((row) => row.participantId === ana.id));

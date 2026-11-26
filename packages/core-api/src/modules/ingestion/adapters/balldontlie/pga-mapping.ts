@@ -6,7 +6,7 @@
  * mappings (#2011, `placeSlotsByName`).
  */
 
-import { ParticipantRoundStatus, Sport, JobErrorType } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, Sport, JobErrorType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -108,7 +108,7 @@ type GolferNames = Pick<PgaPlayerSummary, 'id' | 'display_name'>
 
 function toGolfer(
   player: GolferNames,
-  details: { active: boolean; ranking: number | undefined; metadata: ProviderParticipant['metadata'] },
+  details: { status: SportEventParticipantStatus; ranking: number | undefined; metadata: ProviderParticipant['metadata'] },
 ): ProviderParticipant {
   return {
     externalId: String(player.id),
@@ -136,7 +136,7 @@ export function toFieldParticipants(
     .map((competitor) => {
       const player = requirePlayer('/pga/v2/tournament_competitors', competitor.player, competitor.id);
       return toGolfer(player, {
-        active: true,
+        status: SportEventParticipantStatus.ACTIVE,
         ranking: owgrByPlayerId.get(player.id) ?? undefined,
         metadata: { competitorId: competitor.id },
       });
@@ -155,7 +155,7 @@ export function fieldPlayerIds(competitors: readonly PgaTournamentCompetitor[]):
  * `active` flag is missing is active by that request.
  */
 export function toTourParticipant(player: PgaPlayer): ProviderParticipant {
-  return toGolfer(player, { active: player.active ?? true, ranking: player.owgr ?? undefined, metadata: {} });
+  return toGolfer(player, { status: player.active ?? true ? SportEventParticipantStatus.ACTIVE : SportEventParticipantStatus.WITHDRAWN, ranking: player.owgr ?? undefined, metadata: {} });
 }
 
 /** Positions that mean a golfer is out, and the status their last played round takes. */

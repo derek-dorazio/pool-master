@@ -74,7 +74,7 @@ function eventFacts(overrides: Partial<SportLeagueEventFacts> = {}): SportLeague
 }
 
 function fieldRow(overrides: Partial<SportEventPageFieldRow> = {}): SportEventPageFieldRow {
-  return { id: 'sep1', isActive: true, oddsToWin: null, seedNumber: null, ranking: null, name: 'Aaron Judge', mapping: null, ...overrides };
+  return { id: 'sep1', status: 'ACTIVE', oddsToWin: null, seedNumber: null, ranking: null, name: 'Aaron Judge', mapping: null, ...overrides };
 }
 
 function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEventPageFacts {
@@ -242,7 +242,7 @@ describe('buildSportEventOverview', () => {
 
   it('orders the active field by the first value every active participant has, ignoring a withdrawn one without it', () => {
     const overview = buildSportEventOverview(eventPageFacts({
-      field: [fieldRow({ oddsToWin: 5, ranking: 1 }), fieldRow({ id: 'sep2', oddsToWin: 12 }), fieldRow({ id: 'sep3', isActive: false })],
+      field: [fieldRow({ oddsToWin: 5, ranking: 1 }), fieldRow({ id: 'sep2', oddsToWin: 12 }), fieldRow({ id: 'sep3', status: 'WITHDRAWN' })],
     }), context);
 
     expect(overview).toMatchObject({ tierOrderBasis: FieldOrderBasis.ODDS, tierOrderCoversField: true });
@@ -260,7 +260,7 @@ describe('buildSportEventOverview', () => {
 
   it('names the first value anyone has when none covers the field, and no basis with no active field', () => {
     const partial = buildSportEventOverview(eventPageFacts({ field: [fieldRow({ seedNumber: 1 }), fieldRow({ id: 'sep2' })] }), context);
-    const empty = buildSportEventOverview(eventPageFacts({ field: [fieldRow({ isActive: false })] }), context);
+    const empty = buildSportEventOverview(eventPageFacts({ field: [fieldRow({ status: 'WITHDRAWN' })] }), context);
 
     expect(partial).toMatchObject({ tierOrderBasis: FieldOrderBasis.SEED, tierOrderCoversField: false });
     expect(empty).toMatchObject({ tierOrderBasis: null, tierOrderCoversField: true });
@@ -269,7 +269,7 @@ describe('buildSportEventOverview', () => {
   it('gives every field row, withdrawn ones too, its feed id and when the feed last listed it', () => {
     const seen = at('2027-04-15T09:00:00.000Z');
     const overview = buildSportEventOverview(eventPageFacts({
-      field: [fieldRow({ mapping: { externalId: 'mlb-player-592450', lastSeenAt: seen } }), fieldRow({ id: 'sep2', isActive: false })],
+      field: [fieldRow({ mapping: { externalId: 'mlb-player-592450', lastSeenAt: seen } }), fieldRow({ id: 'sep2', status: 'WITHDRAWN' })],
     }), context);
 
     expect(overview.fieldFeed).toEqual([

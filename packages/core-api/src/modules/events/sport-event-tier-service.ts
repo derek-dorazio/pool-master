@@ -51,6 +51,7 @@ import {
   type PlatformPricingProfile,
   type PlatformTierProfile,
   type TierSpread,
+  SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
 
@@ -503,7 +504,7 @@ export class SportEventTierService {
    */
   private async orderedActiveField(sportEventId: string, sources: readonly FieldOrderBasis[]): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
     const active = (await this.deps.field.findBySportEvent(sportEventId))
-      .filter((entry) => entry.isActive)
+      .filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE)
       // A full tie keeps this order, so the result never depends on how the rows were read.
       .sort((left, right) => left.participantId.localeCompare(right.participantId));
     const nameOf = new Map((active.length === 0 ? [] : await this.deps.participants.findByIds(active.map((entry) => entry.participantId)))

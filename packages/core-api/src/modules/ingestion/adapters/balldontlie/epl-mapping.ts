@@ -14,7 +14,7 @@
  * A matchweek forms no bracket, so a drawn final is a result like any other.
  */
 
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -105,7 +105,7 @@ export function toEplTeamParticipant(team: SoccerTeam): ProviderParticipant {
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.SOCCER,
     name: required(team.name, EPL_TEAMS_PATH, `team ${String(id)}`, 'name'),
-    active: true,
+    status: SportEventParticipantStatus.ACTIVE,
     metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }

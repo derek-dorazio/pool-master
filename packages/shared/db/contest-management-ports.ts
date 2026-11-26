@@ -6,7 +6,7 @@ import type {
   ContestTemplateSlot,
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
 } from '../domain';
 
 export interface ContestConfigurationRepository {
@@ -62,8 +62,7 @@ export interface ParticipantContestScoringRuleRepository {
 export interface ContestEntryPickParticipant {
   participantId: string;
   participantName: string;
-  isActive: boolean;
-  inactiveReason: ParticipantInactiveReason | null;
+  status: SportEventParticipantStatus;
   role: string | null;
   teamAffiliation: string | null;
 }

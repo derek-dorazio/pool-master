@@ -15,7 +15,7 @@
  * Team ids are the provider's own (`participantFeedId`, #2040), mapped per sport league.
  */
 
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -97,7 +97,7 @@ export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderP
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.FOOTBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
-    active: true,
+    status: SportEventParticipantStatus.ACTIVE,
     metadata: {
       ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
       ...(team.conference ? { conference: team.conference } : {}),

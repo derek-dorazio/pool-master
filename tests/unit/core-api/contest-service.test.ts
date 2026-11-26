@@ -310,8 +310,7 @@ function buildReceiptPick(
     participant: {
       participantId,
       participantName,
-      isActive: true,
-      inactiveReason: null,
+      status: 'ACTIVE' as const,
       role: null,
       teamAffiliation: null,
     },
@@ -383,8 +382,7 @@ function buildGolfFieldView(input: {
     entry: {
       id: input.id,
       participantId: `participant-${input.id}`,
-      isActive: true,
-      inactiveReason: undefined,
+      status: 'ACTIVE' as const,
       ranking: undefined,
       oddsToWin: undefined,
       seedNumber: undefined,
@@ -1812,12 +1810,7 @@ describe('ContestService', () => {
   });
 
   describe('getEntryDetail', () => {
-    // pool-master-uvc — proves this call site delegates to the shared
-    // deriveLegacyParticipantStatus derivation rather than a second copy of the
-    // same ternary; the derivation's own branches are covered directly in
-    // tests/unit/shared/domain-models.test.ts.
-    it('derives participantStatus via the shared deriveLegacyParticipantStatus function', async () => {
-      const deriveSpy = jest.spyOn(SharedDomainEnums, 'deriveLegacyParticipantStatus');
+    it('reports a withdrawn field row\'s participantStatus as WITHDRAWN, read straight from the row status', async () => {
 
       const contestRepo = createMockContestRepo({
         findById: jest.fn().mockResolvedValue(buildContest({ id: 'contest-1', leagueId: 'league-1' })),
@@ -1847,8 +1840,7 @@ describe('ContestService', () => {
               participant: {
                 participantId: 'participant-1',
                 participantName: 'Withdrawn Golfer',
-                isActive: false,
-                inactiveReason: 'WITHDRAWN',
+                status: 'WITHDRAWN' as const,
                 role: null,
                 teamAffiliation: null,
               },
@@ -1859,8 +1851,6 @@ describe('ContestService', () => {
 
       const { entry } = await service.getEntryDetail('contest-1', 'entry-1', 'user-1');
 
-      expect(deriveSpy).toHaveBeenCalledWith(false, 'WITHDRAWN');
-      deriveSpy.mockRestore();
       expect(entry.participants).toEqual([
         expect.objectContaining({ participantName: 'Withdrawn Golfer', participantStatus: 'WITHDRAWN' }),
       ]);
@@ -1868,10 +1858,7 @@ describe('ContestService', () => {
   });
 
   describe('listEntries', () => {
-    // pool-master-uvc — same shared-function proof as getEntryDetail above, for
-    // the other contests/service.ts call site (loadParticipantsForEntries).
-    it('derives participantStatus via the shared deriveLegacyParticipantStatus function', async () => {
-      const deriveSpy = jest.spyOn(SharedDomainEnums, 'deriveLegacyParticipantStatus');
+    it('reports a cut field row\'s participantStatus as ELIMINATED, read straight from the row status', async () => {
 
       const contestRepo = createMockContestRepo({
         findById: jest.fn().mockResolvedValue(
@@ -1897,8 +1884,7 @@ describe('ContestService', () => {
               participant: {
                 participantId: 'participant-1',
                 participantName: 'Cut Golfer',
-                isActive: false,
-                inactiveReason: 'ELIMINATED',
+                status: 'ELIMINATED' as const,
                 role: null,
                 teamAffiliation: null,
               },
@@ -1909,8 +1895,6 @@ describe('ContestService', () => {
 
       const { entries } = await service.listEntries('contest-1', 'user-1');
 
-      expect(deriveSpy).toHaveBeenCalledWith(false, 'ELIMINATED');
-      deriveSpy.mockRestore();
       expect(entries[0].participants).toEqual([
         expect.objectContaining({ participantName: 'Cut Golfer', participantStatus: 'ELIMINATED' }),
       ]);

@@ -4,8 +4,6 @@ import {
   ContestFormat,
   TournamentFormat,
   VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
-  ParticipantInactiveReason,
-  deriveLegacyParticipantStatus,
   formatParticipantStatusLabel,
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
@@ -66,28 +64,6 @@ describe('ContestStatus enum', () => {
     expect(ContestStatus.OPEN).toBe('OPEN');
     expect(ContestStatus.ACTIVE).toBe('ACTIVE');
     expect(ContestStatus.COMPLETED).toBe('COMPLETED');
-  });
-});
-
-// pool-master-uvc — single source of truth consumed by admin-events.mapper.ts,
-// selections/routes.ts, and contests/service.ts (x2); each call site's own test
-// asserts it's wired to this function (see mock spy assertions there) rather
-// than re-testing every branch redundantly.
-describe('deriveLegacyParticipantStatus', () => {
-  it('pool-master-uvc: returns ACTIVE when isActive is true, regardless of inactiveReason', () => {
-    expect(deriveLegacyParticipantStatus(true, null)).toBe('ACTIVE');
-    expect(deriveLegacyParticipantStatus(true, undefined)).toBe('ACTIVE');
-    expect(deriveLegacyParticipantStatus(true, ParticipantInactiveReason.WITHDRAWN)).toBe('ACTIVE');
-  });
-
-  it('pool-master-uvc: returns the inactiveReason when isActive is false and a reason is recorded', () => {
-    expect(deriveLegacyParticipantStatus(false, ParticipantInactiveReason.WITHDRAWN)).toBe('WITHDRAWN');
-    expect(deriveLegacyParticipantStatus(false, ParticipantInactiveReason.ELIMINATED)).toBe('ELIMINATED');
-  });
-
-  it('pool-master-uvc: falls back to INACTIVE when isActive is false and no reason is recorded', () => {
-    expect(deriveLegacyParticipantStatus(false, null)).toBe('INACTIVE');
-    expect(deriveLegacyParticipantStatus(false, undefined)).toBe('INACTIVE');
   });
 });
 

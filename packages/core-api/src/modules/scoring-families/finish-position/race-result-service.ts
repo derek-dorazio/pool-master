@@ -30,6 +30,7 @@ import {
   type RaceResultStatus as RaceResultStatusValue,
   type SportEvent,
   type SportEventParticipantRaceResult,
+  SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import {
@@ -182,7 +183,7 @@ export class RaceResultService {
     }
     // An official result leaves no active runner without one, and no finisher without a place.
     if (input.isOfficial && (
-      field.some((entry) => entry.isActive && !merged.has(entry.id))
+      field.some((entry) => entry.status === SportEventParticipantStatus.ACTIVE && !merged.has(entry.id))
       || [...merged.values()].some((values) => values.resultStatus === RaceResultStatus.FINISHED && values.finishPosition === null)
     )) {
       orderErrors.push(RaceResultOrderError.FIELD_INCOMPLETE);

@@ -115,7 +115,7 @@ async function seedSportLeagueEvents(events: number) {
       const participant = await prisma.participant.create({
         data: { sportLeagueId: sportLeague.id, name: `Event Golfer ${randomUUID().slice(0, 8)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
       });
-      field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
+      field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } }));
     }
     await seedTiers(event.id, field, 1);
   }
@@ -173,7 +173,7 @@ async function seedReseededRound(matchups: number) {
   for (let game = 0; game < firstRoundGames; game += 1) {
     const team = async (seedNumber: number) => {
       const participant = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Seed ${String(seedNumber)} ${suffix}`, participantType: 'TEAM' } });
-      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true, seedNumber } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, seedNumber } });
     };
     // The better seeds host and win: game N is seed N + 1 against seed 2 x games - N.
     const [home, away] = await Promise.all([team(game + 1), team(firstRoundGames * 2 - game)]);

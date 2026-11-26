@@ -11,9 +11,9 @@
  */
 
 import {
-  deriveLegacyParticipantStatus,
   eventPlaysMatches,
   SelectionStatus,
+  SportEventParticipantStatus,
   type Contest,
   type ContestEntry,
   type Participant,
@@ -134,8 +134,7 @@ export function buildSelectionParticipants(input: {
     .map((entry) => {
       const participant = input.participantsById.get(entry.participantId);
       const valuation = input.valuationBySportEventParticipantId.get(entry.id);
-      const legacyStatus = deriveLegacyParticipantStatus(entry.isActive, entry.inactiveReason);
-      const isAvailable = entry.isActive;
+      const isAvailable = entry.status === SportEventParticipantStatus.ACTIVE;
 
       return {
         sportEventParticipantId: entry.id,
@@ -143,7 +142,7 @@ export function buildSelectionParticipants(input: {
         participantName: participant?.name ?? '',
         role: participant?.role ?? null,
         teamAffiliation: participant?.teamAffiliation ?? null,
-        status: legacyStatus,
+        status: entry.status,
         price: valuation?.price ?? undefined,
         ranking: entry.ranking ?? undefined,
         seedNumber: showsSeeds ? entry.seedNumber ?? null : null,

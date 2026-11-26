@@ -332,7 +332,6 @@ describe('Contract verification (web)', () => {
       data: {
         sportEventId: eventId,
         participantId,
-        isActive: true,
       },
     });
 
@@ -601,7 +600,6 @@ describe('Contract verification (web)', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     // pool-master-9y6: default tiered templates require a contest-ready field.
@@ -618,7 +616,6 @@ describe('Contract verification (web)', () => {
         data: {
           sportEventId: sportEvent.id,
           participantId: fieldParticipant.id,
-          isActive: true,
         },
       });
     }
@@ -935,7 +932,7 @@ describe('Contract verification (web)', () => {
     const golfer = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: 'Contract Draw Golfer', participantType: 'INDIVIDUAL'  },
     });
-    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, isActive: true } });
+    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });
     // The event added after the entry, as "Events in this contest" adds one: the entry gets a
     // DRAFT status in it (#713).
     await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
@@ -1009,7 +1006,7 @@ describe('Contract verification (web)', () => {
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });
     const [home, away] = await Promise.all(['Contract Home', 'Contract Away'].map(async (name) => {
       const team = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'TEAM'  } });
-      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id } });
     }));
     const game = await createMatchRow(prisma, {
       sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1,

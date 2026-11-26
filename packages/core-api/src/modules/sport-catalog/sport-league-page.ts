@@ -12,6 +12,7 @@ import type {
   SportLeaguePageRun,
 } from '@poolmaster/shared/db';
 import {
+  SportEventParticipantStatus,
   AutoReleaseCheckOutcome,
   compareByEnumOrder,
   fieldOrderDecision,
@@ -223,7 +224,7 @@ export function buildSportEventOverview(
   const held = event.status === SportEventStatus.DRAFT && check?.outcome === AutoReleaseCheckOutcome.HELD
     ? [{ id: event.id, name: event.name, checkedAt: check.checkedAt, failedChecks: check.failedChecks }]
     : [];
-  const active = facts.field.filter((row) => row.isActive);
+  const active = facts.field.filter((row) => row.status === SportEventParticipantStatus.ACTIVE);
   const decision = active.length === 0 ? null : fieldOrderDecision(active, league.tierSources);
   return {
     syncHealth: syncHealthOf({

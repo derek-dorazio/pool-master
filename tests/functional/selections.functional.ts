@@ -317,7 +317,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
     data: {
       sportEventId: event.id,
       participantId: firstParticipant.id,
-      isActive: true,
     },
   });
   createdSportEventParticipantIds.push(firstEventParticipant.id);
@@ -333,7 +332,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
     data: {
       sportEventId: event.id,
       participantId: secondParticipant.id,
-      isActive: true,
     },
   });
   createdSportEventParticipantIds.push(secondEventParticipant.id);
@@ -435,7 +433,6 @@ async function seedTieredDraftFixture(options: {
       data: {
         sportEventId: event.id,
         participantId: participant.id,
-        isActive: true,
       },
     });
     createdSportEventParticipantIds.push(eventParticipant.id);
@@ -508,7 +505,7 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
       });
       createdParticipantIds.push(participant.id);
       const fieldRow = await prisma.sportEventParticipant.create({
-        data: { sportEventId: event.id, participantId: participant.id, isActive: true },
+        data: { sportEventId: event.id, participantId: participant.id },
       });
       createdSportEventParticipantIds.push(fieldRow.id);
       await prisma.sportEventParticipantValuation.create({

@@ -307,9 +307,13 @@ enum PrismaSportEventStatus {
 /// the cut, a knocked-out seed and an eliminated driver are all ELIMINATED; a
 /// golf surface renders ELIMINATED as "Cut" for its audience. null means
 /// "inactive, no more specific reason recorded" — there is no OTHER.
-enum ParticipantInactiveReason {
+/// A field row's place in its event (#2184): still in it, or out of it and why. A golfer who
+/// missed the cut and a knocked-out team are both ELIMINATED.
+enum SportEventParticipantStatus {
+  ACTIVE
   WITHDRAWN
   ELIMINATED
+  DISQUALIFIED
 }
 
 /// How a SportEventParticipantValuation's tier or price was set.
@@ -2249,8 +2253,7 @@ model SportEventParticipant {
   id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId   String                     @map("sport_event_id") @db.Uuid
   participantId  String                     @map("participant_id") @db.Uuid
-  isActive       Boolean                    @default(true) @map("is_active")
-  inactiveReason ParticipantInactiveReason? @map("inactive_reason")
+  status         SportEventParticipantStatus @default(ACTIVE)
   /// The rank that applied to this participant at this event (1 is best) —
   /// seeded from the provider or the sport-league affiliation, then editable.
   ranking        Int?

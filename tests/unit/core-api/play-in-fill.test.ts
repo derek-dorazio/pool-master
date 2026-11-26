@@ -1,4 +1,4 @@
-import { ProviderCode, ProviderGameState, type SportEventRoundMatch, type SportEventParticipant } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderGameState, type SportEventRoundMatch, type SportEventParticipant, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import { fillPlayInPlaces, type PlayInFillDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/play-in-fill';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
@@ -19,7 +19,7 @@ function row(id: string, isPlayInPlace = false): SportEventParticipant {
     id,
     sportEventId: EVENT_ID,
     participantId: id.replace('sep-', 'p-'),
-    isActive: true,
+    status: SportEventParticipantStatus.ACTIVE,
     isPlayInPlace,
     metadata: {},
     createdAt: T0,

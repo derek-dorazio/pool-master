@@ -91,7 +91,7 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
     const participant = await prisma.participant.create({
       data: { sportLeagueId, name: `Golfer ${suffix} ${index}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
-    field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
+    field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } }));
   }
   return { event, field };
 }
@@ -144,7 +144,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   for (let matchNumber = 1; matchNumber <= games; matchNumber += 1) {
     const team = async (side: string) => {
       const participant = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${side} ${suffix} ${matchNumber}`, participantType: 'TEAM' } });
-      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
     };
     const [home, away] = await Promise.all([team('Home'), team('Away')]);
     const final = matchNumber <= played;

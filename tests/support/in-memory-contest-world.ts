@@ -63,8 +63,7 @@ import {
   Sport,
   SportEventStatus,
   SquadMembershipStatus,
-  TeamIconKey,
-} from '@poolmaster/shared/domain';
+  TeamIconKey, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { ContestServiceDeps, StoredLeaderboard } from '../../packages/core-api/src/modules/contests/service';
 import { buildLeague, buildUser } from '../factories';
 import {
@@ -311,8 +310,7 @@ export class InMemoryContestWorld {
       participant: {
         participantId: `participant-of-${sportEventParticipantId}`,
         participantName: `Golfer ${sportEventParticipantId}`,
-        isActive: true,
-        inactiveReason: null,
+        status: SportEventParticipantStatus.ACTIVE,
         role: null,
         teamAffiliation: null,
       },

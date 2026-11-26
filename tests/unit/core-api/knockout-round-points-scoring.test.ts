@@ -4,7 +4,7 @@ import {
   MatchEnding,
   MatchSide,
   MatchStatus,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   ScoringFamily,
   Sport,
   SportEventStatus,
@@ -58,7 +58,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     const participant = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
     const entry = store.addToField(event.id, participant.id, {
       ...(seed === undefined ? {} : { seedNumber: seed }),
-      ...(withdrawn ? { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN } : {}),
+      ...(withdrawn ? { status: SportEventParticipantStatus.WITHDRAWN } : {}),
     });
     return { name, entry, participant };
   });

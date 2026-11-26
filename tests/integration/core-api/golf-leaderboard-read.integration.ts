@@ -331,7 +331,6 @@ async function createGolfLeaderboardParticipant(input: {
     data: {
       sportEventId: input.sportEventId,
       participantId: participant.id,
-      isActive: true,
     },
   });
   await prisma.sportEventParticipantRound.create({

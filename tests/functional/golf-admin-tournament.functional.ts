@@ -33,7 +33,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { insertTestSportLeague } from '../support/test-sport-league';
 
 // plans/124 §8 — pool-master-z3l. End-to-end golf-admin authoring journey through
@@ -216,8 +216,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       body: {
         participants: expectDefined(field.data).participants.slice(0, 2).map((e) => ({
           sportEventParticipantId: e.id,
-          isActive: false,
-          inactiveReason: 'WITHDRAWN' as const,
+          status: 'WITHDRAWN' as const,
         })),
       },
     });
@@ -340,7 +339,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         pricedCount += 1;
       }
     });
-    expect(pricedCount).toBe(expectDefined(prices.data).participants.filter((e) => e.isActive).length);
+    expect(pricedCount).toBe(expectDefined(prices.data).participants.filter((e) => e.status === SportEventParticipantStatus.ACTIVE).length);
     const pricedEvent = await getEvent({ client: c, path: { eventId } });
     expect(expectDefined(pricedEvent.data).event.pricing).toEqual(standardEventPricing());
 

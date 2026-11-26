@@ -83,7 +83,7 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Draw Golfer ${index} ${suffix}`, participantType: ParticipantType.INDIVIDUAL  },
     });
     const row = await prisma.sportEventParticipant.create({
-      data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true },
+      data: { sportEventId: sportEvent.id, participantId: participant.id },
     });
     fieldIds.push(row.id);
   }

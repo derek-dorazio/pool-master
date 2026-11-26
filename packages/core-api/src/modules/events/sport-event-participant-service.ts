@@ -36,7 +36,7 @@ import {
   getSportDefinition,
   eventPlaysMatches,
   SportEventStatus,
-  type ParticipantInactiveReason,
+  type SportEventParticipantStatus,
   type SportEvent,
   type SportEventParticipant,
   sideOfParticipant,
@@ -76,8 +76,7 @@ export interface FieldUploadRowInput extends ParticipantRowIdentifiers, Omit<Spo
 
 /** The values an upload can change on a field row, each as stored (null when unset). */
 export interface FieldUploadValues {
-  isActive: boolean;
-  inactiveReason: ParticipantInactiveReason | null;
+  status: SportEventParticipantStatus;
   ranking: number | null;
   seedNumber: number | null;
 }
@@ -105,12 +104,11 @@ export interface FieldUploadPreviewRow {
   message: string | null;
 }
 
-const FIELD_UPLOAD_VALUE_KEYS = ['isActive', 'inactiveReason', 'ranking', 'seedNumber'] as const;
+const FIELD_UPLOAD_VALUE_KEYS = ['status', 'ranking', 'seedNumber'] as const;
 
 function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
   return {
-    isActive: entry.isActive,
-    inactiveReason: entry.inactiveReason ?? null,
+    status: entry.status,
     ranking: entry.ranking ?? null,
     seedNumber: entry.seedNumber ?? null,
   };
@@ -120,8 +118,7 @@ function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
 function changedValues(entry: SportEventParticipant, patch: SportEventParticipantPatch): SportEventParticipantPatch {
   const before = fieldUploadValues(entry);
   const changed: SportEventParticipantPatch = {};
-  if (patch.isActive !== undefined && patch.isActive !== before.isActive) changed.isActive = patch.isActive;
-  if (patch.inactiveReason !== undefined && patch.inactiveReason !== before.inactiveReason) changed.inactiveReason = patch.inactiveReason;
+  if (patch.status !== undefined && patch.status !== before.status) changed.status = patch.status;
   if (patch.ranking !== undefined && patch.ranking !== before.ranking) changed.ranking = patch.ranking;
   if (patch.oddsToWin !== undefined && patch.oddsToWin !== (entry.oddsToWin ?? null)) changed.oddsToWin = patch.oddsToWin;
   if (patch.seedNumber !== undefined && patch.seedNumber !== before.seedNumber) changed.seedNumber = patch.seedNumber;
@@ -132,8 +129,7 @@ function changedValues(entry: SportEventParticipant, patch: SportEventParticipan
 /** The patch a row carries: only the values it names, each exactly as sent. */
 function fieldUploadPatch(row: FieldUploadRowInput): SportEventParticipantPatch {
   const patch: SportEventParticipantPatch = {};
-  if (row.isActive !== undefined) patch.isActive = row.isActive;
-  if (row.inactiveReason !== undefined) patch.inactiveReason = row.inactiveReason;
+  if (row.status !== undefined) patch.status = row.status;
   if (row.ranking !== undefined) patch.ranking = row.ranking;
   if (row.seedNumber !== undefined) patch.seedNumber = row.seedNumber;
   return patch;

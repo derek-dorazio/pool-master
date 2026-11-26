@@ -7,7 +7,7 @@ import {
   ContestStatus,
   EventPricingConfigSchema,
   EventTierConfigSchema,
-  ParticipantInactiveReason,
+  SportEventParticipantStatus,
   ParticipantRoundStatus,
   ParticipantType,
   ParticipantStandingStatus,
@@ -356,12 +356,13 @@ export const SportEventParticipantRaceResultDtoSchema = z.object({
 }).describe('Finish-position extension of a field row: how one runner\'s race ended, as an admin entered it.');
 export type SportEventParticipantRaceResultDto = z.infer<typeof SportEventParticipantRaceResultDtoSchema>;
 
+const SportEventParticipantStatusDtoSchema = z.enum(SportEventParticipantStatus).describe('The field row\'s place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.');
+
 export const SportEventParticipantDtoSchema = z.object({
   id: z.uuid().describe('Field row identifier.'),
   sportEventId: z.uuid(),
   participantId: z.uuid(),
-  isActive: z.boolean().describe('Whether the participant is competing; false is withdrawn or eliminated.'),
-  inactiveReason: z.enum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null means no more specific reason is recorded.'),
+  status: SportEventParticipantStatusDtoSchema,
   ranking: z.number().int().nullable().describe('The participant\'s rank coming into this event — seeded from the provider\'s ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.'),
   oddsToWin: z.number().nullable(),
   seedNumber: z.number().int().nullable(),
@@ -400,8 +401,7 @@ const MAX_INT32 = 2147483647;
 /** The field-row values an admin patches — by the grid save and by the field upload alike. */
 /** The values a field upload can set on a field row; odds come only from the feed (#2081). */
 const SportEventParticipantUploadPatchShape = {
-  isActive: z.boolean().optional(),
-  inactiveReason: z.enum(ParticipantInactiveReason).nullable().optional(),
+  status: SportEventParticipantStatusDtoSchema.optional(),
   ranking: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
   seedNumber: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
 };
@@ -442,8 +442,7 @@ export const SportEventParticipantUploadRequestSchema = z.object({
 export type SportEventParticipantUploadRequest = z.infer<typeof SportEventParticipantUploadRequestSchema>;
 
 export const SportEventParticipantUploadValuesDtoSchema = z.object({
-  isActive: z.boolean(),
-  inactiveReason: z.enum(ParticipantInactiveReason).nullable(),
+  status: SportEventParticipantStatusDtoSchema,
   ranking: z.number().int().nullable(),
   seedNumber: z.number().int().nullable(),
 }).describe('The values a field upload can change on a field row. Odds are not among them: they come only from the feed.');

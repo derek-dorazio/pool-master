@@ -2,16 +2,15 @@
  * A nullable enum converts to `{ type, enum, nullable: true }`. Ajv's `nullable` widens `type`
  * but not `enum`, so unless the converter adds null to the enum, Fastify rejects a request body
  * that sends null for the field with a 400, though the published contract says null is allowed.
- * The field grid's `inactiveReason: null` (clear the reason) hit exactly that.
+ * The field grid's old nullable inactive reason (clear the reason) hit exactly that (#666).
  */
 import { expect } from '@jest/globals';
 import Fastify from 'fastify';
 import { z } from 'zod';
 import { zodToJsonSchema } from '../../../packages/shared/dto/json-schema';
-import { ParticipantInactiveReason } from '../../../packages/shared/domain/enums';
 
 const BodySchema = z.object({
-  reason: z.enum(ParticipantInactiveReason).nullable().optional(),
+  reason: z.enum(['WITHDRAWN', 'ELIMINATED']).nullable().optional(),
   kind: z.enum(['A', 'B']).nullable(),
 });
 

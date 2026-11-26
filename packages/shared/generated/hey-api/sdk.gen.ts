@@ -1608,7 +1608,7 @@ export const refreshEventParticipants = <ThrowOnError extends boolean = false>(o
 /**
  * Preview a field upload
  *
- * Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber, isActive and inactiveReason (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
+ * Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
  */
 export const previewEventParticipantUpload = <ThrowOnError extends boolean = false>(options: Options<PreviewEventParticipantUploadData, ThrowOnError>): RequestResult<PreviewEventParticipantUploadResponses, PreviewEventParticipantUploadErrors, ThrowOnError> => (options.client ?? client).post<PreviewEventParticipantUploadResponses, PreviewEventParticipantUploadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -121,8 +121,7 @@ function participant(overrides: {
     id: overrides.id,
     sportEventId: 'event-1',
     participantId: `participant-${overrides.id}`,
-    isActive: true,
-    inactiveReason: null,
+    status: 'ACTIVE',
     // Present on the event's own field rows and deliberately never rendered here.
     ranking: 1,
     oddsToWin: 750,

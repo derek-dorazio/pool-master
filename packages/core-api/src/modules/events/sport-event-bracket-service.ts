@@ -58,6 +58,7 @@ import {
   type SportEventRoundMatch,
   SportEventStatus,
   sportVocabulary,
+  SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import { roundLabels } from '@poolmaster/shared/display-strings';
 import { SportEventError } from './errors';
@@ -405,11 +406,11 @@ export class SportEventBracketService {
         blockers.push(`${where} has ${gap.openPlaces} open place(s) for ${gap.winnersToCome} ${nameOfRound(gap.roundNumber - 1)} winner(s) still to come`);
       }
     }
-    const missing = field.filter((entry) => entry.isActive && !named.has(entry.id)).length;
+    const missing = field.filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE && !named.has(entry.id)).length;
     if (missing > 0) {
       blockers.push(`${missing} active ${participant.many} are not in the bracket`);
     }
-    const withdrawn = field.filter((entry) => !entry.isActive && named.has(entry.id)).length;
+    const withdrawn = field.filter((entry) => entry.status !== SportEventParticipantStatus.ACTIVE && named.has(entry.id)).length;
     if (withdrawn > 0) {
       blockers.push(`${withdrawn} withdrawn ${participant.many} are still in the bracket`);
     }

@@ -1,7 +1,7 @@
 import { legacyMatch } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { SlotKind, Sport, SportEventStatus, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
+import { SlotKind, Sport, SportEventStatus, type SportLeagueSeasonSlot, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
@@ -214,7 +214,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const moved = store.addToField(event.id, store.addParticipant(sport.id, 'Moved').id, { ranking: 5, oddsToWin: 30 });
 
     await service.updateParticipants(event.id, [
-      { sportEventParticipantId: same.id, ranking: 4, oddsToWin: 20, isActive: true },
+      { sportEventParticipantId: same.id, ranking: 4, oddsToWin: 20, status: SportEventParticipantStatus.ACTIVE },
       { sportEventParticipantId: moved.id, ranking: 2, oddsToWin: 30, seedNumber: null },
     ]);
 
@@ -302,10 +302,10 @@ describe('SportEventParticipantService — changing the field', () => {
     const entry = store.addToField(event.id, store.addParticipant(sport.id, 'A').id, { ranking: 4 });
 
     const [view] = await service.updateParticipants(event.id, [
-      { sportEventParticipantId: entry.id, ranking: 1, oddsToWin: 12.5, seedNumber: 3, isActive: false, inactiveReason: 'WITHDRAWN' },
+      { sportEventParticipantId: entry.id, ranking: 1, oddsToWin: 12.5, seedNumber: 3, status: SportEventParticipantStatus.WITHDRAWN },
     ]);
 
-    expect(view.entry).toMatchObject({ ranking: 1, oddsToWin: 12.5, seedNumber: 3, isActive: false, inactiveReason: 'WITHDRAWN' });
+    expect(view.entry).toMatchObject({ ranking: 1, oddsToWin: 12.5, seedNumber: 3, status: SportEventParticipantStatus.WITHDRAWN });
   });
 
   it('removes a field row, refusing one a contest entry has picked (409) or one on another event (404)', async () => {
@@ -349,9 +349,9 @@ describe('SportEventParticipantService — seeds on a released bracket', () => {
     const { store, service, sport, event } = setup(Sport.BASKETBALL, SportEventStatus.SCHEDULED);
     const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id, { seedNumber: 1, ranking: 1 });
 
-    const [view] = await service.updateParticipants(event.id, [{ sportEventParticipantId: duke.id, seedNumber: 1, ranking: 2, isActive: false }]);
+    const [view] = await service.updateParticipants(event.id, [{ sportEventParticipantId: duke.id, seedNumber: 1, ranking: 2, status: SportEventParticipantStatus.WITHDRAWN }]);
 
-    expect(view.entry).toMatchObject({ seedNumber: 1, ranking: 2, isActive: false });
+    expect(view.entry).toMatchObject({ seedNumber: 1, ranking: 2, status: SportEventParticipantStatus.WITHDRAWN });
   });
 
   it('changes a bracket\'s seeds freely while the event is a draft', async () => {
@@ -443,7 +443,7 @@ describe('SportEventParticipantService — field upload', () => {
 
     const [changed, same] = await service.previewUpload(event.id, [
       { externalId: 'ext-ana', ranking: 7 },
-      { externalId: 'ext-bo', ranking: 9, seedNumber: 2, isActive: true },
+      { externalId: 'ext-bo', ranking: 9, seedNumber: 2, status: SportEventParticipantStatus.ACTIVE },
     ]);
 
     expect(changed).toMatchObject({ change: 'UPDATE', before: { ranking: 5 }, after: { ranking: 7, seedNumber: 1 } });
@@ -453,18 +453,18 @@ describe('SportEventParticipantService — field upload', () => {
 
   it('leaves an omitted value untouched and clears a value sent as null, in preview and on apply', async () => {
     const { store, service, event, anaEntry } = fieldWithTwo();
-    const row = { externalId: 'ext-ana', seedNumber: null, isActive: false, inactiveReason: 'WITHDRAWN' as const };
+    const row = { externalId: 'ext-ana', seedNumber: null, status: 'WITHDRAWN' as const };
 
     const [preview] = await service.previewUpload(event.id, [row]);
 
     // The upload has no odds column: odds come only from the feed (#2081), so they are not among its values.
-    expect(preview.after).toEqual({ isActive: false, inactiveReason: 'WITHDRAWN', ranking: 5, seedNumber: null });
+    expect(preview.after).toEqual({ status: 'WITHDRAWN', ranking: 5, seedNumber: null });
     expect(anaEntry.seedNumber).toBe(1);
 
     await service.applyUpload(event.id, [row]);
 
     const stored = store.field.find((entry) => entry.id === anaEntry.id);
-    expect(stored).toMatchObject({ ranking: 5, isActive: false, inactiveReason: 'WITHDRAWN', oddsToWin: 12 });
+    expect(stored).toMatchObject({ ranking: 5, status: 'WITHDRAWN', oddsToWin: 12 });
     expect(stored?.seedNumber).toBeUndefined();
   });
 

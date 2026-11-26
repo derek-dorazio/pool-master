@@ -66,6 +66,10 @@
     "savePeriodScore": "#2046 (10e): saveGamePeriodScores, one Game's side periods",
     "applyLiveScores": "#2046 (10e): applyStatuses and the Game side results",
     "PrismaMatchSide": "#2046 (10e): side numbers on match sides",
+    "inactiveReason": "#2184 (10e-web): the field row status",
+    "ParticipantInactiveReason": "#2184 (10e-web): SportEventParticipantStatus",
+    "deriveLegacyParticipantStatus": "#2184 (10e-web): the field row status, read as is",
+    "LegacyParticipantStatus": "#2184 (10e-web): SportEventParticipantStatus",
     "useEventRoundLabels": "#2200: useEventRoundNames, which every screen waits on so no round shows as Round N first"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
@@ -133,5 +137,9 @@
   "savePeriodScore": 0,
   "applyLiveScores": 0,
   "PrismaMatchSide": 0,
+  "inactiveReason": 0,
+  "ParticipantInactiveReason": 0,
+  "deriveLegacyParticipantStatus": 0,
+  "LegacyParticipantStatus": 0,
   "useEventRoundLabels": 0
 }
