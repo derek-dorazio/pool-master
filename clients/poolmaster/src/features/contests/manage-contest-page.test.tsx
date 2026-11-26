@@ -361,6 +361,18 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(screen.queryByTestId('manage-contest-danger-zone')).not.toBeInTheDocument();
   });
 
+  it('says members can enter now, with no entry stats, for an open contest whose read carries no entry counts', async () => {
+    primeMocks({
+      contest: buildContest({ status: 'OPEN', entryCount: undefined, enteredSquadCount: undefined }),
+      managedContest: buildManagedContest({ status: 'OPEN' }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByText('Members can enter now')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-stat-entries')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['live', 'ACTIVE', 'Full leaderboard'],
     ['final', 'COMPLETED', 'See the results'],

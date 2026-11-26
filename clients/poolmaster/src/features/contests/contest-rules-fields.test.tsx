@@ -102,3 +102,39 @@ describe('contest rules fields for a tiered contest', () => {
     expect(screen.queryByText('Tiers to pick from')).not.toBeInTheDocument();
   });
 });
+
+describe('contest rules fields for a budget contest', () => {
+  it('says the salary cap is not set and the field has no prices yet when the event has no cap, and marks unset counts with a question mark', () => {
+    render(
+      <ContestRulesFields
+        onChange={vi.fn()}
+        participant={TEAM}
+        salaryCap={null}
+        selectionType={SelectionType.BUDGET_PICK}
+        tierCount={0}
+        values={{ ...DEFAULT_CONTEST_RULES, countedScores: '', rosterSize: '' }}
+      />,
+    );
+
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent(`Salary cap not set`);
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent(`have no prices yet`);
+    expect(screen.getByText('Best ? of ?')).toBeInTheDocument();
+  });
+
+  it('shows the event\'s salary cap, which the commissioner cannot edit, and the counted scores of the roster', () => {
+    render(
+      <ContestRulesFields
+        onChange={vi.fn()}
+        participant={TEAM}
+        salaryCap={50000}
+        selectionType={SelectionType.BUDGET_PICK}
+        tierCount={0}
+        values={{ ...DEFAULT_CONTEST_RULES, countedScores: '3', rosterSize: '4' }}
+      />,
+    );
+
+    expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent('salary cap');
+    expect(screen.getByTestId('contest-budget-salary-cap')).not.toHaveTextContent('Salary cap not set');
+    expect(screen.getByText('Best 3 of 4')).toBeInTheDocument();
+  });
+});
