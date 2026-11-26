@@ -65,7 +65,7 @@ describe('SDK Functional: event pages (#1007)', () => {
     const round = await db.sportEventRound.findFirst({ where: { sportEventId: eventId }, orderBy: { roundNumber: 'desc' } })
       ?? await db.sportEventRound.create({ data: { sportEventId: eventId, sportEventSlotId: await oneEventSlotId(db, eventId), roundNumber: 1, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) } });
     await db.sportEventRoundMatch.create({
-      data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) },
+      data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) },
     });
     const visitor = getSdkClient();
 

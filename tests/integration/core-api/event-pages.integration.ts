@@ -218,10 +218,10 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: sportEvent.id, sportEventSlotId: await oneEventSlotId(prisma, sportEvent.id), roundNumber: 1, scheduledDate: sportEvent.startDate } });
     await prisma.sportEventRoundMatch.create({
-      data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false, status: 'COMPLETED', scheduledDate: sportEvent.startDate },
+      data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 1, status: 'COMPLETED', scheduledDate: sportEvent.startDate },
     });
     const ahead = await prisma.sportEventRoundMatch.create({
-      data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 2, isNeutralSite: false, scheduledDate: new Date('2030-01-24T20:00:00.000Z') },
+      data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 2, scheduledDate: new Date('2030-01-24T20:00:00.000Z') },
     });
     const reader = createContestOpeningReader(getAppPrisma());
     const state = await reader.findById(sportEvent.id);
