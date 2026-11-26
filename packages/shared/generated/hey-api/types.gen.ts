@@ -17775,6 +17775,10 @@ export type GamePicksResponse = {
              * What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored.
              */
             points: number | null;
+            /**
+             * In a survivor pool, the pick's week as the entry's season decides it (#1992): SURVIVED when its team won or its game was cancelled; after a loss or a tie, LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry's last; PENDING while the game is unplayed. Null in the other pools, before the week starts, and for a week after the entry went out.
+             */
+            survivorOutcome: 'SURVIVED' | 'LIFE_LOST' | 'ELIMINATED' | 'PENDING' | null;
         } | null;
     }>;
 };

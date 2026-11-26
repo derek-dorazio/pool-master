@@ -286,6 +286,12 @@ describe('SDK Functional: a survivor season (#719)', () => {
       [entries.bob]: [0, '3'],
     });
 
+    // Week 1's picks now carry their week's outcome: Alice survived, Bob's one life is gone.
+    const markOf = async (client: typeof alice.client, entryId: string) => expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client, path: path(week1, entryId) })).data)
+      .games.flatMap((game) => (game.pick ? [game.pick.survivorOutcome] : []));
+    expect(await markOf(alice.client, entries.alice)).toEqual([SurvivorWeekOutcome.SURVIVED]);
+    expect(await markOf(bob.client, entries.bob)).toEqual([SurvivorWeekOutcome.ELIMINATED]);
+
     // --- Week 2: Duke is used up for Alice, and Bob is out -----------------------------------------
     const aliceWeek2 = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(week2, entries.alice) })).data);
     expect(aliceWeek2.survivor?.usedTeams).toEqual([{ participantId: teamIds[0], weekNumber: 1 }]);

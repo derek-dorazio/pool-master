@@ -15,6 +15,7 @@ import type {
   PredictedChoice,
   PredictionSelectionType,
   SportEventRoundMatch,
+  SurvivorWeekOutcome,
 } from '@poolmaster/shared/domain';
 import type { PickWindow } from '../../contests/entry-window';
 import type { BracketScore, PredictedSides } from '../../scoring-families/head-to-head/bracket-picks';
@@ -63,6 +64,12 @@ export interface PredictionSeason {
   weekNumberOfRound: ReadonlyMap<number, number>;
   /** The week number of the event's first round. */
   firstWeekNumber: number;
+  /**
+   * The entry's outcome for each of the event's rounds, as its season decides it (#1992): a lost
+   * week is LIFE_LOST while the entry keeps a life, ELIMINATED when it was its last. Null for a
+   * round that has not started, is cancelled, or comes after the entry went out.
+   */
+  outcomeOfRound: ReadonlyMap<number, SurvivorWeekOutcome | null>;
 }
 
 /** One pick as the week's rules read it: a team, or a tie (#792). */
