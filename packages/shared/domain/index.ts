@@ -23,6 +23,7 @@ export * from './sport-catalog-types';
 export * from './match-place';
 export * from './match-sides';
 export * from './match-games';
+export * from './latest-participant-round';
 export * from './bracket-final';
 export * from './slot-tiebreaker';
 export * from './sport-rows';
