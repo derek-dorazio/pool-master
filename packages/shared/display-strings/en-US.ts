@@ -1420,6 +1420,10 @@ export const enUS = {
     stageDone: 'done',
     stageCurrent: 'current stage',
     stageUpcoming: 'to come',
+    // A profile an event recorded but a root admin has since deleted (#2205).
+    deletedProfile: 'A deleted profile',
+    // The price dialog, when no pricing profile is chosen for the values to start from (#2205).
+    choosePricingProfile: 'Choose the pricing profile the values start from.',
   },
   // What each sport's audience calls things, by role (`SportWordRole`); a role a sport leaves
   // out reads the generic `word.<role>`. Proper names (Super Bowl, PGA Tour) are model columns.

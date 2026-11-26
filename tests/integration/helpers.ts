@@ -21,6 +21,8 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
 import { RecordingCdnInvalidator } from '../support/recording-cdn-invalidator';
+import { standardEventPricing } from '../support/budget-pricing';
+import type { EventPricingConfig } from '@poolmaster/shared/domain';
 import { statementLog } from './statement-log';
 import { describeUnindexedScans, indexCheck } from './index-check';
 
@@ -742,6 +744,15 @@ export function authHeaders(userId: string, email: string): Record<string, strin
     authorization: `Bearer ${accessToken}`,
     'content-type': 'application/json',
   };
+}
+
+/**
+ * The Standard pricing profile's values as an event records them, with the id the migrations gave
+ * the profile in this database, found by its code (#2205).
+ */
+export async function standardEventPricingInDb(): Promise<EventPricingConfig & { platformPricingProfileId: string }> {
+  const { id } = await getPrisma().platformPricingProfile.findUniqueOrThrow({ where: { code: 'STANDARD' }, select: { id: true } });
+  return { ...standardEventPricing(id), platformPricingProfileId: id };
 }
 
 /**

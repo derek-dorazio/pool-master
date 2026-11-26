@@ -12497,9 +12497,9 @@ export type SportEventDto = {
          */
         steepness: number;
         /**
-         * The profile the values started from. The admin may have changed any value before assigning.
+         * The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
          */
-        profileName: string;
+        platformPricingProfileId: string | null;
     } | null;
     /**
      * The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.
@@ -12523,9 +12523,9 @@ export type SportEventDto = {
          */
         lastTierMax: number | null;
         /**
-         * The tier profile the layout came from.
+         * The tier profile the layout came from (#2205), or null once that profile is deleted.
          */
-        profileName: string;
+        platformTierProfileId: string | null;
     } | null | {
         type: 'RANGES';
         /**
@@ -12546,9 +12546,9 @@ export type SportEventDto = {
             toValue: number | null;
         }>;
         /**
-         * The tier profile the layout came from.
+         * The tier profile the layout came from (#2205), or null once that profile is deleted.
          */
-        profileName: string;
+        platformTierProfileId: string | null;
     } | null;
     /**
      * Contest-setup readiness right now.
@@ -12947,9 +12947,9 @@ export type SportEventListResponse = {
              */
             steepness: number;
             /**
-             * The profile the values started from. The admin may have changed any value before assigning.
+             * The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
              */
-            profileName: string;
+            platformPricingProfileId: string | null;
         } | null;
         /**
          * The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.
@@ -12973,9 +12973,9 @@ export type SportEventListResponse = {
              */
             lastTierMax: number | null;
             /**
-             * The tier profile the layout came from.
+             * The tier profile the layout came from (#2205), or null once that profile is deleted.
              */
-            profileName: string;
+            platformTierProfileId: string | null;
         } | null | {
             type: 'RANGES';
             /**
@@ -12996,9 +12996,9 @@ export type SportEventListResponse = {
                 toValue: number | null;
             }>;
             /**
-             * The tier profile the layout came from.
+             * The tier profile the layout came from (#2205), or null once that profile is deleted.
              */
-            profileName: string;
+            platformTierProfileId: string | null;
         } | null;
         /**
          * Contest-setup readiness right now.
@@ -13372,9 +13372,9 @@ export type SportEventResponse = {
              */
             steepness: number;
             /**
-             * The profile the values started from. The admin may have changed any value before assigning.
+             * The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
              */
-            profileName: string;
+            platformPricingProfileId: string | null;
         } | null;
         /**
          * The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.
@@ -13398,9 +13398,9 @@ export type SportEventResponse = {
              */
             lastTierMax: number | null;
             /**
-             * The tier profile the layout came from.
+             * The tier profile the layout came from (#2205), or null once that profile is deleted.
              */
-            profileName: string;
+            platformTierProfileId: string | null;
         } | null | {
             type: 'RANGES';
             /**
@@ -13421,9 +13421,9 @@ export type SportEventResponse = {
                 toValue: number | null;
             }>;
             /**
-             * The tier profile the layout came from.
+             * The tier profile the layout came from (#2205), or null once that profile is deleted.
              */
-            profileName: string;
+            platformTierProfileId: string | null;
         } | null;
         /**
          * Contest-setup readiness right now.
@@ -14095,9 +14095,9 @@ export type EventPricingConfig = {
      */
     steepness: number;
     /**
-     * The profile the values started from. The admin may have changed any value before assigning.
+     * The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
      */
-    profileName: string;
+    platformPricingProfileId: string | null;
 };
 
 /**
@@ -14122,9 +14122,9 @@ export type EventTierConfig = {
      */
     lastTierMax: number | null;
     /**
-     * The tier profile the layout came from.
+     * The tier profile the layout came from (#2205), or null once that profile is deleted.
      */
-    profileName: string;
+    platformTierProfileId: string | null;
 } | {
     type: 'RANGES';
     /**
@@ -14145,13 +14145,13 @@ export type EventTierConfig = {
         toValue: number | null;
     }>;
     /**
-     * The tier profile the layout came from.
+     * The tier profile the layout came from (#2205), or null once that profile is deleted.
      */
-    profileName: string;
+    platformTierProfileId: string | null;
 };
 
 /**
- * Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed.
+ * Prices the active field on the budget curve with these values, in the field's order, and records them on the event as its pricing, with the profile they started from. The values usually are the profile's, possibly changed.
  */
 export type AutoAssignSportEventPricesRequest = {
     /**
@@ -14175,9 +14175,9 @@ export type AutoAssignSportEventPricesRequest = {
      */
     steepness: number;
     /**
-     * The profile the values started from. The admin may have changed any value before assigning.
+     * The pricing profile the values started from. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when there is none with this id.
      */
-    profileName: string;
+    platformPricingProfileId: string;
 };
 
 /**

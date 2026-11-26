@@ -38,7 +38,7 @@ async function pricedGolfEvent(golfers: number) {
   const prisma = getPrisma();
   await prisma.sportEvent.update({
     where: { id: event.id },
-    data: { pricingConfig: { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 } },
+    data: { pricingConfig: { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 } },
   });
   await Promise.all(field.map((row, index) => prisma.sportEventParticipantValuation.update({
     where: { sportEventParticipantId: row.id },

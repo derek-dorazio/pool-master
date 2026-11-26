@@ -1,4 +1,4 @@
-import { priceFieldOnBudgetCurve } from '@poolmaster/shared/domain';
+import { EventPricingConfigSchema, eventPricingOf, priceFieldOnBudgetCurve, StoredEventPricingSchema } from '@poolmaster/shared/domain';
 import { standardEventPricing } from '../../support/budget-pricing';
 
 describe('priceFieldOnBudgetCurve — a pricing profile\'s budget curve (#93), over a field already in order', () => {
@@ -46,5 +46,29 @@ describe('priceFieldOnBudgetCurve — a pricing profile\'s budget curve (#93), o
 
   it('returns an empty array for an empty field', () => {
     expect(priceFieldOnBudgetCurve(standard, [])).toEqual([]);
+  });
+});
+
+describe('An event\'s recorded pricing names the profile its values started from by id (#2205)', () => {
+  const PROFILE_ID = '00000000-0000-4000-8000-0000000000b1';
+  const values = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+
+  it('records a profile\'s values with the profile\'s id, not its name', () => {
+    const now = new Date();
+    const profile = { id: PROFILE_ID, code: 'STANDARD', name: 'Standard', description: 'The usual curve.', sources: [], createdAt: now, updatedAt: now, ...values };
+
+    expect(eventPricingOf(profile)).toEqual({ platformPricingProfileId: PROFILE_ID, ...values });
+  });
+
+  it('reads back recorded pricing whose profile was deleted, with no profile', () => {
+    expect(EventPricingConfigSchema.parse({ platformPricingProfileId: null, ...values })).toEqual({ platformPricingProfileId: null, ...values });
+  });
+
+  it('refuses recorded pricing that names its profile by name rather than id', () => {
+    expect(EventPricingConfigSchema.safeParse({ profileName: 'Standard', ...values }).success).toBe(false);
+  });
+
+  it('stores the values without the profile, which the event keeps as a column of its own', () => {
+    expect(StoredEventPricingSchema.parse({ platformPricingProfileId: PROFILE_ID, ...values })).toEqual(values);
   });
 });

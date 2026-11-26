@@ -368,12 +368,12 @@ describe('SportEventTierService — assignment', () => {
     expect(outOfTiers).toHaveLength(3);
     expect(outOfTiers.every((row) => row.tierAssignedSource === 'AUTO_ODDS')).toBe(true);
     expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
-      profileName: '3 tiers of 2', type: 'EQUAL_GROUPS', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
+      platformTierProfileId: league.platformTierProfileId, type: 'EQUAL_GROUPS', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
     });
     await expect(store.sportEventRepo().countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 0]]));
   });
 
-  it('tiers with the profile its own sport league names, not the first profile there is', async () => {
+  it('tiers with the profile its own sport league names, not the first profile there is, and records that profile by id', async () => {
     const { store, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount: 2, tierSize: 1 });
     const event = store.addEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
@@ -383,17 +383,17 @@ describe('SportEventTierService — assignment', () => {
     const groups = await service.autoAssignTiers({ sportEventId: event.id });
 
     expect(groups.map((group) => group.participants.length)).toEqual([1, 4]);
-    expect((await store.sportEventRepo().findById(event.id))?.tierConfig?.profileName).toBe('2 tiers of 1');
+    expect((await store.sportEventRepo().findById(event.id))?.tierConfig?.platformTierProfileId).toBe(league.platformTierProfileId);
   });
 
-  it('records the tier size an admin sent on the event\'s layout, with the league\'s profile name', async () => {
+  it('records the tier size an admin sent on the event\'s layout, with the league\'s profile', async () => {
     const { store, event, service } = setup();
     await store.addTiers(event.id, TWO_TIERS);
     addFieldByOdds(store, event.id, 4);
 
     await service.autoAssignTiers({ sportEventId: event.id, tierSize: 3 });
 
-    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toMatchObject({ profileName: '6 tiers of 10', tierSize: 3 });
+    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toMatchObject({ platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, tierSize: 3 });
   });
 
   it('refuses to auto-tier an event whose sport league names no tier profile with 404 SPORT_LEAGUE_NOT_FOUND, tiering no one', async () => {
@@ -521,13 +521,24 @@ describe('SportEventTierService — prices and the contest-side read', () => {
   it('records on the event the values its field was priced with, replacing the last ones on a re-price', async () => {
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
-    const small = { ...standardEventPricing(), profileName: 'Small', salaryCap: 5000, unit: 10 };
+    const smallLeague = store.addLeagueWithPlatformPricingProfile({ name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 });
+    const small = { ...standardEventPricing(smallLeague.platformPricingProfileId), salaryCap: 5000, unit: 10 };
 
     await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
     await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: small });
 
     expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual(small);
     expect(store.valuationRows.map((row) => row.price)).toEqual([1200]);
+  });
+
+  it('refuses to price with a pricing profile id there is no profile for with 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, pricing no one and recording nothing', async () => {
+    const { store, event, service } = setup();
+    store.addToField(event.id, 'p-1', { seedNumber: 1 });
+
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing('no-such-profile') }))
+      .rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_NOT_FOUND', statusCode: 404 });
+    expect(store.valuationRows.map((row) => row.price ?? null)).toEqual(store.valuationRows.map(() => null));
+    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toBeUndefined();
   });
 
   it.each([

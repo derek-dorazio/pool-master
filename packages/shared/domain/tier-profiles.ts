@@ -70,17 +70,21 @@ export function tierCountOf(layout: TierLayout): number {
   return layout.type === TierProfileType.EQUAL_GROUPS ? layout.tierCount : layout.ranges.length;
 }
 
-const ProfileNameOfLayoutSchema = z.string().trim().min(1).max(50).describe('The tier profile the layout came from.');
+const ProfileOfLayoutSchema = z.uuid().nullable()
+  .describe('The tier profile the layout came from (#2205), or null once that profile is deleted.');
 
 /**
  * The tier layout an event's field was last auto-tiered with: its sport league's profile at the
  * time, with the tier size an admin sent instead, if any. Stored on the event with the tiers.
  */
 export const EventTierConfigSchema = z.discriminatedUnion('type', [
-  EqualGroupsLayoutSchema.extend({ profileName: ProfileNameOfLayoutSchema }),
-  RangesLayoutSchema.extend({ profileName: ProfileNameOfLayoutSchema }),
+  EqualGroupsLayoutSchema.extend({ platformTierProfileId: ProfileOfLayoutSchema }),
+  RangesLayoutSchema.extend({ platformTierProfileId: ProfileOfLayoutSchema }),
 ]).describe('The tier layout an event\'s field was last auto-tiered with.');
 export type EventTierConfig = z.infer<typeof EventTierConfigSchema>;
+
+/** The layout as the event's JSON column stores it; the profile it came from is a column of its own. */
+export const StoredEventTierLayoutSchema = z.discriminatedUnion('type', [EqualGroupsLayoutSchema, RangesLayoutSchema]);
 
 /** A named tier layout, defined once for the platform; each sport league names one (`SportLeague.platformTierProfileId`). */
 export type PlatformTierProfile = DomainEntity & TierLayout & {
