@@ -12,6 +12,7 @@
  */
 
 import { COVERING_TEMPLATE_KEY } from '../support/sync-slots';
+import { SYNCED_SLOT_KEY_PREFIX } from '../support/test-slots';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
@@ -1047,7 +1048,13 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.contestConfigTemplate.deleteMany({ where: { templateKey: COVERING_TEMPLATE_KEY } });
   const testLeagues = { contestConfigTemplates: { none: {} }, displayOrder: null };
   const testLeagueIds = (await prisma.sportLeague.findMany({ where: testLeagues, select: { id: true } })).map(({ id }) => id);
-  await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }] } });
+  // A synced event's copy of a seeded league's test definition (`testSlotIdIn`, isTestData false)
+  // goes too, with its synced Season slot, so the seeded league keeps only its own definitions.
+  const copiedDefinitionIds = (await prisma.sportLeagueCompetitionSlot.findMany({ where: { key: { startsWith: SYNCED_SLOT_KEY_PREFIX } }, select: { id: true } })).map(({ id }) => id);
+  await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({
+    where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }, { sportLeagueCompetitionSlotId: { in: copiedDefinitionIds } }] },
+  });
+  await prisma.sportLeagueCompetitionSlot.deleteMany({ where: { id: { in: copiedDefinitionIds } } });
   await prisma.sportLeagueSeasonCompetition.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
   await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
   await prisma.sportLeague.deleteMany({ where: { id: { in: testLeagueIds } } });

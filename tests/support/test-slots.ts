@@ -30,7 +30,7 @@ export const TEST_DEFINITION_KEY = 'TEST_EVENT';
 async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<TestDefinition> {
   const existing = await prisma.sportLeagueCompetitionSlot.findFirst({
     // Not a copy made for one synced slot (`syncedSlotPlaceIn`).
-    where: { sportLeagueId, NOT: { key: { startsWith: SYNCED_KEY_PREFIX } } },
+    where: { sportLeagueId, NOT: { key: { startsWith: SYNCED_SLOT_KEY_PREFIX } } },
     select: DEFINITION_SELECT,
     orderBy: { key: 'asc' },
   });
@@ -136,7 +136,8 @@ export async function testSlotIdIn(
   })).id;
 }
 
-const SYNCED_KEY_PREFIX = 'SYNCED_';
+/** The key prefix of a synced event's copy of a test definition, which test cleanup removes. */
+export const SYNCED_SLOT_KEY_PREFIX = 'SYNCED_';
 let syncedPlaceCount = 0;
 
 /**
@@ -149,7 +150,7 @@ async function syncedSlotPlaceIn(prisma: Db, sportLeagueId: string, sportLeagueS
   const definition = await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({ where: { id: sourceId }, omit: { id: true, createdAt: true, updatedAt: true } });
   syncedPlaceCount += 1;
   // A key no other test file or worker takes: each file counts from 1 again.
-  const key = `${SYNCED_KEY_PREFIX}${String(randomInt(1, 1_000_000))}_${String(syncedPlaceCount)}`;
+  const key = `${SYNCED_SLOT_KEY_PREFIX}${String(randomInt(1, 1_000_000))}_${String(syncedPlaceCount)}`;
   const { id: definitionId } = await prisma.sportLeagueCompetitionSlot.create({
     data: { ...definition, key, slotKind: 'TOURNAMENT', weekNumber: null, name: null },
     select: { id: true },
