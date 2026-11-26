@@ -6,6 +6,7 @@ import {
   enUS,
   flattenDisplayStrings,
   hasDisplayString,
+  profileWords,
   GENERIC_SPORT_WORD_ROLES,
   SOURCE_LOCALE,
   SPORT_WORD_ROLES,
@@ -25,6 +26,7 @@ const frFR: DisplayStringsModule = {
   error: { ...enUS.error, CONTEST_FULL: 'Ce concours est complet.' },
   word: { ...enUS.word, roundCount_one: '{{count}} manche', roundCount_other: '{{count}} manches', participant_one: 'concurrent', participant_other: 'concurrents' },
   sport: { ...enUS.sport, GOLF: { ...enUS.sport.GOLF, participant_one: 'golfeur', participant_other: 'golfeurs' } },
+  tierProfile: { ...enUS.tierProfile, TIERS_6_OF_10: { name: '6 niveaux de 10', description: 'Six niveaux de dix.' } },
 };
 
 /** The source language with words the real module does not have yet: a short form, a placeholder and a plural. */
@@ -223,5 +225,30 @@ describe('sport words (#1960)', () => {
         expect(SPORT_WORD_ROLES).toContain(key.replace(/_(one|other)$/, ''));
       }
     }
+  });
+});
+
+describe('profile words (#2194)', () => {
+  it('give a seeded profile the name and line its code holds, not the row\'s own name', () => {
+    expect(profileWords('tierProfile', { code: 'SEEDS_2_5_REST', name: 'NBA seeds' })).toEqual({
+      name: enUS.tierProfile.SEEDS_2_5_REST.name,
+      description: enUS.tierProfile.SEEDS_2_5_REST.description,
+    });
+    expect(profileWords('pricingProfile', { code: 'STANDARD', name: 'Anything' }).name).toBe('Standard');
+  });
+
+  it('give a profile with no words for its code (one a root admin added) its own name and no line', () => {
+    expect(profileWords('tierProfile', { code: 'ADDED_ON_SCREEN', name: 'Added on screen' })).toEqual({ name: 'Added on screen', description: null });
+  });
+
+  it('read a profile\'s words in the reader\'s language, falling back to en-US for a code that language lacks', () => {
+    expect(strings.profileWords('tierProfile', { code: 'TIERS_6_OF_10', name: 'x' }, 'fr-FR').name).toBe('6 niveaux de 10');
+    expect(strings.profileWords('tierProfile', { code: 'TIERS_5_OF_8', name: 'x' }, 'fr-FR').name).toBe(enUS.tierProfile.TIERS_5_OF_8.name);
+  });
+
+  it('flatten each profile entry to tierProfile.<CODE>.name and .description keys', () => {
+    const flat = flattenDisplayStrings(enUS);
+    expect(flat['tierProfile.TIERS_6_OF_10.name']).toBe(enUS.tierProfile.TIERS_6_OF_10.name);
+    expect(flat['pricingProfile.SMALL.description']).toBe(enUS.pricingProfile.SMALL.description);
   });
 });

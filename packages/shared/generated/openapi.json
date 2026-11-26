@@ -76230,7 +76230,7 @@
         "description": "Every user on the platform, for the Customers › Users grid."
       },
       "PlatformTierProfileWriteRequest": {
-        "description": "A tier profile's code, name, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.",
+        "description": "A tier profile's code, name, description, sources and layout, the whole of it. 422 PLATFORM_TIER_PROFILE_INVALID when the layout can't be used: on EQUAL_GROUPS, lastTierMax set other than exactly when lastTier is CAPPED; on RANGES, ranges out of tier order, with a gap or an overlap, open before the last tier, or ordered by ODDS first. 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the pricing profile of a sport league that names this one.",
         "anyOf": [
           {
             "type": "object",
@@ -76284,7 +76284,16 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 50,
-                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                 "x-transform": [
                   "trim"
                 ]
@@ -76312,6 +76321,7 @@
               "lastTierMax",
               "code",
               "name",
+              "description",
               "sources"
             ],
             "additionalProperties": false
@@ -76378,7 +76388,16 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 50,
-                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                 "x-transform": [
                   "trim"
                 ]
@@ -76403,6 +76422,7 @@
               "ranges",
               "code",
               "name",
+              "description",
               "sources"
             ],
             "additionalProperties": false
@@ -76464,7 +76484,16 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 50,
-                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                 "x-transform": [
                   "trim"
                 ]
@@ -76512,6 +76541,7 @@
               "lastTierMax",
               "code",
               "name",
+              "description",
               "sources",
               "id",
               "sportLeagueCount",
@@ -76582,7 +76612,16 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 50,
-                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                 "x-transform": [
                   "trim"
                 ]
@@ -76627,6 +76666,7 @@
               "ranges",
               "code",
               "name",
+              "description",
               "sources",
               "id",
               "sportLeagueCount",
@@ -76697,7 +76737,16 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 50,
-                      "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                      "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    },
+                    "description": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                       "x-transform": [
                         "trim"
                       ]
@@ -76745,6 +76794,7 @@
                     "lastTierMax",
                     "code",
                     "name",
+                    "description",
                     "sources",
                     "id",
                     "sportLeagueCount",
@@ -76815,7 +76865,16 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 50,
-                      "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                      "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    },
+                    "description": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                       "x-transform": [
                         "trim"
                       ]
@@ -76860,6 +76919,7 @@
                     "ranges",
                     "code",
                     "name",
+                    "description",
                     "sources",
                     "id",
                     "sportLeagueCount",
@@ -76937,7 +76997,16 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 50,
-                    "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                    "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                     "x-transform": [
                       "trim"
                     ]
@@ -76985,6 +77054,7 @@
                   "lastTierMax",
                   "code",
                   "name",
+                  "description",
                   "sources",
                   "id",
                   "sportLeagueCount",
@@ -77055,7 +77125,16 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 50,
-                    "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                    "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                     "x-transform": [
                       "trim"
                     ]
@@ -77100,6 +77179,7 @@
                   "ranges",
                   "code",
                   "name",
+                  "description",
                   "sources",
                   "id",
                   "sportLeagueCount",
@@ -77154,7 +77234,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 50,
-            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+            "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
             "x-transform": [
               "trim"
             ]
@@ -77165,6 +77245,15 @@
             "maxLength": 50,
             "pattern": "^[A-Z][A-Z0-9_]*$",
             "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+            "x-transform": [
+              "trim"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
             "x-transform": [
               "trim"
             ]
@@ -77192,10 +77281,11 @@
           "steepness",
           "name",
           "code",
+          "description",
           "sources"
         ],
         "additionalProperties": false,
-        "description": "A pricing profile's code, name, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one."
+        "description": "A pricing profile's code, name, description, sources and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other; 422 PROFILE_FIRST_SOURCES_DIFFER when a changed first source no longer matches the tier profile of a sport league that names this one."
       },
       "PlatformPricingProfileDto": {
         "type": "object",
@@ -77234,7 +77324,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 50,
-            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+            "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
             "x-transform": [
               "trim"
             ]
@@ -77245,6 +77335,15 @@
             "maxLength": 50,
             "pattern": "^[A-Z][A-Z0-9_]*$",
             "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+            "x-transform": [
+              "trim"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
             "x-transform": [
               "trim"
             ]
@@ -77292,6 +77391,7 @@
           "steepness",
           "name",
           "code",
+          "description",
           "sources",
           "id",
           "sportLeagueCount",
@@ -77343,7 +77443,7 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 50,
-                  "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                  "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
                   "x-transform": [
                     "trim"
                   ]
@@ -77354,6 +77454,15 @@
                   "maxLength": 50,
                   "pattern": "^[A-Z][A-Z0-9_]*$",
                   "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                  "x-transform": [
+                    "trim"
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                  "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                   "x-transform": [
                     "trim"
                   ]
@@ -77401,6 +77510,7 @@
                 "steepness",
                 "name",
                 "code",
+                "description",
                 "sources",
                 "id",
                 "sportLeagueCount",
@@ -77459,7 +77569,7 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 50,
-                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "description": "The root admin's name for the profile, unique among its kind: \"6 tiers of 10\", \"Standard\". Screens read the display strings keyed by the code, and show this only for a profile whose strings are not seeded yet.",
                 "x-transform": [
                   "trim"
                 ]
@@ -77470,6 +77580,15 @@
                 "maxLength": 50,
                 "pattern": "^[A-Z][A-Z0-9_]*$",
                 "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "Plain English for agents and root admins: what the profile is and why it exists. Not shown to commissioners or members, who read the display strings keyed by the code (tierProfile.<CODE>.name, pricingProfile.<CODE>.name).",
                 "x-transform": [
                   "trim"
                 ]
@@ -77517,6 +77636,7 @@
               "steepness",
               "name",
               "code",
+              "description",
               "sources",
               "id",
               "sportLeagueCount",

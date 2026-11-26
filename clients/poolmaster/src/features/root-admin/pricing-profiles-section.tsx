@@ -1,3 +1,4 @@
+import { profileWords } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useState } from 'react';
 import { formatDollars } from '@poolmaster/shared/domain';
@@ -8,6 +9,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { PlatformPricingProfileEditor } from './pricing-profile-editor';
 import { ProfileDeleteDialog } from './profile-delete-dialog';
 import { ProfileDialog, type ProfileDialogState } from './profile-dialog';
+import { profileWordsFacts } from './profile-words';
 import { usePlatformPricingProfilesQuery } from './use-profiles';
 import { describeSources } from './tier-profile-format';
 
@@ -20,7 +22,12 @@ const columns = [
   }),
   columnHelper.accessor('name', {
     header: 'Name',
-    meta: { info: 'The pricing profile\'s name, as a sport league\'s settings and the price dialog offer it.', type: { kind: 'text' } },
+    meta: { info: 'The root admin\'s name for the pricing profile, as the price dialog offers it. Other screens show it only until display strings are seeded for its code.', type: { kind: 'text' } },
+  }),
+  columnHelper.accessor((profile) => profileWords('pricingProfile', profile).name, {
+    id: 'shownAs',
+    header: 'Shown as',
+    meta: { info: 'What screens call the pricing profile: the name seeded for its code, or its own name until one is.', type: { kind: 'text' } },
   }),
   columnHelper.accessor('salaryCap', {
     header: 'Salary cap',
@@ -105,6 +112,7 @@ export function PlatformPricingProfilesSection() {
       </QueryState>
       <ProfileDialog
         facts={(profile) => [
+          ...profileWordsFacts('pricingProfile', profile),
           { id: 'sources', label: 'Order by', value: describeSources(profile.sources) },
           { id: 'salary-cap', label: 'Salary cap', value: formatDollars(profile.salaryCap) },
           { id: 'unit', label: 'Unit', value: formatDollars(profile.unit) },

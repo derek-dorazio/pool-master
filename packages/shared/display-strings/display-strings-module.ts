@@ -169,6 +169,10 @@ export type ErrorContextDisplayStrings = {
  * word role; `sport` holds the words that differ by sport, keyed by sport code then role
  * (`sport.GOLF.participant_one`), and a role a sport leaves out reads the generic word. Proper
  * names (teams, players, tournaments, named slots) are model columns and never go in a module.
+ * `tierProfile` and `pricingProfile` hold what commissioners and members read about a platform
+ * profile, keyed by the profile's code (`tierProfile.SEEDS_2_5_REST.name`, #2194): a profile is
+ * a model row, so its codes are data, and a reference-data test holds every seeded code to an
+ * entry here. A code with no entry (a profile a root admin added on screen) reads the row's name.
  */
 export type DisplayStringsModule = {
   readonly enum: EnumDisplayStrings;
@@ -176,4 +180,15 @@ export type DisplayStringsModule = {
   readonly errorContext: ErrorContextDisplayStrings;
   readonly word: { readonly [key: string]: DisplayEntry } & { readonly [K in SportWordEntryKey<GenericSportWordRole>]: DisplayEntry };
   readonly sport: { readonly [S in Sport]?: { readonly [K in SportWordEntryKey]?: DisplayEntry } };
+  readonly tierProfile: ProfileDisplayStrings;
+  readonly pricingProfile: ProfileDisplayStrings;
 };
+
+/** What a profile is called on screen and one line on what it does for a contest, by profile code. */
+export type ProfileDisplayStrings = { readonly [code: string]: ProfileDisplayEntry };
+
+/** A profile's name and its one line for commissioners and members. */
+export type ProfileDisplayEntry = { readonly name: string; readonly description: string };
+
+/** The module sections keyed by a platform profile's code. */
+export type ProfileDisplaySection = 'tierProfile' | 'pricingProfile';
