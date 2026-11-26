@@ -1,6 +1,12 @@
 import { expect } from '@jest/globals';
-import { SportEventStatus } from '@poolmaster/shared/domain';
-import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
+import { ProviderCode, ProviderSyncFindingKind, ProviderSyncFindingStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository, PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaProviderSyncFindingRepository } from '../../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
+import { PrismaSlotNamePatternRepository } from '../../../packages/core-api/src/adapters/prisma-slot-name-pattern-repository';
+import { SyncedFieldFollowUps } from '../../../packages/core-api/src/modules/events/synced-field-follow-ups';
+import { ProviderSyncFindingService } from '../../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
+import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
+import { testDomainEvents } from '../../support/domain-events';
 import { createSportEventTierService } from '../../../packages/core-api/src/modules/events/wiring';
 import { SyncedFieldValuationService } from '../../../packages/core-api/src/modules/events/synced-field-valuation';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
@@ -100,5 +106,32 @@ describe('Synced field valuation (#1822)', () => {
       call: (ref) => service.afterFieldLoad(ref),
       rowsShown: (outcome) => (outcome.outcome === 'VALUED' && outcome.prices.result === 'MADE' ? outcome.prices.pricedCount : 0),
     });
+  });
+
+  it('raises a FIELD_HAS_NO_ORDER finding on a synced field with no odds, seeds or ranks, and resolves it once the feed brings odds', async () => {
+    const { event, field, ref } = await syncedEvent(3, SportEventStatus.DRAFT, false);
+    const provider = await getPrisma().provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
+    const followUps = new SyncedFieldFollowUps({
+      providerGames: { afterFieldLoad: async () => null },
+      valuation: valuationService(),
+      sportEvents: new PrismaSportEventRepository(getAppPrisma()),
+      findings: new ProviderSyncFindingService({
+        repository: new PrismaProviderSyncFindingRepository(getPrisma()),
+        providers: { all: () => [{ ...provider, leagues: [] }] },
+        participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma()), testDomainEvents()),
+        slotNamePatterns: new PrismaSlotNamePatternRepository(getPrisma()),
+        now: () => new Date(),
+      }),
+    });
+    const findings = () => getPrisma().providerSyncFinding.findMany({ where: { sportEventId: event.id, kind: ProviderSyncFindingKind.FIELD_HAS_NO_ORDER } });
+
+    await followUps.run({ sportEventId: event.id, ...ref });
+    expect(await findings()).toEqual([expect.objectContaining({ status: ProviderSyncFindingStatus.OPEN, sportLeagueId: event.sportLeagueId, providerId: provider.id })]);
+
+    for (const [index, row] of field.entries()) {
+      await getPrisma().sportEventParticipant.update({ where: { id: row.id }, data: { oddsToWin: 5 + index } });
+    }
+    await followUps.run({ sportEventId: event.id, ...ref });
+    expect((await findings()).map((row) => row.status)).toEqual([ProviderSyncFindingStatus.RESOLVED]);
   });
 });

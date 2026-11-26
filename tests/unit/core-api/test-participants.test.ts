@@ -114,8 +114,8 @@ describe('test participants: which template a test contest is built from', () =>
     template('nfl-squares', { coverageMode: TemplateCoverageMode.ONE_SLOT, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, sortOrder: 10, isDefault: true }),
   ];
   const playoffTemplates = [
-    template('nfl-tiered-doubling', { sortOrder: 1 }),
-    template('nfl-budget-doubling', { selectionType: SelectionType.BUDGET_PICK, sortOrder: 2, isDefault: true }),
+    template('nfl-tiered-pick-3', { sortOrder: 1 }),
+    template('nfl-budget-pick-3', { selectionType: SelectionType.BUDGET_PICK, sortOrder: 2, isDefault: true }),
     template('nfl-random-draw-doubling', { selectionType: SelectionType.RANDOM_DRAW, sortOrder: 3, isDefault: true }),
     template('nfl-squares', { coverageMode: TemplateCoverageMode.ONE_SLOT, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, sortOrder: 10, isDefault: true }),
   ];
@@ -125,7 +125,7 @@ describe('test participants: which template a test contest is built from', () =>
   });
 
   it('builds a playoff test contest from the offered default roster template, never a draw', () => {
-    expect(chooseContestTemplate(playoffTemplates)?.templateKey).toBe('nfl-budget-doubling');
+    expect(chooseContestTemplate(playoffTemplates)?.templateKey).toBe('nfl-budget-pick-3');
   });
 
   it('builds from the first roster template in sort order when none offered is a default', () => {

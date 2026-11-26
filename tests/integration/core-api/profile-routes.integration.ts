@@ -5,7 +5,7 @@
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, Sport, TierProfileType } from '@poolmaster/shared/domain';
 import {
   PlatformPricingProfileListResponseSchema,
   PlatformPricingProfileResponseSchema,
@@ -43,7 +43,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-function send(method: 'POST' | 'PUT' | 'DELETE', url: string, viewer: TestUserResult, payload?: object) {
+function send(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, viewer: TestUserResult, payload?: object) {
   return getApp().inject({ method, url, ...(payload ? { headers: viewer.headers, payload } : { headers: withoutJsonBodyHeaders(viewer.headers) }) });
 }
 
@@ -56,14 +56,31 @@ function codeOf(name: string): string {
   return `TEST_${name.toUpperCase().replaceAll(/[^A-Z0-9]+/g, '_')}`;
 }
 
-function tierWrite(name: string, overrides: Partial<PlatformTierProfileWriteRequest> = {}): PlatformTierProfileWriteRequest {
+type EqualGroupsWrite = Extract<PlatformTierProfileWriteRequest, { type: typeof TierProfileType.EQUAL_GROUPS }>;
+type RangesWrite = Extract<PlatformTierProfileWriteRequest, { type: typeof TierProfileType.RANGES }>;
+
+const ODDS_FIRST = [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING];
+const SEED_FIRST = [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.RANKING];
+const SEED_RANGES = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }];
+
+function tierWrite(name: string, overrides: Partial<EqualGroupsWrite> = {}): EqualGroupsWrite {
   made.platformTierProfileNames.add(name);
-  return { code: codeOf(name), name, tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, ...overrides };
+  return { code: codeOf(name), name, type: TierProfileType.EQUAL_GROUPS, sources: ODDS_FIRST, tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, ...overrides };
+}
+
+function rangesWrite(name: string, overrides: Partial<RangesWrite> = {}): RangesWrite {
+  made.platformTierProfileNames.add(name);
+  return { code: codeOf(name), name, type: TierProfileType.RANGES, sources: SEED_FIRST, ranges: SEED_RANGES, ...overrides };
 }
 
 function pricingWrite(name: string, overrides: Partial<PlatformPricingProfileWriteRequest> = {}): PlatformPricingProfileWriteRequest {
   made.platformPricingProfileNames.add(name);
-  return { code: codeOf(name), name, salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...overrides };
+  return { code: codeOf(name), name, sources: ODDS_FIRST, salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...overrides };
+}
+
+/** The rows a source list is stored as, for a seed written straight to the database. */
+function sourceRows(sources: readonly FieldOrderBasis[]) {
+  return { create: sources.map((source, orderIndex) => ({ source, orderIndex })) };
 }
 
 /** A golf sport league naming these profiles, so they are in use. */
@@ -132,6 +149,61 @@ describe('Contract verification (tier and pricing profiles)', () => {
     await expect(getPrisma().platformTierProfile.count({ where: { id: platformTierProfile.id } })).resolves.toBe(1);
   });
 
+  it('creates a ranges tier profile ordered by seed first and reads it back with its sources and ranges, matching its DTO', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Ranges Profile Admin', isRootAdmin: true });
+    const name = `Seed ranges ${randomUUID().slice(0, 8)}`;
+
+    const created = await send('POST', '/api/v1/tier-profiles/', rootAdmin, rangesWrite(name));
+
+    expect(created.statusCode).toBe(201);
+    const { platformTierProfile } = PlatformTierProfileResponseSchema.parse(created.json());
+    expect(platformTierProfile).toMatchObject({ name, type: 'RANGES', sources: SEED_FIRST, ranges: SEED_RANGES });
+    expect(okBody(await get(`/api/v1/tier-profiles/${platformTierProfile.id}`, rootAdmin), PlatformTierProfileResponseSchema).platformTierProfile).toMatchObject({ ranges: SEED_RANGES });
+  });
+
+  it('refuses (422 PLATFORM_TIER_PROFILE_INVALID) a ranges profile ordered by odds first, or with a gap between tiers, writing nothing', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Ranges Refusals Admin', isRootAdmin: true });
+    const byOdds = `Ranges by odds ${randomUUID().slice(0, 8)}`;
+    const gapped = `Ranges gapped ${randomUUID().slice(0, 8)}`;
+
+    const responses = [
+      await send('POST', '/api/v1/tier-profiles/', rootAdmin, rangesWrite(byOdds, { sources: ODDS_FIRST })),
+      await send('POST', '/api/v1/tier-profiles/', rootAdmin, rangesWrite(gapped, { ranges: [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 3, toValue: null }] })),
+    ];
+
+    expect(responses.map((response) => [response.statusCode, errorCode(response)])).toEqual([[422, 'PLATFORM_TIER_PROFILE_INVALID'], [422, 'PLATFORM_TIER_PROFILE_INVALID']]);
+    await expect(getPrisma().platformTierProfile.count({ where: { name: { in: [byOdds, gapped] } } })).resolves.toBe(0);
+  });
+
+  it('refuses (422 PROFILE_FIRST_SOURCES_DIFFER) a tier profile edit that changes its first source away from the pricing profile of a league naming it, keeping the sources', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'First Source Admin', isRootAdmin: true });
+    const name = `Paired ${randomUUID().slice(0, 8)}`;
+    const { platformTierProfile } = PlatformTierProfileResponseSchema.parse((await send('POST', '/api/v1/tier-profiles/', rootAdmin, tierWrite(name))).json());
+    // The league's pricing profile is Standard, which starts with odds.
+    await leagueNaming({ platformTierProfileId: platformTierProfile.id });
+
+    const refused = await send('PUT', `/api/v1/tier-profiles/${platformTierProfile.id}`, rootAdmin, tierWrite(name, { sources: SEED_FIRST }));
+    const reordered = await send('PUT', `/api/v1/tier-profiles/${platformTierProfile.id}`, rootAdmin, tierWrite(name, { sources: [FieldOrderBasis.ODDS, FieldOrderBasis.RANKING] }));
+
+    expect([refused.statusCode, errorCode(refused)]).toEqual([422, 'PROFILE_FIRST_SOURCES_DIFFER']);
+    expect(reordered.statusCode).toBe(200);
+    expect(PlatformTierProfileResponseSchema.parse(reordered.json()).platformTierProfile.sources).toEqual([FieldOrderBasis.ODDS, FieldOrderBasis.RANKING]);
+  });
+
+  it('refuses (422 PROFILE_FIRST_SOURCES_DIFFER) a league settings change to a seed-first tier profile while its pricing profile starts with odds, and takes the pair together', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'League Profiles Admin', isRootAdmin: true });
+    const tiers = PlatformTierProfileResponseSchema.parse((await send('POST', '/api/v1/tier-profiles/', rootAdmin, rangesWrite(`League seeds ${randomUUID().slice(0, 8)}`))).json()).platformTierProfile;
+    const prices = PlatformPricingProfileResponseSchema.parse((await send('POST', '/api/v1/pricing-profiles/', rootAdmin, pricingWrite(`League by seed ${randomUUID().slice(0, 8)}`, { sources: SEED_FIRST }))).json()).platformPricingProfile;
+    const sportLeagueId = await leagueNaming({});
+
+    const refused = await send('PATCH', `/api/v1/sport-leagues/${sportLeagueId}`, rootAdmin, { platformTierProfileId: tiers.id });
+    const together = await send('PATCH', `/api/v1/sport-leagues/${sportLeagueId}`, rootAdmin, { platformTierProfileId: tiers.id, platformPricingProfileId: prices.id });
+
+    expect([refused.statusCode, errorCode(refused)]).toEqual([422, 'PROFILE_FIRST_SOURCES_DIFFER']);
+    expect(together.statusCode).toBe(200);
+    await expect(getPrisma().sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId } })).resolves.toMatchObject({ platformTierProfileId: tiers.id, platformPricingProfileId: prices.id });
+  });
+
   it('creates, reads, lists, updates and deletes a pricing profile, each response matching its DTO, and refuses with pricing profiles\' own codes', async () => {
     const rootAdmin = await createTestUser({ displayName: 'Pricing Profile Admin', isRootAdmin: true });
     const name = `Pricey ${randomUUID().slice(0, 8)}`;
@@ -198,11 +270,17 @@ async function seedProfiles(kind: 'tier' | 'pricing', rows: number) {
   for (let index = 0; index < rows; index++) {
     const name = `${prefix} ${index}`;
     if (kind === 'tier') {
-      const profile = await prisma.platformTierProfile.create({ data: tierWrite(name) });
+      // Every other profile is ranges, so the list reads both layouts' rows however many there are.
+      const { sources, ...write } = index % 2 === 0 ? tierWrite(name) : rangesWrite(name);
+      const data = write.type === TierProfileType.RANGES
+        ? { code: write.code, name: write.name, type: write.type, sources: sourceRows(sources), ranges: { create: write.ranges } }
+        : { ...write, sources: sourceRows(sources) };
+      const profile = await prisma.platformTierProfile.create({ data });
       lastSeed.platformTierProfileIds.push(profile.id);
       lastSeed.sportLeagueIds.push(await leagueNaming({ platformTierProfileId: profile.id }));
     } else {
-      const profile = await prisma.platformPricingProfile.create({ data: pricingWrite(name) });
+      const { sources, ...write } = pricingWrite(name);
+      const profile = await prisma.platformPricingProfile.create({ data: { ...write, sources: sourceRows(sources) } });
       lastSeed.platformPricingProfileIds.push(profile.id);
       lastSeed.sportLeagueIds.push(await leagueNaming({ platformPricingProfileId: profile.id }));
     }
