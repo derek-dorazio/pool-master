@@ -21,7 +21,7 @@ import type { DomainEntity } from './types';
 export const PLATFORM_TIER_PROFILE_TIER_COUNT_MAX = 20;
 export const PLATFORM_TIER_PROFILE_TIER_SIZE_MAX = 500;
 /** The largest seed or rank a range can name. */
-export const PLATFORM_TIER_PROFILE_RANGE_VALUE_MAX = 1000;
+const PLATFORM_TIER_PROFILE_RANGE_VALUE_MAX = 1000;
 
 /**
  * The values a profile orders a field by, first deciding (#2160): each basis at most once, at
@@ -58,12 +58,12 @@ export const RangesLayoutSchema = z.object({
     .describe('Each tier\'s seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.'),
 }).describe('Tiers by ranges of the first source\'s values.');
 
-/** How a field is laid out in pick tiers: equal groups or ranges (#2160). */
-export const TierLayoutSchema = z.discriminatedUnion('type', [EqualGroupsLayoutSchema, RangesLayoutSchema])
-  .describe('How a field is laid out in pick tiers: EQUAL_GROUPS, tiers of one size in the field\'s order; or RANGES, each tier the seeds or ranks its range holds.');
-export type TierLayout = z.infer<typeof TierLayoutSchema>;
+/**
+ * How a field is laid out in pick tiers (#2160): EQUAL_GROUPS, tiers of one size in the field's
+ * order; or RANGES, each tier the seeds or ranks its range holds.
+ */
+export type TierLayout = z.infer<typeof EqualGroupsLayoutSchema> | z.infer<typeof RangesLayoutSchema>;
 export type EqualGroupsLayout = Extract<TierLayout, { type: 'EQUAL_GROUPS' }>;
-export type RangesLayout = Extract<TierLayout, { type: 'RANGES' }>;
 
 /** How many tiers a new event starts with: the profile's count, or one per range. */
 export function tierCountOf(layout: TierLayout): number {

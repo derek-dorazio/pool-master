@@ -5,9 +5,16 @@ import { formatOrList } from '@/features/shared/ui';
 
 type FieldOrderFacts = Pick<SportEventOverviewDto, 'tierOrderBasis' | 'tierOrderCoversField' | 'tierOrderSources'>;
 
+/** Each source's words: what it is, what a participant lacks without it, and the order it gives. */
+const SOURCE_WORDS = {
+  ODDS: { source: 'word.fieldOrderSourceODDS', missing: 'word.fieldOrderMissingODDS', orderedBy: 'word.fieldOrderedByODDS' },
+  SEED: { source: 'word.fieldOrderSourceSEED', missing: 'word.fieldOrderMissingSEED', orderedBy: 'word.fieldOrderedBySEED' },
+  RANKING: { source: 'word.fieldOrderSourceRANKING', missing: 'word.fieldOrderMissingRANKING', orderedBy: 'word.fieldOrderedByRANKING' },
+} as const satisfies Record<FieldOrderBasis, { source: string; missing: string; orderedBy: string }>;
+
 /** "odds or a seed": the sources a participant can lack, joined as the reader's language joins a choice. */
 function anyOf(sources: readonly FieldOrderBasis[]): string {
-  const words = sources.map((source) => displayString(`word.fieldOrderMissing${source}`));
+  const words = sources.map((source) => displayString(SOURCE_WORDS[source].missing));
   return formatOrList(words);
 }
 
@@ -23,11 +30,11 @@ export function describeFieldOrder(overview: FieldOrderFacts | undefined, hasAct
   if (basis === null) return displayString('word.fieldOrderNone', { sources: anyOf(sources) });
   if (!tierOrderCoversField) {
     return displayString('word.fieldOrderPartial', {
-      source: displayString(`word.fieldOrderSource${basis}`),
-      missing: displayString(`word.fieldOrderMissing${basis}`),
+      source: displayString(SOURCE_WORDS[basis].source),
+      missing: displayString(SOURCE_WORDS[basis].missing),
     });
   }
-  const order = displayString(`word.fieldOrderedBy${basis}`);
+  const order = displayString(SOURCE_WORDS[basis].orderedBy);
   // A later source decided only because none before it covers the whole field.
   const earlier = sources.slice(0, Math.max(0, sources.indexOf(basis)));
   return earlier.length === 0
