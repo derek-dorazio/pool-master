@@ -1116,7 +1116,7 @@ export class InMemorySportEvents {
         for (const game of created) {
           const match = this.matchRows.find((row) => row.id === game.sportEventRoundMatchId);
           if (!match) throw new Error('unknown match');
-          this.putGame(match, stamp({ ...game, scheduledDate: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null, sideResults: [] }));
+          this.putGame(match, stamp({ ...game, scheduledDate: null, venue: null, location: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null, sideResults: [] }));
         }
         const ids = new Set(maps.map((each) => each.externalId));
         const games = new Set(maps.map((each) => each.sportEventRoundMatchGameId));
@@ -1189,7 +1189,7 @@ export class InMemorySportEvents {
               sides: stored,
               games: [stamp({
                 id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${String(match.roundNumber)}`, gameNumber: 1,
-                scheduledDate: match.scheduledDate, isNeutralSite, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
+                scheduledDate: match.scheduledDate, isNeutralSite, venue: null, location: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
                 sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, periodScores: [] })),
               })],
             });

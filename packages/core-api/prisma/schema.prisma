@@ -2388,6 +2388,11 @@ model SportEventRoundMatchGame {
   /// Neither side plays at home (#2047): a Super Bowl, a tournament game. Its side results then
   /// say NONE for home or away.
   isNeutralSite              Boolean                  @default(false) @map("is_neutral_site")
+  /// Where the game is played (#2047): its arena or stadium, and its city. A series moves between
+  /// both sides' homes, so each Game has its own. Null until a feed sends one; a golf tournament's
+  /// course stays on its event.
+  venue                      String?                  @db.VarChar(500)
+  location                   String?                  @db.VarChar(500)
   status                     PrismaMatchStatus        @default(SCHEDULED)
   /// When the game was last written COMPLETED; null for any other status. A match's and a
   /// round's completion time are read from their Games.

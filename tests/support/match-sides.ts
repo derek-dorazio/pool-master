@@ -134,6 +134,8 @@ function gamesOf(
     gameNumber,
     scheduledDate: gameNumber === 1 ? match.scheduledDate : null,
     isNeutralSite: match.isNeutralSite,
+    venue: null,
+    location: null,
     status,
     completedAt,
     movedToGameId: null,
