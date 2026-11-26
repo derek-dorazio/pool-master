@@ -13,7 +13,7 @@ const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisi
  * (BracketAdvancement.RESEED_BY_SEED, #722), so the best seed left always hosts.
  *
  * The NFL playoffs are 14 teams in four rounds, seven seeds in each conference with the 1 seed on
- * a bye; a bye scores nothing. Its tier profile is seven tiers of two (#1844), assigned like any
+ * a bye; a bye counts as a win (#2170). Its tier profile is seven tiers of two (#1844), assigned like any
  * sport's from odds or ranking.
  *
  * NCAA Men's Football is a second sport league (#707). Its College Football Playoff is a fixed

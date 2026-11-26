@@ -1,3 +1,4 @@
+import { SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import { EMPTY_SCORING_SETTINGS_VALUES, SCORING_SETTINGS_UI } from './contest-scoring-settings';
 
@@ -26,10 +27,17 @@ describe('knockout round points settings', () => {
       .toBe('The upset bonus multiplier must be a whole number, 1 or more.');
   });
 
-  it('fills the form from a preset and describes it for members', () => {
+  it('fills the form from a preset and describes it for members, telling a roster contest that a bye counts as a win', () => {
     const preset = { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS' as const, config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'SEED_DIFFERENCE' as const, multiplier: 1 } } };
 
     expect(knockoutUi.toValues(preset, EMPTY_SCORING_SETTINGS_VALUES)).toMatchObject({ roundValues: '1, 2, 4', upsetBonusRule: 'SEED_DIFFERENCE', upsetBonusMultiplier: '1' });
-    expect(knockoutUi.describe(preset)).toBe('Points for a win in each round: 1, 2, 4. A win over a better seed adds the seed difference.');
+    expect(knockoutUi.describe(preset, SelectionType.TIERED))
+      .toBe('Points for a win in each round: 1, 2, 4. A bye counts as a win. A win over a better seed adds the seed difference.');
+  });
+
+  it('leaves the bye out of a bracket contest\'s description, since a bracket scores picks, not the teams\' wins', () => {
+    const preset = { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS' as const, config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' as const } } };
+
+    expect(knockoutUi.describe(preset, SelectionType.BRACKET)).toBe('Points for a win in each round: 1, 2, 4.');
   });
 });

@@ -7174,7 +7174,7 @@ export interface components {
                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                 config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                     roundValues: number[];
                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                     upsetBonus: {
@@ -7217,7 +7217,7 @@ export interface components {
                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                 config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                     roundValues: number[];
                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                     upsetBonus: {
@@ -7260,7 +7260,7 @@ export interface components {
                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                 config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                     roundValues: number[];
                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                     upsetBonus: {
@@ -7306,7 +7306,7 @@ export interface components {
                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                 config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                     roundValues: number[];
                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                     upsetBonus: {
@@ -7347,7 +7347,7 @@ export interface components {
                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                 config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                     roundValues: number[];
                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                     upsetBonus: {
@@ -7388,7 +7388,7 @@ export interface components {
                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                 config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                     roundValues: number[];
                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                     upsetBonus: {
@@ -7431,7 +7431,7 @@ export interface components {
                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                 config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                     roundValues: number[];
                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                     upsetBonus: {
@@ -7794,7 +7794,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -7837,7 +7837,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -7880,7 +7880,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -7926,7 +7926,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -7967,7 +7967,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8008,7 +8008,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8051,7 +8051,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8348,7 +8348,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -8391,7 +8391,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -8434,7 +8434,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -8480,7 +8480,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -8521,7 +8521,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -8562,7 +8562,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -8605,7 +8605,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -8666,7 +8666,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8709,7 +8709,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8752,7 +8752,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8798,7 +8798,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8839,7 +8839,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8880,7 +8880,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -8923,7 +8923,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -9059,7 +9059,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -9102,7 +9102,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -9145,7 +9145,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -9191,7 +9191,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -9232,7 +9232,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -9273,7 +9273,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -9316,7 +9316,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -14950,7 +14950,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -14993,7 +14993,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -15036,7 +15036,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -15082,7 +15082,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -15123,7 +15123,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -15164,7 +15164,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -15207,7 +15207,7 @@ export interface components {
                     participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                     /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                     config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                         roundValues: number[];
                         /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                         upsetBonus: {
@@ -15534,9 +15534,9 @@ export interface components {
             } | null;
             /** @description Present for a head-to-head contest (a basketball bracket); null otherwise. */
             knockout: {
-                /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result. */
+                /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. Null until the bracket has a result. */
                 points: number | null;
-                /** @description Matches the team has won. */
+                /** @description Matches the team has won, each bye whose skipped round is decided counted as a win. */
                 wins: number;
                 /** @description The part of the points that is upset bonus; 0 when the bonus is off. */
                 upsetBonusPoints: number;
@@ -15608,9 +15608,9 @@ export interface components {
                 } | null;
                 /** @description Present for a head-to-head contest (a basketball bracket); null otherwise. */
                 knockout: {
-                    /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result. */
+                    /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. Null until the bracket has a result. */
                     points: number | null;
-                    /** @description Matches the team has won. */
+                    /** @description Matches the team has won, each bye whose skipped round is decided counted as a win. */
                     wins: number;
                     /** @description The part of the points that is upset bonus; 0 when the bonus is off. */
                     upsetBonusPoints: number;
@@ -15938,9 +15938,9 @@ export interface components {
                     } | null;
                     /** @description Present for a head-to-head contest (a basketball bracket); null otherwise. */
                     knockout: {
-                        /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result. */
+                        /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. Null until the bracket has a result. */
                         points: number | null;
-                        /** @description Matches the team has won. */
+                        /** @description Matches the team has won, each bye whose skipped round is decided counted as a win. */
                         wins: number;
                         /** @description The part of the points that is upset bonus; 0 when the bonus is off. */
                         upsetBonusPoints: number;
@@ -22417,7 +22417,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -22460,7 +22460,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -22503,7 +22503,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -22549,7 +22549,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -22590,7 +22590,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -22631,7 +22631,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -22674,7 +22674,7 @@ export interface components {
                         participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                         /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                         config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                             roundValues: number[];
                             /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                             upsetBonus: {
@@ -22893,7 +22893,7 @@ export interface components {
                             participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                             /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                             config: {
-                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                 roundValues: number[];
                                 /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                 upsetBonus: {
@@ -22936,7 +22936,7 @@ export interface components {
                             participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                             /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                             config: {
-                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                 roundValues: number[];
                                 /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                 upsetBonus: {
@@ -22979,7 +22979,7 @@ export interface components {
                             participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                             /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                             config: {
-                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                 roundValues: number[];
                                 /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                 upsetBonus: {
@@ -23025,7 +23025,7 @@ export interface components {
                             participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                             /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                             config: {
-                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                 roundValues: number[];
                                 /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                 upsetBonus: {
@@ -23066,7 +23066,7 @@ export interface components {
                             participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                             /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                             config: {
-                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                 roundValues: number[];
                                 /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                 upsetBonus: {
@@ -23107,7 +23107,7 @@ export interface components {
                             participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                             /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                             config: {
-                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                 roundValues: number[];
                                 /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                 upsetBonus: {
@@ -23150,7 +23150,7 @@ export interface components {
                             participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                             /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                             config: {
-                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                 roundValues: number[];
                                 /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                 upsetBonus: {
@@ -23372,7 +23372,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23415,7 +23415,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23458,7 +23458,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23504,7 +23504,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23545,7 +23545,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23586,7 +23586,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23629,7 +23629,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23862,7 +23862,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23905,7 +23905,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23948,7 +23948,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -23994,7 +23994,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -24035,7 +24035,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -24076,7 +24076,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {
@@ -24119,7 +24119,7 @@ export interface components {
                                 participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
                                 /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
                                 config: {
-                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
                                     roundValues: number[];
                                     /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
                                     upsetBonus: {

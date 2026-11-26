@@ -3,6 +3,7 @@ import {
   SelectionType,
   KnockoutRoundPointsSettingsSchema,
   UpsetBonusRule,
+  describeKnockoutRoundPoints,
   type ContestScoringSettings,
   type ParticipantScoringDefinitionId,
   type SportVocabulary,
@@ -60,8 +61,11 @@ interface ScoringSettingsUi {
    * contest takes its template's preset or its sport's default.
    */
   parse: (values: ScoringSettingsValues) => ScoringSettingsResult;
-  /** The sentence members read about how picks score, or null when the rules sentence says it all. */
-  describe: (scoring: ContestScoringSettings | null) => string | null;
+  /**
+   * The sentence members read about how picks score, or null when the rules sentence says it all.
+   * The contest's selection type says whether its scoring scores teams or an entry's predictions.
+   */
+  describe: (scoring: ContestScoringSettings | null, selectionType: SelectionType) => string | null;
 }
 
 /** "5, 3, 1" as numbers. A blank, a non-whole number or a negative one reads as not a table. */
@@ -153,21 +157,9 @@ const knockoutRoundPointsUi: ScoringSettingsUi = {
       error: null,
     };
   },
-  describe: (scoring) => {
-    if (scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS') {
-      return null;
-    }
-    const { roundValues, upsetBonus } = scoring.config;
-    const perRound = `Points for a win in each round: ${roundValues.join(', ')}.`;
-    switch (upsetBonus.rule) {
-      case UpsetBonusRule.NONE:
-        return perRound;
-      case UpsetBonusRule.SEED_DIFFERENCE:
-        return upsetBonus.multiplier === 1
-          ? `${perRound} A win over a better seed adds the seed difference.`
-          : `${perRound} A win over a better seed adds the seed difference times ${upsetBonus.multiplier}.`;
-    }
-  },
+  describe: (scoring, selectionType) => (scoring?.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS'
+    ? describeKnockoutRoundPoints(scoring.config, selectionType)
+    : null),
 };
 
 /** Golf's total against par takes no settings: nothing to show, nothing to send. */

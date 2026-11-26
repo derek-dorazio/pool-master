@@ -740,7 +740,9 @@ placed stands `ACTIVE` with `currentRound` the next round.
 
 A bracket contest scores by `KNOCKOUT_ROUND_POINTS`: each win scores its round's value, plus
 the seed difference times the multiplier when the upset bonus is on and the worse seed wins
-(an unseeded team counts as the field's worst seed; a bye scores nothing). Contest setup
+(an unseeded team counts as the field's worst seed). A bye counts as a win: a team placed straight
+into a later round scores the value of each round it skipped once that round is decided, with no
+upset bonus (#2170). Contest setup
 requires one round value per round of the event: 422 `CONTEST_SCORING_ROUNDS_MISMATCH`
 otherwise, and refuses an event whose games form no bracket (a regular-season week, #715) with
 422 `CONTEST_EVENT_NOT_A_BRACKET`, since no team goes a round further. Until the bracket has a
