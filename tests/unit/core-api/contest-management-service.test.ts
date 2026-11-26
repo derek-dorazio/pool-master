@@ -239,7 +239,6 @@ function createSportEventTierServiceStub(
   const tiers = Array.from({ length: tierCount }, (_, index) => ({
     id: `tier-${index + 1}`,
     tierKey: `tier-${index + 1}`,
-    label: `Tier ${index + 1}`,
     tierNumber: index + 1,
     participants: withParticipants
       ? [
@@ -270,8 +269,7 @@ function createSportEventReader(overrides?: Partial<{
   sportLeagueId: string;
   championshipYear: number;
   tournamentFormat: TournamentFormat;
-  participantCount: number | null;
-  loadedParticipantCount: number;
+  participantCount: number;
   rounds: number | null;
   salaryCap: number | null;
   activeFieldPrices: number[];
@@ -312,7 +310,6 @@ function createSportEventReader(overrides?: Partial<{
       tournamentFormat:
         overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: overrides?.participantCount ?? 72,
-      loadedParticipantCount: overrides?.loadedParticipantCount ?? 72,
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       salaryCap: overrides?.salaryCap ?? null,
       squaresFromRound: overrides?.squaresFromRound ?? null,
@@ -411,7 +408,6 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(2),
       sportEventReader: createSportEventReader({
         participantCount: 80,
-        loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -452,7 +448,6 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(2),
       sportEventReader: createSportEventReader({
         participantCount: 80,
-        loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -855,7 +850,6 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(2),
       sportEventReader: createSportEventReader({
         participantCount: 80,
-        loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -886,7 +880,6 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(2),
       sportEventReader: createSportEventReader({
         participantCount: 80,
-        loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -953,7 +946,6 @@ describe('ContestManagementService', () => {
     expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
         tierKey: 'tier-1',
-        label: 'Tier 1',
         tierNumber: 1,
         assignments: [
           {
@@ -966,7 +958,6 @@ describe('ContestManagementService', () => {
       },
       {
         tierKey: 'tier-2',
-        label: 'Tier 2',
         tierNumber: 2,
         assignments: [
           {
@@ -1245,8 +1236,7 @@ describe('ContestManagementService', () => {
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader({
-        participantCount: 72,
-        loadedParticipantCount: 0,
+        participantCount: 0,
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1301,7 +1291,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
-      sportEventReader: createSportEventReader({ ...event, loadedParticipantCount: 72 }),
+      sportEventReader: createSportEventReader({ ...event, participantCount: 72 }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
@@ -1993,7 +1983,6 @@ describe('ContestManagementService — a contest of several events', () => {
       sportLeagueId: PGA_TOUR_LEAGUE_ID,
       tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: 72,
-      loadedParticipantCount: 72,
       rounds: 4,
       salaryCap: null,
       squaresFromRound: null,
@@ -2650,7 +2639,6 @@ describe('ContestManagementService — a bracket on a knockout already under way
       status: options.eventStatus ?? SportEventStatus.IN_PROGRESS,
       startDate: at(options.eventStartHours ?? -48),
       rounds: 3,
-      participantCount: 8,
     });
     for (const [team, seed] of EIGHT_SEEDS) {
       const participant = store.addParticipant(sport.id, `Team ${team}`);
@@ -3106,7 +3094,7 @@ describe('createContestSportEventReader event and game counts', () => {
 
     const state = await readerOn(store, async () => new Map()).findById(golf.id);
 
-    expect(state?.loadedParticipantCount).toBe(0);
+    expect(state?.participantCount).toBe(0);
   });
 
   it('counts the games that are not cancelled, and the undecided ones in the whole event or its opening round only', async () => {
@@ -3166,7 +3154,7 @@ describe('createBatchedContestOpeningReader', () => {
     const event = store.addEvent({});
     const { reader } = openingReaderOn(store, { countParticipants: async () => new Map() });
 
-    await expect(reader.findById(event.id)).resolves.toEqual(expect.objectContaining({ loadedParticipantCount: 0 }));
+    await expect(reader.findById(event.id)).resolves.toEqual(expect.objectContaining({ participantCount: 0 }));
   });
 
   it('finds the earliest squares kickoff still to come, leaving out cancelled, started and earlier-round games', async () => {

@@ -99,7 +99,6 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     roundsParMin: 60,
     roundsParMax: 80,
     participantCount: 89,
-    loadedParticipantCount: 89,
     pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     tierLayout: null,
     readinessStatus: 'CONTEST_ELIGIBLE',
@@ -172,7 +171,6 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
 export function buildTier(tierNumber: number, golferCount: number): EffectiveTierDto {
   return {
     tierKey: `tier-${tierNumber}`,
-    label: `Tier ${tierNumber}`,
     tierNumber,
     assignments: Array.from({ length: golferCount }, (_, index) => ({
       sportEventParticipantId: `sep-${tierNumber}-${index}`,

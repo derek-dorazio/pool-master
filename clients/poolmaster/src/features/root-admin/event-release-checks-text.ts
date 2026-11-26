@@ -1,3 +1,4 @@
+import { tierLabel } from '@poolmaster/shared/display-strings';
 import { assertNever } from '@poolmaster/shared/domain';
 import { formatDateTimeDisplay, type DisplayPreferences } from '@/features/shared/ui';
 import type { ReleaseCheckDto, SportEventOverviewDto } from '@/lib/api';
@@ -15,7 +16,7 @@ export function releaseCheckValueText(check: ReleaseCheckDto, preferences: Displ
     case 'TIERS_ASSIGNED':
       return `${plural(check.value, 'participant')} without a tier`;
     case 'TIERS_FILLED':
-      return check.value.length === 0 ? 'None empty' : `Empty: ${check.value.join(', ')}`;
+      return check.value.length === 0 ? 'None empty' : `Empty: ${check.value.map(tierLabel).join(', ')}`;
     case 'PRICES_ASSIGNED':
       return check.value === null ? 'Not priced' : `${plural(check.value, 'participant')} without a price`;
     case 'BRACKET_COMPLETE':

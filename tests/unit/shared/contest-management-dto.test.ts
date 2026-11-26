@@ -171,7 +171,6 @@ describe('contest-management dto schemas', () => {
         tiers: [
           {
             tierKey: 'A',
-            label: 'Tier A',
             pickCount: 1,
             startPosition: 1,
             endPosition: 10,
@@ -217,7 +216,6 @@ describe('contest-management dto schemas', () => {
           effectiveTiers: [
           {
             tierKey: 'tier-1',
-            label: 'Tier 1',
             tierNumber: 1,
             assignments: [
               {

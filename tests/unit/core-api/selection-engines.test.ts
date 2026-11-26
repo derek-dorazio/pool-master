@@ -26,7 +26,6 @@ import {
 function tier(overrides: Partial<SelectionTierConfig> = {}): SelectionTierConfig {
   return {
     tierId: 'tier-1',
-    tierName: 'Tier 1',
     tierNumber: 1,
     picksFromTier: 2,
     participantIds: [],
@@ -45,12 +44,12 @@ function configuration(overrides: Partial<ContestConfiguration> = {}): ContestCo
   };
 }
 
-function participant(participantId: string, tierLabel: string | null): SelectionParticipant {
+function participant(participantId: string, tierNumber: number | null): SelectionParticipant {
   return {
     sportEventParticipantId: `sep-${participantId}`,
     participantId,
     participantName: `Golfer ${participantId}`,
-    tier: tierLabel,
+    tierNumber,
     seedNumber: null,
     isAvailable: true,
   };
@@ -60,14 +59,14 @@ const picks = (...participantIds: string[]): EntryPick[] =>
   participantIds.map((participantId) => ({ id: `pick-${participantId}`, participantId }));
 
 const TIERS = [
-  tier({ tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2, participantIds: ['a', 'b', 'c'] }),
-  tier({ tierId: 'tier-2', tierName: 'Tier 2', tierNumber: 2, picksFromTier: 1, participantIds: ['d', 'e'] }),
+  tier({ tierId: 'tier-1', tierNumber: 1, picksFromTier: 2, participantIds: ['a', 'b', 'c'] }),
+  tier({ tierId: 'tier-2', tierNumber: 2, picksFromTier: 1, participantIds: ['d', 'e'] }),
 ];
 const ROSTER_SIZE = 3;
 
 function request(overrides: Partial<SelectionRequest> = {}): SelectionRequest {
   return {
-    participant: participant('a', 'Tier 1'),
+    participant: participant('a', 1),
     existingPicks: [],
     tiers: TIERS,
     rosterSize: ROSTER_SIZE,
@@ -107,18 +106,18 @@ describe('tiered selection engine — evaluate', () => {
       .toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_MISSING });
   });
 
-  it('rejects TIER_NOT_FOUND, carrying the label, for a tier the contest does not configure', () => {
-    expect(tieredSelectionEngine.evaluate(request({ participant: participant('z', 'Tier 9') })))
-      .toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_NOT_FOUND, tierLabel: 'Tier 9' });
+  it('rejects TIER_NOT_FOUND, carrying the tier number, for a tier the contest does not configure', () => {
+    expect(tieredSelectionEngine.evaluate(request({ participant: participant('z', 9) })))
+      .toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_NOT_FOUND, tierNumber: 9 });
   });
 
-  it('finds the participant\'s tier by its id as well as its display name', () => {
-    expect(tieredSelectionEngine.evaluate(request({ participant: participant('d', 'tier-2') })))
+  it('finds the participant\'s tier by its tier number and places the pick in that tier', () => {
+    expect(tieredSelectionEngine.evaluate(request({ participant: participant('d', 2) })))
       .toEqual({ kind: SelectionOutcomeKind.ACCEPT, lineupSlot: 3 });
   });
 
   it('replaces the newest pick in a full tier rather than rejecting', () => {
-    expect(tieredSelectionEngine.evaluate(request({ participant: participant('c', 'Tier 1'), existingPicks: picks('a', 'b') })))
+    expect(tieredSelectionEngine.evaluate(request({ participant: participant('c', 1), existingPicks: picks('a', 'b') })))
       .toEqual({ kind: SelectionOutcomeKind.REPLACE, lineupSlot: 2, replacedPickId: 'pick-b' });
   });
 });
@@ -216,7 +215,7 @@ describe('tiered selection engine — groupField and summarizeLineup', () => {
   it('lists one group per tier with the tier\'s golfers on the field, leaving out one not on it', () => {
     const groups = tieredSelectionEngine.groupField({
       tiers: TIERS,
-      participants: [participant('a', 'Tier 1'), participant('d', 'Tier 2')],
+      participants: [participant('a', 1), participant('d', 2)],
       rosterSize: 3,
     });
 

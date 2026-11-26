@@ -74,7 +74,6 @@ export interface ParticipantValuationView {
   participantId: string;
   tierId: string | null;
   tierKey: string | null;
-  tierLabel: string | null;
   tierNumber: number | null;
   tierOrderIndex: number | null;
   price: number | null;
@@ -163,7 +162,6 @@ export class SportEventTierService {
       sportEventId,
       Array.from({ length: tierCount }, (_, index) => ({
         tierKey: `tier-${index + 1}`,
-        label: `Tier ${index + 1}`,
         tierNumber: index + 1,
       })),
     ]));
@@ -207,7 +205,6 @@ export class SportEventTierService {
           participantId: participantIdByEntry.get(valuation.sportEventParticipantId) as string,
           tierId: tier?.id ?? null,
           tierKey: tier?.tierKey ?? null,
-          tierLabel: tier?.label ?? null,
           tierNumber: tier?.tierNumber ?? null,
           tierOrderIndex: valuation.tierOrderIndex,
           price: valuation.price,

@@ -204,6 +204,7 @@ const STARTED_EVENT = {
   ...sportPlay(Sport.GOLF),
   status: SportEventStatus.IN_PROGRESS,
   startDate: new Date('2026-01-01T12:00:00.000Z'),
+  slotDefinitions: [] as SportEvent['slotDefinitions'],
 } as SportEvent;
 
 /**
@@ -320,15 +321,14 @@ function buildReceiptPick(
 /** An effective valuation as `SportEventTierService` resolves one: untiered and unpriced unless given. */
 function receiptValuation(
   sportEventParticipantId: string,
-  overrides: { tierLabel?: string; price?: number } = {},
+  overrides: { tierNumber?: number; price?: number } = {},
 ): ParticipantValuationView {
   return {
     sportEventParticipantId,
     participantId: `participant-of-${sportEventParticipantId}`,
     tierId: null,
     tierKey: null,
-    tierLabel: overrides.tierLabel ?? null,
-    tierNumber: null,
+    tierNumber: overrides.tierNumber ?? null,
     tierOrderIndex: null,
     price: overrides.price ?? null,
   };
@@ -1536,8 +1536,8 @@ describe('ContestService', () => {
       // The event's effective tiers and the entry's picks, as the selection room already holds them.
       await service.sendEntrySubmittedEmails(receiptInput(contest, {
         valuations: [
-          receiptValuation('sport-event-participant-1', { tierLabel: 'Tier A' }),
-          receiptValuation('sport-event-participant-2', { tierLabel: 'Tier B' }),
+          receiptValuation('sport-event-participant-1', { tierNumber: 1 }),
+          receiptValuation('sport-event-participant-2', { tierNumber: 2 }),
         ],
         picks: [
           buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
@@ -1560,8 +1560,8 @@ describe('ContestService', () => {
         },
       }));
       const sentMessage = mailDelivery.send.mock.calls[0][0];
-      expect(sentMessage.text).toContain('Tier A: Rory McIlroy');
-      expect(sentMessage.text).toContain('Tier B: Tommy Fleetwood');
+      expect(sentMessage.text).toContain('Tier 1: Rory McIlroy');
+      expect(sentMessage.text).toContain('Tier 2: Tommy Fleetwood');
       expect(sentMessage.text).toContain('Tiebreaker: +271');
       expect(sentMessage.text).toContain(
         'Review entry: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/entries/entry-1',

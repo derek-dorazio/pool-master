@@ -313,7 +313,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       client: c,
       path: { eventId },
       body: {
-        tiers: [1, 2, 3, 4].map((n) => ({ tierKey: `tier-${n}`, label: `Tier ${n}`, tierNumber: n })),
+        tiers: [1, 2, 3, 4].map((n) => ({ tierKey: `tier-${n}`, tierNumber: n })),
         reassignOrphansTo: 'tier-1',
       },
     });

@@ -52,7 +52,6 @@ describe('events routes', () => {
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: new Date('2099-04-23T23:00:00.000Z'),
           status: 'SCHEDULED',
-          participantCount: 144,
         },
         {
           ...(await freshEventEdition(prisma)),
@@ -61,7 +60,6 @@ describe('events routes', () => {
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: new Date('2099-04-23T23:00:00.000Z'),
           status: 'COMPLETED',
-          participantCount: 12,
         },
       ],
     });
@@ -152,7 +150,6 @@ describe('events routes', () => {
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: null,
           status: 'DRAFT',
-          participantCount: 100,
         },
         {
           ...(await freshEventEdition(prisma)),
@@ -162,7 +159,6 @@ describe('events routes', () => {
           startDate: new Date('2000-04-20T15:00:00.000Z'),
           endDate: null,
           status: 'SCHEDULED',
-          participantCount: 100,
         },
       ],
     });
@@ -246,7 +242,6 @@ describe('events routes', () => {
           startDate: new Date('2099-04-20T15:00:00.000Z'),
           endDate: null,
           status: 'DRAFT',
-          participantCount: 1,
         },
       });
       await prisma.participant.create({
@@ -263,7 +258,7 @@ describe('events routes', () => {
       });
       if (options.tiered) {
         const tier = await prisma.sportEventTier.create({
-          data: { sportEventId: eventId, tierKey: 'A', label: 'Tier A', tierNumber: 1 },
+          data: { sportEventId: eventId, tierKey: 'A', tierNumber: 1 },
         });
         await prisma.sportEventParticipantValuation.create({
           data: {
@@ -278,7 +273,7 @@ describe('events routes', () => {
     }
 
     const tierPayload = {
-      tiers: [{ tierKey: 'A', label: 'Tier A', tierNumber: 1 }],
+      tiers: [{ tierKey: 'A', tierNumber: 1 }],
     };
 
     it('releases a tiered draft for a root admin, then locks its tiers while the generic transition never releases', async () => {
@@ -376,11 +371,11 @@ describe('events routes', () => {
       expect(stored.status).toBe('DRAFT');
     });
 
-    it('refuses to release a tiered, priced draft that has an empty tier with 422 SPORT_EVENT_NOT_READY naming the tier, and leaves it a draft', async () => {
+    it('refuses to release a tiered, priced draft that has an empty tier with 422 SPORT_EVENT_NOT_READY naming the tier by its number, and leaves it a draft', async () => {
       const admin = await createTestUser({ displayName: 'Release Empty Tier Admin', isRootAdmin: true });
       const eventId = await seedDraftGolfEvent({ tiered: true });
       await getPrisma().sportEventTier.create({
-        data: { sportEventId: eventId, tierKey: 'B', label: 'Tier B', tierNumber: 2 },
+        data: { sportEventId: eventId, tierKey: 'B', tierNumber: 2 },
       });
       const pricesRes = await getApp().inject({
         method: 'POST',
@@ -399,7 +394,7 @@ describe('events routes', () => {
       expect(res.statusCode).toBe(422);
       const body = res.json<{ error: { code: string; message: string } }>();
       expect(body.error.code).toBe('SPORT_EVENT_NOT_READY');
-      expect(body.error.message).toContain('Tier B has no golfers');
+      expect(body.error.message).toContain('Tier 2 has no golfers');
       const stored = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: eventId } });
       expect(stored.status).toBe('DRAFT');
     });

@@ -150,7 +150,7 @@ export const selectionErrors = {
       400,
     ),
 
-  tierNotFound: (tier: string, contestId: string) =>
+  tierNotFound: (tier: number, contestId: string) =>
     new SelectionError(
       `Tier ${tier} is not configured for contest ${contestId}`,
       'TIER_NOT_FOUND',

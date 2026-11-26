@@ -67,13 +67,15 @@ describe('pool-master-r11 sport-admin-utils: parseGolfRoundScoreUpload', () => {
     ).toThrow(/Row 1/);
   });
 
-  it('pool-master-r11 rejects a thru outside 0-18', () => {
+  it('rejects a negative thru, and leaves a thru past the round\'s holes for the server to refuse by the round\'s slot', () => {
     expect(() =>
       parseGolfRoundScoreUpload(
-        'playerName,strokes,scoreToPar,thru,status\nRory McIlroy,70,-2,25,COMPLETED',
+        'playerName,strokes,scoreToPar,thru,status\nRory McIlroy,70,-2,-1,COMPLETED',
         'CSV',
       ),
     ).toThrow(/Row 1 \(thru\)/);
+    expect(parseGolfRoundScoreUpload('playerName,strokes,scoreToPar,thru,status\nRory McIlroy,70,-2,25,COMPLETED', 'CSV'))
+      .toEqual([expect.objectContaining({ thru: 25 })]);
   });
 
   it('rejects a row with 0 strokes, since a stored round has at least one stroke', () => {

@@ -67,7 +67,7 @@ export function squaresBoardFixture(overrides: Partial<SquaresBoardResponse> = {
     contestId: 'contest-1',
     contestStatus: 'OPEN',
     maxSquaresPerEntry: 2,
-    periodLayout: 'QUARTERS',
+    periods: { unit: 'QUARTER', count: 4 },
     game: squaresGameFixture(),
     homeTeamName: 'Eagles',
     awayTeamName: 'Chiefs',

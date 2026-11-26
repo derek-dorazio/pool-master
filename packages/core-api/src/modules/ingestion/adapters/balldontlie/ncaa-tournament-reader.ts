@@ -54,7 +54,7 @@ export class NcaaTournamentReader {
     const participants = toNcaaFieldParticipants(this.league, games);
     const bracket = toNcaaBracket(scope, games);
     return {
-      ...toNcaaTournamentEvent(scope, games, participants.length),
+      ...toNcaaTournamentEvent(scope, games),
       participants,
       games: toNcaaScheduledGames(this.league, games),
       ...(bracket !== null && { bracket }),

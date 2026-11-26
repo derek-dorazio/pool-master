@@ -22,7 +22,7 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 // contest's points table, and when a runner is left unscored.
 
 const family = getScoringFamilyModule(ScoringFamily.FINISH_POSITION);
-const RACE: FieldScoringEvent = { sport: Sport.HORSE_RACING, ...sportPlay(Sport.HORSE_RACING), rounds: 1, roundsPar: undefined, status: SportEventStatus.COMPLETED };
+const RACE: FieldScoringEvent = { sport: Sport.HORSE_RACING, ...sportPlay(Sport.HORSE_RACING), rounds: 1, roundsPar: undefined, status: SportEventStatus.COMPLETED, slotDefinitions: [] };
 const WIN_PLACE_SHOW: ContestScoringSettings = {
   participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
   config: { pointsTable: [5, 3, 1], didNotFinishPoints: -1 },

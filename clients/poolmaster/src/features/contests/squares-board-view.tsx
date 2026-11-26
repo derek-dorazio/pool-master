@@ -189,7 +189,7 @@ export function SquaresBoardView({
               label: 'Score',
               value: 'score',
               testId: 'squares-tab-score',
-              content: <SquaresScoreTable awayTeamName={awayTeam} homeTeamName={homeTeam} score={squaresScoreByPeriod(board.game, board.periodLayout)} />,
+              content: <SquaresScoreTable awayTeamName={awayTeam} homeTeamName={homeTeam} score={squaresScoreByPeriod(board.game, board.periods)} />,
             },
             {
               label: 'Winners',

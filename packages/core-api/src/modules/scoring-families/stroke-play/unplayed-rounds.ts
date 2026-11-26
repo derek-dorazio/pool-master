@@ -31,7 +31,17 @@ import type {
 export const UNPLAYED_ROUND_STROKES = 80;
 
 /** What unplayed-round scoring reads off the event. */
-export type UnplayedRoundScoringEvent = Pick<SportEvent, 'rounds' | 'roundsPar' | 'status'>;
+export type UnplayedRoundScoringEvent = Pick<SportEvent, 'rounds' | 'roundsPar' | 'status' | 'slotDefinitions'>;
+
+/**
+ * How many holes each of a stroke-play event's rounds has (#2047): the period count of the slot
+ * its rounds are played in, which every round of a tournament shares. Null when the event covers
+ * no slot with one, or slots that disagree.
+ */
+export function holesPerRound(event: Pick<SportEvent, 'slotDefinitions'>): number | null {
+  const counts = [...new Set(event.slotDefinitions.map((definition) => definition.periods?.count ?? null))];
+  return counts.length === 1 ? counts[0] : null;
+}
 
 /** A golfer's contest score and the rounds in it that were scored as 80 strokes. */
 export interface GolfContestScore {
@@ -40,15 +50,15 @@ export interface GolfContestScore {
 }
 
 /**
- * A round played to the end: completed, completed and then cut on, or all 18 holes scored
- * while the status has not caught up (the event can complete before the last group's round
- * flips to COMPLETED).
+ * A round played to the end: completed, completed and then cut on, or every hole of the round
+ * (`holes`, from `holesPerRound`) scored while the status has not caught up (the event can
+ * complete before the last group's round flips to COMPLETED).
  */
-export function isRoundFinished(round: ParticipantRoundView): boolean {
+export function isRoundFinished(round: ParticipantRoundView, holes: number | null): boolean {
   return round.golf !== null && (
     round.round.status === ParticipantRoundStatus.COMPLETED
     || round.round.status === ParticipantRoundStatus.MISSED_CUT
-    || (round.round.status === ParticipantRoundStatus.IN_PROGRESS && round.golf.thru === 18)
+    || (round.round.status === ParticipantRoundStatus.IN_PROGRESS && holes !== null && round.golf.thru === holes)
   );
 }
 
@@ -66,6 +76,8 @@ export interface UnplayedRoundContext {
   /** The highest round any golfer has a score for; rounds below it the field has moved past. */
   highestStartedRound: number;
   eventComplete: boolean;
+  /** `holesPerRound` of the event. */
+  holes: number | null;
 }
 
 export function buildUnplayedRoundContext(
@@ -73,11 +85,12 @@ export function buildUnplayedRoundContext(
   event: UnplayedRoundScoringEvent,
 ): UnplayedRoundContext {
   let highestStartedRound = 0;
+  const holes = holesPerRound(event);
   const derivedPar = new Map<number, number>();
   for (const row of field) {
     for (const round of row.rounds) {
       highestStartedRound = Math.max(highestStartedRound, round.round.roundNumber);
-      if (round.golf && isRoundFinished(round) && !derivedPar.has(round.round.roundNumber)) {
+      if (round.golf && isRoundFinished(round, holes) && !derivedPar.has(round.round.roundNumber)) {
         derivedPar.set(round.round.roundNumber, round.golf.strokes - round.golf.scoreToPar);
       }
     }
@@ -97,6 +110,7 @@ export function buildUnplayedRoundContext(
     parByRound,
     highestStartedRound,
     eventComplete: event.status === SportEventStatus.COMPLETED,
+    holes,
   };
 }
 
@@ -116,7 +130,7 @@ export function scoreGolferForContest(
     };
   };
 
-  const finished = new Map(row.rounds.filter(isRoundFinished).map((round) => [round.round.roundNumber, round]));
+  const finished = new Map(row.rounds.filter((round) => isRoundFinished(round, context.holes)).map((round) => [round.round.roundNumber, round]));
   const missesScheduledRound = context.scheduledRoundNumbers.some((roundNumber) => !finished.has(roundNumber));
 
   // Out of the event, or the event is over and they did not finish every round: the rounds

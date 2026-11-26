@@ -24,6 +24,7 @@ import {
   type SportConfig,
   type SportEventRoundMatch,
   MatchEnding,
+  PeriodUnit,
 } from '@poolmaster/shared/domain';
 import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, GAME_PICKS_TIEBREAKER_MAX, SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
 import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
@@ -156,7 +157,7 @@ describe('toSquaresBoardResponse', () => {
   const board = (digits: SquaresBoard['digits']): SquaresBoard => ({
     contest: { id: 'c1', status: ContestStatus.OPEN },
     maxSquaresPerEntry: 10,
-    periodLayout: 'QUARTERS',
+    periods: { unit: PeriodUnit.QUARTER, count: 4 },
     game: match(),
     homeTeamName: 'Home',
     awayTeamName: null,

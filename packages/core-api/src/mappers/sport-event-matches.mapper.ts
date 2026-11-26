@@ -74,8 +74,8 @@ export function homeSpreadOf(match: Pick<SportEventRoundMatch, 'id' | 'sides'>):
 }
 
 /** The slot a round is played in, for the wire (#2006): its series length and pairing stay server-side. */
-export function mapRoundSlotToDto({ seasonSlotId, name, slotKind, weekNumber }: SportEventRoundSlot): SportEventRoundSlotDto {
-  return { seasonSlotId, name, slotKind, weekNumber };
+export function mapRoundSlotToDto({ seasonSlotId, name, slotKind, weekNumber, periods }: SportEventRoundSlot): SportEventRoundSlotDto {
+  return { seasonSlotId, name, slotKind, weekNumber, periods: periods === null ? null : { unit: periods.unit, count: periods.count } };
 }
 
 /** A result request's home and away, as the result service takes them: by side number (home is side 2). */

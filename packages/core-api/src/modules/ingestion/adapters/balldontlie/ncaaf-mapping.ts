@@ -64,7 +64,7 @@ const gameName = (game: NcaafGame) => `game ${game.id === undefined ? '(no id)' 
  * the Season slots' date windows (#2012). The slate is the season's every game, so the event is
  * complete once they all are.
  */
-export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], participantCount?: number): SportEvent {
+export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[]): SportEvent {
   const times = games.map((game) => Date.parse(required(game.date, NCAAF_GAMES_PATH, gameName(game), 'date')));
   const status = eventStatusOf(games.map((game) => PROGRESS_BY_STATE[game.status_state]), true);
   return {
@@ -75,7 +75,6 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], partici
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
     status,
-    participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     providerSlots: games.map((game, index) => ({ code: null, startsAt: new Date(times[index]), endsAt: new Date(times[index]), teams: teamFeedIdsOf(game) })),
   };

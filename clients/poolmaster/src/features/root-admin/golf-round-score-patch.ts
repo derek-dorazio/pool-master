@@ -42,9 +42,12 @@ export function isStrokes(raw: string): boolean {
   return isNonNegInt(raw) && Number(raw) >= 1;
 }
 
-/** Holes completed as typed: 0 to 18, the server's bound; playoff holes are not part of any round (#374). */
+/**
+ * Holes completed as typed: a whole number of at least 0. The round's own hole count is the
+ * server's to check, from the round's slot (#2047); it refuses more with ROUND_THRU_BEYOND_HOLES.
+ */
 export function isThru(raw: string): boolean {
-  return isNonNegInt(raw) && Number(raw) <= 18;
+  return isNonNegInt(raw);
 }
 
 /** A whole number with an optional sign, as a score to par is typed ("-3", "+2", "0"). */

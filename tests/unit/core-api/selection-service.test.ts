@@ -60,7 +60,6 @@ const RECORDED_DRAW_AT = new Date('2026-04-01T12:00:05.000Z');
 const TIER_GROUPS = [
   {
     tierKey: 'tier-1',
-    label: 'Tier 1',
     tierNumber: 1,
     participants: [
       { sportEventParticipantId: 'sep-a', participantId: 'p-a', tierOrderIndex: 1, price: 100 },
@@ -70,7 +69,6 @@ const TIER_GROUPS = [
   },
   {
     tierKey: 'tier-2',
-    label: 'Tier 2',
     tierNumber: 2,
     participants: [
       { sportEventParticipantId: 'sep-d', participantId: 'p-d', tierOrderIndex: 1, price: 40 },
@@ -79,10 +77,10 @@ const TIER_GROUPS = [
 ];
 
 const VALUATIONS = [
-  { sportEventParticipantId: 'sep-a', participantId: 'p-a', tierId: 't1', tierKey: 'tier-1', tierLabel: 'Tier 1', tierNumber: 1, tierOrderIndex: 1, price: 100 },
-  { sportEventParticipantId: 'sep-b', participantId: 'p-b', tierId: 't1', tierKey: 'tier-1', tierLabel: 'Tier 1', tierNumber: 1, tierOrderIndex: 2, price: 90 },
-  { sportEventParticipantId: 'sep-c', participantId: 'p-c', tierId: 't1', tierKey: 'tier-1', tierLabel: 'Tier 1', tierNumber: 1, tierOrderIndex: 3, price: 80 },
-  { sportEventParticipantId: 'sep-d', participantId: 'p-d', tierId: 't2', tierKey: 'tier-2', tierLabel: 'Tier 2', tierNumber: 2, tierOrderIndex: 1, price: 40 },
+  { sportEventParticipantId: 'sep-a', participantId: 'p-a', tierId: 't1', tierKey: 'tier-1', tierNumber: 1, tierOrderIndex: 1, price: 100 },
+  { sportEventParticipantId: 'sep-b', participantId: 'p-b', tierId: 't1', tierKey: 'tier-1', tierNumber: 1, tierOrderIndex: 2, price: 90 },
+  { sportEventParticipantId: 'sep-c', participantId: 'p-c', tierId: 't1', tierKey: 'tier-1', tierNumber: 1, tierOrderIndex: 3, price: 80 },
+  { sportEventParticipantId: 'sep-d', participantId: 'p-d', tierId: 't2', tierKey: 'tier-2', tierNumber: 2, tierOrderIndex: 1, price: 40 },
 ];
 
 const TIMESTAMPS = {
@@ -625,14 +623,14 @@ describe('#324 SelectionService.selectPick and unselectPick — the guards, in o
     expect(addPick).not.toHaveBeenCalled();
   });
 
-  it('answers 400 TIER_NOT_FOUND when the participant\'s tier label is not a configured tier', async () => {
+  it('answers 400 TIER_NOT_FOUND when the participant\'s tier number is not a configured tier', async () => {
     // The room is configured with Tier 2 only, while sep-a's valuation still says Tier 1.
     const { service, addPick } = setup({ tierGroups: [TIER_GROUPS[1]] });
 
     await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'TIER_NOT_FOUND',
       statusCode: 400,
-      message: `Tier Tier 1 is not configured for contest ${CONTEST_ID}`,
+      message: `Tier 1 is not configured for contest ${CONTEST_ID}`,
     });
     expect(addPick).not.toHaveBeenCalled();
   });

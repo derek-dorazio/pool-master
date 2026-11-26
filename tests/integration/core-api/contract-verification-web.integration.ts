@@ -315,7 +315,6 @@ describe('Contract verification (web)', () => {
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
-        participantCount: 144,
       },
     });
     await prisma.participant.create({
@@ -350,7 +349,7 @@ describe('Contract verification (web)', () => {
         id: eventId,
         contestEligible: true,
         readinessStatus: 'CONTEST_ELIGIBLE',
-        loadedParticipantCount: 1,
+        participantCount: 1,
         // A member's read counts no admin numbers (#1198).
         adminCounts: null,
       });
@@ -418,7 +417,6 @@ describe('Contract verification (web)', () => {
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
-        participantCount: 144,
       },
     });
 

@@ -2,12 +2,11 @@ import { z } from 'zod';
 import type { ReplaceSportEventTiersRequest, SportEventTierDto } from '@/lib/api';
 import type { EventFieldEntry } from './event-field-patch';
 
-/** The ⚙ Tiers dialog's form: the event's tiers in order, and where a removed tier's participants go. */
+/** The ⚙ Tiers dialog's form: the event's tiers in order, each named by its place (#2047), and where a removed tier's participants go. */
 export const eventTiersSchema = z.object({
   tiers: z.array(z.object({
     /** Kept for a tier the event has, so its participants stay in it; a new one gets a fresh key. */
     tierKey: z.string(),
-    label: z.string().trim().min(1, 'Name the tier'),
   })).min(1, 'Keep at least one tier'),
   /** A tier key from `tiers`; asked only once a tier was placed by hand and a removed tier has participants. */
   reassignTo: z.string(),
@@ -16,7 +15,7 @@ export type EventTiersValues = z.infer<typeof eventTiersSchema>;
 
 export function eventTiersValuesOf(tiers: readonly SportEventTierDto[]): EventTiersValues {
   return {
-    tiers: [...tiers].sort((left, right) => left.tierNumber - right.tierNumber).map(({ tierKey, label }) => ({ tierKey, label })),
+    tiers: [...tiers].sort((left, right) => left.tierNumber - right.tierNumber).map(({ tierKey }) => ({ tierKey })),
     reassignTo: '',
   };
 }
@@ -45,7 +44,7 @@ export function strandedCount(values: EventTiersValues, tiers: readonly SportEve
 
 export function eventTiersRequestBody(values: EventTiersValues, stranded: number): ReplaceSportEventTiersRequest {
   return {
-    tiers: values.tiers.map((tier, index) => ({ tierKey: tier.tierKey, label: tier.label.trim(), tierNumber: index + 1 })),
+    tiers: values.tiers.map((tier, index) => ({ tierKey: tier.tierKey, tierNumber: index + 1 })),
     ...(stranded > 0 && values.reassignTo !== '' ? { reassignOrphansTo: values.reassignTo } : {}),
   };
 }

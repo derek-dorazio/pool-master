@@ -73,7 +73,7 @@ export class NflReader {
     if (games.length === 0) return null;
     if (scope.kind === NflScopeKind.WEEK) {
       const participants = toNflFieldParticipants(games);
-      return { ...toNflSportEvent(scope, games, participants.length), participants, games: toNflScheduledGames(games) };
+      return { ...toNflSportEvent(scope, games), participants, games: toNflScheduledGames(games) };
     }
     const standings = await this.client.get(STANDINGS_PATH, { season: scope.season }, nflStandingListSchema);
     const seeded = toNflPlayoffField(standings.data);
@@ -82,7 +82,7 @@ export class NflReader {
     const scheduled = toNflPostseasonGames(games, new Set(participants.map((team) => team.externalId)));
     const bracket = toNflPlayoffBracket(seeded, scheduled);
     return {
-      ...toNflSportEvent(scope, games, participants.length),
+      ...toNflSportEvent(scope, games),
       participants,
       games: scheduled,
       ...(bracket !== null && { bracket }),

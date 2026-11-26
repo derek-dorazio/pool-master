@@ -5,7 +5,6 @@ import {
   getValidContestFormatsForTournamentFormat,
   isContestFormatValidForTournamentFormat,
   isPredictionSelectionType,
-  MatchPeriodLayout,
   PARTICIPANT_SCORING_DEFINITIONS,
   SelectionType,
   Sport,
@@ -278,10 +277,9 @@ describe('American football', () => {
 describe('hockey', () => {
   const hockey = getSportDefinition(Sport.HOCKEY);
 
-  it('is a team sport played as a knockout bracket, scored by knockout round points, in three periods a game', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(hockey.name).toBe('Hockey');
     expect(hockey.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(hockey.matchPeriodLayout).toBe(MatchPeriodLayout.THREE_PERIODS);
     expect(sportPlaysMatches(Sport.HOCKEY)).toBe(true);
   });
 
@@ -305,10 +303,9 @@ describe('hockey', () => {
 describe('baseball', () => {
   const baseball = getSportDefinition(Sport.BASEBALL);
 
-  it('is a team sport played as a knockout bracket, scored by knockout round points, keeping no score by period', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(baseball.name).toBe('Baseball');
     expect(baseball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(baseball.matchPeriodLayout).toBeUndefined();
     expect(sportPlaysMatches(Sport.BASEBALL)).toBe(true);
   });
 
@@ -330,10 +327,9 @@ describe('baseball', () => {
 describe('soccer', () => {
   const soccer = getSportDefinition(Sport.SOCCER);
 
-  it('is a team sport played as a knockout bracket, scored by knockout round points, in two halves a match', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(soccer.name).toBe('Soccer');
     expect(soccer.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(soccer.matchPeriodLayout).toBe(MatchPeriodLayout.HALVES);
     expect(sportPlaysMatches(Sport.SOCCER)).toBe(true);
   });
 
@@ -365,10 +361,9 @@ describe('soccer', () => {
 describe('tennis', () => {
   const tennis = getSportDefinition(Sport.TENNIS);
 
-  it('is an individual sport played as a knockout draw, scored by knockout round points, with no periods and no shoot-out', () => {
+  it('is an individual sport played as a knockout draw, scored by knockout round points, with no shoot-out', () => {
     expect(tennis.name).toBe('Tennis');
     expect(tennis.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(tennis.matchPeriodLayout).toBeUndefined();
     expect(sportVocabulary(tennis).shootout).toBeUndefined();
     expect(sportPlaysMatches(Sport.TENNIS)).toBe(true);
   });

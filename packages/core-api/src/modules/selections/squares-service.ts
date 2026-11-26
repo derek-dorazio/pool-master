@@ -38,14 +38,12 @@ import {
   MatchStatus,
   SelectionType,
   SQUARES_GRID_SIZE,
-  MATCH_PERIOD_LAYOUTS,
-  matchPeriodLayoutOf,
   squaresScoringMoments,
   squaresWinners,
   type Contest,
   type ContestEntrySquare,
   type ContestSquaresDraw,
-  type MatchPeriodLayout,
+  type SlotPeriods,
   type SportEvent,
   type SportEventRoundMatch,
   type SquaresWinner,
@@ -124,8 +122,8 @@ export interface SquaresBoardEntry {
 export interface SquaresBoard {
   contest: Contest;
   maxSquaresPerEntry: number;
-  /** The periods the game is played in (#786): its scoring moments are each period's end. */
-  periodLayout: MatchPeriodLayout;
+  /** The periods the game is played in, its slot's (#2047): its scoring moments are each period's end. */
+  periods: SlotPeriods;
   game: SportEventRoundMatch;
   homeTeamName: string | null;
   awayTeamName: string | null;
@@ -143,8 +141,7 @@ interface SquaresContext {
   maxSquaresPerEntry: number;
   sportEvent: SportEvent;
   game: SportEventRoundMatch;
-  periodLayout: MatchPeriodLayout;
-  periodCount: number;
+  periods: SlotPeriods;
   entries: ContestEntryWithSquad[];
   squares: ContestEntrySquare[];
   draw: ContestSquaresDraw | null;
@@ -343,12 +340,12 @@ export class SquaresService {
     if (!sportEvent) throw selectionErrors.contestHasNoEvent(contestId);
     const game = matched?.sportEventId === sportEvent.id ? matched : undefined;
     const rules = configuration?.configJson;
-    const periodLayout = matchPeriodLayoutOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null);
-    if (!game || rules?.selectionType !== SelectionType.SQUARES || periodLayout === undefined) {
-      this.deps.logger?.error({ action: 'squares.context.invalid', data: { contestId, hasGame: game !== undefined, hasRules: rules?.selectionType === SelectionType.SQUARES } }, 'A squares contest is missing its game, its rules or its sport\'s periods');
+    const periods = game?.slot.periods ?? null;
+    if (!game || rules?.selectionType !== SelectionType.SQUARES || periods === null) {
+      this.deps.logger?.error({ action: 'squares.context.invalid', data: { contestId, hasGame: game !== undefined, hasRules: rules?.selectionType === SelectionType.SQUARES } }, 'A squares contest is missing its game, its rules or its slot\'s periods');
       throw selectionErrors.selectionConfigInvalid(contestId);
     }
-    return { contest, maxSquaresPerEntry: rules.maxSquaresPerEntry, sportEvent, game, periodLayout, periodCount: MATCH_PERIOD_LAYOUTS[periodLayout].count, entries, squares, draw, isCommissioner };
+    return { contest, maxSquaresPerEntry: rules.maxSquaresPerEntry, sportEvent, game, periods, entries, squares, draw, isCommissioner };
   }
 
   private async buildBoard(context: SquaresContext): Promise<SquaresBoard> {
@@ -358,7 +355,7 @@ export class SquaresService {
     const [winners, standings, teams] = await Promise.all([
       settled
         ? this.deps.squares.findWinners(contest.id)
-        : Promise.resolve(draw ? squaresWinners(draw, squaresScoringMoments(game, context.periodCount), squares) : []),
+        : Promise.resolve(draw ? squaresWinners(draw, squaresScoringMoments(game, context.periods.count), squares) : []),
       settled ? this.deps.standings.findByContest(contest.id) : Promise.resolve([]),
       this.findTeamNames(game),
     ]);
@@ -376,7 +373,7 @@ export class SquaresService {
     return {
       contest,
       maxSquaresPerEntry: context.maxSquaresPerEntry,
-      periodLayout: context.periodLayout,
+      periods: context.periods,
       game,
       homeTeamName: teams.home,
       awayTeamName: teams.away,

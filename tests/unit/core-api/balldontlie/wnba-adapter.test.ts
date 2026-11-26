@@ -120,7 +120,8 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
 
       const detail = await harness.adapter.getEventDetails('wnba-2025-postseason');
 
-      expect(detail).toMatchObject({ externalId: 'wnba-2025-postseason', sport: Sport.BASKETBALL, status: 'COMPLETED', participantCount: 8, fieldLocked: true });
+      expect(detail).toMatchObject({ externalId: 'wnba-2025-postseason', sport: Sport.BASKETBALL, status: 'COMPLETED', fieldLocked: true });
+      expect(detail?.participants).toHaveLength(8);
       expect(detail?.participants.map((team) => team.externalId)).not.toContain('3');
       expect(detail?.participants[0]).toMatchObject({ externalId: '8', name: 'Minnesota Lynx', metadata: { abbreviation: 'MIN' } });
       expect(requestLine(harness.api)).toEqual(['/wnba/v1/games?seasons[]=2025&per_page=100', '/wnba/v1/standings?season=2025']);
@@ -159,7 +160,8 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
 
       const detail = await harness.adapter.getEventDetails('wnba-2025-postseason');
 
-      expect(detail).toMatchObject({ participantCount: 8, rounds: 3 });
+      expect(detail).toMatchObject({ rounds: 3 });
+      expect(detail?.participants).toHaveLength(8);
       expect(detail?.games).toHaveLength(7);
       expect(detail?.bracket).toBeUndefined();
       expect(logger.warn).toHaveBeenCalledWith(

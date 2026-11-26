@@ -101,7 +101,7 @@ export async function seedTiers(sportEventId: string, field: readonly { id: stri
   const prisma = getPrisma();
   const rows: { id: string }[] = [];
   for (let tierNumber = 1; tierNumber <= tiers; tierNumber += 1) {
-    rows.push(await prisma.sportEventTier.create({ data: { sportEventId, tierKey: `T${String(tierNumber)}`, label: `Tier ${String(tierNumber)}`, tierNumber } }));
+    rows.push(await prisma.sportEventTier.create({ data: { sportEventId, tierKey: `T${String(tierNumber)}`, tierNumber } }));
   }
   await prisma.sportEventParticipantValuation.createMany({
     data: field.map((row, index) => ({ sportEventParticipantId: row.id, sportEventTierId: rows[index % tiers]?.id, tierOrderIndex: Math.floor(index / tiers) + 1 })),

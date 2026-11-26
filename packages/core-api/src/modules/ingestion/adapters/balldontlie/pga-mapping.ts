@@ -51,7 +51,7 @@ function toUtcDate(date: string): Date {
   return new Date(`${date}T00:00:00.000Z`);
 }
 
-export function toSportEvent(tournament: PgaTournament, participantCount?: number): SportEvent {
+export function toSportEvent(tournament: PgaTournament): SportEvent {
   if (tournament.status_state === PgaStatusState.UNKNOWN) {
     throw new BalldontlieContractError(
       `/pga/v2/tournaments ${String(tournament.id)}`,
@@ -70,7 +70,6 @@ export function toSportEvent(tournament: PgaTournament, participantCount?: numbe
     endDate: tournament.end_date ? toUtcDate(tournament.end_date) : undefined,
     status: EVENT_STATUS_BY_STATE[tournament.status_state],
     rounds: tournament.rounds.length > 0 ? tournament.rounds.length : undefined,
-    participantCount,
     // Once play starts the field cannot change.
     fieldLocked: tournament.status_state !== PgaStatusState.SCHEDULED,
     // A tournament's code is the vendor's id for it.
@@ -186,7 +185,6 @@ function readOutStatus(path: string, position: string | null): ParticipantRoundS
 /** `thru` while a round is played: the holes completed, with a `*` when the golfer started on the back nine. */
 const HOLES_THRU_PATTERN = /^(\d{1,2})\*?$/;
 const FINISHED_THRU = 'F';
-const HOLES_IN_ROUND = 18;
 
 type RoundProgress =
   | { status: typeof ParticipantRoundStatus.COMPLETED }
@@ -203,13 +201,8 @@ function readThru(path: string, thru: string | null): RoundProgress {
   if (!holes) {
     throw new BalldontlieContractError(path, [`thru "${thru}" is neither "F" nor a hole count`]);
   }
-  const completed = Number(holes[1]);
-  if (completed > HOLES_IN_ROUND) {
-    throw new BalldontlieContractError(path, [`thru "${thru}" is more than ${String(HOLES_IN_ROUND)} holes`]);
-  }
-  return completed === HOLES_IN_ROUND
-    ? { status: ParticipantRoundStatus.COMPLETED }
-    : { status: ParticipantRoundStatus.IN_PROGRESS, thru: completed };
+  // How many holes a round has is its slot's (#2047): the score service skips a thru past them.
+  return { status: ParticipantRoundStatus.IN_PROGRESS, thru: Number(holes[1]) };
 }
 
 /** The par of the course a round is played on, when the tournament names exactly one with a par. */

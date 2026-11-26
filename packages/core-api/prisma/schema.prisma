@@ -414,14 +414,6 @@ enum PrismaPredictedResult {
   TIE
 }
 
-/// The periods a sport league's games are played in, when not its sport's (#786). Mirrors the
-/// domain `MatchPeriodLayout`.
-enum PrismaMatchPeriodLayout {
-  QUARTERS
-  HALVES
-  THREE_PERIODS
-}
-
 /// What screens call a sport league when its sport's noun does not fit (#834). Mirrors the domain
 /// `SportLeagueNoun`.
 enum PrismaSportLeagueNoun {
@@ -1168,10 +1160,6 @@ model SportLeague {
   /// The pricing profile an event of the sport league is priced with after a field sync (#1844),
   /// until an admin prices it with other values. Every league names one.
   platformPricingProfileId   String                   @map("platform_pricing_profile_id") @db.Uuid
-  /// The periods its games are played in, when not its sport's (#786: men's college basketball
-  /// plays halves). Null: the sport's layout. Reference data, set by the migration that seeds the
-  /// league.
-  matchPeriodLayout          PrismaMatchPeriodLayout? @map("match_period_layout")
   /// The first round whose matches are single games a squares pool can be played on, when not
   /// every round's are (#787: a Champions League two-legged tie or an MLS best-of-three series
   /// is one match with no half-time score). Null: every round. Reference data, set by the
@@ -2121,7 +2109,6 @@ model SportEvent {
   // round's par from the field's finished rounds (strokes minus to-par). Read
   // only by contest scoring, to turn an unplayed round's 80 strokes into to-par.
   roundsPar                  Int?                           @map("rounds_par")
-  participantCount           Int?                           @map("participant_count")
   // The event's sport league (#2010): its Season is one of this league's, by a composite key.
   sportLeagueId              String                         @map("sport_league_id") @db.Uuid
   // The Season the event is played in (#2003): the synced Season the sync read it from, or the
@@ -2599,7 +2586,6 @@ model SportEventTier {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId String   @map("sport_event_id") @db.Uuid
   tierKey      String   @map("tier_key") @db.VarChar(50)
-  label        String   @db.VarChar(100)
   tierNumber   Int      @map("tier_number")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz

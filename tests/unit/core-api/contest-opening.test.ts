@@ -27,8 +27,7 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
     sportLeagueId: 'league-1',
     championshipYear: 2027,
     tournamentFormat: TournamentFormat.MATCHES,
-    participantCount: null,
-    loadedParticipantCount: 14,
+    participantCount: 14,
     rounds: 4,
     salaryCap: null,
     squaresFromRound: null,
@@ -63,7 +62,7 @@ describe('contestOpening', () => {
   });
 
   it('is NOT_YET for a released event whose field has not loaded', async () => {
-    expect((await contestOpening(reader(event({ loadedParticipantCount: 0 })), 'event-1', TIERED, NOW)).opening).toBe(ContestOpening.NOT_YET);
+    expect((await contestOpening(reader(event({ participantCount: 0 })), 'event-1', TIERED, NOW)).opening).toBe(ContestOpening.NOT_YET);
   });
 
   it('is CLOSED for an event that has started, even unreleased, so the page leaves the offer out', async () => {
@@ -103,7 +102,7 @@ describe('contestOpening', () => {
 
 describe('eventContestOpenings, the event list\'s openings per selection type (#1929)', () => {
   function facts(overrides: Partial<EventOpeningFacts> = {}): EventOpeningFacts {
-    return { sport: Sport.BASKETBALL, status: SportEventStatus.SCHEDULED, startDate: LATER, loadedParticipantCount: 64, ...sportPlay(overrides.sport ?? Sport.BASKETBALL), ...overrides };
+    return { sport: Sport.BASKETBALL, status: SportEventStatus.SCHEDULED, startDate: LATER, participantCount: 64, ...sportPlay(overrides.sport ?? Sport.BASKETBALL), ...overrides };
   }
   const byType = (rows: EventContestOpening[]) => Object.fromEntries(rows.map((row) => [row.selectionType, row])) as Record<SelectionType, EventContestOpening>;
 
@@ -114,7 +113,7 @@ describe('eventContestOpenings, the event list\'s openings per selection type (#
   });
 
   it('is NOT_YET for every format while the event is a draft or has no field', () => {
-    for (const notReady of [facts({ status: SportEventStatus.DRAFT }), facts({ loadedParticipantCount: 0 })]) {
+    for (const notReady of [facts({ status: SportEventStatus.DRAFT }), facts({ participantCount: 0 })]) {
       expect(eventContestOpenings(notReady, NOW).every((row) => row.opening === ContestOpening.NOT_YET)).toBe(true);
     }
   });

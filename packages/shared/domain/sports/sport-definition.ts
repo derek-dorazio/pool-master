@@ -1,5 +1,5 @@
 import type { ParticipantScoringDefinitionId } from '../contest-scoring';
-import type { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
+import type { SelectionType, Sport, TournamentFormat } from '../enums';
 
 /** A noun in its singular and plural, as the audience says it, read from the display strings. */
 export interface SportNoun {
@@ -19,17 +19,6 @@ export interface SportPickEm {
 }
 
 /**
- * The periods one game is played in (#772): four quarters in American football. The score at the
- * end of each period but the last is entered on its own; the last period's is the final score.
- */
-export interface SportMatchPeriods {
-  /** How many periods a game has, overtime aside: 4 for American football. */
-  count: number;
-  /** What one period is called: "quarter" / "quarters", read from the display strings. */
-  label: SportNoun;
-}
-
-/**
  * Everything that differs between sports and is data rather than behaviour. Behaviour that
  * differs (storing and scoring results) belongs to the sport's scoring family, never to a
  * comparison against the sport elsewhere (`rules/architecture-rules.md` §4 *Sport extension*).
@@ -46,14 +35,6 @@ export interface SportDefinition {
   selectionTypes: readonly [SelectionType, ...SelectionType[]];
   /** Scoring definitions a contest in this sport may rank by; the first is the default. */
   scoringDefinitions: readonly [ParticipantScoringDefinitionId, ...ParticipantScoringDefinitionId[]];
-  /**
-   * The periods a game is played in, for a sport that plays matches and keeps a score at the end
-   * of each one (American football's quarters). A sport league may play another layout
-   * (`SportLeague.matchPeriodLayout`: men's college basketball's halves); read both through
-   * `matchPeriodsOf`. Absent for every other sport: its games take no period scores, and squares
-   * pools (#711) are not offered on it.
-   */
-  matchPeriodLayout?: MatchPeriodLayout;
   /**
    * What the sport's pick'em pools can be (#792). Present exactly when `selectionTypes` offers
    * PICK_EM: contest setup refuses a spread pool where it says no, and a tie pick is taken only

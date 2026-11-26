@@ -400,7 +400,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     );
     const rankings = await this.readWorldRankings(fieldPlayerIds(competitors));
     const participants = toFieldParticipants(competitors, rankings);
-    return { ...toSportEvent(tournament, participants.length), participants };
+    return { ...toSportEvent(tournament), participants };
   }
 
   /** Every started round of every golfer in a stroke-play tournament. */

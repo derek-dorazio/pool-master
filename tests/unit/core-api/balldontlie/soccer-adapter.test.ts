@@ -139,7 +139,8 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
 
       const detail = await harness.adapter.getEventDetails('epl-2026-matchweek-11');
 
-      expect(detail).toMatchObject({ externalId: 'epl-2026-matchweek-11', sport: Sport.SOCCER, participantCount: 10, rounds: 1, status: 'IN_PROGRESS' });
+      expect(detail).toMatchObject({ externalId: 'epl-2026-matchweek-11', sport: Sport.SOCCER, rounds: 1, status: 'IN_PROGRESS' });
+      expect(detail?.participants).toHaveLength(10);
       expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.name])).toEqual([
         ['12', 'Manchester City'],
         ['9', 'Fulham'],
@@ -249,7 +250,8 @@ describe('BalldontlieAdapter (soccer: the FIFA World Cup)', () => {
 
     const detail = await harness.adapter.getEventDetails('fifa-wc-2022-knockout');
 
-    expect(detail).toMatchObject({ externalId: 'fifa-wc-2022-knockout', name: 'FIFA World Cup', participantCount: 7, status: 'COMPLETED' });
+    expect(detail).toMatchObject({ externalId: 'fifa-wc-2022-knockout', name: 'FIFA World Cup', status: 'COMPLETED' });
+    expect(detail?.participants).toHaveLength(7);
     expect(detail?.participants.map((team) => team.name)).not.toContain('Qatar');
     expect(worldCupRequests(harness.api)).toEqual(['/fifa/worldcup/v1/matches?seasons[]=2022&per_page=100']);
     await expect(harness.adapter.getEventDetails('fifa-wc-2018-knockout')).resolves.toBeNull();
@@ -262,7 +264,8 @@ describe('BalldontlieAdapter (soccer: the FIFA World Cup)', () => {
 
     const detail = await harness.adapter.getEventDetails('fifa-wc-2026-knockout');
 
-    expect(detail).toMatchObject({ externalId: 'fifa-wc-2026-knockout', rounds: 5, participantCount: 32 });
+    expect(detail).toMatchObject({ externalId: 'fifa-wc-2026-knockout', rounds: 5 });
+    expect(detail?.participants).toHaveLength(32);
     expect(detail?.games).toHaveLength(16);
     expect(detail?.bracket).toHaveLength(31);
     expect(detail?.bracket?.[30]).toMatchObject({ roundNumber: 5, advancesTo: null });

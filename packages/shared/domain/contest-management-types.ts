@@ -4,7 +4,6 @@ import type {
   LeaguePhase,
   MatchFormat,
   SlotKind,
-  MatchPeriodLayout,
   SportEventParticipantStatus,
   ParticipantType,
   SelectionType,
@@ -19,6 +18,7 @@ import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './conte
 import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
 import type { ScoringFamily } from './sports/scoring-family';
 import type { DomainEntity } from './types';
+import type { SlotPeriods } from './slot-periods';
 
 export type SportEventReadinessStatus =
   | 'NOT_RELEASED'
@@ -51,7 +51,6 @@ export interface SportEvent extends DomainEntity {
   rounds?: number;
   /** Par for every round, when an admin set it; unset, contest scoring derives each round's par from the field (#478). */
   roundsPar?: number;
-  participantCount?: number;
   /** The slot definitions of the Season slots the event covers, in play order (#2004, #2010): where templates are offered. */
   slotDefinitions: SportEventSlotDefinition[];
   /** The Season the event is played in (#2003). */
@@ -63,12 +62,6 @@ export interface SportEvent extends DomainEntity {
   championshipYear: number;
   /** The event's sport league (#2010): stored, and its Season is the same league's (a composite key). */
   sportLeagueId: string;
-  /**
-   * Its sport league's period layout when it is not its sport's (#786: men's college
-   * basketball's halves), read through the league; absent plays the sport's.
-   * Read through `matchPeriodsOf`.
-   */
-  matchPeriodLayout?: MatchPeriodLayout;
   /**
    * Its sport league's first squares round when not every round's matches are single
    * games (#787), read through the league; absent takes every round. Read
@@ -183,6 +176,8 @@ export interface SportEventSlotDefinition {
   slotKind: SlotKind;
   /** Whether the slot's games can finish level (#2043); where not, a shoot-out may decide one (#2046). */
   canEndTied: boolean;
+  /** What its games are played in (#2047): four quarters, eighteen holes; null for a race or tennis match. */
+  periods: SlotPeriods | null;
 }
 
 /** One slot definition a contest template covers (#2010), with the facts screens and checks read. */

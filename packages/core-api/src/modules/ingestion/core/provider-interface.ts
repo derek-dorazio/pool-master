@@ -167,7 +167,6 @@ export interface SportEvent {
   endDate?: Date;
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
   rounds?: number;
-  participantCount?: number;
   fieldLocked: boolean;
   /**
    * The provider's own code for the league the event belongs to (a ProviderLeague's `code`,

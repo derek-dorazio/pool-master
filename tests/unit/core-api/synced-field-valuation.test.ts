@@ -14,7 +14,7 @@ import { expectDefined } from '../../support/expect-defined';
 const SYNCED = { providerId: 'balldontlie', externalId: 'game-week-12' };
 
 function tierDefinitions(count: number) {
-  return Array.from({ length: count }, (_, index) => ({ tierKey: `tier-${index + 1}`, label: `Tier ${index + 1}`, tierNumber: index + 1 }));
+  return Array.from({ length: count }, (_, index) => ({ tierKey: `tier-${index + 1}`, tierNumber: index + 1 }));
 }
 
 /** A synced draft of `fieldSize` with `tierCount` tiers, in a league naming Standard pricing or `pricing`. */

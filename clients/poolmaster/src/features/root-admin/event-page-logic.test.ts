@@ -22,7 +22,7 @@ describe('releaseCheckValueText', () => {
     expect(releaseCheckValueText({ key: 'FIELD_LOADED', passed: true, value: 80 }, preferences)).toBe('80 participants active');
     expect(releaseCheckValueText({ key: 'TIERS_ASSIGNED', passed: false, value: 1 }, preferences)).toBe('1 participant without a tier');
     expect(releaseCheckValueText({ key: 'TIERS_FILLED', passed: true, value: [] }, preferences)).toBe('None empty');
-    expect(releaseCheckValueText({ key: 'TIERS_FILLED', passed: false, value: ['Tier 5', 'Tier 6'] }, preferences)).toBe('Empty: Tier 5, Tier 6');
+    expect(releaseCheckValueText({ key: 'TIERS_FILLED', passed: false, value: [5, 6] }, preferences)).toBe('Empty: Tier 5, Tier 6');
     expect(releaseCheckValueText({ key: 'PRICES_ASSIGNED', passed: false, value: null }, preferences)).toBe('Not priced');
     expect(releaseCheckValueText({ key: 'PRICES_ASSIGNED', passed: false, value: 2 }, preferences)).toBe('2 participants without a price');
     expect(releaseCheckValueText({ key: 'BRACKET_COMPLETE', passed: true, value: [] }, preferences)).toBe('Complete');

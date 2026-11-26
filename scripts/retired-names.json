@@ -70,7 +70,12 @@
     "ParticipantInactiveReason": "#2184 (10e-web): SportEventParticipantStatus",
     "deriveLegacyParticipantStatus": "#2184 (10e-web): the field row status, read as is",
     "LegacyParticipantStatus": "#2184 (10e-web): SportEventParticipantStatus",
-    "useEventRoundLabels": "#2200: useEventRoundNames, which every screen waits on so no round shows as Round N first"
+    "useEventRoundLabels": "#2200: useEventRoundNames, which every screen waits on so no round shows as Round N first",
+    "MatchPeriodLayout": "#2047 (10f): PeriodUnit and the slot's period count",
+    "matchPeriodsOf": "#2047 (10f): slotPeriodsOf",
+    "loadedParticipantCount": "#2047 (10f): participantCount, counted on each read",
+    "GOLF_HOLES_PER_ROUND": "#2047 (10f): the round's slot periods",
+    "HOLES_IN_ROUND": "#2047 (10f): the round's slot periods"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -81,8 +86,8 @@
   "bracketAdvancement": 0,
   "defaultRounds": 13,
   "tournamentFormat": 36,
-  "matchPeriodLayout": 25,
-  "MATCH_PERIOD_LAYOUTS": 10,
+  "matchPeriodLayout": 0,
+  "MATCH_PERIOD_LAYOUTS": 0,
   "FEED_LABELS": 3,
   "IngestionFeedType": 20,
   "overdueLateness": 3,
@@ -141,5 +146,10 @@
   "ParticipantInactiveReason": 0,
   "deriveLegacyParticipantStatus": 0,
   "LegacyParticipantStatus": 0,
-  "useEventRoundLabels": 0
+  "useEventRoundLabels": 0,
+  "MatchPeriodLayout": 0,
+  "matchPeriodsOf": 0,
+  "loadedParticipantCount": 0,
+  "GOLF_HOLES_PER_ROUND": 0,
+  "HOLES_IN_ROUND": 0
 }

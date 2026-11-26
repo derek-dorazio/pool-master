@@ -88,7 +88,6 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     autoReleaseDaysBeforeStart: 7,
     platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
     platformPricingProfileId: '00000000-0000-4000-8000-0000000000b1',
-    matchPeriodLayout: null,
     squaresFromRound: null,
     noun: null,
     participantType: ParticipantType.INDIVIDUAL,

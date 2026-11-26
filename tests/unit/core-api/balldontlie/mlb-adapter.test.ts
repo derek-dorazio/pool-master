@@ -111,7 +111,8 @@ describe('BalldontlieAdapter (MLB)', () => {
 
       const detail = await harness.adapter.getEventDetails('mlb-2025-postseason');
 
-      expect(detail).toMatchObject({ externalId: 'mlb-2025-postseason', sport: Sport.BASEBALL, status: 'COMPLETED', participantCount: 12, fieldLocked: true });
+      expect(detail).toMatchObject({ externalId: 'mlb-2025-postseason', sport: Sport.BASEBALL, status: 'COMPLETED', fieldLocked: true });
+      expect(detail?.participants).toHaveLength(12);
       expect(detail?.participants[0]).toMatchObject({ externalId: '10', name: 'New York Yankees', metadata: { abbreviation: 'NYY' } });
       expect(requestLine(harness.api)).toEqual(['/mlb/v1/games?seasons[]=2025&postseason=true&per_page=100', '/mlb/v1/standings?season=2025', '/mlb/v1/teams?']);
     });
@@ -126,7 +127,8 @@ describe('BalldontlieAdapter (MLB)', () => {
 
       const team = (id: number) => String(id);
       expect(detail?.participants.map((participant) => participant.externalId)).toEqual(expect.arrayContaining([team(14), team(25), team(19), team(22)]));
-      expect(detail).toMatchObject({ participantCount: 12, rounds: 4 });
+      expect(detail).toMatchObject({ rounds: 4 });
+      expect(detail?.participants).toHaveLength(12);
       // AL: New York 4 v Boston 5 and Cleveland 3 v Detroit 6; Toronto (1) and Seattle (2) wait. NL likewise.
       expect(detail?.bracket?.map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
         [1, 1, 'AL', team(10), team(2), { roundNumber: 2, matchNumber: 1, side: MatchSide.AWAY }],
@@ -162,7 +164,8 @@ describe('BalldontlieAdapter (MLB)', () => {
 
       const detail = await harness.adapter.getEventDetails('mlb-2025-postseason');
 
-      expect(detail).toMatchObject({ participantCount: 12, rounds: 4 });
+      expect(detail).toMatchObject({ rounds: 4 });
+      expect(detail?.participants).toHaveLength(12);
       expect(detail?.games).toHaveLength(11);
       expect(detail?.bracket).toBeUndefined();
       expect(logger.warn).toHaveBeenCalledWith(
@@ -219,7 +222,8 @@ describe('BalldontlieAdapter (MLB)', () => {
     const detail = await harness.adapter.getEventDetails('mlb-2026-postseason');
     const result = await harness.adapter.getLiveScores('mlb-2026-postseason');
 
-    expect(detail).toMatchObject({ externalId: 'mlb-2026-postseason', status: 'IN_PROGRESS', participantCount: 8 });
+    expect(detail).toMatchObject({ externalId: 'mlb-2026-postseason', status: 'IN_PROGRESS' });
+    expect(detail?.participants).toHaveLength(8);
     expect(result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []).toEqual(['5066001', '5066002', '5066003']);
   });
 

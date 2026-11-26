@@ -309,7 +309,6 @@ export type EffectiveTierAssignmentDto = z.infer<typeof EffectiveTierAssignmentD
 
 export const EffectiveTierDtoSchema = z.object({
   tierKey: z.string().describe('Stable per-event tier key.'),
-  label: z.string().describe('Commissioner-facing tier label.'),
   tierNumber: z.number().int().describe('1-based tier ordering.'),
   assignments: z.array(EffectiveTierAssignmentDtoSchema).describe('Participants assigned to this tier, ordered by tierOrderIndex ascending.'),
 }).describe('One inherited event tier and its participant assignments.');

@@ -14,7 +14,7 @@ import {
   buildSelectionParticipants,
   buildTierByParticipantId,
   buildValuationLookup,
-  findTierByLabel,
+  findTierByNumber,
   isCommissionerRole,
   mapContestStatusToSelectionStatus,
 } from '../../../packages/core-api/src/modules/selections/selection-rules';
@@ -39,7 +39,6 @@ import type {
 function tier(overrides: Partial<SelectionTierConfig> = {}): SelectionTierConfig {
   return {
     tierId: 'tier-1',
-    tierName: 'Tier 1',
     tierNumber: 1,
     picksFromTier: 2,
     participantIds: [],
@@ -171,7 +170,6 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
         id: 'tier-row-1',
         sportEventId: 'event-1',
         tierKey: 'tier-1',
-        label: 'Tier 1',
         tierNumber: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -185,7 +183,6 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
     expect(buildSelectionTiers(groups, 2)).toEqual([
       {
         tierId: 'tier-1',
-        tierName: 'Tier 1',
         tierNumber: 1,
         picksFromTier: 2,
         participantIds: ['participant-1', 'participant-2'],
@@ -202,7 +199,6 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
       id: `tier-row-${tierNumber}`,
       sportEventId: 'event-1',
       tierKey: `tier-${tierNumber}`,
-      label: `Tier ${tierNumber}`,
       tierNumber,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -216,7 +212,7 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
   });
 
   it('offers every tier of the event in tier order, so one pick per tier on six tiers makes a roster of six', () => {
-    const groups = [6, 5, 4, 3, 2, 1].map((tierNumber) => ({ tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber, participants: [] })) as unknown as SportEventTierGroup[];
+    const groups = [6, 5, 4, 3, 2, 1].map((tierNumber) => ({ tierKey: `tier-${tierNumber}`, tierNumber, participants: [] })) as unknown as SportEventTierGroup[];
 
     const tiers = buildSelectionTiers(groups, 1);
 
@@ -226,7 +222,7 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
 
   it('gives every tier no picks when the contest supplies 0 picks per tier, so the tiered roster is 0', () => {
     const groups = [
-      { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, participants: [] },
+      { tierKey: 'tier-1', tierNumber: 1, participants: [] },
     ] as unknown as SportEventTierGroup[];
 
     const tiers = buildSelectionTiers(groups, 0);
@@ -245,7 +241,6 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
         participantId: 'participant-1',
         tierId: null,
         tierKey: null,
-        tierLabel: null,
         tierNumber: null,
         tierOrderIndex: null,
         price: 3200,
@@ -255,7 +250,6 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
         participantId: 'participant-2',
         tierId: 'tier-row-1',
         tierKey: 'tier-1',
-        tierLabel: 'Tier 1',
         tierNumber: 1,
         tierOrderIndex: 1,
         price: 25,
@@ -265,12 +259,12 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
     const lookup = buildValuationLookup(valuations);
 
     expect(lookup.get('sep-1')).toEqual<ParticipantValuation>({
-      tierLabel: null,
+      tierNumber: null,
       tierOrderIndex: null,
       price: 3200,
     });
     expect(lookup.get('sep-2')).toEqual<ParticipantValuation>({
-      tierLabel: 'Tier 1',
+      tierNumber: 1,
       tierOrderIndex: 1,
       price: 25,
     });
@@ -314,7 +308,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         ['participant-2', participant('participant-2', { name: 'Unvalued Golfer' })],
       ]),
       valuationBySportEventParticipantId: new Map([
-        ['sep-1', { tierLabel: 'Tier 1', tierOrderIndex: 1, price: 25 }],
+        ['sep-1', { tierNumber: 1, tierOrderIndex: 1, price: 25 }],
       ]),
       event: { sport: Sport.GOLF, ...sportPlay(Sport.GOLF) },
     });
@@ -325,7 +319,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         status: 'ACTIVE',
         isAvailable: true,
         ranking: 5,
-        tier: 'Tier 1',
+        tierNumber: 1,
         price: 25,
         orderIndex: 1,
       }),
@@ -333,7 +327,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
     expect(participants[1]).toEqual(
       expect.objectContaining({
         sportEventParticipantId: 'sep-2',
-        tier: null,
+        tierNumber: null,
         price: undefined,
         orderIndex: undefined,
         ranking: undefined,
@@ -384,8 +378,8 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         ['p-t1', participant('p-t1', { name: 'First Placed' })],
       ]),
       valuationBySportEventParticipantId: new Map([
-        ['sep-tier-1', { tierLabel: 'Tier 1', tierOrderIndex: 1, price: null }],
-        ['sep-tier-2', { tierLabel: 'Tier 1', tierOrderIndex: 2, price: null }],
+        ['sep-tier-1', { tierNumber: 1, tierOrderIndex: 1, price: null }],
+        ['sep-tier-2', { tierNumber: 1, tierOrderIndex: 2, price: null }],
       ]),
       event: { sport: Sport.GOLF, ...sportPlay(Sport.GOLF) },
     });
@@ -401,14 +395,13 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
 
 describe('#324 draft rules — tier lookups', () => {
   const TIERS = [
-    tier({ tierId: 'tier-1', tierName: 'Tier 1', participantIds: ['a', 'b'] }),
-    tier({ tierId: 'tier-2', tierName: 'Tier 2', tierNumber: 2, participantIds: ['c'] }),
+    tier({ tierId: 'tier-1', participantIds: ['a', 'b'] }),
+    tier({ tierId: 'tier-2', tierNumber: 2, participantIds: ['c'] }),
   ];
 
-  it('finds a tier by its id or by its display name, and nothing for an unknown label', () => {
-    expect(findTierByLabel(TIERS, 'tier-2')?.tierId).toBe('tier-2');
-    expect(findTierByLabel(TIERS, 'Tier 2')?.tierId).toBe('tier-2');
-    expect(findTierByLabel(TIERS, 'Tier 9')).toBeUndefined();
+  it('finds a tier by its tier number, and nothing for a number the contest has no tier for', () => {
+    expect(findTierByNumber(TIERS, 2)?.tierId).toBe('tier-2');
+    expect(findTierByNumber(TIERS, 9)).toBeUndefined();
   });
 
   it('indexes every tier participant, and omits one in no tier', () => {

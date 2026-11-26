@@ -485,21 +485,6 @@ export const MatchEndingOrder = explicitOrder<MatchEnding>({
 });
 
 /**
- * The periods one game of a sport league is played in (#786): QUARTERS for American football, the
- * NBA, the WNBA and women's college basketball; HALVES for men's college basketball; THREE_PERIODS
- * for hockey (#788). A sport league with none set plays its sport's layout
- * (`SportDefinition.matchPeriodLayout`).
- */
-export const MatchPeriodLayout = {
-  QUARTERS: 'QUARTERS',
-  HALVES: 'HALVES',
-  THREE_PERIODS: 'THREE_PERIODS',
-} as const;
-export type MatchPeriodLayout = (typeof MatchPeriodLayout)[keyof typeof MatchPeriodLayout];
-/** No natural order: A to Z by its display strings. */
-export const MatchPeriodLayoutOrder = alphabeticalOrder('MatchPeriodLayout');
-
-/**
  * What screens call a sport league when its sport's noun does not fit (#834): the NCAA Division I
  * tennis championships are leagues, where the ATP and the WTA are tours. A sport league with
  * none set takes its sport's (`sport.<SPORT>.sportLeague`); read through `sportLeagueNounOf`.

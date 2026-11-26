@@ -11,7 +11,7 @@
  */
 import { randomInt } from 'node:crypto';
 import type { Prisma, PrismaClient, PrismaSlotKind, PrismaSlotPairing } from '@prisma/client';
-import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport, type PeriodUnit } from '@poolmaster/shared/domain';
 import { competitionFor, seasonCompetitionFor } from './competitions';
 import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
@@ -174,7 +174,7 @@ export async function keyedSlotDefinitionId(
   prisma: Db,
   sportLeagueId: string,
   key: string,
-  options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: PrismaSlotKind; name?: string; pairing?: PrismaSlotPairing; seriesGames?: number } = {},
+  options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: PrismaSlotKind; name?: string; pairing?: PrismaSlotPairing; seriesGames?: number; periods?: { unit: PeriodUnit; count: number } } = {},
 ): Promise<string> {
   const { competitionId } = await competitionFor(prisma, { sportLeagueId, phase: options.phase ?? 'REGULAR' });
   await prisma.sportLeagueCompetitionSlot.createMany({
@@ -183,6 +183,7 @@ export async function keyedSlotDefinitionId(
       awardsTrophy: false, squaresEligible: false,
       seriesFormat: (options.seriesGames ?? 1) > 1 ? 'BEST_OF' : 'SINGLE_GAME', seriesGames: options.seriesGames ?? 1, pairing: options.pairing ?? 'FIXED',
       ...(await fixtureSlotPlay(prisma, sportLeagueId)),
+      ...(options.periods ? { periodUnit: options.periods.unit, periodCount: options.periods.count } : {}),
     }],
     skipDuplicates: true,
   });
@@ -350,6 +351,8 @@ export interface TestRoundSlot {
   name?: string;
   pairing?: PrismaSlotPairing;
   seriesGames?: number;
+  /** What its games are played in (#2047): four quarters a football game; none unless given. */
+  periods?: { unit: PeriodUnit; count: number };
 }
 
 /**

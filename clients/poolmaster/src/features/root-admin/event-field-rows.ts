@@ -1,3 +1,4 @@
+import { tierLabel } from '@poolmaster/shared/display-strings';
 import { FieldValueSetBy, ValuationSource } from '@poolmaster/shared/domain';
 import type { SportEventOverviewDto, SportEventParticipantDto, SportEventTierDto } from '@/lib/api';
 
@@ -53,7 +54,7 @@ export function eventFieldRows(
       ranking: entry.ranking,
       oddsToWin: entry.oddsToWin,
       tierNumber: tier?.tierNumber ?? null,
-      tierLabel: tier?.label ?? null,
+      tierLabel: tier === undefined ? null : tierLabel(tier.tierNumber),
       price: entry.valuation?.price ?? null,
       setBy: fieldValueSetBy(entry.valuation),
       feedId: feed?.feedId ?? null,

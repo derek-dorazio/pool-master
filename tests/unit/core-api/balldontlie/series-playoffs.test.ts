@@ -49,7 +49,7 @@ describe('series playoffs scopes', () => {
 
 describe('toPlayoffsEvent', () => {
   it('spans the games and is in progress while any game has started', () => {
-    const event = toPlayoffsEvent(LEAGUE, 2025, [...semifinals(), game(9, 1, 2, null, null, CompetitionStatusState.SCHEDULED)], 4);
+    const event = toPlayoffsEvent(LEAGUE, 2025, [...semifinals(), game(9, 1, 2, null, null, CompetitionStatusState.SCHEDULED)]);
 
     expect(event).toMatchObject({
       externalId: 'tst-2025-postseason',
@@ -58,7 +58,6 @@ describe('toPlayoffsEvent', () => {
       startDate: new Date(Date.UTC(2026, 3, 1)),
       endDate: new Date(Date.UTC(2026, 3, 9)),
       status: 'IN_PROGRESS',
-      participantCount: 4,
       fieldLocked: true,
     });
   });

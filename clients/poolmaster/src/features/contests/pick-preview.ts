@@ -64,7 +64,7 @@ export function previewRulesFor(configuration: ContestConfigurationRequest): Pre
 }
 
 /** The event facts that decide whether its pick screen can be shown yet. */
-export type PreviewEvent = Pick<SportEventDto, 'loadedParticipantCount' | 'pricing'>;
+export type PreviewEvent = Pick<SportEventDto, 'participantCount' | 'pricing'>;
 
 /**
  * Why the preview is off, in the words beside its button, or null when it can open: a format with
@@ -96,7 +96,7 @@ export function pickPreviewUnavailableReason({
   if (rulesError !== null) {
     return 'Finish the rules to preview the picks page.';
   }
-  if (event.loadedParticipantCount === 0) {
+  if (event.participantCount === 0) {
     return `This event's ${participant.many} aren't loaded yet, so there is nothing to pick from.`;
   }
   if (selectionType === SelectionType.TIERED && tierCount === 0) {

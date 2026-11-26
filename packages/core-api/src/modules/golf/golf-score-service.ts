@@ -9,9 +9,10 @@
  * event's field with the shared participant-row resolver, the same precedence a sport
  * league's ranking upload uses (#236; each had its own copy before).
  *
- * Nothing is scored after the 18th hole of the event's last scheduled round (#375): a round
- * above `SportEvent.rounds` is skipped by sync and refused to an admin, and a sync update
- * past hole 18 is skipped. Golf playoff holes are not a round and never count toward a score.
+ * Nothing is scored after the last hole of the event's last scheduled round (#375): a round
+ * above `SportEvent.rounds` is skipped by sync and refused to an admin, and a sync update past
+ * the round's last hole (its slot's period count, #2047) is skipped. Golf playoff holes are not a
+ * round and never count toward a score.
  *
  * Every write goes through the golf extension ports, which write a core row and its golf
  * row together (#235 split them). This service keeps its golf name: it writes golf rows.
@@ -38,6 +39,7 @@ import {
   type GolfRoundResult,
   type GolfStandingResult,
   type SportEvent,
+  type SportEventRound,
   requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core/sync-write-diagnostics';
@@ -56,9 +58,6 @@ export class GolfScoreError extends Error {
     this.name = 'GolfScoreError';
   }
 }
-
-/** A golf round is 18 holes; anything past it is a playoff, which is never scored (#118, #375). */
-export const GOLF_HOLES_PER_ROUND = 18;
 
 export interface GolfRoundPersistenceResult {
   updatesReturned: number;
@@ -158,8 +157,8 @@ export class GolfScoreService {
         'Skipping golf round update(s) for round(s) beyond the event\'s scheduled rounds',
       );
     }
-    const roundIdByNumber = new Map((await this.deps.rounds.findBySportEvent(sportEventId)).map((round) => [round.roundNumber, round.id]));
-    const missingRoundNumbers = reportedRoundNumbers.filter((roundNumber) => !beyondScheduleRoundNumbers.includes(roundNumber) && !roundIdByNumber.has(roundNumber));
+    const roundByNumber = new Map((await this.deps.rounds.findBySportEvent(sportEventId)).map((round) => [round.roundNumber, round]));
+    const missingRoundNumbers = reportedRoundNumbers.filter((roundNumber) => !beyondScheduleRoundNumbers.includes(roundNumber) && !roundByNumber.has(roundNumber));
     if (missingRoundNumbers.length > 0) {
       logger?.warn(
         { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId, roundNumbers: missingRoundNumbers } },
@@ -184,11 +183,13 @@ export class GolfScoreService {
         skipped += 1;
         continue;
       }
-      if (round.thru !== undefined && round.thru > GOLF_HOLES_PER_ROUND) {
+      // A round's holes are its slot's periods (#2047): eighteen for a golf tournament.
+      const holes = roundByNumber.get(round.round)?.slot.periods?.count;
+      if (round.thru !== undefined && holes !== undefined && round.thru > holes) {
         // Its to-par may include playoff holes, so no part of it is stored.
         logger?.warn(
-          { action: 'liveScore.golf.holeBeyondEighteenSkipped', data: { sportEventId, externalId: round.participantExternalId, round: round.round, thru: round.thru } },
-          'Skipping golf round update — it reports holes past the 18th, which are a playoff and never scored',
+          { action: 'liveScore.golf.holeBeyondRoundSkipped', data: { sportEventId, externalId: round.participantExternalId, round: round.round, thru: round.thru, holes } },
+          'Skipping golf round update — it reports holes past the round\'s last, which are a playoff and never scored',
         );
         skipped += 1;
         continue;
@@ -217,7 +218,7 @@ export class GolfScoreService {
         skipped += 1;
         continue;
       }
-      const sportEventRoundId = roundIdByNumber.get(round.round);
+      const sportEventRoundId = roundByNumber.get(round.round)?.id;
       if (!sportEventRoundId) {
         if (missingRoundNumbers.includes(round.round)) {
           // Logged once above, with every unscheduled round number.
@@ -287,6 +288,7 @@ export class GolfScoreService {
     // failed tick left behind is put right on the next one.
     const standingDiagnostics = await this.refreshGolfStandings(
       sportEventId,
+      [...roundByNumber.values()],
       [...new Set(persistable.map((entry) => entry.sportEventParticipantId))],
       new Date(),
     );
@@ -308,11 +310,12 @@ export class GolfScoreService {
    */
   private async refreshGolfStandings(
     sportEventId: string,
+    eventRounds: readonly SportEventRound[],
     sportEventParticipantIds: readonly string[],
     asOf: Date,
   ): Promise<SyncWriteDiagnostics> {
     if (sportEventParticipantIds.length === 0) return emptySyncWriteDiagnostics();
-    const diagnostics = await this.writeGolfStandings(sportEventParticipantIds, asOf);
+    const diagnostics = await this.writeGolfStandings(eventRounds, sportEventParticipantIds, asOf);
     await this.rankEventStandings(sportEventId);
     return diagnostics;
   }
@@ -351,7 +354,7 @@ export class GolfScoreService {
     rebuild.queued();
   }
 
-  private async writeGolfStandings(sportEventParticipantIds: readonly string[], asOf: Date): Promise<SyncWriteDiagnostics> {
+  private async writeGolfStandings(eventRounds: readonly SportEventRound[], sportEventParticipantIds: readonly string[], asOf: Date): Promise<SyncWriteDiagnostics> {
 
     const [rounds, existing] = await Promise.all([
       this.deps.golfRounds.findBySportEventParticipants(sportEventParticipantIds),
@@ -364,6 +367,7 @@ export class GolfScoreService {
       roundsByEntry.set(result.participantRound.sportEventParticipantId, list);
     }
     const existingByEntry = new Map(existing.map((result) => [result.standing.sportEventParticipantId, result]));
+    const holesByRoundId = new Map(eventRounds.map((round) => [round.id, round.slot.periods?.count ?? null]));
 
     const plans = sportEventParticipantIds.flatMap((sportEventParticipantId) => {
       const entryRounds = roundsByEntry.get(sportEventParticipantId) ?? [];
@@ -373,7 +377,10 @@ export class GolfScoreService {
       ));
       const eventScoreToPar = entryRounds.reduce((sum, result) => sum + result.golf.scoreToPar, 0);
       const eventStrokes = entryRounds.reduce((sum, result) => sum + result.golf.strokes, 0);
-      const currentRoundThru = current.golf.thru ?? (current.participantRound.status === ParticipantRoundStatus.COMPLETED ? 18 : null);
+      // A completed round with no thru reported was played through every hole its slot gives it.
+      const currentRoundThru = current.golf.thru ?? (current.participantRound.status === ParticipantRoundStatus.COMPLETED
+        ? holesByRoundId.get(current.participantRound.sportEventRoundId) ?? null
+        : null);
       const status = mapGolfLiveStatus(current.participantRound.status);
       const currentRound = current.participantRound.roundNumber;
       const before = existingByEntry.get(sportEventParticipantId);
@@ -406,6 +413,15 @@ export class GolfScoreService {
 
   /** Dry run — resolves every row against the event's field and reports the change it would make. Writes nothing. */
   async previewRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<GolfScorePreviewRow[]> {
+    return (await this.previewWithRounds(sportEventId, roundNumber, rows)).preview;
+  }
+
+  /** The preview, with the event's rounds it read, so applying it reads them once. */
+  private async previewWithRounds(
+    sportEventId: string,
+    roundNumber: number,
+    rows: GolfScoreRowInput[],
+  ): Promise<{ preview: GolfScorePreviewRow[]; eventRounds: SportEventRound[] }> {
     const event = await this.requireGolfScoredEvent(sportEventId);
     this.requireScheduledRound(event, sportEventId, roundNumber);
     const [field, eventRounds] = await Promise.all([
@@ -421,7 +437,7 @@ export class GolfScoreService {
         .map((result) => [result.participantRound.sportEventParticipantId, result]),
     );
 
-    return Promise.all(rows.map(async (row) => {
+    const preview = await Promise.all(rows.map(async (row): Promise<GolfScorePreviewRow> => {
       const resolved = await resolveParticipantRow(row, matchAmong(participants, feedIds));
       const after: GolfRoundValues = { strokes: row.strokes, scoreToPar: row.scoreToPar, thru: row.thru ?? null, status: row.status };
       const sportEventParticipantId = resolved.participant ? entryIdByParticipantId.get(resolved.participant.id) ?? null : null;
@@ -446,6 +462,7 @@ export class GolfScoreService {
         after,
       };
     }));
+    return { preview, eventRounds };
   }
 
   /**
@@ -453,7 +470,7 @@ export class GolfScoreService {
    * refreshes standings exactly as the sync path does.
    */
   async applyRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<void> {
-    const preview = await this.previewRoundScores(sportEventId, roundNumber, rows);
+    const { preview, eventRounds } = await this.previewWithRounds(sportEventId, roundNumber, rows);
     const unresolved = preview.filter((row) => row.resolution !== 'MATCHED' || !row.sportEventParticipantId);
     if (unresolved.length > 0) {
       throw new GolfScoreError(
@@ -463,6 +480,7 @@ export class GolfScoreService {
       );
     }
     const round = await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
+    for (const row of preview) requireThruWithinRound(round, row.row.thru ?? null);
 
     // strokes is NOT NULL in storage: a row with no strokes has nothing to persist,
     // matching the sync path's null-strokes skip.
@@ -479,7 +497,8 @@ export class GolfScoreService {
       }));
     if (writes.length > 0) {
       await this.deps.golfRounds.upsertMany(writes);
-      await this.refreshGolfStandings(sportEventId, writes.map((write) => write.sportEventParticipantId), new Date());
+      const rounds = eventRounds.some((candidate) => candidate.id === round.id) ? eventRounds : [...eventRounds, round];
+      await this.refreshGolfStandings(sportEventId, rounds, writes.map((write) => write.sportEventParticipantId), new Date());
     }
   }
 
@@ -499,7 +518,8 @@ export class GolfScoreService {
       );
     }
     this.requireScheduledRound(event, sportEventId, roundNumber);
-    const storedRound = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
+    const eventRounds = await this.deps.rounds.findBySportEvent(sportEventId);
+    const storedRound = eventRounds.find((candidate) => candidate.roundNumber === roundNumber);
     const existing = storedRound
       ? (await this.deps.golfRounds.findBySportEventParticipants([sportEventParticipantId]))
         .find((result) => result.participantRound.sportEventRoundId === storedRound.id)
@@ -514,6 +534,7 @@ export class GolfScoreService {
       );
     }
     const round = storedRound ?? await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
+    requireThruWithinRound(round, patch.thru ?? null);
 
     await this.deps.golfRounds.upsert({
       sportEventParticipantId,
@@ -526,7 +547,7 @@ export class GolfScoreService {
       scoreToPar,
       thru: patch.thru !== undefined ? patch.thru : existing?.golf.thru ?? null,
     });
-    await this.refreshGolfStandings(sportEventId, [sportEventParticipantId], new Date());
+    await this.refreshGolfStandings(sportEventId, storedRound ? eventRounds : [...eventRounds, round], [sportEventParticipantId], new Date());
   }
 
   /**
@@ -558,6 +579,18 @@ export class GolfScoreService {
         422,
       );
     }
+  }
+}
+
+/**
+ * Refuses holes completed past the round's last (#375, #2047): a round's holes are its slot's
+ * periods, eighteen for a golf tournament, and playoff holes are no part of a round. A round
+ * whose slot keeps no score by period has no bound.
+ */
+function requireThruWithinRound(round: SportEventRound, thru: number | null): void {
+  const holes = round.slot.periods?.count;
+  if (thru !== null && holes !== undefined && thru > holes) {
+    throw new GolfScoreError(`Round ${round.roundNumber} has ${holes} holes, so ${thru} holes cannot be completed.`, 'ROUND_THRU_BEYOND_HOLES', 422);
   }
 }
 

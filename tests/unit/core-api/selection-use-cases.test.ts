@@ -55,8 +55,8 @@ const TIMESTAMPS = {
 // (#479: every tier takes the contest's picksPerTier), so the roster size is 4.
 const PICKS_PER_TIER = 2;
 const TIERS = [
-  { key: 'tier-1', label: 'Tier 1', number: 1, golfers: ['a', 'b', 'c'] },
-  { key: 'tier-2', label: 'Tier 2', number: 2, golfers: ['d', 'e', 'f'] },
+  { key: 'tier-1', number: 1, golfers: ['a', 'b', 'c'] },
+  { key: 'tier-2', number: 2, golfers: ['d', 'e', 'f'] },
 ];
 
 interface WorldOptions {
@@ -164,7 +164,6 @@ function buildWorld(options: WorldOptions = {}) {
   }));
   const tierGroups = TIERS.map((tier) => ({
     tierKey: tier.key,
-    label: tier.label,
     tierNumber: tier.number,
     participants: tier.golfers.map((golfer, index) => ({
       sportEventParticipantId: `sep-${golfer}`,
@@ -178,7 +177,6 @@ function buildWorld(options: WorldOptions = {}) {
     participantId: `p-${golfer}`,
     tierId: tier.key,
     tierKey: tier.key,
-    tierLabel: tier.label,
     tierNumber: tier.number,
     tierOrderIndex: index + 1,
     price: 100 - index,

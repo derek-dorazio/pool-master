@@ -2,7 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { replaceEventTiers, type SportEventDto, type SportEventTierDto } from '@/lib/api';
-import { Button, FormField, FormModal, FormSection, Input, Select, showToast } from '@/features/shared/ui';
+import { tierLabel } from '@poolmaster/shared/display-strings';
+import { Button, FormField, FormModal, FormSection, Select, showToast, Text } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -46,7 +47,6 @@ export function EventTiersDialog({
   const rows = useFieldArray({ control: form.control, name: 'tiers' });
   const values = useWatch({ control: form.control }) as EventTiersValues;
   const stranded = strandedCount(values, tiers, field);
-  const errors = form.formState.errors;
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (submitted: EventTiersValues) => {
@@ -88,9 +88,7 @@ export function EventTiersDialog({
           <div className="grid gap-2">
             {rows.fields.map((row, index) => (
               <div className="flex items-end gap-2" data-testid={`${testId}-row-${String(index)}`} key={row.id}>
-                <FormField className="flex-1" error={errors.tiers?.[index]?.label?.message} label={`Tier ${String(index + 1)}`}>
-                  <Input data-testid={`${testId}-label-${String(index)}`} {...form.register(`tiers.${index}.label`)} />
-                </FormField>
+                <Text className="flex-1" data-testid={`${testId}-label-${String(index)}`}>{tierLabel(index + 1)}</Text>
                 <Button
                   aria-label={`Move tier ${String(index + 1)} up`}
                   data-testid={`${testId}-up-${String(index)}`}
@@ -129,7 +127,7 @@ export function EventTiersDialog({
             <div>
               <Button
                 data-testid={`${testId}-add`}
-                onClick={() => rows.append({ tierKey: nextTierKey([...tiers, ...values.tiers].map((tier) => tier.tierKey)), label: `Tier ${String(rows.fields.length + 1)}` })}
+                onClick={() => rows.append({ tierKey: nextTierKey([...tiers, ...values.tiers].map((tier) => tier.tierKey)) })}
                 size="sm"
                 type="button"
                 variant="secondary"
@@ -146,7 +144,7 @@ export function EventTiersDialog({
           >
             <Select data-testid={`${testId}-reassign`} {...form.register('reassignTo')}>
               <option value="">Choose a tier</option>
-              {values.tiers.map((tier) => <option key={tier.tierKey} value={tier.tierKey}>{tier.label}</option>)}
+              {values.tiers.map((tier, index) => <option key={tier.tierKey} value={tier.tierKey}>{tierLabel(index + 1)}</option>)}
             </Select>
           </FormField>
         ) : null}
