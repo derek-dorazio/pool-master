@@ -218,7 +218,7 @@ Final standings are built from the scores PoolMaster has already received.
 
 A basketball tournament or a playoff is a knockout bracket. Its field, games and results come
 from the provider's feed, and nothing on the Event page enters or corrects them (ADR 0013,
-#2074): the Bracket tab, its pairing and play-in editors, *Withdrawals*, the quarter-score rows
+#2074): the Bracket tab, its pairing editor, *Withdrawals*, the quarter-score rows
 and the Tools tabs are gone. The Rounds and matches tab shows each game's score, winner and where
 the result came from, and a wrong result is fixed by the feed and applied with *Settle again*.
 Test data still loads through a sport data file ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md)
@@ -230,8 +230,8 @@ Test data still loads through a sport data file ([`SPORT-DATA-LOADING.md`](SPORT
   bracket pairs them by its region order, which the provider does not promise; the sync logs the
   pairing it loaded ("check them against the official bracket before release",
   `crossRegionPairings`). If it is wrong, hold the release: the links come from the code
-  (`toNcaaBracket`), so it needs a fix there. Release before the First Four games end, too: a
-  play-in place takes its winner only once the event is released.
+  (`toNcaaBracket`), so it needs a fix there. The First Four is the event's round 1, its four
+  pairings' teams in the field, and each winner advances into its round of 64 side (#2184).
 - **Withdrawals**: a team or player who withdraws is the feed's to report; one that withdraws
   once their game has started is a walkover in the feed's result.
 - **Period scores** (quarters in American football, halves in men's college basketball and
@@ -239,8 +239,8 @@ Test data still loads through a sport data file ([`SPORT-DATA-LOADING.md`](SPORT
 
 The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
 is one game of the bracket: the feed records the team that won the series, with the games each
-side won as the score (4-2). The NBA's 7 and 8 seeds in each conference are play-in places until the
-play-in tournament is played, as the First Four's are. Those leagues' rounds show their own
+side won as the score (4-2). The NBA's play-in tournament is not a round of the bracket: the feed's
+bracket starts once it is played, its winners the 7 and 8 seeds. Those leagues' rounds show their own
 names (Conference Finals, NBA Finals), not March Madness's.
 
 The College Football Playoff is a fixed bracket in its own American football sport league: 12
@@ -255,7 +255,7 @@ play best-of-five semifinals and a final, the first seed choosing its semifinal 
 the bracket is loaded. Like the NBA's, each series is one game of the bracket, scored in games
 won. The NCAA men's tournament is 16 teams in four regions of four, every game at a neutral
 site; the women's seeds five teams, and the six others play a first round for three
-quarterfinal places, which are play-in places until it is played. The PWHL starts on two tiers,
+quarterfinal places. The PWHL starts on two tiers,
 the others on four. Only the college title games, single games, take squares pools.
 
 Baseball (#789) has one sport league, the MLB postseason, a fixed bracket of 12 teams in four
@@ -313,8 +313,8 @@ holding the four Grand Slams; every bracket is fixed. A Slam singles draw is 128
 rounds, First round to Final, with the tournament's 32 seeds as seeds 1 to 32 and everyone else
 unseeded (the admin's "derive seeds from ranking" action is not used, because it would overwrite
 the real seeds). Each quarter of the draw is a region ("Top quarter" to "Bottom quarter")
-through the quarterfinals. The draw's qualifier places are play-in places, named "qualifier",
-and are filled once qualifying ends. A player who withdraws before their first
+through the quarterfinals. Qualifying is not a round of the draw: the draw's qualifiers are in its
+field once qualifying ends. A player who withdraws before their first
 match is replaced by the lucky loser the feed reports. A match's score is sets won (3-1) and
 is optional: a winner alone is enough. A match that ended early carries how it ended: a
 retirement, a walkover (no score) or a default; the winner advances in full. There

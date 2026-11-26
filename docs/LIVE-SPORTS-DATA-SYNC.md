@@ -344,7 +344,7 @@ earliest one.
 |---|---|
 | NFL weeks, Premier League matchweeks | One round of games. |
 | NFL postseason | Full bracket: seeds 1–7 per conference from `/nfl/v1/standings`, 13 matches over four rounds (`toNflPlayoffBracket`). |
-| NCAA men's tournament | Full bracket from `/ncaab/v1/bracket`; First Four pairings are play-in places filled by the live-score sync. **Which regions meet in the semifinals is read from `region_id` order, which the vendor does not promise**: check it before a live tournament (`crossRegionPairings` log, `EVENT-SETUP-PROCEDURES.md` *Knockout brackets*). Release the event before the First Four ends. |
+| NCAA men's tournament | Full bracket from `/ncaab/v1/bracket`; the First Four is round 1, each game's winner advancing into its round of 64 side (#2184). **Which regions meet in the semifinals is read from `region_id` order, which the vendor does not promise**: check it before a live tournament (`crossRegionPairings` log, `EVENT-SETUP-PROCEDURES.md` *Knockout brackets*). |
 | NCAA women's, College Football Playoff | Games only: the women's bracket has no region and the CFP feed has no committee seeds, so an admin builds the bracket and the sync only links games to open matches. |
 | NBA, WNBA playoffs | Each series as one game; once the first round is out, a fixed bracket seeded from standings (`series-playoff-bracket.ts`). |
 | NHL playoffs | As the NBA, seeded by division from standings points (`toNhlSeedRanks`). |
@@ -504,7 +504,7 @@ its stored Games, never at Game 1. Two cases raise a WARNING finding and keep go
 - `GAME_MOVED`: a mapped id turns up in another event's slate (a game moved to another week). The
   old Game is kept, with whatever points at it, and marked moved; the target event's Game takes
   the mapping. Voiding the picks on the old Game is #2016's.
-A First Four winner first fills its play-in place. **The feed is the only writer** (#2074): a
+**The feed is the only writer** (#2074): a
 provider final overwrites whatever the match holds, a result written by hand before included,
 and the API shows every result's `resultSource` as `PROVIDER` (a cancelled match's too); nothing
 stores it. A level knockout game takes its winner from the shoot-out wherever its slot's games

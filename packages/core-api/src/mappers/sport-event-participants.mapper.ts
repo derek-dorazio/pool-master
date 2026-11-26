@@ -26,7 +26,6 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
     ranking: entry.ranking ?? null,
     oddsToWin: entry.oddsToWin ?? null,
     seedNumber: entry.seedNumber ?? null,
-    isPlayInPlace: entry.isPlayInPlace,
     participant: mapParticipantToDto(view.participant),
     valuation: valuation
       ? {

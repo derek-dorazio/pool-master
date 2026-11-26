@@ -20,7 +20,7 @@
   "testData": true,
   "provenance": {
     "gatheredAt": "2026-10-20",
-    "gatheredBy": "load-sport-data, the 2026 NCAA Division I men's and women's ice hockey tournaments as played: regions, seeds, pairings, every game's score and the title games' period scores from Wikipedia's tournament pages, cross-checked against the ESPN college hockey scoreboards, which agree on every game they carry (the men's regional finals are Wikipedia's alone). Puck drops (scheduledAt) are ESPN's where it has the game, else Wikipedia's Eastern times. Men's ranking is the overall seed and its seed the regional one; every men's game and both Frozen Fours are at neutral sites. The women's tournament seeds five teams: the six others play a first round for three quarterfinal places, each a play-in place named for its pairing whose winner is its playInWinner, seeded 6-8 by the seed it meets. Women's quarterfinals are at the better seed's rink. Odds to win are made up by ranking.",
+    "gatheredBy": "load-sport-data, the 2026 NCAA Division I men's and women's ice hockey tournaments as played: regions, seeds, pairings, every game's score and the title games' period scores from Wikipedia's tournament pages, cross-checked against the ESPN college hockey scoreboards, which agree on every game they carry (the men's regional finals are Wikipedia's alone). Puck drops (scheduledAt) are ESPN's where it has the game, else Wikipedia's Eastern times. Men's ranking is the overall seed and its seed the regional one; every men's game and both Frozen Fours are at neutral sites. The women's tournament seeds five teams: the six others play a first round for three quarterfinal places: each first-round winner is in the field in its quarterfinal place, seeded 6-8 by the seed it meets, and the first round itself is left out (#2184). Women's quarterfinals are at the better seed's rink. Odds to win are made up by ranking.",
     "sources": [
       {
         "name": "2026 NCAA Division I men's ice hockey tournament (Wikipedia)",
@@ -603,24 +603,6 @@
           "ranking": 5
         },
         {
-          "key": "ncaawh-princeton-uconn-first-round",
-          "name": "Princeton / UConn (first round)",
-          "countryCode": "US",
-          "ranking": 6
-        },
-        {
-          "key": "ncaawh-franklin-pierce-quinnipiac-first-round",
-          "name": "Franklin Pierce / Quinnipiac (first round)",
-          "countryCode": "US",
-          "ranking": 7
-        },
-        {
-          "key": "ncaawh-minnesota-duluth-yale-first-round",
-          "name": "Minnesota Duluth / Yale (first round)",
-          "countryCode": "US",
-          "ranking": 8
-        },
-        {
           "key": "ncaawh-yale-bulldogs",
           "name": "Yale Bulldogs",
           "countryCode": "US",
@@ -700,28 +682,22 @@
               "oddsToWin": 12.0
             },
             {
-              "player": "ncaawh-princeton-uconn-first-round",
+              "player": "ncaawh-uconn-huskies",
               "ranking": 6,
               "seed": 6,
-              "isPlayInPlace": true,
-              "oddsToWin": 14.0,
-              "playInWinner": "ncaawh-uconn-huskies"
+              "oddsToWin": 14.0
             },
             {
-              "player": "ncaawh-franklin-pierce-quinnipiac-first-round",
+              "player": "ncaawh-quinnipiac-bobcats",
               "ranking": 7,
               "seed": 7,
-              "isPlayInPlace": true,
-              "oddsToWin": 16.0,
-              "playInWinner": "ncaawh-quinnipiac-bobcats"
+              "oddsToWin": 16.0
             },
             {
-              "player": "ncaawh-minnesota-duluth-yale-first-round",
+              "player": "ncaawh-yale-bulldogs",
               "ranking": 8,
               "seed": 8,
-              "isPlayInPlace": true,
-              "oddsToWin": 18.0,
-              "playInWinner": "ncaawh-yale-bulldogs"
+              "oddsToWin": 18.0
             }
           ],
           "matches": [
@@ -729,7 +705,7 @@
               "matchNumber": 1,
               "roundNumber": 1,
               "home": "ncaawh-ohio-state-buckeyes",
-              "away": "ncaawh-minnesota-duluth-yale-first-round",
+              "away": "ncaawh-yale-bulldogs",
               "isNeutralSite": false,
               "scheduledAt": "2026-03-14T22:00:00Z",
               "advancesTo": {
@@ -765,7 +741,7 @@
               "matchNumber": 3,
               "roundNumber": 1,
               "home": "ncaawh-penn-state-nittany-lions",
-              "away": "ncaawh-princeton-uconn-first-round",
+              "away": "ncaawh-uconn-huskies",
               "isNeutralSite": false,
               "scheduledAt": "2026-03-14T18:00:00Z",
               "advancesTo": {
@@ -783,7 +759,7 @@
               "matchNumber": 4,
               "roundNumber": 1,
               "home": "ncaawh-wisconsin-badgers",
-              "away": "ncaawh-franklin-pierce-quinnipiac-first-round",
+              "away": "ncaawh-quinnipiac-bobcats",
               "isNeutralSite": false,
               "scheduledAt": "2026-03-14T18:00:00Z",
               "advancesTo": {

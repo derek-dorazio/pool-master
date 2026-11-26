@@ -28,8 +28,8 @@ import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 
 // The 2026 US Open men's and women's singles end to end over HTTP (#704): the test seed loads each
-// 128-player draw into the ATP and the WTA, its qualifier places taking their qualifiers after
-// release, and plays every match out, the two men's retirements included. A commissioner runs a
+// 128-player draw into the ATP and the WTA, its qualifiers in the draw from the start, and plays
+// every match out, the two men's retirements included. A commissioner runs a
 // contest from the ATP's default template (one player from each of six tiers, round values
 // doubling from 1 to 64), and the settled contest scores each player for the matches they won,
 // a retirement a full win for the player who went through.
@@ -75,7 +75,6 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
     for (const player of league.players) player.key = expectDefined(tagged(player.key));
     for (const entry of draw.field) {
       entry.player = expectDefined(tagged(entry.player));
-      if (entry.playInWinner !== undefined) entry.playInWinner = expectDefined(tagged(entry.playInWinner));
     }
     for (const match of draw.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
   }
@@ -111,7 +110,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
 
   // Both draws are played out over HTTP, one request per match: about 27 s, so the 30 s default
   // times out on a slow runner. The settling test plays one draw, about 17 s on its own.
-  it('loads both draws as seven rounds, the 32 seeds seeded and everyone else unseeded, each qualifier place filled, every match played, Zverev and Rybakina the champions', async () => {
+  it('loads both draws as seven rounds, the 32 seeds seeded and everyone else unseeded, the qualifiers among them, every match played, Zverev and Rybakina the champions', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Tennis Director' });
     await promoteToRootAdmin(admin);
     const file = taggedSeed('tennis-2026-us-open-test.json', (leagueName) => `US Open ${leagueName} ${RUN}`);
@@ -126,7 +125,6 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
       expect([event.status, event.rounds]).toEqual(['SCHEDULED', 7]);
       const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
       expect(field).toHaveLength(128);
-      expect(field.some((row) => row.isPlayInPlace)).toBe(false);
       expect(field.filter((row) => row.seedNumber !== null)).toHaveLength(seeded);
       expect(field.filter((row) => row.seedNumber === null)).toHaveLength(128 - seeded);
 

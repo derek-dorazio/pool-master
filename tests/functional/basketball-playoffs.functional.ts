@@ -29,10 +29,10 @@ import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 
 // The NBA and WNBA playoffs end to end over HTTP (#706): each test seed loads into its seeded sport
-// league, played out series by series. The NBA's play-in places take their winners after release,
-// before any result. A commissioner runs a contest from the NBA's default template (one team from
-// each of four tiers, round values doubling 1, 2, 4, 8), a member picks a lineup that includes a
-// filled play-in place, and the settled contest scores each team for the series it won.
+// league, played out series by series, the play-in tournament's winners seeded 7 and 8. A
+// commissioner runs a contest from the NBA's default template (one team from each of four tiers,
+// round values doubling 1, 2, 4, 8), a member picks a lineup that includes a play-in winner, and
+// the settled contest scores each team for the series it won.
 
 const RUN = `nba-${Date.now()}`;
 const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
@@ -73,10 +73,7 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
     const [playoffs] = league.events;
     playoffs.name = eventName(league.name);
     for (const player of league.players) player.key = expectDefined(tagged(player.key));
-    for (const entry of playoffs.field) {
-      entry.player = expectDefined(tagged(entry.player));
-      if (entry.playInWinner !== undefined) entry.playInWinner = expectDefined(tagged(entry.playInWinner));
-    }
+    for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
     for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
   }
   return file;
@@ -114,7 +111,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     });
   });
 
-  it('loads the played NBA playoffs with each play-in place naming its winner, then scores and settles an entry from the NBA\'s default tiered template by series won', async () => {
+  it('loads the played NBA playoffs with the play-in winners seeded 7 and 8, then scores and settles an entry from the NBA\'s default tiered template by series won', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -124,9 +121,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     expect(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
 
-    // Each play-in place now names the team that won it, keeping its seed, and is no longer a place.
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
-    expect(field.some((row) => row.isPlayInPlace)).toBe(false);
     expect(field.filter((row) => (row.seedNumber ?? 0) >= 7).map((row) => [row.participant.name, row.seedNumber]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
       ['Golden State Warriors', 7], ['Memphis Grizzlies', 8], ['Miami Heat', 8], ['Orlando Magic', 7],
     ]);
@@ -137,7 +132,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     // Games won (#2046) until the file gives each Game (#2184).
     expect([final.homeSportEventParticipantId, final.winnerSide, final.homeScore, final.awayScore]).toEqual([rowOf('Oklahoma City Thunder'), 'HOME', null, null]);
 
-    // Loading the same file again changes nothing, the filled play-in places included.
+    // Loading the same file again changes nothing.
     const again = await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.DRY_RUN });
     expect(again.filter((row) => row.action !== LoadAction.SKIP)).toEqual([]);
 
@@ -223,7 +218,6 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
       expect([event.status, event.rounds]).toEqual(['SCHEDULED', 6]);
       const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
       expect(field).toHaveLength(64);
-      expect(field.some((row) => row.isPlayInPlace)).toBe(false);
       const names = new Set(field.map((row) => row.participant.name));
       expect(firstFourWinners.filter((team) => names.has(team))).toEqual(firstFourWinners);
 

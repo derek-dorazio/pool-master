@@ -40,8 +40,8 @@
  * provider lists the other way round only changes `homeAway`. The match's own status follows its
  * Games while it is played (in progress, back to scheduled, postponed); its score is its Games'.
  *
- * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
- * with that winner (`play-in-fill.ts`), so the game is placed at the place's match in the same sync.
+ * A play-in game (the First Four's) is a match of the bracket's first round like any other, and
+ * its winner advances into the next round's side its match feeds (#2184).
  */
 import { randomUUID } from 'node:crypto';
 import {
@@ -84,14 +84,12 @@ import type { LiveScoreGameFinding, LiveScorePersistenceResult } from '../../ing
 import { summarizeSyncWriteRows, type SyncWriteDetailRow } from '../../ingestion/core/sync-write-diagnostics';
 import type { LiveScoreTargetEvent } from '../scoring-family-module';
 import type { MatchResultService } from './match-result-service';
-import { fillPlayInPlaces, type PlayInFillDeps } from './play-in-fill';
 
 export interface GameScoreWriterDeps {
   providerId: string;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'applyStatuses'>;
   games: Pick<SportEventRoundMatchGameRepository, 'findBySportEvent' | 'findByProviderExternalIds' | 'applySync'>;
-  eventParticipants: Pick<SportEventParticipantRepository, 'findByIds' | 'findBySportEvent'>;
-  playIns: PlayInFillDeps['playIns'];
+  eventParticipants: Pick<SportEventParticipantRepository, 'findByIds'>;
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   results: Pick<MatchResultService, 'recordResult'>;
   /** What follows a Game moved out of its event (#2048): the app's one map. */
@@ -140,7 +138,6 @@ export async function writeGameScores(
     deps.games.findBySportEvent(sportEventId, providerCode),
   ]);
   const mappedHere = new Map(storedGames.flatMap((each) => (each.externalId === null ? [] : [[each.externalId, each.game] as const])));
-  await fillPlayInPlaces(deps, sportEventId, loaded, games, new Set(mappedHere.keys()));
   const matchById = new Map(loaded.map((match) => [match.id, match]));
   const unmapped = games.filter((game) => !mappedHere.has(game.providerGameId));
   const elsewhere = new Map((await deps.games.findByProviderExternalIds(providerCode, unmapped.map((game) => game.providerGameId)))

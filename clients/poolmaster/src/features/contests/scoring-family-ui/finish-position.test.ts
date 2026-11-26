@@ -30,7 +30,6 @@ function runner(
     ranking: null,
     oddsToWin: null,
     seedNumber: null,
-    isPlayInPlace: false,
     participant: {
       id: 'participant-1',
       sportLeagueId: 'league-horse-racing',

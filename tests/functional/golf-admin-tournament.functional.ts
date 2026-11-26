@@ -35,6 +35,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
 import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { SportEventParticipantResponseSchema } from '@poolmaster/shared/dto';
 
 // plans/124 §8 — pool-master-z3l. End-to-end golf-admin authoring journey through
 // the generated SDK: tour -> players -> roster upload -> tournament in an event
@@ -403,7 +405,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       body: { strokes: 65, status: 'COMPLETED' },
     });
     expect(correction.response?.status).toBe(200);
-    expect(expectDefined(correction.data).participant.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
+    expect(expectMatchesSchema(SportEventParticipantResponseSchema, correction.data).participant.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
 
     // --- COMPLETE the event -----------------------------------------------------
     const toDone = await transitionEvent({ client: c, path: { eventId }, body: { toStatus: 'COMPLETED' } });

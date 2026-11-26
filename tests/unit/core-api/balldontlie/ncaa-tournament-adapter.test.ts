@@ -126,14 +126,14 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a tournament with every team its bracket has decided so far, each with its seed, and no First Four team', async () => {
+    it('gives a tournament with every team its bracket has decided so far, each with its seed, the First Four\'s teams among them, and the First Four as its first round', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('ncaab-2025-tournament');
 
-      expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, participantCount: 5, rounds: 6, status: 'COMPLETED' });
-      expect(detail?.participants.map((team) => team.name)).not.toContain('Texas Longhorns');
+      expect(detail).toMatchObject({ externalId: 'ncaab-2025-tournament', sport: Sport.BASKETBALL, participantCount: 7, rounds: 7, status: 'COMPLETED' });
+      expect(detail?.participants.map((team) => team.name)).toContain('Texas Longhorns');
       expect(detail?.participants.find((team) => team.name === 'Duke Blue Devils')?.metadata).toEqual({ seed: 1 });
       expect(requestLine(harness.api)).toEqual(['/ncaab/v1/bracket?season=2025&per_page=100']);
     });
@@ -144,23 +144,22 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
 
       const detail = await harness.adapter.getEventDetails('ncaaw-2025-tournament');
 
-      expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 5, rounds: 6 });
-      expect(detail?.participants.map((team) => team.externalId)).toEqual(['41', '2636', '150', '2655', '2579']);
+      expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 7, rounds: 7 });
+      expect(detail?.participants.map((team) => team.externalId)).toEqual(['2390', '2569', '41', '2636', '150', '2655', '2579']);
       expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
     });
 
-    it('gives a men\'s tournament before the First Four its teams and a play-in place per First Four game, its round of 64 games and its whole 63-match bracket', async () => {
+    it('gives a men\'s tournament before the First Four every team, the First Four\'s among them, its games and its whole bracket with the First Four as round 1', async () => {
       const harness = setup({ ...defaultRoutes, '/ncaab/v1/bracket': bracketRoute(bracketRow.array().parse(ncaaFullBracket())) });
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('ncaab-2025-tournament');
 
-      // Two First Four games in this bracket: 62 teams and 2 places.
-      expect(detail?.participants).toHaveLength(64);
-      expect(detail?.participants.filter((team) => team.metadata.playInPlace === true).map((team) => team.externalId))
-        .toEqual(['ncaab-2025-east-11-seed-play-in', 'ncaab-2025-south-16-seed-play-in']);
-      expect(detail?.games).toHaveLength(30);
-      expect(detail?.bracket).toHaveLength(63);
+      // Two First Four games in this bracket: 62 teams placed straight into the round of 64, and 4 who play in.
+      expect(detail?.participants).toHaveLength(66);
+      expect(detail?.games).toHaveLength(32);
+      expect(detail?.bracket).toHaveLength(65);
+      expect(detail?.bracket?.filter((match) => match.roundNumber === 1).map((match) => match.advancesTo?.roundNumber)).toEqual([2, 2]);
     });
 
     it('gives a women\'s tournament no bracket, since the women\'s bracket names no region', async () => {
@@ -218,7 +217,7 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
     const result = await harness.adapter.getLiveScores('ncaaw-2025-tournament');
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'ncaaw-2025-tournament' });
-    expect(result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []).toEqual(['401856710', '401856711', '401856772']);
+    expect(result.category === 'GAME' ? result.games.map((game) => game.providerGameId) : []).toEqual(['401856700', '401856710', '401856711', '401856772']);
     expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
   });
 

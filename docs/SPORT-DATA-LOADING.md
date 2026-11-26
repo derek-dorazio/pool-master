@@ -76,8 +76,8 @@ definition key in `roundSlotKeys`, round 1 first and FINAL last, in place of `sl
 makes a test slot of each and plays round n in the nth (#2006). Whether it reseeds is its slots'
 `pairing` (the NFL's are `RESEEDED`), so a reseeded file gives its first-round games
 `advancesTo: null` and sets no rule on the sport league. A field entry may give its bracket `seed` (1-16 in each
-March Madness region) where the seed is not its place in the field, and `isPlayInPlace` for a
-First Four pairing. The run refuses a bracket the bracket endpoint would refuse, before any
+March Madness region) where the seed is not its place in the field. A play-in's winner is a
+field entry in the place it won, with that place's seed (#2184). The run refuses a bracket the bracket endpoint would refuse, before any
 write.
 
 **Released as it loads.** Each league's first new test event is released; the ones after it
@@ -130,8 +130,7 @@ of sport carries:
 - **A tournament** (golf): each field entry's made-up `oddsToWin` and `rounds` of strokes.
 - **A bracket** (`american-football-2026-nfl-playoffs-test.json`): `contents` add `BRACKET`, each
   field entry made-up `oddsToWin` and each match its real `result`. A reseeded round's results
-  name the side the server's reseed puts each team on (the 1 seed at home). A play-in place's
-  entry names its winner in `playInWinner`, set after release, before any result. A bye is a
+  name the side the server's reseed puts each team on (the 1 seed at home). A bye is a
   team named straight into a later round's match. A match of a sport with periods may carry
   `periodScores`, the score at the end of each period but the last. A match level after extra
   time in a sport that settles it by shoot-out carries `homeShootoutScore` and
@@ -193,8 +192,8 @@ beside the real ones and always lie just ahead (#1524). The rule is
   the next day leaves about a day to set one up.
 - **Only the first is released**: each league's first event is released for contests; the
   ones after it are set up whole (field, odds, tiers, prices, stored scores) but left drafts.
-  An admin can release one early on the Manage screens. A bracket event's play-in winners,
-  cancellations and results go in only once a run releases it.
+  An admin can release one early on the Manage screens. A bracket event's cancellations and
+  results go in only once a run releases it.
 - **Results go in as the games are played** (#1720): a run enters a match's result only once its
   rolled kickoff (or, with none, the event's start) has passed, so a game still to come stays
   open for picks and a squares board. Each run first catches up the test events earlier runs
@@ -342,10 +341,9 @@ Load each with `mode` `apply` like any file. Because their envelopes say `testDa
 
 - **Dates rolled from the run** (*A few "Test-" events at a time* above), the tip-offs with them.
 - **Released** with automatic lifecycle off, the field tiered by odds (four tiers) and priced.
-- **The NBA's play-in places filled**: each conference's 7 and 8 seeds are play-in places
-  ("West 8 seed (play-in)"), and after release each takes the team that won it (Golden State
-  and Orlando the 7 seeds, Memphis and Miami the 8 seeds), keeping its seed, tier and price, as
-  *Set winner* does. A field entry's `playInWinner` names that team; test data only.
+- **The NBA's play-in winners seeded 7 and 8**: Golden State and Orlando the 7 seeds, Memphis
+  and Miami the 8 seeds, in the field from the start. The play-in tournament is not a
+  single-elimination round of the playoffs, so the file has no games for it.
 - **Every series result entered as its Game 1 is played**, round by round. The Oklahoma City Thunder beat the
   Indiana Pacers 4-3 in the NBA Finals; the Las Vegas Aces beat the Phoenix Mercury 4-0 in the
   WNBA Finals.
@@ -363,8 +361,8 @@ up by seed. Load it with `mode` `apply` like any file. Because its envelope says
 
 - **Dates rolled from the run** (*A few "Test-" events at a time* above), the tip-offs with them.
 - **Released** with automatic lifecycle off, the field tiered by odds and priced.
-- **The First Four places filled**: each First Four pairing is a play-in place ("UMBC / Howard"),
-  and after release each takes the team that won it, keeping its seed, tier and price.
+- **The First Four winners in the places they won**, with those places' seeds. The file holds
+  no First Four games, so its bracket starts at the round of 64.
 - **Every game's result entered as it is played**, round by round. Michigan beat UConn 69-63 for the
   men's title; UCLA beat South Carolina 79-51 for the women's.
 
@@ -460,7 +458,7 @@ carries its half-time score. Kickoffs and scores are real, and the odds are made
 event each in the ATP and the WTA. Each is a 128-player draw in seven rounds, every quarter of
 the draw a region through the quarterfinals. The 32 seeds carry their seed (the men's 31: Ruud,
 the 19th, withdrew and a lucky loser took his place) and everyone else is unseeded. Each draw's
-16 qualifier places are play-in places that take their qualifier after release. A match's score
+16 qualifiers are in the field from the start. A match's score
 is sets won, and the men's two retirements count only the sets finished. Alexander Zverev beat
 Ben Shelton 3-1 and Elena Rybakina beat Aryna Sabalenka 2-1. Pairings, winners, sets and match
 times are real. The seeds' rankings are real; the unseeded players' are an ordering after the

@@ -93,10 +93,8 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
   let sequence = 0;
   const brackets = new SportEventBracketService({ domainEvents: testDomainEvents(),
     sportEvents: store.sportEventRepo(),
-    sportLeagues: store.sportLeagueRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
-    participants: store.participantRepo(),
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
@@ -136,10 +134,8 @@ async function week() {
   let sequence = 0;
   await new SportEventBracketService({ domainEvents: testDomainEvents(),
     sportEvents: store.sportEventRepo(),
-    sportLeagues: store.sportLeagueRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
-    participants: store.participantRepo(),
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
