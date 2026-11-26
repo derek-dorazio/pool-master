@@ -67,8 +67,7 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
    contest create refuses any other. What fits follows the scoring family:
    - Every sport: the roster picks, `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW`.
    - A sport played in games (head to head) can add the prediction types: `BRACKET`, a knockout
-     bracket pool, picked to the final before it starts (a second-chance bracket starts at a
-     later round, such as the Sweet 16); `PICK_EM`, the winner of every game of each week,
+     bracket pool, picked to the final before it starts; `PICK_EM`, the winner of every game of each week,
      straight up or by confidence, optionally against the spread; and `SURVIVOR`, one team a
      week, each team once. The validity matrix allows prediction contests only on events of
      games.
@@ -78,6 +77,11 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      field pool never spans events (ADR 0014).
    A new selection type is separate work through the selection-engine registry, not part of
    adding a sport.
+   Which of these a league should offer, and how many variations of each, is a judgement, not a
+   rule: start from the recommendations in `docs/CONTEST-TEMPLATE-GUIDELINES.md` (the 12-team
+   cut for tiered and budget, the random draw and bracket variations by whether the field has
+   seeds, where squares fit, Clutch Card and Margin Card), and say in the PR where the league
+   departs from them. For Clutch Card on a new sport, ask the owner first.
 4. **Results source.** A new provider follows `rules/architecture-rules.md` §3 *Provider and
    Adapter Registry Discipline*.
 5. **Vocabulary.** Check `rules/domain-model-concepts.md` §2 *Vocabulary* so product terms
