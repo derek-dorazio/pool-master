@@ -47,6 +47,7 @@ the one people read.
 | Setting up a race's odds, tiers and contests, and entering its result | [`docs/RACE-SETUP-PROCEDURES.md`](docs/RACE-SETUP-PROCEDURES.md) |
 | Loading schedules, fields and brackets from a data file, and the test seeds for trying contests | [`docs/SPORT-DATA-LOADING.md`](docs/SPORT-DATA-LOADING.md) |
 | Where each sport's real schedules and fields come from | [`docs/SPORT-DATA-SOURCES.md`](docs/SPORT-DATA-SOURCES.md) |
+| Which contest templates to offer a new sport or sport league, and why (recommendations, not rules) | [`docs/CONTEST-TEMPLATE-GUIDELINES.md`](docs/CONTEST-TEMPLATE-GUIDELINES.md) |
 | How a provider sync works end to end: which leagues sync, the events, field and scores syncs, triggers and each league's reader | [`docs/LIVE-SPORTS-DATA-SYNC.md`](docs/LIVE-SPORTS-DATA-SYNC.md) |
 | The backend modules | [`packages/README.md`](packages/README.md) |
 | The web app | [`clients/poolmaster/README.md`](clients/poolmaster/README.md) |
