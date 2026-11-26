@@ -7,9 +7,9 @@ import { ScoringFamily } from './sports/scoring-family';
  * individuals (tennis). A sport league's scoring family is checked against the match format of
  * each of its slot definitions, the model home of how its games are played. Every sport league is
  * added by a migration, so the reference-data test that checks each seeded league against this
- * table is its one reader; a league that no row admits fails that test.
+ * table is its check; a league that no row admits fails that test. The test-data loader reads it
+ * too, to know whether a data file's league plays matches (#2008).
  */
-// poolmaster-allow-test-export: sport leagues are written only by migrations, so the reference-data test that checks every seeded league is the table's reader
 export const LEAGUE_PLAY_BY_SCORING_FAMILY = {
   [ScoringFamily.STROKE_PLAY]: { matchFormats: [MatchFormat.FIELD], participantTypes: [ParticipantType.INDIVIDUAL] },
   [ScoringFamily.FINISH_POSITION]: { matchFormats: [MatchFormat.FIELD], participantTypes: [ParticipantType.INDIVIDUAL] },
