@@ -1207,9 +1207,9 @@ export class InMemorySportEvents {
         Object.assign(row, patch);
         setTeams(row, sides);
         if (spread !== undefined) row.sides = row.sides.map((side) => (side.sideNumber === 1 ? { ...side, spread } : side));
+        row.games = row.games.map((game) => ({ ...game, isNeutralSite: isNeutralSite ?? game.isNeutralSite }));
         row.games = row.games.map((game) => (game.gameNumber !== 1 ? game : {
           ...game,
-          isNeutralSite: isNeutralSite ?? game.isNeutralSite,
           sideResults: game.sideResults.map((result) => ({ ...result, homeAway: gameOneHomeAway.find((each) => each.sideNumber === result.sideNumber)?.homeAway ?? result.homeAway })),
         }));
       },

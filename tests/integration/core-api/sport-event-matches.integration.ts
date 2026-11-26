@@ -5,6 +5,7 @@ import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { MatchResultWrite, MatchSideWrite, SportEventRoundMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
+  PrismaSportEventRoundMatchGameRepository,
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
@@ -42,6 +43,7 @@ function repos() {
     rounds: new PrismaSportEventRoundRepository(getAppPrisma()),
     field: new PrismaSportEventParticipantRepository(getAppPrisma()),
     matches: new PrismaSportEventRoundMatchRepository(getAppPrisma()),
+    games: new PrismaSportEventRoundMatchGameRepository(getAppPrisma()),
   };
 }
 
@@ -261,6 +263,25 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     const [edited] = await repos().matches.findBySportEvent(event.id);
     expect([edited.scheduledDate, matchIsNeutralSite(edited)]).toEqual([null, false]);
     expect(sideParticipantId(edited, 2)).toBe(entryOf('Duke').id);
+  });
+
+  it('sets a series to a neutral site on every one of its Games, so the match reads neutral once its Game 2 exists', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+    const gameOne = gameOneOf(first);
+    await repos().games.applySync({
+      providerCode: 'BALLDONTLIE',
+      created: [{ id: randomUUID(), sportEventId: event.id, sportEventRoundMatchId: first.id, sportEventSlotId: gameOne.sportEventSlotId, gameNumber: 2, isNeutralSite: false }],
+      mapped: [], moved: [], scores: [],
+    });
+    await repos().matches.update(first.id, { isNeutralSite: false });
+
+    await repos().matches.update(first.id, { isNeutralSite: true });
+
+    const edited = expectDefined(await repos().matches.findById(first.id));
+    expect(edited.games.map((game) => [game.gameNumber, game.isNeutralSite])).toEqual([[1, true], [2, true]]);
+    expect(matchIsNeutralSite(edited)).toBe(true);
   });
 
   it('changes where each side plays Game 1 without moving either team off its side, as a provider listing the teams the other way round does', async () => {

@@ -114,7 +114,7 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
     await this.prisma.$transaction([
       this.prisma.sportEventRoundMatch.update({ where: { id }, data: patch }),
       ...sideTeamUpdates(this.prisma, id, sides),
-      ...(isNeutralSite === undefined ? [] : [this.prisma.sportEventRoundMatchGame.updateMany({ where: { sportEventRoundMatchId: id, gameNumber: 1 }, data: { isNeutralSite } })]),
+      ...(isNeutralSite === undefined ? [] : [this.prisma.sportEventRoundMatchGame.updateMany({ where: { sportEventRoundMatchId: id }, data: { isNeutralSite } })]),
       // poolmaster-allow-query-in-loop: a match's two sides at most
       ...gameOneHomeAway.map(({ sideNumber, homeAway }) => this.prisma.sportEventRoundMatchGameSideResult.updateMany({
         where: { sportEventRoundMatchId: id, game: { gameNumber: 1 }, side: { sideNumber } },

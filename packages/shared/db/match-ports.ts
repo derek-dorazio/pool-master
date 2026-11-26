@@ -38,7 +38,7 @@ export interface MatchSideTeam {
 export interface SportEventRoundMatchPatch {
   /** The sides whose team changes. */
   sides?: readonly MatchSideTeam[];
-  /** Game 1's neutral-site flag (#2047). */
+  /** Every one of the match's Games' neutral-site flag (#2047), so the match reads what was set. */
   isNeutralSite?: boolean;
   scheduledDate?: Date | null;
   /** Side 1's spread (#720). */
