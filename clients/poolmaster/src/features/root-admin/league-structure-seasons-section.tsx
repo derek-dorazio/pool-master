@@ -4,7 +4,7 @@ import { LeaguePhaseOrder, SeasonSlotStatusOrder, SlotKindOrder, SlotWindowStatu
 import { useState } from 'react';
 import { DataGrid, DetailEditModal, FactList, SectionCard, StatusBadge, Text, type Fact } from '@/features/shared/ui';
 import type { SportLeagueSeasonDto } from '@/lib/api';
-import { seasonSlotRowsOf, seasonMappingText, type SeasonSlotRow } from './league-structure-rows';
+import { seasonCompetitionsOf, seasonSlotRowsOf, seasonMappingText, type SeasonSlotRow } from './league-structure-rows';
 
 const seasonColumnHelper = createColumnHelper<SportLeagueSeasonDto>();
 
@@ -80,7 +80,8 @@ function SeasonDialog({ onClose, season }: { onClose: () => void; season: SportL
     { id: 'championshipYear', label: 'Championship year', value: String(season.championshipYear) },
     { id: 'current', label: 'Current', value: season.isCurrent ? 'Yes' : 'No' },
     { id: 'providers', label: 'Provider ids', value: season.providerMappings.map(seasonMappingText).join(', ') || 'None' },
-    { id: 'slots', label: 'Slots', value: String(season.phases.reduce((count, phase) => count + phase.slots.length, 0)) },
+    { id: 'competitions', label: 'Competitions', value: competitionsText(season), testId: 'root-admin-league-structure-season-competitions' },
+    { id: 'slots', label: 'Slots', value: String(seasonCompetitionsOf(season).reduce((count, competition) => count + competition.slots.length, 0)) },
     { id: 'needsDates', label: 'Needs dates', value: needsDatesText(season) },
   ];
   return (
@@ -96,10 +97,26 @@ function SeasonDialog({ onClose, season }: { onClose: () => void; season: SportL
   );
 }
 
-/** Each phase with slots that need dates and how many ("Postseason 2"), or "None". */
+/** Each of the Season's competitions in play order, by code, with its status ("CFP · Scheduled"). */
+function competitionsText(season: SportLeagueSeasonDto) {
+  const competitions = seasonCompetitionsOf(season);
+  return competitions.length === 0
+    ? 'None'
+    : (
+      <ul className="space-y-1">
+        {competitions.map((competition) => (
+          <li data-testid={`root-admin-league-structure-season-competition-${competition.code}`} key={competition.id}>
+            {`${competition.code} · ${enumLabel('SeasonCompetitionStatus', competition.status)}`}
+          </li>
+        ))}
+      </ul>
+    );
+}
+
+/** Each competition with slots that need dates and how many ("CFP 2"), or "None". */
 function needsDatesText(season: SportLeagueSeasonDto): string {
-  const phases = season.phases.filter((phase) => phase.slotsNeedingDates > 0);
-  return phases.length === 0 ? 'None' : phases.map((phase) => `${enumLabel('LeaguePhase', phase.phase)} ${String(phase.slotsNeedingDates)}`).join(', ');
+  const needing = seasonCompetitionsOf(season).filter((competition) => competition.slotsNeedingDates > 0);
+  return needing.length === 0 ? 'None' : needing.map((competition) => `${competition.code} ${String(competition.slotsNeedingDates)}`).join(', ');
 }
 
 const slotColumnHelper = createColumnHelper<SeasonSlotRow>();
@@ -125,6 +142,10 @@ function seasonSlotColumns(seasons: readonly SportLeagueSeasonDto[]) {
       header: 'Phase',
       meta: { info: 'The phase the slot is in.', type: { kind: 'enum', order: LeaguePhaseOrder, label: (phase) => enumLabel('LeaguePhase', phase as LeaguePhase) } },
       cell: ({ getValue }) => enumLabel('LeaguePhase', getValue()),
+    }),
+    slotColumnHelper.accessor('competitionCode', {
+      header: 'Competition',
+      meta: { info: 'The competition of its phase the slot is in, by code.', type: { kind: 'text' } },
     }),
     slotColumnHelper.accessor((slot) => slotLabel(slot), {
       id: 'slot',

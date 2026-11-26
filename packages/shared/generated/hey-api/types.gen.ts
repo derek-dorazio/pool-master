@@ -4993,7 +4993,7 @@ export type ContestManagementDetailDto = {
  */
 export type ContestTemplateSlotDto = {
     /**
-     * The slot definition's id (SportLeaguePhaseSlot).
+     * The slot definition's id (SportLeagueCompetitionSlot).
      */
     id: string;
     /**
@@ -5013,13 +5013,21 @@ export type ContestTemplateSlotDto = {
      */
     weekNumber: number | null;
     /**
-     * The phase the slot is in.
+     * The competition the slot is in (#2153); a template's slots all sit in one.
      */
-    sportLeaguePhaseId: string;
+    sportLeagueCompetitionId: string;
     /**
-     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+     * That competition's code, such as REGULAR or CFP; nothing parses it.
      */
-    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+    competitionCode: string;
+    /**
+     * That competition's place in its phase.
+     */
+    competitionOrderIndex: number;
+    /**
+     * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+     */
+    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
     /**
      * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
      */
@@ -5047,7 +5055,7 @@ export type ContestConfigTemplateDto = {
      */
     slots: Array<{
         /**
-         * The slot definition's id (SportLeaguePhaseSlot).
+         * The slot definition's id (SportLeagueCompetitionSlot).
          */
         id: string;
         /**
@@ -5067,13 +5075,21 @@ export type ContestConfigTemplateDto = {
          */
         weekNumber: number | null;
         /**
-         * The phase the slot is in.
+         * The competition the slot is in (#2153); a template's slots all sit in one.
          */
-        sportLeaguePhaseId: string;
+        sportLeagueCompetitionId: string;
         /**
-         * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+         * That competition's code, such as REGULAR or CFP; nothing parses it.
          */
-        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+        competitionCode: string;
+        /**
+         * That competition's place in its phase.
+         */
+        competitionOrderIndex: number;
+        /**
+         * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+         */
+        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
         /**
          * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
          */
@@ -5833,7 +5849,7 @@ export type ContestConfigTemplateListResponse = {
          */
         slots: Array<{
             /**
-             * The slot definition's id (SportLeaguePhaseSlot).
+             * The slot definition's id (SportLeagueCompetitionSlot).
              */
             id: string;
             /**
@@ -5853,13 +5869,21 @@ export type ContestConfigTemplateListResponse = {
              */
             weekNumber: number | null;
             /**
-             * The phase the slot is in.
+             * The competition the slot is in (#2153); a template's slots all sit in one.
              */
-            sportLeaguePhaseId: string;
+            sportLeagueCompetitionId: string;
             /**
-             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             * That competition's code, such as REGULAR or CFP; nothing parses it.
              */
-            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            competitionCode: string;
+            /**
+             * That competition's place in its phase.
+             */
+            competitionOrderIndex: number;
+            /**
+             * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
             /**
              * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
              */
@@ -6817,7 +6841,7 @@ export type ContestConfigTemplateResponse = {
          */
         slots: Array<{
             /**
-             * The slot definition's id (SportLeaguePhaseSlot).
+             * The slot definition's id (SportLeagueCompetitionSlot).
              */
             id: string;
             /**
@@ -6837,13 +6861,21 @@ export type ContestConfigTemplateResponse = {
              */
             weekNumber: number | null;
             /**
-             * The phase the slot is in.
+             * The competition the slot is in (#2153); a template's slots all sit in one.
              */
-            sportLeaguePhaseId: string;
+            sportLeagueCompetitionId: string;
             /**
-             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             * That competition's code, such as REGULAR or CFP; nothing parses it.
              */
-            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            competitionCode: string;
+            /**
+             * That competition's place in its phase.
+             */
+            competitionOrderIndex: number;
+            /**
+             * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
             /**
              * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
              */
@@ -10093,15 +10125,18 @@ export type SportLeagueSlotDefinitionDto = {
 };
 
 /**
- * One phase definition of a sport league.
+ * One competition of a phase (#2153): what the phase's slots are played as. No contest crosses competitions.
  */
-export type SportLeaguePhaseDefinitionDto = {
+export type SportLeagueCompetitionDefinitionDto = {
     id: string;
-    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
     /**
-     * Whether the league's sync reads the phase. An unsynced phase has no slots.
+     * A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it.
      */
-    isSynced: boolean;
+    code: string;
+    /**
+     * Its place among its phase's competitions, from 1.
+     */
+    orderIndex: number;
     /**
      * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
      */
@@ -10172,19 +10207,28 @@ export type SportLeaguePhaseDefinitionDto = {
 };
 
 /**
- * A sport league's phase and slot definitions, set by migration.
+ * One phase definition of a sport league.
  */
-export type SportLeagueStructureResponse = {
+export type SportLeaguePhaseDefinitionDto = {
+    id: string;
+    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
     /**
-     * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.
+     * Whether the league's sync reads the phase. An unsynced phase has no slots.
      */
-    phases: Array<{
+    isSynced: boolean;
+    /**
+     * By their order in the phase.
+     */
+    competitions: Array<{
         id: string;
-        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
         /**
-         * Whether the league's sync reads the phase. An unsynced phase has no slots.
+         * A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it.
          */
-        isSynced: boolean;
+        code: string;
+        /**
+         * Its place among its phase's competitions, from 1.
+         */
+        orderIndex: number;
         /**
          * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
          */
@@ -10250,6 +10294,104 @@ export type SportLeagueStructureResponse = {
                  * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
                  */
                 providerValue: string | null;
+            }>;
+        }>;
+    }>;
+};
+
+/**
+ * A sport league's phase, competition and slot definitions, set by migration.
+ */
+export type SportLeagueStructureResponse = {
+    /**
+     * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON.
+     */
+    phases: Array<{
+        id: string;
+        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
+        /**
+         * Whether the league's sync reads the phase. An unsynced phase has no slots.
+         */
+        isSynced: boolean;
+        /**
+         * By their order in the phase.
+         */
+        competitions: Array<{
+            id: string;
+            /**
+             * A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it.
+             */
+            code: string;
+            /**
+             * Its place among its phase's competitions, from 1.
+             */
+            orderIndex: number;
+            /**
+             * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
+             */
+            slots: Array<{
+                id: string;
+                /**
+                 * A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.
+                 */
+                key: string;
+                slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                /**
+                 * The week's number in its phase; set only on a WEEK slot.
+                 */
+                weekNumber: number | null;
+                /**
+                 * The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.
+                 */
+                name: string | null;
+                awardsTrophy: boolean;
+                /**
+                 * Whether a squares pool can be played on its games.
+                 */
+                squaresEligible: boolean;
+                seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+                /**
+                 * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
+                 */
+                seriesGames: number;
+                pairing: 'FIXED' | 'RESEEDED';
+                /**
+                 * How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+                 */
+                matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+                /**
+                 * Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out.
+                 */
+                canEndTied: boolean;
+                /**
+                 * What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+                 */
+                periodUnit: 'QUARTER' | 'HALF' | 'PERIOD' | 'INNING' | 'HOLE' | null;
+                /**
+                 * How many periods a game has, overtime aside; null exactly when periodUnit is.
+                 */
+                periodCount: number | null;
+                /**
+                 * By provider, then in the order the sync tries them.
+                 */
+                providerMappings: Array<{
+                    id: string;
+                    providerId: string;
+                    providerName: string;
+                    /**
+                     * The provider's own code for the league the mapping reads, such as nfl.
+                     */
+                    providerLeagueCode: string;
+                    providerLeagueName: string;
+                    /**
+                     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                     */
+                    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+                    /**
+                     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+                     */
+                    providerValue: string | null;
+                }>;
             }>;
         }>;
     }>;
@@ -10354,7 +10496,7 @@ export type SportLeagueSeasonSlotDto = {
 /**
  * One slot of one Season, as its Season lists it.
  */
-export type SportLeagueSeasonPhaseSlotDto = {
+export type SportLeagueSeasonCompetitionSlotDto = {
     id: string;
     /**
      * The slot definition it plays (SportLeagueSlotDefinitionDto).
@@ -10517,15 +10659,30 @@ export type SportLeagueSeasonSlotResponse = {
 };
 
 /**
- * One phase of one Season.
+ * One competition of one Season (#2153).
  */
-export type SportLeagueSeasonPhaseDto = {
+export type SportLeagueSeasonCompetitionDto = {
     id: string;
-    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
     /**
-     * Whether the league's sync reads the phase. An unsynced phase has no slots.
+     * The competition definition it plays (SportLeagueCompetitionDefinitionDto).
      */
-    isSynced: boolean;
+    sportLeagueCompetitionId: string;
+    /**
+     * Its definition's code, such as REGULAR or CFP.
+     */
+    code: string;
+    /**
+     * Its definition's place in its phase.
+     */
+    orderIndex: number;
+    /**
+     * How far it has got this Season.
+     */
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+    /**
+     * Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+     */
+    championParticipantId: string | null;
     /**
      * In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot.
      */
@@ -10609,56 +10766,44 @@ export type SportLeagueSeasonPhaseDto = {
 };
 
 /**
- * One Season of a sport league, added by migration.
+ * One phase of one Season.
  */
-export type SportLeagueSeasonDto = {
+export type SportLeagueSeasonPhaseDto = {
     id: string;
+    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
     /**
-     * What screens call the Season, such as 2025-26 or 2026.
+     * Whether the league's sync reads the phase. An unsynced phase has no slots.
      */
-    name: string;
+    isSynced: boolean;
     /**
-     * The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration.
+     * How far the phase has got this Season.
      */
-    championshipYear: number;
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
     /**
-     * Its span's first moment, in the league's time zone.
+     * By their order in the phase.
      */
-    startsAt: string;
-    /**
-     * Its span's last moment.
-     */
-    endsAt: string;
-    /**
-     * Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId).
-     */
-    isCurrent: boolean;
-    /**
-     * Each provider's id for it, by provider name.
-     */
-    providerMappings: Array<{
+    competitions: Array<{
         id: string;
-        providerId: string;
-        providerName: string;
         /**
-         * The provider's own code for the league, such as nfl.
+         * The competition definition it plays (SportLeagueCompetitionDefinitionDto).
          */
-        providerLeagueCode: string;
+        sportLeagueCompetitionId: string;
         /**
-         * The provider's own id for the Season, as the sync asks the feed for it.
+         * Its definition's code, such as REGULAR or CFP.
          */
-        providerSeasonId: string;
-    }>;
-    /**
-     * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.
-     */
-    phases: Array<{
-        id: string;
-        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+        code: string;
         /**
-         * Whether the league's sync reads the phase. An unsynced phase has no slots.
+         * Its definition's place in its phase.
          */
-        isSynced: boolean;
+        orderIndex: number;
+        /**
+         * How far it has got this Season.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+        /**
+         * Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+         */
+        championParticipantId: string | null;
         /**
          * In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot.
          */
@@ -10740,67 +10885,88 @@ export type SportLeagueSeasonDto = {
          */
         slotsNeedingDates: number;
     }>;
-    /**
-     * How many of its slots need dates (needsDates), across its phases.
-     */
-    slotsNeedingDates: number;
 };
 
 /**
- * A sport league's Seasons.
+ * One Season of a sport league, added by migration.
  */
-export type SportLeagueSeasonListResponse = {
+export type SportLeagueSeasonDto = {
+    id: string;
     /**
-     * Every Season of the sport league, latest first, never paged.
+     * What screens call the Season, such as 2025-26 or 2026.
      */
-    seasons: Array<{
+    name: string;
+    /**
+     * The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration.
+     */
+    championshipYear: number;
+    /**
+     * Its span's first moment, in the league's time zone.
+     */
+    startsAt: string;
+    /**
+     * Its span's last moment.
+     */
+    endsAt: string;
+    /**
+     * Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId).
+     */
+    isCurrent: boolean;
+    /**
+     * Each provider's id for it, by provider name.
+     */
+    providerMappings: Array<{
         id: string;
+        providerId: string;
+        providerName: string;
         /**
-         * What screens call the Season, such as 2025-26 or 2026.
+         * The provider's own code for the league, such as nfl.
          */
-        name: string;
+        providerLeagueCode: string;
         /**
-         * The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration.
+         * The provider's own id for the Season, as the sync asks the feed for it.
          */
-        championshipYear: number;
+        providerSeasonId: string;
+    }>;
+    /**
+     * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON.
+     */
+    phases: Array<{
+        id: string;
+        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
         /**
-         * Its span's first moment, in the league's time zone.
+         * Whether the league's sync reads the phase. An unsynced phase has no slots.
          */
-        startsAt: string;
+        isSynced: boolean;
         /**
-         * Its span's last moment.
+         * How far the phase has got this Season.
          */
-        endsAt: string;
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
         /**
-         * Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId).
+         * By their order in the phase.
          */
-        isCurrent: boolean;
-        /**
-         * Each provider's id for it, by provider name.
-         */
-        providerMappings: Array<{
+        competitions: Array<{
             id: string;
-            providerId: string;
-            providerName: string;
             /**
-             * The provider's own code for the league, such as nfl.
+             * The competition definition it plays (SportLeagueCompetitionDefinitionDto).
              */
-            providerLeagueCode: string;
+            sportLeagueCompetitionId: string;
             /**
-             * The provider's own id for the Season, as the sync asks the feed for it.
+             * Its definition's code, such as REGULAR or CFP.
              */
-            providerSeasonId: string;
-        }>;
-        /**
-         * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.
-         */
-        phases: Array<{
-            id: string;
-            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            code: string;
             /**
-             * Whether the league's sync reads the phase. An unsynced phase has no slots.
+             * Its definition's place in its phase.
              */
-            isSynced: boolean;
+            orderIndex: number;
+            /**
+             * How far it has got this Season.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+            /**
+             * Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+             */
+            championParticipantId: string | null;
             /**
              * In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot.
              */
@@ -10882,8 +11048,181 @@ export type SportLeagueSeasonListResponse = {
              */
             slotsNeedingDates: number;
         }>;
+    }>;
+    /**
+     * How many of its slots need dates (needsDates), across its competitions.
+     */
+    slotsNeedingDates: number;
+};
+
+/**
+ * A sport league's Seasons.
+ */
+export type SportLeagueSeasonListResponse = {
+    /**
+     * Every Season of the sport league, latest first, never paged.
+     */
+    seasons: Array<{
+        id: string;
         /**
-         * How many of its slots need dates (needsDates), across its phases.
+         * What screens call the Season, such as 2025-26 or 2026.
+         */
+        name: string;
+        /**
+         * The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration.
+         */
+        championshipYear: number;
+        /**
+         * Its span's first moment, in the league's time zone.
+         */
+        startsAt: string;
+        /**
+         * Its span's last moment.
+         */
+        endsAt: string;
+        /**
+         * Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId).
+         */
+        isCurrent: boolean;
+        /**
+         * Each provider's id for it, by provider name.
+         */
+        providerMappings: Array<{
+            id: string;
+            providerId: string;
+            providerName: string;
+            /**
+             * The provider's own code for the league, such as nfl.
+             */
+            providerLeagueCode: string;
+            /**
+             * The provider's own id for the Season, as the sync asks the feed for it.
+             */
+            providerSeasonId: string;
+        }>;
+        /**
+         * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON.
+         */
+        phases: Array<{
+            id: string;
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
+            /**
+             * Whether the league's sync reads the phase. An unsynced phase has no slots.
+             */
+            isSynced: boolean;
+            /**
+             * How far the phase has got this Season.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+            /**
+             * By their order in the phase.
+             */
+            competitions: Array<{
+                id: string;
+                /**
+                 * The competition definition it plays (SportLeagueCompetitionDefinitionDto).
+                 */
+                sportLeagueCompetitionId: string;
+                /**
+                 * Its definition's code, such as REGULAR or CFP.
+                 */
+                code: string;
+                /**
+                 * Its definition's place in its phase.
+                 */
+                orderIndex: number;
+                /**
+                 * How far it has got this Season.
+                 */
+                status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+                /**
+                 * Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot.
+                 */
+                championParticipantId: string | null;
+                /**
+                 * In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot.
+                 */
+                slots: Array<{
+                    id: string;
+                    /**
+                     * The slot definition it plays (SportLeagueSlotDefinitionDto).
+                     */
+                    slotDefinitionId: string;
+                    /**
+                     * Its definition's key.
+                     */
+                    key: string;
+                    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                    weekNumber: number | null;
+                    /**
+                     * Its definition's proper name; null when screens show the word for its kind.
+                     */
+                    name: string | null;
+                    /**
+                     * The earliest start of its Games; null until the sync has matched one.
+                     */
+                    startsAt: string | null;
+                    /**
+                     * The latest end of its Games; null until the sync has matched one.
+                     */
+                    endsAt: string | null;
+                    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+                    /**
+                     * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+                     */
+                    seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+                    seriesGames: number;
+                    pairing: 'FIXED' | 'RESEEDED';
+                    /**
+                     * A test slot: QA only, never read or written by the sync.
+                     */
+                    isTestData: boolean;
+                    /**
+                     * A test slot's label, unique per Season and definition; null on a synced slot.
+                     */
+                    label: string | null;
+                    /**
+                     * Its date window, set as data (#2012); null when it has none.
+                     */
+                    window: {
+                        /**
+                         * ISO 8601 datetime string.
+                         */
+                        startsAt: string;
+                        /**
+                         * Exclusive.
+                         */
+                        endsAt: string;
+                        /**
+                         * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                         */
+                        status: 'TENTATIVE' | 'CONFIRMED';
+                    } | null;
+                    /**
+                     * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                     */
+                    sportEventId: string | null;
+                    /**
+                     * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+                     */
+                    takesTestEvent: boolean;
+                    /**
+                     * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+                     */
+                    placedByWindow: boolean;
+                    /**
+                     * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+                     */
+                    needsDates: boolean;
+                }>;
+                /**
+                 * How many of its slots need dates (needsDates).
+                 */
+                slotsNeedingDates: number;
+            }>;
+        }>;
+        /**
+         * How many of its slots need dates (needsDates), across its competitions.
          */
         slotsNeedingDates: number;
     }>;
@@ -24097,7 +24436,7 @@ export type EventPageOfferDto = {
     /**
      * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
      */
-    sportLeaguePhaseSlotId: string;
+    sportLeagueCompetitionSlotId: string;
     /**
      * The contest setup the offer starts as: Create contest's ?template=.
      */
@@ -24119,7 +24458,7 @@ export type EventPageOfferDto = {
          */
         slots: Array<{
             /**
-             * The slot definition's id (SportLeaguePhaseSlot).
+             * The slot definition's id (SportLeagueCompetitionSlot).
              */
             id: string;
             /**
@@ -24139,13 +24478,21 @@ export type EventPageOfferDto = {
              */
             weekNumber: number | null;
             /**
-             * The phase the slot is in.
+             * The competition the slot is in (#2153); a template's slots all sit in one.
              */
-            sportLeaguePhaseId: string;
+            sportLeagueCompetitionId: string;
             /**
-             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             * That competition's code, such as REGULAR or CFP; nothing parses it.
              */
-            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            competitionCode: string;
+            /**
+             * That competition's place in its phase.
+             */
+            competitionOrderIndex: number;
+            /**
+             * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
             /**
              * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
              */
@@ -24736,7 +25083,7 @@ export type EventPageDto = {
         /**
          * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
          */
-        sportLeaguePhaseSlotId: string;
+        sportLeagueCompetitionSlotId: string;
         /**
          * The contest setup the offer starts as: Create contest's ?template=.
          */
@@ -24758,7 +25105,7 @@ export type EventPageDto = {
              */
             slots: Array<{
                 /**
-                 * The slot definition's id (SportLeaguePhaseSlot).
+                 * The slot definition's id (SportLeagueCompetitionSlot).
                  */
                 id: string;
                 /**
@@ -24778,13 +25125,21 @@ export type EventPageDto = {
                  */
                 weekNumber: number | null;
                 /**
-                 * The phase the slot is in.
+                 * The competition the slot is in (#2153); a template's slots all sit in one.
                  */
-                sportLeaguePhaseId: string;
+                sportLeagueCompetitionId: string;
                 /**
-                 * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                 * That competition's code, such as REGULAR or CFP; nothing parses it.
                  */
-                phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                competitionCode: string;
+                /**
+                 * That competition's place in its phase.
+                 */
+                competitionOrderIndex: number;
+                /**
+                 * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+                 */
+                phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
                 /**
                  * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                  */
@@ -25380,7 +25735,7 @@ export type EventPageResponse = {
             /**
              * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
              */
-            sportLeaguePhaseSlotId: string;
+            sportLeagueCompetitionSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -25402,7 +25757,7 @@ export type EventPageResponse = {
                  */
                 slots: Array<{
                     /**
-                     * The slot definition's id (SportLeaguePhaseSlot).
+                     * The slot definition's id (SportLeagueCompetitionSlot).
                      */
                     id: string;
                     /**
@@ -25422,13 +25777,21 @@ export type EventPageResponse = {
                      */
                     weekNumber: number | null;
                     /**
-                     * The phase the slot is in.
+                     * The competition the slot is in (#2153); a template's slots all sit in one.
                      */
-                    sportLeaguePhaseId: string;
+                    sportLeagueCompetitionId: string;
                     /**
-                     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     * That competition's code, such as REGULAR or CFP; nothing parses it.
                      */
-                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                    competitionCode: string;
+                    /**
+                     * That competition's place in its phase.
+                     */
+                    competitionOrderIndex: number;
+                    /**
+                     * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+                     */
+                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
                     /**
                      * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                      */
@@ -26039,7 +26402,7 @@ export type EventPageListResponse = {
             /**
              * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
              */
-            sportLeaguePhaseSlotId: string;
+            sportLeagueCompetitionSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -26061,7 +26424,7 @@ export type EventPageListResponse = {
                  */
                 slots: Array<{
                     /**
-                     * The slot definition's id (SportLeaguePhaseSlot).
+                     * The slot definition's id (SportLeagueCompetitionSlot).
                      */
                     id: string;
                     /**
@@ -26081,13 +26444,21 @@ export type EventPageListResponse = {
                      */
                     weekNumber: number | null;
                     /**
-                     * The phase the slot is in.
+                     * The competition the slot is in (#2153); a template's slots all sit in one.
                      */
-                    sportLeaguePhaseId: string;
+                    sportLeagueCompetitionId: string;
                     /**
-                     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     * That competition's code, such as REGULAR or CFP; nothing parses it.
                      */
-                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                    competitionCode: string;
+                    /**
+                     * That competition's place in its phase.
+                     */
+                    competitionOrderIndex: number;
+                    /**
+                     * Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+                     */
+                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON_CONFERENCE' | 'POSTSEASON';
                     /**
                      * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
                      */
@@ -30018,9 +30389,9 @@ export type ActivityJobResponse = {
 export type ProviderSyncFindingDto = {
     id: string;
     /**
-     * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+     * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -30171,9 +30542,9 @@ export type ProviderSyncFindingListResponse = {
     findings: Array<{
         id: string;
         /**
-         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -30259,9 +30630,9 @@ export type ProviderSyncFindingResponse = {
     finding: {
         id: string;
         /**
-         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -37019,7 +37390,7 @@ export type GetSportLeagueStructureError = GetSportLeagueStructureErrors[keyof G
 
 export type GetSportLeagueStructureResponses = {
     /**
-     * A sport league's phase and slot definitions, set by migration.
+     * A sport league's phase, competition and slot definitions, set by migration.
      */
     200: SportLeagueStructureResponse;
 };

@@ -120,7 +120,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       summary: 'Add a test slot to the current Season',
       description: 'A labelled test slot of one of the league\'s slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). '
         + 'It copies the definition\'s series format and pairing, and its dates are the test event\'s. '
-        + '404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.',
+        + '404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_COMPETITION_NOT_IN_SEASON when the current Season lacks the competition of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.',
       operationId: 'createTestSlot',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('CreateTestSlotRequest'),
@@ -216,9 +216,9 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     onRequest: requireRootAdmin,
     schema: {
       tags: TAGS,
-      summary: 'Get a sport league\'s phase and slot definitions with their provider mappings',
+      summary: 'Get a sport league\'s phases, competitions and slot definitions with their provider mappings',
       description: 'The League page\'s Structure tab (#2002): the sport league\'s timeless phases, in the order a Season plays them, '
-        + 'each with its slot definitions in play order and each slot\'s provider mappings. Set by migration, so there is no write. '
+        + 'each with its competitions in order (#2153) and each competition\'s slot definitions in play order with their provider mappings. Set by migration, so there is no write. '
         + 'Read from a fixed number of queries, however many slots. Root admin only.',
       operationId: 'getSportLeagueStructure',
       params: SPORT_LEAGUE_PARAMS,
@@ -230,9 +230,9 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
   fastify.get('/:sportLeagueId/seasons', {
     schema: {
       tags: TAGS,
-      summary: 'List a sport league\'s Seasons with their provider ids, phases and slots',
+      summary: 'List a sport league\'s Seasons with their provider ids, phases, competitions and slots',
       description: 'Every Season of the sport league (#2003), latest first, each with whether it is current, each provider\'s id for it, '
-        + 'and its phases and slots in play order, test slots included. Seasons are added by migration, so there is no write. '
+        + 'and its phases with their status, each phase\'s competitions with their status and champion (#2153), and each competition\'s slots in play order, test slots included. Seasons are added by migration, so there is no write. '
         + 'What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. '
         + 'Any signed-in user may read it.',
       operationId: 'listSportLeagueSeasons',

@@ -32,7 +32,7 @@ export const EventPageOfferDtoSchema = z.object({
   id: z.uuid(),
   sportLeagueId: z.uuid().describe('The sport league whose slot the offer runs on.'),
   sportLeagueName: z.string().describe('The sport league as screens away from its sport\'s own pages name it, such as "NFL".'),
-  sportLeaguePhaseSlotId: z.uuid().describe('The slot definition the offer runs on (#2010), such as the NFL\'s conference championships: each Season has a slot of it.'),
+  sportLeagueCompetitionSlotId: z.uuid().describe('The slot definition the offer runs on (#2010), such as the NFL\'s conference championships: each Season has a slot of it.'),
   template: ContestConfigTemplateDtoSchema.describe('The contest setup the offer starts as: Create contest\'s ?template=.'),
   startsAtRound: z.number().int().min(1).nullable().describe('For a bracket, the round it starts at: the offer\'s own, else its template\'s (1 is the whole knockout). Null for any other selection type.'),
   sortOrder: z.number().int().describe('Where the offer sits on its page, first first.'),

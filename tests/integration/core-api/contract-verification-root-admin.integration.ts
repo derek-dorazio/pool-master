@@ -1876,7 +1876,7 @@ describe('Contract verification (root admin)', () => {
 
       const slotId = await testSlotId(prisma, leagueId, new Date('2086-05-01T12:00:00.000Z'));
       const syncedSlotId = await testSlotId(prisma, leagueId, new Date('2086-06-01T12:00:00.000Z'));
-      await prisma.sportLeagueSeasonPhaseSlot.update({ where: { id: syncedSlotId }, data: { isTestData: false, label: null } });
+      await prisma.sportLeagueSeasonCompetitionSlot.update({ where: { id: syncedSlotId }, data: { isTestData: false, label: null } });
       const deleteSlot = (id: string) => getApp().inject({
         method: 'DELETE', url: `/api/v1/sport-leagues/${leagueId}/test-slots/${id}`, headers: withoutJsonBodyHeaders(rootAdmin.headers),
       });

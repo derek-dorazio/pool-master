@@ -142,7 +142,7 @@ describe('Sport and SportLeague repositories', () => {
   // #2083: no API adds a sport league, so the migrations that seed them are checked against the
   // validity table instead of a create request.
   it('seeds every sport league with a scoring family and participant type that its slot definitions\' match formats admit', async () => {
-    const definitions = await getPrisma().sportLeaguePhaseSlot.findMany({
+    const definitions = await getPrisma().sportLeagueCompetitionSlot.findMany({
       select: { key: true, matchFormat: true, sportLeague: { select: { name: true, scoringFamily: true, participantType: true } } },
     });
 

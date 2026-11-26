@@ -4,6 +4,7 @@ import { LeaguePhaseOrder, type LeaguePhase } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { DataGrid, DetailEditModal, SectionCard, type Fact } from '@/features/shared/ui';
 import type { SportLeaguePhaseDefinitionDto } from '@/lib/api';
+import { competitionCodesText, phaseSlotCount } from './league-structure-rows';
 
 const columnHelper = createColumnHelper<SportLeaguePhaseDefinitionDto>();
 
@@ -22,10 +23,15 @@ const phaseColumns = [
     meta: { info: 'Whether the league\'s sync reads the phase. An unsynced phase has no slots, events or findings.', type: { kind: 'boolean' } },
     cell: ({ getValue }) => (getValue() ? 'Yes' : 'No'),
   }),
-  columnHelper.accessor((phase) => phase.slots.length, {
+  columnHelper.accessor((phase) => competitionCodesText(phase), {
+    id: 'competitions',
+    header: 'Competitions',
+    meta: { info: 'The competitions the phase holds, in their order, by code. A contest covers slots of one competition only.', type: { kind: 'text' } },
+  }),
+  columnHelper.accessor((phase) => phaseSlotCount(phase), {
     id: 'slots',
     header: 'Slots',
-    meta: { info: 'How many slot definitions the phase has.', type: { kind: 'number' } },
+    meta: { info: 'How many slot definitions the phase has, across its competitions.', type: { kind: 'number' } },
   }),
 ];
 
@@ -57,7 +63,8 @@ function PhaseDialog({ onClose, phase }: { onClose: () => void; phase: SportLeag
   const facts: Fact[] = [
     { id: 'phase', label: 'Phase', value: enumLabel('LeaguePhase', phase.phase) },
     { id: 'synced', label: 'Synced', value: phase.isSynced ? 'Yes' : 'No' },
-    { id: 'slots', label: 'Slots', value: String(phase.slots.length) },
+    { id: 'competitions', label: 'Competitions', value: competitionCodesText(phase) },
+    { id: 'slots', label: 'Slots', value: String(phaseSlotCount(phase)) },
   ];
   return (
     <DetailEditModal

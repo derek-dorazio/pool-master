@@ -50,6 +50,7 @@ export const enUS = {
     LeaguePhase: {
       PRESEASON: 'Preseason',
       REGULAR: 'Regular season',
+      POSTSEASON_CONFERENCE: 'Conference postseason',
       POSTSEASON: 'Postseason',
     },
     SlotKind: {
@@ -78,6 +79,11 @@ export const enUS = {
       IN_PROGRESS: 'In progress',
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
+    },
+    SeasonCompetitionStatus: {
+      SCHEDULED: 'Scheduled',
+      IN_PROGRESS: 'In progress',
+      COMPLETED: 'Completed',
     },
     SlotWindowStatus: {
       TENTATIVE: 'Tentative',
@@ -282,7 +288,7 @@ export const enUS = {
       PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
       SLOT_NAME_UNMATCHED: 'Tournament name not matched to a slot',
       SLOT_NAME_AMBIGUOUS: 'Tournament name matches more than one slot',
-      SLOT_SEASON_PHASE_MISSING: 'Tournament slot has no phase in the season',
+      SLOT_SEASON_COMPETITION_MISSING: 'Slot has no competition in the season',
       SLOT_OUTSIDE_SEASON: 'Games outside the Season',
       GAMES_UNPLACED: 'Games in no slot',
       SLOT_DATES_NEEDED: 'Slot dates needed',
@@ -857,6 +863,7 @@ export const enUS = {
     CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH: 'That contest type is not offered in this league.',
     CONTEST_CONFIG_TEMPLATE_NOT_FOUND: 'That contest type was not found.',
     CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH: 'These settings do not match the contest type.',
+    CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS: 'Pick slots from one competition only.',
     CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT: 'Pick slots from this sport league only.',
     CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS: 'Covering all of its slots needs one event\'s slots.',
     CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT: 'A bracket can cover knockout slots only.',
@@ -1061,7 +1068,7 @@ export const enUS = {
     SETTINGS_KEY_MISMATCH: 'These settings do not belong together.',
     SLOT_DEFINITION_NOT_FOUND: 'That slot is not one of this league\'s.',
     SLOT_NAME_PATTERN_TAKEN: 'That tournament name already places a tournament on a slot.',
-    SLOT_PHASE_NOT_IN_SEASON: 'This league\'s current Season has no place for that slot yet.',
+    SLOT_COMPETITION_NOT_IN_SEASON: 'This league\'s current Season has no place for that slot yet.',
     SPORT_EVENT_ALREADY_STARTED: 'This event has already started, so it can no longer be released.',
     SPORT_EVENT_BRACKET_LOCKED: 'This event has been released, so its bracket is locked.',
     SPORT_EVENT_FIELD_NOT_LOADED: 'This event\'s field has not loaded yet.',

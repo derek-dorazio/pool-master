@@ -432,13 +432,14 @@ class Loader {
    */
   private async testSlotFor(client: Client, sportLeagueId: string, event: SportDataEvent, slotKey: string): Promise<string | null> {
     const { phases } = await must(getSportLeagueStructure({ client, path: { sportLeagueId } }), 'Read the league\'s slot definitions');
-    const definition = phases.flatMap((phase) => phase.slots).find((slot) => slot.key === slotKey);
+    const definition = phases.flatMap((phase) => phase.competitions).flatMap((competition) => competition.slots).find((slot) => slot.key === slotKey);
     if (definition === undefined) return null;
     // A file event's key is unique in its file and short enough for a label. Another event of the
     // same key (a copy under another name) has its own slot, labelled with the next number.
     const { seasons } = await must(listSportLeagueSeasons({ client, path: { sportLeagueId } }), 'Read the league\'s Seasons');
     const labelled = (seasons.find((season) => season.isCurrent)?.phases ?? [])
-      .flatMap((phase) => phase.slots)
+      .flatMap((phase) => phase.competitions)
+      .flatMap((competition) => competition.slots)
       .filter((slot) => slot.isTestData && slot.slotDefinitionId === definition.id && (slot.label === event.key || slot.label?.startsWith(`${event.key} `) === true));
     const free = labelled.find((slot) => slot.sportEventId === null);
     if (free) return free.id;

@@ -47,7 +47,8 @@ function prismaDouble(options: { league?: unknown } = {}) {
     participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]) },
     providerLeague: { findMany: jest.fn().mockResolvedValue([]) },
     sportLeaguePhase: { findMany: jest.fn().mockResolvedValue([]) },
-    sportLeaguePhaseSlot: { findMany: jest.fn().mockResolvedValue([]) },
+    sportLeagueCompetition: { findMany: jest.fn().mockResolvedValue([]) },
+    sportLeagueCompetitionSlot: { findMany: jest.fn().mockResolvedValue([]) },
   };
 }
 
@@ -180,14 +181,18 @@ describe('PrismaSportLeaguePageReader.readStructure', () => {
     await expect(new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readStructure('missing')).resolves.toBeNull();
   });
 
-  it('puts each slot under its own phase with its provider mappings named by provider and provider league, and a phase with no slots none', async () => {
+  it('puts each slot under its own competition and each competition under its phase, with its provider mappings named by provider and provider league, and a competition with no slots none', async () => {
     const prisma = prismaDouble();
     prisma.sportLeaguePhase.findMany.mockResolvedValue([
       { id: 'regular', phase: LeaguePhase.REGULAR, isSynced: true },
       { id: 'preseason', phase: LeaguePhase.PRESEASON, isSynced: false },
     ]);
+    prisma.sportLeagueCompetition.findMany.mockResolvedValue([
+      { id: 'c-regular', sportLeaguePhaseId: 'regular', code: 'REGULAR', orderIndex: 1 },
+      { id: 'c-preseason', sportLeaguePhaseId: 'preseason', code: 'PRESEASON', orderIndex: 1 },
+    ]);
     const slot = {
-      id: 'week-1', sportLeaguePhaseId: 'regular', key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1, name: null, awardsTrophy: false, squaresEligible: true,
+      id: 'week-1', sportLeagueCompetitionId: 'c-regular', key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1, name: null, awardsTrophy: false, squaresEligible: true,
       seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
       matchFormat: MatchFormat.HEAD_TO_HEAD, canEndTied: true, periodUnit: PeriodUnit.HALF, periodCount: 2,
       providerMappings: [{
@@ -195,14 +200,14 @@ describe('PrismaSportLeaguePageReader.readStructure', () => {
         sportLeagueProviderMapping: { providerLeague: { code: 'nfl', name: 'NFL', provider: { id: 'bdl', name: 'BALLDONTLIE' } } },
       }],
     };
-    prisma.sportLeaguePhaseSlot.findMany.mockResolvedValue([slot]);
+    prisma.sportLeagueCompetitionSlot.findMany.mockResolvedValue([slot]);
 
     const phases = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readStructure('tour');
 
     expect(phases).toEqual([
       {
         id: 'regular', phase: LeaguePhase.REGULAR, isSynced: true,
-        slots: [{
+        competitions: [{ id: 'c-regular', code: 'REGULAR', orderIndex: 1, slots: [{
           id: 'week-1', key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1, name: null, awardsTrophy: false, squaresEligible: true,
           seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
           matchFormat: MatchFormat.HEAD_TO_HEAD, canEndTied: true, periodUnit: PeriodUnit.HALF, periodCount: 2,
@@ -210,9 +215,9 @@ describe('PrismaSportLeaguePageReader.readStructure', () => {
             id: 'm1', matchType: SlotProviderMatchType.PROVIDER_CODE, providerValue: 'REG:1',
             providerId: 'bdl', providerName: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL',
           }],
-        }],
+        }] }],
       },
-      { id: 'preseason', phase: LeaguePhase.PRESEASON, isSynced: false, slots: [] },
+      { id: 'preseason', phase: LeaguePhase.PRESEASON, isSynced: false, competitions: [{ id: 'c-preseason', code: 'PRESEASON', orderIndex: 1, slots: [] }] },
     ]);
   });
 });

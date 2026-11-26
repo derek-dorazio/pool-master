@@ -75,10 +75,12 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_slots', 1], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_events', 1],
   // The event covers a test slot, as every event an admin scores does (#2074): its slot, the slot's
-  // definition and phase are read once each.
-  ['SELECT sport_league_phase_slots', 1],
+  // definition, the definition's competition and that competition's phase are read once each
+  // (#2153: the competition is one more nested read).
+  ['SELECT sport_league_competition_slots', 1],
+  ['SELECT sport_league_competitions', 1],
   ['SELECT sport_league_phases', 1],
-  ['SELECT sport_league_season_phase_slots', 1],
+  ['SELECT sport_league_season_competition_slots', 1],
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
   ['SELECT sports', 1], // a sport is read through its event's Season and league since #2042 (#2089)
@@ -99,7 +101,7 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 2],
-  ['SELECT sport_league_season_phase_slots', 1], // the answer's event slots (#2004)
+  ['SELECT sport_league_season_competition_slots', 1], // the answer's event slots (#2004)
   ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
   ['SELECT sports', 2], // a sport is read through its event's Season and league since #2042 (#2089)
@@ -714,7 +716,7 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
-  ['SELECT sport_league_season_phase_slots', 1], // the answer's event slots (#2004)
+  ['SELECT sport_league_season_competition_slots', 1], // the answer's event slots (#2004)
   ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)
   ['SELECT sport_leagues', 3],
   ['SELECT sports', 3],
@@ -738,7 +740,7 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_slots', 3], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
-  ['SELECT sport_league_season_phase_slots', 2], // whether the event has slots (its dates are theirs), and the answer's (#2004)
+  ['SELECT sport_league_season_competition_slots', 2], // whether the event has slots (its dates are theirs), and the answer's (#2004)
   ['SELECT sport_league_seasons', 4], // a sport is read through its event's Season and league (#2042, #2004)
   ['SELECT sport_leagues', 4],
   ['SELECT sports', 4],

@@ -16,7 +16,7 @@ beforeEach(() => cleanupTestData());
 
 /** A slot of a Season the migrations seeded, with its league, sport and championship year. */
 async function seededSeasonSlot() {
-  return getPrisma().sportLeagueSeasonPhaseSlot.findFirstOrThrow({
+  return getPrisma().sportLeagueSeasonCompetitionSlot.findFirstOrThrow({
     where: { isTestData: false },
     select: {
       id: true,
@@ -45,12 +45,12 @@ describe('SportEventSlot keys', () => {
     const sport = slot.season.sportLeague.sport.sport;
     const first = await eventIn(sportLeagueId, championshipYear, sport, 'First on the slot');
     const second = await eventIn(sportLeagueId, championshipYear, sport, 'Second on the slot');
-    const row = (sportEventId: string) => ({ sportEventId, sportLeagueSeasonId: slot.sportLeagueSeasonId, sportLeagueSeasonPhaseSlotId: slot.id });
+    const row = (sportEventId: string) => ({ sportEventId, sportLeagueSeasonId: slot.sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId: slot.id });
 
     await getPrisma().sportEventSlot.create({ data: row(first.id) });
 
     await expect(getPrisma().sportEventSlot.create({ data: row(second.id) })).rejects.toMatchObject({ code: 'P2002' });
-    await expect(getPrisma().sportEventSlot.findMany({ where: { sportLeagueSeasonPhaseSlotId: slot.id }, select: { sportEventId: true } }))
+    await expect(getPrisma().sportEventSlot.findMany({ where: { sportLeagueSeasonCompetitionSlotId: slot.id }, select: { sportEventId: true } }))
       .resolves.toEqual([{ sportEventId: first.id }]);
   });
 
@@ -59,7 +59,7 @@ describe('SportEventSlot keys', () => {
     const otherSeasonEvent = await eventIn(undefined, slot.season.championshipYear, Sport.GOLF, 'Another Season');
 
     await expect(getPrisma().sportEventSlot.create({
-      data: { sportEventId: otherSeasonEvent.id, sportLeagueSeasonId: slot.sportLeagueSeasonId, sportLeagueSeasonPhaseSlotId: slot.id },
+      data: { sportEventId: otherSeasonEvent.id, sportLeagueSeasonId: slot.sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId: slot.id },
     })).rejects.toMatchObject({ code: 'P2003' });
   });
 });

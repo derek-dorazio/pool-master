@@ -5,9 +5,10 @@
 import type { PrismaClient } from '@prisma/client';
 import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
 import { compareCoveredSlots, ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import { SLOT_PLACE_SELECT, slotPlaceOf } from './slot-place-select';
 
 /** A slot definition with what puts it in play order. */
-const TROPHY_DEFINITION_SELECT = { id: true, key: true, name: true, slotKind: true, weekNumber: true, phase: { select: { phase: true } } } as const;
+const TROPHY_DEFINITION_SELECT = { id: true, key: true, name: true, slotKind: true, weekNumber: true, ...SLOT_PLACE_SELECT } as const;
 
 const FINISH_SELECT = {
   leagueId: true,
@@ -143,7 +144,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       id: row.id,
       selectionType: row.selectionType,
       cupWeight: row.cupWeight,
-      ...coveredDefinitions(event.slots.map(({ seasonSlot }) => ({ ...seasonSlot.definition, phase: seasonSlot.definition.phase.phase }))),
+      ...coveredDefinitions(event.slots.map(({ seasonSlot }) => ({ ...seasonSlot.definition, ...slotPlaceOf(seasonSlot.definition) }))),
       eventName: event.name,
       sportLeagueName: event.sportLeagueSeason.sportLeague.name,
       championshipYear: event.sportLeagueSeason.championshipYear,

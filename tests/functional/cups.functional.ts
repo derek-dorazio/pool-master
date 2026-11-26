@@ -102,8 +102,8 @@ async function cleanup(): Promise<void> {
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   if (created.slotDefinitionIds.size) {
-    await db.sportLeagueSeasonPhaseSlot.deleteMany({ where: { sportLeaguePhaseSlotId: { in: [...created.slotDefinitionIds] } } });
-    await db.sportLeaguePhaseSlot.deleteMany({ where: { id: { in: [...created.slotDefinitionIds] } } });
+    await db.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { sportLeagueCompetitionSlotId: { in: [...created.slotDefinitionIds] } } });
+    await db.sportLeagueCompetitionSlot.deleteMany({ where: { id: { in: [...created.slotDefinitionIds] } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });

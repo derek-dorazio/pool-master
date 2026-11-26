@@ -52,7 +52,7 @@ export interface EventPageOffer {
   /** The sport league as screens away from its sport's own pages name it. */
   sportLeagueName: string;
   /** The slot definition it runs on (#2010): shown with the next Season slot of it not yet over. */
-  sportLeaguePhaseSlotId: string;
+  sportLeagueCompetitionSlotId: string;
   template: ContestConfigTemplate;
   /** The round a bracket starts at, when not the template's own; null otherwise. */
   bracketStartRound: number | null;

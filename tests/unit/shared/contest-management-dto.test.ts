@@ -148,7 +148,7 @@ describe('contest-management dto schemas', () => {
       coverageMode: 'ONE_SLOT',
       slots: [{
         id: '33333333-3333-4333-8333-333333333333', key: 'MASTERS', name: 'Masters', slotKind: 'TOURNAMENT', weekNumber: null,
-        sportLeaguePhaseId: '44444444-4444-4444-8444-444444444444', phase: 'REGULAR', matchFormat: 'FIELD',
+        sportLeagueCompetitionId: '44444444-4444-4444-8444-444444444444', competitionCode: 'REGULAR', competitionOrderIndex: 1, phase: 'REGULAR', matchFormat: 'FIELD',
       }],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',

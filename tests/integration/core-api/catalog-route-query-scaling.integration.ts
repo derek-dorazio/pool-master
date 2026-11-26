@@ -257,9 +257,9 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
     expect(okBody(result, SportEventListResponseSchema).events.map((each) => each.slots.length)).toEqual([1]);
     // The listed slots are read once (#2004); the event read carries the slot definitions it
     // covers (#2010) through the same tables, a second read #2089 folds into the first.
-    expect(statementCounts(statements).filter(([statement]) => statement.includes('sport_league_season_phase_slots') || statement.includes('sport_league_phase_slots'))).toEqual([
-      ['SELECT sport_league_phase_slots', 2],
-      ['SELECT sport_league_season_phase_slots', 2],
+    expect(statementCounts(statements).filter(([statement]) => statement.includes('sport_league_season_competition_slots') || statement.includes('sport_league_competition_slots'))).toEqual([
+      ['SELECT sport_league_competition_slots', 2],
+      ['SELECT sport_league_season_competition_slots', 2],
     ]);
   });
 

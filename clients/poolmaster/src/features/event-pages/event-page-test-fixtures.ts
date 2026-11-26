@@ -6,7 +6,7 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
     id: `offer-${templateKey}`,
     sportLeagueId: 'nfl',
     sportLeagueName: 'NFL',
-    sportLeaguePhaseSlotId: 'slot-conference',
+    sportLeagueCompetitionSlotId: 'slot-conference',
     template: {
       id: `template-${templateKey}`,
       sportLeagueId: 'nfl',

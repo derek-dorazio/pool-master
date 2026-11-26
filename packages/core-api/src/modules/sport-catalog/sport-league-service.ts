@@ -116,7 +116,7 @@ export class SportLeagueService {
    * A labelled test slot of one of the league's slot definitions, in its current Season (#2004,
    * plan §2): QA's test events are made on these, and the sync never reads or writes them. 404
    * SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON,
-   * TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON; 409 TEST_SLOT_LABEL_TAKEN.
+   * TEST_SLOT_ENDS_BEFORE_START, SLOT_COMPETITION_NOT_IN_SEASON; 409 TEST_SLOT_LABEL_TAKEN.
    */
   async createTestSlot(
     sportLeagueId: string,
@@ -137,8 +137,8 @@ export class SportLeagueService {
     if (created.outcome === 'DEFINITION_NOT_FOUND') {
       throw new SportCatalogError(`Slot definition ${input.slotDefinitionId} is not one of ${sportLeague.name}'s.`, 'SLOT_DEFINITION_NOT_FOUND', 404);
     }
-    if (created.outcome === 'PHASE_NOT_IN_SEASON') {
-      throw new SportCatalogError(`${sportLeague.name}'s current Season does not have the phase slot definition ${input.slotDefinitionId} is in.`, 'SLOT_PHASE_NOT_IN_SEASON', 422);
+    if (created.outcome === 'COMPETITION_NOT_IN_SEASON') {
+      throw new SportCatalogError(`${sportLeague.name}'s current Season does not have the competition slot definition ${input.slotDefinitionId} is in.`, 'SLOT_COMPETITION_NOT_IN_SEASON', 422);
     }
     const { slot } = created;
     this.deps.logger?.info({ sportLeagueId, sportLeagueSeasonId: sportLeague.currentSeasonId, seasonSlotId: slot.id, label: input.label }, 'Created test slot');

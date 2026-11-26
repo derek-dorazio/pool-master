@@ -190,7 +190,7 @@ plays: one per code the provider names their place by (`providerSlots`, each wit
 earliest and latest start). A code is the provider's own value, never ours: the season type and
 the vendor's week or round (`REG:5`, `POST:2`, built once in `provider-slot-codes.ts`), or a
 tournament id. The sync matches each code to a Season slot through the slot definition's
-`PROVIDER_CODE` row in `sport_league_phase_slot_provider_mappings` at the league's selected
+`PROVIDER_CODE` row in `sport_league_competition_slot_provider_mappings` at the league's selected
 provider mapping, so a league's own offsets live in those rows, not in code. Test slots are never
 read. Each matched slot takes its games' dates (an update only when they moved): it starts at its
 first game's start and ends at its last game's start, since the feed sends start times only, never
@@ -206,15 +206,15 @@ normalized name (lower case, any year and anything from "presented by" on
 removed), once, in `placeSlotsByName`, the one place name matching happens. One definition's
 pattern matching creates that definition's Season slot when the events sync loads the season
 schedule (or links the existing one) and records the tournament's code on it
-(`sport_league_season_phase_slot_provider_mappings`); from then on the tournament matches by that code, whatever it is
+(`sport_league_season_competition_slot_provider_mappings`); from then on the tournament matches by that code, whatever it is
 called. A name no pattern matches places nothing and raises one `SLOT_NAME_UNMATCHED` INFO finding
 per league and normalized name, whose **Link to existing** action adds the name as another
 pattern of a chosen definition and resolves it (the next sync links the tournament). There is no
 "create new": definitions are set by migration, so a tournament with none waits for its migration.
 A name that matches more than one definition, or a slot another tournament already has, raises one
-`SLOT_NAME_AMBIGUOUS` ERROR finding and links nothing. A name that matches a definition whose phase
-the Season has no phase for gets no slot and raises one `SLOT_SEASON_PHASE_MISSING` ERROR finding,
-so a Season added without its open phase is never skipped in silence.
+`SLOT_NAME_AMBIGUOUS` ERROR finding and links nothing. A name that matches a definition whose competition
+the Season does not have gets no slot and raises one `SLOT_SEASON_COMPETITION_MISSING` ERROR finding,
+so a Season added without its open competition is never skipped in silence.
 
 **Matching by date window (#2012).** A feed that names no place for its games (BALLDONTLIE's
 college football has no round, bowl name or postseason flag) sends each game as a play with a null
@@ -435,7 +435,7 @@ column. Each finding names its sport league; its event, Provider row and the fee
   (INFO, a provider code no slot maps, *Matching games to Season slots* above; it has no action,
   since a mapping is added by migration), `SLOT_NAME_UNMATCHED` (INFO, a tournament name no
   pattern matches; its action is Link to existing) and `SLOT_NAME_AMBIGUOUS` (ERROR, a name that
-  matches more than one slot) and `SLOT_SEASON_PHASE_MISSING` (ERROR, a matched slot whose phase the
+  matches more than one slot) and `SLOT_SEASON_COMPETITION_MISSING` (ERROR, a matched slot whose competition the
   Season lacks), all three *Tournaments matched by name* above, and `SLOT_OUTSIDE_SEASON` (WARNING),
   `GAMES_UNPLACED` (INFO) and `SLOT_DATES_NEEDED` (WARNING, resolved once the Season's windows are
   confirmed), all three *Matching by date window* above. Three are checked on an event by each sync that

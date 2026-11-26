@@ -51,7 +51,7 @@ function offer(id: string, overrides: Partial<EventPageOffer>): EventPageOffer {
     eventPageId: PAGE.id,
     sportLeagueId: 'nfl',
     sportLeagueName: 'NFL',
-    sportLeaguePhaseSlotId: 'nfl-playoffs',
+    sportLeagueCompetitionSlotId: 'nfl-playoffs',
     template: template(`${id}-template`, { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }),
     bracketStartRound: null,
     sortOrder: 1,
@@ -63,7 +63,7 @@ function offer(id: string, overrides: Partial<EventPageOffer>): EventPageOffer {
 const TIERED = offer('tiered', {
   sportLeagueId: 'cw',
   sportLeagueName: 'Championship Weekend',
-  sportLeaguePhaseSlotId: 'conference-championships',
+  sportLeagueCompetitionSlotId: 'conference-championships',
   template: template('cw-tiered', { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }),
   isPrimary: true,
 });
@@ -253,11 +253,11 @@ describe('EventPageService', () => {
     const { service } = build({
       pages: [superBowl, PAGE, proBowl, between],
       offers: [
-        { ...TIERED, id: 'sb-card', eventPageId: superBowl.id, sportLeaguePhaseSlotId: 'super-bowl' },
+        { ...TIERED, id: 'sb-card', eventPageId: superBowl.id, sportLeagueCompetitionSlotId: 'super-bowl' },
         TIERED,
         // The Pro Bowl's only showing offer is not its primary one, so it has no slot heading it.
         { ...SQUARES, id: 'pb-squares', eventPageId: proBowl.id },
-        { ...TIERED, id: 'between-card', eventPageId: between.id, sportLeaguePhaseSlotId: 'nothing-scheduled' },
+        { ...TIERED, id: 'between-card', eventPageId: between.id, sportLeagueCompetitionSlotId: 'nothing-scheduled' },
       ],
       slots: {
         'super-bowl': [nextSlot('sb-2027', '2027-02-07T23:30:00.000Z')],

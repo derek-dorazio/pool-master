@@ -5,7 +5,7 @@ import { templateCoversLabel } from './league-contest-template-covers';
 type Slot = ContestConfigTemplateDto['slots'][number];
 
 function slot(overrides: Partial<Slot>): Slot {
-  return { id: 'slot', key: 'FINAL', name: null, slotKind: 'FINAL', weekNumber: null, sportLeaguePhaseId: 'postseason', phase: 'POSTSEASON', matchFormat: 'HEAD_TO_HEAD', ...overrides };
+  return { id: 'slot', key: 'FINAL', name: null, slotKind: 'FINAL', weekNumber: null, sportLeagueCompetitionId: 'postseason', competitionCode: 'POSTSEASON', competitionOrderIndex: 1, phase: 'POSTSEASON', matchFormat: 'HEAD_TO_HEAD', ...overrides };
 }
 
 describe('the Covers fact of a contest template', () => {

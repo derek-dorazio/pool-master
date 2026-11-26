@@ -126,12 +126,14 @@ const SEASONS = [
     isCurrent: true,
     providerMappings: [{ id: 'm1', providerId: 'balldontlie', providerName: 'BALLDONTLIE', providerLeagueCode: 'nba', providerSeasonId: '2026' }],
     phases: [{
-      id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [{
-        id: 'slot-week-1', slotDefinitionId: 'def-week-1', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
-        startsAt: '2026-10-20T00:00:00.000Z', endsAt: '2026-10-26T00:00:00.000Z', status: 'SCHEDULED',
-        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null, window: null, sportEventId: null, takesTestEvent: false, placedByWindow: false, needsDates: false,
+      id: 'p-reg', phase: 'REGULAR', isSynced: true, status: 'IN_PROGRESS', competitions: [{
+        id: 'sc-reg', sportLeagueCompetitionId: 'c-reg', code: 'REGULAR', orderIndex: 1, status: 'IN_PROGRESS', championParticipantId: null, slotsNeedingDates: 0,
+        slots: [{
+          id: 'slot-week-1', slotDefinitionId: 'def-week-1', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
+          startsAt: '2026-10-20T00:00:00.000Z', endsAt: '2026-10-26T00:00:00.000Z', status: 'SCHEDULED',
+          seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null, window: null, sportEventId: null, takesTestEvent: false, placedByWindow: false, needsDates: false,
+        }],
       }],
-      slotsNeedingDates: 0,
     }],
   }),
   season('s2026', 2026),
@@ -233,26 +235,30 @@ function LocationProbe() {
 const STRUCTURE_MAPPING = {
   providerId: '00000000-0000-4000-8000-00000000b001', providerName: 'BALLDONTLIE', providerLeagueCode: 'nba', providerLeagueName: 'NBA',
 } as const;
-const STRUCTURE_SLOT: Omit<SportLeaguePhaseDefinitionDto['slots'][number], 'id' | 'key' | 'slotKind'> = {
+const STRUCTURE_SLOT: Omit<SportLeaguePhaseDefinitionDto['competitions'][number]['slots'][number], 'id' | 'key' | 'slotKind'> = {
   weekNumber: null, name: null, awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
   matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
 };
 const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [
-  { id: '00000000-0000-4000-8000-00000000c001', phase: 'PRESEASON', isSynced: false, slots: [] },
+  { id: '00000000-0000-4000-8000-00000000c001', phase: 'PRESEASON', isSynced: false, competitions: [{ id: '00000000-0000-4000-8000-00000000a101', code: 'PRESEASON', orderIndex: 1, slots: [] }] },
   {
-    id: '00000000-0000-4000-8000-00000000c002', phase: 'REGULAR', isSynced: true, slots: [{
-      ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d001', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, squaresEligible: true,
-      providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e001', matchType: 'CALENDAR_WEEK', providerValue: null }],
+    id: '00000000-0000-4000-8000-00000000c002', phase: 'REGULAR', isSynced: true, competitions: [{
+      id: '00000000-0000-4000-8000-00000000a102', code: 'REGULAR', orderIndex: 1, slots: [{
+        ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d001', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, squaresEligible: true,
+        providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e001', matchType: 'CALENDAR_WEEK', providerValue: null }],
+      }],
     }],
   },
   {
-    id: '00000000-0000-4000-8000-00000000c003', phase: 'POSTSEASON', isSynced: true, slots: [
-      { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d002', key: 'SEMIFINAL', slotKind: 'SEMIFINAL', seriesFormat: 'BEST_OF', seriesGames: 7 },
-      {
-        ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d003', key: 'FINAL', slotKind: 'FINAL', name: 'NBA Finals', awardsTrophy: true, seriesFormat: 'BEST_OF', seriesGames: 7,
-        providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e002', matchType: 'PROVIDER_CODE', providerValue: 'POST:5' }],
-      },
-    ],
+    id: '00000000-0000-4000-8000-00000000c003', phase: 'POSTSEASON', isSynced: true, competitions: [{
+      id: '00000000-0000-4000-8000-00000000a103', code: 'PLAYOFFS', orderIndex: 1, slots: [
+        { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d002', key: 'SEMIFINAL', slotKind: 'SEMIFINAL', seriesFormat: 'BEST_OF', seriesGames: 7 },
+        {
+          ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d003', key: 'FINAL', slotKind: 'FINAL', name: 'NBA Finals', awardsTrophy: true, seriesFormat: 'BEST_OF', seriesGames: 7,
+          providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e002', matchType: 'PROVIDER_CODE', providerValue: 'POST:5' }],
+        },
+      ],
+    }],
   },
 ];
 const POSITION_CODE = { provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL' } as const;
@@ -435,7 +441,7 @@ describe('League page', () => {
     expect(updateContestConfigTemplateMock).not.toHaveBeenCalled();
   });
 
-  it('lists the league\'s phases and its slots in the API\'s order, each named by its proper name or the word for its kind, opens a slot to read with no Edit, and closes it on Escape', async () => {
+  it('lists the league\'s phases with their competitions and its slots in the API\'s order, each named by its proper name or the word for its kind and showing its competition, opens a slot to read with no Edit, and closes it on Escape', async () => {
     getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
     listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
@@ -443,10 +449,12 @@ describe('League page', () => {
     const phasesTable = await screen.findByTestId('root-admin-league-structure-phases-table');
     expect(getSportLeagueStructureMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'nba' } }));
     expect(within(phasesTable).getByTestId('root-admin-league-structure-phase-PRESEASON')).toHaveTextContent('No');
+    expect(within(phasesTable).getByTestId('root-admin-league-structure-phase-POSTSEASON')).toHaveTextContent('PLAYOFFS');
     const slots = within(screen.getByTestId('root-admin-league-structure-slots-table')).getAllByTestId(/^root-admin-league-structure-slot-/);
     expect(slots.map((row) => row.getAttribute('data-testid'))).toEqual(['WEEK_1', 'SEMIFINAL', 'FINAL'].map((key) => `root-admin-league-structure-slot-${key}`));
     ['Week 1', 'Semifinal', 'NBA Finals'].forEach((label, index) => expect(slots[index]).toHaveTextContent(label));
     expect(within(screen.getByTestId('root-admin-league-structure-slot-FINAL')).getByText('Best of · 7 games')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-league-structure-slot-FINAL')).getByText('PLAYOFFS')).toBeInTheDocument();
     expect(within(screen.getByTestId('root-admin-league-structure-slot-WEEK_1')).getByText('BALLDONTLIE nba · Calendar week')).toBeInTheDocument();
 
     await userEvent.click(within(screen.getByTestId('root-admin-league-structure-slot-FINAL')).getByRole('button', { name: 'Open details' }));
@@ -477,10 +485,12 @@ describe('League page', () => {
 
   it('shows each slot\'s match format, whether its games can end tied and its periods, in the grid and its dialog', async () => {
     const phases: SportLeaguePhaseDefinitionDto[] = [{
-      id: '00000000-0000-4000-8000-00000000c010', phase: 'REGULAR', isSynced: true, slots: [
-        { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d010', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, canEndTied: true, periodUnit: 'HALF', periodCount: 2 },
-        { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d011', key: 'MONACO', slotKind: 'TOURNAMENT', name: 'Monaco Grand Prix', matchFormat: 'FIELD', periodUnit: null, periodCount: null },
-      ],
+      id: '00000000-0000-4000-8000-00000000c010', phase: 'REGULAR', isSynced: true, competitions: [{
+        id: '00000000-0000-4000-8000-00000000a110', code: 'REGULAR', orderIndex: 1, slots: [
+          { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d010', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, canEndTied: true, periodUnit: 'HALF', periodCount: 2 },
+          { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d011', key: 'MONACO', slotKind: 'TOURNAMENT', name: 'Monaco Grand Prix', matchFormat: 'FIELD', periodUnit: null, periodCount: null },
+        ],
+      }],
     }];
     getSportLeagueStructureMock.mockResolvedValue({ data: { phases } });
     listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });

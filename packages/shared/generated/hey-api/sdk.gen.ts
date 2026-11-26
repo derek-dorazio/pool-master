@@ -1393,7 +1393,7 @@ export const listContestConfigTemplates = <ThrowOnError extends boolean = false>
 /**
  * Update a contest configuration template
  *
- * Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT) and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.
+ * Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration. A configuration must be the template's own selection type's rules (422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH otherwise). The slots it lists must be its own sport league's (422 CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT), all in one competition for ALL_LISTED and FROM_SLOT, since no contest crosses competitions (422 CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS), and fit its coverage: ALL_LISTED lists one event's slots (422 CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS), and a bracket only knockout slots (422 CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT). Setting isDefault unsets the default its sport league and selection type had.
  */
 export const updateContestConfigTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateContestConfigTemplateData, ThrowOnError>): RequestResult<UpdateContestConfigTemplateResponses, UpdateContestConfigTemplateErrors, ThrowOnError> => (options.client ?? client).put<UpdateContestConfigTemplateResponses, UpdateContestConfigTemplateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1986,7 +1986,7 @@ export const updateSportLeague = <ThrowOnError extends boolean = false>(options:
 /**
  * Add a test slot to the current Season
  *
- * A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
+ * A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_COMPETITION_NOT_IN_SEASON when the current Season lacks the competition of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
  */
 export const createTestSlot = <ThrowOnError extends boolean = false>(options: Options<CreateTestSlotData, ThrowOnError>): RequestResult<CreateTestSlotResponses, CreateTestSlotErrors, ThrowOnError> => (options.client ?? client).post<CreateTestSlotResponses, CreateTestSlotErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2032,9 +2032,9 @@ export const listSportLeaguePositions = <ThrowOnError extends boolean = false>(o
 });
 
 /**
- * Get a sport league's phase and slot definitions with their provider mappings
+ * Get a sport league's phases, competitions and slot definitions with their provider mappings
  *
- * The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its slot definitions in play order and each slot's provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.
+ * The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its competitions in order (#2153) and each competition's slot definitions in play order with their provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.
  */
 export const getSportLeagueStructure = <ThrowOnError extends boolean = false>(options: Options<GetSportLeagueStructureData, ThrowOnError>): RequestResult<GetSportLeagueStructureResponses, GetSportLeagueStructureErrors, ThrowOnError> => (options.client ?? client).get<GetSportLeagueStructureResponses, GetSportLeagueStructureErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2043,9 +2043,9 @@ export const getSportLeagueStructure = <ThrowOnError extends boolean = false>(op
 });
 
 /**
- * List a sport league's Seasons with their provider ids, phases and slots
+ * List a sport league's Seasons with their provider ids, phases, competitions and slots
  *
- * Every Season of the sport league (#2003), latest first, each with whether it is current, each provider's id for it, and its phases and slots in play order, test slots included. Seasons are added by migration, so there is no write. What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. Any signed-in user may read it.
+ * Every Season of the sport league (#2003), latest first, each with whether it is current, each provider's id for it, and its phases with their status, each phase's competitions with their status and champion (#2153), and each competition's slots in play order, test slots included. Seasons are added by migration, so there is no write. What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. Any signed-in user may read it.
  */
 export const listSportLeagueSeasons = <ThrowOnError extends boolean = false>(options: Options<ListSportLeagueSeasonsData, ThrowOnError>): RequestResult<ListSportLeagueSeasonsResponses, ListSportLeagueSeasonsErrors, ThrowOnError> => (options.client ?? client).get<ListSportLeagueSeasonsResponses, ListSportLeagueSeasonsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

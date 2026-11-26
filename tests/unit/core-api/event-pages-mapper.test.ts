@@ -17,7 +17,7 @@ const OFFER: EventPageOffer = {
   eventPageId: CURRENT.id,
   sportLeagueId: 'cw',
   sportLeagueName: 'Championship Weekend',
-  sportLeaguePhaseSlotId: 'conference-championships',
+  sportLeagueCompetitionSlotId: 'conference-championships',
   template: {
     id: 'cw-tiered',
     coverageMode: TemplateCoverageMode.ONE_SLOT,
@@ -54,7 +54,7 @@ describe('toEventPageDto (#2042)', () => {
       }],
     });
 
-    expect([dto.sportName, dto.sportUrlSegment, dto.urlSegment, dto.path, dto.redirectTo, dto.offers.map((offer) => [offer.sportLeaguePhaseSlotId, offer.nextSlot.seasonSlotId, offer.nextSlot.endDate])])
+    expect([dto.sportName, dto.sportUrlSegment, dto.urlSegment, dto.path, dto.redirectTo, dto.offers.map((offer) => [offer.sportLeagueCompetitionSlotId, offer.nextSlot.seasonSlotId, offer.nextSlot.endDate])])
       .toEqual(['Football', 'football', 'championship-weekend', '/play/football/championship-weekend', null, [['conference-championships', 'cw-slot-2027', '2026-10-02T00:00:00.000Z'], ['conference-championships', 'cw-slot-2028', null]]]);
   });
 

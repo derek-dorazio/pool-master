@@ -37,10 +37,10 @@ export class PrismaSlotNamePatternRepository implements SlotNamePatternRepositor
 
   async addPattern(input: { sportLeagueId: string; sportLeagueProviderMappingId: string; slotDefinitionId: string; pattern: string }): Promise<'ADDED' | 'TAKEN'> {
     try {
-      await this.prisma.sportLeaguePhaseSlotProviderMapping.create({
+      await this.prisma.sportLeagueCompetitionSlotProviderMapping.create({
         data: {
           sportLeagueId: input.sportLeagueId,
-          sportLeaguePhaseSlotId: input.slotDefinitionId,
+          sportLeagueCompetitionSlotId: input.slotDefinitionId,
           sportLeagueProviderMappingId: input.sportLeagueProviderMappingId,
           matchType: PrismaSlotProviderMatchType.NAME_PATTERN,
           providerValue: input.pattern,
