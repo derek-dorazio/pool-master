@@ -446,6 +446,35 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Round of 32: lost to Arizona 70–\u206074');
   });
 
+  it('shows the loading state, never "Round 2", until a team-picks board\'s round names have loaded', async () => {
+    primeMocks({ leaderboard: teamPicksBoard() });
+    primeTeamPicksGames();
+    let releaseRounds: () => void = () => undefined;
+    listEventRoundsMock.mockImplementation(() => new Promise((resolve) => {
+      releaseRounds = () => resolve(eventRoundsResponse('event-1', TOURNAMENT_ROUND_SLOTS));
+    }));
+
+    renderLeaderboard();
+
+    await waitFor(() => expect(listEventRoundsMock).toHaveBeenCalled());
+    expect(screen.getByText('Loading contest leaderboard...')).toBeInTheDocument();
+    expect(screen.queryByText(/Round 2/)).not.toBeInTheDocument();
+
+    releaseRounds();
+
+    expect(await screen.findByText('Out · Round of 32')).toBeInTheDocument();
+  });
+
+  it('names a team-picks board\'s rounds "Round N" when the event\'s rounds cannot be read, rather than loading for ever', async () => {
+    primeMocks({ leaderboard: teamPicksBoard() });
+    primeTeamPicksGames();
+    listEventRoundsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'rounds unavailable' } } });
+
+    renderLeaderboard();
+
+    expect(await screen.findByText('Out · Round 2')).toBeInTheDocument();
+  });
+
   /** The team-picks board with a second entry, Rival, holding the same picks. */
   function teamPicksBoardWithRival() {
     const board = teamPicksBoard();

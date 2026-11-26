@@ -1,7 +1,7 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { SUPPORTED_SPORTS, SelectionType, SlotKind } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1581,6 +1581,53 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     ]) {
       mock.mockReset();
     }
+  });
+
+  it('shows the squares games loading, never as "Round N", until the playoff\'s round names have loaded', async () => {
+    primeFootballMocks();
+    let releaseRounds: () => void = () => undefined;
+    const rounds = eventRoundsResponse('nfl-playoffs', [
+      roundSlot(SlotKind.ROUND_OF_16, 'Wild Card'), roundSlot(SlotKind.QUARTERFINAL, 'Divisional'),
+      roundSlot(SlotKind.SEMIFINAL, 'Conference Championship'), roundSlot(SlotKind.FINAL, 'Super Bowl'),
+    ]);
+    listEventRoundsMock.mockImplementation(() => new Promise((resolve) => {
+      releaseRounds = () => resolve(rounds);
+    }));
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-FOOTBALL'));
+    fireEvent.click(await screen.findByTestId('contest-format-SQUARES'));
+
+    expect(await screen.findByTestId('contest-squares-games-loading')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getEventBracketMock).toHaveBeenCalled();
+      expect(listEventParticipantsMock).toHaveBeenCalled();
+      expect(getSportLeagueMock).toHaveBeenCalled();
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.getByTestId('contest-squares-games-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-squares-game')).not.toBeInTheDocument();
+
+    releaseRounds();
+
+    const picker = await screen.findByTestId('contest-squares-game');
+    expect(within(picker).getAllByRole('option')[0]).toHaveTextContent('Super Bowl · To be decided vs To be decided');
+  });
+
+  it('names the squares games\' rounds "Round N" when the event\'s rounds cannot be read, rather than loading for ever', async () => {
+    primeFootballMocks();
+    listEventRoundsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'rounds unavailable' } } });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-FOOTBALL'));
+    fireEvent.click(await screen.findByTestId('contest-format-SQUARES'));
+
+    const picker = await screen.findByTestId('contest-squares-game');
+    expect(within(picker).getAllByRole('option')[0]).toHaveTextContent('Round 4 · To be decided vs To be decided');
   });
 
   it('lists the playoffs under way for squares, offers its games still to kick off with the Super Bowl first, takes one entry per member, and creates the contest on the chosen game', async () => {

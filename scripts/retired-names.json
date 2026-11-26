@@ -65,7 +65,8 @@
     "sportEventMatchPeriodScore": "#2046 (10e): Game side result period scores",
     "savePeriodScore": "#2046 (10e): saveGamePeriodScores, one Game's side periods",
     "applyLiveScores": "#2046 (10e): applyStatuses and the Game side results",
-    "PrismaMatchSide": "#2046 (10e): side numbers on match sides"
+    "PrismaMatchSide": "#2046 (10e): side numbers on match sides",
+    "useEventRoundLabels": "#2200: useEventRoundNames, which every screen waits on so no round shows as Round N first"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -131,5 +132,6 @@
   "sportEventMatchPeriodScore": 0,
   "savePeriodScore": 0,
   "applyLiveScores": 0,
-  "PrismaMatchSide": 0
+  "PrismaMatchSide": 0,
+  "useEventRoundLabels": 0
 }
