@@ -13533,7 +13533,7 @@ export interface components {
             roundsParMax: number;
             /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
             participantCount: number;
-            /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
+            /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
             pricing: {
                 /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                 salaryCap: number;
@@ -13545,10 +13545,15 @@ export interface components {
                 floorSharePercent: number;
                 /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                 steepness: number;
-                /** @description The profile the values started from. The admin may have changed any value before assigning. */
+                /**
+                 * Format: uuid
+                 * @description The pricing profile the values started from. The admin may have changed any value before assigning.
+                 */
+                platformPricingProfileId: string;
+                /** @description The name of the pricing profile the values started from, a label only. */
                 profileName: string;
             } | null;
-            /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+            /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
             tierLayout: ({
                 /** @enum {string} */
                 type: "EQUAL_GROUPS";
@@ -13563,7 +13568,12 @@ export interface components {
                 lastTier: "ALL_REMAINING" | "CAPPED";
                 /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                 lastTierMax: number | null;
-                /** @description The tier profile the layout came from. */
+                /**
+                 * Format: uuid
+                 * @description The tier profile the layout came from: the sport league's when the set was tiered.
+                 */
+                platformTierProfileId: string;
+                /** @description That profile's name, a label only. */
                 profileName: string;
             } | null) | ({
                 /** @enum {string} */
@@ -13577,7 +13587,12 @@ export interface components {
                     /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                     toValue: number | null;
                 }[];
-                /** @description The tier profile the layout came from. */
+                /**
+                 * Format: uuid
+                 * @description The tier profile the layout came from: the sport league's when the set was tiered.
+                 */
+                platformTierProfileId: string;
+                /** @description That profile's name, a label only. */
                 profileName: string;
             } | null);
             /**
@@ -13602,7 +13617,7 @@ export interface components {
                  */
                 opening: "OPEN" | "NOT_YET" | "CLOSED";
             }[];
-            /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+            /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
             tiersLocked: boolean;
             /** @description The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots. */
             slotDefinitionIds: string[];
@@ -13876,7 +13891,7 @@ export interface components {
                 roundsParMax: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
-                /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
+                /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
@@ -13888,10 +13903,15 @@ export interface components {
                     floorSharePercent: number;
                     /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                     steepness: number;
-                    /** @description The profile the values started from. The admin may have changed any value before assigning. */
+                    /**
+                     * Format: uuid
+                     * @description The pricing profile the values started from. The admin may have changed any value before assigning.
+                     */
+                    platformPricingProfileId: string;
+                    /** @description The name of the pricing profile the values started from, a label only. */
                     profileName: string;
                 } | null;
-                /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+                /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
                     /** @enum {string} */
                     type: "EQUAL_GROUPS";
@@ -13906,7 +13926,12 @@ export interface components {
                     lastTier: "ALL_REMAINING" | "CAPPED";
                     /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                     lastTierMax: number | null;
-                    /** @description The tier profile the layout came from. */
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
+                     */
+                    platformTierProfileId: string;
+                    /** @description That profile's name, a label only. */
                     profileName: string;
                 } | null) | ({
                     /** @enum {string} */
@@ -13920,7 +13945,12 @@ export interface components {
                         /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                         toValue: number | null;
                     }[];
-                    /** @description The tier profile the layout came from. */
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
+                     */
+                    platformTierProfileId: string;
+                    /** @description That profile's name, a label only. */
                     profileName: string;
                 } | null);
                 /**
@@ -13945,7 +13975,7 @@ export interface components {
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
                 }[];
-                /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+                /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
                 /** @description The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots. */
                 slotDefinitionIds: string[];
@@ -14198,7 +14228,7 @@ export interface components {
                 roundsParMax: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
-                /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
+                /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
@@ -14210,10 +14240,15 @@ export interface components {
                     floorSharePercent: number;
                     /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                     steepness: number;
-                    /** @description The profile the values started from. The admin may have changed any value before assigning. */
+                    /**
+                     * Format: uuid
+                     * @description The pricing profile the values started from. The admin may have changed any value before assigning.
+                     */
+                    platformPricingProfileId: string;
+                    /** @description The name of the pricing profile the values started from, a label only. */
                     profileName: string;
                 } | null;
-                /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+                /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
                     /** @enum {string} */
                     type: "EQUAL_GROUPS";
@@ -14228,7 +14263,12 @@ export interface components {
                     lastTier: "ALL_REMAINING" | "CAPPED";
                     /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                     lastTierMax: number | null;
-                    /** @description The tier profile the layout came from. */
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
+                     */
+                    platformTierProfileId: string;
+                    /** @description That profile's name, a label only. */
                     profileName: string;
                 } | null) | ({
                     /** @enum {string} */
@@ -14242,7 +14282,12 @@ export interface components {
                         /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                         toValue: number | null;
                     }[];
-                    /** @description The tier profile the layout came from. */
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
+                     */
+                    platformTierProfileId: string;
+                    /** @description That profile's name, a label only. */
                     profileName: string;
                 } | null);
                 /**
@@ -14267,7 +14312,7 @@ export interface components {
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
                 }[];
-                /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+                /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
                 /** @description The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots. */
                 slotDefinitionIds: string[];
@@ -14710,12 +14755,15 @@ export interface components {
                 createdAt: string;
             }[];
         };
-        /** @description A pick tier an event's field is divided into. Who is in it is on each field row's valuation. */
+        /** @description A pick tier of an event slot's team tier set (#2044). Who is in it is on each field row's valuation. */
         SportEventTierDto: {
             /** Format: uuid */
             id: string;
-            /** Format: uuid */
-            sportEventId: string;
+            /**
+             * Format: uuid
+             * @description The Season slot of the event whose tier set the tier is in (#2044).
+             */
+            seasonSlotId: string;
             /** @description Stable key; assignments name a tier by it. */
             tierKey: string;
             /** @description Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number. */
@@ -14727,8 +14775,11 @@ export interface components {
             tiers: {
                 /** Format: uuid */
                 id: string;
-                /** Format: uuid */
-                sportEventId: string;
+                /**
+                 * Format: uuid
+                 * @description The Season slot of the event whose tier set the tier is in (#2044).
+                 */
+                seasonSlotId: string;
                 /** @description Stable key; assignments name a tier by it. */
                 tierKey: string;
                 /** @description Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number. */
@@ -14759,8 +14810,8 @@ export interface components {
                 tierOrderIndex: number;
             }[];
         };
-        /** @description The values an event's field was priced with for budget contests. */
-        EventPricingConfig: {
+        /** @description The values an event slot's set was priced with for budget contests, and the profile they started from (#2044). */
+        SlotPricingDto: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
             /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
@@ -14771,11 +14822,16 @@ export interface components {
             floorSharePercent: number;
             /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
             steepness: number;
-            /** @description The profile the values started from. The admin may have changed any value before assigning. */
+            /**
+             * Format: uuid
+             * @description The pricing profile the values started from. The admin may have changed any value before assigning.
+             */
+            platformPricingProfileId: string;
+            /** @description The name of the pricing profile the values started from, a label only. */
             profileName: string;
         };
-        /** @description The tier layout an event's field was last auto-tiered with. */
-        EventTierConfig: {
+        /** @description The tier layout an event slot's set was last auto-tiered with: its tier profile's, with any tier size an admin sent instead. */
+        SlotTierLayout: {
             /** @enum {string} */
             type: "EQUAL_GROUPS";
             /** @description How many tiers a new event starts with. */
@@ -14789,7 +14845,12 @@ export interface components {
             lastTier: "ALL_REMAINING" | "CAPPED";
             /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
             lastTierMax: number | null;
-            /** @description The tier profile the layout came from. */
+            /**
+             * Format: uuid
+             * @description The tier profile the layout came from: the sport league's when the set was tiered.
+             */
+            platformTierProfileId: string;
+            /** @description That profile's name, a label only. */
             profileName: string;
         } | {
             /** @enum {string} */
@@ -14803,10 +14864,15 @@ export interface components {
                 /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                 toValue: number | null;
             }[];
-            /** @description The tier profile the layout came from. */
+            /**
+             * Format: uuid
+             * @description The tier profile the layout came from: the sport league's when the set was tiered.
+             */
+            platformTierProfileId: string;
+            /** @description That profile's name, a label only. */
             profileName: string;
         };
-        /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed. */
+        /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none). */
         AutoAssignSportEventPricesRequest: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
@@ -14818,8 +14884,11 @@ export interface components {
             floorSharePercent: number;
             /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
             steepness: number;
-            /** @description The profile the values started from. The admin may have changed any value before assigning. */
-            profileName: string;
+            /**
+             * Format: uuid
+             * @description The pricing profile the values started from. The admin may have changed any value before assigning.
+             */
+            platformPricingProfileId: string;
         };
         /** @description A field row's tier placement and price, each set independently. */
         SportEventParticipantValuationDto: {

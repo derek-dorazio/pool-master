@@ -903,7 +903,7 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
-  await database.sportEventParticipantValuation.deleteMany({
+  await database.sportEventSlotParticipantValuation.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
@@ -1028,13 +1028,13 @@ export async function cleanupTestData(): Promise<void> {
   // tables intentionally use explicit child rows rather than FK cascade.
   await prisma.sportEventParticipantGolfStanding.deleteMany();
   await prisma.sportEventParticipantStanding.deleteMany();
-  await prisma.sportEventParticipantValuation.deleteMany();
+  await prisma.sportEventSlotParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
   await prisma.participant.deleteMany();
   // SportEventTier and SportEventRound both have RESTRICT FKs to
   // SportEvent, so they must clear before the SportEvent delete below.
-  await prisma.sportEventTier.deleteMany();
+  await prisma.sportEventSlotTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   // Every event goes, so every contest's link to one goes first (#713): those rows hold RESTRICT
   // foreign keys to the event, where a contest's single event column used to be set null.

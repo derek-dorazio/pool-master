@@ -36,7 +36,7 @@ afterAll(async () => {
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   if (created.participantIds.size) await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });

@@ -4,8 +4,8 @@ import {
   SyncedFieldValuationService,
   fieldValuationReport,
 } from '../../../packages/core-api/src/modules/events/synced-field-valuation';
-import { InMemorySportEvents } from '../../support/in-memory-sport-events';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { inMemoryStandardPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
 
 // Tiers and prices made from the feed after each field sync (#1822), against an in-memory store:
@@ -21,7 +21,7 @@ function tierDefinitions(count: number) {
 async function setup(options: { status?: SportEventStatus; fieldSize?: number; tierCount?: number; pricing?: BudgetPricingProfile } = {}) {
   const store = new InMemorySportEvents();
   const league = options.pricing && store.addLeagueWithPlatformPricingProfile(options.pricing);
-  const event = store.addEvent({ status: options.status ?? SportEventStatus.DRAFT, providerRef: SYNCED, ...(league && { sportLeagueId: league.id }) });
+  const event = store.addSlottedEvent({ status: options.status ?? SportEventStatus.DRAFT, providerRef: SYNCED, ...(league && { sportLeagueId: league.id }) });
   await store.addTiers(event.id, tierDefinitions(options.tierCount ?? 2));
   for (let index = 1; index <= (options.fieldSize ?? 4); index++) {
     // p-01 has the shortest odds.
@@ -43,7 +43,7 @@ async function setup(options: { status?: SportEventStatus; fieldSize?: number; t
 function tierOf(store: InMemorySportEvents, participantId: string) {
   const entry = store.field.find((row) => row.participantId === participantId);
   const row = store.valuationRows.find((candidate) => candidate.sportEventParticipantId === entry?.id);
-  return store.tierRows.find((tier) => tier.id === row?.sportEventTierId)?.tierKey ?? null;
+  return store.tierRows.find((tier) => tier.id === row?.sportEventSlotTierId)?.tierKey ?? null;
 }
 
 describe('SyncedFieldValuationService — a field sync makes tiers and prices on a draft', () => {
@@ -62,7 +62,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     expect(store.valuationRows.every((row) => row.tierAssignedSource === 'AUTO_ODDS' && row.priceAssignedSource === 'AUTO_ODDS')).toBe(true);
     const prices = store.valuationRows.map((row) => row.price as number);
     expect(prices).toEqual([...prices].sort((left, right) => right - left));
-    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual(standardEventPricing());
+    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ ...inMemoryStandardPricing(), profileName: 'Standard' });
   });
 
   it('re-makes the tiers when a later sync moves the odds, so the new favourite leads tier 1', async () => {
@@ -81,8 +81,8 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     const { store, event, valuation } = await setup();
     await valuation.afterFieldLoad(SYNCED);
     const valuations = store.valuationRepo();
-    const assignTiers = jest.spyOn(valuations, 'assignEventTiers');
-    const assignEventPrices = jest.spyOn(valuations, 'assignEventPrices');
+    const assignTiers = jest.spyOn(valuations, 'assignSlotTiers');
+    const assignEventPrices = jest.spyOn(valuations, 'assignSlotPrices');
     const watched = new SportEventTierService({
       sportEvents: store.sportEventRepo(),
       tiers: store.tierRepo(),
@@ -103,12 +103,13 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
   it('prices a never-priced field with the pricing profile its own sport league names, not the first profile there is', async () => {
     const small = { name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
     const { store, event, valuation } = await setup({ pricing: small });
+    const profileId = expectDefined(store.sportLeagues.find((league) => league.id === event.sportLeagueId)?.platformPricingProfileId, 'the league names a pricing profile');
 
     const outcome = await valuation.afterFieldLoad(SYNCED);
 
     expect(outcome).toMatchObject({ prices: { result: 'MADE', profileName: 'Small' } });
     const { name, ...values } = small;
-    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual({ profileName: name, ...values });
+    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ platformPricingProfileId: profileId, profileName: name, ...values });
     expect(store.valuationRows.every((row) => (row.price as number) <= 5000 && (row.price as number) % 10 === 0)).toBe(true);
   });
 
@@ -117,20 +118,20 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
 
     await valuation.afterFieldLoad(SYNCED);
 
-    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
-      profileName: '6 tiers of 10', type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
+    expect(store.firstTierSlotOf(event.id).tierLayout).toEqual({
+      platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, profileName: '6 tiers of 10', type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
     });
   });
 
   it('prices a re-sync with the values the event was last priced with, not the default profile', async () => {
     const { store, event, tiers, valuation } = await setup();
-    const small = { ...standardEventPricing(), profileName: 'Small', salaryCap: 5000, unit: 10 };
-    await tiers.autoAssignPrices({ sportEventId: event.id, pricingConfig: small });
+    // The admin priced the event by hand with Standard's profile but a smaller cap and rounding.
+    const handPriced = { ...inMemoryStandardPricing(), salaryCap: 5000, unit: 10 };
+    await tiers.autoAssignPrices({ sportEventId: event.id, pricing: handPriced });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    await valuation.afterFieldLoad(SYNCED);
 
-    expect(outcome).toMatchObject({ prices: { profileName: 'Small' } });
-    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual(small);
+    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ ...handPriced, profileName: 'Standard' });
     expect(Math.max(...store.valuationRows.map((row) => row.price as number))).toBeLessThanOrEqual(5000);
   });
 });
@@ -163,9 +164,9 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     const { store, event, valuation } = await setup();
     await valuation.afterFieldLoad(SYNCED);
     const favourite = expectDefined(store.field.find((row) => row.participantId === 'p-01'));
-    await store.valuationRepo().assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await store.valuationRepo().assignSlotPrices({
+      slot: store.firstTierSlotOf(event.id),
+      pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: favourite.id, price: 777, source: 'MANUAL' }],
     });
 
@@ -180,9 +181,9 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     await valuation.afterFieldLoad(SYNCED);
     const favourite = expectDefined(store.field.find((row) => row.participantId === 'p-01'));
     await tiers.replaceTierAssignments({ sportEventId: event.id, assignments: [{ sportEventParticipantId: favourite.id, tierKey: 'tier-2', tierOrderIndex: 1 }] });
-    await store.valuationRepo().assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await store.valuationRepo().assignSlotPrices({
+      slot: store.firstTierSlotOf(event.id),
+      pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: favourite.id, price: 777, source: 'MANUAL' }],
     });
     store.addToField(event.id, 'p-late', { oddsToWin: 2 });

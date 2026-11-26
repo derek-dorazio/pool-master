@@ -42,6 +42,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId, setEventSlotPeriods } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
+import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -115,14 +116,16 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT contest_sport_events', 1],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
-  ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
-  ['SELECT sport_event_tiers', 2],
+  ['SELECT sport_event_slot_tiers', 2],
+  // The slot definitions the event plays, read with it (#2010), and its tier slots (#2044).
+  ['SELECT sport_event_slots', 3],
   ['SELECT sport_events', 2],
-  // The event's round is played in its slot (#2006), so its event reads take the slot's definition and its place in play.
-  ['SELECT sport_league_competition_slots', 3],
+  // The event's round is played in its slot (#2006), so its event reads take the slot's definition
+  // and its place in play; so does its tier slots' read, for their play order (#2044).
+  ['SELECT sport_league_competition_slots', 4],
   ['SELECT sport_league_competitions', 2],
   ['SELECT sport_league_phases', 2],
-  ['SELECT sport_league_season_competition_slots', 3], // the answer's event slots (#2004), and the event reads' (#2006)
+  ['SELECT sport_league_season_competition_slots', 4], // the answer's event slots (#2004), and the event reads' (#2006)
   ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
   ['SELECT sports', 2], // a sport is read through its event's Season and league since #2042 (#2089)
@@ -311,15 +314,15 @@ async function tieredGolfEvent(name: string) {
   });
   const tiers = [];
   for (const [index, tierKey] of TIER_KEYS.entries()) {
-    tiers.push(await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey, tierNumber: index + 1 } }));
+    tiers.push(await prisma.sportEventSlotTier.create({ data: { sportEventSlotId: (await tierSetSlot(prisma, event.id)).id, tierKey, tierNumber: index + 1 } }));
   }
   for (const [index, tier] of tiers.slice(0, 2).entries()) {
     const golfer = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Read Once Golfer ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     const fieldRow = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, ranking: index + 1 } });
-    await prisma.sportEventParticipantValuation.create({
-      data: { sportEventParticipantId: fieldRow.id, sportEventTierId: tier.id, tierOrderIndex: 1, tierAssignedSource: 'MANUAL' },
+    await prisma.sportEventSlotParticipantValuation.create({
+      data: { ...inTierSet(await tierSetSlot(prisma, event.id)), sportEventParticipantId: fieldRow.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, tierAssignedSource: 'MANUAL' },
     });
   }
   return event;
@@ -353,11 +356,11 @@ describe('Opening a contest (#1355)', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json<ContestResponse>().contest.status).toBe(ContestStatus.OPEN);
-    // Every read of the events or their tiers but one takes both events together; the one is the
-    // first event's tiers for the reply's pick groups.
+    // Every read of the events or their slots but one takes both events together; the one is the
+    // first event's tier slots for the reply's pick groups. Tiers are read by slot, not event (#2044).
     const eachEvent = (table: string) => statementsOn(statements, StatementVerb.SELECT, table)
       .filter((statement) => !(statementParams(statement).includes(first.id) && statementParams(statement).includes(second.id))).length;
-    expect([eachEvent('sport_events'), eachEvent('sport_event_tiers')]).toEqual([0, 1]);
+    expect([eachEvent('sport_events'), eachEvent('sport_event_slots')]).toEqual([0, 1]);
     expect(requestCounts(statements)).toEqual([
       ['INSERT background_jobs', 1], // the opened contest's board rebuild, written with the move (#1973)
       ['SELECT contest_configurations', 1],
@@ -369,12 +372,19 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT league_memberships', 1], // the commissioner's own membership is kept from creating the contest (#1438)
       ['SELECT leagues', 1],
       ['SELECT participant_contest_scoring_rules', 1],
-      ['SELECT sport_event_participant_valuations', 2],
       ['SELECT sport_event_participants', 3],
       ['SELECT sport_event_provider_mappings', 1],
-      ['SELECT sport_event_slots', 1], // the slot definitions the event plays, read with it (#2010)
-      ['SELECT sport_event_tiers', 3],
+      ['SELECT sport_event_slot_participant_valuations', 2],
+      ['SELECT sport_event_slot_tiers', 3],
+      // The slot definitions the event plays, read with it (#2010), and four reads of the events'
+      // tier slots across the opening's steps, each with its Season slot and definition for play
+      // order (#2044); a fixed number however many events the contest covers.
+      ['SELECT sport_event_slots', 5],
       ['SELECT sport_events', 3],
+      ['SELECT sport_league_competition_slots', 5],
+      ['SELECT sport_league_competitions', 1],
+      ['SELECT sport_league_phases', 1],
+      ['SELECT sport_league_season_competition_slots', 5],
   ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
       ['SELECT sport_leagues', 4],
       ['SELECT sports', 4],
@@ -728,10 +738,11 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 2],
-  ['SELECT sport_event_participants', 3],
+  // The answer's field count; the event covers no slot, so it has no tier set to count (#2044).
+  ['SELECT sport_event_participants', 1],
   ['SELECT sport_event_provider_mappings', 2],
-  ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
-  ['SELECT sport_event_tiers', 2],
+  // The slot definitions the event plays, read with it (#2010), and its tier slots (#2044).
+  ['SELECT sport_event_slots', 3],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_season_competition_slots', 1], // the answer's event slots (#2004)
   ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)
@@ -751,11 +762,12 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 1],
-  ['SELECT sport_event_participants', 3],
+  // The answer's field count; the event covers no slot, so it has no tier set to count (#2044).
+  ['SELECT sport_event_participants', 1],
   ['SELECT sport_event_provider_mappings', 3],
   ['SELECT sport_event_rounds', 1],
-  ['SELECT sport_event_slots', 3], // the slot definitions the event plays, read with it (#2010)
-  ['SELECT sport_event_tiers', 2],
+  // The slot definitions the event plays, read with it (#2010), and its tier slots (#2044).
+  ['SELECT sport_event_slots', 4],
   ['SELECT sport_events', 4],
   ['SELECT sport_league_season_competition_slots', 2], // whether the event has slots (its dates are theirs), and the answer's (#2004)
   ['SELECT sport_league_seasons', 4], // a sport is read through its event's Season and league (#2042, #2004)

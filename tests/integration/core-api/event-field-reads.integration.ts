@@ -26,6 +26,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
+import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
 
 // An event's field against real Postgres (#1163): read in one repository call on one connection,
 // shared by every contest and pick screen on the event for 30 seconds, and read afresh once an
@@ -79,7 +80,7 @@ async function golfEvent() {
   const cal = await golfer('Cal', null, false);
   const bea = await golfer('Bea', 2, true);
   const ana = await golfer('Ana', 1, true);
-  await prisma.sportEventParticipantValuation.create({ data: { sportEventParticipantId: ana.id, price: 12, priceAssignedSource: 'MANUAL' } });
+  await prisma.sportEventSlotParticipantValuation.create({ data: { ...inTierSet(await tierSetSlot(prisma, event.id)), sportEventParticipantId: ana.id, price: 12, priceAssignedSource: 'MANUAL' } });
   for (const [round, strokes] of [[round2, 70], [round1, 68]] as const) {
     await prisma.sportEventParticipantRound.create({
       data: { sportEventParticipantId: ana.id, sportEventRoundId: round.id, status: 'COMPLETED', golf: { create: { strokes, scoreToPar: strokes - 72 } } },

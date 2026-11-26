@@ -24,6 +24,7 @@ import { freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
 import { sportRowKeys } from '../support/sport-rows';
+import { inTierSet, tierSetSlot } from '../support/event-tier-sets';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -69,7 +70,7 @@ async function cleanupDraftArtifacts(): Promise<void> {
           },
         },
       });
-      await prisma.sportEventParticipantValuation.deleteMany({
+      await prisma.sportEventSlotParticipantValuation.deleteMany({
         where: {
           sportEventParticipantId: {
             in: eventParticipantIds,
@@ -89,11 +90,11 @@ async function cleanupDraftArtifacts(): Promise<void> {
 
     // SportEventTier and SportEventRound both have RESTRICT FKs to
     // SportEvent, so they must clear before the SportEvent delete below.
-    await prisma.sportEventTier.deleteMany({
+    await prisma.sportEventSlotTier.deleteMany({
       where: {
-        sportEventId: {
+        slot: { sportEventId: {
           in: createdSportEventIds,
-        },
+        } },
       },
     });
     await prisma.sportEventRound.deleteMany({
@@ -320,8 +321,9 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
     },
   });
   createdSportEventParticipantIds.push(firstEventParticipant.id);
-  await prisma.sportEventParticipantValuation.create({
+  await prisma.sportEventSlotParticipantValuation.create({
     data: {
+      ...inTierSet(await tierSetSlot(prisma, event.id)),
       sportEventParticipantId: firstEventParticipant.id,
       price: 3200,
       priceAssignedSource: 'MANUAL',
@@ -335,8 +337,9 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
     },
   });
   createdSportEventParticipantIds.push(secondEventParticipant.id);
-  await prisma.sportEventParticipantValuation.create({
+  await prisma.sportEventSlotParticipantValuation.create({
     data: {
+      ...inTierSet(await tierSetSlot(prisma, event.id)),
       sportEventParticipantId: secondEventParticipant.id,
       price: 5100,
       priceAssignedSource: 'MANUAL',
@@ -407,9 +410,9 @@ async function seedTieredDraftFixture(options: {
 
   // Tiers are event-owned (plans/124 §4.5/§4.6b): the selection room resolves selectionGroups
   // through SportEventTierService, so a real SportEventTier + valuation row is required per golfer.
-  const tier = await prisma.sportEventTier.create({
+  const tier = await prisma.sportEventSlotTier.create({
     data: {
-      sportEventId: event.id,
+      sportEventSlotId: (await tierSetSlot(prisma, event.id)).id,
       tierKey: 'tier-1',
       tierNumber: 1,
     },
@@ -436,10 +439,11 @@ async function seedTieredDraftFixture(options: {
     });
     createdSportEventParticipantIds.push(eventParticipant.id);
     eventParticipantIds.push(eventParticipant.id);
-    await prisma.sportEventParticipantValuation.create({
+    await prisma.sportEventSlotParticipantValuation.create({
       data: {
+        ...inTierSet(await tierSetSlot(prisma, event.id)),
         sportEventParticipantId: eventParticipant.id,
-        sportEventTierId: tier.id,
+        sportEventSlotTierId: tier.id,
         tierOrderIndex: index + 1,
         tierAssignedSource: 'MANUAL',
         price: 1200 + index,
@@ -483,9 +487,9 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
 
   const tierFieldRowIds: string[][] = [];
   for (let tierIndex = 0; tierIndex < options.tierCount; tierIndex += 1) {
-    const tier = await prisma.sportEventTier.create({
+    const tier = await prisma.sportEventSlotTier.create({
       data: {
-        sportEventId: event.id,
+        sportEventSlotId: (await tierSetSlot(prisma, event.id)).id,
         tierKey: `tier-${tierIndex + 1}`,
         tierNumber: tierIndex + 1,
       },
@@ -506,10 +510,11 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
         data: { sportEventId: event.id, participantId: participant.id },
       });
       createdSportEventParticipantIds.push(fieldRow.id);
-      await prisma.sportEventParticipantValuation.create({
+      await prisma.sportEventSlotParticipantValuation.create({
         data: {
+          ...inTierSet(await tierSetSlot(prisma, event.id)),
           sportEventParticipantId: fieldRow.id,
-          sportEventTierId: tier.id,
+          sportEventSlotTierId: tier.id,
           tierOrderIndex: golferIndex + 1,
           tierAssignedSource: 'MANUAL',
         },

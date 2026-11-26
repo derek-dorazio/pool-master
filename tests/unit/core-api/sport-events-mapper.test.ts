@@ -1,5 +1,5 @@
 import { sportPlay } from '../../support/sport-play';
-import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, Sport, type SportEvent } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, Sport, type SportEvent, type SportEventTierSlot } from '@poolmaster/shared/domain';
 import {
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
@@ -7,7 +7,7 @@ import {
   mapSportEventToDto,
 } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import type { SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { inMemoryStandardPricing } from '../../support/budget-pricing';
 import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 import { roundSlot } from '../../support/round-slots';
 
@@ -33,22 +33,38 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
   };
 }
 
+/** The event's first slot (#2044), its set tiered and priced as given. */
+function firstSlot(sportEvent: SportEvent, set: Partial<Pick<SportEventTierSlot, 'pricing' | 'tierLayout'>> = {}): SportEventTierSlot {
+  return { id: 'event-slot-1', sportEventId: sportEvent.id, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isFirstSlot: true, tierLayout: null, pricing: null, ...set };
+}
+
 /** A root admin's summary, with the admin counts; `adminCounts: null` is everyone else's. */
-function summary(sportEvent: SportEvent, participantCount: number, untieredParticipantCount = 0): SportEventSummary {
+function summary(sportEvent: SportEvent, participantCount: number, untieredParticipantCount = 0, firstTierSlot: SportEventTierSlot | null = firstSlot(sportEvent)): SportEventSummary {
   return {
     event: sportEvent,
     participantCount,
     tierCount: 0,
+    firstTierSlot,
     adminCounts: { untieredParticipantCount, unpricedParticipantCount: 0, emptyTierNumbers: [], contestCount: 0 },
     slots: [],
   };
 }
 
 describe('SportEvent pricing on the wire (#93)', () => {
-  it('carries the values the field was priced with, whose salary cap every budget contest on the event uses', () => {
-    const pricing = standardEventPricing();
+  it('carries the values the event\'s first slot was priced with, whose salary cap every budget contest on the event uses', () => {
+    const pricing = { ...inMemoryStandardPricing(), profileName: 'Standard' };
+    const priced = event();
 
-    expect(mapSportEventToDto(summary(event({ pricingConfig: pricing }), 72)).pricing).toEqual(pricing);
+    expect(mapSportEventToDto(summary(priced, 72, 0, firstSlot(priced, { pricing }))).pricing).toEqual(pricing);
+  });
+
+  it('locks the tiers of a draft that covers no slot, which has no set to edit', () => {
+    expect(mapSportEventToDto(summary(event({ status: 'DRAFT' }), 0, 0, null))).toMatchObject({ tiersLocked: true, pricing: null, tierLayout: null });
+  });
+
+  it('leaves a draft\'s first-slot set editable and locks it once the event is released', () => {
+    expect(mapSportEventToDto(summary(event({ status: 'DRAFT' }), 0)).tiersLocked).toBe(false);
+    expect(mapSportEventToDto(summary(event({ status: 'SCHEDULED' }), 0)).tiersLocked).toBe(true);
   });
 
   it('carries null pricing for an event whose prices were never assigned', () => {
@@ -173,7 +189,7 @@ describe('the contests on an event on the wire (#1889)', () => {
 
 describe('SportEvent admin counts on the wire (#1198)', () => {
   it('carries null admin counts for a read that did not count them, keeping the field size and tier count', () => {
-    expect(mapSportEventToDto({ event: event(), participantCount: 72, tierCount: 6, adminCounts: null, slots: [] })).toMatchObject({
+    expect(mapSportEventToDto({ event: event(), participantCount: 72, tierCount: 6, firstTierSlot: null, adminCounts: null, slots: [] })).toMatchObject({
       participantCount: 72,
       tierCount: 6,
       adminCounts: null,
@@ -185,7 +201,7 @@ describe('SportEvent admin counts on the wire (#1198)', () => {
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
     const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [6], contestCount: 2 };
-    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), participantCount: 0, tierCount: 6, adminCounts, slots: [] })).toMatchObject({
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), participantCount: 0, tierCount: 6, firstTierSlot: null, adminCounts, slots: [] })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
       adminCounts,
@@ -226,9 +242,9 @@ describe('the event\'s rounds and tiers on the wire', () => {
     expect(mapSportEventRoundToDto(round)).toMatchObject({ status: RoundStatus.COMPLETED, resultCount: 8, completedAt: AT.toISOString() });
   });
 
-  it('sends a tier\'s key and number, with no stored name', () => {
-    expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', tierKey: 'A', tierNumber: 1 } as never))
-      .toEqual({ id: 't1', sportEventId: 'e1', tierKey: 'A', tierNumber: 1 });
+  it('sends a tier\'s key and number and the Season slot whose set it is in, with no stored name', () => {
+    expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', sportEventSlotId: 'es1', seasonSlotId: 's1', tierKey: 'A', tierNumber: 1, createdAt: new Date(0), updatedAt: new Date(0) }))
+      .toEqual({ id: 't1', seasonSlotId: 's1', tierKey: 'A', tierNumber: 1 });
   });
 });
 

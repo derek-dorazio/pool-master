@@ -40,6 +40,7 @@ import {
   type ContestEntry,
   type Participant,
   type SportEvent,
+  type SportEventTierSlot,
   type SportEventParticipant,
   type TieredContestRules,
 } from '@poolmaster/shared/domain';
@@ -200,7 +201,7 @@ export class SelectionService {
     const sportEvent = (await this.deps.sportEvents.findByIds([input.sportEventId])).at(0);
     if (!sportEvent) throw selectionErrors.sportEventNotFound(input.sportEventId);
     const { rules } = input;
-    const configuration = previewConfiguration(rules, sportEvent);
+    const configuration = previewConfiguration(rules, sportEvent.id, await this.deps.tiers.firstTierSlot(sportEvent.id));
 
     const field = await this.deps.field.findBySportEvent(sportEvent.id);
     const { selectionParticipants, tierGroups } = await this.readEventField(sportEvent, field);
@@ -976,16 +977,18 @@ function buildSelectionGroups(
 
 /**
  * A preview's unsaved rules as the engines read a contest's (#1612). A budget contest is built
- * under its event's salary cap, which creating one copies onto its rules, so a budget preview does
- * the same, and an event never priced has none to preview under.
+ * under its event's salary cap, its first slot's set's (#2044), which creating one copies onto
+ * its rules, so a budget preview does the same, and an event never priced has none to preview
+ * under.
  */
 function previewConfiguration(
   rules: TieredContestRules | BudgetContestRules,
-  sportEvent: Pick<SportEvent, 'id' | 'pricingConfig'>,
+  sportEventId: string,
+  firstTierSlot: Pick<SportEventTierSlot, 'pricing'> | undefined,
 ): EngineRules {
   if (rules.selectionType === SelectionType.TIERED) return { configJson: rules };
-  const salaryCap = sportEvent.pricingConfig?.salaryCap;
-  if (salaryCap === undefined) throw selectionErrors.eventNotPriced(sportEvent.id);
+  const salaryCap = firstTierSlot?.pricing?.salaryCap;
+  if (salaryCap === undefined) throw selectionErrors.eventNotPriced(sportEventId);
   return { configJson: { ...rules, salaryCap } };
 }
 

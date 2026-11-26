@@ -1122,6 +1122,7 @@ export const enUS = {
     SPORT_EVENT_BRACKET_LOCKED: 'This event has been released, so its bracket is locked.',
     SPORT_EVENT_FIELD_NOT_LOADED: 'This event\'s field has not loaded yet.',
     SPORT_EVENT_FILTER_REQUIRED: 'Choose a sport, a sport league or a year to list events.',
+    SPORT_EVENT_HAS_NO_SLOT: 'This event is in no slot of its season yet, so it has no tiers or prices to set.',
     SPORT_EVENT_INVALID_TRANSITION: 'This event changed while you were working. Reload and try again.',
     SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED: 'This result can no longer change.',
     SPORT_EVENT_NOT_BRACKET: 'This event is not played as a bracket.',

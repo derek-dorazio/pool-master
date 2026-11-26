@@ -329,7 +329,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<EventParams & { Body: AutoAssignSportEventPricesRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
       await requireEvent(request.params.eventId);
-      await tiers.autoAssignPrices({ sportEventId: request.params.eventId, pricingConfig: request.body });
+      await tiers.autoAssignPrices({ sportEventId: request.params.eventId, pricing: request.body });
       return fieldResponse(request.params.eventId);
     },
 

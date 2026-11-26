@@ -11,8 +11,6 @@ import type {
   SportEventStatus,
 } from './enums';
 import type { SportEventProviderMapping } from './providers';
-import type { EventPricingConfig } from './budget-pricing';
-import type { EventTierConfig } from './tier-profiles';
 import type { AutoReleaseCheck } from './sport-league-overview';
 import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
 import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
@@ -84,17 +82,6 @@ export interface SportEvent extends DomainEntity {
   syncProviderName?: string;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;
-  /**
-   * The values the field was last priced with for budget contests (#93); unset until prices are
-   * assigned. Locks with the prices at release, and is every budget contest's salary cap.
-   */
-  pricingConfig?: EventPricingConfig;
-  /**
-   * The tier layout the field was last auto-tiered with (#1844): its sport league's tier profile
-   * at the time, with any tier size an admin sent instead; unset until the field is first
-   * auto-tiered.
-   */
-  tierConfig?: EventTierConfig;
   /**
    * The latest automatic release check (#1847): when the release job last judged the event, and
    * whether it released or held it. Unset until the first check, and after a release by hand.

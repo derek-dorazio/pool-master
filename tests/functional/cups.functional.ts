@@ -60,7 +60,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { keyedSlotDefinitionId } from '../support/event-edition';
 import { uniqueTestSlotLabel } from '../support/test-slots';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingFor } from './standard-pricing';
 
 // A league's 2099 World Marathon Majors (men) Cup end to end (#841): the cup is made with the
 // league's first contest of the season, and two races settled through the real routes rank the
@@ -95,10 +95,10 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   if (created.slotDefinitionIds.size) {
@@ -163,7 +163,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
       });
       await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } });
-      await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() });
+      await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) });
       expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
       return eventId;
     };

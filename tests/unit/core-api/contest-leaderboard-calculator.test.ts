@@ -242,8 +242,8 @@ describe('whether a contest scores an upset bonus', () => {
 });
 
 describe('a full entry\'s pick count, the M of "best N of M"', () => {
-  const tieredField = (tierIds: (string | null)[]) => tierIds.map((sportEventTierId) => ({
-    valuation: sportEventTierId ? { sportEventTierId } : null,
+  const tieredField = (tierIds: (string | null)[]) => tierIds.map((sportEventSlotTierId) => ({
+    valuation: sportEventSlotTierId ? { sportEventSlotTierId } : null,
   })) as Parameters<typeof resolveLineupSize>[1];
 
   it('is a budget contest\'s roster size', () => {

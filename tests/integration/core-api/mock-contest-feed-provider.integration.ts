@@ -88,7 +88,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
   });
   const participantIds = [...new Set(fieldRows.map((row) => row.participantId))];
 
-  await prisma.sportEventParticipantValuation.deleteMany({
+  await prisma.sportEventSlotParticipantValuation.deleteMany({
     where: {
       sportEventParticipant: {
         sportEvent: MOCK_FEED_EVENTS,

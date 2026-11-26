@@ -26,10 +26,10 @@ async function cleanup(): Promise<void> {
     const series = { sportLeagueId: { in: leagueIds } };
     const where = { sportEvent: series };
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: where } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: where } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: where } });
     await db.sportEventParticipant.deleteMany({ where });
     await db.sportEventRound.deleteMany({ where });
-    await db.sportEventTier.deleteMany({ where });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: where } });
     await db.sportEvent.deleteMany({ where: series });
   }
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).

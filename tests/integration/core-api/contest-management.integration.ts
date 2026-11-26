@@ -31,6 +31,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
 // approval); the literal is the published path.
@@ -165,30 +166,33 @@ describe('Contest management integration', () => {
     // contest-supplied tiers array, so the fixture needs a real
     // SportEventTier + valuation row per golfer. Six tiers, so a contest picking one golfer
     // per tier has a roster of 6 (#479: the roster is the event's tier count × picksPerTier).
-    const tier = await prisma.sportEventTier.create({
+    const tierSet = await tierSetSlot(prisma, sportEventId);
+    const tier = await prisma.sportEventSlotTier.create({
       data: {
-        sportEventId,
+        sportEventSlotId: tierSet.id,
         tierKey: 'A',
         tierNumber: 1,
       },
     });
     for (const [index, tierKey] of ['B', 'C', 'D', 'E', 'F'].entries()) {
-      await prisma.sportEventTier.create({
-        data: { sportEventId, tierKey, tierNumber: index + 2 },
+      await prisma.sportEventSlotTier.create({
+        data: { sportEventSlotId: tierSet.id, tierKey, tierNumber: index + 2 },
       });
     }
-    await prisma.sportEventParticipantValuation.create({
+    await prisma.sportEventSlotParticipantValuation.create({
       data: {
+        ...inTierSet(tierSet),
         sportEventParticipantId: topEventParticipant.id,
-        sportEventTierId: tier.id,
+        sportEventSlotTierId: tier.id,
         tierOrderIndex: 1,
         tierAssignedSource: 'MANUAL',
       },
     });
-    await prisma.sportEventParticipantValuation.create({
+    await prisma.sportEventSlotParticipantValuation.create({
       data: {
+        ...inTierSet(tierSet),
         sportEventParticipantId: secondEventParticipant.id,
-        sportEventTierId: tier.id,
+        sportEventSlotTierId: tier.id,
         tierOrderIndex: 2,
         tierAssignedSource: 'MANUAL',
       },

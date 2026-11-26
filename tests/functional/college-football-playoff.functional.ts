@@ -51,10 +51,10 @@ async function cleanup(): Promise<void> {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   // Only those no other event's field still holds.
@@ -115,8 +115,8 @@ describe('SDK Functional: College Football Playoff', () => {
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
 
     // The league's seed-range tiers (#2164): four seeds in each, by seed and not by odds.
-    const tiers = await getFunctionalPrisma().sportEventTier.findMany({
-      where: { sportEventId: event.id },
+    const tiers = await getFunctionalPrisma().sportEventSlotTier.findMany({
+      where: { slot: { sportEventId: event.id } },
       orderBy: { tierNumber: 'asc' },
       select: { tierNumber: true, _count: { select: { valuations: true } } },
     });

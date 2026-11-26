@@ -230,7 +230,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
     const created = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'))], name: 'Shuffle Open' });
-    const before = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id } });
+    const before = await getPrisma().sportEventSlotTier.findMany({ where: { slot: { sportEventId: created.event.id } } });
     const idByKey = new Map(before.map((row) => [row.tierKey, row.id]));
 
     await tiers.replaceTiers({
@@ -241,7 +241,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
       ],
     });
 
-    const after = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id }, orderBy: { tierNumber: 'asc' } });
+    const after = await getPrisma().sportEventSlotTier.findMany({ where: { slot: { sportEventId: created.event.id } }, orderBy: { tierNumber: 'asc' } });
     expect(after.map((row) => [row.tierKey, row.tierNumber])).toEqual([
       ['tier-5', 1], ['tier-4', 2], ['tier-3', 3], ['tier-2', 4], ['tier-1', 5], ['tier-new', 6],
     ]);

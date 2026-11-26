@@ -153,10 +153,10 @@ async function cleanup(): Promise<void> {
     await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } });
     await db.sportEventParticipantRaceResult.deleteMany({ where: field });
     await db.sportEventParticipantStanding.deleteMany({ where: field });
-    await db.sportEventParticipantValuation.deleteMany({ where: field });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: field });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   // Only those no other event's field still holds.

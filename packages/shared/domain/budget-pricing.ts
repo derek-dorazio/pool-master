@@ -15,9 +15,9 @@ import type { FieldOrderBasis } from './enums';
  * of the field towards the floor, so the cap always binds and every pick is a trade-off.
  *
  * The values are kept as named pricing profiles, defined once for the platform; each sport league
- * names one, which prices its events' fields after a sync (#1844). The values an event was
- * actually priced with are stored on the event and lock with its prices at release. A budget
- * contest's salary cap is its event's.
+ * names one, which prices its events' fields after a sync (#1844). The values an event slot's set
+ * was actually priced with are stored on the slot and lock with its prices (#2044). A budget
+ * contest's salary cap is that of the slot its picks are valued in.
  */
 
 export const BUDGET_SALARY_CAP_MAX = 10_000_000;
@@ -45,14 +45,14 @@ export const BudgetPricingProfileSchema = BudgetPricingValuesSchema.extend({
 export type BudgetPricingProfile = z.infer<typeof BudgetPricingProfileSchema>;
 
 /**
- * The values an event's field was priced with, and the profile they started from. Stored on the
- * event by every price assignment and locked at release.
+ * The values an event slot's set was priced with, and the profile they started from (#2044).
+ * Stored on the slot by every price assignment and locked with the set.
  */
-export const EventPricingConfigSchema = BudgetPricingValuesSchema.extend({
-  profileName: z.string().trim().min(1).max(50)
-    .describe('The profile the values started from. The admin may have changed any value before assigning.'),
-}).describe('The values an event\'s field was priced with for budget contests.');
-export type EventPricingConfig = z.infer<typeof EventPricingConfigSchema>;
+export const SlotPricingSchema = BudgetPricingValuesSchema.extend({
+  platformPricingProfileId: z.uuid()
+    .describe('The pricing profile the values started from. The admin may have changed any value before assigning.'),
+}).describe('The values an event slot\'s set was priced with for budget contests, and the profile they started from.');
+export type SlotPricing = z.infer<typeof SlotPricingSchema>;
 
 /** A pricing profile, defined once for the platform; each sport league names one (`SportLeague.platformPricingProfileId`). */
 export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfile {
@@ -64,15 +64,15 @@ export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfi
   sources: FieldOrderBasis[];
 }
 
-/** A profile as an event stores the values it was priced with. */
-export function eventPricingOf({ name, ...values }: BudgetPricingProfile): EventPricingConfig {
+/** A profile's values as an event slot is priced with them, unchanged. */
+export function slotPricingOf(profile: PlatformPricingProfile): SlotPricing {
   return {
-    profileName: name,
-    salaryCap: values.salaryCap,
-    unit: values.unit,
-    topSharePercent: values.topSharePercent,
-    floorSharePercent: values.floorSharePercent,
-    steepness: values.steepness,
+    platformPricingProfileId: profile.id,
+    salaryCap: profile.salaryCap,
+    unit: profile.unit,
+    topSharePercent: profile.topSharePercent,
+    floorSharePercent: profile.floorSharePercent,
+    steepness: profile.steepness,
   };
 }
 

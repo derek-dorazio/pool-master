@@ -9,10 +9,10 @@ import {
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantValuationRepository,
+  PrismaSportEventSlotParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
-  PrismaSportEventTierRepository,
+  PrismaSportEventSlotTierRepository,
   PrismaBackgroundJobRepository,
 } from '../../../packages/core-api/src/adapters';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
@@ -29,7 +29,8 @@ import { findUnindexedScans } from '../index-check';
 import { recordStatements, statementShape } from '../statement-log';
 import { createRoundRows, createSportEventRow, createTierRows } from '../../support/sport-event-rows';
 import { freshEventEdition, mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { standardPricingIn } from '../../support/budget-pricing';
+import { tierSetSlot } from '../../support/event-tier-sets';
 import { expectDefined } from '../../support/expect-defined';
 import { linkTestSlot } from '../../support/test-slots';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
@@ -54,13 +55,18 @@ const TIERS = [
   { tierKey: 'tier-2', tierNumber: 2 },
 ];
 
+/** The event's one slot, whose set its tiers and valuations are in (#2044); linked now when it has none. */
+function slotOf(event: { id: string }) {
+  return tierSetSlot(getPrisma(), event.id);
+}
+
 function repos() {
   return {
     events: new PrismaSportEventRepository(getAppPrisma()),
     rounds: new PrismaSportEventRoundRepository(getAppPrisma()),
     field: new PrismaSportEventParticipantRepository(getAppPrisma()),
-    tiers: new PrismaSportEventTierRepository(getAppPrisma()),
-    valuations: new PrismaSportEventParticipantValuationRepository(getAppPrisma()),
+    tiers: new PrismaSportEventSlotTierRepository(getAppPrisma()),
+    valuations: new PrismaSportEventSlotParticipantValuationRepository(getAppPrisma()),
     golfRounds: new PrismaSportEventParticipantGolfRoundRepository(getAppPrisma()),
     golfStandings: new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma()),
     participants: new PrismaParticipantRepository(getAppPrisma()),
@@ -106,11 +112,11 @@ async function createPopulatedEvent() {
     { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
   ]);
-  await createTierRows(tiers, event.id, TIERS);
+  await createTierRows(tiers, (await slotOf(event)).id, TIERS);
   await field.createMany(event.id, [{ participantId: golfer.id, seedNumber: 1 }]);
   const [entry] = await field.findBySportEvent(event.id);
-  const [tier] = await tiers.findBySportEvent(event.id);
-  await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+  const [tier] = await tiers.findBySlot((await slotOf(event)).id);
+  await valuations.assignTiers(await slotOf(event), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
   const [round] = await rounds.findBySportEvent(event.id);
   await golfRounds.upsert({
     sportEventParticipantId: entry.id, sportEventRoundId: round.id, status: 'COMPLETED', completedAt: null,
@@ -169,20 +175,22 @@ describe('SportEventRepository — writes', () => {
     const prisma = getPrisma();
     await expect(events.findById(event.id)).resolves.toBeNull();
     await expect(prisma.sportEventRound.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
-    await expect(prisma.sportEventTier.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
+    await expect(prisma.sportEventSlotTier.count({ where: { slot: { sportEventId: event.id } } })).resolves.toBe(0);
+    await expect(prisma.sportEventSlotParticipantValuation.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
     await expect(prisma.sportEventParticipant.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
     await expect(prisma.sportEventParticipantGolfRound.count()).resolves.toBe(0);
     await expect(prisma.sportEventParticipantGolfStanding.count()).resolves.toBe(0);
   });
 
-  it('counts tiers and contests per event, zero where there are none', async () => {
+  it('counts tiers per event slot and contests per event, zero where there are none', async () => {
     const { events, tiers } = repos();
     const withTiers = await createEvent('With Tiers');
     const bare = await createEvent('Bare');
-    await createTierRows(tiers, withTiers.id, TIERS);
+    const [tieredSlot, bareSlot] = [await slotOf(withTiers), await slotOf(bare)];
+    await createTierRows(tiers, tieredSlot.id, TIERS);
     const fixture = await createContestFixture(withTiers.id);
 
-    expect(await events.countTiers([withTiers.id, bare.id])).toEqual(new Map([[withTiers.id, 2], [bare.id, 0]]));
+    expect(await events.countTiers([tieredSlot.id, bareSlot.id])).toEqual(new Map([[tieredSlot.id, 2], [bareSlot.id, 0]]));
     expect(await events.countContests([withTiers.id, bare.id])).toEqual(new Map([[withTiers.id, 1], [bare.id, 0]]));
     expect(fixture.contestId).toBeDefined();
   });
@@ -191,20 +199,21 @@ describe('SportEventRepository — writes', () => {
     const { events, tiers, field, valuations } = repos();
     const event = await createEvent('Empty Tiers');
     const bare = await createEvent('No Tiers');
-    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', tierNumber: 3 }]);
+    await createTierRows(tiers, (await slotOf(event)).id, [...TIERS, { tierKey: 'tier-3', tierNumber: 3 }]);
     const [active, withdrawn] = await createParticipants(['Active Golfer', 'Withdrawn Golfer']);
     await field.createMany(event.id, [{ participantId: active.id }, { participantId: withdrawn.id }]);
     await getPrisma().sportEventParticipant.updateMany({ where: { participantId: withdrawn.id }, data: { status: 'WITHDRAWN' } });
     const entries = await field.findBySportEvent(event.id);
-    const [tier1, tier2] = await tiers.findBySportEvent(event.id);
-    await valuations.assignTiers(entries.map((entry) => ({
+    const [tier1, tier2] = await tiers.findBySlot((await slotOf(event)).id);
+    await valuations.assignTiers(await slotOf(event), entries.map((entry) => ({
       sportEventParticipantId: entry.id,
-      sportEventTierId: entry.participantId === active.id ? tier1.id : tier2.id,
+      sportEventSlotTierId: entry.participantId === active.id ? tier1.id : tier2.id,
       tierOrderIndex: 1,
       source: 'MANUAL',
     })));
 
-    expect(await events.findEmptyTierNumbers([event.id, bare.id])).toEqual(new Map([[event.id, [2, 3]], [bare.id, []]]));
+    const [slot, bareSlot] = [await slotOf(event), await slotOf(bare)];
+    expect(await events.findEmptyTierNumbers([slot.id, bareSlot.id])).toEqual(new Map([[slot.id, [2, 3]], [bareSlot.id, []]]));
   });
 
   it('finds the lifecycle scheduler\'s candidates: auto lifecycle on and scheduled, in progress or postponed, linked to a provider or not', async () => {
@@ -413,7 +422,8 @@ describe('SportEventParticipantRepository — the field', () => {
     await field.createMany(event.id, [{ participantId: ana.id, ranking: 5, seedNumber: 1 }]);
     const [entry] = await field.findBySportEvent(event.id);
 
-    await field.updateMany([{ id: entry.id, updates: { ranking: null, oddsToWin: 12.5 }, price: 9.5 }]);
+    const slot = await slotOf(event);
+    await field.updateMany([{ id: entry.id, updates: { ranking: null, oddsToWin: 12.5 }, valuation: { slot, price: 9.5 } }]);
     await expect(field.updateMany([
       { id: entry.id, updates: { seedNumber: 7 } },
       { id: randomUUID(), updates: { seedNumber: 8 } },
@@ -421,8 +431,8 @@ describe('SportEventParticipantRepository — the field', () => {
 
     const [after] = await field.findBySportEvent(event.id);
     expect(after).toMatchObject({ ranking: undefined, oddsToWin: 12.5, seedNumber: 1 });
-    const [valuation] = await valuations.findBySportEvent(event.id);
-    expect(valuation).toMatchObject({ price: 9.5, priceAssignedSource: 'MANUAL', sportEventTierId: null });
+    const [valuation] = await valuations.findBySlot((await slotOf(event)).id);
+    expect(valuation).toMatchObject({ price: 9.5, priceAssignedSource: 'MANUAL', sportEventSlotTierId: null });
   });
 
   it('removes a field row with its valuation, standing and scored rounds, and counts picks', async () => {
@@ -433,7 +443,7 @@ describe('SportEventParticipantRepository — the field', () => {
     await field.delete(entry.id);
 
     await expect(field.findBySportEvent(event.id)).resolves.toEqual([]);
-    await expect(getPrisma().sportEventParticipantValuation.count()).resolves.toBe(0);
+    await expect(getPrisma().sportEventSlotParticipantValuation.count()).resolves.toBe(0);
     await expect(getPrisma().sportEventParticipantStanding.count()).resolves.toBe(0);
     await expect(getPrisma().sportEventParticipantRound.count()).resolves.toBe(0);
   });
@@ -453,160 +463,166 @@ describe('SportEventParticipantRepository — the field', () => {
   });
 });
 
-describe('SportEventTierRepository and valuations', () => {
+describe('SportEventSlotTierRepository and valuations', () => {
   it('replaces tiers: swaps numbers without a unique clash and moves a removed tier\'s valuations to the named tier', async () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await createTierRows(tiers, event.id, [...TIERS, { tierKey: 'tier-3', tierNumber: 3 }]);
+    await createTierRows(tiers, (await slotOf(event)).id, [...TIERS, { tierKey: 'tier-3', tierNumber: 3 }]);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
-    const tier3 = (await tiers.findBySportEvent(event.id))[2];
-    await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier3.id, tierOrderIndex: 4, source: 'AUTO_ODDS' }]);
+    const tier3 = (await tiers.findBySlot((await slotOf(event)).id))[2];
+    await valuations.assignTiers(await slotOf(event), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier3.id, tierOrderIndex: 4, source: 'AUTO_ODDS' }]);
 
-    await tiers.replace(event.id, [
+    await tiers.replace((await slotOf(event)).id, [
       { tierKey: 'tier-1', tierNumber: 2 },
       { tierKey: 'tier-2', tierNumber: 1 },
     ], 'tier-2');
 
-    const after = await tiers.findBySportEvent(event.id);
+    const after = await tiers.findBySlot((await slotOf(event)).id);
     expect(after.map((tier) => [tier.tierKey, tier.tierNumber])).toEqual([['tier-2', 1], ['tier-1', 2]]);
-    const [valuation] = await valuations.findBySportEvent(event.id);
-    expect(valuation).toMatchObject({ sportEventTierId: after[0].id, tierOrderIndex: null });
-    expect(await tiers.countValuations(event.id)).toEqual(new Map([[after[0].id, 1]]));
+    const [valuation] = await valuations.findBySlot((await slotOf(event)).id);
+    expect(valuation).toMatchObject({ sportEventSlotTierId: after[0].id, tierOrderIndex: null });
+    expect(await tiers.countValuations((await slotOf(event)).id)).toEqual(new Map([[after[0].id, 1]]));
   });
 
   it('moves a removed tier\'s valuations to a tier added in the same save', async () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await createTierRows(tiers, event.id, TIERS);
+    await createTierRows(tiers, (await slotOf(event)).id, TIERS);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
-    const [, tier2] = await tiers.findBySportEvent(event.id);
-    await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    const [, tier2] = await tiers.findBySlot((await slotOf(event)).id);
+    await valuations.assignTiers(await slotOf(event), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
 
-    await tiers.replace(event.id, [TIERS[0], { tierKey: 'tier-late', tierNumber: 2 }], 'tier-late');
+    await tiers.replace((await slotOf(event)).id, [TIERS[0], { tierKey: 'tier-late', tierNumber: 2 }], 'tier-late');
 
-    const after = await tiers.findBySportEvent(event.id);
+    const after = await tiers.findBySlot((await slotOf(event)).id);
     expect(after.map((tier) => [tier.tierKey, tier.tierNumber])).toEqual([['tier-1', 1], ['tier-late', 2]]);
-    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: after[1].id, tierOrderIndex: null })]);
+    await expect(valuations.findBySlot((await slotOf(event)).id)).resolves.toEqual([expect.objectContaining({ sportEventSlotTierId: after[1].id, tierOrderIndex: null })]);
   });
 
   it('leaves a removed tier\'s valuations without a tier or a tier source when no target is named, so release counts them untiered', async () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await createTierRows(tiers, event.id, TIERS);
+    await createTierRows(tiers, (await slotOf(event)).id, TIERS);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
-    const [, tier2] = await tiers.findBySportEvent(event.id);
-    await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    const [, tier2] = await tiers.findBySlot((await slotOf(event)).id);
+    await valuations.assignTiers(await slotOf(event), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
 
-    await tiers.replace(event.id, [TIERS[0]]);
+    await tiers.replace((await slotOf(event)).id, [TIERS[0]]);
 
-    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: null, tierAssignedSource: null })]);
-    await expect(repos().events.countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 1]]));
+    await expect(valuations.findBySlot((await slotOf(event)).id)).resolves.toEqual([expect.objectContaining({ sportEventSlotTierId: null, tierAssignedSource: null })]);
+    await expect(repos().events.countUntieredActiveParticipants([await slotOf(event)])).resolves.toEqual(new Map([[(await slotOf(event)).id, 1]]));
   });
 
-  it('counts the valuations in each of one event\'s tiers by reading only that event\'s valuations, not every valuation of every event', async () => {
+  it('counts the valuations in each of one slot\'s tiers by reading only that slot\'s valuations, not every valuation of every event', async () => {
     const { tiers, valuations, field } = repos();
     const [event, other] = [await createEvent('Counted'), await createEvent('Other')];
     const [ana, ben, cal] = await createParticipants(['Ana', 'Ben', 'Cal']);
-    for (const created of [event, other]) await createTierRows(tiers, created.id, TIERS);
+    for (const created of [event, other]) await createTierRows(tiers, (await slotOf(created)).id, TIERS);
     await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
     await field.createMany(other.id, [{ participantId: cal.id }]);
-    const [tier1] = await tiers.findBySportEvent(event.id);
-    const [otherTier1] = await tiers.findBySportEvent(other.id);
+    const [tier1] = await tiers.findBySlot((await slotOf(event)).id);
+    const [otherTier1] = await tiers.findBySlot((await slotOf(other)).id);
     const [anaRow, benRow] = await field.findBySportEvent(event.id);
     const [calRow] = await field.findBySportEvent(other.id);
-    await valuations.assignTiers([
-      { sportEventParticipantId: anaRow.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' },
-      { sportEventParticipantId: benRow.id, sportEventTierId: tier1.id, tierOrderIndex: 2, source: 'MANUAL' },
-      { sportEventParticipantId: calRow.id, sportEventTierId: otherTier1.id, tierOrderIndex: 1, source: 'MANUAL' },
+    await valuations.assignTiers(await slotOf(event), [
+      { sportEventParticipantId: anaRow.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' },
+      { sportEventParticipantId: benRow.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 2, source: 'MANUAL' },
+    ]);
+    await valuations.assignTiers(await slotOf(other), [
+      { sportEventParticipantId: calRow.id, sportEventSlotTierId: otherTier1.id, tierOrderIndex: 1, source: 'MANUAL' },
     ]);
 
-    const { result, statements } = await recordStatements(() => tiers.countValuations(event.id));
+    const countedSlot = await slotOf(event);
+    const { result, statements } = await recordStatements(() => tiers.countValuations(countedSlot.id));
 
     expect(result).toEqual(new Map([[tier1.id, 2]]));
     expect(statements).toHaveLength(1);
     expect(statements.map((statement) => statementShape(statement.sql)).join('\n'))
-      .not.toContain('FROM "public"."sport_event_participant_valuations" WHERE 1=1');
+      .not.toContain('FROM "public"."sport_event_slot_participant_valuations" WHERE 1=1');
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'countValuations' })))).resolves.toEqual([]);
   });
 
-  it('reads several events\' tiers, each in tier order, and their valuations at once, leaving out events not asked for', async () => {
+  it('reads several slots\' tiers, each in tier order, and their valuations at once, leaving out slots not asked for', async () => {
     const { tiers, valuations, field } = repos();
     const [first, second, other] = [await createEvent('First'), await createEvent('Second'), await createEvent('Other')];
     const [ana, ben, cal] = await createParticipants(['Ana', 'Ben', 'Cal']);
-    for (const event of [first, second, other]) await createTierRows(tiers, event.id, [TIERS[1], TIERS[0]]);
+    for (const event of [first, second, other]) await createTierRows(tiers, (await slotOf(event)).id, [TIERS[1], TIERS[0]]);
     await field.createMany(first.id, [{ participantId: ana.id }]);
     await field.createMany(second.id, [{ participantId: ben.id }]);
     await field.createMany(other.id, [{ participantId: cal.id }]);
-    const assign = async (sportEventId: string) => {
-      const [entry] = await field.findBySportEvent(sportEventId);
-      const [tier] = await tiers.findBySportEvent(sportEventId);
-      await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    const assign = async (event: { id: string }) => {
+      const slot = await slotOf(event);
+      const [entry] = await field.findBySportEvent(event.id);
+      const [tier] = await tiers.findBySlot(slot.id);
+      await valuations.assignTiers(slot, [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
       return entry;
     };
-    const [anaRow, benRow] = [await assign(first.id), await assign(second.id)];
-    await assign(other.id);
+    const [anaRow, benRow] = [await assign(first), await assign(second)];
+    await assign(other);
+    const slotIds = [(await slotOf(first)).id, (await slotOf(second)).id];
 
-    const read = await tiers.findBySportEvents([first.id, second.id]);
-    for (const event of [first, second]) {
-      expect(read.filter((tier) => tier.sportEventId === event.id).map((tier) => tier.tierNumber)).toEqual([1, 2]);
+    const read = await tiers.findBySlots(slotIds);
+    for (const slotId of slotIds) {
+      expect(read.filter((tier) => tier.sportEventSlotId === slotId).map((tier) => tier.tierNumber)).toEqual([1, 2]);
     }
     expect(read).toHaveLength(4);
-    expect((await valuations.findBySportEvents([first.id, second.id])).map((row) => row.sportEventParticipantId).sort())
+    expect((await valuations.findBySlots(slotIds)).map((row) => row.sportEventParticipantId).sort())
       .toEqual([anaRow.id, benRow.id].sort());
-    expect(await tiers.findBySportEvents([])).toEqual([]);
-    expect(await valuations.findBySportEvents([])).toEqual([]);
+    expect(await tiers.findBySlots([])).toEqual([]);
+    expect(await valuations.findBySlots([])).toEqual([]);
   });
 
   it('sets tier and price independently, each leaving the other in place', async () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
-    await createTierRows(tiers, event.id, TIERS);
+    await createTierRows(tiers, (await slotOf(event)).id, TIERS);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
-    const [tier1] = await tiers.findBySportEvent(event.id);
+    const [tier1] = await tiers.findBySlot((await slotOf(event)).id);
 
-    await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_RANKING' }]);
-    await valuations.assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await valuations.assignTiers(await slotOf(event), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_RANKING' }]);
+    await valuations.assignSlotPrices({
+      slot: await slotOf(event),
+      pricing: await standardPricingIn(getPrisma()),
       assignments: [{ sportEventParticipantId: entry.id, price: 15, source: 'AUTO_ODDS' }],
     });
 
-    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({
-      sportEventTierId: tier1.id, tierAssignedSource: 'AUTO_RANKING', price: 15, priceAssignedSource: 'AUTO_ODDS',
+    await expect(valuations.findBySlot((await slotOf(event)).id)).resolves.toEqual([expect.objectContaining({
+      sportEventSlotTierId: tier1.id, tierAssignedSource: 'AUTO_RANKING', price: 15, priceAssignedSource: 'AUTO_ODDS',
     })]);
   });
 
-  it('tiers a field and records the tier layout on the event in one write, read back typed (#1844)', async () => {
-    const { events, tiers, valuations, field } = repos();
+  it('tiers a field and records the tier profile and size on its slot in one write, read back typed (#1844)', async () => {
+    const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana, ben] = await createParticipants(['Ana', 'Ben']);
-    await createTierRows(tiers, event.id, TIERS);
+    await createTierRows(tiers, (await slotOf(event)).id, TIERS);
     await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
     const [first, second] = await field.findBySportEvent(event.id);
-    const [tier1] = await tiers.findBySportEvent(event.id);
-    const tierConfig = { profileName: '1 tier of 1, capped', type: 'EQUAL_GROUPS' as const, tierCount: 1, tierSize: 1, lastTier: 'CAPPED' as const, lastTierMax: 1 };
+    const [tier1] = await tiers.findBySlot((await slotOf(event)).id);
+    const profile = await getPrisma().platformTierProfile.findFirstOrThrow({ where: { type: 'EQUAL_GROUPS' }, orderBy: { code: 'asc' } });
 
-    await valuations.assignEventTiers({
-      sportEventId: event.id,
-      tierConfig,
+    await valuations.assignSlotTiers({
+      slot: await slotOf(event),
+      tierSettings: { platformTierProfileId: profile.id, tierSize: 1 },
       assignments: [
-        { sportEventParticipantId: first.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_ODDS' },
-        { sportEventParticipantId: second.id, sportEventTierId: null, tierOrderIndex: 2, source: 'AUTO_ODDS' },
+        { sportEventParticipantId: first.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_ODDS' },
+        { sportEventParticipantId: second.id, sportEventSlotTierId: null, tierOrderIndex: 2, source: 'AUTO_ODDS' },
       ],
     });
 
-    expect((await events.findById(event.id))?.tierConfig).toEqual(tierConfig);
-    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual(expect.arrayContaining([
-      expect.objectContaining({ sportEventParticipantId: first.id, sportEventTierId: tier1.id }),
-      expect.objectContaining({ sportEventParticipantId: second.id, sportEventTierId: null, tierAssignedSource: 'AUTO_ODDS' }),
+    const [read] = expectDefined((await tiers.findTierSlots([event.id])).get(event.id), 'the event\'s slots');
+    expect(read.tierLayout).toMatchObject({ platformTierProfileId: profile.id, type: 'EQUAL_GROUPS', tierSize: 1 });
+    await expect(valuations.findBySlot((await slotOf(event)).id)).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ sportEventParticipantId: first.id, sportEventSlotTierId: tier1.id }),
+      expect.objectContaining({ sportEventParticipantId: second.id, sportEventSlotTierId: null, tierAssignedSource: 'AUTO_ODDS' }),
     ]));
   });
 
@@ -614,7 +630,7 @@ describe('SportEventTierRepository and valuations', () => {
     const { events, tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana, ben, cal, dee] = await createParticipants(['Ana', 'Ben', 'Cal', 'Dee']);
-    await createTierRows(tiers, event.id, TIERS);
+    await createTierRows(tiers, (await slotOf(event)).id, TIERS);
     await field.createMany(event.id, [
       { participantId: ana.id },
       { participantId: ben.id },
@@ -623,13 +639,13 @@ describe('SportEventTierRepository and valuations', () => {
     ]);
     const rows = await field.findBySportEvent(event.id);
     const entryOf = (participantId: string) => expectDefined(rows.find((row) => row.participantId === participantId)).id;
-    const [tier1] = await tiers.findBySportEvent(event.id);
-    await valuations.assignTiers([
-      { sportEventParticipantId: entryOf(ana.id), sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_ODDS' },
-      { sportEventParticipantId: entryOf(ben.id), sportEventTierId: null, tierOrderIndex: 2, source: 'AUTO_ODDS' },
+    const [tier1] = await tiers.findBySlot((await slotOf(event)).id);
+    await valuations.assignTiers(await slotOf(event), [
+      { sportEventParticipantId: entryOf(ana.id), sportEventSlotTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_ODDS' },
+      { sportEventParticipantId: entryOf(ben.id), sportEventSlotTierId: null, tierOrderIndex: 2, source: 'AUTO_ODDS' },
     ]);
 
-    await expect(events.countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 1]]));
+    await expect(events.countUntieredActiveParticipants([await slotOf(event)])).resolves.toEqual(new Map([[(await slotOf(event)).id, 1]]));
   });
 });
 
@@ -656,45 +672,47 @@ describe('The sport league\'s first squares round on the event read', () => {
   });
 });
 
-describe('Budget pricing on the event (#93)', () => {
-  it('prices the field and records the pricing values on the event in one write, read back typed', async () => {
-    const { events, valuations, field } = repos();
+describe('Budget pricing on the event slot (#93, #2044)', () => {
+  it('prices the field and records the pricing values on its slot in one write, read back typed with the profile\'s name', async () => {
+    const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana, ben] = await createParticipants(['Ana', 'Ben']);
     await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
     const [first, second] = await field.findBySportEvent(event.id);
 
-    await valuations.assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await valuations.assignSlotPrices({
+      slot: await slotOf(event),
+      pricing: await standardPricingIn(getPrisma()),
       assignments: [
         { sportEventParticipantId: first.id, price: 12000, source: 'AUTO_RANKING' },
         { sportEventParticipantId: second.id, price: 6000, source: 'AUTO_RANKING' },
       ],
     });
 
-    expect((await events.findById(event.id))?.pricingConfig).toEqual(standardEventPricing());
-    expect((await valuations.findBySportEvent(event.id)).map((row) => row.price)).toEqual(expect.arrayContaining([12000, 6000]));
+    const [read] = expectDefined((await tiers.findTierSlots([event.id])).get(event.id), 'the event\'s slots');
+    expect(read.pricing).toEqual({ ...(await standardPricingIn(getPrisma())), profileName: 'Standard' });
+    expect((await valuations.findBySlot((await slotOf(event)).id)).map((row) => row.price)).toEqual(expect.arrayContaining([12000, 6000]));
   });
 
-  it('writes neither the prices nor the event\'s pricing values when one price fails', async () => {
-    const { events, valuations, field } = repos();
+  it('writes neither the prices nor the slot\'s pricing values when one price fails', async () => {
+    const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
     await field.createMany(event.id, [{ participantId: ana.id }]);
     const [entry] = await field.findBySportEvent(event.id);
 
-    await expect(valuations.assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await expect(valuations.assignSlotPrices({
+      slot: await slotOf(event),
+      pricing: await standardPricingIn(getPrisma()),
       assignments: [
         { sportEventParticipantId: entry.id, price: 12000, source: 'AUTO_RANKING' },
         { sportEventParticipantId: randomUUID(), price: 6000, source: 'AUTO_RANKING' },
       ],
     })).rejects.toBeDefined();
 
-    expect((await events.findById(event.id))?.pricingConfig).toBeUndefined();
-    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([]);
+    const [read] = expectDefined((await tiers.findTierSlots([event.id])).get(event.id), 'the event\'s slots');
+    expect(read.pricing).toBeNull();
+    await expect(valuations.findBySlot((await slotOf(event)).id)).resolves.toEqual([]);
   });
 
   it('counts the active golfers with no price, skipping withdrawn ones and ones priced manually', async () => {
@@ -709,13 +727,13 @@ describe('Budget pricing on the event (#93)', () => {
     ]);
     const rows = await field.findBySportEvent(event.id);
     const priced = expectDefined(rows.find((row) => row.participantId === ana.id));
-    await valuations.assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await valuations.assignSlotPrices({
+      slot: await slotOf(event),
+      pricing: await standardPricingIn(getPrisma()),
       assignments: [{ sportEventParticipantId: priced.id, price: 9000, source: 'MANUAL' }],
     });
 
-    await expect(events.countUnpricedActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 2]]));
+    await expect(events.countUnpricedActiveParticipants([await slotOf(event)])).resolves.toEqual(new Map([[(await slotOf(event)).id, 2]]));
   });
 });
 

@@ -19,6 +19,7 @@ import {
   TemplateCoverageMode,
   TournamentFormat,
   LeaguePlan,
+  SeasonSlotStatus,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -2675,6 +2676,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
         sportEvents: store.sportEventRepo(),
         sports: store.sportRepo(),
         field: store.fieldRepo(),
+        tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),
@@ -2996,6 +2998,7 @@ describe('createContestSportEventReader.findByIds (#1355)', () => {
       sportEvents: store.sportEventRepo(),
       sports: store.sportRepo(),
       field: store.fieldRepo(),
+      tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
     });
@@ -3017,7 +3020,8 @@ describe('createContestSportEventReader field, game and price reads', () => {
       sportEvents: store.sportEventRepo(),
       sports: store.sportRepo(),
       field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
-      valuations: { findBySportEvent: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
+      tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isFirstSlot: true, tierLayout: null, pricing: null }]]]) },
+      valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
       matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
     });
   }
@@ -3061,6 +3065,7 @@ describe('createContestSportEventReader event and game counts', () => {
       sportEvents: countParticipants ? { ...sportEvents, countParticipants } : sportEvents,
       sports: store.sportRepo(),
       field: store.fieldRepo(),
+      tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
     });
@@ -3125,6 +3130,7 @@ describe('createBatchedContestOpeningReader', () => {
         sportEvents: { ...sportEvents, ...overrides },
         sports: { ...sports, findAll: () => { sportReads.count += 1; return sports.findAll(); } },
         field: store.fieldRepo(),
+        tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),

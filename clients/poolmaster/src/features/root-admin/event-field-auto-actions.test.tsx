@@ -113,7 +113,7 @@ function fieldEntry(
 }
 
 function tier(n: number, tierNumber = n) {
-  return tierFixture({ id: `tier-id-${n}`, sportEventId: 'evt-1', tierKey: `tier-${n}`, tierNumber });
+  return tierFixture({ id: `tier-id-${n}`, tierKey: `tier-${n}`, tierNumber });
 }
 
 function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {}) {
@@ -180,12 +180,13 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
   it('prices the field with its sport league\'s profile, previewing the best and worst price in domain words, and with a changed one', async () => {
     seed({ tournament: { pricing: null } });
+    const [small] = platformPricingProfilesFixture();
     autoAssignEventPricesMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
-    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue('Standard');
+    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveDisplayValue('Standard');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('50000');
     expect(screen.getByTestId('root-admin-tier-auto-prices-preview')).toHaveTextContent(
       'Best participant $12,000, worst $6,000, across 3 active participants.',
@@ -201,7 +202,8 @@ describe('the Field section\'s automatic tiers and prices', () => {
       expect(autoAssignEventPricesMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
-          body: { profileName: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 1 },
+          // The profile goes by its id; its name is the picker's label only (#2044).
+          body: { platformPricingProfileId: small.id, salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 1 },
         }),
       ),
     );
@@ -215,7 +217,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
-    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue('Small');
+    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveDisplayValue('Small');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('5000');
     const [request] = getSportLeagueMock.mock.calls[0] as [{ path: { sportLeagueId: string } }];
     expect(request.path.sportLeagueId).toBe('league-1');
@@ -263,7 +265,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
   });
 
   it('starts the price dialog from the values the event was last priced with', async () => {
-    seed({ tournament: { pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
+    seed({ tournament: { pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
     renderPage();
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());

@@ -1,8 +1,8 @@
 import { priceFieldOnBudgetCurve } from '@poolmaster/shared/domain';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { inMemoryStandardPricing } from '../../support/budget-pricing';
 
 describe('priceFieldOnBudgetCurve — a pricing profile\'s budget curve (#93), over a field already in order', () => {
-  const standard = standardEventPricing();
+  const standard = inMemoryStandardPricing();
   const field = (size: number) => Array.from({ length: size }, (_, i) => `p-${i + 1}`);
 
   it('prices a 144-participant field with the Standard profile from $12,000 at the top to $6,000 at the bottom, steepest at the top', () => {

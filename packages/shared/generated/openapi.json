@@ -28827,7 +28827,7 @@
             "description": "The event's field size: the teams or players on its field, counted on each read. 0 until the field loads."
           },
           "pricing": {
-            "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
+            "description": "The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event.",
             "type": [
               "object",
               "null"
@@ -28863,14 +28863,14 @@
                 "maximum": 10,
                 "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
               },
+              "platformPricingProfileId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+              },
               "profileName": {
                 "type": "string",
-                "minLength": 1,
-                "maxLength": 50,
-                "description": "The profile the values started from. The admin may have changed any value before assigning.",
-                "x-transform": [
-                  "trim"
-                ]
+                "description": "The name of the pricing profile the values started from, a label only."
               }
             },
             "required": [
@@ -28879,12 +28879,13 @@
               "topSharePercent",
               "floorSharePercent",
               "steepness",
+              "platformPricingProfileId",
               "profileName"
             ],
             "additionalProperties": false
           },
           "tierLayout": {
-            "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
+            "description": "The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.",
             "anyOf": [
               {
                 "type": [
@@ -28927,11 +28928,16 @@
                     "minimum": 1,
                     "maximum": 500
                   },
+                  "platformTierProfileId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                  },
                   "profileName": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 50,
-                    "description": "The tier profile the layout came from.",
+                    "description": "That profile's name, a label only.",
                     "x-transform": [
                       "trim"
                     ]
@@ -28943,6 +28949,7 @@
                   "tierSize",
                   "lastTier",
                   "lastTierMax",
+                  "platformTierProfileId",
                   "profileName"
                 ],
                 "additionalProperties": false
@@ -28998,11 +29005,16 @@
                     },
                     "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
                   },
+                  "platformTierProfileId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                  },
                   "profileName": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 50,
-                    "description": "The tier profile the layout came from.",
+                    "description": "That profile's name, a label only.",
                     "x-transform": [
                       "trim"
                     ]
@@ -29011,6 +29023,7 @@
                 "required": [
                   "type",
                   "ranges",
+                  "platformTierProfileId",
                   "profileName"
                 ],
                 "additionalProperties": false
@@ -29082,7 +29095,7 @@
           },
           "tiersLocked": {
             "type": "boolean",
-            "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+            "description": "Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
           },
           "slotDefinitionIds": {
             "type": "array",
@@ -29897,7 +29910,7 @@
                   "description": "The event's field size: the teams or players on its field, counted on each read. 0 until the field loads."
                 },
                 "pricing": {
-                  "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
+                  "description": "The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event.",
                   "type": [
                     "object",
                     "null"
@@ -29933,14 +29946,14 @@
                       "maximum": 10,
                       "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
                     },
+                    "platformPricingProfileId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+                    },
                     "profileName": {
                       "type": "string",
-                      "minLength": 1,
-                      "maxLength": 50,
-                      "description": "The profile the values started from. The admin may have changed any value before assigning.",
-                      "x-transform": [
-                        "trim"
-                      ]
+                      "description": "The name of the pricing profile the values started from, a label only."
                     }
                   },
                   "required": [
@@ -29949,12 +29962,13 @@
                     "topSharePercent",
                     "floorSharePercent",
                     "steepness",
+                    "platformPricingProfileId",
                     "profileName"
                   ],
                   "additionalProperties": false
                 },
                 "tierLayout": {
-                  "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
+                  "description": "The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.",
                   "anyOf": [
                     {
                       "type": [
@@ -29997,11 +30011,16 @@
                           "minimum": 1,
                           "maximum": 500
                         },
+                        "platformTierProfileId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                        },
                         "profileName": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 50,
-                          "description": "The tier profile the layout came from.",
+                          "description": "That profile's name, a label only.",
                           "x-transform": [
                             "trim"
                           ]
@@ -30013,6 +30032,7 @@
                         "tierSize",
                         "lastTier",
                         "lastTierMax",
+                        "platformTierProfileId",
                         "profileName"
                       ],
                       "additionalProperties": false
@@ -30068,11 +30088,16 @@
                           },
                           "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
                         },
+                        "platformTierProfileId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                        },
                         "profileName": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 50,
-                          "description": "The tier profile the layout came from.",
+                          "description": "That profile's name, a label only.",
                           "x-transform": [
                             "trim"
                           ]
@@ -30081,6 +30106,7 @@
                       "required": [
                         "type",
                         "ranges",
+                        "platformTierProfileId",
                         "profileName"
                       ],
                       "additionalProperties": false
@@ -30152,7 +30178,7 @@
                 },
                 "tiersLocked": {
                   "type": "boolean",
-                  "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+                  "description": "Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
                 },
                 "slotDefinitionIds": {
                   "type": "array",
@@ -30921,7 +30947,7 @@
                 "description": "The event's field size: the teams or players on its field, counted on each read. 0 until the field loads."
               },
               "pricing": {
-                "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
+                "description": "The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event.",
                 "type": [
                   "object",
                   "null"
@@ -30957,14 +30983,14 @@
                     "maximum": 10,
                     "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
                   },
+                  "platformPricingProfileId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+                  },
                   "profileName": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 50,
-                    "description": "The profile the values started from. The admin may have changed any value before assigning.",
-                    "x-transform": [
-                      "trim"
-                    ]
+                    "description": "The name of the pricing profile the values started from, a label only."
                   }
                 },
                 "required": [
@@ -30973,12 +30999,13 @@
                   "topSharePercent",
                   "floorSharePercent",
                   "steepness",
+                  "platformPricingProfileId",
                   "profileName"
                 ],
                 "additionalProperties": false
               },
               "tierLayout": {
-                "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
+                "description": "The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.",
                 "anyOf": [
                   {
                     "type": [
@@ -31021,11 +31048,16 @@
                         "minimum": 1,
                         "maximum": 500
                       },
+                      "platformTierProfileId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                      },
                       "profileName": {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 50,
-                        "description": "The tier profile the layout came from.",
+                        "description": "That profile's name, a label only.",
                         "x-transform": [
                           "trim"
                         ]
@@ -31037,6 +31069,7 @@
                       "tierSize",
                       "lastTier",
                       "lastTierMax",
+                      "platformTierProfileId",
                       "profileName"
                     ],
                     "additionalProperties": false
@@ -31092,11 +31125,16 @@
                         },
                         "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
                       },
+                      "platformTierProfileId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                      },
                       "profileName": {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 50,
-                        "description": "The tier profile the layout came from.",
+                        "description": "That profile's name, a label only.",
                         "x-transform": [
                           "trim"
                         ]
@@ -31105,6 +31143,7 @@
                     "required": [
                       "type",
                       "ranges",
+                      "platformTierProfileId",
                       "profileName"
                     ],
                     "additionalProperties": false
@@ -31176,7 +31215,7 @@
               },
               "tiersLocked": {
                 "type": "boolean",
-                "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+                "description": "Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
               },
               "slotDefinitionIds": {
                 "type": "array",
@@ -32438,9 +32477,10 @@
             "type": "string",
             "format": "uuid"
           },
-          "sportEventId": {
+          "seasonSlotId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "The Season slot of the event whose tier set the tier is in (#2044)."
           },
           "tierKey": {
             "type": "string",
@@ -32455,12 +32495,12 @@
         },
         "required": [
           "id",
-          "sportEventId",
+          "seasonSlotId",
           "tierKey",
           "tierNumber"
         ],
         "additionalProperties": false,
-        "description": "A pick tier an event's field is divided into. Who is in it is on each field row's valuation."
+        "description": "A pick tier of an event slot's team tier set (#2044). Who is in it is on each field row's valuation."
       },
       "SportEventTierListResponse": {
         "type": "object",
@@ -32474,9 +32514,10 @@
                   "type": "string",
                   "format": "uuid"
                 },
-                "sportEventId": {
+                "seasonSlotId": {
                   "type": "string",
-                  "format": "uuid"
+                  "format": "uuid",
+                  "description": "The Season slot of the event whose tier set the tier is in (#2044)."
                 },
                 "tierKey": {
                   "type": "string",
@@ -32491,12 +32532,12 @@
               },
               "required": [
                 "id",
-                "sportEventId",
+                "seasonSlotId",
                 "tierKey",
                 "tierNumber"
               ],
               "additionalProperties": false,
-              "description": "A pick tier an event's field is divided into. Who is in it is on each field row's valuation."
+              "description": "A pick tier of an event slot's team tier set (#2044). Who is in it is on each field row's valuation."
             },
             "description": "By tier number."
           }
@@ -32595,7 +32636,7 @@
         "additionalProperties": false,
         "description": "The drag-and-drop tier save."
       },
-      "EventPricingConfig": {
+      "SlotPricingDto": {
         "type": "object",
         "properties": {
           "salaryCap": {
@@ -32628,14 +32669,14 @@
             "maximum": 10,
             "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
           },
+          "platformPricingProfileId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+          },
           "profileName": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "The profile the values started from. The admin may have changed any value before assigning.",
-            "x-transform": [
-              "trim"
-            ]
+            "description": "The name of the pricing profile the values started from, a label only."
           }
         },
         "required": [
@@ -32644,13 +32685,14 @@
           "topSharePercent",
           "floorSharePercent",
           "steepness",
+          "platformPricingProfileId",
           "profileName"
         ],
         "additionalProperties": false,
-        "description": "The values an event's field was priced with for budget contests."
+        "description": "The values an event slot's set was priced with for budget contests, and the profile they started from (#2044)."
       },
-      "EventTierConfig": {
-        "description": "The tier layout an event's field was last auto-tiered with.",
+      "SlotTierLayout": {
+        "description": "The tier layout an event slot's set was last auto-tiered with: its tier profile's, with any tier size an admin sent instead.",
         "anyOf": [
           {
             "type": "object",
@@ -32690,11 +32732,16 @@
                 "minimum": 1,
                 "maximum": 500
               },
+              "platformTierProfileId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+              },
               "profileName": {
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 50,
-                "description": "The tier profile the layout came from.",
+                "description": "That profile's name, a label only.",
                 "x-transform": [
                   "trim"
                 ]
@@ -32706,6 +32753,7 @@
               "tierSize",
               "lastTier",
               "lastTierMax",
+              "platformTierProfileId",
               "profileName"
             ],
             "additionalProperties": false
@@ -32758,11 +32806,16 @@
                 },
                 "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
               },
+              "platformTierProfileId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+              },
               "profileName": {
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 50,
-                "description": "The tier profile the layout came from.",
+                "description": "That profile's name, a label only.",
                 "x-transform": [
                   "trim"
                 ]
@@ -32771,6 +32824,7 @@
             "required": [
               "type",
               "ranges",
+              "platformTierProfileId",
               "profileName"
             ],
             "additionalProperties": false
@@ -32810,14 +32864,10 @@
             "maximum": 10,
             "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
           },
-          "profileName": {
+          "platformPricingProfileId": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "The profile the values started from. The admin may have changed any value before assigning.",
-            "x-transform": [
-              "trim"
-            ]
+            "format": "uuid",
+            "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
           }
         },
         "required": [
@@ -32826,10 +32876,10 @@
           "topSharePercent",
           "floorSharePercent",
           "steepness",
-          "profileName"
+          "platformPricingProfileId"
         ],
         "additionalProperties": false,
-        "description": "Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed."
+        "description": "Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none)."
       },
       "SportEventParticipantValuationDto": {
         "type": "object",

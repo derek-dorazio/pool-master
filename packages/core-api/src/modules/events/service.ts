@@ -52,6 +52,7 @@ import {
   type SportEvent,
   SportEventStatus,
   type SportLeague,
+  type SportEventTierSlot,
   type SportLeagueSeasonSlot,
   slotDatesChange,
   sportLeagueDefinitionOf,
@@ -87,7 +88,13 @@ export interface SportEventAdminCounts {
 export interface SportEventSummary {
   event: SportEvent;
   participantCount: number;
+  /** Tiers in its first slot's set (#2044). */
   tierCount: number;
+  /**
+   * Its first slot in play order (#2044), whose set its tiers, prices and lock are today; null for
+   * an event covering no slot.
+   */
+  firstTierSlot: SportEventTierSlot | null;
   /** The Season slots it covers (#2004), in play order; empty for an event with none yet. */
   slots: SportLeagueSeasonSlot[];
   /** Null unless the read asked for them: see `SportEventAdminCounts`. */
@@ -769,7 +776,7 @@ export class SportEventService {
       participantCount: summary.participantCount,
       untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
       emptyTierNumbers: summary.adminCounts.emptyTierNumbers,
-      isPriced: event.pricingConfig !== undefined,
+      isPriced: (summary.firstTierSlot?.pricing ?? null) !== null,
       unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
       bracketBlockers,
       contestSetupCount: facts.contestSetupCount,
@@ -867,11 +874,13 @@ export class SportEventService {
     })));
     const tiersByEvent = await this.deps.tiers.createDefaultTiers(sportLeague, events.map((event) => event.id));
     return events.map((event, index): SportEventAdminSummary => {
-      const tiers = tiersByEvent.get(event.id) ?? [];
+      const made = tiersByEvent.get(event.id);
+      const tiers = made?.tiers ?? [];
       return {
         event,
         participantCount: 0,
         tierCount: tiers.length,
+        firstTierSlot: made?.slot ?? null,
         slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
         adminCounts: {
           untieredParticipantCount: 0,
@@ -900,42 +909,58 @@ export class SportEventService {
     return this.deps.now?.() ?? new Date();
   }
 
-  /** The counts every reader of an event needs, and its slots: three grouped reads for the whole list. */
+  /**
+   * The counts every reader of an event needs, its slots and its first slot's set (#2044): a fixed
+   * number of reads for the whole list.
+   */
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, tiers, slots] = await Promise.all([
+    const [participants, slots, firstTierSlots] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
-      this.deps.sportEvents.countTiers(ids),
       this.deps.sportEvents.findSlots(ids),
+      this.deps.tiers.firstTierSlots(ids),
     ]);
-    return events.map((event) => ({
-      event,
-      participantCount: participants.get(event.id) ?? 0,
-      tierCount: tiers.get(event.id) ?? 0,
-      slots: slots.get(event.id) ?? [],
-      adminCounts: null,
-    }));
+    const tiers = await this.deps.sportEvents.countTiers([...firstTierSlots.values()].map((slot) => slot.id));
+    return events.map((event) => {
+      const firstTierSlot = firstTierSlots.get(event.id) ?? null;
+      return {
+        event,
+        participantCount: participants.get(event.id) ?? 0,
+        tierCount: firstTierSlot === null ? 0 : tiers.get(firstTierSlot.id) ?? 0,
+        firstTierSlot,
+        slots: slots.get(event.id) ?? [],
+        adminCounts: null,
+      };
+    });
   }
 
   /** Every reader's counts and a root admin's own. */
   private async summarizeForAdmin(events: SportEvent[]): Promise<SportEventAdminSummary[]> {
     const ids = events.map((event) => event.id);
-    const [summaries, untiered, unpriced, emptyTiers, contests] = await Promise.all([
+    const [summaries, contests] = await Promise.all([
       this.summarize(events),
-      this.deps.sportEvents.countUntieredActiveParticipants(ids),
-      this.deps.sportEvents.countUnpricedActiveParticipants(ids),
-      this.deps.sportEvents.findEmptyTierNumbers(ids),
       this.deps.sportEvents.countContests(ids),
     ]);
-    return summaries.map((summary) => ({
-      ...summary,
-      adminCounts: {
-        untieredParticipantCount: untiered.get(summary.event.id) ?? 0,
-        unpricedParticipantCount: unpriced.get(summary.event.id) ?? 0,
-        emptyTierNumbers: emptyTiers.get(summary.event.id) ?? [],
-        contestCount: contests.get(summary.event.id) ?? 0,
-      },
-    }));
+    // An event covering no slot has no set: its counts are the empty set's.
+    const firstSlots = summaries.flatMap((summary) => (summary.firstTierSlot === null ? [] : [summary.firstTierSlot]));
+    const firstSlotIds = firstSlots.map((slot) => slot.id);
+    const [untiered, unpriced, emptyTiers] = await Promise.all([
+      this.deps.sportEvents.countUntieredActiveParticipants(firstSlots),
+      this.deps.sportEvents.countUnpricedActiveParticipants(firstSlots),
+      this.deps.sportEvents.findEmptyTierNumbers(firstSlotIds),
+    ]);
+    return summaries.map((summary) => {
+      const slotId = summary.firstTierSlot?.id;
+      return {
+        ...summary,
+        adminCounts: {
+          untieredParticipantCount: slotId === undefined ? 0 : untiered.get(slotId) ?? 0,
+          unpricedParticipantCount: slotId === undefined ? 0 : unpriced.get(slotId) ?? 0,
+          emptyTierNumbers: slotId === undefined ? [] : emptyTiers.get(slotId) ?? [],
+          contestCount: contests.get(summary.event.id) ?? 0,
+        },
+      };
+    });
   }
 }
 

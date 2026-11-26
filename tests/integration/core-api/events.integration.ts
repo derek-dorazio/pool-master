@@ -11,7 +11,8 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { fixtureSeasonId, freshEventEdition } from '../../support/event-edition';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { standardPricingIn } from '../../support/budget-pricing';
+import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
@@ -256,14 +257,17 @@ describe('events routes', () => {
         // A rank gives the field an order to tier and price by (#2040: never by name).
         data: { sportEventId: eventId, participantId, ranking: 1 },
       });
+      // Its one slot holds its tiers and prices (#2044).
+      const slot = await tierSetSlot(prisma, eventId);
       if (options.tiered) {
-        const tier = await prisma.sportEventTier.create({
-          data: { sportEventId: eventId, tierKey: 'A', tierNumber: 1 },
+        const tier = await prisma.sportEventSlotTier.create({
+          data: { sportEventSlotId: slot.id, tierKey: 'A', tierNumber: 1 },
         });
-        await prisma.sportEventParticipantValuation.create({
+        await prisma.sportEventSlotParticipantValuation.create({
           data: {
+            ...inTierSet(slot),
             sportEventParticipantId: entry.id,
-            sportEventTierId: tier.id,
+            sportEventSlotTierId: tier.id,
             tierOrderIndex: 1,
             tierAssignedSource: 'MANUAL',
           },
@@ -311,7 +315,7 @@ describe('events routes', () => {
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: admin.headers,
-        payload: standardEventPricing(),
+        payload: await standardPricingIn(getPrisma()),
       });
       expect(pricesRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(pricesRes.json()).success).toBe(true);
@@ -335,13 +339,13 @@ describe('events routes', () => {
       });
       expect(lockedTierRes.statusCode).toBe(409);
       expect(lockedTierRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_TIERS_LOCKED' } });
-      expect(releaseRes.json()).toMatchObject({ event: { pricing: standardEventPricing() } });
+      expect(releaseRes.json()).toMatchObject({ event: { pricing: await standardPricingIn(getPrisma()) } });
 
       const lockedPricesRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: admin.headers,
-        payload: { ...standardEventPricing(), salaryCap: 5000, unit: 10 },
+        payload: { ...(await standardPricingIn(getPrisma())), salaryCap: 5000, unit: 10 },
       });
       expect(lockedPricesRes.statusCode).toBe(409);
       expect(lockedPricesRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_TIERS_LOCKED' } });
@@ -374,14 +378,14 @@ describe('events routes', () => {
     it('refuses to release a tiered, priced draft that has an empty tier with 422 SPORT_EVENT_NOT_READY naming the tier by its number, and leaves it a draft', async () => {
       const admin = await createTestUser({ displayName: 'Release Empty Tier Admin', isRootAdmin: true });
       const eventId = await seedDraftGolfEvent({ tiered: true });
-      await getPrisma().sportEventTier.create({
-        data: { sportEventId: eventId, tierKey: 'B', tierNumber: 2 },
+      await getPrisma().sportEventSlotTier.create({
+        data: { sportEventSlotId: (await tierSetSlot(getPrisma(), eventId)).id, tierKey: 'B', tierNumber: 2 },
       });
       const pricesRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: admin.headers,
-        payload: standardEventPricing(),
+        payload: await standardPricingIn(getPrisma()),
       });
       expect(pricesRes.statusCode).toBe(200);
 

@@ -1,7 +1,7 @@
 import { FieldOrderBasis, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { inMemoryStandardPricing } from '../../support/budget-pricing';
 
 // Tier and valuation rules against an in-memory store: defaults, the fill order of
 // auto-assignment, the orphan guard on replacement, the drag-and-drop save's checks,
@@ -27,7 +27,7 @@ function addFieldByOdds(store: InMemorySportEvents, sportEventId: string, count:
 function setup(status: SportEventStatus = SportEventStatus.DRAFT) {
   const store = new InMemorySportEvents();
   // Tiers and prices are set while the event is a draft; release locks them (#431).
-  const event = store.addEvent({ status });
+  const event = store.addSlottedEvent({ status });
   const service = new SportEventTierService({
     sportEvents: store.sportEventRepo(),
     tiers: store.tierRepo(),
@@ -44,13 +44,13 @@ describe('SportEventTierService — tiers', () => {
   it('creates each new event\'s default tiers, as many as its sport league\'s tier profile names, and answers them as written', async () => {
     const { store, event, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount: 4, tierSize: 3 });
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
+    const playoff = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
 
     const golf = await service.createDefaultTiers({ id: event.sportLeagueId, platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID }, [event.id]);
     const written = await service.createDefaultTiers(league, [playoff.id]);
 
-    expect(golf.get(event.id)?.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
-    expect(written.get(playoff.id)?.map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
+    expect(golf.get(event.id)?.tiers.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
+    expect(written.get(playoff.id)?.tiers.map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
     expect((await service.listTiers(playoff.id)).map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
     expect(store.tierRows).toHaveLength(10);
   });
@@ -65,7 +65,7 @@ describe('SportEventTierService — tiers', () => {
   it('starts an event with its league\'s six tiers of two (the College Football Playoff\'s profile) and places 12 playoff teams two to a tier', async () => {
     const { store, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount: 6, tierSize: 2 });
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
+    const playoff = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
 
     await service.createDefaultTiers(league, [playoff.id]);
     addFieldByOdds(store, playoff.id, 12);
@@ -80,7 +80,7 @@ describe('SportEventTierService — tiers', () => {
       [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }],
       [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.RANKING],
     );
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
+    const playoff = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
     await service.createDefaultTiers(league, [playoff.id]);
     for (const conference of ['afc', 'nfc']) {
       for (let seed = 1; seed <= 7; seed++) {
@@ -97,13 +97,13 @@ describe('SportEventTierService — tiers', () => {
       ['afc-5', 'afc-6', 'afc-7', 'nfc-5', 'nfc-6', 'nfc-7'],
     ]);
     expect(store.valuationRows.every((valuation) => valuation.tierAssignedSource === 'AUTO_SEED')).toBe(true);
-    expect((await store.sportEventRepo().findById(playoff.id))?.tierConfig).toMatchObject({ type: 'RANGES' });
+    expect(store.firstTierSlotOf(playoff.id).tierLayout).toMatchObject({ type: 'RANGES' });
   });
 
   it('refuses (422 TIER_SIZE_NOT_FOR_RANGES) a tier size sent for a league whose tier profile is ranges, placing no one', async () => {
     const { store, service } = setup();
     const league = store.addLeagueWithRangesTierProfile([{ tierNumber: 1, fromValue: 1, toValue: 2 }, { tierNumber: 2, fromValue: 3, toValue: null }], [FieldOrderBasis.SEED]);
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
+    const playoff = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.FOOTBALL, sportLeagueId: league.id });
     await service.createDefaultTiers(league, [playoff.id]);
     store.addToField(playoff.id, 'p-1', { seedNumber: 1 });
 
@@ -148,9 +148,9 @@ describe('SportEventTierService — tiers', () => {
     addFieldByOdds(store, event.id, 2);
     const [tier1, tier2] = store.tierRows;
     const [first, second] = store.field;
-    await store.valuationRepo().assignTiers([
-      { sportEventParticipantId: first.id, sportEventTierId: tier2.id, tierOrderIndex: 0, source: 'MANUAL' },
-      { sportEventParticipantId: second.id, sportEventTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
+    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [
+      { sportEventParticipantId: first.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 0, source: 'MANUAL' },
+      { sportEventParticipantId: second.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
     ]);
 
     const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [
@@ -169,7 +169,7 @@ describe('SportEventTierService — tiers', () => {
     await store.addTiers(event.id, TWO_TIERS);
     const entry = store.addToField(event.id, 'p-1');
     const [, tier2] = store.tierRows;
-    await store.valuationRepo().assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
 
     await expect(service.replaceTiers({ sportEventId: event.id, tiers: [TWO_TIERS[0]] }))
       .rejects.toMatchObject({ code: 'TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS', statusCode: 409 });
@@ -225,7 +225,7 @@ describe('SportEventTierService — assignment', () => {
 
   it('keeps a three-tiers-of-three profile\'s three-three-rest layout when no size is sent and the race keeps its three default tiers', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 3 }).id });
+    const race = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 3 }).id });
     await store.addTiers(race.id, tierDefinitions(3));
     addFieldByOdds(store, race.id, 14);
 
@@ -248,7 +248,7 @@ describe('SportEventTierService — assignment', () => {
   ])('auto-assigns the default tiers of a league profiled $tierCount tiers of $tierSize when no size is sent: $what', async ({ tierCount, tierSize, fieldSize, expected }) => {
     const { store, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount, tierSize });
-    const event = store.addEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
+    const event = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
     await service.createDefaultTiers(league, [event.id]);
     addFieldByOdds(store, event.id, fieldSize);
 
@@ -273,7 +273,7 @@ describe('SportEventTierService — assignment', () => {
 
   it('spreads a field too small for the league\'s tier profile evenly on the default tiers so release finds no empty tier: 6 horses on three tiers is 2/2/2, 30 golfers on six is 5 each', async () => {
     const { store, event, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 3 }).id });
+    const race = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 3 }).id });
     await store.addTiers(race.id, tierDefinitions(3));
     addFieldByOdds(store, race.id, 6);
 
@@ -291,7 +291,7 @@ describe('SportEventTierService — assignment', () => {
 
   it('keeps the profile\'s layout when it just fills every default tier: 7 horses on three tiers is 3/3/1', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 3 }).id });
+    const race = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 3 }).id });
     await store.addTiers(race.id, tierDefinitions(3));
     addFieldByOdds(store, race.id, 7);
 
@@ -302,7 +302,7 @@ describe('SportEventTierService — assignment', () => {
 
   it('spreads a 22-driver field over a race set to four tiers as 6/6/5/5 when no size is sent, leaving no tier empty', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 5, tierSize: 8 }).id });
+    const race = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 5, tierSize: 8 }).id });
     await store.addTiers(race.id, tierDefinitions(4));
     addFieldByOdds(store, race.id, 22);
 
@@ -322,7 +322,7 @@ describe('SportEventTierService — assignment', () => {
 
     expect(groups.map((group) => group.participants.length)).toEqual([7, 7, 7, 6, 6]);
 
-    const big = store.addEvent({ status: SportEventStatus.DRAFT });
+    const big = store.addSlottedEvent({ status: SportEventStatus.DRAFT });
     await store.addTiers(big.id, tierDefinitions(5));
     addFieldByOdds(store, big.id, 176);
 
@@ -343,7 +343,7 @@ describe('SportEventTierService — assignment', () => {
 
   it('fills a sent tier size exactly as before, even when that leaves the last tier empty (22 drivers in fours of 8 is 8/8/6/0)', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 5, tierSize: 8 }).id });
+    const race = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 5, tierSize: 8 }).id });
     await store.addTiers(race.id, tierDefinitions(4));
     addFieldByOdds(store, race.id, 22);
 
@@ -355,7 +355,7 @@ describe('SportEventTierService — assignment', () => {
   it('leaves the participants beyond a capped last tier in no tier, still in order, and records the capped layout on the event', async () => {
     const { store, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2 });
-    const event = store.addEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
+    const event = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
     await service.createDefaultTiers(league, [event.id]);
     addFieldByOdds(store, event.id, 9);
 
@@ -364,26 +364,27 @@ describe('SportEventTierService — assignment', () => {
     expect(groups.map((group) => group.participants.map((placement) => placement.participantId))).toEqual([
       ['p-01', 'p-02'], ['p-03', 'p-04'], ['p-05', 'p-06'],
     ]);
-    const outOfTiers = store.valuationRows.filter((row) => row.sportEventTierId === null);
+    const outOfTiers = store.valuationRows.filter((row) => row.sportEventSlotTierId === null);
     expect(outOfTiers).toHaveLength(3);
     expect(outOfTiers.every((row) => row.tierAssignedSource === 'AUTO_ODDS')).toBe(true);
-    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
-      profileName: '3 tiers of 2', type: 'EQUAL_GROUPS', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
+    expect(store.firstTierSlotOf(event.id).tierLayout).toEqual({
+      platformTierProfileId: league.platformTierProfileId, profileName: '3 tiers of 2', type: 'EQUAL_GROUPS', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
     });
-    await expect(store.sportEventRepo().countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 0]]));
+    const slot = store.firstTierSlotOf(event.id);
+    await expect(store.sportEventRepo().countUntieredActiveParticipants([slot])).resolves.toEqual(new Map([[slot.id, 0]]));
   });
 
   it('tiers with the profile its own sport league names, not the first profile there is', async () => {
     const { store, service } = setup();
     const league = store.addLeagueWithPlatformTierProfile({ tierCount: 2, tierSize: 1 });
-    const event = store.addEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
+    const event = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
     await store.addTiers(event.id, TWO_TIERS);
     addFieldByOdds(store, event.id, 5);
 
     const groups = await service.autoAssignTiers({ sportEventId: event.id });
 
     expect(groups.map((group) => group.participants.length)).toEqual([1, 4]);
-    expect((await store.sportEventRepo().findById(event.id))?.tierConfig?.profileName).toBe('2 tiers of 1');
+    expect(store.firstTierSlotOf(event.id).tierLayout?.profileName).toBe('2 tiers of 1');
   });
 
   it('records the tier size an admin sent on the event\'s layout, with the league\'s profile name', async () => {
@@ -393,7 +394,7 @@ describe('SportEventTierService — assignment', () => {
 
     await service.autoAssignTiers({ sportEventId: event.id, tierSize: 3 });
 
-    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toMatchObject({ profileName: '6 tiers of 10', tierSize: 3 });
+    expect(store.firstTierSlotOf(event.id).tierLayout).toMatchObject({ profileName: '6 tiers of 10', tierSize: 3 });
   });
 
   it('refuses to auto-tier an event whose sport league names no tier profile with 404 SPORT_LEAGUE_NOT_FOUND, tiering no one', async () => {
@@ -440,7 +441,7 @@ describe('SportEventTierService — one order for tiers and prices', () => {
     store.addToField(event.id, 'p-seed-3', { seedNumber: 3, oddsToWin: 25, ranking: 2 });
 
     const groups = await service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 });
-    const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+    const views = await service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() });
 
     const tierOrder = groups.flatMap((group) => group.participants.map((placement) => placement.participantId));
     const priceOrder = [...views].sort((left, right) => (right.price ?? 0) - (left.price ?? 0)).map((view) => view.participantId);
@@ -456,7 +457,7 @@ describe('SportEventTierService — one order for tiers and prices', () => {
     store.addToField(event.id, 'p-a', { seedNumber: 1, ranking: 9 });
 
     const groups = await service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 });
-    await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+    await service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() });
 
     expect(groups.map((group) => group.participants.map((placement) => placement.participantId))).toEqual([['p-a'], ['p-b']]);
     expect(store.valuationRows.every((row) => row.tierAssignedSource === 'AUTO_SEED' && row.priceAssignedSource === 'AUTO_SEED')).toBe(true);
@@ -471,7 +472,7 @@ describe('SportEventTierService — one order for tiers and prices', () => {
     }
 
     await expect(service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 })).rejects.toMatchObject({ code: 'FIELD_HAS_NO_ORDER', statusCode: 409 });
-    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() })).rejects.toMatchObject({ code: 'FIELD_HAS_NO_ORDER', statusCode: 409 });
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() })).rejects.toMatchObject({ code: 'FIELD_HAS_NO_ORDER', statusCode: 409 });
     expect(store.valuationRows).toEqual([]);
   });
 });
@@ -484,7 +485,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
     store.addToField(event.id, 'p-withdrawn', { seedNumber: 3, status: SportEventParticipantStatus.WITHDRAWN });
 
-    const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+    const views = await service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() });
 
     const priceOf = new Map(views.map((view) => [view.participantId, view.price]));
     expect(Object.fromEntries(priceOf)).toEqual({ 'p-1': 12000, 'p-2': 6400, 'p-unseeded': 6000 });
@@ -498,7 +499,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     store.addToField(event.id, 'p-fav', { oddsToWin: 2.5 });
     store.addToField(event.id, 'p-mid', { oddsToWin: 8 });
 
-    const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+    const views = await service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() });
 
     const priceOf = Object.fromEntries(views.map((view) => [view.participantId, view.price]));
     expect(priceOf['p-fav']).toBeGreaterThan(priceOf['p-mid'] ?? Infinity);
@@ -512,7 +513,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     store.addToField(event.id, 'p-guest-short', { oddsToWin: 6 });
     store.addToField(event.id, 'p-seed-1', { seedNumber: 1, oddsToWin: 10 });
 
-    const views = await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
+    const views = await service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() });
 
     const byPrice = [...views].sort((left, right) => (right.price ?? 0) - (left.price ?? 0)).map((view) => view.participantId);
     expect(byPrice).toEqual(['p-seed-2', 'p-guest-short', 'p-seed-1', 'p-guest-long']);
@@ -521,12 +522,12 @@ describe('SportEventTierService — prices and the contest-side read', () => {
   it('records on the event the values its field was priced with, replacing the last ones on a re-price', async () => {
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
-    const small = { ...standardEventPricing(), profileName: 'Small', salaryCap: 5000, unit: 10 };
+    const small = { ...inMemoryStandardPricing(), salaryCap: 5000, unit: 10 };
 
-    await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() });
-    await service.autoAssignPrices({ sportEventId: event.id, pricingConfig: small });
+    await service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() });
+    await service.autoAssignPrices({ sportEventId: event.id, pricing: small });
 
-    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual(small);
+    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ ...small, profileName: 'Standard' });
     expect(store.valuationRows.map((row) => row.price)).toEqual([1200]);
   });
 
@@ -539,18 +540,18 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-1', { seedNumber: 1 });
 
-    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: { ...standardEventPricing(), ...change } }))
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricing: { ...inMemoryStandardPricing(), ...change } }))
       .rejects.toMatchObject({ code: 'PRICING_CONFIG_INVALID', statusCode: 422 });
     expect(store.valuationRows).toEqual([]);
-    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toBeUndefined();
+    expect(store.firstTierSlotOf(event.id).pricing).toBeNull();
   });
 
   it('reads a price-only valuation with no tier, which a read starting from the tiers would miss', async () => {
     const { store, event, service } = setup();
     const entry = store.addToField(event.id, 'p-budget');
-    await store.valuationRepo().assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await store.valuationRepo().assignSlotPrices({
+      slot: store.firstTierSlotOf(event.id),
+      pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: entry.id, price: 12, source: 'MANUAL' }],
     });
 
@@ -565,11 +566,11 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     await store.addTiers(event.id, [TWO_TIERS[0]]);
     const [tier] = store.tierRows;
     const entry = store.addToField(event.id, 'p-1');
-    await store.valuationRepo().assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
     const field = store.fieldRepo();
     const findBySportEvent = jest.spyOn(field, 'findBySportEvent');
     const tiers = store.tierRepo();
-    const findTiers = jest.spyOn(tiers, 'findBySportEvent');
+    const findTiers = jest.spyOn(tiers, 'findBySlot');
     const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations: store.valuationRepo(), field, participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() });
     const heldField = await store.fieldRepo().findBySportEvent(event.id);
 
@@ -583,25 +584,27 @@ describe('SportEventTierService — prices and the contest-side read', () => {
 
   it('answers several events\' tiers from one read each of tiers, valuations and fields, each event with its own tiers and an untiered one with none', async () => {
     const { store, event } = setup();
-    const second = store.addEvent({ status: SportEventStatus.DRAFT });
-    const untiered = store.addEvent({ status: SportEventStatus.DRAFT });
+    const second = store.addSlottedEvent({ status: SportEventStatus.DRAFT });
+    const untiered = store.addSlottedEvent({ status: SportEventStatus.DRAFT });
     await store.addTiers(event.id, TWO_TIERS);
     await store.addTiers(second.id, [TWO_TIERS[0]]);
     const [first1, first2, second1] = store.tierRows;
     const firstEntry = store.addToField(event.id, 'p-1');
     const secondEntry = store.addToField(event.id, 'p-2');
     const otherEntry = store.addToField(second.id, 'p-3');
-    await store.valuationRepo().assignTiers([
-      { sportEventParticipantId: firstEntry.id, sportEventTierId: first2.id, tierOrderIndex: 1, source: 'MANUAL' },
-      { sportEventParticipantId: secondEntry.id, sportEventTierId: first1.id, tierOrderIndex: 1, source: 'MANUAL' },
-      { sportEventParticipantId: otherEntry.id, sportEventTierId: second1.id, tierOrderIndex: 1, source: 'MANUAL' },
+    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [
+      { sportEventParticipantId: firstEntry.id, sportEventSlotTierId: first2.id, tierOrderIndex: 1, source: 'MANUAL' },
+      { sportEventParticipantId: secondEntry.id, sportEventSlotTierId: first1.id, tierOrderIndex: 1, source: 'MANUAL' },
+    ]);
+    await store.valuationRepo().assignTiers(store.firstTierSlotOf(second.id), [
+      { sportEventParticipantId: otherEntry.id, sportEventSlotTierId: second1.id, tierOrderIndex: 1, source: 'MANUAL' },
     ]);
     const tiers = store.tierRepo();
     const valuations = store.valuationRepo();
     const field = store.fieldRepo();
     const reads = [
-      jest.spyOn(tiers, 'findBySportEvents'),
-      jest.spyOn(valuations, 'findBySportEvents'),
+      jest.spyOn(tiers, 'findBySlots'),
+      jest.spyOn(valuations, 'findBySlots'),
       jest.spyOn(field, 'findBySportEvents'),
     ];
     const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations, field, participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() });
@@ -635,7 +638,7 @@ describe('SportEventTierService — locked once the event is released (#431)', (
       assignments: [{ sportEventParticipantId: entry.id, tierKey: 'tier-1', tierOrderIndex: 1 }],
     })).rejects.toMatchObject(locked);
     await expect(service.autoAssignTiers({ sportEventId: event.id })).rejects.toMatchObject(locked);
-    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() })).rejects.toMatchObject(locked);
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() })).rejects.toMatchObject(locked);
 
     expect(store.tierRows).toHaveLength(2);
     expect(store.valuationRows).toEqual([]);
@@ -684,10 +687,10 @@ describe('SportEventTierService — the field changing between assignments', () 
     const unordered = store.addToField(event.id, 'p-unordered');
     const second = store.addToField(event.id, 'p-second');
     const first = store.addToField(event.id, 'p-first');
-    await store.valuationRepo().assignTiers([
-      { sportEventParticipantId: unordered.id, sportEventTierId: tier.id, tierOrderIndex: null as unknown as number, source: 'MANUAL' },
-      { sportEventParticipantId: second.id, sportEventTierId: tier.id, tierOrderIndex: 2, source: 'MANUAL' },
-      { sportEventParticipantId: first.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' },
+    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [
+      { sportEventParticipantId: unordered.id, sportEventSlotTierId: tier.id, tierOrderIndex: null as unknown as number, source: 'MANUAL' },
+      { sportEventParticipantId: second.id, sportEventSlotTierId: tier.id, tierOrderIndex: 2, source: 'MANUAL' },
+      { sportEventParticipantId: first.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' },
     ]);
 
     const [group] = await service.getEffectiveTiersForSportEvent(event.id);
@@ -700,7 +703,7 @@ describe('SportEventTierService — the field changing between assignments', () 
     await store.addTiers(event.id, TWO_TIERS);
     const entry = store.addToField(event.id, 'p-1');
     const [tier1] = store.tierRows;
-    await store.valuationRepo().assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' }]);
 
     const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [TWO_TIERS[0]] });
 
@@ -711,7 +714,7 @@ describe('SportEventTierService — the field changing between assignments', () 
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-withdrawn', { seedNumber: 1, status: SportEventParticipantStatus.WITHDRAWN });
 
-    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() })).resolves.toEqual([]);
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() })).resolves.toEqual([]);
     expect(store.valuationRows).toEqual([]);
   });
 });

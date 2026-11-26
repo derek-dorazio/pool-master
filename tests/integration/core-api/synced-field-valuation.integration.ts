@@ -15,6 +15,8 @@ import { mapEventToProvider } from '../../support/event-edition';
 import { expectSameStatementCount } from '../query-scaling';
 import { recordStatements } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
+import { tierSetSlot } from '../../support/event-tier-sets';
+import { standardPricingIn } from '../../support/budget-pricing';
 
 // Tiers and prices made from the feed after each field sync (#1822), against real Postgres: the
 // valuations and the event's pricing values written through the adapters, a hand edit kept, a
@@ -42,8 +44,9 @@ async function syncedEvent(golfers: number, status: SportEventStatus = SportEven
       await getPrisma().sportEventParticipant.update({ where: { id: row.id }, data: { oddsToWin: 5 + index } });
     }
   }
-  await getPrisma().sportEventTier.createMany({
-    data: [1, 2].map((tierNumber) => ({ sportEventId: event.id, tierKey: `tier-${tierNumber}`, tierNumber })),
+  const tierSet = await tierSetSlot(getPrisma(), event.id);
+  await getPrisma().sportEventSlotTier.createMany({
+    data: [1, 2].map((tierNumber) => ({ sportEventSlotId: tierSet.id, tierKey: `tier-${tierNumber}`, tierNumber })),
   });
   // The provider's id for the event (#2004), which a field sync names it by.
   const ref = { providerId: 'balldontlie', externalId: `valuation-${event.id}` };
@@ -52,11 +55,11 @@ async function syncedEvent(golfers: number, status: SportEventStatus = SportEven
 }
 
 function valuationsOf(sportEventId: string) {
-  return getPrisma().sportEventParticipantValuation.findMany({ where: { sportEventParticipant: { sportEventId } } });
+  return getPrisma().sportEventSlotParticipantValuation.findMany({ where: { sportEventParticipant: { sportEventId } } });
 }
 
 describe('Synced field valuation (#1822)', () => {
-  it('tiers and prices a synced draft field by its odds and stores the default pricing profile on the event', async () => {
+  it('tiers and prices a synced draft field by its odds and stores the default pricing profile on the event\'s slot', async () => {
     const { event, ref } = await syncedEvent(4);
     const service = valuationService();
 
@@ -67,8 +70,11 @@ describe('Synced field valuation (#1822)', () => {
     });
     const made = await valuationsOf(event.id);
     expect(made).toHaveLength(4);
-    expect(made.every((row) => row.sportEventTierId !== null && row.tierAssignedSource === 'AUTO_ODDS' && row.priceAssignedSource === 'AUTO_ODDS')).toBe(true);
-    expect((await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } })).pricingConfig).toMatchObject({ profileName: 'Standard', salaryCap: 50_000 });
+    expect(made.every((row) => row.sportEventSlotTierId !== null && row.tierAssignedSource === 'AUTO_ODDS' && row.priceAssignedSource === 'AUTO_ODDS')).toBe(true);
+    const standard = await standardPricingIn(getPrisma());
+    expect(await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id } })).toMatchObject({
+      platformPricingProfileId: standard.platformPricingProfileId, salaryCap: 50_000, pricingUnit: 100,
+    });
   });
 
   it('writes nothing when a re-sync finds the same field, and keeps every tier once one is placed by hand', async () => {
@@ -81,7 +87,7 @@ describe('Synced field valuation (#1822)', () => {
     expect(repeat.result).toMatchObject({ tiers: { result: 'UNCHANGED' }, prices: { result: 'UNCHANGED' } });
     expect(repeat.statements.filter(({ sql }) => /^\s*(INSERT|UPDATE|DELETE)/i.test(sql))).toEqual([]);
 
-    await getPrisma().sportEventParticipantValuation.update({ where: { id: expectDefined(made[0]).id }, data: { tierAssignedSource: 'MANUAL' } });
+    await getPrisma().sportEventSlotParticipantValuation.update({ where: { id: expectDefined(made[0]).id }, data: { tierAssignedSource: 'MANUAL' } });
     expect(await service.afterFieldLoad(ref)).toMatchObject({ tiers: { result: 'KEPT_AS_EDITED' }, prices: { result: 'UNCHANGED' } });
   });
 

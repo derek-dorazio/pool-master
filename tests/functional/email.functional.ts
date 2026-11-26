@@ -31,6 +31,7 @@ import { freshEventEdition } from '../support/event-edition';
 import { seededSportLeagueId } from '../support/contest-setups';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
+import { inTierSet, tierSetSlot } from '../support/event-tier-sets';
 
 // #442 — every system email the app sends, proven end to end: the functional server sends
 // through a local SMTP sink that records each message, and these tests read it back. Each one
@@ -45,11 +46,11 @@ async function cleanupEventFixtures(): Promise<void> {
   await prisma.contestEntryPick.deleteMany({
     where: { sportEventParticipantId: { in: createdSportEventParticipantIds } },
   });
-  await prisma.sportEventParticipantValuation.deleteMany({
+  await prisma.sportEventSlotParticipantValuation.deleteMany({
     where: { sportEventParticipantId: { in: createdSportEventParticipantIds } },
   });
   await prisma.sportEventParticipant.deleteMany({ where: { id: { in: createdSportEventParticipantIds } } });
-  await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: createdSportEventIds } } });
+  await prisma.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: createdSportEventIds } } } });
   await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: createdSportEventIds } } });
   await unlinkContestsFromSportEvents(prisma, createdSportEventIds);
   await prisma.sportEvent.deleteMany({ where: { id: { in: createdSportEventIds } } });
@@ -78,8 +79,8 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
   });
   createdSportEventIds.push(sportEvent.id);
 
-  const tier = await prisma.sportEventTier.create({
-    data: { sportEventId: sportEvent.id, tierKey: 'A', tierNumber: 1 },
+  const tier = await prisma.sportEventSlotTier.create({
+    data: { sportEventSlotId: (await tierSetSlot(prisma, sportEvent.id)).id, tierKey: 'A', tierNumber: 1 },
   });
   const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
   const participant = await prisma.participant.create({
@@ -96,10 +97,11 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
     data: { sportEventId: sportEvent.id, participantId: participant.id },
   });
   createdSportEventParticipantIds.push(sportEventParticipant.id);
-  await prisma.sportEventParticipantValuation.create({
+  await prisma.sportEventSlotParticipantValuation.create({
     data: {
+      ...inTierSet(await tierSetSlot(prisma, sportEvent.id)),
       sportEventParticipantId: sportEventParticipant.id,
-      sportEventTierId: tier.id,
+      sportEventSlotTierId: tier.id,
       tierOrderIndex: 1,
       tierAssignedSource: 'MANUAL',
     },

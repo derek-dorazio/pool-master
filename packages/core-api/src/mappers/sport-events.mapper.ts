@@ -11,7 +11,7 @@ import {
   SPORT_EVENT_STATUS_TRANSITIONS,
   SportEventStatus,
   type SportEventContest,
-  type SportEventTier,
+  isTierSetEditable,
   eventProviderNameOf,
 } from '@poolmaster/shared/domain';
 import {
@@ -27,7 +27,7 @@ import { mapRoundSlotToDto } from './sport-event-matches.mapper';
 import { mapSportLeagueSeasonSlotToDto } from './sport-catalog.mapper';
 import { eventContestOpenings } from '../modules/contest-management/contest-opening';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
-import { areTiersAndPricesEditable } from '../modules/events/sport-event-tier-service';
+import type { SetTier } from '../modules/events/sport-event-tier-service';
 import type { SportEventSummary } from '../modules/events/service';
 import type { SportEventRoundView } from '../modules/events/sport-event-round-service';
 
@@ -45,6 +45,7 @@ export function mapSportEventToDto({
   event,
   participantCount,
   tierCount,
+  firstTierSlot,
   adminCounts,
   releaseChecks,
   slots,
@@ -74,13 +75,14 @@ export function mapSportEventToDto({
     roundsParMin: ROUNDS_PAR_MIN,
     roundsParMax: ROUNDS_PAR_MAX,
     participantCount,
-    pricing: event.pricingConfig ?? null,
-    tierLayout: event.tierConfig ?? null,
+    pricing: firstTierSlot?.pricing ?? null,
+    tierLayout: firstTierSlot?.tierLayout ?? null,
     readinessStatus: operationalState.readinessStatus,
     readinessReasons: operationalState.readinessReasons,
     contestEligible: operationalState.contestEligible,
     contestOpenings: eventContestOpenings({ ...event, participantCount }, now),
-    tiersLocked: !areTiersAndPricesEditable(event),
+    // An event covering no slot has no set to edit.
+    tiersLocked: firstTierSlot === null || !isTierSetEditable(event, firstTierSlot),
     slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
     sportLeagueSeasonId: event.sportLeagueSeasonId,
     championshipYear: event.championshipYear,
@@ -138,10 +140,10 @@ export function mapSportEventContestsToResponse(contests: readonly SportEventCon
   };
 }
 
-export function mapSportEventTierToDto(tier: SportEventTier): SportEventTierDto {
+export function mapSportEventTierToDto(tier: SetTier): SportEventTierDto {
   return {
     id: tier.id,
-    sportEventId: tier.sportEventId,
+    seasonSlotId: tier.seasonSlotId,
     tierKey: tier.tierKey,
     tierNumber: tier.tierNumber,
   };
